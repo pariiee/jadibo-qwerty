@@ -250,10 +250,6 @@
             <input class="inp" id="f-footer" type="text" placeholder="Powered by YaaParBot" />
           </div>
         </div>
-        <div class="field">
-          <label for="f-desc">Deskripsi</label>
-          <textarea class="inp" id="f-desc" rows="2" placeholder="Opsional..."></textarea>
-        </div>
         <div class="err" id="add-error"></div>
         <button class="btn btn-dark submit" type="submit">Buat Bot</button>
       </form>
@@ -406,7 +402,6 @@
       owner_number: document.getElementById('f-owner').value.trim() || undefined,
       prefix: document.getElementById('f-prefix').value.trim() || '!',
       footer_text: document.getElementById('f-footer').value.trim() || 'Powered by YaaParBot',
-      description: document.getElementById('f-desc').value.trim(),
       telegram_token: document.getElementById('f-token').value.trim() || undefined
     };
     const d = await api('/api/bots', { method: 'POST', body: JSON.stringify(body) });
