@@ -1,9 +1,8 @@
 -- YaaParBot Database Schema (sinkron dengan kode — jangan edit separuh)
--- Run: mysql -u root -p < schema.sql
--- Semua tabel & kolom yang dipakai kode (engine, controllers, plugins) ada di sini.
-
-CREATE DATABASE IF NOT EXISTS yaaparbot CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE yaaparbot;
+-- Jalankan ke database yang sudah dibuat, nama DB diambil dari .env (DB_NAME):
+--   mysql -u <user> -p <nama_db> < schema.sql
+-- File ini sengaja TIDAK memuat CREATE DATABASE / USE supaya tidak mengunci
+-- nama database — biar bisa dipakai di box mana pun tanpa mengedit file ini.
 
 -- ============================================================
 -- Table: users
