@@ -44,6 +44,13 @@ app.use(helmet({
   },
 }));
 
+// Di balik Cloudflare Tunnel semua koneksi datang dari 127.0.0.1 — tanpa ini
+// req.ip jadi 127.0.0.1 untuk SEMUA user dan rate-limit berubah jadi satu ember
+// global (20x login habis dipakai satu orang, sisanya kena blok). 'loopback'
+// hanya mempercayai proxy dari localhost (cloudflared), jadi X-Forwarded-For
+// dari luar tetap tidak bisa dipalsukan.
+app.set('trust proxy', 'loopback');
+
 app.use(cors({
   origin: process.env.NODE_ENV === 'production'
     ? process.env.ALLOWED_ORIGIN || false
