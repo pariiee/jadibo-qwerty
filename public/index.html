@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>YaaParBot — WhatsApp &amp; Telegram Gateway</title>
+<style>
+  :root{
+    --bg:#f6f6f7; --card:#ffffff; --border:#e6e6e8; --txt:#18181b; --muted:#6f6f76;
+    --dark:#18181b; --dark2:#27272a; --wa:#25D366; --tg:#229ED9; --ok:#16a34a; --warn:#ca8a04;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Segoe UI',system-ui,-apple-system,Arial,sans-serif;background:var(--bg);color:var(--txt);-webkit-font-smoothing:antialiased}
+  a{text-decoration:none;color:inherit}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+  .btn{display:inline-flex;align-items:center;gap:8px;border:none;cursor:pointer;font-weight:600;font-size:14px;border-radius:12px;padding:10px 18px;transition:.15s}
+  .btn-dark{background:var(--dark);color:#fff}.btn-dark:hover{background:#3f3f46}
+  .btn-outline{background:transparent;border:1px solid var(--border);color:var(--txt)}.btn-outline:hover{background:#f0f0f2}
+  .btn-danger{background:#ef4444;color:#fff}.btn-danger:hover{background:#dc2626}
+  .btn-ok{background:var(--ok);color:#fff}.btn-ok:hover{background:#15803d}
+
+  /* navbar */
+  nav{position:sticky;top:0;z-index:40;background:rgba(255,255,255,.85);backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
+  .nav-in{height:58px;display:flex;align-items:center;justify-content:space-between}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px}
+  .logo-badge{width:32px;height:32px;background:var(--dark);border-radius:9px;display:flex;align-items:center;justify-content:center}
+  .nav-links{display:none;gap:22px;color:var(--muted);font-size:14px}
+  @media(min-width:768px){.nav-links{display:flex}}
+  .nav-links a:hover{color:var(--txt)}
+  .nav-actions{display:flex;gap:8px}
+
+  /* hero */
+  .hero{padding:70px 0 46px;text-align:center}
+  .badge-live{display:inline-flex;align-items:center;gap:8px;background:#f1f1f3;color:#4b4b52;font-size:12px;font-weight:600;border-radius:999px;padding:7px 14px;margin-bottom:22px}
+  .dot-live{width:7px;height:7px;border-radius:50%;background:var(--ok);animation:pulse 1.6s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  h1{font-size:42px;line-height:1.15;font-weight:800;letter-spacing:-.5px;margin-bottom:18px}
+  @media(min-width:768px){h1{font-size:56px}}
+  .grad{background:linear-gradient(120deg,#18181b 0%,#5b5b64 90%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .sub{color:var(--muted);font-size:17px;line-height:1.65;max-width:640px;margin:0 auto 30px}
+  .hero-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+  .terminal{margin:52px auto 0;max-width:620px;background:var(--dark);border:1px solid #26262a;border-radius:18px;padding:16px;text-align:left;box-shadow:0 24px 50px rgba(0,0,0,.18)}
+  .term-dots{display:flex;gap:6px;margin-bottom:14px}
+  .term-dots span{width:11px;height:11px;border-radius:50%}
+  .term-label{margin-left:8px;color:#71717a;font-size:11px;font-family:Consolas,Menlo,monospace}
+  .term-body{font-family:Consolas,Menlo,monospace;font-size:13px;line-height:1.8}
+  .c-ok{color:#34d399}.c-warn{color:#fbbf24}.c-info{color:#93c5fd}.c-dim{color:#a1a1aa}
+  .caret{color:#a1a1aa;animation:pulse 1s infinite}
+
+  /* stats */
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin:54px 0 10px}
+  .stat{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:22px;display:flex;flex-direction:column;gap:6px}
+  .stat b{font-size:30px;font-weight:800;font-variant-numeric:tabular-nums}
+  .stat span{font-size:13px;color:var(--muted)}
+  .stat-foot{width:8px;height:8px;border-radius:50%;margin-top:10px}
+
+  /* features */
+  .sec-label{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#9a9aa2;margin:44px 0 6px}
+  h2{font-size:28px;font-weight:800;letter-spacing:-.3px;margin-bottom:22px}
+  .feat{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-bottom:26px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:24px}
+  .card-dark{background:var(--dark);color:#fff;border-color:#27272a}
+  .card-dark .lead{font-weight:800;font-size:19px;margin-bottom:8px}
+  .card-dark p{color:#a1a1aa;font-size:14px;line-height:1.6;margin-bottom:16px}
+  .card h4{font-size:16px;font-weight:700;margin:0 0 6px}
+  .card p{color:var(--muted);font-size:14px;line-height:1.6}
+  .icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{background:#27272a;color:#c9c9cf;font-size:12px;font-family:Consolas,Menlo,monospace;border-radius:7px;padding:4px 9px}
+
+  /* FAQ */
+  .faq{max-width:660px;margin-bottom:30px}
+  .faq-item{border:1px solid var(--border);border-radius:14px;background:var(--card);overflow:hidden;margin-bottom:10px}
+  .faq-q{width:100%;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px 20px;background:none;border:none;cursor:pointer;font-size:14px;font-weight:600;color:var(--txt);text-align:left}
+  .faq-q:hover{background:#fafafa}
+  .faq-a{display:none;padding:0 20px 18px;color:var(--muted);font-size:14px;line-height:1.65}
+  .faq-a.open{display:block}
+
+  /* footer */
+  footer{border-top:1px solid var(--border);margin-top:40px}
+  .foot-in{max-width:1080px;margin:0 auto;padding:26px 20px;display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between}
+  .foot-logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px}
+  .mini-badge{width:22px;height:22px;background:var(--dark);border-radius:6px;display:flex;align-items:center;justify-content:center}
+  .foot-copy{color:#a1a1aa;font-size:12px}
+  .foot-links{display:flex;gap:18px;font-size:13px;color:var(--muted)}
+  .foot-links a:hover{color:var(--txt)}
+
+  /* modal */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:18px;z-index:60}
+  .overlay.show{display:flex}
+  .modal{background:#fff;border-radius:18px;width:100%;max-width:390px;padding:30px;position:relative;box-shadow:0 30px 70px rgba(0,0,0,.25)}
+  .modal h3{font-size:20px;font-weight:800;margin-bottom:4px}
+  .modal .m-sub{color:var(--muted);font-size:13px;margin-bottom:20px}
+  .modal-close{position:absolute;top:14px;right:14px;background:none;border:none;cursor:pointer;color:#9a9aa2;padding:4px}
+  .modal-close:hover{color:var(--txt)}
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:12px;font-weight:600;color:#4b4b52;margin-bottom:6px}
+  .inp{width:100%;border:1px solid var(--border);border-radius:12px;padding:11px 14px;font-size:14px;outline:none;transition:.15s;font-family:inherit}
+  .inp:focus{border-color:var(--txt);box-shadow:0 0 0 3px rgba(24,24,27,.08)}
+  .err{color:#dc2626;font-size:12px;margin:4px 2px 10px;display:none}
+  .err.show{display:block}
+  .switch-line{font-size:12px;color:#8b8b93;text-align:center;margin-top:16px}
+  .switch-line button{background:none;border:none;color:var(--txt);font-weight:700;text-decoration:underline;cursor:pointer;font-size:12px}
+  @media(max-width:560px){.hide-mob{display:none!important}}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap nav-in">
+    <a href="/" class="logo">
+      <span class="logo-badge">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="#fff"><path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.37 5.07L2 22l5.09-1.34A9.95 9.95 0 0 0 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2z"/></svg>
+      </span>
+      YaaParBot
+    </a>
+    <div class="nav-links">
+      <a href="#features">Fitur</a>
+      <a href="#stats">Statistik</a>
+      <a href="#faq">FAQ</a>
+    </div>
+    <div class="nav-actions">
+      <button class="btn btn-outline" onclick="openAuth('login')">Masuk</button>
+      <button class="btn btn-dark" onclick="openAuth('register')">Daftar</button>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="badge-live"><span class="dot-live"></span> Multi-platform Gateway &middot; WhatsApp &amp; Telegram</div>
+    <h1>Bot Gateway yang <span class="grad">Simpel &amp; Powerful</span></h1>
+    <p class="sub">Kelola bot WhatsApp &amp; Telegram kamu dari satu dashboard. Multi-session, 90+ command, real-time monitor — tanpa ribet.</p>
+    <div class="hero-btns">
+      <button class="btn btn-dark" onclick="openAuth('register')">Mulai Sekarang</button>
+      <a class="btn btn-outline" href="#features">Lihat Fitur</a>
+    </div>
+    <div class="terminal">
+      <div class="term-dots">
+        <span style="background:#ef4444"></span><span style="background:#eab308"></span><span style="background:#22c55e"></span>
+        <span class="term-label">YaaParBot Terminal</span>
+      </div>
+      <div class="term-body">
+        <p class="c-ok">[ok] MySQL connected successfully</p>
+        <p class="c-ok">[ok] King account seeded</p>
+        <p class="c-info">[..] Bot &quot;MyBot&quot; starting...</p>
+        <p class="c-warn">[qr] QR_DATA: [scan this code]</p>
+        <p class="c-ok">[ok] Bot terhubung ke WhatsApp</p>
+        <p class="c-dim">[..] Incoming: <span style="color:#60a5fa">!ping</span> from 628xx</p>
+        <p class="c-dim">[..] Replied: <span style="color:#4ade80">Pong! Latensi: 42ms</span></p>
+        <p class="caret">_</p>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section id="stats">
+  <div class="wrap">
+    <p class="sec-label">Live Statistik</p>
+    <div class="stats">
+      <div class="stat">
+        <b id="stat-bots">&mdash;</b><span>Bot Online</span>
+        <span class="stat-foot" style="background:var(--ok)"></span>
+      </div>
+      <div class="stat">
+        <b id="stat-users">&mdash;</b><span>Total Pengguna</span>
+        <span class="stat-foot" style="background:#3b82f6"></span>
+      </div>
+      <div class="stat">
+        <b id="stat-messages">&mdash;</b><span>Pesan Diproses</span>
+        <span class="stat-foot" style="background:#8b5cf6"></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="features">
+  <div class="wrap">
+    <p class="sec-label">Kenapa YaaParBot</p>
+    <h2>Semua yang kamu butuhkan, dalam satu platform.</h2>
+    <div class="feat">
+      <div class="card card-dark" style="grid-column:span 2">
+        <div class="lead">90+ Command Siap Pakai</div>
+        <p>Dari !ping sampai RPG lengkap, giveaway, warn system, dan owner controls — semua sudah built-in.</p>
+        <div class="chips">
+          <span class="chip">!tagall</span><span class="chip">!rpg</span><span class="chip">!giveaway</span>
+          <span class="chip">!antilink</span><span class="chip">!sticker</span><span class="chip">!warn</span><span class="chip">+84 lainnya</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="icon" style="background:#e7f7ee">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z" stroke="#059669" stroke-width="2" stroke-linejoin="round"/></svg>
+        </div>
+        <h4>Real-time Log</h4>
+        <p>Monitor status koneksi dan pesan masuk langsung via WebSocket.</p>
+      </div>
+      <div class="card">
+        <div class="icon" style="background:#e9efff">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1.5" stroke="#2563eb" stroke-width="2"/><rect x="14" y="3" width="7" height="7" rx="1.5" stroke="#2563eb" stroke-width="2"/><rect x="3" y="14" width="7" height="7" rx="1.5" stroke="#2563eb" stroke-width="2"/><rect x="14" y="14" width="7" height="7" rx="1.5" stroke="#2563eb" stroke-width="2"/></svg>
+        </div>
+        <h4>Multi-Session Terisolasi</h4>
+        <p>Setiap bot punya SQLite session sendiri. Tidak saling ganggu.</p>
+      </div>
+      <div class="card">
+        <div class="icon" style="background:#f3edff">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#7c3aed" stroke-width="2"/><path d="M12 7v5l3.5 2" stroke="#7c3aed" stroke-width="2" stroke-linecap="round"/></svg>
+        </div>
+        <h4>QR &amp; Pairing Code</h4>
+        <p>Login WhatsApp via scan QR atau pairing code 8 digit langsung dari dashboard.</p>
+      </div>
+      <div class="card">
+        <div class="icon" style="background:#fff1e6">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3.5" stroke="#ea580c" stroke-width="2"/><path d="M3 20c0-3.3 2.7-5 6-5s6 1.7 6 5M16 4.6a3.5 3.5 0 0 1 0 6.8M17.5 15.4c2.1.6 3.5 2 3.5 4.6" stroke="#ea580c" stroke-width="2" stroke-linecap="round"/></svg>
+        </div>
+        <h4>Role King &amp; User</h4>
+        <p>King punya akses penuh. User dibatasi slot dan bot miliknya sendiri.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="wrap">
+    <p class="sec-label">FAQ</p>
+    <h2>Pertanyaan Umum</h2>
+    <div class="faq" id="faq-list"></div>
+  </div>
+</section>
+
+<footer>
+  <div class="foot-in">
+    <div class="foot-logo">
+      <span class="mini-badge"><svg width="11" height="11" viewBox="0 0 24 24" fill="#fff"><path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.37 5.07L2 22l5.09-1.34A9.95 9.95 0 0 0 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2z"/></svg></span>
+      YaaParBot
+    </div>
+    <p class="foot-copy">&copy; 2026 YaaParBot. All rights reserved.</p>
+    <div class="foot-links">
+      <a href="https://wa.me/" target="_blank" rel="noopener">WhatsApp</a>
+      <a href="https://t.me/" target="_blank" rel="noopener">Telegram</a>
+      <a href="https://github.com/" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </div>
+</footer>
+
+<!-- Auth modal -->
+<div class="overlay" id="auth-overlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeAuth()" aria-label="Tutup">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+
+    <div id="auth-login">
+      <h3>Masuk</h3>
+      <p class="m-sub">Lanjutkan ke dashboard kamu</p>
+      <form id="login-form">
+        <div class="field">
+          <label for="login-username">Username</label>
+          <input class="inp" id="login-username" type="text" placeholder="Username" autocomplete="username" required />
+        </div>
+        <div class="field">
+          <label for="login-password">Password</label>
+          <input class="inp" id="login-password" type="password" placeholder="Password" autocomplete="current-password" required />
+        </div>
+        <div class="err" id="login-error"></div>
+        <button class="btn btn-dark" style="width:100%;justify-content:center" type="submit">Masuk</button>
+      </form>
+      <p class="switch-line">Belum punya akun? <button type="button" onclick="switchAuth('register')">Daftar</button></p>
+    </div>
+
+    <div id="auth-register" style="display:none">
+      <h3>Daftar</h3>
+      <p class="m-sub">Buat akun baru</p>
+      <form id="register-form">
+        <div class="field">
+          <label for="reg-username">Username</label>
+          <input class="inp" id="reg-username" type="text" placeholder="Username" autocomplete="username" required />
+        </div>
+        <div class="field">
+          <label for="reg-password">Password</label>
+          <input class="inp" id="reg-password" type="password" placeholder="Min. 6 karakter" autocomplete="new-password" required />
+        </div>
+        <div class="err" id="reg-error"></div>
+        <button class="btn btn-dark" style="width:100%;justify-content:center" type="submit">Buat Akun</button>
+      </form>
+      <p class="switch-line">Sudah punya akun? <button type="button" onclick="switchAuth('login')">Masuk</button></p>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── FAQ ─────────────────────────────────────────────────────────
+  const faqs = [
+    { q: 'Berapa batas bot per akun?', a: 'Setiap akun user mendapat 2 slot bot secara default. King (admin) tidak ada batasnya.' },
+    { q: 'Platform apa saja yang didukung?', a: 'WhatsApp (via zapo-js) dan Telegram (via Bot API). Bisa tambah platform lain lewat plugin.' },
+    { q: 'Apakah sesi WhatsApp tersimpan?', a: 'Ya, setiap bot punya file SQLite session tersendiri di folder /sessions/bot_<id>/. Data tidak bercampur antar bot.' },
+    { q: 'Bagaimana cara login WhatsApp?', a: 'Kamu bisa memilih Scan QR Code atau Pairing Code (8 digit) yang langsung ditampilkan di dashboard.' },
+    { q: 'Apakah bisa custom prefix dan footer?', a: 'Bisa. Setiap bot bisa dikonfigurasi dengan prefix, footer text, nama bot, nomor owner, dan deskripsi sendiri.' },
+    { q: 'Apa itu role King?', a: 'King adalah super admin dengan akses penuh: manajemen semua user, semua bot, dan command owner seperti broadcast dan ban.' }
+  ];
+  const faqBox = document.getElementById('faq-list');
+  faqs.forEach((f, i) => {
+    const item = document.createElement('div');
+    item.className = 'faq-item';
+    const qBtn = document.createElement('button');
+    qBtn.className = 'faq-q';
+    qBtn.type = 'button';
+    const span = document.createElement('span');
+    span.textContent = f.q;
+    const chev = document.createElement('span');
+    chev.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+    qBtn.append(span, chev);
+    const ans = document.createElement('div');
+    ans.className = 'faq-a';
+    ans.textContent = f.a;
+    qBtn.addEventListener('click', () => {
+      const open = ans.classList.contains('open');
+      faqBox.querySelectorAll('.faq-a').forEach(a => a.classList.remove('open'));
+      if (!open) ans.classList.add('open');
+    });
+    item.append(qBtn, ans);
+    faqBox.appendChild(item);
+  });
+
+  // ── Live stats ──────────────────────────────────────────────────
+  function updateStats(s) {
+    document.getElementById('stat-bots').textContent     = (s.total_bots_online ?? 0).toLocaleString('id-ID');
+    document.getElementById('stat-users').textContent    = (s.total_users ?? 0).toLocaleString('id-ID');
+    document.getElementById('stat-messages').textContent = (s.total_messages ?? 0).toLocaleString('id-ID');
+  }
+  try {
+    const ws = new WebSocket((location.protocol === 'https:' ? 'wss' : 'ws') + '://' + location.host);
+    ws.onmessage = e => { try { const d = JSON.parse(e.data); if (d.type === 'stats') updateStats(d.payload); } catch {} };
+    ws.onclose = () => setTimeout(() => { try { location.reload(); } catch {} }, 15000);
+  } catch {}
+  fetch('/api/stats').then(r => r.json()).then(d => { if (d.ok) updateStats(d.stats); }).catch(() => {});
+
+  // ── Auth modal ──────────────────────────────────────────────────
+  function openAuth(mode) {
+    document.getElementById('auth-overlay').classList.add('show');
+    switchAuth(mode);
+  }
+  function closeAuth() { document.getElementById('auth-overlay').classList.remove('show'); }
+  function switchAuth(mode) {
+    const show = mode === 'register' ? 'auth-register' : 'auth-login';
+    document.getElementById('auth-login').style.display  = show === 'auth-login'  ? 'block' : 'none';
+    document.getElementById('auth-register').style.display = show === 'auth-register' ? 'block' : 'none';
+  }
+  document.getElementById('auth-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeAuth(); });
+
+  async function authFetch(url, body) {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(body)
+    });
+    return res.json();
+  }
+
+  document.getElementById('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const err = document.getElementById('login-error');
+    err.classList.remove('show');
+    try {
+      const data = await authFetch('/api/auth/login', {
+        username: document.getElementById('login-username').value.trim(),
+        password: document.getElementById('login-password').value
+      });
+      if (data.ok) location.href = '/dashboard';
+      else { err.textContent = data.message; err.classList.add('show'); }
+    } catch { err.textContent = 'Gagal terhubung ke server'; err.classList.add('show'); }
+  });
+
+  document.getElementById('register-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const err = document.getElementById('reg-error');
+    err.classList.remove('show');
+    try {
+      const data = await authFetch('/api/auth/register', {
+        username: document.getElementById('reg-username').value.trim(),
+        password: document.getElementById('reg-password').value
+      });
+      if (data.ok) location.href = '/dashboard';
+      else { err.textContent = data.message; err.classList.add('show'); }
+    } catch { err.textContent = 'Gagal terhubung ke server'; err.classList.add('show'); }
+  });
+
+  // Cek sesi via cookie — kalau sudah login, langsung ke dashboard
+  fetch('/api/auth/me', { credentials: 'include' }).then(r => r.json()).then(d => {
+    if (d.ok) location.href = '/dashboard';
+  }).catch(() => {});
+</script>
+</body>
+</html>

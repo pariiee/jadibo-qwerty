@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dashboard — YaaParBot</title>
+<style>
+  :root{
+    --bg:#f6f6f7; --card:#ffffff; --border:#e6e6e8; --txt:#18181b; --muted:#6f6f76;
+    --dark:#18181b; --dark2:#3f3f46; --wa:#25D366; --tg:#229ED9; --ok:#16a34a; --warn:#ca8a04;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Segoe UI',system-ui,-apple-system,Arial,sans-serif;background:var(--bg);color:var(--txt);-webkit-font-smoothing:antialiased;min-height:100vh}
+  a{text-decoration:none;color:inherit}
+  .btn{display:inline-flex;align-items:center;gap:8px;border:none;cursor:pointer;font-weight:600;font-size:13px;border-radius:10px;padding:9px 14px;transition:.15s;font-family:inherit}
+  .btn-dark{background:var(--dark);color:#fff}.btn-dark:hover{background:var(--dark2)}
+  .btn-outline{background:#fff;border:1px solid var(--border);color:var(--txt)}.btn-outline:hover{background:#f3f3f5}
+  .btn-danger{background:#fff;border:1px solid #fecaca;color:#dc2626}.btn-danger:hover{background:#fef2f2}
+  .btn-sm{padding:6px 10px;font-size:12px;border-radius:8px}
+
+  /* layout */
+  .app{display:flex;min-height:100vh}
+  aside{width:224px;background:#fff;border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;inset:0 auto 0 0;z-index:40}
+  .logo{height:58px;display:flex;align-items:center;padding:0 18px;border-bottom:1px solid #f1f1f3}
+  .logo a{display:flex;align-items:center;gap:9px;font-weight:800;font-size:16px}
+  .logo-badge{width:28px;height:28px;background:var(--dark);border-radius:8px;display:flex;align-items:center;justify-content:center}
+  nav.nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:4px}
+  nav.nav a{display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:9px;font-size:14px;color:var(--muted);transition:.12s}
+  nav.nav a:hover{background:#f4f4f6;color:var(--txt)}
+  nav.nav a.active{background:#ececee;color:var(--txt);font-weight:600}
+  .side-user{border-top:1px solid #f1f1f3;padding:12px}
+  .side-user .me{display:flex;align-items:center;gap:10px}
+  .avatar{width:34px;height:34px;border-radius:50%;background:var(--dark);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+  .side-user .nm{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .side-user .rl{font-size:11px;color:var(--muted);text-transform:capitalize}
+  .logout-btn{display:flex;align-items:center;gap:8px;width:100%;margin-top:8px;background:none;border:none;color:#a1a1aa;font-size:12px;cursor:pointer;padding:6px 8px;border-radius:8px;font-family:inherit}
+  .logout-btn:hover{color:#dc2626;background:#fef2f2}
+
+  main{flex:1;margin-left:224px;min-width:0}
+  .topbar{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.85);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;gap:12px}
+  .topbar h1{font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tb-right{display:flex;align-items:center;gap:14px}
+  .live-ind{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:12px}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--ok);animation:pulse 1.6s infinite}
+  .dot.off{background:#c7c7cc;animation:none}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .content{padding:24px}
+  .slot-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px}
+  .slot-head .lbl{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#9a9aa2;margin-bottom:6px}
+  .slot-row{display:flex;align-items:center;gap:10px}
+  .slot-dots{display:flex;gap:6px}
+  .slot-dots i{width:9px;height:9px;border-radius:50%;background:#d6d6da;display:inline-block}
+  .slot-dots i.on{background:var(--dark)}
+  .slot-txt{font-size:12px;color:var(--muted)}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+  .bot-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;cursor:pointer;transition:.15s;display:flex;flex-direction:column;gap:6px}
+  .bot-card:hover{box-shadow:0 8px 24px rgba(0,0,0,.06);border-color:#d4d4d8;transform:translateY(-1px)}
+  .bc-top{display:flex;align-items:center;justify-content:space-between}
+  .bc-platform{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);text-transform:capitalize}
+  .bc-status{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+  .st-dot{width:8px;height:8px;border-radius:50%}
+  .st-on{background:var(--ok)} .st-wait{background:#eab308} .st-off{background:#d6d6da}
+  .bot-card h3{font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:4px}
+  .bot-card .desc{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:8px}
+  .bc-meta{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--muted);border-top:1px solid #f3f3f5;padding-top:10px}
+  .bc-meta b{color:#52525b;font-weight:600;font-family:Consolas,Menlo,monospace}
+
+  .add-card{background:transparent;border:2px dashed #d6d6da;border-radius:16px;min-height:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;cursor:pointer;color:#8b8b93;transition:.15s;font-size:14px;font-weight:600}
+  .add-card:hover{border-color:#a1a1aa;background:#fafafa;color:var(--txt)}
+  .add-ic{width:42px;height:42px;border-radius:12px;background:#ececee;display:flex;align-items:center;justify-content:center}
+
+  .empty{text-align:center;padding:70px 20px}
+  .empty .ic{width:56px;height:56px;background:#ececee;border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+  .empty h3{font-size:16px;margin-bottom:6px}
+  .empty p{color:var(--muted);font-size:13px;margin-bottom:20px}
+
+  /* overlay + modal */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:18px;z-index:60}
+  .overlay.show{display:flex}
+  .modal{background:#fff;border-radius:18px;width:100%;max-width:480px;padding:28px;position:relative;box-shadow:0 30px 70px rgba(0,0,0,.25);max-height:92vh;overflow-y:auto}
+  .modal h3{font-size:18px;font-weight:800;margin-bottom:4px}
+  .m-sub{color:var(--muted);font-size:13px;margin-bottom:20px}
+  .modal-close{position:absolute;top:14px;right:14px;background:none;border:none;cursor:pointer;color:#9a9aa2;padding:4px}
+  .modal-close:hover{color:var(--txt)}
+  .field{margin-bottom:13px}
+  .field label{display:block;font-size:12px;font-weight:600;color:#4b4b52;margin-bottom:6px}
+  .field label .req{color:#f87171}
+  .inp,select.inp,textarea.inp{width:100%;border:1px solid var(--border);border-radius:11px;padding:10px 13px;font-size:13px;outline:none;transition:.15s;font-family:inherit;background:#fff}
+  .inp:focus{border-color:var(--txt);box-shadow:0 0 0 3px rgba(24,24,27,.08)}
+  textarea.inp{resize:none}
+  .hint{font-size:11px;color:#a1a1aa;margin-top:5px}
+  .err{color:#dc2626;font-size:12px;margin:2px;display:none}
+  .err.show{display:block}
+  .plat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .plat-btn{display:flex;flex-direction:column;align-items:center;gap:10px;padding:20px 12px;border:2px solid var(--border);border-radius:14px;background:#fff;cursor:pointer;font-weight:600;font-size:14px;transition:.15s;font-family:inherit;color:var(--txt)}
+  .plat-btn:hover{border-color:var(--dark)}
+  .plat-btn.sel{border-color:var(--dark);background:#fafafa}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .back-row{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+  .back-btn{background:none;border:none;cursor:pointer;color:#9a9aa2;padding:4px;border-radius:6px}
+  .back-btn:hover{color:var(--txt);background:#f3f3f5}
+  .modal .submit{width:100%;justify-content:center;margin-top:6px}
+
+  /* mobile */
+  .menu-mobile{display:none}
+  @media(max-width:768px){
+    aside{transform:translateX(-100%);transition:.2s;box-shadow:0 0 40px rgba(0,0,0,.15)}
+    aside.open{transform:none}
+    main{margin-left:0}
+    .menu-mobile{display:inline-flex}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <aside id="sidebar">
+    <div class="logo">
+      <a href="/">
+        <span class="logo-badge"><svg width="13" height="13" viewBox="0 0 24 24" fill="#fff"><path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.37 5.07L2 22l5.09-1.34A9.95 9.95 0 0 0 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2z"/></svg></span>
+        YaaParBot
+      </a>
+    </div>
+    <nav class="nav">
+      <a href="/dashboard" class="active">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/><rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/><rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/><rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/></svg>
+        Dashboard
+      </a>
+      <a href="#" id="nav-admin" style="display:none">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3.5" stroke="currentColor" stroke-width="2"/><path d="M3 20c0-3.3 2.7-5 6-5s6 1.7 6 5M16 4.6a3.5 3.5 0 0 1 0 6.8M17.5 15.4c2.1.6 3.5 2 3.5 4.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        Manajemen User
+      </a>
+    </nav>
+    <div class="side-user">
+      <div class="me">
+        <div class="avatar" id="side-avatar">?</div>
+        <div style="min-width:0">
+          <div class="nm" id="side-name">...</div>
+          <div class="rl" id="side-role">user</div>
+        </div>
+      </div>
+      <button class="logout-btn" onclick="logout()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Keluar
+      </button>
+    </div>
+  </aside>
+
+  <main>
+    <header class="topbar">
+      <div style="display:flex;align-items:center;gap:12px;min-width:0">
+        <button class="btn btn-outline menu-mobile" onclick="document.getElementById('sidebar').classList.toggle('open')" aria-label="Menu">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+        <h1 id="greeting">Dashboard</h1>
+      </div>
+      <div class="tb-right">
+        <div class="live-ind">
+          <span class="dot" id="live-dot"></span>
+          <span id="online-text">0 bot online</span>
+        </div>
+        <button class="btn btn-dark" onclick="openAddBot()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+          Tambah Bot
+        </button>
+      </div>
+    </header>
+
+    <div class="content">
+      <div class="slot-head">
+        <div>
+          <div class="lbl">Slot Bot Kamu</div>
+          <div class="slot-row">
+            <span class="slot-dots" id="slot-dots"></span>
+            <span class="slot-txt" id="slot-text">0 / 0</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid" id="bot-grid"></div>
+
+      <div class="empty" id="empty-state" style="display:none">
+        <div class="ic">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#a1a1aa" stroke-width="2" stroke-linecap="round"/></svg>
+        </div>
+        <h3>Belum ada bot</h3>
+        <p>Tambah bot pertama kamu untuk memulai</p>
+        <button class="btn btn-dark" onclick="openAddBot()">Tambah Bot Sekarang</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Add bot modal -->
+<div class="overlay" id="add-overlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeAdd()" aria-label="Tutup">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+
+    <div id="step-platform">
+      <h3>Tambah Bot Baru</h3>
+      <p class="m-sub">Pilih platform yang ingin kamu gunakan</p>
+      <div class="plat-grid">
+        <button class="plat-btn" id="plat-wa" onclick="pickPlatform('whatsapp')">
+          <svg width="34" height="34" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.37 5.07L2 22l5.09-1.34A9.95 9.95 0 0 0 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2z" fill="#25D366"/><path d="M17 14.8c-.3-.15-1.77-.87-2.05-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.95 1.17-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.47-.89-.79-1.49-1.77-1.66-2.07-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51h-.81c-.2 0-.52.07-.79.37s-.61 1-.61 1.97.74 2.12.84 2.27c.1.15 1.46 2.22 3.53 3.12.49.21.88.34 1.18.44.5.16.95.14 1.3.08.4-.06 1.22-.5 1.4-.98.17-.48.17-.9.12-1-.05-.1-.2-.15-.5-.3z" fill="#fff"/></svg>
+          <span>WhatsApp</span>
+        </button>
+        <button class="plat-btn" id="plat-tg" onclick="pickPlatform('telegram')">
+          <svg width="34" height="34" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#229ED9"/><path d="M17.5 7.5 14.7 16.7c-.2.6-.8.8-1.3.5l-2.5-1.9-1.2 1.1c-.1.1-.3.2-.5.2l.2-2.7 5.2-4.7c.2-.2 0-.3-.3-.1L7.2 12.9 4.8 12c-.6-.2-.6-.6.1-.9l12-4.6c.5-.2.9.1.6.1z" fill="#fff"/></svg>
+          <span>Telegram</span>
+        </button>
+      </div>
+    </div>
+
+    <div id="step-form" style="display:none">
+      <div class="back-row">
+        <button class="back-btn" onclick="backStep()" aria-label="Kembali">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M19 12H5m7-7-7 7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+        <h3>Konfigurasi Bot <span id="form-badge" style="font-weight:400;font-size:13px;color:var(--muted);text-transform:capitalize"></span></h3>
+      </div>
+      <form id="add-form">
+        <div class="field">
+          <label for="f-name">Nama Bot <span class="req">*</span></label>
+          <input class="inp" id="f-name" type="text" placeholder="Contoh: Bot Grup Seru" required />
+        </div>
+        <div class="field">
+          <label id="lbl-owner" for="f-owner">Nomor Owner</label>
+          <input class="inp" id="f-owner" type="text" placeholder="628xxxxxxxxxx" />
+          <div class="hint" id="hint-owner">Nomor pemilik bot — untuk akses command owner-only</div>
+        </div>
+        <div class="field" id="wrap-botnum">
+          <label for="f-botnum">Nomor Bot WA</label>
+          <input class="inp" id="f-botnum" type="text" placeholder="628xxxxxxxxxx" />
+          <div class="hint">Nomor WA yang akan di-pair ke bot ini</div>
+        </div>
+        <div class="field" id="wrap-token" style="display:none">
+          <label for="f-token">Token Telegram Bot <span class="req">*</span></label>
+          <input class="inp" id="f-token" type="password" placeholder="123456:ABC-DEF..." autocomplete="off" />
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label for="f-prefix">Prefix</label>
+            <input class="inp" id="f-prefix" type="text" value="!" maxlength="3" />
+          </div>
+          <div class="field">
+            <label for="f-footer">Footer</label>
+            <input class="inp" id="f-footer" type="text" placeholder="Powered by YaaParBot" />
+          </div>
+        </div>
+        <div class="field">
+          <label for="f-desc">Deskripsi</label>
+          <textarea class="inp" id="f-desc" rows="2" placeholder="Opsional..."></textarea>
+        </div>
+        <div class="err" id="add-error"></div>
+        <button class="btn btn-dark submit" type="submit">Buat Bot</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── Session via cookie — tidak pakai localStorage ────────────────
+  let me = null;
+  async function whoami() {
+    const d = await api('/api/auth/me');
+    if (!d?.ok) { location.href = '/'; return null; }
+    me = d.user;
+    document.getElementById('side-avatar').textContent = (me.username || '?')[0].toUpperCase();
+    document.getElementById('side-name').textContent  = me.username;
+    document.getElementById('side-role').textContent  = me.role;
+    document.getElementById('greeting').textContent   = 'Selamat Datang Kembali, ' + me.username;
+    if (me.role === 'king') document.getElementById('nav-admin').style.display = '';
+    return me;
+  }
+
+  // ── API helper ──────────────────────────────────────────────────
+  async function api(path, opts = {}) {
+    try {
+      const res = await fetch(path, {
+        ...opts,
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) }
+      });
+      if (res.status === 401) { location.href = '/'; return null; }
+      return res.json();
+    } catch { return null; }
+  }
+  async function logout() {
+    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
+    location.href = '/';
+  }
+
+  // ── Data ────────────────────────────────────────────────────────
+  let bots = [];
+  let maxSlots = 2;
+
+  async function loadBots() {
+    const d = await api('/api/bots');
+    if (!d?.ok) return;
+    bots = d.bots;
+    maxSlots = me?.slots_max ?? (me?.role === 'king' ? 999 : 2);
+    renderSlots();
+    renderBots();
+  }
+
+  function renderSlots() {
+    const used = bots.length;
+    const box = document.getElementById('slot-dots');
+    box.innerHTML = '';
+    const show = maxSlots > 12 ? Math.min(used, 12) : maxSlots;
+    for (let i = 0; i < show; i++) {
+      const d = document.createElement('i');
+      if (i < used) d.className = 'on';
+      box.appendChild(d);
+    }
+    document.getElementById('slot-text').textContent = `${used} / ${maxSlots > 12 ? '\u221E' : maxSlots}`;
+  }
+
+  function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+  const waIcon = (s) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.37 5.07L2 22l5.09-1.34A9.95 9.95 0 0 0 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2z" fill="#25D366"/></svg>`;
+  const tgIcon = (s) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#229ED9"/></svg>`;
+
+  function renderBots() {
+    const grid = document.getElementById('bot-grid');
+    const empty = document.getElementById('empty-state');
+    grid.innerHTML = '';
+    empty.style.display = bots.length ? 'none' : '';
+
+    const online = bots.filter(b => b.is_running).length;
+    const dot = document.getElementById('live-dot');
+    dot.className = 'dot' + (online ? '' : ' off');
+    document.getElementById('online-text').textContent = `${online} bot online`;
+
+    bots.forEach(bot => {
+      const card = document.createElement('div');
+      card.className = 'bot-card';
+      card.addEventListener('click', () => { location.href = '/bot/' + bot.id; });
+      const on = bot.is_running;
+      const stCls = on ? 'st-on' : (bot.status === 'connecting' ? 'st-wait' : 'st-off');
+      const stTxt = on ? 'Online' : (bot.status === 'connecting' ? 'Connecting' : 'Offline');
+      card.innerHTML =
+        '<div class="bc-top">' +
+          '<div class="bc-platform">' + (bot.platform === 'telegram' ? tgIcon(14) : waIcon(14)) + '<span>' + esc(bot.platform) + '</span></div>' +
+          '<div class="bc-status"><span class="st-dot ' + stCls + '"></span>' + stTxt + '</div>' +
+        '</div>' +
+        '<h3>' + esc(bot.bot_name) + '</h3>' +
+        '<div class="desc">' + (bot.description ? esc(bot.description) : 'Tidak ada deskripsi') + '</div>' +
+        '<div class="bc-meta"><span>Prefix: <b>' + esc(bot.prefix) + '</b></span><span>' + esc(new Date(bot.created_at).toLocaleDateString('id-ID')) + '</span></div>';
+      grid.appendChild(card);
+    });
+
+    if (bots.length < maxSlots) {
+      const add = document.createElement('div');
+      add.className = 'add-card';
+      add.innerHTML = '<div class="add-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#71717a" stroke-width="2" stroke-linecap="round"/></svg></div><span>Tambah Bot</span>';
+      add.addEventListener('click', openAddBot);
+      grid.appendChild(add);
+    }
+  }
+
+  // ── Add bot ─────────────────────────────────────────────────────
+  let platform = 'whatsapp';
+  function openAddBot() {
+    if (bots.length >= maxSlots) { alert('Slot penuh. Maksimal ' + maxSlots + ' bot per akun.'); return; }
+    platform = 'whatsapp';
+    setPlatUI();
+    showStep('platform');
+    document.getElementById('add-overlay').classList.add('show');
+  }
+  function closeAdd() { document.getElementById('add-overlay').classList.remove('show'); }
+  function showStep(s) {
+    document.getElementById('step-platform').style.display = s === 'platform' ? '' : 'none';
+    document.getElementById('step-form').style.display     = s === 'form' ? '' : 'none';
+  }
+  function backStep() { showStep('platform'); }
+  function pickPlatform(p) { platform = p; setPlatUI(); showStep('form'); }
+  function setPlatUI() {
+    document.getElementById('plat-wa').classList.toggle('sel', platform === 'whatsapp');
+    document.getElementById('plat-tg').classList.toggle('sel', platform === 'telegram');
+    document.getElementById('form-badge').textContent = platform;
+    const isTg = platform === 'telegram';
+    document.getElementById('wrap-token').style.display = isTg ? '' : 'none';
+    document.getElementById('wrap-botnum').style.display = isTg ? 'none' : '';
+    const lbl = document.getElementById('lbl-owner');
+    const inp = document.getElementById('f-owner');
+    const hint = document.getElementById('hint-owner');
+    if (isTg) { lbl.textContent = 'Owner Telegram ID'; inp.placeholder = 'Contoh: 123456789'; hint.textContent = 'Telegram user ID pemilik bot — untuk akses command owner-only'; }
+    else { lbl.textContent = 'Nomor Owner'; inp.placeholder = '628xxxxxxxxxx'; hint.textContent = 'Nomor pemilik bot — untuk akses command owner-only'; }
+  }
+
+  document.getElementById('add-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeAdd(); });
+
+  document.getElementById('add-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const err = document.getElementById('add-error');
+    err.classList.remove('show');
+    const body = {
+      platform,
+      bot_name: document.getElementById('f-name').value.trim(),
+      bot_number: document.getElementById('f-botnum').value.trim() || undefined,
+      owner_number: document.getElementById('f-owner').value.trim() || undefined,
+      prefix: document.getElementById('f-prefix').value.trim() || '!',
+      footer_text: document.getElementById('f-footer').value.trim() || 'Powered by YaaParBot',
+      description: document.getElementById('f-desc').value.trim(),
+      telegram_token: document.getElementById('f-token').value.trim() || undefined
+    };
+    const d = await api('/api/bots', { method: 'POST', body: JSON.stringify(body) });
+    if (!d) return;
+    if (d.ok) { closeAdd(); location.href = '/bot/' + d.bot_id; }
+    else { err.textContent = d.message; err.classList.add('show'); }
+  });
+
+  // ── Live stats ──────────────────────────────────────────────────
+  function connectWS() {
+    try {
+      const ws = new WebSocket((location.protocol === 'https:' ? 'wss' : 'ws') + '://' + location.host);
+      ws.onmessage = e => {
+        try {
+          const d = JSON.parse(e.data);
+          if (d.type === 'stats') document.getElementById('online-text').textContent = `${d.payload.total_bots_online} bot online`;
+        } catch {}
+      };
+      ws.onclose = () => setTimeout(connectWS, 5000);
+    } catch {}
+  }
+
+  (async () => {
+    if (!(await whoami())) return;
+    await loadBots();
+    connectWS();
+  })();
+</script>
+</body>
+</html>

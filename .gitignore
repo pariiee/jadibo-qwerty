@@ -1,0 +1,45 @@
+# ── Dependencies ──
+node_modules/
+
+# ── Environment & secrets ──
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# ── WhatsApp/Telegram session (kredensial pairing — JANGAN commit!) ──
+sessions/
+*.session.db
+*.session.db-wal
+*.session.db-shm
+
+# ── Logs & runtime ──
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+pm2-*.log
+
+# ── Database dump lokal ──
+*.sql.bak
+sql_dump.txt
+
+# ── OS junk ──
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Editor ──
+.vscode/
+.idea/
+*.swp
+
+# ── Cache audit / artifact sementara ──
+_audit_cache.json
+_engine_cache.json
+
+# ── Runtime cache per bot ──
+data/active-groups-*.json
+data/*.json
