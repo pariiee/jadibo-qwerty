@@ -1076,23 +1076,74 @@ module.exports = async function ownerHandler(ctx) {
       return true;
     }
 
-    // ── test — location share (locationMessage) ─────────────────────────
+    // ── test — render JSON proto ke WhatsApp (dev playground) ──────────
+    // Pakai: reply/kirim pesan yang berisi JSON, ketik .test
+    // AI memetakan JSON → WaSendMessageContent; fallback raw kalau AI mati.
     case 'test': {
       if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }
+
+      // Ambil JSON dari pesan (direct atau quoted)
+      const rawMsg  = ctx.msg.message || {};
+      const msgType = Object.keys(rawMsg)[0] || '';
+      const direct  = rawMsg[msgType] || {};
+      let text = '';
+      if (typeof direct.text === 'string') text = direct.text;
+      else if (typeof direct.caption === 'string') text = direct.caption;
+      else if (msgType === 'conversation') text = direct;
+      if (!text) {
+        const q = rawMsg?.extendedTextMessage?.contextInfo?.quotedMessage;
+        if (q) {
+          const qt = Object.keys(q)[0] || '';
+          const qc = q[qt] || {};
+          text = typeof qc === 'string' ? qc : (qc.text || qc.caption || '');
+        }
+      }
+      if (!text || !text.trim()) {
+        await reply(`Penggunaan: kirim/reply pesan berisi JSON lalu ketik *${p}test*\n\n_Akan dicoba render ke WhatsApp._`);
+        return true;
+      }
+
+      let parsed;
       try {
-        await client.message.send(jid, {
-          locationMessage: {
-            degreesLatitude: -23.5505,
-            degreesLongitude: -46.6333,
-            accuracyInMeters: 50,
-            speedInMps: 0,
-            caption: 'On my way',
-            sequenceNumber: 1,
-            isLive: true
-          }
-        });
+        parsed = JSON.parse(text.replace(/^```(?:json)?\s*|\s*```$/g, '').trim());
       } catch (e) {
-        await reply(`❌ Gagal: ${e.message}`);
+        await reply(`❌ JSON tidak valid: ${e.message}`);
+        return true;
+      }
+
+      // ── Normalisasi: buang wrapper __source/__topKeys/__aiRichPaths, ambil node proto ──
+      const dropped = [];
+      const strip = (o, pathKey = '') => {
+        if (!o || typeof o !== 'object') return o;
+        const out = {};
+        for (const [k, v] of Object.entries(o)) {
+          if (k.startsWith('__')) continue;
+          if (v && typeof v === 'object' && !Array.isArray(v) && v.__type === 'bytes') {
+            const hex = String(v.preview || '');
+            // preview terpotong ('…') / bukan hex → byte-nya tak bisa dipakai,
+            // kirim field-nya hilang lebih aman daripada byte rusak yang bikin send gagal
+            if (hex.includes('…') || !/^[0-9a-f]+$/i.test(hex) || hex.length % 2 !== 0) {
+              dropped.push(`${pathKey}${k}`);
+              continue;
+            }
+            out[k] = Buffer.from(hex, 'hex');
+            continue;
+          }
+          out[k] = Array.isArray(v) ? v.map(x => strip(x, pathKey + k + '[].')) : (v && typeof v === 'object' ? strip(v, pathKey + k + '.') : v);
+        }
+        return out;
+      };
+      const node = strip(parsed);
+      const topKey = Object.keys(node)[0];
+      if (dropped.length) console.log(`[.test] field bytes dibuang (preview terpotong): ${dropped.join(', ')}`);
+
+      try {
+        await react(mess.reactLoading);
+        await client.message.send(jid, node, { quote: ctx.msg });
+        await react(mess.reactSuccess);
+      } catch (e) {
+        await react(mess.reactError);
+        await reply(`❌ Gagal render *${topKey}*: ${e.message}${dropped.length ? `\n_Bytes dibuang: ${dropped.join(', ')}_` : ''}`);
       }
       return true;
     }
