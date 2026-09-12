@@ -1440,6 +1440,44 @@ module.exports = async function ownerHandler(ctx) {
       return true;
     }
 
+    // ── addlevel ──────────────────────────────────────────────────────────────
+    case 'addlevel': {
+      if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }
+      const mentioned = getMentionedFromCtx(ctx);
+      const target    = mentioned[0];
+      const jumlah    = parseInt(ctx.args.filter(a => !a.startsWith('@')).join(''), 10);
+      if (!target || !jumlah || isNaN(jumlah) || jumlah <= 0) {
+        await reply(`Penggunaan: ${p}addlevel @user <jumlah>\n\nContoh: ${p}addlevel @John 5`);
+        return true;
+      }
+      const [rows] = await pool.execute(
+        'SELECT xp, level, registered FROM rpg_members WHERE bot_id = ? AND jid = ? LIMIT 1',
+        [botId, target]
+      );
+      if (!rows[0] || rows[0].registered !== 1) {
+        await ctx.client.message.send(ctx.jid,
+          `❌ @${target.split('@')[0]} belum terdaftar!`, { mentions: [target] }
+        );
+        return true;
+      }
+      let newLevel = (Number(rows[0].level) || 1) + jumlah;
+      // Naikin level tanpa nyisa XP di bawah threshold — kalau XP sudah lewat
+      // batas level baru, buang kelebihannya (pakai helper level-loop engine).
+      let newXp = Number(rows[0].xp) || 0;
+      const xpForLvl = (lv) => lv <= 0 ? 1 : lv * 100;
+      while (newXp >= xpForLvl(newLevel)) newXp -= xpForLvl(newLevel);
+
+      await pool.execute(
+        'UPDATE rpg_members SET xp = ?, level = ? WHERE bot_id = ? AND jid = ?',
+        [newXp, newLevel, botId, target]
+      );
+      await ctx.client.message.send(ctx.jid,
+        `✨ *ADD LEVEL*\n\n@${target.split('@')[0]} naik *+${jumlah} level*\nLevel sekarang: *${newLevel}*\nXP: *${newXp}*`,
+        { mentions: [target] }
+      );
+      return true;
+    }
+
     // ── delmoney ─────────────────────────────────────────────────────────────
     case 'delmoney': {
       if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }

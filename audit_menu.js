@@ -7,9 +7,11 @@ function grab(openTag, closeTag) {
   return src.slice(i + openTag.length, j);
 }
 
-// ALL_COMMANDS array literal
-const acRaw = grab('const ALL_COMMANDS = [', '];');
-const ALL = [...acRaw.matchAll(/'([^']+)'/g)].map(m => m[1]);
+// ALL_COMMANDS array literal (dedupe — definisi pakai [...new Set([...])])
+const acRaw = grab('const ALL_COMMANDS = [...new Set([', '])];');
+const ALL_RAW = [...acRaw.matchAll(/'([^']+)'/g)].map(m => m[1]);
+const ALL = [...new Set(ALL_RAW)];
+const dupAll = ALL_RAW.filter((c, i) => ALL_RAW.indexOf(c) !== i);
 
 // CATS object literal (semua nilai array)
 const catRaw = grab('const CATS = {', '\n};');
@@ -21,7 +23,8 @@ const keys = Object.keys(CATS);
 console.log('Kategori:', keys.length, '->', keys.join(', '));
 const union = new Set();
 for (const k of keys) for (const c of CATS[k]) union.add(c);
-console.log('ALL_COMMANDS:', ALL.length, '| union CATS:', union.size);
+console.log('ALL_COMMANDS:', ALL.length, '(raw ' + ALL_RAW.length + ') | union CATS:', union.size);
+if (dupAll.length) console.log('  duplikat di ALL_COMMANDS: ' + dupAll.join(', '));
 
 const inAllNotCat = ALL.filter(c => !union.has(c));
 const inCatNotAll = [...union].filter(c => !ALL.includes(c));

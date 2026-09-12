@@ -19,7 +19,7 @@ function formatUptime(ms) {
   return `${d}h ${h}j ${m}m ${sec}d`;
 }
 
-const ALL_COMMANDS = [
+const ALL_COMMANDS = [...new Set([
   // Info
   'ping','menu','info','owner','uptime','profile','me','carifitur','totalfitur','limit','uptname',
   // Grup
@@ -129,7 +129,7 @@ const ALL_COMMANDS = [
   // Group admin
   'banmember','unbanmember','clearchat','setppgc','sider','listtotalpesan',
   'setopen','setclose',
-];
+])];
 
 // ── Menu kategori — menu <kategori> / menu all ──────────────────────────────
 const RM = String.fromCharCode(8206).repeat(4001); // readmore: konten bawah terlipat "Read more"
@@ -338,7 +338,7 @@ module.exports = async function infoHandler(ctx) {
     case 'carifitur': {
       const q = args.join(' ').toLowerCase();
       if (!q) { await reply(`Penggunaan: ${p}carifitur <nama command>`); return true; }
-      const found = ALL_COMMANDS.filter(c => c.includes(q));
+      const found = [...new Set(ALL_COMMANDS.filter(c => c.includes(q)))];
       if (found.length === 0) {
         await reply(`❌ Tidak ada fitur yang cocok dengan *${q}*`);
       } else {
