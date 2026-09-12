@@ -309,6 +309,26 @@ module.exports = async function infoHandler(ctx) {
       } else {
         await reply(caption);
       }
+
+      // ── Audio default (opsional) — voice note bareng menu ────────────────
+      const audioSrc = process.env.AUDIO_DEFAULT;
+      if (audioSrc) {
+        try {
+          const fs   = require('fs');
+          const path = require('path');
+          const audioBuf = /^https?:\/\//i.test(audioSrc)
+            ? Buffer.from((await require('axios').get(audioSrc, { responseType: 'arraybuffer', timeout: 30000 })).data)
+            : fs.readFileSync(path.resolve(audioSrc));
+          // Format harus cocok isinya, kalau nggak WA nolak play (opus → voice note, sisanya audio biasa)
+          const isOgg = /\.(ogg|opus)$/i.test(audioSrc);
+          await client.message.send(jid, {
+            type:     'audio',
+            media:    audioBuf,
+            mimetype: isOgg ? 'audio/ogg; codecs=opus' : 'audio/mpeg',
+            ...(isOgg ? { ptt: true } : {}),
+          });
+        } catch { /* audio opsional — gagal pun menu tetap terkirim */ }
+      }
       return true;
     }
 
