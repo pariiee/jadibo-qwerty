@@ -41,6 +41,7 @@ async function genThumbnail(buffer, mimetype) {
           '-q:v', '5',
           tmpOut,
         ]);
+        ff.on('error', () => resolve()); // ffmpeg tidak ada → thumbnail null, jangan sampai crash
         ff.on('close', resolve);
       });
 

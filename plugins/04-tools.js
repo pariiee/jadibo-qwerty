@@ -230,6 +230,7 @@ module.exports = async function toolsHandler(ctx) {
               '-quality', '70', '-loop', '0', '-preset', 'default', '-an',
               '-vsync', '0', tmpOut
             ]);
+            ff.on('error', reject); // ffmpeg tidak ada → reject, jangan crash proses
             ff.on('close', code => {
               try { fs.unlinkSync(tmpIn); } catch {}
               if (code === 0) resolve(); else reject(new Error(`ffmpeg exit ${code}`));
@@ -4442,16 +4443,40 @@ module.exports = async function toolsHandler(ctx) {
           headers: { 'X-API-Key': process.env.KEY_API },
           timeout: 30000,
         });
-        const dlUrl = data?.results?.video?.no_watermark;
-        if (!dlUrl) throw new Error('URL video tidak ditemukan');
-        const res = await axios.get(dlUrl, { responseType: 'arraybuffer', timeout: 90000 });
+        const res     = data?.results || {};
+        const title   = res.title  || '';
+        const author  = res.author?.nickname || '';
+        const caption = `🎵 *TikTok*${title ? `\n${title}` : ''}${author ? `\n👤 ${author}` : ''}`;
+
+        // ── Photomode (slide foto) → kirim tiap gambar ────────────────────────
+        const images = (res.images || res.download || []).filter(Boolean);
+        if (images.length) {
+          await react(mess.reactSuccess);
+          for (let i = 0; i < Math.min(images.length, 10); i++) {
+            const imgUrl = images[i];
+            const imgRes = await axios.get(imgUrl, { responseType: 'arraybuffer', timeout: 60000 });
+            const ct     = imgRes.headers['content-type'] || 'image/jpeg';
+            const buf    = Buffer.from(imgRes.data);
+            const thumb  = await genThumbnail(buf, ct);
+            await client.message.send(jid, {
+              type: 'image', media: buf, mimetype: ct,
+              caption: `${caption}${images.length > 1 ? `\n🖼️ ${i + 1}/${images.length}` : ''}`,
+              ...(thumb ? { jpegThumbnail: thumb } : {}),
+            });
+          }
+          return true;
+        }
+
+        // ── Video biasa ───────────────────────────────────────────────────────
+        const dlUrl = res.video?.no_watermark;
+        if (!dlUrl) throw new Error('Media tidak ditemukan di response API');
+        const vidRes = await axios.get(dlUrl, { responseType: 'arraybuffer', timeout: 90000 });
         await react(mess.reactSuccess);
-        const title  = data?.results?.title  || '';
-        const author = data?.results?.author?.nickname || '';
-        const thumb = await genThumbnail(Buffer.from(res.data), 'video/mp4');
+        const vbuf  = Buffer.from(vidRes.data);
+        const thumb = await genThumbnail(vbuf, 'video/mp4');
         await client.message.send(jid, {
-          type: 'video', media: Buffer.from(res.data), mimetype: 'video/mp4',
-          caption: `🎵 *TikTok*${title ? `\n${title}` : ''}${author ? `\n👤 ${author}` : ''}`,
+          type: 'video', media: vbuf, mimetype: 'video/mp4',
+          caption,
           ...(thumb ? { jpegThumbnail: thumb } : {}),
         });
       } catch (e) {
