@@ -81,38 +81,9 @@ const { getBotGlobalSetting, setBotGlobalSetting } = require('../config/globalSe
 // key: `${botId}:${groupJid}` → timestamp last greeting
 const ownerGreetCooldown = new Map();
 const devGreetCooldown   = new Map(); // key: groupJid → timestamp
-// Map: lidJid (@lid) → phoneJid (@s.whatsapp.net)
-const lidToPhoneCache = new Map();
-
-function cacheLidFromMeta(participants) {
-  for (const p of (participants || [])) {
-    if (p.jid && p.jid.endsWith('@lid') && p.phoneNumber) {
-      const phone = String(p.phoneNumber).replace(/\D/g, '');
-      if (phone) lidToPhoneCache.set(p.jid, `${phone}@s.whatsapp.net`);
-    }
-  }
-}
-
-function resolveLid(jid) {
-  if (jid && jid.endsWith('@lid')) return lidToPhoneCache.get(jid) || jid;
-  return jid;
-}
-
-// Resolve LID → PN: cache in-memory dulu, fallback ke contact store (session.db),
-// biar DM dari LID konsisten ke nomor PN di ctx/log/state.
-async function resolveLidAsync(client, jid) {
-  if (!jid || !String(jid).endsWith('@lid')) return jid;
-  const cached = resolveLid(jid);
-  if (cached !== jid) return cached;
-  try {
-    const rec = await client?.stores?.contacts?.getByJid?.(jid);
-    if (rec?.phoneNumber) {
-      lidToPhoneCache.set(jid, rec.phoneNumber);
-      return rec.phoneNumber;
-    }
-  } catch { /* fallback: biarkan LID */ }
-  return jid;
-}
+// Logika LID↔PN dipusatkan di engine/jid.js supaya cache-nya SATU (dulu tiap
+// file punya Map sendiri → user bisa tampil beda jid di log yang beda).
+const { cacheLidFromMeta, lidToPn: resolveLid, lidToPnAsync: resolveLidAsync } = require('./jid');
 
 // ─── WS broadcast helper ──────────────────────────────────────────────────────
 let _wsBroadcast = () => {};

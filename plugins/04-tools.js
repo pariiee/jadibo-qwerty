@@ -3011,15 +3011,7 @@ module.exports = async function toolsHandler(ctx) {
         const loadingSent = await client.message.send(jid, mess.loading);
         const loadingId   = loadingSent?.key?.id || loadingSent?.id || null;
 
-        const form = new FormData();
-        form.append('file', buffer, { filename, contentType: mime });
-        const { data } = await axios.post(`${process.env.BASE_API}api/tools/upload`, form, {
-          headers: {
-            ...form.getHeaders(),
-            'X-API-Key': process.env.KEY_API,
-          },
-          timeout: 20000,
-        });
+        const { url: fileUrl, expires, size } = await uploadInfo(buffer, filename, mime);
 
         const typeEmoji = {
           imageMessage:    '🖼️ Gambar',
@@ -3045,16 +3037,10 @@ module.exports = async function toolsHandler(ctx) {
           await reply(text);
         };
 
-        if (!data?.success || !data?.results?.file_url) {
-          await sendResult(mess.error);
-          return true;
-        }
-
-        const { file_url, expires, size } = data.results;
         const expiredText = expires || 'Tidak diketahui';
         const sizeKb = size ? `${(size / 1024).toFixed(1)} KB` : `${(buffer.length / 1024).toFixed(1)} KB`;
 
-        await sendResult(`🔗 *URL Media*\n\n${file_url}\n\n📦 Ukuran: ${sizeKb}\n⏳ Expired: ${expiredText}\n🏷️ Tipe: ${mediaLabel}`);
+        await sendResult(`🔗 *URL Media*\n\n${fileUrl}\n\n📦 Ukuran: ${sizeKb}\n⏳ Expired: ${expiredText}\n🏷️ Tipe: ${mediaLabel}`);
       } catch (e) {
         await reply(`${mess.error}\n${e.message}`);
       }
@@ -3114,15 +3100,8 @@ module.exports = async function toolsHandler(ctx) {
         const loadingSent = await client.message.send(jid, mess.loading);
         const loadingId   = loadingSent?.key?.id || loadingSent?.id || null;
 
-        const form = new FormData();
-        form.append('file', buffer, { filename, contentType: mime });
-        const { data } = await axios.post(`${process.env.BASE_API}api/tools/upload-v2`, form, {
-          headers: {
-            ...form.getHeaders(),
-            'X-API-Key': process.env.KEY_API,
-          },
-          timeout: 30000,
-        });
+        // v2 = URL PERMANEN (URL-nya ditampilkan ke user & mungkin disimpan)
+        const info = await uploadInfo(buffer, filename, mime, { v2: true });
 
         const sendResult = async (text) => {
           if (loadingId) {
@@ -3137,17 +3116,11 @@ module.exports = async function toolsHandler(ctx) {
           await reply(text);
         };
 
-        const result = data?.result || data?.results;
-        if (!result?.url) {
-          await sendResult(mess.error);
-          return true;
-        }
+        const sizeKb = info.size ? `${(info.size / 1024).toFixed(1)} KB` : `${(buffer.length / 1024).toFixed(1)} KB`;
+        const providerText = info.provider ? `\n🏢 Provider: ${info.provider}` : '';
+        const expiredText = info.expires || 'Permanen';
 
-        const sizeKb = result.size ? `${(result.size / 1024).toFixed(1)} KB` : `${(buffer.length / 1024).toFixed(1)} KB`;
-        const providerText = result.provider ? `\n🏢 Provider: ${result.provider}` : '';
-        const expiredText = result.expires || 'Permanen';
-
-        await sendResult(`🔗 *URL Media (Permanen)*\n\n${result.url}\n\n📦 Ukuran: ${sizeKb}\n⏳ Expired: ${expiredText}${providerText}`);
+        await sendResult(`🔗 *URL Media (Permanen)*\n\n${info.url}\n\n📦 Ukuran: ${sizeKb}\n⏳ Expired: ${expiredText}${providerText}`);
       } catch (e) {
         await reply(`${mess.error}\n${e.message}`);
       }

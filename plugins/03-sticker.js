@@ -6,10 +6,9 @@
  * Convert sticker webp → mp4 atau png via YaPari API
  */
 
-const axios              = require('axios');
-const FormData           = require('form-data');
 const mess               = require('../config/mess');
 const { genThumbnail }   = require('../engine/thumbnail');
+const { upload, apiGet } = require('../engine/api');
 
 module.exports = async function stickerConvertHandler(ctx) {
   if (!ctx.isCmd) return false;
@@ -53,29 +52,14 @@ module.exports = async function stickerConvertHandler(ctx) {
     }
 
     // ── Upload via YaPari untuk dapat URL publik ────────────────────────────
-    const form = new FormData();
-    form.append('file', buffer, { filename: `sticker_${Date.now()}.webp`, contentType: 'image/webp' });
-    const uploadRes = await axios.post(`${process.env.BASE_API}api/tools/upload`, form, {
-      headers: {
-        ...form.getHeaders(),
-        'X-API-Key': process.env.KEY_API,
-      },
-      timeout: 20000,
-    });
-
-    const fileUrl = uploadRes.data?.results?.file_url;
+    // v1: URL cuma dipakai sekali di baris berikutnya (convert) → cepat & cukup.
+    const fileUrl = await upload(buffer, `sticker_${Date.now()}.webp`, 'image/webp');
     console.log(`[TOMP4/TOPNG] fileUrl: ${fileUrl}`);
-    if (!fileUrl) {
-      await react(mess.reactError);
-      await reply(mess.error);
-      return true;
-    }
 
     // ── Hit YaPari API convert ───────────────────────────────────────────────
     const endpoint = command === 'tomp4' ? 'api/tools/webptomp4' : 'api/tools/webptopng';
-    const convertRes = await axios.get(`${process.env.BASE_API}${endpoint}`, {
+    const convertRes = await apiGet(endpoint, {
       params: { url: fileUrl },
-      headers: { 'X-API-Key': process.env.KEY_API },
       responseType: 'arraybuffer',
       timeout: 30000,
     });

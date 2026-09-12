@@ -15,6 +15,7 @@ const { pool } = require('../config/database');
 const mess = require('../config/mess');
 const { addStickerExif } = require('../engine/sticker');
 const { markPendingSewa } = require('../engine/pendingSewa');
+const { uploadInfo } = require('../engine/api');
 const { getRankByLevel } = require('./03-fun-rpg');
 
 // In-memory stores
@@ -1140,8 +1141,6 @@ module.exports = async function ownerHandler(ctx) {
       if (isDirectImg || isQuotedImg) {
         try {
           await react(mess.reactLoading);
-          const axios    = require('axios');
-          const FormData = require('form-data');
 
           let buffer, mime, filename;
           if (isDirectImg) {
@@ -1167,22 +1166,15 @@ module.exports = async function ownerHandler(ctx) {
           const ext      = extMap[mime] || 'png';
           filename       = `qris_${botId}_${Date.now()}.${ext}`;
 
-          const form = new FormData();
-          form.append('file', buffer, { filename, contentType: mime });
-
-          const { data } = await axios.post('https://yapari.my.id/api/tools/upload-v2', form, {
-            headers: form.getHeaders(),
-            timeout: 30000,
-          });
-
-          const url = data?.result?.url;
-          if (!url) throw new Error('URL tidak ditemukan di response upload');
+          // v2 = URL PERMANEN — wajib, karena URL-nya disimpan di DB & dipakai terus
+          // oleh .pay dan halaman web (URL v1 cuma hidup 24 jam).
+          const { url, expires } = await uploadInfo(buffer, filename, mime, { v2: true, timeout: 30000 });
 
           // Simpan ke DB dan update botData
           await pool.execute('UPDATE bots SET qris_url = ? WHERE id = ?', [url, botId]);
           botData.qris_url = url;
 
-          await reply(`✅ *QRIS berhasil diupload & disimpan!*\n\n🔗 URL: ${url}\n\nKetik ${p}pay untuk test.`);
+          await reply(`✅ *QRIS berhasil diupload & disimpan!*\n\n🔗 URL: ${url}\n⏳ Expired: ${expires || 'Permanen'}\n\nKetik ${p}pay untuk test.`);
         } catch (e) {
           await reply(`❌ Gagal upload QRIS: ${e.message}`);
         }
