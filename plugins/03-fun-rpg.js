@@ -55,7 +55,7 @@ function xpForLevel(level) {
 }
 
 // ─── Role berdasarkan level ───────────────────────────────────────────────────
-function getRoleByLevel(level) {
+function getRankByLevel(level) {
   if (level >= 50) return 'Legenda';
   if (level >= 40) return 'Master';
   if (level >= 30) return 'Expert';
@@ -660,7 +660,7 @@ module.exports = async function funRpgHandler(ctx) {
         const phone   = target.split('@')[0];
         const numFmt  = phone.replace(/^62/, '+62 ').replace(/(\d{3})(\d{4})(\d{4})$/, '$1-$2-$3');
         const xpNeeded = xpForLevel(Number(m.level));
-        const role    = getRoleByLevel(Number(m.level));
+        const rank    = getRankByLevel(Number(m.level));
 
         // Format tanggal
         const fmtDate = (d) => {
@@ -677,7 +677,7 @@ module.exports = async function funRpgHandler(ctx) {
           `└──────────────\n\n` +
           `┌─⊷ RPG INFO\n` +
           `┃📊 • Level: ${m.level}\n` +
-          `┃🔰 • Role: ${role}\n` +
+          `┃🔰 • Rank: ${rank}\n` +
           `┃✨ • XP: ${formatNum(m.xp)} / ${formatNum(xpNeeded)}\n` +
           `┃💰 • Money: ${formatNum(m.money)}\n` +
           `┃💎 • Limit: ${m.lim}\n` +
@@ -707,11 +707,11 @@ module.exports = async function funRpgHandler(ctx) {
     case 'rpg': {
       try {
         const m    = await getOrCreateMember(botData.id, sender, pushName);
-        const role = getRoleByLevel(Number(m.level));
+        const rank = getRankByLevel(Number(m.level));
         await reply(
           `⚔️ *Profil RPG*\n\n` +
           `Nama   : ${pushName}\n` +
-          `Level  : ${m.level} (${role})\n` +
+          `Level  : ${m.level} (${rank})\n` +
           `XP     : ${formatNum(m.xp)}/${formatNum(xpForLevel(Number(m.level)))}\n` +
           `Koin   : ${formatNum(m.money)} 🪙\n` +
           `Limit  : ${m.lim}`
@@ -1403,7 +1403,7 @@ module.exports = async function funRpgHandler(ctx) {
           `💰 Nilai: *+${formatNum(reward)} koin*\n` +
           `✨ XP   : *+${xpGet} XP*`;
         if (newLevel > (member.level || 1)) {
-          txt += `\n\n🎉 *LEVEL UP!* Naik ke level *${newLevel}* (${getRoleByLevel(newLevel)})`;
+          txt += `\n\n🎉 *LEVEL UP!* Naik ke level *${newLevel}* (${getRankByLevel(newLevel)})`;
         }
         if (ctx.isPremium) txt += `\n⭐ Bonus XP premium diterapkan!`;
         txt += `\n\nTotal koin: *${formatNum(newMoney)}*`;
@@ -1560,7 +1560,7 @@ module.exports = async function funRpgHandler(ctx) {
         `💰 Dapat: *+${formatNum(reward)} koin*\n` +
         `✨ XP   : *+${xpGet} XP*`;
       if (newLevel > (member.level || 1)) {
-        txt += `\n\n🎉 *LEVEL UP!* Kamu naik ke level *${newLevel}* (${getRoleByLevel(newLevel)})`;
+        txt += `\n\n🎉 *LEVEL UP!* Kamu naik ke level *${newLevel}* (${getRankByLevel(newLevel)})`;
       }
       if (ctx.isPremium) txt += `\n⭐ Bonus XP premium sudah diterapkan!`;
       txt += `\n\nTotal koin: *${formatNum(newMoney)}*`;
@@ -1753,7 +1753,7 @@ module.exports = async function funRpgHandler(ctx) {
         `╚══════════════╝\n\n` +
         `💰 Dapat: +${formatNum(koinDapat)} koin\n` +
         `⭐ XP: +${hasil.xp}\n` +
-        (res.leveledUp ? `\n🎉 *LEVEL UP!* Naik ke level *${res.newLevel}* (${getRoleByLevel(res.newLevel)})` : '') +
+        (res.leveledUp ? `\n🎉 *LEVEL UP!* Naik ke level *${res.newLevel}* (${getRankByLevel(res.newLevel)})` : '') +
         `\n\nSisa koin: *${formatNum(newMoney)}*`
       );
       return true;
@@ -1858,7 +1858,7 @@ module.exports = async function funRpgHandler(ctx) {
         `⏰ *HOURLY CLAIM*\n\n` +
         `💰 Koin : *+${formatNum(koinGet)}*\n` +
         `✨ XP   : *+${xpGet}*`;
-      if (newLevel > (member.level || 1)) txt += `\n\n🎉 *LEVEL UP!* → Level *${newLevel}* (${getRoleByLevel(newLevel)})`;
+      if (newLevel > (member.level || 1)) txt += `\n\n🎉 *LEVEL UP!* → Level *${newLevel}* (${getRankByLevel(newLevel)})`;
       if (ctx.isPremium) txt += `\n⭐ Bonus XP premium!`;
       txt += `\n\nTotal koin: *${formatNum(newMoney)}*\nKlaim lagi dalam *1 jam*`;
       await reply(txt);
@@ -1905,7 +1905,7 @@ module.exports = async function funRpgHandler(ctx) {
         `💰 Koin  : *+${formatNum(koinGet)}*\n` +
         `✨ XP    : *+${xpGet}*\n` +
         `🔋 Limit : *+${limGet}*`;
-      if (newLevel > (member.level || 1)) txt += `\n\n🎉 *LEVEL UP!* → Level *${newLevel}* (${getRoleByLevel(newLevel)})`;
+      if (newLevel > (member.level || 1)) txt += `\n\n🎉 *LEVEL UP!* → Level *${newLevel}* (${getRankByLevel(newLevel)})`;
       if (ctx.isPremium) txt += `\n⭐ Bonus XP premium!`;
       txt += `\n\nTotal koin: *${formatNum(newMoney)}*\nKlaim lagi dalam *7 hari*`;
       await reply(txt);
@@ -1969,7 +1969,7 @@ module.exports = async function funRpgHandler(ctx) {
         `💰 Reward : *+${formatNum(koinGet)} koin*\n` +
         `✨ XP     : *+${xpGet}*` +
         bonusTxt;
-      if (newLevel > (member.level || 1)) txt += `\n\n🎉 *LEVEL UP!* → Level *${newLevel}* (${getRoleByLevel(newLevel)})`;
+      if (newLevel > (member.level || 1)) txt += `\n\n🎉 *LEVEL UP!* → Level *${newLevel}* (${getRankByLevel(newLevel)})`;
       if (ctx.isPremium) txt += `\n⭐ Bonus XP premium!`;
       txt += `\n\nTotal koin: *${formatNum(newMoney)}*\nMisi baru tersedia dalam *24 jam*`;
       await reply(txt);
@@ -2062,7 +2062,7 @@ module.exports = async function funRpgHandler(ctx) {
           `💰 Reward : *+${formatNum(koinGet)} koin*\n` +
           `✨ XP     : *+${xpGet}*\n` +
           `❤️ Health sisa: *${newHp}*`;
-        if (newLevel > level) txt += `\n\n🎉 *LEVEL UP!* → Level *${newLevel}* (${getRoleByLevel(newLevel)})`;
+        if (newLevel > level) txt += `\n\n🎉 *LEVEL UP!* → Level *${newLevel}* (${getRankByLevel(newLevel)})`;
         if (ctx.isPremium) txt += `\n⭐ Bonus XP premium!`;
         txt += `\n\nTotal koin: *${formatNum(newMoney)}*\nAdventure lagi dalam *2 jam*`;
         await reply(txt);
@@ -2238,6 +2238,9 @@ module.exports = async function funRpgHandler(ctx) {
       return false;
   }
 };
+
+// Rank dari level — satu sumber kebenaran (dipakai juga 05-owner .cekprofil)
+module.exports.getRankByLevel = getRankByLevel;
 
 // Command yang kena limit untuk user biasa
 module.exports.limitedCmds = new Set([

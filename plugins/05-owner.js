@@ -15,6 +15,7 @@ const { pool } = require('../config/database');
 const mess = require('../config/mess');
 const { addStickerExif } = require('../engine/sticker');
 const { markPendingSewa } = require('../engine/pendingSewa');
+const { getRankByLevel } = require('./03-fun-rpg');
 
 // In-memory stores
 const blockedUsers  = new Map(); // botId -> Set<jid>
@@ -1586,14 +1587,13 @@ module.exports = async function ownerHandler(ctx) {
         return true;
       }
       const r = rows[0];
-      const ROLES = ['Newbie','Adventurer','Fighter','Warrior','Veteran','Expert','Master','Legenda'];
-      const role  = ROLES[Math.min(Math.floor((r.level || 1) / 10), ROLES.length - 1)] || 'Newbie';
+      const rank = getRankByLevel(Number(r.level) || 1);
       const isPrem = r.premium === 1;
       const premExp = r.premium_expired ? new Date(r.premium_expired).toLocaleDateString('id-ID') : '-';
       await ctx.client.message.send(ctx.jid,
         `👤 *PROFIL — @${target.split('@')[0]}*\n\n` +
         `📛 Nama   : ${r.name || '-'}\n` +
-        `🏅 Role   : ${role}\n` +
+        `🏅 Rank   : ${rank}\n` +
         `⭐ Level  : ${r.level || 1}\n` +
         `✨ XP     : ${r.xp || 0}\n` +
         `💰 Uang   : ${(r.money || 0).toLocaleString('id-ID')}\n` +
