@@ -43,3 +43,4 @@ _engine_cache.json
 # ── Runtime cache per bot ──
 data/active-groups-*.json
 data/*.json
+data/audio-cache-*.ogg

@@ -311,21 +311,50 @@ module.exports = async function infoHandler(ctx) {
       }
 
       // ── Audio default (opsional) — voice note bareng menu ────────────────
+      // Terima apa saja: .mp3/.m4a/.wav/.ogg atau URL. Yang bukan ogg/opus
+      // dikonversi otomatis ke ogg opus (format voice note WA), lalu di-cache.
       const audioSrc = process.env.AUDIO_DEFAULT;
       if (audioSrc) {
         try {
           const fs   = require('fs');
           const path = require('path');
+          const tmp  = require('os').tmpdir();
           const audioBuf = /^https?:\/\//i.test(audioSrc)
             ? Buffer.from((await require('axios').get(audioSrc, { responseType: 'arraybuffer', timeout: 30000 })).data)
             : fs.readFileSync(path.resolve(audioSrc));
-          // Format harus cocok isinya, kalau nggak WA nolak play (opus → voice note, sisanya audio biasa)
-          const isOgg = /\.(ogg|opus)$/i.test(audioSrc);
+
+          let voiceBuf = audioBuf;
+          if (!/\.(ogg|opus)$/i.test(audioSrc)) {
+            const crypto = require('crypto');
+            const hash   = crypto.createHash('md5').update(audioSrc + ':' + audioBuf.length).digest('hex').slice(0, 12);
+            const cached = path.join(__dirname, '..', 'data', `audio-cache-${hash}.ogg`);
+            if (fs.existsSync(cached)) {
+              voiceBuf = fs.readFileSync(cached);
+            } else {
+              const inPath  = path.join(tmp, `menu-src-${Date.now()}`);
+              const outPath = path.join(tmp, `menu-vn-${Date.now()}.ogg`);
+              fs.writeFileSync(inPath, audioBuf);
+              await new Promise((resolve, reject) => {
+                const ff = require('child_process').spawn('ffmpeg', [
+                  '-y', '-i', inPath,
+                  '-vn', '-c:a', 'libopus', '-b:a', '64k',
+                  '-ar', '48000', '-ac', '1', '-application', 'voip',
+                  outPath,
+                ]);
+                ff.on('error', reject); // ffmpeg tidak ada → pakai aslinya, jangan crash
+                ff.on('close', code => code === 0 ? resolve() : reject(new Error(`ffmpeg exit ${code}`)));
+              });
+              voiceBuf = fs.readFileSync(outPath);
+              try { fs.mkdirSync(path.dirname(cached), { recursive: true }); fs.writeFileSync(cached, voiceBuf); } catch { /* cache opsional */ }
+              fs.unlinkSync(inPath); fs.unlinkSync(outPath);
+            }
+          }
+
           await client.message.send(jid, {
             type:     'audio',
-            media:    audioBuf,
-            mimetype: isOgg ? 'audio/ogg; codecs=opus' : 'audio/mpeg',
-            ...(isOgg ? { ptt: true } : {}),
+            media:    voiceBuf,
+            mimetype: 'audio/ogg; codecs=opus',
+            ptt:      true, // ponytail: selalu ogg opus di sini — input non-ogg sudah dikonversi di atas
           });
         } catch { /* audio opsional — gagal pun menu tetap terkirim */ }
       }
