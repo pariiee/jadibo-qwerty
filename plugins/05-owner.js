@@ -1076,45 +1076,71 @@ module.exports = async function ownerHandler(ctx) {
       return true;
     }
 
-    // ── test — render JSON proto ke WhatsApp (dev playground) ──────────
-    // Pakai: reply/kirim pesan yang berisi JSON, ketik .test
-    // AI memetakan JSON → WaSendMessageContent; fallback raw kalau AI mati.
+    // ── test — render kode/JSON proto ke WhatsApp (dev playground) ──────
+    // Pakai: reply pesan berisi JSON atau KODE JS object literal, ketik .test
+    //   .test                          → reply ke { buttonsMessage: {...} }
+    //   .test { buttonsMessage: {...} } → kode langsung (1 baris)
     case 'test': {
       if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }
 
-      // Ambil JSON dari pesan (direct atau quoted)
       const rawMsg  = ctx.msg.message || {};
       const msgType = Object.keys(rawMsg)[0] || '';
-      const direct  = rawMsg[msgType] || {};
-      let text = '';
-      if (typeof direct.text === 'string') text = direct.text;
-      else if (typeof direct.caption === 'string') text = direct.caption;
-      else if (msgType === 'conversation') text = direct;
-      if (!text) {
-        const q = rawMsg?.extendedTextMessage?.contextInfo?.quotedMessage;
-        if (q) {
-          const qt = Object.keys(q)[0] || '';
-          const qc = q[qt] || {};
-          text = typeof qc === 'string' ? qc : (qc.text || qc.caption || '');
+      const quoted  = rawMsg?.extendedTextMessage?.contextInfo?.quotedMessage;
+
+      const asText = (node) => {
+        if (typeof node === 'string') return node;
+        if (!node) return '';
+        return node.text || node.caption || node.contentText || '';
+      };
+
+      // ── Payload: REPLY dulu (yang di-reply Pak), baru teks pesan ini ──
+      let src = '';
+      if (quoted) {
+        const qt = Object.keys(quoted)[0] || '';
+        src = asText(quoted[qt]);
+        // dokumen .js / .json → baca isinya
+        if (!src && qt === 'documentMessage') {
+          const fixed = Object.assign({}, quoted.documentMessage);
+          for (const f of ['mediaKey', 'fileSha256', 'fileEncSha256']) {
+            if (typeof fixed[f] === 'string') fixed[f] = Buffer.from(fixed[f], 'base64');
+          }
+          try {
+            src = Buffer.from(await client.message.downloadBytes({ documentMessage: fixed })).toString('utf8');
+          } catch (e) { await reply(`❌ Gagal baca dokumen: ${e.message}`); return true; }
         }
       }
-      if (!text || !text.trim()) {
-        await reply(`Penggunaan: kirim/reply pesan berisi JSON lalu ketik *${p}test*\n\n_Akan dicoba render ke WhatsApp._`);
+      // Belum ada → ambil teks pesan ini, buang token command-nya (.test)
+      if (!src) src = String(asText(rawMsg[msgType])).replace(/^\s*[^\s]+\s*/, '').trim();
+
+      const clean = src.replace(/^```[a-z]*\s*/i, '').replace(/\s*```$/, '').trim();
+      if (!clean) {
+        await reply(
+          `Penggunaan: reply pesan berisi *JSON* atau *kode JS* lalu ketik *${p}test*\n\n` +
+          `_Contoh kode:_\n${p}test { buttonsMessage: { contentText: 'hai', footerText: 'ft', headerType: 1, buttons: [] } }`
+        );
         return true;
       }
 
-      let parsed;
+      // ── Parse: JSON dulu, kalau gagal coba sebagai kode JS ──
+      // ponytail: new Function = eval; owner-only playground, jangan dipakai di jalur user
+      let seed;
       try {
-        parsed = JSON.parse(text.replace(/^```(?:json)?\s*|\s*```$/g, '').trim());
-      } catch (e) {
-        await reply(`❌ JSON tidak valid: ${e.message}`);
-        return true;
+        seed = JSON.parse(clean);
+      } catch {
+        try {
+          seed = new Function(`return (${clean})`)();
+        } catch (e2) {
+          await reply(`❌ Bukan JSON / kode yang valid:\n${e2.message}`);
+          return true;
+        }
       }
 
-      // ── Normalisasi: buang wrapper __source/__topKeys/__aiRichPaths, ambil node proto ──
+      // ── Normalisasi: buang wrapper __source/__topKeys/__aiRichPaths ──
       const dropped = [];
       const strip = (o, pathKey = '') => {
         if (!o || typeof o !== 'object') return o;
+        if (Buffer.isBuffer(o) || o instanceof Uint8Array) return o; // sudah byte asli dari kode
+        if (Array.isArray(o)) return o.map(x => strip(x, pathKey + '[].'));
         const out = {};
         for (const [k, v] of Object.entries(o)) {
           if (k.startsWith('__')) continue;
@@ -1129,11 +1155,11 @@ module.exports = async function ownerHandler(ctx) {
             out[k] = Buffer.from(hex, 'hex');
             continue;
           }
-          out[k] = Array.isArray(v) ? v.map(x => strip(x, pathKey + k + '[].')) : (v && typeof v === 'object' ? strip(v, pathKey + k + '.') : v);
+          out[k] = (v && typeof v === 'object') ? strip(v, pathKey + k + '.') : v;
         }
         return out;
       };
-      const node = strip(parsed);
+      const node = strip(seed);
       const topKey = Object.keys(node)[0];
       if (dropped.length) console.log(`[.test] field bytes dibuang (preview terpotong): ${dropped.join(', ')}`);
 

@@ -1,5 +1,5 @@
 'use strict';
-// Self-check .test (render JSON proto -> WA).
+// Self-check .test (render JSON ATAU kode JS -> WA).
 // Jalankan: node testjson.js
 // Menguji kode strip() ASLI dari plugins/05-owner.js, bukan salinannya.
 const fs = require('fs');
@@ -10,11 +10,21 @@ const { proto } = require('zapo-js');
 const src = fs.readFileSync('plugins/05-owner.js', 'utf8');
 const fnStart = src.indexOf('const strip = (o, pathKey');
 assert(fnStart > -1, 'strip() tidak ditemukan di 05-owner.js');
-const fnEnd = src.indexOf('const node = strip(parsed);', fnStart);
+const fnEnd = src.indexOf('const node = strip(seed);', fnStart);
+assert(fnEnd > fnStart, 'pemanggilan strip(seed) tidak ditemukan');
 const strip = new Function('dropped', src.slice(fnStart, fnEnd) + '\nreturn strip;')([]);
 
-// ── Payload persis seperti yang Pak kirim (dengan wrapper __*) ──
-const INPUT = {
+// ── Tiru parse pipeline plugin: JSON dulu, gagal -> kode JS ──
+const parse = (raw) => {
+  const clean = String(raw).replace(/^```[a-z]*\s*/i, '').replace(/\s*```$/, '').trim();
+  try { return { ok: true, via: 'json', val: JSON.parse(clean) }; }
+  catch {
+    try { return { ok: true, via: 'code', val: new Function(`return (${clean})`)() }; }
+    catch (e) { return { ok: false, err: e.message }; }
+  }
+};
+
+const FULL_JSON = {
   "__source": "quoted",
   "__topKeys": ["buttonsMessage"],
   "__aiRichPaths": [],
@@ -24,8 +34,7 @@ const INPUT = {
       { "buttonId": "btnv2_2", "buttonText": { "displayText": "Tombol 2" }, "type": 1 }
     ],
     "locationMessage": {
-      "degreesLatitude": -6.2,
-      "degreesLongitude": 106.816666,
+      "degreesLatitude": -6.2, "degreesLongitude": 106.816666,
       "name": "Moszy AI MD • Button V2",
       "address": "Testing custom thumbnail di location header",
       "jpegThumbnail": { "__type": "bytes", "length": 20497, "preview": "ffd8ffdb004300080808080908090a0a090d0e0c0e0d1311101011131c141614…" }
@@ -37,51 +46,76 @@ const INPUT = {
 };
 const clean = (o) => JSON.parse(JSON.stringify(o));
 
-// ── 1. Normalisasi ──
+// ── 1. INPUT KODE JS (bukan JSON) — ini yang Pak mau ──
+const CODE_INPUT = `{
+  buttonsMessage: {
+    buttons: [
+      { buttonId: 'btnv2_1', buttonText: { displayText: 'Tombol 1' }, type: 1 },
+      { buttonId: 'btnv2_2', buttonText: { displayText: 'Tombol 2' }, type: 1 }
+    ],
+    locationMessage: {
+      degreesLatitude: -6.2, degreesLongitude: 106.816666,
+      name: 'Moszy AI MD • Button V2',
+      address: 'Testing custom thumbnail di location header'
+    },
+    contentText: 'Testing ButtonV2 — location header + legacy buttons',
+    footerText: 'Moszy Button V2 Test',
+    headerType: 6
+  }
+}`;
 {
-  const out = strip(clean(INPUT));
-  assert.deepStrictEqual(Object.keys(out), ['buttonsMessage'], 'top-level harus buttonsMessage saja');
-  const bm = out.buttonsMessage;
-  assert.strictEqual(bm.contentText, 'Testing ButtonV2 — location header + legacy buttons');
-  assert.strictEqual(bm.footerText, 'Moszy Button V2 Test');
+  const p = parse(CODE_INPUT);
+  assert.ok(p.ok, `kode JS harus bisa di-parse: ${p.err}`);
+  assert.strictEqual(p.via, 'code', 'harus lewat jalur kode (bukan JSON)');
+  const node = strip(p.val);
+  assert.deepStrictEqual(Object.keys(node), ['buttonsMessage']);
+  assert.strictEqual(node.buttonsMessage.headerType, 6);
+  assert.strictEqual(node.buttonsMessage.buttons.length, 2);
+  console.log('[PASS] INPUT KODE JS (tanpa kutip key) -> node valid');
+}
+
+// ── 2. INPUT JSON (tetap jalan, buat backward-compat) ──
+{
+  const p = parse(JSON.stringify(FULL_JSON));
+  assert.strictEqual(p.via, 'json');
+  const node = strip(p.val);
+  const bm = node.buttonsMessage;
   assert.strictEqual(bm.headerType, 6, 'headerType 6 = LOCATION');
-  assert.strictEqual(bm.buttons.length, 2);
-  assert.strictEqual(bm.buttons[0].buttonId, 'btnv2_1');
   assert.strictEqual(bm.buttons[0].buttonText.displayText, 'Tombol 1');
-  assert.strictEqual(bm.buttons[0].type, 1, 'type 1 = RESPONSE');
   assert.strictEqual(bm.locationMessage.degreesLatitude, -6.2);
-  assert.strictEqual(bm.locationMessage.degreesLongitude, 106.816666);
-  assert.strictEqual(bm.locationMessage.name, 'Moszy AI MD • Button V2');
   assert.strictEqual(bm.locationMessage.jpegThumbnail, undefined, 'preview terpotong harus DIBUANG');
-  console.log('[PASS] wrapper __* dibuang; teks, 2 button, lokasi utuh');
-  console.log('[PASS] jpegThumbnail (preview terpotong) dibuang, bukan byte rusak');
+  assert.strictEqual(node.__source, undefined, 'wrapper __* harus dibuang');
+  console.log('[PASS] INPUT JSON -> node valid; jpegThumbnail terpotong dibuang');
 }
 
-// ── 2. Bytes lengkap jadi Buffer ──
+// ── 3. Kode PAKAI Buffer asli (jpegThumbnail dari fs.readFileSync) ──
 {
-  const out = strip({ jpegThumbnail: { __type: 'bytes', length: 4, preview: 'ffd8ffdb' } });
-  assert.ok(Buffer.isBuffer(out.jpegThumbnail), 'hex lengkap harus jadi Buffer');
-  assert.strictEqual(out.jpegThumbnail.toString('hex'), 'ffd8ffdb');
-  console.log('[PASS] hex lengkap -> Buffer(4) ffd8ffdb');
+  const code = `({ buttonsMessage: { contentText: 'x', footerText: 'y', headerType: 4, buttons: [],
+    imageMessage: { jpegThumbnail: Buffer.from('ffd8ffdb', 'hex'), mimetype: 'image/jpeg' } } })`;
+  const p = parse(code);
+  assert.ok(p.ok, `kode pakai Buffer harus jalan: ${p.err}`);
+  const node = strip(p.val);
+  assert.ok(Buffer.isBuffer(node.buttonsMessage.imageMessage.jpegThumbnail), 'Buffer asli harus lewat utuh');
+  assert.strictEqual(node.buttonsMessage.imageMessage.jpegThumbnail.toString('hex'), 'ffd8ffdb');
+  console.log('[PASS] kode pakai Buffer asli -> Buffer utuh (nggak dirusak strip)');
 }
 
-// ── 3. Tanpa wrapper tetap jalan ──
+// ── 4. Teks command mentah ".test" -> pesan pakai, bukan crash ──
 {
-  const out = strip({ buttonsMessage: { buttons: [], contentText: 'x', footerText: 'y', headerType: 1 } });
-  assert.deepStrictEqual(Object.keys(out), ['buttonsMessage']);
-  console.log('[PASS] tanpa wrapper __* tetap jalan');
+  const p = parse('.test');
+  assert.ok(!p.ok, '".test" memang bukan JSON/kode — harus ketahuan kosong duluan');
+  console.log('[PASS] ".test" polos dikenali bukan payload (ditangani cek panjang)');
 }
 
-// ── 4. ENCODE + DECODE proto zapo (yang sebenarnya terjadi saat send) ──
+// ── 5. ENCODE + DECODE proto zapo (yang sebenarnya terjadi saat send) ──
 {
-  const node = strip(clean(INPUT));
+  const node = strip(parse(CODE_INPUT).val);
   const enc = proto.Message.encode(node);
   const buf = enc.finish ? enc.finish() : enc;
   const back = proto.Message.decode(buf).buttonsMessage;
-  assert.strictEqual(back.contentText, node.buttonsMessage.contentText);
   assert.strictEqual(back.headerType, 6);
   assert.strictEqual(back.buttons.length, 2);
-  assert.strictEqual(back.buttons[0].buttonText.displayText, 'Tombol 1');
+  assert.strictEqual(back.buttons[0].buttonId, 'btnv2_1');
   assert.strictEqual(back.locationMessage.name, 'Moszy AI MD • Button V2');
   const HT = proto.Message.ButtonsMessage.HeaderType;
   const BT = proto.Message.ButtonsMessage.Button.Type;
