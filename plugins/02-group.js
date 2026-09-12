@@ -4,7 +4,7 @@
  * plugins/02-group.js
  * Commands: tagall, tagadmin, tagme, hidetag, kick, kickall, promote, demote,
  *           open, close, mute, unmute, slowmode, setname, setdesc, linkgroup,
- *           groupinfo, idgc, grouplist, leavegc, listadmin, getpp, totag,
+ *           groupinfo, idgc, grouplist, leavegc, listadmin, getpp, getppgc, totag,
  *           delete, cekasalmember, absen, mulaiabsen, cekabsen, hapusabsen,
  *           afk, listafk, topchat
  */
@@ -182,6 +182,17 @@ module.exports = async function groupHandler(ctx) {
       const jidMatch = p.jid && p.jid.includes(botNum);
       return (phoneMatch || jidMatch) && p.isAdmin;
     });
+  }
+
+  // Helper: normalisasi jam jadwal buka/tutup -> 'HH.MM' atau null kalau invalid.
+  // Wajib: cron di server.js membandingkan string persis, jadi '7.00' tidak akan
+  // pernah cocok dengan '07.00' -> jadwal diam-diam tidak jalan.
+  function normalizeJam(input) {
+    const m = String(input ?? '').trim().match(/^(\d{1,2})[.:](\d{1,2})$/);
+    if (!m) return null;
+    const h = Number(m[1]), min = Number(m[2]);
+    if (h > 23 || min > 59) return null;
+    return `${String(h).padStart(2, '0')}.${String(min).padStart(2, '0')}`;
   }
 
   switch (command) {
@@ -390,8 +401,9 @@ module.exports = async function groupHandler(ctx) {
       const botJid  = client.auth?.getCurrentCredentials?.()?.meJid
         ?.replace(/:.*@/, '@') || '';
       const members = meta.participants
-        .filter(p => p.id !== sender && p.id !== botJid && !p.admin)
-        .map(p => p.id);
+        .filter(p => !p.isAdmin)
+        .map(p => p.jid || p.lid)
+        .filter(m => m && m !== sender && m !== botJid);
       if (members.length === 0) { await reply('Tidak ada member yang bisa dikick'); return true; }
       try {
         const results = await client.group.removeParticipants(jid, members);
@@ -434,6 +446,16 @@ module.exports = async function groupHandler(ctx) {
       await reply(`⬇️ Berhasil demote ${targetsDemote.length} admin menjadi member`);
       return true;
     }
+
+    // ── grupopen / grupclose / linkgc / setnamegc — alias ────────────────────
+    case 'grupopen':
+      return module.exports({ ...ctx, command: 'open' });
+    case 'grupclose':
+      return module.exports({ ...ctx, command: 'close' });
+    case 'linkgc':
+      return module.exports({ ...ctx, command: 'linkgroup' });
+    case 'setnamegc':
+      return module.exports({ ...ctx, command: 'setname' });
 
     // ── open / close ─────────────────────────────────────────────────────────
     case 'open': {
@@ -648,6 +670,39 @@ module.exports = async function groupHandler(ctx) {
         });
       } else {
         await reply('❌ Foto profil tidak ditemukan atau private');
+      }
+      return true;
+    }
+
+    // ── getppgc ───────────────────────────────────────────────────────────────
+    case 'getppgc':
+    case 'ppgc':
+    case 'ppgroup':
+    case 'ppgrup': {
+      const DEFAULT_PP_GC = 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png';
+      let ppGcUrl = DEFAULT_PP_GC;
+      try {
+        const pp = await client.profile.getProfilePicture(jid, 'image');
+        if (pp?.url) ppGcUrl = pp.url;
+      } catch { /* pakai default */ }
+
+      let gcImgBuffer = null;
+      try {
+        const res = await fetch(ppGcUrl);
+        gcImgBuffer = Buffer.from(await res.arrayBuffer());
+      } catch { /* fallback teks */ }
+
+      if (gcImgBuffer) {
+        const thumb = await genThumbnail(gcImgBuffer, 'image/jpeg');
+        await client.message.send(jid, {
+          type: 'image',
+          media: gcImgBuffer,
+          mimetype: 'image/jpeg',
+          caption: '✅ Foto profil grup',
+          ...(thumb ? { jpegThumbnail: thumb } : {}),
+        });
+      } else {
+        await reply('❌ Foto profil grup tidak ada atau diprivasi.');
       }
       return true;
     }
@@ -1197,8 +1252,8 @@ module.exports = async function groupHandler(ctx) {
     // Jadwal buka-tutup otomatis per grup. Format jam: HH.MM
     case 'setopen': {
       if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
-      const jam = args[0];
-      if (!jam || !/^\d{1,2}\.\d{2}$/.test(jam)) {
+      const jam = normalizeJam(args[0]);
+      if (!jam) {
         await reply(`Penggunaan: ${p}setopen <jam>\n\nContoh: ${p}setopen 07.00\nFormat jam: HH.MM (00.00 - 23.59)`);
         return true;
       }
@@ -1225,8 +1280,8 @@ module.exports = async function groupHandler(ctx) {
 
     case 'setclose': {
       if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
-      const jam = args[0];
-      if (!jam || !/^\d{1,2}\.\d{2}$/.test(jam)) {
+      const jam = normalizeJam(args[0]);
+      if (!jam) {
         await reply(`Penggunaan: ${p}setclose <jam>\n\nContoh: ${p}setclose 22.00\nFormat jam: HH.MM (00.00 - 23.59)`);
         return true;
       }
@@ -1361,6 +1416,7 @@ module.exports.limitedCmds = new Set([
   'tagall','tagadmin','tagme','hidetag','ht',
   'kick','kickall','promote','demote','add','promoteme',
   'open','close','mute','unmute','slowmode','setname','setdesc',
+  'grupopen','grupclose','linkgc','setnamegc',
   'linkgroup','groupinfo','idgc','grouplist','leavegc','listadmin',
   'getpp','totag','delete','cekasalmember',
   'mulaiabsen','absen','cekabsen','hapusabsen',

@@ -148,15 +148,23 @@ function formatNum(n) {
  * Tambah XP + hitung level-up berantai (satu-satunya jalur nambah XP biar
  * konsisten). Balikin { member, newLevel, leveledUp, levelsGained }.
  */
-async function applyXpGain(botId, jid, amount, extraFields = {}) {
-  const m = await getOrCreateMember(botId, jid, null);
-  let xp    = (Number(m.xp) || 0) + amount;
-  let level = Number(m.level) || 1;
-  const startLevel = level;
+// Satu-satunya rumus XP→level. Semua command yang nambah XP WAJIB lewat sini,
+// supaya level-up berantai konsisten dan tidak ada user stranded (XP > threshold
+// tapi level rendah) — bug yang pernah terjadi saat gacha nambah XP mentah.
+function calcXpLevel(xp, level, gain) {
+  xp    = (Number(xp) || 0) + gain;
+  level = Number(level) || 1;
   while (xp >= xpForLevel(level)) {
     xp -= xpForLevel(level);
     level++;
   }
+  return { xp, level };
+}
+
+async function applyXpGain(botId, jid, amount, extraFields = {}) {
+  const m = await getOrCreateMember(botId, jid, null);
+  const startLevel = Number(m.level) || 1;
+  const { xp, level } = calcXpLevel(m.xp, startLevel, amount);
   await updateMember(botId, jid, { xp, level, ...extraFields });
   return { member: { ...m, xp, level }, newLevel: level, leveledUp: level > startLevel, levelsGained: level - startLevel };
 }
@@ -246,9 +254,7 @@ module.exports = async function funRpgHandler(ctx) {
             for (const pJid of players) {
               try {
                 const pm = await getOrCreateMember(botId, pJid, resolveMentionNum(pJid));
-                let newXp    = (Number(pm.xp) || 0) + rewardXp;
-                let newLevel = pm.level || 1;
-                while (newXp >= xpForLevel(newLevel)) { newXp -= xpForLevel(newLevel); newLevel++; }
+                const { xp: newXp, level: newLevel } = calcXpLevel(pm.xp, pm.level || 1, rewardXp);
                 await updateMember(botId, pJid, {
                   money:        (Number(pm.money) || 0) + rewardKoin,
                   xp:           newXp,
@@ -1374,12 +1380,7 @@ module.exports = async function funRpgHandler(ctx) {
       const xpGet  = ikan.xp + (ctx.isPremium ? 2 : 0);
 
       // Hitung level up
-      let newXp    = (Number(member.xp) || 0) + xpGet;
-      let newLevel = member.level || 1;
-      while (newXp >= xpForLevel(newLevel)) {
-        newXp   -= xpForLevel(newLevel);
-        newLevel++;
-      }
+      const { xp: newXp, level: newLevel } = calcXpLevel(member.xp, member.level || 1, xpGet);
       const newMoney = (Number(member.money) || 0) + reward;
 
       await updateMember(botId, sender, {
@@ -1540,12 +1541,7 @@ module.exports = async function funRpgHandler(ctx) {
       const xpGet  = job.xp + (ctx.isPremium ? 3 : 0);
 
       // Hitung level up
-      let newXp    = (member.xp || 0) + xpGet;
-      let newLevel = member.level || 1;
-      while (newXp >= xpForLevel(newLevel)) {
-        newXp   -= xpForLevel(newLevel);
-        newLevel++;
-      }
+      const { xp: newXp, level: newLevel } = calcXpLevel(member.xp, member.level || 1, xpGet);
       const newMoney = (member.money || 0) + reward;
 
       await updateMember(botId, sender, {
@@ -1842,9 +1838,7 @@ module.exports = async function funRpgHandler(ctx) {
       const koinGet = Math.floor(Math.random() * 151) + 100; // 100–250
       const xpGet   = Math.floor(Math.random() * 6) + 5 + (ctx.isPremium ? 3 : 0); // 5–10 (+3 premium)
 
-      let newXp    = (Number(member.xp) || 0) + xpGet;
-      let newLevel = member.level || 1;
-      while (newXp >= xpForLevel(newLevel)) { newXp -= xpForLevel(newLevel); newLevel++; }
+      const { xp: newXp, level: newLevel } = calcXpLevel(member.xp, member.level || 1, xpGet);
       const newMoney = (Number(member.money) || 0) + koinGet;
 
       await updateMember(botId, sender, {
@@ -1886,9 +1880,7 @@ module.exports = async function funRpgHandler(ctx) {
       const xpGet    = Math.floor(Math.random() * 51) + 50 + (ctx.isPremium ? 20 : 0); // 50–100 (+20 premium)
       const limGet   = 10; // +10 limit
 
-      let newXp    = (Number(member.xp) || 0) + xpGet;
-      let newLevel = member.level || 1;
-      while (newXp >= xpForLevel(newLevel)) { newXp -= xpForLevel(newLevel); newLevel++; }
+      const { xp: newXp, level: newLevel } = calcXpLevel(member.xp, member.level || 1, xpGet);
       const newMoney = (Number(member.money) || 0) + koinGet;
       const newLim   = (Number(member.lim) || 0) + limGet;
 
@@ -1951,9 +1943,7 @@ module.exports = async function funRpgHandler(ctx) {
         bonusTxt  = `\n🍀 *BONUS LUCKY!* +${formatNum(bonusKoin)} koin ekstra!`;
       }
 
-      let newXp    = (Number(member.xp) || 0) + xpGet;
-      let newLevel = member.level || 1;
-      while (newXp >= xpForLevel(newLevel)) { newXp -= xpForLevel(newLevel); newLevel++; }
+      const { xp: newXp, level: newLevel } = calcXpLevel(member.xp, member.level || 1, xpGet);
       const newMoney = (Number(member.money) || 0) + koinGet + bonusKoin;
 
       await updateMember(botId, sender, {
@@ -2039,9 +2029,7 @@ module.exports = async function funRpgHandler(ctx) {
       if (menang) {
         const koinGet = Math.floor(Math.random() * (monster.reward[1] - monster.reward[0] + 1)) + monster.reward[0];
         const xpGet   = monster.xp + (ctx.isPremium ? 10 : 0);
-        let newXp     = (Number(member.xp) || 0) + xpGet;
-        let newLevel  = level;
-        while (newXp >= xpForLevel(newLevel)) { newXp -= xpForLevel(newLevel); newLevel++; }
+        const { xp: newXp, level: newLevel } = calcXpLevel(member.xp, level, xpGet);
         const newMoney = (Number(member.money) || 0) + koinGet;
         const newHp    = Math.max(10, Math.floor(pHp)); // HP sisa
 

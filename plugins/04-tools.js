@@ -288,6 +288,113 @@ module.exports = async function toolsHandler(ctx) {
       return true;
     }
 
+    // ── tovn / 2vo — convert audio/video ke voice note PTT ───────────────
+    case 'tovn':
+    case '2vo': {
+      const rawMsg     = msg.message || {};
+      const msgType    = Object.keys(rawMsg)[0] || '';
+      const quoted     = rawMsg?.extendedTextMessage?.contextInfo?.quotedMessage;
+      const quotedType = quoted ? Object.keys(quoted)[0] : null;
+
+      const allowed    = ['audioMessage', 'videoMessage', 'documentMessage'];
+      const isDirect   = allowed.includes(msgType);
+      const isQuoted   = allowed.includes(quotedType);
+
+      if (!isDirect && !isQuoted) {
+        await reply(`Reply atau kirim audio/video dengan ${p}${command} untuk convert ke voice note`);
+        return true;
+      }
+
+      try {
+        await react(mess.reactLoading);
+        const fs     = require('fs');
+        const path   = require('path');
+        const os     = require('os');
+        const { spawn } = require('child_process');
+
+        const srcType   = isDirect ? msgType : quotedType;
+        const srcContent = isDirect ? rawMsg[srcType] : quoted[srcType];
+        const fixed     = Object.assign({}, srcContent);
+        for (const f of ['mediaKey','fileSha256','fileEncSha256']) {
+          if (typeof fixed[f] === 'string') fixed[f] = Buffer.from(fixed[f], 'base64');
+        }
+        const inBuf  = Buffer.from(await client.message.downloadBytes({ [srcType]: fixed }));
+        const inExt  = srcType === 'audioMessage' ? (srcContent.mimetype?.includes('ogg') ? 'ogg' : 'mp3') : 'mp4';
+        const tmpIn  = path.join(os.tmpdir(), `tovn_in_${Date.now()}.${inExt}`);
+        const tmpOut = path.join(os.tmpdir(), `tovn_out_${Date.now()}.ogg`);
+        fs.writeFileSync(tmpIn, inBuf);
+
+        await new Promise((resolve, reject) => {
+          const ff = spawn('ffmpeg', [
+            '-y', '-i', tmpIn,
+            '-c:a', 'libopus', '-b:a', '64k', '-vn',
+            tmpOut,
+          ]);
+          ff.on('error', reject);
+          ff.on('close', code => code !== 0 ? reject(new Error(`ffmpeg exit ${code}`)) : resolve());
+        });
+
+        const outBuf = fs.readFileSync(tmpOut);
+        try { fs.unlinkSync(tmpIn); } catch {}
+        try { fs.unlinkSync(tmpOut); } catch {}
+
+        await client.message.send(jid, {
+          type: 'audio',
+          media: outBuf,
+          mimetype: 'audio/ogg; codecs=opus',
+          ptt: true,
+        });
+        await react(mess.reactSuccess);
+      } catch (e) {
+        await react(mess.reactError);
+        await reply(`❌ Gagal convert ke voice note: ${e.message}`);
+      }
+      return true;
+    }
+
+    // ── todoc — kirim ulang media/file sebagai dokumen ────────────────────
+    case 'todoc': {
+      const rawMsg     = msg.message || {};
+      const msgType    = Object.keys(rawMsg)[0] || '';
+      const quoted     = rawMsg?.extendedTextMessage?.contextInfo?.quotedMessage;
+      const quotedType = quoted ? Object.keys(quoted)[0] : null;
+
+      const allowed    = ['imageMessage','videoMessage','audioMessage','documentMessage','stickerMessage'];
+      const isDirect   = allowed.includes(msgType);
+      const isQuoted   = allowed.includes(quotedType);
+
+      if (!isDirect && !isQuoted) {
+        await reply(`Reply atau kirim file dengan ${p}todoc untuk kirim ulang sebagai dokumen`);
+        return true;
+      }
+
+      try {
+        await react(mess.reactLoading);
+        const srcType    = isDirect ? msgType : quotedType;
+        const srcContent = isDirect ? rawMsg[srcType] : quoted[srcType];
+        const fixed      = Object.assign({}, srcContent);
+        for (const f of ['mediaKey','fileSha256','fileEncSha256']) {
+          if (typeof fixed[f] === 'string') fixed[f] = Buffer.from(fixed[f], 'base64');
+        }
+        const buf  = Buffer.from(await client.message.downloadBytes({ [srcType]: fixed }));
+        const mime = srcContent.mimetype || 'application/octet-stream';
+        const ext  = mimeToExt(mime);
+        const fileName = srcContent.fileName || `file_${Date.now()}.${ext}`;
+
+        await client.message.send(jid, {
+          type: 'document',
+          media: buf,
+          mimetype: mime,
+          fileName,
+        });
+        await react(mess.reactSuccess);
+      } catch (e) {
+        await react(mess.reactError);
+        await reply(`❌ Gagal kirim sebagai dokumen: ${e.message}`);
+      }
+      return true;
+    }
+
     // ── readmore ──────────────────────────────────────────────────────────
     case 'readmore': {
       const text = args.join(' ');
@@ -5268,6 +5375,7 @@ module.exports = async function toolsHandler(ctx) {
 module.exports.limitedCmds = new Set([
   'sticker','s','wm','poll','readmore','base64','kalkulator',
   'pick','tourl','upload','pay','rvo','readviewonce','readvo','liat',
+  'tovn','2vo','todoc',
   'tanyaimg','ailyrics','buatlirik','chatgpt','gpt','resetgpt','gemini','resetgemini','toghibli','ghibli','ai','deepai','resetdeepai',
   // downloader commands
   'mediafire','mfdl',

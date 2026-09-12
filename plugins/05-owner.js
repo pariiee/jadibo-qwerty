@@ -22,6 +22,7 @@ const { getRankByLevel } = require('./03-fun-rpg');
 const blockedUsers  = new Map(); // botId -> Set<jid>
 const blockedLoaded = new Set(); // botId yang sudah di-load dari DB
 const warnData      = new Map(); // `${botId}:${groupJid}:${jid}` -> { count, limit }
+const warnLoaded    = new Set(); // botId yang warnData-nya sudah di-load dari DB
 const sewaIndexMap  = new Map(); // `${botId}` -> [groupJid, ...] — index dari .listsewa terakhir
 
 function getMentionedFromCtx(ctx) {
@@ -100,6 +101,28 @@ async function ensureBlockedLoaded(botId) {
   } catch { /* non-critical */ }
 }
 
+// Load warn dari DB saat pertama kali dibutuhkan per botId.
+// Tanpa ini, warnData selalu mulai dari 0 tiap restart -> member yang sudah
+// dikumpulin warn-nya lolos begitu bot restart.
+// ponytail: muat semua grup sekaligus (bukan per-grup); pecah per-grup kalau
+// warn_records sudah puluhan ribu baris.
+async function ensureWarnLoaded(botId) {
+  if (warnLoaded.has(botId)) return;
+  warnLoaded.add(botId);
+  try {
+    const [rows] = await pool.execute(
+      'SELECT group_jid, member_jid, warn_count, warn_limit FROM warn_records WHERE bot_id = ?',
+      [botId]
+    );
+    for (const r of rows) {
+      warnData.set(getWarnKey(botId, r.group_jid, r.member_jid), {
+        count: Number(r.warn_count) || 0,
+        limit: Number(r.warn_limit) || 3,
+      });
+    }
+  } catch { /* non-critical */ }
+}
+
 function getWarnKey(botId, groupJid, memberJid) {
   return `${botId}:${groupJid}:${memberJid}`;
 }
@@ -119,6 +142,7 @@ module.exports = async function ownerHandler(ctx) {
 
   // ── Load blacklist dari DB kalau belum (lazy, sekali per botId per session) ─
   await ensureBlockedLoaded(botId);
+  await ensureWarnLoaded(botId);
 
   // ── Blacklist / block gate on every message ─────────────────────────────
   const blocked = getBlockedSet(botId);
@@ -523,6 +547,13 @@ module.exports = async function ownerHandler(ctx) {
       for (const [key, val] of warnData.entries()) {
         if (key.startsWith(prefix)) val.limit = limit;
       }
+      // Persist limit ke DB, kalau tidak tiap restart balik ke default 3
+      try {
+        await pool.execute(
+          'UPDATE warn_records SET warn_limit = ? WHERE bot_id = ? AND group_jid = ?',
+          [limit, botId, jid]
+        );
+      } catch {}
       await reply(`✅ Batas warn diubah ke ${limit}`);
       return true;
     }
@@ -578,7 +609,7 @@ module.exports = async function ownerHandler(ctx) {
       );
       if (!regCheck[0] || regCheck[0].registered !== 1) {
         await ctx.client.message.send(ctx.jid,
-          `❌ @${target.split('@')[0]} belum terdaftar di bot ini!\n\nSuruh dia ketik *${p}daftar* dulu.`,
+          `❌ @${target.split('@')[0]} belum terdaftar di bot ini!\n\nSuruh dia ketik *${p}uptname <nama>* dulu.`,
           { mentions: [target] }
         );
         return true;

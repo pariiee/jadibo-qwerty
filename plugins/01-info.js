@@ -21,11 +21,12 @@ function formatUptime(ms) {
 
 const ALL_COMMANDS = [...new Set([
   // Info
-  'ping','menu','info','owner','uptime','profile','me','carifitur','totalfitur','limit','uptname',
+  'ping','menu','info','owner','uptime','profile','me','carifitur','totalfitur','limit','uptname','memory','runtime','react',
   // Grup
   'tagall','tagadmin','tagme','hidetag','ht','kick','kickall','promote','demote',
   'open','close','mute','unmute','slowmode','setname','setdesc','linkgroup','upswgc',
-  'groupinfo','grouplist','leavegc','listadmin','getpp','totag',
+  'grupopen','grupclose','linkgc','setnamegc',
+  'groupinfo','grouplist','leavegc','listadmin','getpp','getppgc','ppgc','ppgroup','ppgrup','totag',
   'delete','cekasalmember','absen','mulaiabsen','cekabsen','hapusabsen',
   'afk','listafk','antidelete','topchat',
   'setwelcome','setbye','delwelcome','delbye','setdetect','deldetect',
@@ -44,7 +45,7 @@ const ALL_COMMANDS = [...new Set([
   // Giveaway
   'mulaigiveaway','ikut','rollgiveaway','cekgiveaway','cekmenang','hapusgiveaway',
   // Media & Tools
-  'sticker','s','wm','poll','readmore','encode','decode','kalkulator','pick','tourl','tourl2','upload2','upload','pay','tomp4','topng','artinama','attp','brat','bratvid','fakech','fakecall','fakecallip','fakedana','fakeovo','fakegcios','fakepptele','igqc','igstoryimg','iqc','ttqc','dafont','dafontdl','lirik','genius','gsmarena','spek','jarak','kbbi','kodepos',
+  'sticker','s','wm','poll','readmore','encode','decode','kalkulator','pick','tourl','tourl2','upload2','upload','pay','tomp4','topng','tovn','2vo','todoc','artinama','attp','brat','bratvid','fakech','fakecall','fakecallip','fakedana','fakeovo','fakegcios','fakepptele','igqc','igstoryimg','iqc','ttqc','dafont','dafontdl','lirik','genius','gsmarena','spek','jarak','kbbi','kodepos',
   'bandinghp','comparehp','wilayah','cariwilayah','imei','cekimei','gempa',
   'cuaca','weather','accuweather','prakiraan',
   'checkwa','cekwa',
@@ -135,12 +136,12 @@ const ALL_COMMANDS = [...new Set([
 const RM = String.fromCharCode(8206).repeat(4001); // readmore: konten bawah terlipat "Read more"
 
 const CATS = {
-  info:   ['ping','menu','info','owner','uptime','profile','me','carifitur','totalfitur','limit','uptname'],
-  grup:   ['tagall','tagadmin','tagme','hidetag','ht','kick','kickall','promote','demote','open','close','mute','unmute','slowmode','setname','setdesc','linkgroup','upswgc','groupinfo','grouplist','leavegc','listadmin','getpp','totag','delete','cekasalmember','absen','mulaiabsen','cekabsen','hapusabsen','afk','listafk','topchat','antidelete','setwelcome','setbye','delwelcome','delbye','setdetect','deldetect','mulaigiveaway','ikut','rollgiveaway','cekgiveaway','cekmenang','hapusgiveaway'],
+  info:   ['ping','menu','info','owner','uptime','profile','me','carifitur','totalfitur','limit','uptname','memory','runtime','react'],
+  grup:   ['tagall','tagadmin','tagme','hidetag','ht','kick','kickall','promote','demote','open','close','mute','unmute','slowmode','setname','setdesc','linkgroup','upswgc','grupopen','grupclose','linkgc','setnamegc','groupinfo','grouplist','leavegc','listadmin','getpp','getppgc','ppgc','ppgroup','ppgrup','totag','delete','cekasalmember','absen','mulaiabsen','cekabsen','hapusabsen','afk','listafk','topchat','antidelete','setwelcome','setbye','delwelcome','delbye','setdetect','deldetect','mulaigiveaway','ikut','rollgiveaway','cekgiveaway','cekmenang','hapusgiveaway'],
   proteksi: ['on','off','fitur','proteksi','antibot','antilink','antilinkv2','antitoxic','antispam','antitagsw','autosticker','antisticker','viewonce','autolevelup','detect','autoacc','document','nyimak','autoread'],
   rpg:    ['unreg','profile','me','claim','hourly','weekly','dailymisi','kerja','mancing','berburu','hunt','bertarung','fight','dungeon','adventure','koboy','airdrop','maling','lamarkerja','job','gajian','transfer','tf','bank','atm','topkoin','lb','leaderboard','store','beli','inventory','pakai','gacha','slot','jodoh','suitpvp','coinflip','cf','tictactoe','ttt'],
   maker:  ['sticker','s','wm','brat','bratvid','attp','fakech','fakecall','fakecallip','fakedana','fakeovo','fakegcios','fakepptele','rvo','readviewonce','readvo','liat','swgc','upswgc'],
-  tools:  ['poll','readmore','encode','decode','kalkulator','pick','tourl','tourl2','upload2','upload','pay','tomp4','topng','artinama','igqc','igstoryimg','iqc','ttqc','dafont','dafontdl','lirik','genius','gsmarena','spek','jarak','kbbi','kodepos','bandinghp','comparehp','wilayah','cariwilayah','imei','cekimei','gempa','cuaca','weather','accuweather','prakiraan','checkwa','cekwa','translate','terjemah','tr','qrcode','qr','decodeqr','readqr','ocr','upscale','hd','enhance','ssweb','ss','screenshot','fancytext','fancy','nik','nikinfo','iplookup','ipcek','reverseip','httpheaders','headers','nationalday','hariini','shalat','jadwalshalat','kalendershalat','kshalat','konversitanggal','tanggal','bypass','bypasssfl','bpsfl','drakor','duolingo','npm','resep','steam','play','lk21','lk21trending','lk21search','filmsearch','mcpedl','berita','pinterest','tokopedia','toped','stalktiktok','stalktt','tiktokstalk','roblox','stalkroblox','cekroblox','minecraft','mc','stalkmc','stalkgithub','ghstalk','genshin','stalkgenshin','freefire','ff','stalkff','discord','stalkdiscord','chess','stalkchess','nimegami','nimegamis','animesearch','shinigami','spotify','spotifylyrics','slyrics','tiktokphoto','ttkphoto','searchcode','caricode'],
+  tools:  ['poll','readmore','encode','decode','kalkulator','pick','tourl','tourl2','upload2','upload','pay','tomp4','topng','tovn','2vo','todoc','artinama','igqc','igstoryimg','iqc','ttqc','dafont','dafontdl','lirik','genius','gsmarena','spek','jarak','kbbi','kodepos','bandinghp','comparehp','wilayah','cariwilayah','imei','cekimei','gempa','cuaca','weather','accuweather','prakiraan','checkwa','cekwa','translate','terjemah','tr','qrcode','qr','decodeqr','readqr','ocr','upscale','hd','enhance','ssweb','ss','screenshot','fancytext','fancy','nik','nikinfo','iplookup','ipcek','reverseip','httpheaders','headers','nationalday','hariini','shalat','jadwalshalat','kalendershalat','kshalat','konversitanggal','tanggal','bypass','bypasssfl','bpsfl','drakor','duolingo','npm','resep','steam','play','lk21','lk21trending','lk21search','filmsearch','mcpedl','berita','pinterest','tokopedia','toped','stalktiktok','stalktt','tiktokstalk','roblox','stalkroblox','cekroblox','minecraft','mc','stalkmc','stalkgithub','ghstalk','genshin','stalkgenshin','freefire','ff','stalkff','discord','stalkdiscord','chess','stalkchess','nimegami','nimegamis','animesearch','shinigami','spotify','spotifylyrics','slyrics','tiktokphoto','ttkphoto','searchcode','caricode'],
   downloader: ['aio','mediafire','mfdl','likee','likeedl','moddroid','moddroiddl','facebook','fbdl','fb','tgsticker','telesticker','spotify','spotifydl','soundcloud','scdl','sfilemobi','sfile','sfileco','rednote','xiaohongshu','xhs','reddit','redditdl','twitter','twit','xdl','tiktok','tiktokdl','ttdl','tt','pinterest','pindl','pin','threads','threadsdl','youtube','ytdl','yt','gdrive','gdrivedl','instagram','igdl','ig','kuaishou','kwai','kuaishoudl'],
   random: ['aceh','kataaceh','batak','katabatak','bijak','china','katachina','dare','tantangan','fakta','faktaunik','fiersa','fiersabesari','jawa','pepatahjawa','katajawa','katabucin','bucin','katasore','sore','minangkabau','minang','kataminang','motivasi','katamotivasi','ngeles','alasan'],
   game:   ['asahotak','toka','hint','nyerah'],
@@ -163,10 +164,31 @@ const CAT_ALIAS = {
 
 module.exports = async function infoHandler(ctx) {
   if (!ctx.isCmd) return false;
-  const { command, args, reply, react, botData, client, sock, jid, sender, isGroup } = ctx;
+  const { command, args, reply, react, botData, client, sock, jid, sender, isGroup, msg } = ctx;
   const p = botData.prefix;
 
   switch (command) {
+    // ── memory — RAM usage bot ──────────────────────────────────────────────
+    case 'memory': {
+      const mem   = process.memoryUsage();
+      const used  = Math.round(mem.heapUsed / 1024 / 1024);
+      const total = Math.round(mem.heapTotal / 1024 / 1024);
+      const rss   = Math.round(mem.rss / 1024 / 1024);
+      await reply(
+        `🧠 *Memory Bot*\n\n` +
+        `Heap Used  : *${used} MB*\n` +
+        `Heap Total : *${total} MB*\n` +
+        `RSS        : *${rss} MB*`
+      );
+      return true;
+    }
+
+    // ── runtime — uptime proses bot ─────────────────────────────────────────
+    case 'runtime': {
+      await reply(`⏱️ *Runtime Bot*\n\n${formatUptime(Date.now() - START_TIME)}`);
+      return true;
+    }
+
     case 'ping': {
       const start = Date.now();
       await react('⏱️');
@@ -335,6 +357,29 @@ module.exports = async function infoHandler(ctx) {
       return true;
     }
 
+    // ── react — kasih emoji reaction ke pesan yang di-reply ─────────────────
+    case 'react': {
+      const emoji = args[0]?.trim();
+      if (!emoji) { await reply(`Penggunaan: ${p}react <emoji>\nContoh: ${p}react 🔥`); return true; }
+      const quotedKey = msg.message?.extendedTextMessage?.contextInfo;
+      if (!quotedKey?.stanzaId) { await reply(`Reply pesan yang ingin di-react, lalu ketik ${p}react <emoji>`); return true; }
+      try {
+        await client.message.send(jid, {
+          type: 'reaction',
+          target: {
+            id:          quotedKey.stanzaId,
+            remoteJid:   jid,
+            fromMe:      false,
+            participant: quotedKey.participant,
+          },
+          emoji,
+        });
+      } catch (e) {
+        await reply(`❌ Gagal react: ${e.message}`);
+      }
+      return true;
+    }
+
     case 'carifitur': {
       const q = args.join(' ').toLowerCase();
       if (!q) { await reply(`Penggunaan: ${p}carifitur <nama command>`); return true; }
@@ -359,7 +404,7 @@ module.exports = async function infoHandler(ctx) {
           'SELECT name, lim, premium FROM rpg_members WHERE bot_id = ? AND jid = ? AND registered = 1 LIMIT 1',
           [botData.id, sender]
         );
-        if (!rows[0]) { await reply(`❌ Kamu belum terdaftar. Ketik *${p}daftar* untuk daftar.`); return true; }
+        if (!rows[0]) { await reply(`❌ Kamu belum punya profil RPG.\nKetik *${p}uptname <nama>* untuk mulai (profil dibuat otomatis).`); return true; }
         const { name, lim, premium } = rows[0];
         const isPrem = premium === 1;
         const defLimit = parseInt(process.env.DEFAULT_LIMIT || '20', 10);
@@ -385,5 +430,5 @@ module.exports = async function infoHandler(ctx) {
 
 // Command yang kena limit untuk user biasa
 module.exports.limitedCmds = new Set([
-  'limit',
+  'limit','react',
 ]);
