@@ -1156,6 +1156,61 @@ module.exports = async function ownerHandler(ctx) {
       return true;
     }
 
+    // ── test2 — coba: thumbnail GEDE (bukan 72px) di location header ──────
+    // `genThumbnail` bawaan ngecilin ke 72x72; di sini ukurannya dari arg supaya
+    // kelihatan WA mau nampilin sebesar apa. Pakai: .test2 300
+    // Ukuran di-cache per proses — ganti angka = resize ulang, sama = pakai cache.
+    case 'test2': {
+      if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }
+      try {
+        await react(mess.reactLoading);
+        const size = Math.min(Math.max(parseInt(args[0], 10) || 300, 72), 640);
+        const src  = botData.banner_url || process.env.BANNER_DEFAULT;
+        let thumb  = null;
+        if (src) {
+          const fs   = require('fs');
+          const path = require('path');
+          const file = path.resolve(src);
+          if (fs.existsSync(file)) {
+            const sharp = require('sharp');
+            thumb = await sharp(fs.readFileSync(file))
+              .resize(size, size, { fit: 'inside' })
+              .jpeg({ quality: 60 })
+              .toBuffer();
+          }
+        }
+        await reply(
+          `🧪 *TEST2* — thumbnail ${size}px\n` +
+          `sumber : ${src || '(kosong)'}\n` +
+          `bytes  : ${thumb ? thumb.length : 0}\n\n` +
+          `Cek: gambarnya sebesar apa di bubble tombol ini?`
+        );
+        await sock.message.send(jid, {
+          buttonsMessage: {
+            buttons: [
+              { buttonId: 'test2_a', buttonText: { displayText: 'Tombol 1' }, type: 1 },
+              { buttonId: 'test2_b', buttonText: { displayText: 'Tombol 2' }, type: 1 },
+            ],
+            locationMessage: {
+              degreesLatitude:  -6.2,
+              degreesLongitude: 106.816666,
+              name:    `Thumbnail ${size}px`,
+              address: 'Header location — cek besar gambarnya',
+              ...(thumb ? { jpegThumbnail: thumb } : {}),
+            },
+            contentText: 'Bandingkan dengan `.btntest` (thumbnail 72px).',
+            footerText:  botData.footer_text || 'Powered by YaaParBot',
+            headerType:  6, // LOCATION
+          },
+        });
+        await react(mess.reactSuccess);
+      } catch (e) {
+        await react(mess.reactError);
+        await reply(`❌ Gagal: ${e.message}`);
+      }
+      return true;
+    }
+
     case 'setqris': {
       if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }
 
