@@ -319,8 +319,9 @@ module.exports = async function infoHandler(ctx) {
         `Nama Bot : ${botData.bot_name}\n` +
         `* Nama user    : ${namaUser}\n` +
         `* role    : ${role}\n` +
-        `* Limit    : ${limitTxt}\n\n` +
-        `${RM}\n` +
+        `* Limit    : ${limitTxt}\n` +
+        `${RM}` +
+        `\n╭───≪〔 📋  LIST MENU  〕≫───╮\n` +
         `${catList}\n\n` +
         `*_${botData.footer_text || 'Powered by YaaParBot'}_*`;
 
