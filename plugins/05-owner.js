@@ -1295,65 +1295,54 @@ module.exports = async function ownerHandler(ctx) {
     // tombol download), BUKAN media yang ditampilkan. Yang render cuma:
     //   • image message beneran (upload)            → mode default di bawah
     //   • ContextInfo.externalAdReply (kartu link)  → mode `ad`
-    //   • LocationMessage.jpegThumbnail             → preview peta, kecil
-    //   .test4    → kirim assets/banner.jpg sebagai gambar asli (upload)
-    //   .test4 ad → kartu externalAdReply pakai thumbnail banner yang sama
+    //   .test4    → 1 bubble: teks + tombol interaktif + kartu thumbnail banner
+    //   .test4 ad → sama, tapi pakai contextInfo.raw.externalAdReply
     // Mode `head` (buttonsMessage headerType IMAGE) dibuang — terbukti invisible.
+    // Gambar banner GEDE + tombol dalam 1 bubble: nggak bisa. Upload media cuma
+    // ada di jalur `type:'image'`, dan image message nggak punya field tombol.
+    // `InteractiveMessage.Header.imageMessage` ada di proto tapi zapo-js nggak
+    // punya API upload buat ngisi url/directPath/mediaKey-nya (`prepareWAMessageMedia`
+    // nggak ada). Diuji berulang: header media = bubble polos.
     case 'test4': {
       if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }
       try {
         await react(mess.reactLoading);
-        const a   = (args || []).map((x) => String(x).toLowerCase());
-        const src = path.resolve('assets/banner.jpg'); // Pak: ambil dari assets/banner.jpg
-        const raw = fs.readFileSync(src);
-        const kb  = Math.round(raw.length / 1024);
+        const a    = (args || []).map((x) => String(x).toLowerCase());
+        const src  = path.resolve('assets/banner.jpg'); // Pak: ambil dari assets/banner.jpg
+        const raw  = fs.readFileSync(src);
+        const kb   = Math.round(raw.length / 1024);
+        const thumb = await genThumbnail(raw, 'image/jpeg');
 
-        if (a.includes('ad')) {
-          // Kartu preview. externalAdReply WAJIB lewat contextInfo.raw —
-          // buildContextInfoProto() zapo-js cuma kenal whitelist field
-          // (stanzaId/quotedMessage/mentionedJid/dst), dikirim flat = di-DROP
-          // diam-diam. (dibuktiin _t6.js, fix 2b172ce)
-          const thumb = await genThumbnail(raw, 'image/jpeg');
-          await client.message.send(jid, {
-            type: 'text',
-            text: 'Kartu preview — externalAdReply ' + kb + 'KB.',
-            contextInfo: {
-              raw: {
-                externalAdReply: {
-                  title:                 botData.botName || 'Bot',
-                  body:                  'banner ' + kb + 'KB',
-                  thumbnail:             thumb,
-                  mediaType:             1,
-                  renderLargerThumbnail: true,
-                  sourceUrl:             'https://yapari.web.id/',
-                },
-              },
+        // Tombol interaktif = jalur yang jalan di WA biasa (.menu produksi pakai ini).
+        const btn = {
+          name: 'quick_reply',
+          buttonParamsJson: JSON.stringify({ display_text: '📋 All Menu', id: 'btn_all' }),
+        };
+
+        // Kartu thumbnail banner nempel di bubble yang SAMA. externalAdReply WAJIB
+        // lewat contextInfo.raw — buildContextInfoProto() zapo-js whitelist-only,
+        // dikirim flat = di-DROP diam-diam (dibuktiin _t6.js, fix 2b172ce).
+        const ctxInfo = {
+          raw: {
+            externalAdReply: {
+              title:                 a.includes('ad') ? `banner ${kb}KB (mode ad)` : 'assets/banner.jpg',
+              body:                  `${kb}KB — thumbnail ${thumb.length}B`,
+              thumbnail:             thumb,
+              mediaType:             1,
+              renderLargerThumbnail: true,
+              sourceUrl:             'https://yapari.web.id/',
             },
-          });
-        } else {
-          // Gambar + caption + tombol. Satu bubble TIDAK bisa: WA nggak render
-          // header media di interactiveMessage (diuji 7dbcd27 + .test4: upload
-          // sukses, bubble polos) dan buttonsMessage header media = invisible.
-          // Jadi bentuk yang jalan = 2 bubble, sama seperti .menu produksi.
-          await client.message.send(jid, {
-            type:     'image',
-            media:    raw,
-            mimetype: 'image/jpeg',
-            caption:  `🖼️ *assets/banner.jpg* — ${kb}KB\n\nIni bubble 1: gambar + caption.\nTombol di bubble 2.`,
-          });
-          await client.message.send(jid, {
-            buttonsMessage: {
-              contentText: 'Pilih menu di bawah ini 👇',
-              footerText:  botData.footer_text || 'Powered by YaaParBot',
-              headerType:  proto.Message.ButtonsMessage.HeaderType.TEXT,
-              text:        `📋 *Menu ${botData.bot_name}*`,
-              buttons: [
-                { buttonId: 'btn_all',   buttonText: { displayText: '📋 All Menu' }, type: proto.Message.ButtonsMessage.Button.Type.RESPONSE },
-                { buttonId: 'btn_owner', buttonText: { displayText: '👑 Owner'    }, type: proto.Message.ButtonsMessage.Button.Type.RESPONSE },
-              ],
-            },
-          });
-        }
+          },
+        };
+
+        await client.message.send(jid, {
+          interactiveMessage: {
+            body:   { text: `📋 *Menu ${botData.bot_name || 'Bot'}*\n\nKartu thumbnail di atas — kalau render, ini gambar kecil bukan banner gede.` },
+            footer: { text: botData.footer_text || 'Powered by YaaParBot' },
+            nativeFlowMessage: { buttons: [btn] },
+          },
+          contextInfo: ctxInfo,
+        });
         await react(mess.reactSuccess);
       } catch (e) {
         await react(mess.reactError);
