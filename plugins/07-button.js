@@ -27,14 +27,8 @@ module.exports = async function buttonHandler(ctx) {
         await reply('🏓 *Pong!* — Bot aktif & responsif.');
         return true;
       case 'btn_menu':
-        await reply(
-          '📋 *Menu Utama*\n\n' +
-          '• `.menu` — Lihat semua command\n' +
-          '• `.ping` — Cek status bot\n' +
-          '• `.info` — Info bot & owner\n' +
-          '• `.button` — Tampilkan tombol ini lagi'
-        );
-        return true;
+        // Reuse handler .menu — tampilan, kategori, dan audio ikut tersinkron
+        return await require('./01-info')({ ...ctx, isCmd: true, command: 'menu', args: [] });
       case 'btn_info':
         await reply(
           '🤖 *YaaParBot v1.0.0*\n\n' +
@@ -43,11 +37,8 @@ module.exports = async function buttonHandler(ctx) {
         );
         return true;
       case 'btn_owner':
-        await reply(
-          '👑 *Owner:* ' + (ctx.botData?.owner_name || ctx.botData?.owner_number || 'owner') + '\n\n' +
-          'Hubungi owner untuk upgrade, sewa bot, atau custom fitur.'
-        );
-        return true;
+        // Reuse handler .owner — kirim kartu kontak, bukan teks doang
+        return await require('./01-info')({ ...ctx, isCmd: true, command: 'owner', args: [] });
 
       // ── Default — echo buttonId ───────────────────────────────────────────────
       default:

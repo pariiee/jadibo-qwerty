@@ -6,6 +6,7 @@
  */
 
 const os = require('os');
+const { proto } = require('zapo-js');
 const { genThumbnail } = require('../engine/thumbnail');
 
 const START_TIME = Date.now();
@@ -198,8 +199,9 @@ module.exports = async function infoHandler(ctx) {
     }
 
     case 'menu': {
-      const role = ctx.isOwner ? 'Owner' : (ctx.isAdmin ? 'Admin' : 'User');
-      const botNum = (botData.bot_number || botData.owner_number || '-').replace(/\D/g, '') || '-';
+      const role = ctx.isOwner ? 'Owner'
+        : ctx.isPremium ? 'Premium'
+        : ctx.isAdmin ? 'Admin' : 'Free';
 
       const catKey = (args[0] || '').toLowerCase();
       const showCat = CAT_ALIAS[catKey] || (CATS[catKey] ? catKey : null);
@@ -234,27 +236,61 @@ module.exports = async function infoHandler(ctx) {
         return true;
       }
 
-      // ── Menu utama: header + deskripsi + kategori ────────────────────────
-      const header =
-        `╭┈〔 𝘽𝙊𝙏 〕\n` +
-        `┊ ◈ *Name*   › ${botData.bot_name}\n` +
-        `┊ ◈ *Number* › ${botNum}\n` +
-        `┊ ◈ *Access* › ${role}\n` +
-        `╰┈┈┈┈┈┈┈┈`;
+      // ── Menu utama: sapaan + info user + kategori ────────────────────────
+      // Nilai bawaan dulu (pushName + limit default) — dipakai kalau DB mati
+      let namaUser = ctx.pushName || 'User';
+      let limUser  = null;
+      const maxLim = botData.daily_limit || parseInt(process.env.DEFAULT_LIMIT || '20', 10);
+      try {
+        const { pool } = require('../config/database');
+        const [rows] = await pool.execute(
+          'SELECT name, lim FROM rpg_members WHERE bot_id = ? AND jid = ? LIMIT 1',
+          [botData.id, sender]
+        );
+        if (rows[0]) { namaUser = rows[0].name || namaUser; limUser = rows[0].lim; }
+      } catch { /* DB opsional — menu tetap terkirim */ }
+      // Owner sudah otomatis terdaftar di engine, tapi user biasa juga dibuat
+      // saat kirim pesan — jadi limit hampir selalu ada. Fallback: tampilkan max.
+      const limitTxt = `${limUser ?? maxLim}/${maxLim}`;
 
-      const desc = `📝 *${botData.description || process.env.DESC_DEFAULT || 'Bot WhatsApp serbaguna'}*`;
+      // Waktu WIB (Asia/Jakarta) — jangan andalkan TZ server
+      const wib = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Asia/Jakarta', hour12: false, weekday: 'long',
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
+      }).formatToParts(new Date());
+      const wp = (t) => wib.find(x => x.type === t)?.value || '';
+      const HARI = { Sunday: 'Minggu', Monday: 'Senin', Tuesday: 'Selasa', Wednesday: 'Rabu',
+                     Thursday: 'Kamis', Friday: 'Jumat', Saturday: 'Sabtu' };
+      const jamWib = parseInt(wp('hour'), 10);
+      const sapaan = jamWib < 4 ? 'SELAMAT MALAM'
+        : jamWib < 11 ? 'SELAMAT PAGI'
+        : jamWib < 15 ? 'SELAMAT SIANG'
+        : jamWib < 18 ? 'SELAMAT SORE' : 'SELAMAT MALAM';
 
       const catList =
-        `┌─────────────────────────────────\n` +
-        `│  \u{1D648}\u{1D640}\u{1D649}\u{1D650} \u{1D63E}\u{1D63C}\u{1D64F}\u{1D640}\u{1D642}\u{1D64A}\u{1D64D}\u{1D644}\n` +
+        `\u{1D648}\u{1D640}\u{1D649}\u{1D650} \u{1D63E}\u{1D63C}\u{1D64F}\u{1D640}\u{1D642}\u{1D64A}\u{1D64D}\u{1D644}\n` +
         `├─────────────────────────────────\n` +
-        Object.keys(CATS).map(k =>
-          `│  ${k}`).join('\n') +
+        Object.keys(CATS).map(k => `│  ${k}`).join('\n') +
         `\n╰─────────────────────────────────\n\n` +
         `📌 *Note:* ketik *${p}menu <kategori>* untuk lihat isinya.\n` +
-        `Contoh: *${p}menu downloader* — semua command: *${p}menu all*\n\n` +
+        `Contoh: *${p}menu downloader* — semua command: *${p}menu all*`;
+
+      const caption =
+        `╭ • *🧾  ${sapaan}* • ─\n` +
+        `│  🗓️ Hari : ${HARI[wp('weekday')] || wp('weekday')}\n` +
+        `│  📅 Tanggal : ${wp('day')}/${wp('month')}/${wp('year')}\n` +
+        `│  ⏰ Waktu : ${wp('hour')}:${wp('minute')}:${wp('second')} WIB\n\n` +
+        `Hi ${namaUser}\n` +
+        `"my name is ${botData.bot_name} and I'm here to help you. Feel free to choose a menu or type a command you need."\n\n` +
+        `⪻───≪〔 INFO  〕≫───⪼\n` +
+        `Nama Bot : ${botData.bot_name}\n` +
+        `* Nama user    : ${namaUser}\n` +
+        `* role    : ${role}\n` +
+        `* Limit    : ${limitTxt}\n\n` +
+        `${RM}\n` +
+        `${catList}\n\n` +
         `> _${botData.footer_text || 'Powered by YaaParBot'}_`;
-      const caption = `${header}\n\n${desc}\n\n${RM}\n${catList}`;
 
       if (botData.banner_url || process.env.BANNER_DEFAULT) {
         const bannerSrc = botData.banner_url || null;
@@ -309,6 +345,24 @@ module.exports = async function infoHandler(ctx) {
       } else {
         await reply(caption);
       }
+
+      // ── Tombol [menu] [owner] — bubble terpisah ──────────────────────────
+      // Tombol WA tidak bisa menempel di gambar: zapo-js tidak upload
+      // header gambar pada buttonsMessage (lihat encode/media-payload.js).
+      try {
+        await client.message.send(jid, {
+          buttonsMessage: {
+            contentText: 'Pilih menu di bawah ini 👇',
+            footerText:  botData.footer_text || 'Powered by YaaParBot',
+            headerType:  proto.Message.ButtonsMessage.HeaderType.TEXT,
+            text:        `📋 *Menu ${botData.bot_name}*`,
+            buttons: [
+              { buttonId: 'btn_menu',  buttonText: { displayText: '📋 Menu'  }, type: proto.Message.ButtonsMessage.Button.Type.RESPONSE },
+              { buttonId: 'btn_owner', buttonText: { displayText: '👑 Owner' }, type: proto.Message.ButtonsMessage.Button.Type.RESPONSE },
+            ],
+          },
+        });
+      } catch { /* tombol opsional — menu tetap terkirim */ }
 
       // ── Audio default (opsional) — voice note bareng menu ────────────────
       // Terima apa saja: .mp3/.m4a/.wav/.ogg atau URL. Yang bukan ogg/opus
