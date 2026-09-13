@@ -56,47 +56,43 @@ module.exports = async function buttonHandler(ctx) {
     }
   }
   // ═══════════════════════════════════════════════════════════════════════════════
-  // 2b. TANGKAP NATIVE-FLOW RESPONSE (dropdown single_select)
+  // 2b. TANGKAP RESPON TOMBOL/LIST — satu handler untuk dua bentuk respons
+  //     (interactiveResponseMessage native-flow & listResponseMessage lama).
+  //     Tambah baris baru cukup di sini; dulu ada 2 switch kembar yang harus
+  //     diubah dua kali, dan lupa satu bikin baris jatuh ke default.
   // ═══════════════════════════════════════════════════════════════════════════════
+  const handleRowId = async (rowId) => {
+    if (!rowId) return false;
+    // Baris dropdown `.menu` → re-dispatch `.menu <kategori>` (handler yang sama)
+    const cat = /^menu_cat:(\w+)$/.exec(rowId);
+    if (cat) return await require('./01-info')({ ...ctx, isCmd: true, command: 'menu', args: [cat[1]] });
+
+    switch (rowId) {
+      case 'lst_ping': await reply('🏓 Pong!'); return true;
+      case 'lst_menu': await reply('📋 Ketik `.menu` untuk daftar command.'); return true;
+      case 'lst_info':
+        await reply('🤖 *YaaParBot* — multi-bot WhatsApp + Telegram gateway.');
+        return true;
+      case 'btn_menu':
+        return await require('./01-info')({ ...ctx, isCmd: true, command: 'menu', args: [] });
+      case 'btn_owner':
+        return await require('./01-info')({ ...ctx, isCmd: true, command: 'owner', args: [] });
+      default:
+        await reply(`✅ Opsi *"${rowId}"* dipilih.`);
+        return true;
+    }
+  };
+
   if (message?.interactiveResponseMessage) {
     let rowId = '';
     try {
       rowId = JSON.parse(message.interactiveResponseMessage.nativeFlowResponseMessage?.paramsJson || '{}').id || '';
     } catch { /* paramsJson bukan JSON valid */ }
-    if (!rowId) return false;
-    switch (rowId) {
-      case 'lst_ping': await reply('🏓 Pong!'); return true;
-      // Baris dari dropdown list di `.menu` (native flow single_select)
-      case 'btn_menu':  return await require('./01-info')({ ...ctx, isCmd: true, command: 'menu', args: [] });
-      case 'btn_owner': return await require('./01-info')({ ...ctx, isCmd: true, command: 'owner', args: [] });
-      case 'menu_all':  return await require('./01-info')({ ...ctx, isCmd: true, command: 'menu', args: ['all'] });
-      case 'lst_menu': await reply('📋 Ketik `.menu` untuk daftar command.'); return true;
-      case 'lst_info':
-        await reply('🤖 *YaaParBot* — multi-bot WhatsApp + Telegram gateway.');
-        return true;
-      default:
-        await reply(`✅ Opsi *"${rowId}"* dipilih.`);
-        return true;
-    }
+    return await handleRowId(rowId);
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════════
-  // 3. TANGKAP LIST RESPONSE (pilih opsi list menu)
-  // ═══════════════════════════════════════════════════════════════════════════════
   if (message?.listResponseMessage) {
-    const rowId = message.listResponseMessage.singleSelectReply?.selectedRowId || '';
-
-    switch (rowId) {
-      case 'lst_ping': await reply('🏓 Pong!'); return true;
-      // Baris dari dropdown list di `.menu` (native flow single_select)
-      case 'btn_menu':  return await require('./01-info')({ ...ctx, isCmd: true, command: 'menu', args: [] });
-      case 'btn_owner': return await require('./01-info')({ ...ctx, isCmd: true, command: 'owner', args: [] });
-      case 'menu_all':  return await require('./01-info')({ ...ctx, isCmd: true, command: 'menu', args: ['all'] });
-      case 'lst_menu': await reply('📋 Ketik `.menu` untuk daftar command.'); return true;
-      default:
-        await reply(`✅ Opsi *"${rowId}"* dipilih dari list menu.`);
-        return true;
-    }
+    return await handleRowId(message.listResponseMessage.singleSelectReply?.selectedRowId || '');
   }
 
   // ═══════════════════════════════════════════════════════════════════════════════

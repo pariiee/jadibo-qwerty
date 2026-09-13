@@ -292,15 +292,48 @@ module.exports = async function infoHandler(ctx) {
 
       // ── Kirim menu + tombol LIST dalam SATU bubble ───────────────────────
       // interactiveMessage + nativeFlowMessage single_select = tombol dropdown
-      // (list button), bukan baris teks. Satu tombol saja: "Pilih Menu ▾".
+      // (list button). Isi barisnya = kategori menu asli (CATS), jadi pilih
+      // "downloader" → langsung daftar command kategori itu.
+      // Banner didukung: InteractiveMessage.Header punya imageMessage +
+      // jpegThumbnail, jadi banner masuk lewat upload manual (zapo-js tidak
+      // auto-upload media di dalam interactiveMessage). Thumbnail WAJIB —
+      // tanpa itu header image ditolak. hasMediaAttachment: true + headerType.
       // Pilihan baris masuk sebagai interactiveResponseMessage → paramsJson.id
       // (ditangkap di plugin 07-button bagian 2b).
-      // header.hasMediaAttachment: false → header cuma judul, tidak bawa gambar
-      // (banner tidak ikut; pakai header IMAGE kalau mau banner, tapi bubble jadi 2).
+      let bannerHeader = { title: `🎛️ ${botData.bot_name || 'YaaParBot'}`, hasMediaAttachment: false };
+      try {
+        const fs   = require('fs');
+        const path = require('path');
+        const src  = String(botData.banner_url || process.env.BANNER_DEFAULT || '');
+        if (src) {
+          const buf = /^https?:\/\//i.test(src)
+            ? Buffer.from((await require('axios').get(src, { responseType: 'arraybuffer', timeout: 15000 })).data)
+            : fs.readFileSync(path.resolve(src));
+          const uploaded = await client.message.upload(buf, { type: 'image', mimetype: 'image/jpeg' });
+          const thumb = await require('../engine/thumbnail').genThumbnail(buf, 'image/jpeg');
+          bannerHeader = {
+            title: `🎛️ ${botData.bot_name || 'YaaParBot'}`,
+            subtitle: botData.desc_bot || undefined,
+            hasMediaAttachment: true,
+            imageMessage: {
+              url:               uploaded.url,
+              directPath:        uploaded.directPath,
+              mediaKey:          uploaded.mediaKey,
+              fileSha256:        uploaded.fileSha256,
+              fileEncSha256:     uploaded.fileEncSha256,
+              fileLength:        uploaded.fileLength,
+              mediaKeyTimestamp: uploaded.mediaKeyTimestamp,
+              mimetype:          'image/jpeg',
+            },
+            ...(thumb ? { jpegThumbnail: thumb } : {}),
+          };
+        }
+      } catch { /* banner gagal → header judul saja, menu tetap terkirim */ }
+
       try {
         await client.message.send(jid, {
           interactiveMessage: {
-            header: { title: `🎛️ ${botData.bot_name || 'YaaParBot'}`, hasMediaAttachment: false },
+            header: bannerHeader,
             body: { text: caption },
             footer: { text: botData.footer_text || 'Powered by YaaParBot' },
             nativeFlowMessage: {
@@ -308,15 +341,15 @@ module.exports = async function infoHandler(ctx) {
                 {
                   name: 'single_select',
                   buttonParamsJson: JSON.stringify({
-                    title: 'Pilih Menu ▾',
+                    title: 'Pilih Kategori ▾',
                     sections: [
                       {
-                        title: '🌟 MENU UTAMA',
-                        rows: [
-                          { title: '📋 Menu Utama',     description: 'Daftar semua kategori command', id: 'btn_menu'  },
-                          { title: '👑 Owner',          description: 'Info & kontak owner bot',       id: 'btn_owner' },
-                          { title: '📚 Semua Command',  description: 'Daftar lengkap (.menu all)',    id: 'menu_all'  },
-                        ],
+                        title: '🌟 MENU KATEGORI',
+                        rows: Object.keys(CATS).map(k => ({
+                          title: k,
+                          description: `${CATS[k].length} command`,
+                          id: `menu_cat:${k}`,
+                        })),
                       },
                     ],
                   }),
