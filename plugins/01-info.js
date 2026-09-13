@@ -9,9 +9,6 @@ const os = require('os');
 
 const START_TIME = Date.now();
 
-// cache upload banner header menu (1 entri per proses — banner jarang berubah)
-const _bannerCache = { src: null, media: null };
-
 function formatUptime(ms) {
   const s = Math.floor(ms / 1000);
   const d = Math.floor(s / 86400);
@@ -294,28 +291,14 @@ module.exports = async function infoHandler(ctx) {
         `> _${botData.footer_text || 'Powered by YaaParBot'}_`;
 
       // ── Kirim menu + tombol [menu] [owner] dalam SATU bubble ─────────────
-      // Tombol legacy (type 1) + header IMAGE (headerType 4): banner utuh di
-      // atas tombol, bukan thumbnail. Banner di-upload lewat client.message.upload
-      // lalu field hasil upload ditaruh di buttonsMessage.imageMessage —
-      // zapo-js TIDAK auto-upload media di dalam buttonsMessage, jadi upload
-      // manual ini wajib. Hasil upload di-cache sekali per proses.
+      // Bentuk = persis pola `.test` (plugins/05-owner.js): buttonsMessage
+      // legacy + header locationMessage (headerType 6).
+      // Header itu WAJIB. Tanpa header, WA me-render tombol legacy jadi baris
+      // teks polos ("menu" / "owner"), bukan kotak yang bisa di-tap — itu
+      // sebabnya varian header EMPTY/TEXT kelihatan sama semua.
+      // Konsekuensi: location tidak membawa gambar, jadi banner TIDAK ikut.
       // Klik tombol masuk lewat buttonsResponseMessage.selectedButtonId
-      // (ditangkap di bagian 1 plugin 07-button).
-      let bannerMedia = null;
-      try {
-        const fs   = require('fs');
-        const path = require('path');
-        const src  = String(botData.banner_url || process.env.BANNER_DEFAULT || '');
-        if (src && _bannerCache.src !== src) {
-          const buf = /^https?:\/\//i.test(src)
-            ? Buffer.from((await require('axios').get(src, { responseType: 'arraybuffer', timeout: 15000 })).data)
-            : fs.readFileSync(path.resolve(src));
-          _bannerCache.src   = src;
-          _bannerCache.media = await client.message.upload(buf, { type: 'image', mimetype: 'image/jpeg' });
-        }
-        bannerMedia = _bannerCache.media;
-      } catch { bannerMedia = null; } // banner gagal → kirim tanpa header, tombol tetap jalan
-
+      // (ditangkap di plugin 07-button).
       try {
         await client.message.send(jid, {
           buttonsMessage: {
@@ -323,21 +306,15 @@ module.exports = async function infoHandler(ctx) {
               { buttonId: 'btn_menu',  buttonText: { displayText: '📋 Menu'  }, type: 1 },
               { buttonId: 'btn_owner', buttonText: { displayText: '👑 Owner' }, type: 1 },
             ],
-            ...(bannerMedia ? {
-              imageMessage: {
-                url:                bannerMedia.url,
-                directPath:         bannerMedia.directPath,
-                mediaKey:           bannerMedia.mediaKey,
-                fileSha256:         bannerMedia.fileSha256,
-                fileEncSha256:      bannerMedia.fileEncSha256,
-                fileLength:         bannerMedia.fileLength,
-                mediaKeyTimestamp:  bannerMedia.mediaKeyTimestamp,
-                mimetype:           'image/jpeg',
-              },
-              headerType: 4, // IMAGE
-            } : { headerType: 1 }), // EMPTY
+            locationMessage: {
+              degreesLatitude:  -6.2,
+              degreesLongitude: 106.816666,
+              name:    botData.bot_name,
+              address: botData.footer_text || 'Powered by YaaParBot',
+            },
             contentText: caption,
             footerText:  botData.footer_text || 'Powered by YaaParBot',
+            headerType:  6, // LOCATION
           },
         });
       } catch {
