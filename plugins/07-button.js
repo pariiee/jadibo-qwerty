@@ -66,6 +66,10 @@ module.exports = async function buttonHandler(ctx) {
     if (!rowId) return false;
     switch (rowId) {
       case 'lst_ping': await reply('🏓 Pong!'); return true;
+      // Baris dari dropdown list di `.menu` (native flow single_select)
+      case 'btn_menu':  return await require('./01-info')({ ...ctx, isCmd: true, command: 'menu', args: [] });
+      case 'btn_owner': return await require('./01-info')({ ...ctx, isCmd: true, command: 'owner', args: [] });
+      case 'menu_all':  return await require('./01-info')({ ...ctx, isCmd: true, command: 'menu', args: ['all'] });
       case 'lst_menu': await reply('📋 Ketik `.menu` untuk daftar command.'); return true;
       case 'lst_info':
         await reply('🤖 *YaaParBot* — multi-bot WhatsApp + Telegram gateway.');
@@ -84,6 +88,10 @@ module.exports = async function buttonHandler(ctx) {
 
     switch (rowId) {
       case 'lst_ping': await reply('🏓 Pong!'); return true;
+      // Baris dari dropdown list di `.menu` (native flow single_select)
+      case 'btn_menu':  return await require('./01-info')({ ...ctx, isCmd: true, command: 'menu', args: [] });
+      case 'btn_owner': return await require('./01-info')({ ...ctx, isCmd: true, command: 'owner', args: [] });
+      case 'menu_all':  return await require('./01-info')({ ...ctx, isCmd: true, command: 'menu', args: ['all'] });
       case 'lst_menu': await reply('📋 Ketik `.menu` untuk daftar command.'); return true;
       default:
         await reply(`✅ Opsi *"${rowId}"* dipilih dari list menu.`);

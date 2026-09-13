@@ -290,31 +290,39 @@ module.exports = async function infoHandler(ctx) {
         `${catList}\n\n` +
         `> _${botData.footer_text || 'Powered by YaaParBot'}_`;
 
-      // ── Kirim menu + tombol [menu] [owner] dalam SATU bubble ─────────────
-      // Bentuk = persis pola `.test` (plugins/05-owner.js): buttonsMessage
-      // legacy + header locationMessage (headerType 6).
-      // Header itu WAJIB. Tanpa header, WA me-render tombol legacy jadi baris
-      // teks polos ("menu" / "owner"), bukan kotak yang bisa di-tap — itu
-      // sebabnya varian header EMPTY/TEXT kelihatan sama semua.
-      // Konsekuensi: location tidak membawa gambar, jadi banner TIDAK ikut.
-      // Klik tombol masuk lewat buttonsResponseMessage.selectedButtonId
-      // (ditangkap di plugin 07-button).
+      // ── Kirim menu + tombol LIST dalam SATU bubble ───────────────────────
+      // interactiveMessage + nativeFlowMessage single_select = tombol dropdown
+      // (list button), bukan baris teks. Satu tombol saja: "Pilih Menu ▾".
+      // Pilihan baris masuk sebagai interactiveResponseMessage → paramsJson.id
+      // (ditangkap di plugin 07-button bagian 2b).
+      // header.hasMediaAttachment: false → header cuma judul, tidak bawa gambar
+      // (banner tidak ikut; pakai header IMAGE kalau mau banner, tapi bubble jadi 2).
       try {
         await client.message.send(jid, {
-          buttonsMessage: {
-            buttons: [
-              { buttonId: 'btn_menu',  buttonText: { displayText: '📋 Menu'  }, type: 1 },
-              { buttonId: 'btn_owner', buttonText: { displayText: '👑 Owner' }, type: 1 },
-            ],
-            locationMessage: {
-              degreesLatitude:  -6.2,
-              degreesLongitude: 106.816666,
-              name:    botData.bot_name,
-              address: botData.footer_text || 'Powered by YaaParBot',
+          interactiveMessage: {
+            header: { title: `🎛️ ${botData.bot_name || 'YaaParBot'}`, hasMediaAttachment: false },
+            body: { text: caption },
+            footer: { text: botData.footer_text || 'Powered by YaaParBot' },
+            nativeFlowMessage: {
+              buttons: [
+                {
+                  name: 'single_select',
+                  buttonParamsJson: JSON.stringify({
+                    title: 'Pilih Menu ▾',
+                    sections: [
+                      {
+                        title: '🌟 MENU UTAMA',
+                        rows: [
+                          { title: '📋 Menu Utama',     description: 'Daftar semua kategori command', id: 'btn_menu'  },
+                          { title: '👑 Owner',          description: 'Info & kontak owner bot',       id: 'btn_owner' },
+                          { title: '📚 Semua Command',  description: 'Daftar lengkap (.menu all)',    id: 'menu_all'  },
+                        ],
+                      },
+                    ],
+                  }),
+                },
+              ],
             },
-            contentText: caption,
-            footerText:  botData.footer_text || 'Powered by YaaParBot',
-            headerType:  6, // LOCATION
           },
         });
       } catch {
