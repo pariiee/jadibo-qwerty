@@ -128,6 +128,39 @@ module.exports = async function buttonHandler(ctx) {
       return true;
     }
 
+    // ── .btntest — 3 varian bentuk tombol, buat nunjuk yang paling pas ─────────
+    //  V1 buttonsMessage + header TEXT   (legacy, kotak kiri-kanan klasik)
+    //  V2 buttonsMessage + header EMPTY  (legacy, tanpa header)
+    //  V3 interactiveMessage quick_reply (native-flow, kotak di dalam bubble + ikon)
+    case 'btntest': {
+      const btns = [
+        { buttonId: 'btn_menu',  buttonText: { displayText: '📋 Menu'  }, type: proto.Message.ButtonsMessage.Button.Type.RESPONSE },
+        { buttonId: 'btn_owner', buttonText: { displayText: '👑 Owner' }, type: proto.Message.ButtonsMessage.Button.Type.RESPONSE },
+      ];
+      const variants = [
+        ['V1 — buttonsMessage + header TEXT', { buttonsMessage: { contentText: 'V1', footerText: 'test', headerType: proto.Message.ButtonsMessage.HeaderType.TEXT, text: '🤖 *V1*', buttons: btns } }],
+        ['V2 — buttonsMessage + header EMPTY', { buttonsMessage: { contentText: 'V2', footerText: 'test', headerType: proto.Message.ButtonsMessage.HeaderType.EMPTY, buttons: btns } }],
+        ['V3 — interactiveMessage quick_reply', { interactiveMessage: {
+            body:   { text: 'V3' },
+            footer: { text: 'test' },
+            nativeFlowMessage: {
+              buttons: [
+                { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: '📋 Menu',  id: 'btn_menu'  }) },
+                { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: '👑 Owner', id: 'btn_owner' }) },
+              ],
+              messageParamsJson: '{}',
+            },
+          } }],
+      ];
+      for (const [label, payload] of variants) {
+        await reply(`▶️ *${label}*`);
+        await client.message.send(jid, payload);
+        await new Promise(r => setTimeout(r, 1200));
+      }
+      await reply('☝️ Balas nomor varian yang bentuknya paling pas (1/2/3).');
+      return true;
+    }
+
     // ── .listbtn — dropdown native-flow (single_select) + CTA, buat test di grup ─
     case 'listbtn': {
       try {
