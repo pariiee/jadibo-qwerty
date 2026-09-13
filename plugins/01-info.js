@@ -362,7 +362,8 @@ module.exports = async function infoHandler(ctx) {
       // DEBUG sementara: bikin kelihatan di `pm2 logs` apakah jalur banner jalan.
       console.log(`[menu] MENU_BANNER=${process.env.MENU_BANNER || '(off)'} banner_url=${botData.banner_url || '(kosong)'} ` +
                   `BANNER_DEFAULT=${process.env.BANNER_DEFAULT || '(kosong)'} → header=${JSON.stringify(Object.keys(bannerHeader))} ` +
-                  `hasMedia=${bannerHeader.hasMediaAttachment} img=${bannerHeader.imageMessage?.fileLength || 0}B`);
+                  `hasMedia=${bannerHeader.hasMediaAttachment} img=${bannerHeader.imageMessage?.fileLength || 0}B ` +
+                  `thumb=${bannerHeader.jpegThumbnail?.length || 0}B`);
 
       try {
         await client.message.send(jid, {
@@ -567,3 +568,6 @@ module.exports = async function infoHandler(ctx) {
 module.exports.limitedCmds = new Set([
   'limit','react',
 ]);
+
+// Dipakai self-check (tanpa ini helper-nya cuma bisa dites lewat handler penuh).
+module.exports._menuBannerHeader = _menuBannerHeader;
