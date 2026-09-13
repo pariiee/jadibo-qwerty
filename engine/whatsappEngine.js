@@ -211,12 +211,6 @@ function buildContext(client, event, botData) {
           interactiveMessage: {
             body:   { text: full },
             footer: { text: '' },
-            nativeFlowMessage: {
-              buttons: [
-                { name: 'inapp_signup', buttonParamsJson: '{}' },
-              ],
-              messageParamsJson: '{}',
-            },
             contextInfo: {
               participant: '0@s.whatsapp.net',
               quotedMessage: {
