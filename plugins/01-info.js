@@ -47,8 +47,6 @@ async function _menuBannerHeader(client, botData) {
     dim = { width: md.width, height: md.height };
   } catch { /* sharp gagal → tanpa dimensi, masih boleh */ }
   return {
-    title:              `🎛️ ${botData.bot_name || 'YaaParBot'}`,
-    subtitle:           botData.description || undefined,
     hasMediaAttachment: true,
     imageMessage: {
       url:               up.url,
@@ -351,15 +349,20 @@ module.exports = async function infoHandler(ctx) {
       // interactiveMessage + nativeFlowMessage single_select = tombol dropdown
       // (list button). Isi barisnya = kategori menu asli (CATS).
       // Banner: lihat catatan di _menuBannerHeader. Dimatikan by default.
-      let bannerHeader = { title: `🎛️ ${botData.bot_name || 'YaaParBot'}`, hasMediaAttachment: false };
+      const bannerHeader = { hasMediaAttachment: false };
       if (process.env.MENU_BANNER === '1') {
         try {
-          bannerHeader = (await _menuBannerHeader(client, botData)) || bannerHeader;
+          const bh = await _menuBannerHeader(client, botData);
+          if (bh) Object.assign(bannerHeader, bh);
         } catch (e) {
           // Jangan diam — kalau banner gagal, header tampil polos tanpa penjelasan.
           console.error('[menu] banner gagal:', e.message);
         }
       }
+      // DEBUG sementara: bikin kelihatan di `pm2 logs` apakah jalur banner jalan.
+      console.log(`[menu] MENU_BANNER=${process.env.MENU_BANNER || '(off)'} banner_url=${botData.banner_url || '(kosong)'} ` +
+                  `BANNER_DEFAULT=${process.env.BANNER_DEFAULT || '(kosong)'} → header=${JSON.stringify(Object.keys(bannerHeader))} ` +
+                  `hasMedia=${bannerHeader.hasMediaAttachment} img=${bannerHeader.imageMessage?.fileLength || 0}B`);
 
       try {
         await client.message.send(jid, {
