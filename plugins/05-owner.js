@@ -1211,6 +1211,81 @@ module.exports = async function ownerHandler(ctx) {
       return true;
     }
 
+    // ── test3 — Button V2: location header (thumb 300px) + 1 tombol dropdown ─
+    // Salinan kepunyaan Pak: jimp diganti sharp (sudah terpasang, gak usah nambah
+    // dependensi), tombol " MENU" type NATIVE_FLOW pakai nativeFlowInfo
+    // single_select berisi 3 baris (All Menu / Script / Donate).
+    case 'test3': {
+      if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }
+      try {
+        await react(mess.reactLoading);
+        const src = botData.banner_url || process.env.BANNER_DEFAULT;
+        let thumb = null;
+        if (src) {
+          const fs   = require('fs');
+          const path = require('path');
+          const file = path.resolve(src);
+          if (fs.existsSync(file)) {
+            thumb = await require('sharp')(fs.readFileSync(file))
+              .resize(300, 300)
+              .jpeg({ quality: 80 })
+              .toBuffer();
+          }
+        }
+        await sock.message.send(jid, {
+          buttonsMessage: {
+            locationMessage: {
+              degreesLatitude:  0,
+              degreesLongitude: 0,
+              name:    botData.bot_name || 'YaaParBot',
+              address: 'LevviCode',
+              ...(thumb ? { jpegThumbnail: thumb } : {}),
+            },
+            contentText:
+              `乂 *BOT INFORMATION*\n\n` +
+              `*Name* : ${botData.bot_name || 'YaaParBot'}\n` +
+              `*Type* : CJS - Plugin\n` +
+              `*Dev*  : ${botData.owner_name || '-'}\n` +
+              `*Uptime* : ${Math.floor(process.uptime() / 60)} Minute\n\n` +
+              `乂 *USER INFORMATION*\n\n` +
+              `*Name* : ${ctx.pushName || '-'}\n` +
+              `*Number* : +${String(sender).split('@')[0].split(':')[0]}\n` +
+              `*Status* : ${await isOwner(ctx) ? 'Owner' : ctx.isPremium ? 'Premium' : 'Free'}`,
+            footerText: botData.footer_text || 'Powered by YaaParBot',
+            buttons: [
+              {
+                buttonId:   'test3_menu',
+                buttonText: { displayText: ' MENU' },
+                type:       2, // NATIVE_FLOW
+                nativeFlowInfo: {
+                  name: 'single_select',
+                  paramsJson: JSON.stringify({
+                    title: 'Pilih Menu',
+                    sections: [{
+                      title: 'Main Menu',
+                      highlight_label: 'LevviCode',
+                      rows: [
+                        { header: '', title: 'All Menu', description: 'Semua Fitur',      id: '.menu',    highlight_label: 'POPULAR' },
+                        { header: '', title: 'Script',   description: 'Informasi Script', id: '.script',  highlight_label: 'INFO'    },
+                        { header: '', title: 'Donate',   description: 'Support Developer', id: '.donate', highlight_label: 'SUPPORT' },
+                      ],
+                    }],
+                  }),
+                },
+              },
+              { buttonId: 'test3_owner', buttonText: { displayText: ' OWNER' }, type: 1 },
+            ],
+            headerType: 6, // LOCATION
+          },
+        });
+        await react(mess.reactSuccess);
+      } catch (e) {
+        await react(mess.reactError);
+        await reply(`❌ Gagal: ${e.message}`);
+      }
+      return true;
+    }
+
     case 'setqris': {
       if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }
 

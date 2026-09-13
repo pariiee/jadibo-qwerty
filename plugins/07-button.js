@@ -50,6 +50,12 @@ module.exports = async function buttonHandler(ctx) {
         // Reuse handler .owner — kirim kartu kontak, bukan teks doang
         return await require('./01-info')({ ...ctx, isCmd: true, command: 'owner', args: [] });
 
+      // ── .test3 — tombol dropdown " MENU" (nativeFlow single_select) ──────────
+      case 'test3_menu':
+        return await require('./01-info')({ ...ctx, isCmd: true, command: 'menu', args: [] });
+      case 'test3_owner':
+        return await require('./01-info')({ ...ctx, isCmd: true, command: 'owner', args: [] });
+
       // ── Default — echo buttonId ───────────────────────────────────────────────
       default:
         // Button didyoumean (dym:*) bukan urusan plugin ini — biarkan plugin 08 handle
@@ -72,6 +78,8 @@ module.exports = async function buttonHandler(ctx) {
 
     switch (rowId) {
       case 'lst_ping': await reply('🏓 Pong!'); return true;
+      // Baris dropdown .test3 pakai id command langsung ('.menu' dsb)
+      case '.menu':    return await require('./01-info')({ ...ctx, isCmd: true, command: 'menu', args: [] });
       case 'lst_menu': await reply('📋 Ketik `.menu` untuk daftar command.'); return true;
       case 'lst_info':
         await reply('🤖 *YaaParBot* — multi-bot WhatsApp + Telegram gateway.');
