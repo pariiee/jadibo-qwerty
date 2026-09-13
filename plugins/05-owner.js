@@ -1295,13 +1295,10 @@ module.exports = async function ownerHandler(ctx) {
     // tombol download), BUKAN media yang ditampilkan. Yang render cuma:
     //   • image message beneran (upload)            → mode default di bawah
     //   • ContextInfo.externalAdReply (kartu link)  → di-drop di interactiveMessage
-    //   .test4    → 1 bubble: teks + tombol + PREVIEW gambar (nggak bisa diklik/dibuka)
-    //   .test4 ad → sama dengan default (arg diabaikan)
-    // Cara preview: content `{type:'text', text, linkPreview:{...}}` → zapo masuk
-    // jalur buildExtendedTextWithPreview() → extendedTextMessage.jegThumbnail +
-    // title/description/matchedText. Gambarnya thumbnail inline, jadi WA nggak
-    // nyimpen file penuh — nggak bisa di-tap buat dibuka gede. Ini API resmi
-    // (bukan raw proto hack). Butuh `matchedText` = URL di dalam teks.
+    //   .test4    → 1 bubble: preview gambar + tombol (nggak bisa diklik/dibuka)
+    // Tombol dikirim sebagai bubble ke-2 (interactiveMessage quick_reply) — image
+    // dan extendedTextMessage nggak punya field tombol, jadi preview + tombol
+    // memang nggak bisa satu bubble.
     case 'test4': {
       if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }
       try {
@@ -1321,6 +1318,19 @@ module.exports = async function ownerHandler(ctx) {
             title:       `assets/banner.jpg — ${kb}KB`,
             description: 'Preview banner YaaParBot',
             thumbnail:   { bytes: raw, contentLength: raw.length }, // inline, 56KB < 64KB
+          },
+        });
+
+        await client.message.send(jid, {
+          interactiveMessage: {
+            body:   { text: 'Pilih menu di bawah ini 👇' },
+            footer: { text: botData.footer_text || 'Powered by YaaParBot' },
+            nativeFlowMessage: {
+              buttons: [
+                { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: '📋 All Menu', id: 'btn_all'   }) },
+                { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: '👑 Owner',    id: 'btn_owner' }) },
+              ],
+            },
           },
         });
         await react(mess.reactSuccess);
