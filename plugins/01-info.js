@@ -9,8 +9,8 @@ const os = require('os');
 
 const START_TIME = Date.now();
 
-// cache thumbnail banner header menu (1 entri per proses — banner jarang berubah)
-const _bannerThumbCache = { src: null, thumb: null };
+// cache upload banner header menu (1 entri per proses — banner jarang berubah)
+const _bannerCache = { src: null, media: null };
 
 function formatUptime(ms) {
   const s = Math.floor(ms / 1000);
@@ -294,29 +294,27 @@ module.exports = async function infoHandler(ctx) {
         `> _${botData.footer_text || 'Powered by YaaParBot'}_`;
 
       // ── Kirim menu + tombol [menu] [owner] dalam SATU bubble ─────────────
-      // Cermin `case test` (05-owner): buttonsMessage + header locationMessage
-      // (headerType 6) supaya tombol legacy-nya muncul.
-      // jpegThumbnail di header lokasi diisi banner bot (di-resize 200px,
-      // di-cache sekali per proses) — thumbnail ini inline, bukan upload,
-      // jadi zapo-js tidak perlu upload apa pun.
+      // Tombol legacy (type 1) + header IMAGE (headerType 4): banner utuh di
+      // atas tombol, bukan thumbnail. Banner di-upload lewat client.message.upload
+      // lalu field hasil upload ditaruh di buttonsMessage.imageMessage —
+      // zapo-js TIDAK auto-upload media di dalam buttonsMessage, jadi upload
+      // manual ini wajib. Hasil upload di-cache sekali per proses.
       // Klik tombol masuk lewat buttonsResponseMessage.selectedButtonId
       // (ditangkap di bagian 1 plugin 07-button).
-      let thumb = null;
+      let bannerMedia = null;
       try {
         const fs   = require('fs');
         const path = require('path');
-        const { genThumbnail } = require('../engine/thumbnail');
-        const banner = botData.banner_url || process.env.BANNER_DEFAULT;
-        const key = String(banner || '');
-        if (key && _bannerThumbCache.src !== key) {
-          _bannerThumbCache.src = key;
-          const buf = /^https?:\/\//i.test(key)
-            ? Buffer.from((await require('axios').get(key, { responseType: 'arraybuffer', timeout: 15000 })).data)
-            : fs.readFileSync(path.resolve(key));
-          _bannerThumbCache.thumb = await genThumbnail(buf, 'image/jpeg', 200);
+        const src  = String(botData.banner_url || process.env.BANNER_DEFAULT || '');
+        if (src && _bannerCache.src !== src) {
+          const buf = /^https?:\/\//i.test(src)
+            ? Buffer.from((await require('axios').get(src, { responseType: 'arraybuffer', timeout: 15000 })).data)
+            : fs.readFileSync(path.resolve(src));
+          _bannerCache.src   = src;
+          _bannerCache.media = await client.message.upload(buf, { type: 'image', mimetype: 'image/jpeg' });
         }
-        thumb = _bannerThumbCache.thumb;
-      } catch { thumb = null; }
+        bannerMedia = _bannerCache.media;
+      } catch { bannerMedia = null; } // banner gagal → kirim tanpa header, tombol tetap jalan
 
       try {
         await client.message.send(jid, {
@@ -325,16 +323,21 @@ module.exports = async function infoHandler(ctx) {
               { buttonId: 'btn_menu',  buttonText: { displayText: '📋 Menu'  }, type: 1 },
               { buttonId: 'btn_owner', buttonText: { displayText: '👑 Owner' }, type: 1 },
             ],
-            locationMessage: {
-              degreesLatitude:  -6.2,
-              degreesLongitude: 106.816666,
-              name:    botData.bot_name || 'YaaParBot',
-              address: 'Pilih menu di bawah ini 👇',
-              ...(thumb ? { jpegThumbnail: thumb } : {}),
-            },
+            ...(bannerMedia ? {
+              imageMessage: {
+                url:                bannerMedia.url,
+                directPath:         bannerMedia.directPath,
+                mediaKey:           bannerMedia.mediaKey,
+                fileSha256:         bannerMedia.fileSha256,
+                fileEncSha256:      bannerMedia.fileEncSha256,
+                fileLength:         bannerMedia.fileLength,
+                mediaKeyTimestamp:  bannerMedia.mediaKeyTimestamp,
+                mimetype:           'image/jpeg',
+              },
+              headerType: 4, // IMAGE
+            } : { headerType: 1 }), // EMPTY
             contentText: caption,
             footerText:  botData.footer_text || 'Powered by YaaParBot',
-            headerType:  6, // LOCATION
           },
         });
       } catch {
