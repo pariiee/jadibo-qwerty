@@ -9,10 +9,13 @@ const os = require('os');
 
 const START_TIME = Date.now();
 
-// ── Banner untuk header menu (interactiveMessage) ────────────────────────────
-// ponytail: cache in-memory 1 entri per sumber. Banner jarang ganti; kalau nanti
-// banyak bot dengan banner berbeda, ganti ke Map per-src + TTL.
-let _bannerCache = null; // { src, buf, upload: {url,directPath,...} | null }
+// ── Helper: baca banner (dipakai kalau MENU_BANNER diaktifkan) ───────────────
+// Percobaan 7dbcd27 (header.imageMessage + jpegThumbnail) upload-nya SUKSES di
+// VPS tapi HP tetap tampil polos; kemungkinan besar sisi WA/akun yang tidak
+// merender media di header interactiveMessage. Jalur banner dimatikan biar tiap
+// .menu tidak buang upload + 56 KB buffer. Kalau mau coba lagi: MENU_BANNER=1.
+// ponytail: cache in-memory 1 entri; banner jarang ganti.
+let _bannerCache = null; // { src, buf } | null
 
 async function _readBanner(src) {
   if (_bannerCache?.src === src && _bannerCache.buf) return _bannerCache.buf;
@@ -26,16 +29,41 @@ async function _readBanner(src) {
   } else {
     buf = require('fs').readFileSync(require('path').resolve(src));
   }
-  _bannerCache = { ...( _bannerCache?.src === src ? _bannerCache : {}), src, buf, upload: null };
+  _bannerCache = { src, buf };
   return buf;
 }
 
-// Upload sekali per sumber — media di dalam interactiveMessage TIDAK auto-upload.
-async function _bannerUpload(client, buf) {
-  if (_bannerCache?.upload) return _bannerCache.upload;
-  const up = await client.message.upload(buf, { type: 'image', mimetype: 'image/jpeg' });
-  if (_bannerCache) _bannerCache.upload = up;
-  return up;
+// Media di dalam interactiveMessage TIDAK auto-upload (media-payload.js zapo-js
+// cuma scan media di root pesan), jadi upload harus manual.
+async function _menuBannerHeader(client, botData) {
+  const src = String(botData.banner_url || process.env.BANNER_DEFAULT || '');
+  if (!src) return null;
+  const buf = await _readBanner(src);
+  const up  = await client.message.upload(buf, { type: 'image', mimetype: 'image/jpeg' });
+  const thumb = await require('../engine/thumbnail').genThumbnail(buf, 'image/jpeg');
+  let dim = {};
+  try {
+    const md = await require('sharp')(buf).metadata();
+    dim = { width: md.width, height: md.height };
+  } catch { /* sharp gagal → tanpa dimensi, masih boleh */ }
+  return {
+    title:              `🎛️ ${botData.bot_name || 'YaaParBot'}`,
+    subtitle:           botData.description || undefined,
+    hasMediaAttachment: true,
+    imageMessage: {
+      url:               up.url,
+      directPath:        up.directPath,
+      mediaKey:          up.mediaKey,
+      fileSha256:        up.fileSha256,
+      fileEncSha256:     up.fileEncSha256,
+      fileLength:        up.fileLength,
+      mediaKeyTimestamp: up.mediaKeyTimestamp,
+      mimetype:          'image/jpeg',
+      ...dim,
+      ...(thumb ? { jpegThumbnail: thumb } : {}),
+    },
+    ...(thumb ? { jpegThumbnail: thumb } : {}),
+  };
 }
 
 function formatUptime(ms) {
@@ -321,52 +349,16 @@ module.exports = async function infoHandler(ctx) {
 
       // ── Kirim menu + tombol LIST dalam SATU bubble ───────────────────────
       // interactiveMessage + nativeFlowMessage single_select = tombol dropdown
-      // (list button). Isi barisnya = kategori menu asli (CATS), jadi pilih
-      // "downloader" → langsung daftar command kategori itu.
-      // Banner didukung: InteractiveMessage.Header punya imageMessage +
-      // jpegThumbnail, jadi banner masuk lewat upload manual (zapo-js tidak
-      // auto-upload media di dalam interactiveMessage). Thumbnail WAJIB — tanpa
-      // itu header media ditolak/diabaikan. Bentuk imageMessage sengaja dibuat
-      // sama seperti hasil prepareWAMessageMedia Baileys (termasuk
-      // jpegThumbnail + width/height), karena itulah bentuk yang terbukti
-      // dirender jadi gambar header di bot lain.
-      // Pilihan baris masuk sebagai interactiveResponseMessage → paramsJson.id
-      // (ditangkap di plugin 07-button bagian 2b).
+      // (list button). Isi barisnya = kategori menu asli (CATS).
+      // Banner: lihat catatan di _menuBannerHeader. Dimatikan by default.
       let bannerHeader = { title: `🎛️ ${botData.bot_name || 'YaaParBot'}`, hasMediaAttachment: false };
-      try {
-        const src = String(botData.banner_url || process.env.BANNER_DEFAULT || '');
-        if (src) {
-          const buf   = await _readBanner(src);
-          const up    = await _bannerUpload(client, buf);
-          const thumb = await require('../engine/thumbnail').genThumbnail(buf, 'image/jpeg');
-          let dim = {};
-          try {
-            const md = await require('sharp')(buf).metadata();
-            dim = { width: md.width, height: md.height };
-          } catch { /* sharp gagal → tanpa dimensi, masih boleh */ }
-          const img = {
-            url:               up.url,
-            directPath:        up.directPath,
-            mediaKey:          up.mediaKey,
-            fileSha256:        up.fileSha256,
-            fileEncSha256:     up.fileEncSha256,
-            fileLength:        up.fileLength,
-            mediaKeyTimestamp: up.mediaKeyTimestamp,
-            mimetype:          'image/jpeg',
-            ...dim,
-            ...(thumb ? { jpegThumbnail: thumb } : {}),
-          };
-          bannerHeader = {
-            title:              `🎛️ ${botData.bot_name || 'YaaParBot'}`,
-            subtitle:           botData.desc_bot || undefined,
-            hasMediaAttachment: true,
-            imageMessage:       img,
-            ...(thumb ? { jpegThumbnail: thumb } : {}),
-          };
+      if (process.env.MENU_BANNER === '1') {
+        try {
+          bannerHeader = (await _menuBannerHeader(client, botData)) || bannerHeader;
+        } catch (e) {
+          // Jangan diam — kalau banner gagal, header tampil polos tanpa penjelasan.
+          console.error('[menu] banner gagal:', e.message);
         }
-      } catch (e) {
-        // Jangan diam — banner gagal itu penyebab paling sering "header kosong".
-        console.error('[menu] banner gagal:', e.message);
       }
 
       try {
