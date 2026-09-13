@@ -33,10 +33,10 @@ async function _readBanner(src) {
   return buf;
 }
 
-// Banner .menu: dikirim sebagai bubble GAMBAR TERPISAH sebelum bubble menu.
+// Bubble .menu = GAMBAR banner dengan caption = isi menu (`MENU_BANNER=1`).
 // Header `interactiveMessage` tidak dirender WA di klien user (diuji 2026-09-13:
 // upload sukses, header berisi imageMessage 56668 B + thumb 1254 B, bubble tetap
-// polos) — jadi medianya dipindah keluar, bukan dijejalkan ke header.
+// polos) — jadi medianya dipindah ke caption.
 async function _menuBannerHeader(botData) {
   const src = String(botData.banner_url || process.env.BANNER_DEFAULT || '');
   if (!src) return null;
@@ -300,15 +300,9 @@ module.exports = async function infoHandler(ctx) {
         : jamWib < 15 ? 'SELAMAT SIANG'
         : jamWib < 18 ? 'SELAMAT SORE' : 'SELAMAT MALAM';
 
-      const catList =
-        `\u{1D648}\u{1D640}\u{1D649}\u{1D650} \u{1D63E}\u{1D63C}\u{1D64F}\u{1D640}\u{1D642}\u{1D64A}\u{1D64D}\u{1D644}\n` +
-        `├─────────────────────────────────\n` +
-        Object.keys(CATS).map(k => `│  ${k}`).join('\n') +
-        `\n╰─────────────────────────────────\n\n` +
-        `📌 *Note:* ketik *${p}menu <kategori>* untuk lihat isinya.\n` +
-        `Contoh: *${p}menu downloader* — semua command: *${p}menu all*`;
+      const catList = `│  ${Object.keys(CATS).join(' / ')}`;
 
-      const caption =
+      const head =
         `╭ • *🧾  ${sapaan}* • ─\n` +
         `│  🗓️ Hari : ${HARI[wp('weekday')] || wp('weekday')}\n` +
         `│  📅 Tanggal : ${wp('day')}/${wp('month')}/${wp('year')}\n` +
@@ -319,18 +313,24 @@ module.exports = async function infoHandler(ctx) {
         `Nama Bot : ${botData.bot_name}\n` +
         `* Nama user    : ${namaUser}\n` +
         `* role    : ${role}\n` +
-        `* Limit    : ${limitTxt}\n\n` +
-        `${RM}\n` +
+        `* Limit    : ${limitTxt}\n\n`;
+
+      const tail =
         `${catList}\n\n` +
+        `📌 *Note:* ketik *${p}menu <kategori>* untuk lihat isinya.\n` +
+        `Contoh: *${p}menu downloader* — semua command: *${p}menu all*\n\n` +
         `*_${botData.footer_text || 'Powered by YaaParBot'}_*`;
 
-      // Caption gambar dibatasi WA 1024 char: filler readmore dipangkas otomatis
-      // supaya total pas 1024 (lipatan "Read more" tetap muncul, tidak ditolak WA).
-      // Ganti HANYA karakter filler — pemisah baris di `RM` harus tetap, kalau
-      // tidak titik lipatannya bergeser ke baris kosong berikutnya.
-      const captionImg = caption.split(RM).join(
-        '\u200e'.repeat(Math.max(0, 1024 - caption.replace(RM, '').length))
-      );
+      // Pesan TEKS: filler readmore 4001 char (`RM`) — lipatan "Baca selengkapnya"
+      // jatuh persis di bawah baris `Limit`; sisa menu ke bawah cuma kesembunyi.
+      const caption = head + `${RM}\n` + tail;
+
+      // Caption gambar dibatasi WA 1024 char → filler 4001 nggak muat. Sisa jatah
+      // (1024 − head − tail) dipakai buat filler, jadi lipatannya jatuh di titik
+      // yang sama: tepat di bawah baris `Limit`, bukan di baris kategori.
+      const captionImg = head +
+        '\u200e'.repeat(Math.max(0, 1024 - head.length - tail.length - 1)) +
+        '\n' + tail;
 
       // ── Kirim menu dalam SATU bubble ─────────────────────────────────────
       // Bubble = gambar banner (kalau ada) dengan caption = isi menu.
