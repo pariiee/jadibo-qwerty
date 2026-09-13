@@ -324,63 +324,40 @@ module.exports = async function infoHandler(ctx) {
         `${catList}\n\n` +
         `> _${botData.footer_text || 'Powered by YaaParBot'}_`;
 
-      // ── Kirim menu + tombol LIST dalam SATU bubble ───────────────────────
-      // interactiveMessage + nativeFlowMessage single_select = tombol dropdown
-      // (list button). Isi barisnya = kategori menu asli (CATS).
-      // Banner: lihat catatan di _menuBannerHeader. Dimatikan by default.
-      const bannerHeader = { hasMediaAttachment: false };
+      // ── Kirim menu dalam SATU bubble ─────────────────────────────────────
+      // Bubble pertama = gambar banner (kalau ada), dengan caption = isi menu.
+      // Tombol dropdown `nativeFlowMessage.single_select` DIBUANG atas
+      // permintaan Pak; kategori tetap bisa dibuka lewat `.menu <kategori>`.
+      // ponytail: kalau tombol mau balik lagi, `07-button.js` masih punya
+      // handleRowId untuk id `menu_cat:<kategori>`.
       let bannerPesan = null;
       if (process.env.MENU_BANNER === '1') {
         try {
           bannerPesan = await _menuBannerHeader(botData);
         } catch (e) {
-          // Jangan diam — kalau banner gagal, header tampil polos tanpa penjelasan.
+          // Jangan diam — kalau banner gagal, menu tetap terkirim sebagai teks.
           console.error('[menu] banner gagal:', e.message);
         }
       }
       // DEBUG sementara: bikin kelihatan di `pm2 logs` apakah jalur banner jalan.
       console.log(`[menu] MENU_BANNER=${process.env.MENU_BANNER || '(off)'} banner_url=${botData.banner_url || '(kosong)'} ` +
-                  `BANNER_DEFAULT=${process.env.BANNER_DEFAULT || '(kosong)'} → gambar=${bannerPesan ? `${bannerPesan.buf.length}B (kirim sebagai bubble terpisah, header interactive tidak dirender WA)` : '(tidak ada)'}`);
-
-      // Gambar banner = bubble sendiri (pola sama dengan 02-group.js: type/media/mimetype).
-      if (bannerPesan) {
-        try {
-          await client.message.send(jid, { type: 'image', media: bannerPesan.buf, mimetype: 'image/jpeg' });
-        } catch (e) {
-          console.error('[menu] banner gagal dikirim:', e.message);
-        }
-      }
+                  `BANNER_DEFAULT=${process.env.BANNER_DEFAULT || '(kosong)'} → gambar=${bannerPesan ? `${bannerPesan.buf.length}B (caption = menu)` : '(tidak ada)'}`);
 
       try {
-        await client.message.send(jid, {
-          interactiveMessage: {
-            header: bannerHeader,
-            body: { text: caption },
-            footer: { text: botData.footer_text || 'Powered by YaaParBot' },
-            nativeFlowMessage: {
-              buttons: [
-                {
-                  name: 'single_select',
-                  buttonParamsJson: JSON.stringify({
-                    title: 'Pilih Kategori ▾',
-                    sections: [
-                      {
-                        title: '🌟 MENU KATEGORI',
-                        rows: Object.keys(CATS).map(k => ({
-                          title: k,
-                          description: `${CATS[k].length} command`,
-                          id: `menu_cat:${k}`,
-                        })),
-                      },
-                    ],
-                  }),
-                },
-              ],
-            },
-          },
-        });
-      } catch {
-        await reply(caption); // buttons gagal → teks mentah, jangan hilang menunya
+        if (bannerPesan) {
+          // Pola sama dengan 02-group.js: type/media/mimetype/caption.
+          // Filler readmore (4001 char tak terlihat) dibuang: batas caption WA 1024
+          // char, dan trik "Read more" cuma jalan di pesan teks.
+          await client.message.send(jid, {
+            type: 'image', media: bannerPesan.buf, mimetype: 'image/jpeg',
+            caption: caption.replace(RM, ''),
+          });
+        } else {
+          await client.message.send(jid, { type: 'text', text: caption });
+        }
+      } catch (e) {
+        console.error('[menu] gagal kirim:', e.message);
+        await reply(caption); // jangan hilang menunya
       }
 
       // ── Audio default (opsional) — voice note bareng menu ────────────────
