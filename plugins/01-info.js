@@ -322,10 +322,17 @@ module.exports = async function infoHandler(ctx) {
         `* Limit    : ${limitTxt}\n\n` +
         `${RM}\n` +
         `${catList}\n\n` +
-        `> _${botData.footer_text || 'Powered by YaaParBot'}_`;
+        `*_${botData.footer_text || 'Powered by YaaParBot'}_*`;
+
+      // Caption gambar dibatasi WA 1024 char: filler readmore dipangkas otomatis
+      // supaya total pas 1024 (lipatan "Read more" tetap muncul, tidak ditolak WA).
+      const captionImg = caption.replace(
+        RM,
+        '\u200e'.repeat(Math.max(0, 1024 - caption.replace(RM, '').length))
+      );
 
       // ── Kirim menu dalam SATU bubble ─────────────────────────────────────
-      // Bubble pertama = gambar banner (kalau ada), dengan caption = isi menu.
+      // Bubble = gambar banner (kalau ada) dengan caption = isi menu.
       // Tombol dropdown `nativeFlowMessage.single_select` DIBUANG atas
       // permintaan Pak; kategori tetap bisa dibuka lewat `.menu <kategori>`.
       // ponytail: kalau tombol mau balik lagi, `07-button.js` masih punya
@@ -345,12 +352,11 @@ module.exports = async function infoHandler(ctx) {
 
       try {
         if (bannerPesan) {
-          // Pola sama dengan 02-group.js: type/media/mimetype/caption.
-          // Filler readmore (4001 char tak terlihat) dibuang: batas caption WA 1024
-          // char, dan trik "Read more" cuma jalan di pesan teks.
+          // Caption WA dibatasi 1024 char — filler readmore di atas sudah
+          // dipangkas otomatis di `captionImg` supaya totalnya pas.
           await client.message.send(jid, {
             type: 'image', media: bannerPesan.buf, mimetype: 'image/jpeg',
-            caption: caption.replace(RM, ''),
+            caption: captionImg,
           });
         } else {
           await client.message.send(jid, { type: 'text', text: caption });
