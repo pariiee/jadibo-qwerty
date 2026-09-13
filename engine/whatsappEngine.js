@@ -228,7 +228,6 @@ function buildContext(client, event, botData) {
               quotedMessage: {
                 groupInviteMessage: {
                   groupJid:  '0@g.us',
-                  groupName: botData.bot_name || 'YaaParBot',
                   caption:   'www.yapari.web.id',
                 },
               },
