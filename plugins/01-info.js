@@ -9,6 +9,35 @@ const os = require('os');
 
 const START_TIME = Date.now();
 
+// ── Banner untuk header menu (interactiveMessage) ────────────────────────────
+// ponytail: cache in-memory 1 entri per sumber. Banner jarang ganti; kalau nanti
+// banyak bot dengan banner berbeda, ganti ke Map per-src + TTL.
+let _bannerCache = null; // { src, buf, upload: {url,directPath,...} | null }
+
+async function _readBanner(src) {
+  if (_bannerCache?.src === src && _bannerCache.buf) return _bannerCache.buf;
+  let buf;
+  if (/^https?:\/\//i.test(src)) {
+    // ponytail: tanpa proxy — kalau nanti ada bot di belakang proxy, pindah ke axios
+    // (axios sudah terpasang). fetch bawaan dipakai supaya tidak tambah dependensi.
+    const res = await fetch(src, { signal: AbortSignal.timeout(15000) });
+    if (!res.ok) throw new Error(`banner HTTP ${res.status}`);
+    buf = Buffer.from(await res.arrayBuffer());
+  } else {
+    buf = require('fs').readFileSync(require('path').resolve(src));
+  }
+  _bannerCache = { ...( _bannerCache?.src === src ? _bannerCache : {}), src, buf, upload: null };
+  return buf;
+}
+
+// Upload sekali per sumber — media di dalam interactiveMessage TIDAK auto-upload.
+async function _bannerUpload(client, buf) {
+  if (_bannerCache?.upload) return _bannerCache.upload;
+  const up = await client.message.upload(buf, { type: 'image', mimetype: 'image/jpeg' });
+  if (_bannerCache) _bannerCache.upload = up;
+  return up;
+}
+
 function formatUptime(ms) {
   const s = Math.floor(ms / 1000);
   const d = Math.floor(s / 86400);
@@ -296,39 +325,49 @@ module.exports = async function infoHandler(ctx) {
       // "downloader" → langsung daftar command kategori itu.
       // Banner didukung: InteractiveMessage.Header punya imageMessage +
       // jpegThumbnail, jadi banner masuk lewat upload manual (zapo-js tidak
-      // auto-upload media di dalam interactiveMessage). Thumbnail WAJIB —
-      // tanpa itu header image ditolak. hasMediaAttachment: true + headerType.
+      // auto-upload media di dalam interactiveMessage). Thumbnail WAJIB — tanpa
+      // itu header media ditolak/diabaikan. Bentuk imageMessage sengaja dibuat
+      // sama seperti hasil prepareWAMessageMedia Baileys (termasuk
+      // jpegThumbnail + width/height), karena itulah bentuk yang terbukti
+      // dirender jadi gambar header di bot lain.
       // Pilihan baris masuk sebagai interactiveResponseMessage → paramsJson.id
       // (ditangkap di plugin 07-button bagian 2b).
       let bannerHeader = { title: `🎛️ ${botData.bot_name || 'YaaParBot'}`, hasMediaAttachment: false };
       try {
-        const fs   = require('fs');
-        const path = require('path');
-        const src  = String(botData.banner_url || process.env.BANNER_DEFAULT || '');
+        const src = String(botData.banner_url || process.env.BANNER_DEFAULT || '');
         if (src) {
-          const buf = /^https?:\/\//i.test(src)
-            ? Buffer.from((await require('axios').get(src, { responseType: 'arraybuffer', timeout: 15000 })).data)
-            : fs.readFileSync(path.resolve(src));
-          const uploaded = await client.message.upload(buf, { type: 'image', mimetype: 'image/jpeg' });
+          const buf   = await _readBanner(src);
+          const up    = await _bannerUpload(client, buf);
           const thumb = await require('../engine/thumbnail').genThumbnail(buf, 'image/jpeg');
+          let dim = {};
+          try {
+            const md = await require('sharp')(buf).metadata();
+            dim = { width: md.width, height: md.height };
+          } catch { /* sharp gagal → tanpa dimensi, masih boleh */ }
+          const img = {
+            url:               up.url,
+            directPath:        up.directPath,
+            mediaKey:          up.mediaKey,
+            fileSha256:        up.fileSha256,
+            fileEncSha256:     up.fileEncSha256,
+            fileLength:        up.fileLength,
+            mediaKeyTimestamp: up.mediaKeyTimestamp,
+            mimetype:          'image/jpeg',
+            ...dim,
+            ...(thumb ? { jpegThumbnail: thumb } : {}),
+          };
           bannerHeader = {
-            title: `🎛️ ${botData.bot_name || 'YaaParBot'}`,
-            subtitle: botData.desc_bot || undefined,
+            title:              `🎛️ ${botData.bot_name || 'YaaParBot'}`,
+            subtitle:           botData.desc_bot || undefined,
             hasMediaAttachment: true,
-            imageMessage: {
-              url:               uploaded.url,
-              directPath:        uploaded.directPath,
-              mediaKey:          uploaded.mediaKey,
-              fileSha256:        uploaded.fileSha256,
-              fileEncSha256:     uploaded.fileEncSha256,
-              fileLength:        uploaded.fileLength,
-              mediaKeyTimestamp: uploaded.mediaKeyTimestamp,
-              mimetype:          'image/jpeg',
-            },
+            imageMessage:       img,
             ...(thumb ? { jpegThumbnail: thumb } : {}),
           };
         }
-      } catch { /* banner gagal → header judul saja, menu tetap terkirim */ }
+      } catch (e) {
+        // Jangan diam — banner gagal itu penyebab paling sering "header kosong".
+        console.error('[menu] banner gagal:', e.message);
+      }
 
       try {
         await client.message.send(jid, {
