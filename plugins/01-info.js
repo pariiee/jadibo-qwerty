@@ -18,7 +18,7 @@ const START_TIME = Date.now();
 let _bannerCache = null; // { src, buf } | null
 
 async function _readBanner(src) {
-  if (_bannerCache?.src === src && _bannerCache.buf) return _bannerCache.buf;
+  if (_bannerCache?.src === src) return _bannerCache.buf;
   let buf;
   if (/^https?:\/\//i.test(src)) {
     // ponytail: tanpa proxy — kalau nanti ada bot di belakang proxy, pindah ke axios
@@ -33,35 +33,14 @@ async function _readBanner(src) {
   return buf;
 }
 
-// Media di dalam interactiveMessage TIDAK auto-upload (media-payload.js zapo-js
-// cuma scan media di root pesan), jadi upload harus manual.
-async function _menuBannerHeader(client, botData) {
+// Banner .menu: dikirim sebagai bubble GAMBAR TERPISAH sebelum bubble menu.
+// Header `interactiveMessage` tidak dirender WA di klien user (diuji 2026-09-13:
+// upload sukses, header berisi imageMessage 56668 B + thumb 1254 B, bubble tetap
+// polos) — jadi medianya dipindah keluar, bukan dijejalkan ke header.
+async function _menuBannerHeader(botData) {
   const src = String(botData.banner_url || process.env.BANNER_DEFAULT || '');
   if (!src) return null;
-  const buf = await _readBanner(src);
-  const up  = await client.message.upload(buf, { type: 'image', mimetype: 'image/jpeg' });
-  const thumb = await require('../engine/thumbnail').genThumbnail(buf, 'image/jpeg');
-  let dim = {};
-  try {
-    const md = await require('sharp')(buf).metadata();
-    dim = { width: md.width, height: md.height };
-  } catch { /* sharp gagal → tanpa dimensi, masih boleh */ }
-  return {
-    hasMediaAttachment: true,
-    imageMessage: {
-      url:               up.url,
-      directPath:        up.directPath,
-      mediaKey:          up.mediaKey,
-      fileSha256:        up.fileSha256,
-      fileEncSha256:     up.fileEncSha256,
-      fileLength:        up.fileLength,
-      mediaKeyTimestamp: up.mediaKeyTimestamp,
-      mimetype:          'image/jpeg',
-      ...dim,
-      ...(thumb ? { jpegThumbnail: thumb } : {}),
-    },
-    ...(thumb ? { jpegThumbnail: thumb } : {}),
-  };
+  return { src, buf: await _readBanner(src) };
 }
 
 function formatUptime(ms) {
@@ -350,10 +329,10 @@ module.exports = async function infoHandler(ctx) {
       // (list button). Isi barisnya = kategori menu asli (CATS).
       // Banner: lihat catatan di _menuBannerHeader. Dimatikan by default.
       const bannerHeader = { hasMediaAttachment: false };
+      let bannerPesan = null;
       if (process.env.MENU_BANNER === '1') {
         try {
-          const bh = await _menuBannerHeader(client, botData);
-          if (bh) Object.assign(bannerHeader, bh);
+          bannerPesan = await _menuBannerHeader(botData);
         } catch (e) {
           // Jangan diam — kalau banner gagal, header tampil polos tanpa penjelasan.
           console.error('[menu] banner gagal:', e.message);
@@ -361,9 +340,16 @@ module.exports = async function infoHandler(ctx) {
       }
       // DEBUG sementara: bikin kelihatan di `pm2 logs` apakah jalur banner jalan.
       console.log(`[menu] MENU_BANNER=${process.env.MENU_BANNER || '(off)'} banner_url=${botData.banner_url || '(kosong)'} ` +
-                  `BANNER_DEFAULT=${process.env.BANNER_DEFAULT || '(kosong)'} → header=${JSON.stringify(Object.keys(bannerHeader))} ` +
-                  `hasMedia=${bannerHeader.hasMediaAttachment} img=${bannerHeader.imageMessage?.fileLength || 0}B ` +
-                  `thumb=${bannerHeader.jpegThumbnail?.length || 0}B`);
+                  `BANNER_DEFAULT=${process.env.BANNER_DEFAULT || '(kosong)'} → gambar=${bannerPesan ? `${bannerPesan.buf.length}B (kirim sebagai bubble terpisah, header interactive tidak dirender WA)` : '(tidak ada)'}`);
+
+      // Gambar banner = bubble sendiri (pola sama dengan 02-group.js: type/media/mimetype).
+      if (bannerPesan) {
+        try {
+          await client.message.send(jid, { type: 'image', media: bannerPesan.buf, mimetype: 'image/jpeg' });
+        } catch (e) {
+          console.error('[menu] banner gagal dikirim:', e.message);
+        }
+      }
 
       try {
         await client.message.send(jid, {
