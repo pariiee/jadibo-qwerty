@@ -9,6 +9,9 @@ const os = require('os');
 
 const START_TIME = Date.now();
 
+// cache thumbnail banner header menu (1 entri per proses — banner jarang berubah)
+const _bannerThumbCache = { src: null, thumb: null };
+
 function formatUptime(ms) {
   const s = Math.floor(ms / 1000);
   const d = Math.floor(s / 86400);
@@ -292,11 +295,29 @@ module.exports = async function infoHandler(ctx) {
 
       // ── Kirim menu + tombol [menu] [owner] dalam SATU bubble ─────────────
       // Cermin `case test` (05-owner): buttonsMessage + header locationMessage
-      // (headerType 6). Header LOCATION sengaja dipakai karena dia inline —
-      // zapo-js tidak upload gambar header pada buttonsMessage, jadi
-      // headerType IMAGE bakal render kosong.
+      // (headerType 6) supaya tombol legacy-nya muncul.
+      // jpegThumbnail di header lokasi diisi banner bot (di-resize 200px,
+      // di-cache sekali per proses) — thumbnail ini inline, bukan upload,
+      // jadi zapo-js tidak perlu upload apa pun.
       // Klik tombol masuk lewat buttonsResponseMessage.selectedButtonId
       // (ditangkap di bagian 1 plugin 07-button).
+      let thumb = null;
+      try {
+        const fs   = require('fs');
+        const path = require('path');
+        const { genThumbnail } = require('../engine/thumbnail');
+        const banner = botData.banner_url || process.env.BANNER_DEFAULT;
+        const key = String(banner || '');
+        if (key && _bannerThumbCache.src !== key) {
+          _bannerThumbCache.src = key;
+          const buf = /^https?:\/\//i.test(key)
+            ? Buffer.from((await require('axios').get(key, { responseType: 'arraybuffer', timeout: 15000 })).data)
+            : fs.readFileSync(path.resolve(key));
+          _bannerThumbCache.thumb = await genThumbnail(buf, 'image/jpeg', 200);
+        }
+        thumb = _bannerThumbCache.thumb;
+      } catch { thumb = null; }
+
       try {
         await client.message.send(jid, {
           buttonsMessage: {
@@ -309,6 +330,7 @@ module.exports = async function infoHandler(ctx) {
               degreesLongitude: 106.816666,
               name:    botData.bot_name || 'YaaParBot',
               address: 'Pilih menu di bawah ini 👇',
+              ...(thumb ? { jpegThumbnail: thumb } : {}),
             },
             contentText: caption,
             footerText:  botData.footer_text || 'Powered by YaaParBot',

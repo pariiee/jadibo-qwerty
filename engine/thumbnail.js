@@ -2,9 +2,10 @@
 
 /**
  * engine/thumbnail.js
- * Helper: generate jpegThumbnail (72x72) dari buffer media
+ * Helper: generate jpegThumbnail dari buffer media
  * - image (jpeg/png/webp/dll) → pakai sharp
  * - video (mp4/dll)           → extract frame pertama pakai ffmpeg
+ * `size` = sisi terpanjang (default 72 = thumbnail mini; 200 = header banner).
  * Return: Buffer JPEG kecil, atau null kalau gagal
  */
 
@@ -12,7 +13,7 @@ const os   = require('os');
 const path = require('path');
 const fs   = require('fs');
 
-async function genThumbnail(buffer, mimetype) {
+async function genThumbnail(buffer, mimetype, size = 72) {
   try {
     const mime = (mimetype || '').toLowerCase();
 
@@ -20,7 +21,7 @@ async function genThumbnail(buffer, mimetype) {
       // ── Image → sharp resize ──────────────────────────────────────────────
       const sharp = require('sharp');
       return await sharp(buffer)
-        .resize(72, 72, { fit: 'inside' })
+        .resize(size, size, { fit: 'inside' })
         .jpeg({ quality: 70 })
         .toBuffer();
     }
