@@ -36,6 +36,9 @@ module.exports = async function buttonHandler(ctx) {
       case 'btn_menu':
         // Reuse handler .menu — tampilan, kategori, dan audio ikut tersinkron
         return await require('./01-info')({ ...ctx, isCmd: true, command: 'menu', args: [] });
+      case 'btn_all':
+        // "All Menu" → daftar semua command (.menu all), bukan menu utama lagi
+        return await require('./01-info')({ ...ctx, isCmd: true, command: 'menu', args: ['all'] });
       case 'btn_info':
         await reply(
           '🤖 *YaaParBot v1.0.0*\n\n' +

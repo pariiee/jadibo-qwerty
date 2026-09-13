@@ -6,6 +6,7 @@
  */
 
 const os = require('os');
+const { proto } = require('zapo-js');
 
 const START_TIME = Date.now();
 
@@ -366,6 +367,25 @@ module.exports = async function infoHandler(ctx) {
         console.error('[menu] gagal kirim:', e.message);
         await reply(caption); // jangan hilang menunya
       }
+
+      // ── Tombol [menu] [owner] — bubble terpisah ──────────────────────────
+      // Tombol WA tidak bisa menempel di gambar: zapo-js tidak upload header
+      // gambar pada buttonsMessage (lihat encode/media-payload.js) — payload-nya
+      // round-trip aman, tapi WA nggak render. Jadi tombol dikirim bubble sendiri.
+      try {
+        await client.message.send(jid, {
+          buttonsMessage: {
+            contentText: 'Pilih menu di bawah ini 👇',
+            footerText:  botData.footer_text || 'Powered by YaaParBot',
+            headerType:  proto.Message.ButtonsMessage.HeaderType.TEXT,
+            text:        `📋 *Menu ${botData.bot_name}*`,
+            buttons: [
+              { buttonId: 'btn_all',   buttonText: { displayText: '📋 All Menu' }, type: proto.Message.ButtonsMessage.Button.Type.RESPONSE },
+              { buttonId: 'btn_owner', buttonText: { displayText: '👑 Owner'    }, type: proto.Message.ButtonsMessage.Button.Type.RESPONSE },
+            ],
+          },
+        });
+      } catch { /* tombol opsional — menu tetap terkirim */ }
 
       // ── Audio default (opsional) — voice note bareng menu ────────────────
       // Terima apa saja: .mp3/.m4a/.wav/.ogg atau URL. Yang bukan ogg/opus
