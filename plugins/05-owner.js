@@ -1300,6 +1300,14 @@ module.exports = async function ownerHandler(ctx) {
     //   .test4 head → v2: buttonsMessage headerType IMAGE (imageMessage)
     //   .test4 ad   → v3: externalAdReply renderLargerThumbnail
     //   .test4 big [px] → v1 tapi thumbnail-nya px (default 300), gagal kalau kebanyakan
+    // HASIL (diuji Pak 2026-09-13): v1 & v2 nggak nongol gambarnya, cuma tombol.
+    // Kesimpulan: `jpegThumbnail` di luar locationMessage BUKAN field gambar —
+    // itu frame preview buat download/notifikasi, WA nggak nge-render sebagai
+    // media. Yang render cuma locationMessage (preview peta) & externalAdReply
+    // (kartu link kecil). Banner yang andal = image message beneran (upload),
+    // itu yang dipakai .menu sekarang (01-info.js).
+    // v3 sempat di-DROP diam-diam oleh zapo-js (bukan salah WA): lihat catatan
+    // di blok `ad` bawah.
     // Ukuran: genThumbnail bawaan ngecilin ke 72x72 — jpegThumbnail itu frame KECIL,
     // WA yang nge-scale. Jadi mode `big` buat nguji apakah WA mau hormatin >72.
     case 'test4': {
@@ -1324,13 +1332,19 @@ module.exports = async function ownerHandler(ctx) {
             type: 'text',
             text: 'Kartu preview — externalAdReply ' + kb + 'KB.',
             contextInfo: {
-              externalAdReply: {
-                title:        botData.botName || 'Bot',
-                body:         'thumbnail ' + kb + 'KB, renderLarger=true',
-                thumbnail:    thumb,
-                mediaType:    1,
-                renderLargerThumbnail: true,
-                sourceUrl:    'https://yapari.web.id/',
+              // zapo-js buildContextInfoProto() cuma kenal whitelist field
+              // (stanzaId/quotedMessage/mentionedJid/dst) — `externalAdReply`
+              // nggak ada di daftar, jadi di-DROP kalau dikirim flat.
+              // Satu-satunya jalan: lewat `raw`. (dibuktiin _t6.js)
+              raw: {
+                externalAdReply: {
+                  title:        botData.botName || 'Bot',
+                  body:         'thumbnail ' + kb + 'KB, renderLarger=true',
+                  thumbnail:    thumb,
+                  mediaType:    1,
+                  renderLargerThumbnail: true,
+                  sourceUrl:    'https://yapari.web.id/',
+                },
               },
             },
           });
