@@ -227,8 +227,7 @@ function buildContext(client, event, botData) {
               participant: '0@s.whatsapp.net',
               quotedMessage: {
                 groupInviteMessage: {
-                  groupJid:  '0@g.us',
-                  caption:   'www.yapari.web.id',
+                  caption: 'www.yapari.web.id',
                 },
               },
               remoteJid: jid,
