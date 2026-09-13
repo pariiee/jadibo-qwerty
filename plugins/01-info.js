@@ -6,8 +6,6 @@
  */
 
 const os = require('os');
-const { proto } = require('zapo-js');
-const { genThumbnail } = require('../engine/thumbnail');
 
 const START_TIME = Date.now();
 
@@ -292,77 +290,29 @@ module.exports = async function infoHandler(ctx) {
         `${catList}\n\n` +
         `> _${botData.footer_text || 'Powered by YaaParBot'}_`;
 
-      if (botData.banner_url || process.env.BANNER_DEFAULT) {
-        const bannerSrc = botData.banner_url || null;
-        const bannerPath = !bannerSrc && process.env.BANNER_DEFAULT
-          ? require('path').resolve(process.env.BANNER_DEFAULT)
-          : null;
-
-        try {
-          let buffer;
-          if (bannerSrc) {
-            // Download dari URL
-            const https  = require('https');
-            const http   = require('http');
-            const urlMod = require('url');
-            const parsed = urlMod.parse(bannerSrc);
-            const proto  = parsed.protocol === 'https:' ? https : http;
-            buffer = await new Promise((resolve, reject) => {
-              proto.get(bannerSrc, (res) => {
-                const chunks = [];
-                res.on('data', c => chunks.push(c));
-                res.on('end',  () => resolve(Buffer.concat(chunks)));
-                res.on('error', reject);
-              }).on('error', reject);
-            });
-          } else {
-            // Baca dari file lokal
-            buffer = require('fs').readFileSync(bannerPath);
-          }
-
-          await client.message.send(jid, {
-            type:    'image',
-            media:   buffer,
-            mimetype: 'image/jpeg',
-            caption,
-            ...(await genThumbnail(buffer, 'image/jpeg').then(t => t ? { jpegThumbnail: t } : {}).catch(() => ({}))),
-            contextInfo: {
-              stanzaId:    'VELZ-B0QX95X5',
-              participant: '0@s.whatsapp.net',
-              quotedMessage: {
-                groupInviteMessage: {
-                  groupJid:  '0@g.us',
-                  groupName: botData.bot_name || 'YaaParBot',
-                  caption:   'www.yapari.web.id',
-                },
-              },
-              remoteJid: jid,
-            },
-          });
-        } catch {
-          await reply(caption);
-        }
-      } else {
-        await reply(caption);
-      }
-
-      // ── Tombol [menu] [owner] — bubble terpisah ──────────────────────────
-      // Tombol WA tidak bisa menempel di gambar: zapo-js tidak upload
-      // header gambar pada buttonsMessage (lihat encode/media-payload.js).
+      // ── Kirim menu + tombol [menu] [owner] dalam SATU bubble ─────────────
+      // Banner sengaja dilepas: tombol WA tidak bisa menempel di gambar
+      // (zapo-js tidak upload header gambar buttonsMessage), sedangkan
+      // interactiveMessage tidak punya slot media.
+      // Balasan quick_reply masuk sebagai interactiveResponseMessage.paramsJson.id
+      // (ditangkap di bagian 2b plugin 07-button).
       try {
         await client.message.send(jid, {
-          buttonsMessage: {
-            contentText: 'Pilih menu di bawah ini 👇',
-            footerText:  botData.footer_text || 'Powered by YaaParBot',
-            headerType:  proto.Message.ButtonsMessage.HeaderType.TEXT,
-            text:        `📋 *Menu ${botData.bot_name}*`,
-            buttons: [
-              { buttonId: 'btn_menu',  buttonText: { displayText: '📋 Menu'  }, type: proto.Message.ButtonsMessage.Button.Type.RESPONSE },
-              { buttonId: 'btn_owner', buttonText: { displayText: '👑 Owner' }, type: proto.Message.ButtonsMessage.Button.Type.RESPONSE },
-            ],
+          interactiveMessage: {
+            body:   { text: caption },
+            footer: { text: botData.footer_text || 'Powered by YaaParBot' },
+            nativeFlowMessage: {
+              buttons: [
+                { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: '📋 Menu',  id: 'btn_menu'  }) },
+                { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: '👑 Owner', id: 'btn_owner' }) },
+              ],
+              messageParamsJson: '{}',
+            },
           },
         });
-      } catch { /* tombol opsional — menu tetap terkirim */ }
+      } catch {
+        await reply(caption); // interactive gagal → teks mentah, jangan hilang menunya
+      }
 
       // ── Audio default (opsional) — voice note bareng menu ────────────────
       // Terima apa saja: .mp3/.m4a/.wav/.ogg atau URL. Yang bukan ogg/opus
