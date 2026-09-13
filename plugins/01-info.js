@@ -327,8 +327,9 @@ module.exports = async function infoHandler(ctx) {
 
       // Caption gambar dibatasi WA 1024 char: filler readmore dipangkas otomatis
       // supaya total pas 1024 (lipatan "Read more" tetap muncul, tidak ditolak WA).
-      const captionImg = caption.replace(
-        RM,
+      // Ganti HANYA karakter filler — pemisah baris di `RM` harus tetap, kalau
+      // tidak titik lipatannya bergeser ke baris kosong berikutnya.
+      const captionImg = caption.split(RM).join(
         '\u200e'.repeat(Math.max(0, 1024 - caption.replace(RM, '').length))
       );
 
