@@ -17,6 +17,7 @@ const { addStickerExif } = require('../engine/sticker');
 const { markPendingSewa } = require('../engine/pendingSewa');
 const { uploadInfo } = require('../engine/api');
 const { genThumbnail } = require('../engine/thumbnail');
+const { proto } = require('zapo-js');
 const { getRankByLevel } = require('./03-fun-rpg');
 
 // In-memory stores
@@ -1330,12 +1331,27 @@ module.exports = async function ownerHandler(ctx) {
             },
           });
         } else {
-          // Gambar asli — satu-satunya jalur yang render gede di WA biasa.
+          // Gambar + caption + tombol. Satu bubble TIDAK bisa: WA nggak render
+          // header media di interactiveMessage (diuji 7dbcd27 + .test4: upload
+          // sukses, bubble polos) dan buttonsMessage header media = invisible.
+          // Jadi bentuk yang jalan = 2 bubble, sama seperti .menu produksi.
           await client.message.send(jid, {
             type:     'image',
             media:    raw,
             mimetype: 'image/jpeg',
-            caption:  `assets/banner.jpg — ${kb}KB`,
+            caption:  `🖼️ *assets/banner.jpg* — ${kb}KB\n\nIni bubble 1: gambar + caption.\nTombol di bubble 2.`,
+          });
+          await client.message.send(jid, {
+            buttonsMessage: {
+              contentText: 'Pilih menu di bawah ini 👇',
+              footerText:  botData.footer_text || 'Powered by YaaParBot',
+              headerType:  proto.Message.ButtonsMessage.HeaderType.TEXT,
+              text:        `📋 *Menu ${botData.bot_name}*`,
+              buttons: [
+                { buttonId: 'btn_all',   buttonText: { displayText: '📋 All Menu' }, type: proto.Message.ButtonsMessage.Button.Type.RESPONSE },
+                { buttonId: 'btn_owner', buttonText: { displayText: '👑 Owner'    }, type: proto.Message.ButtonsMessage.Button.Type.RESPONSE },
+              ],
+            },
           });
         }
         await react(mess.reactSuccess);
