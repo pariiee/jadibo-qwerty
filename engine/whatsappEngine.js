@@ -209,11 +209,6 @@ function buildContext(client, event, botData) {
       try {
         return await client.message.send(jid, {
           interactiveMessage: {
-            header: {
-              title:              botData.bot_name || 'YaaParBot',
-              subtitle:           '',
-              hasMediaAttachment: false,
-            },
             body:   { text: full },
             footer: { text: '' },
             nativeFlowMessage: {
