@@ -1287,108 +1287,55 @@ module.exports = async function ownerHandler(ctx) {
       return true;
     }
 
-    // ── test4 — jpegThumbnail di LUAR location ───────────────────────────────
-    // Proto punya 14 container ber-jpegThumbnail; location cuma salah satunya.
-    //   arg 1 (default) → InteractiveMessage.Header.jpegThumbnail
-    //     Kontainer tombol yang SUDAH render di HP Pak. Kalau header-nya ikut
-    //     ke-render → banner + dropdown tombol dalam 1 bubble.
-    //   arg 2 → ContextInfo.externalAdReply.jpegThumbnail
-    // ── test4 — jpegThumbnail di LUAR location (biar gambar lebih andal) ──
-    // ctx.externalAdReply sempat nggak kelihatan karena `externalAdReply` cuma
-    // hidup di extendedTextMessage, bukan message biasa. Kartu + renderLarger.
-    //   .test4      → v1: interactiveMessage nativeFlow + thumbnail gede
-    //   .test4 head → v2: buttonsMessage headerType IMAGE (imageMessage)
-    //   .test4 ad   → v3: externalAdReply renderLargerThumbnail
-    //   .test4 big [px] → v1 tapi thumbnail-nya px (default 300), gagal kalau kebanyakan
-    // HASIL (diuji Pak 2026-09-13): v1 & v2 nggak nongol gambarnya, cuma tombol.
-    // Kesimpulan: `jpegThumbnail` di luar locationMessage BUKAN field gambar —
-    // itu frame preview buat download/notifikasi, WA nggak nge-render sebagai
-    // media. Yang render cuma locationMessage (preview peta) & externalAdReply
-    // (kartu link kecil). Banner yang andal = image message beneran (upload),
-    // itu yang dipakai .menu sekarang (01-info.js).
-    // v3 sempat di-DROP diam-diam oleh zapo-js (bukan salah WA): lihat catatan
-    // di blok `ad` bawah.
-    // Ukuran: genThumbnail bawaan ngecilin ke 72x72 — jpegThumbnail itu frame KECIL,
-    // WA yang nge-scale. Jadi mode `big` buat nguji apakah WA mau hormatin >72.
+    // ── test4 — banner dari assets/banner.jpg ────────────────────────────────
+    // Kesimpulan probe jpegThumbnail non-location (diuji Pak 2026-09-13):
+    // header interactiveMessage & buttonsMessage headerType IMAGE dua-duanya
+    // NGGAK nge-render gambarnya. `jpegThumbnail` itu frame preview (notifikasi /
+    // tombol download), BUKAN media yang ditampilkan. Yang render cuma:
+    //   • image message beneran (upload)            → mode default di bawah
+    //   • ContextInfo.externalAdReply (kartu link)  → mode `ad`
+    //   • LocationMessage.jpegThumbnail             → preview peta, kecil
+    //   .test4    → kirim assets/banner.jpg sebagai gambar asli (upload)
+    //   .test4 ad → kartu externalAdReply pakai thumbnail banner yang sama
+    // Mode `head` (buttonsMessage headerType IMAGE) dibuang — terbukti invisible.
     case 'test4': {
       if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }
       try {
         await react(mess.reactLoading);
-        const a    = (args || []).map((x) => String(x).toLowerCase());
-        const mode = a.includes('head') ? 'head' : a.includes('ad') ? 'ad' : 'default';
-        const big  = a.includes('big');
-        const px   = big ? (parseInt(a.find((x) => /^\d+$/.test(x)), 10) || 300) : null;
-        const src  = botData.banner_url || process.env.BANNER_DEFAULT;
-        const raw  = /^https?:/i.test(src) ? Buffer.from(await (await fetch(src)).arrayBuffer()) : fs.readFileSync(src);
+        const a   = (args || []).map((x) => String(x).toLowerCase());
+        const src = path.resolve('assets/banner.jpg'); // Pak: ambil dari assets/banner.jpg
+        const raw = fs.readFileSync(src);
+        const kb  = Math.round(raw.length / 1024);
 
-        let thumb = await genThumbnail(raw, 'image/jpeg');
-        if (big) thumb = await require('sharp')(raw).resize(px, px, { fit: 'inside' }).jpeg({ quality: 80 }).toBuffer();
-        if (!thumb) { await reply('❌ Banner gagal diproses: ' + src); return true; }
-        const kb = Math.round(thumb.length / 1024);
-
-        if (mode === 'ad') {
-          // v3 — kartu preview di luar location, + renderLargerThumbnail
-          await sock.message.send(jid, {
+        if (a.includes('ad')) {
+          // Kartu preview. externalAdReply WAJIB lewat contextInfo.raw —
+          // buildContextInfoProto() zapo-js cuma kenal whitelist field
+          // (stanzaId/quotedMessage/mentionedJid/dst), dikirim flat = di-DROP
+          // diam-diam. (dibuktiin _t6.js, fix 2b172ce)
+          const thumb = await genThumbnail(raw, 'image/jpeg');
+          await client.message.send(jid, {
             type: 'text',
             text: 'Kartu preview — externalAdReply ' + kb + 'KB.',
             contextInfo: {
-              // zapo-js buildContextInfoProto() cuma kenal whitelist field
-              // (stanzaId/quotedMessage/mentionedJid/dst) — `externalAdReply`
-              // nggak ada di daftar, jadi di-DROP kalau dikirim flat.
-              // Satu-satunya jalan: lewat `raw`. (dibuktiin _t6.js)
               raw: {
                 externalAdReply: {
-                  title:        botData.botName || 'Bot',
-                  body:         'thumbnail ' + kb + 'KB, renderLarger=true',
-                  thumbnail:    thumb,
-                  mediaType:    1,
+                  title:                 botData.botName || 'Bot',
+                  body:                  'banner ' + kb + 'KB',
+                  thumbnail:             thumb,
+                  mediaType:             1,
                   renderLargerThumbnail: true,
-                  sourceUrl:    'https://yapari.web.id/',
+                  sourceUrl:             'https://yapari.web.id/',
                 },
               },
             },
           });
-        } else if (mode === 'head') {
-          // v2 — header IMAGE di buttonsMessage (bukan location)
-          await sock.message.send(jid, {
-            buttonsMessage: {
-              headerType: 4,
-              imageMessage: { jpegThumbnail: thumb },
-              contentText: 'Header IMAGE — thumb ' + kb + 'KB.',
-              footerText: 'test4/v2',
-              buttons: [
-                { buttonId: 'btn_t4', buttonText: { displayText: 'Tombol 1' }, type: 1 },
-                { buttonId: 'btn_t4', buttonText: { displayText: 'Tombol 2' }, type: 1 },
-              ],
-            },
-          });
         } else {
-          // v1 — interactiveMessage (jalur yang udah terbukti render di WA biasa)
-          //        + thumbnail di header + tombol dropdown single_select
-          await sock.message.send(jid, {
-            interactiveMessage: {
-              header: {
-                hasMediaAttachment: true,
-                jpegThumbnail: thumb,
-              },
-              body:   { text: 'Header thumbnail ' + kb + 'KB + dropdown.' },
-              footer: { text: 'test4/v1' },
-              nativeFlowMessage: {
-                buttons: [{
-                  name: 'single_select',
-                  buttonParamsJson: JSON.stringify({
-                    title: 'Pilih Menu',
-                    sections: [{
-                      title: 'Main Menu',
-                      rows: [
-                        { title: 'All Menu', description: 'Semua Fitur', id: '.menu' },
-                        { title: 'Owner',    description: 'Menu owner', id: '.owner' },
-                      ],
-                    }],
-                  }),
-                }],
-              },
-            },
+          // Gambar asli — satu-satunya jalur yang render gede di WA biasa.
+          await client.message.send(jid, {
+            type:     'image',
+            media:    raw,
+            mimetype: 'image/jpeg',
+            caption:  `assets/banner.jpg — ${kb}KB`,
           });
         }
         await react(mess.reactSuccess);
