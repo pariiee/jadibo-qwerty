@@ -291,27 +291,32 @@ module.exports = async function infoHandler(ctx) {
         `> _${botData.footer_text || 'Powered by YaaParBot'}_`;
 
       // ── Kirim menu + tombol [menu] [owner] dalam SATU bubble ─────────────
-      // Banner sengaja dilepas: tombol WA tidak bisa menempel di gambar
-      // (zapo-js tidak upload header gambar buttonsMessage), sedangkan
-      // interactiveMessage tidak punya slot media.
-      // Balasan quick_reply masuk sebagai interactiveResponseMessage.paramsJson.id
-      // (ditangkap di bagian 2b plugin 07-button).
+      // Cermin `case test` (05-owner): buttonsMessage + header locationMessage
+      // (headerType 6). Header LOCATION sengaja dipakai karena dia inline —
+      // zapo-js tidak upload gambar header pada buttonsMessage, jadi
+      // headerType IMAGE bakal render kosong.
+      // Klik tombol masuk lewat buttonsResponseMessage.selectedButtonId
+      // (ditangkap di bagian 1 plugin 07-button).
       try {
         await client.message.send(jid, {
-          interactiveMessage: {
-            body:   { text: caption },
-            footer: { text: botData.footer_text || 'Powered by YaaParBot' },
-            nativeFlowMessage: {
-              buttons: [
-                { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: '📋 Menu',  id: 'btn_menu'  }) },
-                { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: '👑 Owner', id: 'btn_owner' }) },
-              ],
-              messageParamsJson: '{}',
+          buttonsMessage: {
+            buttons: [
+              { buttonId: 'btn_menu',  buttonText: { displayText: '📋 Menu'  }, type: 1 },
+              { buttonId: 'btn_owner', buttonText: { displayText: '👑 Owner' }, type: 1 },
+            ],
+            locationMessage: {
+              degreesLatitude:  -6.2,
+              degreesLongitude: 106.816666,
+              name:    botData.bot_name || 'YaaParBot',
+              address: 'Pilih menu di bawah ini 👇',
             },
+            contentText: caption,
+            footerText:  botData.footer_text || 'Powered by YaaParBot',
+            headerType:  6, // LOCATION
           },
         });
       } catch {
-        await reply(caption); // interactive gagal → teks mentah, jangan hilang menunya
+        await reply(caption); // buttons gagal → teks mentah, jangan hilang menunya
       }
 
       // ── Audio default (opsional) — voice note bareng menu ────────────────
