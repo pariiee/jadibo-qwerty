@@ -203,33 +203,22 @@ function buildContext(client, event, botData) {
     mentioned,
     activeGroups: activeGroupsPerBot.get(botData.id) || new Map(),
     pushName: pushName || 'User',
-    // Helper: reply with text — pakai interactiveMessage supaya ada verified badge
+    // Helper: reply with text + contextInfo (tanpa interactiveMessage —
+    // wrapper itu yang bikin WA nampilin chrome "permintaan berhasil / lihat detail")
     reply: async (text) => {
       const full = `${text}\n\n${botData.footer_text || ''}`.trim();
       try {
         return await client.message.send(jid, {
-          interactiveMessage: {
-            body:   { text: full },
-            footer: { text: '' },
-            nativeFlowMessage: {
-              buttons: [
-                { name: 'inapp_signup', buttonParamsJson: '{}' },
-              ],
-              messageParamsJson: '{}',
-            },
-            contextInfo: {
-              participant: '0@s.whatsapp.net',
-              quotedMessage: {
-                groupInviteMessage: {
-                  caption: 'www.yapari.web.id',
-                },
+          text: full,
+          contextInfo: {
+            quotedMessage: {
+              groupInviteMessage: {
+                caption: 'www.yapari.web.id',
               },
-              remoteJid: jid,
             },
           },
         });
       } catch {
-        // Fallback ke text biasa kalau interactive gagal
         return client.message.send(jid, full);
       }
     },
