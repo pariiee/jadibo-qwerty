@@ -223,7 +223,6 @@ function buildContext(client, event, botData) {
               messageParamsJson: '{}',
             },
             contextInfo: {
-              stanzaId:    'VELZ-B0QX95X5',
               participant: '0@s.whatsapp.net',
               quotedMessage: {
                 groupInviteMessage: {
