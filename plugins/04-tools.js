@@ -8,6 +8,7 @@
 const mess           = require('../config/mess');
 const { genThumbnail } = require('../engine/thumbnail');
 const { addStickerExif } = require('../engine/sticker');
+const { uploadInfo }  = require('../engine/api');
 
 // ─── Helper: mime type → ekstensi file ───────────────────────────────────────
 function mimeToExt(mime) {
@@ -3082,9 +3083,6 @@ module.exports = async function toolsHandler(ctx) {
       }
 
       try {
-        const axios    = require('axios');
-        const FormData = require('form-data');
-
         let buffer, mime, filename;
 
         if (isDirectMedia) {
@@ -3172,9 +3170,6 @@ module.exports = async function toolsHandler(ctx) {
       }
 
       try {
-        const axios    = require('axios');
-        const FormData = require('form-data');
-
         let buffer, mime, filename;
 
         if (isDirectMedia) {
