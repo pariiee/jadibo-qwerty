@@ -1294,54 +1294,34 @@ module.exports = async function ownerHandler(ctx) {
     // NGGAK nge-render gambarnya. `jpegThumbnail` itu frame preview (notifikasi /
     // tombol download), BUKAN media yang ditampilkan. Yang render cuma:
     //   • image message beneran (upload)            → mode default di bawah
-    //   • ContextInfo.externalAdReply (kartu link)  → mode `ad`
-    //   .test4    → 1 bubble: teks + tombol interaktif + kartu thumbnail banner
-    //   .test4 ad → sama, tapi pakai contextInfo.raw.externalAdReply
-    // Mode `head` (buttonsMessage headerType IMAGE) dibuang — terbukti invisible.
-    // Gambar banner GEDE + tombol dalam 1 bubble: nggak bisa. Upload media cuma
-    // ada di jalur `type:'image'`, dan image message nggak punya field tombol.
-    // `InteractiveMessage.Header.imageMessage` ada di proto tapi zapo-js nggak
-    // punya API upload buat ngisi url/directPath/mediaKey-nya (`prepareWAMessageMedia`
-    // nggak ada). Diuji berulang: header media = bubble polos.
+    //   • ContextInfo.externalAdReply (kartu link)  → di-drop di interactiveMessage
+    //   .test4    → 1 bubble: teks + tombol + PREVIEW gambar (nggak bisa diklik/dibuka)
+    //   .test4 ad → sama dengan default (arg diabaikan)
+    // Cara preview: content `{type:'text', text, linkPreview:{...}}` → zapo masuk
+    // jalur buildExtendedTextWithPreview() → extendedTextMessage.jegThumbnail +
+    // title/description/matchedText. Gambarnya thumbnail inline, jadi WA nggak
+    // nyimpen file penuh — nggak bisa di-tap buat dibuka gede. Ini API resmi
+    // (bukan raw proto hack). Butuh `matchedText` = URL di dalam teks.
     case 'test4': {
       if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }
       try {
         await react(mess.reactLoading);
-        const a    = (args || []).map((x) => String(x).toLowerCase());
         const src  = path.resolve('assets/banner.jpg'); // Pak: ambil dari assets/banner.jpg
         const raw  = fs.readFileSync(src);
         const kb   = Math.round(raw.length / 1024);
-        const thumb = await genThumbnail(raw, 'image/jpeg');
-
-        // Tombol interaktif = jalur yang jalan di WA biasa (.menu produksi pakai ini).
-        const btn = {
-          name: 'quick_reply',
-          buttonParamsJson: JSON.stringify({ display_text: '📋 All Menu', id: 'btn_all' }),
-        };
-
-        // Kartu thumbnail banner nempel di bubble yang SAMA. externalAdReply WAJIB
-        // lewat contextInfo.raw — buildContextInfoProto() zapo-js whitelist-only,
-        // dikirim flat = di-DROP diam-diam (dibuktiin _t6.js, fix 2b172ce).
-        const ctxInfo = {
-          raw: {
-            externalAdReply: {
-              title:                 a.includes('ad') ? `banner ${kb}KB (mode ad)` : 'assets/banner.jpg',
-              body:                  `${kb}KB — thumbnail ${thumb.length}B`,
-              thumbnail:             thumb,
-              mediaType:             1,
-              renderLargerThumbnail: true,
-              sourceUrl:             'https://yapari.web.id/',
-            },
-          },
-        };
 
         await client.message.send(jid, {
-          interactiveMessage: {
-            body:   { text: `📋 *Menu ${botData.bot_name || 'Bot'}*\n\nKartu thumbnail di atas — kalau render, ini gambar kecil bukan banner gede.` },
-            footer: { text: botData.footer_text || 'Powered by YaaParBot' },
-            nativeFlowMessage: { buttons: [btn] },
+          type: 'text',
+          text: `📋 *Menu ${botData.bot_name || 'Bot'}*\n\n`
+              + `Preview banner di atas — tap nggak bisa kebuka, cuma tampilan.\n\n`
+              + `https://yapari.web.id/`,
+          linkPreview: {
+            matchedText: 'https://yapari.web.id/',
+            previewType: proto.Message.ExtendedTextMessage.PreviewType.IMAGE,
+            title:       `assets/banner.jpg — ${kb}KB`,
+            description: 'Preview banner YaaParBot',
+            thumbnail:   { bytes: raw, contentLength: raw.length }, // inline, 56KB < 64KB
           },
-          contextInfo: ctxInfo,
         });
         await react(mess.reactSuccess);
       } catch (e) {
