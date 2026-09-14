@@ -27,10 +27,19 @@ const {
   downloadMediaMessage: baileysDownload,
   jidNormalizedUser,
   DisconnectReason,
+  generateWAMessageFromContent,
   proto,
   Browsers,
 } = require('baileys');
-const { generateWAMessageFromContent } = require('baileys/lib/Utils/messages.js');
+
+// Tipe pesan yang `sendMessage` nolak ("Invalid media type") tapi WA biasa
+// nampilin — semua di sini dikirim lewat relayMessage (.owner kirim kontak).
+const RELAY_ONLY_KEYS = [
+  'contactMessage', 'contactsArrayMessage',
+  'locationMessage', 'liveLocationMessage',
+  'eventMessage', 'pollCreationMessageV3', 'requestPhoneNumberMessage',
+  'productMessage', 'orderMessage', 'albumMessage',
+];
 
 // Key proto mentah yg HARUS lewat relayMessage (sendMessage nolak ini).
 const RAW_PROTO_KEYS = [
@@ -39,6 +48,7 @@ const RAW_PROTO_KEYS = [
   'albumMessage', 'productMessage', 'orderMessage', 'eventMessage',
   'pollCreationMessageV3', 'requestPhoneNumberMessage', 'stickerPackMessage',
   'buttonsResponseMessage', 'listResponseMessage', 'highlyStructuredMessage',
+  ...RELAY_ONLY_KEYS,
 ];
 
 const isRawProto = (c) =>

@@ -103,6 +103,30 @@ const mkOpts = () => ({
     assert.strictEqual(b.buttons[0].buttonText.displayText, 'MENU');
   });
 
+  // ═══ .owner kirim kontak — sendMessage nolak, relayMessage nerima ══════════
+  // Gejala nyata: [20.43.44] owner: Invalid media type
+  await ok('C1. contactMessage dideteksi proto-mentah (jalur relayMessage)', () => {
+    assert.strictEqual(isRawProto({ contactMessage: { displayName: 'X', vcard: 'v' } }), true);
+    assert.strictEqual(isRawProto({ contactsArrayMessage: { contacts: [] } }), true);
+    assert.strictEqual(isRawProto({ locationMessage: { degreesLatitude: 0 } }), true);
+    assert.strictEqual(isRawProto({ liveLocationMessage: {} }), true);
+    assert.strictEqual(isRawProto({ pollCreationMessageV3: {} }), true);
+  });
+
+  await ok('C2. contactMessage -> relayMessage, vcard UTUH (yang dibaca WA)', () => {
+    const vcard = ['BEGIN:VCARD', 'VERSION:3.0', 'FN:AL', 'TEL;type=CELL;type=VOICE;waid=6287778032605:+6287778032605', 'END:VCARD'].join('\n');
+    const wam = generateWAMessageFromContent('g@g.us',
+      { contactMessage: { displayName: 'AL', vcard } }, { userJid: 'me@s.whatsapp.net' });
+    assert.strictEqual(getContentType(wam.message), 'contactMessage');
+    assert.strictEqual(normalizeMessageContent(wam.message).contactMessage.vcard, vcard);
+  });
+
+  await ok('C3. teks/gambar BIASA jangan ikut ke relayMessage (tetap jalur sendMessage)', () => {
+    assert.strictEqual(isRawProto({ text: 'x' }), false);
+    assert.strictEqual(isRawProto(toBaileysContent({ type: 'image', media: Buffer.from('x') })), false);
+    assert.strictEqual(isRawProto({ react: { text: '🔥', key: {} } }), false);
+  });
+
   console.log(`\nbaileys-send-paths: ${pass} PASS, ${fail} FAIL`);
   process.exit(fail ? 1 : 0);
 })();
