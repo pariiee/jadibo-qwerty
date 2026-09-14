@@ -17,7 +17,7 @@ const { addStickerExif } = require('../engine/sticker');
 const { markPendingSewa } = require('../engine/pendingSewa');
 const { uploadInfo } = require('../engine/api');
 const { genThumbnail } = require('../engine/thumbnail');
-const { proto } = require('zapo-js');
+const { proto } = require('baileys');
 const { getRankByLevel } = require('./03-fun-rpg');
 
 // In-memory stores

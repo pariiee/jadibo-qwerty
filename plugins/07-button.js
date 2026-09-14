@@ -7,7 +7,7 @@
  *          + tangkap klik button/list response & proses sebagai command
  */
 
-const { proto } = require('zapo-js');
+const { proto } = require('baileys');
 
 // ── Handler ────────────────────────────────────────────────────────────────────
 

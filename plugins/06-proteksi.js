@@ -214,9 +214,8 @@ module.exports = async function proteksiHandler(ctx) {
     // ── Autosticker — auto convert gambar/video ke stiker ───────────────────
     if (cfg.autosticker && (msgType === 'imageMessage' || msgType === 'videoMessage')) {
       try {
-        // zapo-js: downloadMediaMessage(source, opts) -> Buffer langsung
-        const { downloadMediaMessage } = require('zapo-js');
-        const buffer = await downloadMediaMessage(msg);
+        // Adapter: client.message.downloadBytes(msg) -> Buffer langsung
+        const buffer = await client.message.downloadBytes(msg);
         await client.message.send(jid, {
           type: 'sticker',
           media: buffer,
@@ -240,11 +239,10 @@ module.exports = async function proteksiHandler(ctx) {
       const voMsg  = voType ? msg?.message?.[voType] : null;
       if (voMsg?.viewOnce) {
         try {
-          // zapo-js: source boleh { message } -> Buffer langsung
-          const { downloadMediaMessage } = require('zapo-js');
+          // Adapter: source boleh { message } -> Buffer langsung
           const fixed = { ...msg.message };
           fixed[voType] = { ...voMsg, viewOnce: false };
-          const buffer = await downloadMediaMessage({ message: fixed });
+          const buffer = await client.message.downloadBytes({ message: fixed });
           await client.message.send(jid, {
             type: voType === 'videoMessage' ? 'video' : 'image',
             media: buffer,
@@ -264,8 +262,7 @@ module.exports = async function proteksiHandler(ctx) {
           [botData.id, jid]
         );
         if (rows[0]?.document) {
-          const { downloadMediaMessage } = require('zapo-js');
-          const buffer  = await downloadMediaMessage(msg);
+          const buffer  = await client.message.downloadBytes(msg);
           const docMsg  = msg.message.documentMessage;
           await client.message.send(jid, {
             type: 'document',

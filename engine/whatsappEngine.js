@@ -2,8 +2,8 @@
 
 /**
  * engine/whatsappEngine.js
- * Multi-session WhatsApp engine menggunakan zapo-js API yang benar.
- * Setiap bot mendapat WaClient instance tersendiri dengan SQLite store terpisah.
+ * Multi-session WhatsApp engine — berbasis WhiskeySockets/Baileys v7.
+ * Setiap bot mendapat client tersendiri dengan auth state SQLite terpisah.
  */
 
 const path = require('path');
@@ -49,28 +49,22 @@ function saveGroupsCache(botId) {
   } catch { /* skip */ }
 }
 
-// ─── Lazy-load zapo-js ────────────────────────────────────────────────────────
-let WaClient, createStore;
+// ─── Lazy-load Baileys (lewat adapter yg menyamar jadi client zapo-js) ────────
+let createClient, makeSqliteAuthState;
 try {
-  ({ WaClient, createStore } = require('zapo-js'));
-} catch {
-  console.warn('[Engine] zapo-js tidak terinstall — WhatsApp engine disabled');
+  ({ createClient } = require('./baileys/client'));
+  ({ makeSqliteAuthState } = require('./baileys/auth'));
+} catch (e) {
+  console.warn('[Engine] baileys tidak terinstall — WhatsApp engine disabled:', e.message);
 }
 
-// Logger no-op — supaya log internal zapo-js tidak flood console server
+// Logger no-op — supaya log internal Baileys tidak flood console server
 const noopLogger = {
   level: 'silent',
   trace: () => {}, debug: () => {}, info: () => {},
   warn:  () => {}, error: () => {}, fatal: () => {},
   child: () => noopLogger,
 };
-
-let createSqliteStore;
-try {
-  ({ createSqliteStore } = require('@zapo-js/store-sqlite'));
-} catch {
-  console.warn('[Engine] @zapo-js/store-sqlite tidak terinstall');
-}
 
 const SESSIONS_DIR = path.resolve(process.env.SESSIONS_DIR || './sessions');
 
@@ -102,28 +96,6 @@ async function logBot(botId, level, message) {
       [botId, level, String(message).slice(0, 2000)]
     );
   } catch { /* non-critical */ }
-}
-
-// ─── Build zapo-js store ──────────────────────────────────────────────────────
-function buildStore(dbPath) {
-  return createStore({
-    backends: {
-      sqlite: createSqliteStore({ path: dbPath }),
-    },
-    providers: {
-      auth:         'sqlite',
-      signal:       'sqlite',
-      preKey:       'sqlite',
-      session:      'sqlite',
-      identity:     'sqlite',
-      senderKey:    'sqlite',
-      appState:     'sqlite',
-      privacyToken: 'sqlite',
-      messages:     'sqlite',
-      threads:      'none',
-      contacts:     'sqlite',
-    },
-  });
 }
 
 // ─── Load plugins ─────────────────────────────────────────────────────────────
@@ -234,8 +206,7 @@ function buildContext(client, event, botData) {
 
 // ─── Main start function ──────────────────────────────────────────────────────
 async function startWhatsAppBot(botData, usePairingCode = false) {
-  if (!WaClient) throw new Error('zapo-js tidak terinstall');
-  if (!createSqliteStore) throw new Error('@zapo-js/store-sqlite tidak terinstall');
+  if (!createClient) throw new Error('baileys tidak terinstall');
 
   const botId  = botData.id;
   const botDir = path.join(SESSIONS_DIR, `bot_${botId}`);
@@ -247,13 +218,18 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
   await pool.execute("UPDATE bots SET status = 'connecting' WHERE id = ?", [botId]);
   broadcast(botId, 'status', { status: 'connecting' });
 
-  const store  = buildStore(dbPath);
-  const logger = noopLogger;
+  const authFull = makeSqliteAuthState(dbPath);
+  const auth     = authFull.state;
+  const logger   = noopLogger;
 
-  const client = new WaClient(
-    { store, sessionId: `bot_${botId}` },
-    logger
-  );
+  const client = createClient({
+    auth,
+    saveCreds: authFull.saveCreds,
+    logger,
+    pairingMode: !!usePairingCode,
+  });
+  // Ditutup saat stop — biar file SQLite nggak ke-lock (EPERM di Windows).
+  client.__closeAuth = authFull.close;
 
   // Simpan ke activeBots
   activeBots.set(botId, client);
@@ -416,7 +392,7 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
     const stubJid = event.chatJid || key?.remoteJid || '';
     if (stubType && stubJid.endsWith('@g.us')) {
       try {
-        const { proto } = require('zapo-js');
+        const { proto } = require('baileys');
         const ST = proto.WebMessageInfo.StubType;
         const [gsRows] = await pool.execute(
           'SELECT detect FROM group_settings WHERE bot_id = ? AND group_jid = ? LIMIT 1',
@@ -879,8 +855,8 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
   if (usePairingCode && botData.bot_number) {
     const phoneNumber = botData.bot_number.replace(/\D/g, '');
 
-    // Docs zapo-js: "wait for auth_pairing_required OR any QR" — keduanya
-    // menandakan server sudah siap menerima pairing code request
+    // Baileys: server siap menerima pairing code saat QR pertama di-emit.
+    // Adapter memancarkan 'auth_qr' DAN 'auth_pairing_required' bareng di momen itu.
     const serverReadyPromise = new Promise((resolve) => {
       client.once('auth_qr', resolve);
       client.once('auth_pairing_required', resolve);
@@ -926,6 +902,9 @@ async function stopWhatsAppBot(botId) {
     try {
       if (typeof inst?.disconnect === 'function') await inst.disconnect();
       else if (typeof inst?.destroy === 'function') await inst.destroy();
+      // Tutup handle SQLite — kalau nggak, file session.db tetap ke-lock
+      // (EPERM di Windows) dan clearSession gagal hapus folder sesi basi.
+      try { inst?.__closeAuth?.(); } catch { /* ignore */ }
     } catch { /* ignore */ }
     // disconnect() kadang resolve sebelum event 'close' kebawa — kasih
     // waktu event loop buat proses close + bersihin file handle SQLite

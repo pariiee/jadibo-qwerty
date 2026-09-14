@@ -12,7 +12,7 @@
 
 const fs   = require('fs');
 const path = require('path');
-const { proto } = require('zapo-js');
+const { proto } = require('baileys');
 
 const { getBotGlobalSetting } = require('../config/globalSettings');
 

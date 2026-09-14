@@ -6,7 +6,7 @@
  */
 
 const os = require('os');
-const { proto } = require('zapo-js');
+const { proto } = require('baileys');
 
 const START_TIME = Date.now();
 
