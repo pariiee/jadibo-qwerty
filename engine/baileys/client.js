@@ -160,6 +160,7 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
   let meJid = null;
   let closed = false;
   let pendingPhone = null;   // nomor pairing yg diminta sebelum socket siap
+  let pairingCode = null;    // kode pairing yg terakhir diminta (lihat catatan di bawah)
   let qrCount = 0;           // urutan QR di socket ini (ttl: 1st 60s, sisanya 20s)
 
   // ── Kirim proto mentah (tombol/list) — jalur relayMessage ──────────────────
@@ -198,6 +199,8 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
   function connect() {
     return new Promise((resolve, reject) => {
       qrCount = 0; // socket baru -> QR pertama balik ke ttl 60s
+      pairingCode = null; // kode lama mati bareng socket lama; boleh minta lagi
+      pendingPhone = null;
       try {
         sock = makeWASocket({
           auth: {
@@ -245,7 +248,17 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
 
         if (connection === 'close') {
           const code = lastDisconnect?.error?.output?.statusCode;
-          const isLogout = code === DisconnectReason.loggedOut;
+          // 401 = loggedOut cuma kalau sesi INI memang sudah pernah terdaftar.
+          // Bot yang belum pernah pairing: WA tolak handshake dengan <failure
+          // reason="401"> (socket.js:798) dan Baileys naikin jadi 401 juga.
+          // Kalau dianggap logout → engine stop total, padahal yang dibutuhin
+          // cuma socket baru (kode pairing lama toh mati bareng socket lama).
+          // Penanda "sesi beneran": creds.me.lid, di-set cuma pas koneksi
+          // pertama berhasil (socket.js:764) atau link-code pairing kelar
+          // (validate-connection.js:192). `me.id` jangan dipakai — itu udah
+          // di-set requestPairingCode sebelum sempat connect (socket.js:602).
+          const isLogout = code === DisconnectReason.loggedOut
+            && !!auth?.creds?.me?.lid;
           closed = true;
           ev.emit('connection', {
             status: 'close',
@@ -303,7 +316,15 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
         // Normalisasi dulu: Baileys mau digit saja, tanpa '+', spasi, atau '-'.
         pendingPhone = String(phone).replace(/\D/g, '');
         if (!sock) throw new Error('socket belum siap — panggil connect() dulu');
-        return sock.requestPairingCode(pendingPhone, custom);
+        // SATU kode per QR. Tiap panggilan ngirim iq 'companion_hello' baru dan
+        // nimpa authState.creds.pairingCode — kode lama langsung mati, dan
+        // WA cuma nyimpen satu sesi pairing yg lagi jalan. Jadi jangan mintain
+        // kode baru selama kode sekarang masih hidup; cukup pakai yg ada.
+        // (sock.js:696 genPairQR nge-loop tiap 20s, tapi ref-nya dipakai buat
+        //  QR — bukan alasan buat nge-reset kode.)
+        if (pairingCode) return pairingCode;
+        pairingCode = await sock.requestPairingCode(pendingPhone, custom);
+        return pairingCode;
       },
     },
 

@@ -387,6 +387,10 @@
       ['w-owner','w-ownername','w-botnum','w-channel','w-maingroups'].forEach(id => document.getElementById(id).style.display = 'none');
     }
 
+    // is_running = "user mau bot ini jalan", BUKAN "socket kebuka"
+    // (engine/whatsappEngine.js:347). Jadi pas WA drop koneksi dan engine
+    // reconnect 5 detik lagi, halaman ini tetap 'connected' — bukan kedip
+    // 'Disconnected' tiap kali WA mutusin koneksi.
     updateStatus(b.is_running ? 'connected' : b.status);
 
     document.getElementById('cfg-name').value    = b.bot_name || '';

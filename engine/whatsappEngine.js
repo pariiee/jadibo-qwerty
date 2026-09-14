@@ -21,6 +21,11 @@ const notifiedUnregistered = new Map();
 // Bot yang sedang di-stop / clear-session — auto-reconnect harus skip
 const stoppingBots = new Set();
 
+// Bot yang lagi dipairing lewat pairing code. Dipakai auto-reconnect biar
+// koneksi baru TETAP di mode pairing — dulu reconnect hardcode `false`, jadi
+// jatuh ke mode QR: panel yang lagi nampilin kode pairing ketimpa QR.
+const pairingBots = new Set();
+
 // ─── Persist activeGroups per bot ────────────────────────────────────────────
 const GROUPS_CACHE_DIR = path.join(__dirname, '../data');
 if (!fs.existsSync(GROUPS_CACHE_DIR)) fs.mkdirSync(GROUPS_CACHE_DIR, { recursive: true });
@@ -212,6 +217,11 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
   const botDir = path.join(SESSIONS_DIR, `bot_${botId}`);
   fs.mkdirSync(botDir, { recursive: true });
 
+  // Catat niat pairing SEBELUM apa pun yang bisa gagal — auto-reconnect
+  // baca set ini buat milih mode.
+  if (usePairingCode) pairingBots.add(botId);
+  else pairingBots.delete(botId);
+
   const dbPath = path.join(botDir, 'session.db');
 
   await logBot(botId, 'info', `Memulai bot "${botData.bot_name}"...`);
@@ -266,8 +276,12 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
     const { status, reason, isLogout } = event;
 
     if (status === 'open') {
+      pairingBots.delete(botId); // pairing selesai — reconnect berikutnya cukup mode normal
       console.log(`[Bot ${botId}] ✅ Terhubung ke WhatsApp`);
       await logBot(botId, 'info', 'Bot terhubung ke WhatsApp');
+      // is_running = 1 di sini bukan sekadar penanda status: server.js:242
+      // auto-start bot yang is_running=1 pas boot. Jadi begitu pernah
+      // connected, bot wajib ikut hidup lagi setelah restart server.
       await pool.execute("UPDATE bots SET status = 'connected', is_running = 1 WHERE id = ?", [botId]);
       await incrementStat('total_bots_online');
       broadcast(botId, 'status', { status: 'connected' });
@@ -344,7 +358,12 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
     if (status === 'close') {
       console.log(`[Bot ${botId}] ❌ Koneksi terputus: ${reason}`);
       await logBot(botId, 'warn', `Koneksi terputus: ${reason}`);
-      await pool.execute("UPDATE bots SET status = 'disconnected', is_running = 0 WHERE id = ?", [botId]);
+      // is_running SENGAJA tidak di-nol-in di sini. Kolom itu artinya "user mau
+      // bot ini jalan", bukan "socket lagi kebuka" — dipakai server.js:242 buat
+      // auto-start pas boot. Dulu di-nol-in tiap disconnect, jadi tiap putus
+      // sesaat (WA drop koneksi normal) bot hilang dari daftar auto-start.
+      // Yang nol-in cuma aksi eksplisit user: stopBot, deleteBot, clearSession.
+      await pool.execute("UPDATE bots SET status = 'disconnected' WHERE id = ?", [botId]);
       broadcast(botId, 'status', { status: 'disconnected', reason });
 
       if (activeBots.has(botId)) {
@@ -355,12 +374,18 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
       if (stoppingBots.has(botId)) {
         console.log(`[Bot ${botId}] 🛑 Di-stop manual — tidak reconnect`);
         stoppingBots.delete(botId);
+        // Niat user = berhenti. Ini satu-satunya tempat (selain logout) yang
+        // boleh nol-in is_running dari sisi engine.
+        await pool.execute("UPDATE bots SET is_running = 0 WHERE id = ?", [botId]);
         return;
       }
 
       if (isLogout) {
         console.log(`[Bot ${botId}] 🚪 Logout — hapus sesi untuk scan ulang`);
         await logBot(botId, 'warn', 'Sesi logout. Hapus sesi untuk scan ulang.');
+        // Sesi mati: reconnect percuma (selalu ditolak). Nol-in is_running biar
+        // auto-start boot nggak ngubek-ngubek sesi mati ini tiap restart.
+        await pool.execute("UPDATE bots SET is_running = 0 WHERE id = ?", [botId]);
       } else {
         console.log(`[Bot ${botId}] 🔄 Reconnect dalam 5 detik...`);
         await logBot(botId, 'info', 'Reconnect dalam 5 detik...');
@@ -368,7 +393,7 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
           try {
             const [rows] = await pool.execute('SELECT * FROM bots WHERE id = ?', [botId]);
             const freshBotData = rows[0] || botData;
-            await startWhatsAppBot(freshBotData, false);
+            await startWhatsAppBot(freshBotData, pairingBots.has(botId));
           } catch (e) {
             console.error(`[Bot ${botId}] 💥 Reconnect error: ${e.message}`);
             await logBot(botId, 'error', `Reconnect error: ${e.message}`);
@@ -917,6 +942,7 @@ async function stopWhatsAppBot(botId) {
     }
   }
   stoppingBots.delete(botId);
+  pairingBots.delete(botId); // niat pairing ikut batal pas bot di-stop
 }
 
 module.exports = { startWhatsAppBot, stopWhatsAppBot, setWsBroadcast, getBotGlobalSetting, setBotGlobalSetting };
