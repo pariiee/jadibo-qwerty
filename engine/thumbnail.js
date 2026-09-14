@@ -12,7 +12,7 @@ const os   = require('os');
 const path = require('path');
 const fs   = require('fs');
 
-async function genThumbnail(buffer, mimetype) {
+async function genThumbnail(buffer, mimetype, size = 72) {
   try {
     const mime = (mimetype || '').toLowerCase();
 
@@ -20,8 +20,8 @@ async function genThumbnail(buffer, mimetype) {
       // ── Image → sharp resize ──────────────────────────────────────────────
       const sharp = require('sharp');
       return await sharp(buffer)
-        .resize(72, 72, { fit: 'inside' })
-        .jpeg({ quality: 70 })
+        .resize(size, size, { fit: 'inside' })
+        .jpeg({ quality: 80 })
         .toBuffer();
     }
 
@@ -37,7 +37,7 @@ async function genThumbnail(buffer, mimetype) {
         const ff = spawn('ffmpeg', [
           '-y', '-i', tmpIn,
           '-vframes', '1',
-          '-vf', 'scale=72:72:force_original_aspect_ratio=decrease',
+          '-vf', `scale=${size}:${size}:force_original_aspect_ratio=decrease`,
           '-q:v', '5',
           tmpOut,
         ]);
