@@ -1123,9 +1123,9 @@ module.exports = async function ownerHandler(ctx) {
           path.resolve(botData.banner_url || process.env.BANNER_DEFAULT),
         );
         // Header lokasi cuma bisa nampilin thumbnail (WA nggak nyimpen gambar
-        // utuh di sana). Plafonnya = resolusi banner asli (736×426) — di atas
-        // itu cuma upscale. 640px ≈ 55KB. Mau tajam beneran = gambar bubble sendiri.
-        const thumb = await genThumbnail(banner, 'image/jpeg', 640) || banner;
+        // utuh di sana). 640px nggak dirender WA — mentokin di 400px.
+        // Mau tajam beneran = gambar harus bubble sendiri.
+        const thumb = await genThumbnail(banner, 'image/jpeg', 400) || banner;
 
         const runtime = process.uptime();
         const uh = Math.floor(runtime / 3600);
