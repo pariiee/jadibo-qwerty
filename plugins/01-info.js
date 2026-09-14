@@ -561,3 +561,4 @@ module.exports.limitedCmds = new Set([
 
 // Dipakai self-check (tanpa ini helper-nya cuma bisa dites lewat handler penuh).
 module.exports._menuBannerHeader = _menuBannerHeader;
+module.exports.ALL_COMMANDS      = ALL_COMMANDS;
