@@ -1111,22 +1111,32 @@ module.exports = async function ownerHandler(ctx) {
       return true;
     }
 
-    // ── test — Button V2: location header + tombol dropdown (kode dari Pak) ─
-    // Kode asli Pak (ESM + jimp + config.json) di-port ke CJS:
-    //   • jimp       -> sharp (sudah terpasang, nggak usah nambah dependensi)
-    //   • src/img/menu.jpg -> banner bot (botData.banner_url / BANNER_DEFAULT),
-    //                         karena repo ini nggak punya src/img/menu.jpg
-    //   • config.*   -> botData (bot_name, owner_name, footer_text)
-    //   • handler.js plugins -> ALL_COMMANDS (jumlah command terdaftar)
+    // ── test — prototipe tombol/dropdown, aman dipakai di HP ───────────────
+    // Probe 2026-09-13 (lihat komentar test4 di bawah) sudah ngejawab semua
+    // bentuk yang dicoba: JANGAN ulang. Ringkasan hasil nyata di HP:
+    //   • buttonsMessage legacy            -> dirender WA, TAPI cuma jadi TEKS
+    //     sebaris di dalam bubble; tombolnya nggak bisa diklik/dibuka.
+    //   • interactiveMessage + nativeFlow  -> kotak tombol beneran (bisa diklik),
+    //     tapi hanya 1 tombol yang tampil, dan header gambar DIBUANG.
+    //   • header gambar (interactiveMessage / buttonsMessage headerType=IMAGE
+    //     atau 6/LOCATION + jpegThumbnail) -> ke-upload sukses, tapi WA nggak
+    //     pernah merender gambarnya.
+    // Jadi "gambar header + tombol diklik dalam satu bubble" NGGAK BISA.
+    // Kode LevviCode kirim buttonsMessage (mode teks) — itu sebabnya di HP cuma
+    // muncul teks dan kelihatan seperti bot nggak membalas apa-apa.
+    // Di sini banner dikirim sebagai gambar + caption, tombolnya nyusul sebagai
+    // bubble interactiveMessage (native-flow) yang beneran bisa diklik.
     case 'test': {
       if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }
       try {
         await react(mess.reactLoading);
         const start = Date.now();
 
-        const thumb = await genThumbnail(
-          fs.readFileSync(path.resolve(botData.banner_url || process.env.BANNER_DEFAULT)),
-          'image/jpeg',
+        // Banner dikirim apa adanya (assets/banner.jpg) — jangan lewat
+        // genThumbnail, itu ngecilin ke 72x72 buat jpegThumbnail, bukan buat
+        // gambar yang ditampilkan.
+        const banner = fs.readFileSync(
+          path.resolve(botData.banner_url || process.env.BANNER_DEFAULT),
         );
 
         const ping    = Date.now() - start;
@@ -1154,49 +1164,23 @@ module.exports = async function ownerHandler(ctx) {
           `*Status* : ${await isOwner(ctx) ? 'Owner' : ctx.isPremium ? 'Premium' : 'Free'}`,
         ].join('\n');
 
+        // Banner DI ATAS + tombol DI BAWAH: dua bubble, karena WA nggak bisa
+        // naruh tombol di dalam bubble gambar (probe 2026-09-13).
         await sock.message.send(jid, {
-          buttonsMessage: {
-            locationMessage: {
-              degreesLatitude:  0,
-              degreesLongitude: 0,
-              name:    botData.bot_name || 'YaaParBot',
-              address: 'LevviCode',
-              ...(thumb ? { jpegThumbnail: thumb } : {}),
+          type: 'image', media: banner, mimetype: 'image/jpeg', caption: menu,
+        });
+
+        await sock.message.send(jid, {
+          interactiveMessage: {
+            body:   { text: 'Pilih menu di bawah ini 👇' },
+            footer: { text: botData.footer_text || 'Powered by YaaParBot' },
+            nativeFlowMessage: {
+              buttons: [{
+                name: 'quick_reply',
+                buttonParamsJson: JSON.stringify({ display_text: '📋 MENU', id: 'btn_test' }),
+              }],
+              messageParamsJson: '{}',
             },
-            contentText: menu,
-            footerText:  botData.footer_text || 'Powered by YaaParBot',
-            buttons: [
-              {
-                buttonId:   'menu',
-                buttonText: { displayText: ' MENU' },
-                type:       2, // NATIVE_FLOW
-                // single_select: 10 slot maksimal, jadi command dipecah rata jadi 10
-                // kategori. Isi kategori diambil dari ALL_COMMANDS (01-info.js).
-                nativeFlowInfo: {
-                  name: 'single_select',
-                  paramsJson: JSON.stringify((() => {
-                    const per = Math.ceil(ALL_COMMANDS.length / 10);
-                    return {
-                      title: 'Pilih Menu',
-                      sections: [{
-                        title: 'Main Menu',
-                        rows: Array.from({ length: 10 }, (_, i) => {
-                          const cmds = ALL_COMMANDS.slice(i * per, (i + 1) * per);
-                          return {
-                            header: '',
-                            title: `Menu ${i + 1} (${cmds.length} cmd)`,
-                            description: cmds.slice(0, 3).map(c => '.' + c).join(' • '),
-                            id: '.' + (cmds[0] || 'menu'),
-                          };
-                        }).filter(r => r.description),
-                      }],
-                    };
-                  })()),
-                },
-              },
-              { buttonId: 'menu', buttonText: { displayText: ' OWNER' }, type: 1 },
-            ],
-            headerType: 6, // LOCATION
           },
         });
         await react(mess.reactSuccess);

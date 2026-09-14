@@ -50,6 +50,13 @@ module.exports = async function buttonHandler(ctx) {
         // Reuse handler .owner — kirim kartu kontak, bukan teks doang
         return await require('./01-info')({ ...ctx, isCmd: true, command: 'owner', args: [] });
 
+      // ── .test — echo id tombol apa adanya, buat mastiin klik-nya nyampe ────
+      // (`btn_all` dari interactiveMessage masuk lewat salah satu dari dua
+      //  bentuk respons, jadi di sini nggak perlu ditebak.)
+      case 'btn_test':
+        await reply(`✅ Klik tombol nyampe! id = *${btnId}*`);
+        return true;
+
       // ── .test3 — tombol dropdown " MENU" (nativeFlow single_select) ──────────
       case 'test3_menu':
         return await require('./01-info')({ ...ctx, isCmd: true, command: 'menu', args: [] });
@@ -88,6 +95,9 @@ module.exports = async function buttonHandler(ctx) {
         return await require('./01-info')({ ...ctx, isCmd: true, command: 'menu', args: [] });
       case 'btn_owner':
         return await require('./01-info')({ ...ctx, isCmd: true, command: 'owner', args: [] });
+      case 'btn_test':
+        await reply(`✅ Klik tombol nyampe! id = *${rowId}*`);
+        return true;
       default:
         await reply(`✅ Opsi *"${rowId}"* dipilih.`);
         return true;
