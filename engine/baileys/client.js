@@ -3,14 +3,14 @@
 /**
  * engine/baileys/client.js
  * ─────────────────────────────────────────────────────────────────────────────
- * Adapter Baileys v7 yang "menyamar" jadi client zapo-js.
+ * Adapter Baileys v7 yang mempertahankan wajah client lama (call-site repo nggak disentuh).
  *
  * KENAPA ADAPTER, BUKAN PORT ULANG:
  *   Repo ini punya ~770 panggilan `client.*` di 9 file, tapi cuma 27 method
  *   unik. Menulis ulang 770 titik = risiko typo 770 kali; menulis 1 adapter =
  *   risiko di 1 file, dan plugin/engine nggak perlu disentuh.
  *
- * YANG TIDAK BISA DIPETAKAN (sudah diuji, lihat MIGRASI-BAILEYS.md):
+ * YANG TIDAK BISA DIPETAKAN (sudah diuji):
  *   Baileys v7 NGGAK PUNYA API tombol. `sendMessage` nolak `interactiveMessage`
  *   ("Invalid media type") dan membuang `buttons`/`sections` diam-diam.
  *   Satu-satunya jalur = relayMessage + proto mentah → lihat sendRaw().
@@ -92,8 +92,8 @@ function buttonNodes(normalized) {
 }
 
 /**
- * Konten gaya zapo -> konten gaya Baileys.
- * zapo:    { type: 'image', media, mimetype, caption }
+ * Konten gaya lama -> konten gaya Baileys.
+ * lama:    { type: 'image', media, mimetype, caption }
  * Baileys: { image: media, mimetype, caption }
  */
 function toBaileysContent(c) {
@@ -160,14 +160,14 @@ function toBaileysContent(c) {
   }
 }
 
-/** opsi gaya zapo -> opsi gaya Baileys */
+/** opsi gaya lama -> opsi gaya Baileys */
 function toBaileysOptions(opts) {
   if (!opts || typeof opts !== 'object') return {};
   const out = {};
   if (opts.mentions) out.mentions = opts.mentions;
   if (opts.quoted) out.quoted = opts.quoted;
   else if (opts.quote) {
-    // zapo: { quote: { id, key, message } } -> Baileys butuh { key, message }
+    // lama: { quote: { id, key, message } } -> Baileys butuh { key, message }
     out.quoted = {
       key: opts.quote.key || { id: opts.quote.id, remoteJid: opts.quote.remoteJid, fromMe: false },
       message: opts.quote.message,
@@ -179,7 +179,7 @@ function toBaileysOptions(opts) {
   return out;
 }
 
-/** Baileys pakai `id`, zapo pakai `jid` — samakan supaya engine/jid.js tetap jalan */
+/** Baileys pakai `id`, call-site lama pakai `jid` — samakan supaya engine/jid.js tetap jalan */
 function normalizeGroupMeta(meta) {
   if (!meta || !Array.isArray(meta.participants)) return meta;
   meta.participants = meta.participants.map((p) => ({
@@ -353,7 +353,7 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
     try { sock?.ws?.close(); } catch {}
   }
 
-  // ── Wajah zapo-js ─────────────────────────────────────────────────────────
+  // ── Wajah client lama ─────────────────────────────────────────────────────────
   const client = {
     // socket asli, buat kode baru yg mau API Baileys langsung
     get sock() { return sock; },
@@ -431,7 +431,7 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
 
     business: {
       getBusinessProfile: (jid) => sock.getBusinessProfile(jid),
-      // zapo punya ini; Baileys nggak. Dipertahankan supaya call-site nggak
+      // client lama punya ini; Baileys nggak. Dipertahankan supaya call-site nggak
       // error — balikin null kalau nggak ada (badge verified memang hilang).
       getVerifiedName: async (jid) => {
         try {

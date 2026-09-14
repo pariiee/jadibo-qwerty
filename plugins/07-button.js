@@ -3,7 +3,7 @@
 /**
  * plugins/07-button.js
  * Command:  .button, .btn, .menu2, .list
- * Fitur:   Kirim interactive buttons / list menu via zapo-js raw proto
+ * Fitur:   Kirim interactive buttons / list menu via raw proto (relayMessage)
  *          + tangkap klik button/list response & proses sebagai command
  */
 
@@ -43,7 +43,7 @@ module.exports = async function buttonHandler(ctx) {
         await reply(
           '🤖 *YaaParBot v1.0.0*\n\n' +
           'Multi-bot WhatsApp + Telegram gateway.\n' +
-          'Dibangun dengan zapo-js & node-telegram-bot-api.'
+          'Dibangun dengan Baileys & node-telegram-bot-api.'
         );
         return true;
       case 'btn_owner':

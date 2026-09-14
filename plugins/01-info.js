@@ -369,8 +369,8 @@ module.exports = async function infoHandler(ctx) {
       }
 
       // ── Tombol [menu] [owner] — bubble terpisah ──────────────────────────
-      // Tombol WA tidak bisa menempel di gambar: zapo-js tidak upload header
-      // gambar pada buttonsMessage (lihat encode/media-payload.js) — payload-nya
+      // Tombol WA tidak bisa menempel di gambar: media bersarang di dalam buttonsMessage nggak
+      // ikut ke-upload oleh engine (bukan soal proto-nya) — payload-nya
       // round-trip aman, tapi WA nggak render. Jadi tombol dikirim bubble sendiri.
       try {
         await client.message.send(jid, {

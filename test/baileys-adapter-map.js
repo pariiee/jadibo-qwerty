@@ -1,5 +1,5 @@
 // Self-check: adapter Baileys mengeluarkan SEMUA event yg ditunggu engine,
-// dan mengubah konten gaya-zapo -> gaya-Baileys dengan benar.
+// dan mengubah konten gaya-lama -> gaya-Baileys dengan benar.
 // Jalankan: node baileys-adapter-map
 const assert = require('assert');
 const EventEmitter = require('events');
@@ -10,7 +10,7 @@ const {
 let pass = 0;
 const ok = (label, fn) => { fn(); pass++; console.log('  ok  ' + label); };
 
-// ── 1. Konten gaya zapo -> Baileys ──────────────────────────────────────────
+// ── 1. Konten gaya lama -> Baileys ──────────────────────────────────────────
 ok("text -> { text }", () => {
   assert.deepStrictEqual(toBaileysContent({ type: 'text', text: 'hai' }), { text: 'hai' });
 });
@@ -74,7 +74,7 @@ ok("normalizeGroupMeta: id jadi jid, admin jadi isAdmin/isSuperAdmin", () => {
   assert.strictEqual(meta.participants[2].isAdmin, false);
 });
 
-// ── 4. Opsi: zapo `quote` -> Baileys `quoted` ────────────────────────────────
+// ── 4. Opsi: gaya lama `quote` -> Baileys `quoted` ────────────────────────────────
 ok("options.quote -> options.quoted (key+message)", () => {
   const r = toBaileysOptions({ quote: { id: 'MSG1', remoteJid: 'g@g.us', message: { conversation: 'x' } } });
   assert.strictEqual(r.quoted.key.id, 'MSG1');

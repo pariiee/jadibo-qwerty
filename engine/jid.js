@@ -4,7 +4,7 @@
  * engine/jid.js
  * Pusat urusan JID WhatsApp: LID <-> nomor telepon (PN), angka polos, cek tipe.
  *
- * Konvensi zapo:
+ * Konvensi JID:
  *   LID = `...@lid`            -> id internal WhatsApp (bukan nomor)
  *   PN  = `...@s.whatsapp.net` -> nomor telepon asli
  *

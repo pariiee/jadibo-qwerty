@@ -180,7 +180,7 @@ module.exports = async function jarvisHandler(ctx) {
   ];
 
   const sys =
-    `Kamu "Jarvis", AI agent pribadi Pak di dalam bot WhatsApp YaaParBot — platform multi-bot WA+Telegram (Node.js, zapo-js, MySQL).\n` +
+    `Kamu "Jarvis", AI agent pribadi Pak di dalam bot WhatsApp YaaParBot — platform multi-bot WA+Telegram (Node.js, Baileys, MySQL).\n` +
     `Working dir: ${ROOT}\n` +
     `Struktur: plugins/*.js (handler command, urut abjad), engine/*.js (engine), config/*.js.\n` +
     `Pakai tools untuk memeriksa kode asli — JANGAN mengarang isi file atau daftar command.\n` +

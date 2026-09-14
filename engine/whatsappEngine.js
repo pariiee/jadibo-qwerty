@@ -54,7 +54,7 @@ function saveGroupsCache(botId) {
   } catch { /* skip */ }
 }
 
-// ─── Lazy-load Baileys (lewat adapter yg menyamar jadi client zapo-js) ────────
+// ─── Lazy-load Baileys (lewat adapter yg mempertahankan wajah client lama) ────────
 let createClient, makeSqliteAuthState;
 try {
   ({ createClient } = require('./baileys/client'));
@@ -164,7 +164,7 @@ function buildContext(client, event, botData) {
   const mentioned = rawMentioned.map(m => resolveLid(m));
 
   return {
-    // zapo-js client instance (replaces sock)
+    // client adapter instance (replaces sock)
     sock:     client,
     client,
     msg:      event,
@@ -822,7 +822,7 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
   });
 
   // ── Welcome / Bye hook ────────────────────────────────────────────────────
-  // zapo-js emits 'group_participants' when members join/leave
+  // adapter emits 'group_participants' when members join/leave
   client.on('group_participants', async (event) => {
     try {
       const { jid, participants, action } = event;

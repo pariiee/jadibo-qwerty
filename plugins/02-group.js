@@ -131,7 +131,7 @@ module.exports = async function groupHandler(ctx) {
   const { command, args, reply, react, sock, client, jid, sender, botData } = ctx;
   const p = botData.prefix;
 
-  // Helper: get group metadata via zapo-js
+  // Helper: get group metadata via client adapter
   async function getMeta() {
     try { return await client.group.queryGroupMetadata(jid); } catch { return null; }
   }
@@ -350,7 +350,7 @@ module.exports = async function groupHandler(ctx) {
       const targetJid  = `${normalized}@s.whatsapp.net`;
       try {
         const results = await client.group.addParticipants(jid, [targetJid]);
-        // zapo-js return array hasil per-jid: { jid, status: 'ok'|'error', code }
+        // client adapter return array hasil per-jid: { jid, status: 'ok'|'error', code }
         const res = (Array.isArray(results) ? results : [])[0];
         if (!res) {
           await reply(`⚠️ Tidak ada respon dari WhatsApp saat menambahkan *${normalized}*. Pastikan bot admin grup.`);
@@ -873,7 +873,7 @@ module.exports = async function groupHandler(ctx) {
       const counts  = {};
 
       for (const p of members) {
-        // zapo-js return JID sebagai @lid, gunakan phoneNumber field langsung
+        // engine return JID sebagai @lid, gunakan phoneNumber field langsung
         const rawJid = p.jid || p.lid || '';
         const isPhone = rawJid.endsWith('@s.whatsapp.net') || rawJid.endsWith('@c.us');
         const num = isPhone

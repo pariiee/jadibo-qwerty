@@ -12,7 +12,7 @@
  *     handshake, itu yg bikin signal error intermitten.
  *
  * KOMPATIBEL SESI LAMA: tabel baru dibuat dgn `IF NOT EXISTS`, file session.db
- * zapo yang sudah ada nggak diapa-apakan. Kalau creds belum ada, dianggap baru
+ * engine lama yang sudah ada nggak diapa-apakan. Kalau creds belum ada, dianggap baru
  * dan langsung pairing/QR — jadi nggak perlu hapus sesi manual.
  */
 
