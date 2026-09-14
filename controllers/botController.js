@@ -378,6 +378,10 @@ async function clearSession(req, res) {
       [getDbPath(bot.id), bot.id]
     );
 
+    // Log lama ikut dibuang — kalau nggak, panel nge-replay riwayat sesi
+    // sebelumnya pas dibuka, keliatan kayak kejadian baru.
+    await pool.execute('DELETE FROM bot_logs WHERE bot_id = ?', [bot.id]);
+
     return res.json({ ok: true, message: 'Sesi dihapus. Bot perlu scan QR ulang.' });
   } catch (err) {
     console.error('[Bot] clearSession error:', err);

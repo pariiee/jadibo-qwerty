@@ -435,17 +435,26 @@
   async function loadLogs() {
     const d = await api('/api/bots/' + botId + '/logs?limit=80');
     if (!d?.ok) return;
-    d.logs.forEach(l => appendLog(l.level, l.message, false));
+    d.logs.forEach(l => appendLog(l.level, l.message, false, l.created_at));
     scrollTerm();
   }
 
-  function appendLog(level, message, scroll = true) {
+  // Server kirim created_at UTC (kolom MySQL default TIMESTAMP).
+  // Tanpa 'Z', JS bacanya sebagai waktu lokal → jam log meleset sebesar offset.
+  function logTime(v) {
+    if (!v) return new Date().toLocaleTimeString('id-ID', { hour12: false });
+    const s = /Z|[+-]\d\d:?\d\d$/.test(v) ? v : String(v).replace(' ', 'T') + 'Z';
+    const d = new Date(s);
+    return isNaN(d) ? String(v) : d.toLocaleTimeString('id-ID', { hour12: false });
+  }
+
+  function appendLog(level, message, scroll = true, when = null) {
     const t = document.getElementById('terminal');
     const el = document.createElement('p');
     const known = ['info','warn','error','debug','cmd','cmderr'];
     const lv = known.includes(level) ? level : 'info';
     el.className = 'log-line log-' + lv;
-    const ts = new Date().toLocaleTimeString('id-ID', { hour12: false });
+    const ts = logTime(when);
     if (String(message).startsWith('QR_DATA:')) return;
     el.textContent = '[' + ts + '] ' + message;
     t.appendChild(el);
@@ -616,7 +625,7 @@
     if (!confirm('Hapus sesi? Bot perlu scan QR ulang setelah ini.')) return;
     const d = await api('/api/bots/' + botId + '/clear-session', { method: 'POST' });
     if (!d) return;
-    if (d.ok) { dismissQr(); updateStatus('disconnected'); isRunning = false; syncBtns(); ctrlMsg(d.message); }
+    if (d.ok) { dismissQr(); clearTerminal(); updateStatus('disconnected'); isRunning = false; syncBtns(); ctrlMsg(d.message); }
     else ctrlMsg(d.message, 'error');
   }
   function startPolling() {
