@@ -28,6 +28,8 @@ const {
   jidNormalizedUser,
   DisconnectReason,
   generateWAMessageFromContent,
+  normalizeMessageContent,
+  isJidGroup,
   proto,
   Browsers,
 } = require('baileys');
@@ -53,6 +55,41 @@ const RAW_PROTO_KEYS = [
 
 const isRawProto = (c) =>
   !!c && typeof c === 'object' && RAW_PROTO_KEYS.some((k) => c[k] !== undefined);
+
+// ── Node biner yg bikin tombol beneran ke-render ─────────────────────────────
+// WA nggak baca tombol cuma dari proto-nya: client resmi juga nempelin node
+// `<biz><interactive type="native_flow"><native_flow/></interactive></biz>`
+// (+ `<bot biz_bot="1"/>` di chat pribadi). Tanpa ini WA nampilin teks polos.
+// Diambil dari struktur yg dipakai client resmi (lihat gifted-btns / itsukichan).
+function buttonNodes(normalized) {
+  const nm = normalized?.interactiveMessage?.nativeFlowMessage;
+  const bm = normalized?.buttonsMessage;
+  if (nm || bm) {
+    return [
+      {
+        tag: 'biz',
+        attrs: {},
+        content: [
+          {
+            tag: 'interactive',
+            attrs: { type: 'native_flow', v: '1' },
+            content: [{ tag: 'native_flow', attrs: { v: '9', name: 'mixed' } }],
+          },
+        ],
+      },
+    ];
+  }
+  if (normalized?.listMessage) {
+    return [
+      {
+        tag: 'biz',
+        attrs: {},
+        content: [{ tag: 'list', attrs: { v: '2', type: 'product_list' } }],
+      },
+    ];
+  }
+  return [];
+}
 
 /**
  * Konten gaya zapo -> konten gaya Baileys.
@@ -181,7 +218,16 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
       quoted: opts.quoted,
       messageId: opts.messageId,
     });
-    await sock.relayMessage(jid, wam.message, { messageId: wam.key.id });
+    // Node tambahan WAJIB ada, kalau nggak tombolnya di-drop sama WA.
+    const nodes = buttonNodes(normalizeMessageContent(wam.message));
+    const additionalNodes = [...nodes];
+    if (nodes.length && !isJidGroup(jid)) {
+      additionalNodes.push({ tag: 'bot', attrs: { biz_bot: '1' } });
+    }
+    await sock.relayMessage(jid, wam.message, {
+      messageId: wam.key.id,
+      additionalNodes,
+    });
     return wam;
   }
 

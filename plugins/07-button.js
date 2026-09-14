@@ -57,12 +57,6 @@ module.exports = async function buttonHandler(ctx) {
         await reply(`✅ Klik tombol nyampe! id = *${btnId}*`);
         return true;
 
-      // ── .test3 — tombol dropdown " MENU" (nativeFlow single_select) ──────────
-      case 'test3_menu':
-        return await require('./01-info')({ ...ctx, isCmd: true, command: 'menu', args: [] });
-      case 'test3_owner':
-        return await require('./01-info')({ ...ctx, isCmd: true, command: 'owner', args: [] });
-
       // ── Default — echo buttonId ───────────────────────────────────────────────
       default:
         // Button didyoumean (dym:*) bukan urusan plugin ini — biarkan plugin 08 handle
@@ -85,7 +79,6 @@ module.exports = async function buttonHandler(ctx) {
 
     switch (rowId) {
       case 'lst_ping': await reply('🏓 Pong!'); return true;
-      // Baris dropdown .test3 pakai id command langsung ('.menu' dsb)
       case '.menu':    return await require('./01-info')({ ...ctx, isCmd: true, command: 'menu', args: [] });
       case 'lst_menu': await reply('📋 Ketik `.menu` untuk daftar command.'); return true;
       case 'lst_info':
@@ -156,47 +149,6 @@ module.exports = async function buttonHandler(ctx) {
       } catch (e) {
         await reply(`❌ Gagal kirim buttons: ${e.message}`);
       }
-      return true;
-    }
-
-    // ── .btntest — 3 bentuk output WA, buat nunjuk yang paling pas ─────────────
-    //  A buttonsMessage legacy (tombol asli, WA render jadi baris full-width)
-    //  B interactiveMessage quick_reply (native-flow, kotak di dalam bubble + ikon)
-    //  C teks biasa `[ 📋 Menu ] [ 👑 Owner ]` (sebaris, TIDAK bisa diklik)
-    // Catatan: templateMessage TIDAK dipakai — zapo-js tidak menyisipkan node
-    // <biz> untuk kind itu (resolveButtonAddonKindFrom), jadi bakal mental.
-    case 'btntest': {
-      const variants = [
-        ['A — tombol legacy (buttonsMessage)', { buttonsMessage: {
-          contentText: 'Pilih menu:',
-          footerText:  'YaaParBot',
-          headerType:  proto.Message.ButtonsMessage.HeaderType.EMPTY,
-          buttons: [
-            { buttonId: 'btn_menu',  buttonText: { displayText: '📋 Menu'  }, type: proto.Message.ButtonsMessage.Button.Type.RESPONSE },
-            { buttonId: 'btn_owner', buttonText: { displayText: '👑 Owner' }, type: proto.Message.ButtonsMessage.Button.Type.RESPONSE },
-          ],
-        } }],
-        ['B — tombol native-flow (interactiveMessage)', { interactiveMessage: {
-          body:   { text: 'Pilih menu:' },
-          footer: { text: 'YaaParBot' },
-          nativeFlowMessage: {
-            buttons: [
-              { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: '📋 Menu',  id: 'btn_menu'  }) },
-              { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: '👑 Owner', id: 'btn_owner' }) },
-            ],
-            messageParamsJson: '{}',
-          },
-        } }],
-      ];
-      for (const [label, payload] of variants) {
-        await reply(`▶️ *${label}*`);
-        await client.message.send(jid, payload);
-        await new Promise(r => setTimeout(r, 2500));
-      }
-      // C — teks mentah, sebaris, persis gaya [menu] [owner]
-      await reply('▶️ *C — teks biasa (nggak bisa diklik)*');
-      await reply('[ 📋 Menu ]   [ 👑 Owner ]');
-      await reply('☝️ Balas *A*, *B*, atau *C* — mana yang bentuknya kayak yang lu mau.');
       return true;
     }
 
