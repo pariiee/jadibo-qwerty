@@ -76,6 +76,11 @@ module.exports = async function buttonHandler(ctx) {
     // Baris dropdown `.menu` → re-dispatch `.menu <kategori>` (handler yang sama)
     const cat = /^menu_cat:(\w+)$/.exec(rowId);
     if (cat) return await require('./01-info')({ ...ctx, isCmd: true, command: 'menu', args: [cat[1]] });
+    // Baris native-flow vellzy-style: id langsung ".menu <kategori>"
+    const dotmenu = /^\.menu(?:\s+(\w+))?$/.exec(rowId);
+    if (dotmenu) return await require('./01-info')({ ...ctx, isCmd: true, command: 'menu', args: dotmenu[1] ? [dotmenu[1]] : [] });
+    if (rowId === '.ping')  { await reply(`🏓 Pong! ${Math.floor(process.uptime())}s`); return true; }
+    if (rowId === '.owner') { return await require('./01-info')({ ...ctx, isCmd: true, command: 'owner', args: [] }); }
 
     switch (rowId) {
       case 'lst_ping': await reply('🏓 Pong!'); return true;

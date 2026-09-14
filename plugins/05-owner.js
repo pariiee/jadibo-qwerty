@@ -19,7 +19,7 @@ const { uploadInfo } = require('../engine/api');
 const { genThumbnail } = require('../engine/thumbnail');
 const { proto } = require('baileys');
 const { getRankByLevel } = require('./03-fun-rpg');
-const { ALL_COMMANDS }  = require('./01-info');
+const { ALL_COMMANDS, CATS } = require('./01-info');
 
 // In-memory stores
 const blockedUsers  = new Map(); // botId -> Set<jid>
@@ -1111,76 +1111,102 @@ module.exports = async function ownerHandler(ctx) {
       return true;
     }
 
-    // ── test — prototipe tombol/dropdown, aman dipakai di HP ───────────────
-    // Probe 2026-09-13 (probe test2/3/4, sudah dihapus) ngejawab semua bentuk
-    // yang dicoba: JANGAN ulang. Ringkasan hasil nyata di HP:
-    //   • buttonsMessage legacy            -> dirender WA, TAPI cuma jadi TEKS
-    //     sebaris di dalam bubble; tombolnya nggak bisa diklik/dibuka.
-    //   • interactiveMessage + nativeFlow  -> kotak tombol beneran (bisa diklik),
-    //     tapi hanya 1 tombol yang tampil, dan header gambar DIBUANG.
-    //   • header gambar (interactiveMessage / buttonsMessage headerType=IMAGE
-    //     atau 6/LOCATION + jpegThumbnail) -> ke-upload sukses, tapi WA nggak
-    //     pernah merender gambarnya.
-    // Jadi "gambar header + tombol diklik dalam satu bubble" NGGAK BISA.
-    // Kode LevviCode kirim buttonsMessage (mode teks) — itu sebabnya di HP cuma
-    // muncul teks dan kelihatan seperti bot nggak membalas apa-apa.
-    // Di sini banner dikirim sebagai gambar + caption, tombolnya nyusul sebagai
-    // bubble interactiveMessage (native-flow) yang beneran bisa diklik.
+    // ── test — versi vellzy: SATU bubble interactiveMessage, header lokasi ────
+    // customNodes <biz>/<interactive> dari kode aslinya NGGAK perlu ditulis di
+    // sini — adapter (engine/baileys/client.js sendRaw) udah nambahin otomatis.
     case 'test': {
       if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }
       try {
         await react(mess.reactLoading);
-        const start = Date.now();
 
-        // Banner dikirim apa adanya (assets/banner.jpg) — jangan lewat
-        // genThumbnail, itu ngecilin ke 72x72 buat jpegThumbnail, bukan buat
-        // gambar yang ditampilkan.
         const banner = fs.readFileSync(
           path.resolve(botData.banner_url || process.env.BANNER_DEFAULT),
         );
+        // Header lokasi cuma butuh thumbnail kecil — genThumbnail (72x72) pas.
+        const thumb = await genThumbnail(banner, 'image/jpeg') || banner;
 
-        const ping    = Date.now() - start;
         const runtime = process.uptime();
-        const days    = Math.floor(runtime / 86400);
-        const hours   = Math.floor((runtime % 86400) / 3600);
-        const minutes = Math.floor((runtime % 3600) / 60);
-        const number  = String(sender).split('@')[0].split(':')[0];
+        const uh = Math.floor(runtime / 3600);
+        const um = Math.floor((runtime % 3600) / 60);
+        const us = Math.floor(runtime % 60);
+        const pnJid = String(sender).split(':')[0].split('@')[0];
 
-        const menu = [
-          '乂 *BOT INFORMATION*',
+        const body = [
+          '╭─── • *「 INFO USER 」*',
+          `│ ◦ User : @${pnJid}`,
+          `│ ◦ Status : *${await isOwner(ctx) ? 'Owner' : ctx.isPremium ? 'Premium' : 'Free'}*`,
+          `│ ◦ Uptime : *${uh}h ${um}m ${us}s*`,
+          `│ ◦ Mode : *Public*`,
+          `│ ◦ Prefix : *[${p || '.'}]*`,
+          '╰───────────────────•',
           '',
-          `*Name* : ${botData.bot_name || 'YaaParBot'}`,
-          '*Type* : CJS - Plugin',
-          `*Dev*  : ${botData.owner_name || '-'}`,
-          `*Ping* : ${ping} ms`,
-          '*Status* : PUBLIC',
-          `*Total Plugin* : ${ALL_COMMANDS.length}`,
-          `*Uptime* : ${days} Day ${hours} Hour ${minutes} Minute`,
+          '*CATEGORY COMMANDS*',
+          `Total: ${ALL_COMMANDS.length} fitur / ${Object.keys(CATS).length} kategori`,
           '',
-          '乂 *USER INFORMATION*',
-          '',
-          `*Name* : ${ctx.pushName || '-'}`,
-          `*Number* : +${number}`,
-          `*Status* : ${await isOwner(ctx) ? 'Owner' : ctx.isPremium ? 'Premium' : 'Free'}`,
+          '╭─── • *「 KATEGORI 」*',
+          ...Object.entries(CATS).map(([k, v]) => `│ ◦ ${k.toUpperCase()} (${v.length} Fitur)`),
+          '╰───────────────────•',
         ].join('\n');
 
-        // Banner DI ATAS + tombol DI BAWAH: dua bubble, karena WA nggak bisa
-        // naruh tombol di dalam bubble gambar (probe 2026-09-13).
-        await sock.message.send(jid, {
-          type: 'image', media: banner, mimetype: 'image/jpeg', caption: menu,
-        });
+        const now = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
 
         await sock.message.send(jid, {
           interactiveMessage: {
-            body:   { text: 'Pilih menu di bawah ini 👇' },
-            footer: { text: botData.footer_text || 'Powered by YaaParBot' },
+            header: {
+              hasMediaAttachment: true,
+              locationMessage: {
+                degreesLatitude: 0,
+                degreesLongitude: 0,
+                name: botData.bot_name || 'YaaParBot',
+                address: 'YaaParBot — yapari.web.id',
+                jpegThumbnail: thumb,
+              },
+            },
+            body:   { text: body },
+            footer: { text: `*${botData.bot_name || 'YaaParBot'}*\n*${now}*` },
             nativeFlowMessage: {
-              buttons: [{
-                name: 'quick_reply',
-                buttonParamsJson: JSON.stringify({ display_text: '📋 MENU', id: 'btn_test' }),
-              }],
+              buttons: [
+                {
+                  name: 'single_select',
+                  buttonParamsJson: JSON.stringify({
+                    title: 'Pilih Kategori',
+                    sections: [{
+                      title: 'Kategori',
+                      highlight_label: 'YaaPar Menu',
+                      rows: Object.entries(CATS).map(([k, v]) => ({
+                        title: k.toUpperCase(),
+                        description: `${v.length} Command`,
+                        id: `.menu ${k}`,
+                      })),
+                    }],
+                  }),
+                },
+                {
+                  name: 'single_select',
+                  buttonParamsJson: JSON.stringify({
+                    title: 'Informasi',
+                    sections: [{
+                      title: 'Informasi',
+                      highlight_label: 'Informasi',
+                      rows: [
+                        { title: 'Ping',   id: '.ping' },
+                        { title: 'Owner',  id: '.owner' },
+                      ],
+                    }],
+                  }),
+                },
+                {
+                  name: 'cta_url',
+                  buttonParamsJson: JSON.stringify({
+                    display_text: '🌐 Website',
+                    url: 'https://yapari.web.id',
+                    merchant_url: 'https://yapari.web.id',
+                  }),
+                },
+              ],
               messageParamsJson: '{}',
             },
+            contextInfo: { mentionedJid: [pnJid + '@s.whatsapp.net'] },
           },
         });
         await react(mess.reactSuccess);
