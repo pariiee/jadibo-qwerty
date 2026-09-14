@@ -243,7 +243,11 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
   const plugins = loadPlugins();
 
   // ── auth_qr ───────────────────────────────────────────────────────────────
+  // Di mode pairing adapter nggak pernah emit 'auth_qr' (lihat client.js), jadi
+  // baris ini praktis nggak kepanggil. Dijaga dua lapis biar QR nyasar nggak
+  // nendang panel pairing yang lagi nampilin kode.
   client.on('auth_qr', async ({ qr, ttlMs }) => {
+    if (usePairingCode) return;
     await logBot(botId, 'info', `QR_DATA:${qr}`);
     broadcast(botId, 'qr', { qr, ttlMs });
     await pool.execute("UPDATE bots SET status = 'qr_pending' WHERE id = ?", [botId]);
@@ -855,30 +859,28 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
   if (usePairingCode && botData.bot_number) {
     const phoneNumber = botData.bot_number.replace(/\D/g, '');
 
-    // Baileys: server siap menerima pairing code saat QR pertama di-emit.
-    // Adapter memancarkan 'auth_qr' DAN 'auth_pairing_required' bareng di momen itu.
-    const serverReadyPromise = new Promise((resolve) => {
-      client.once('auth_qr', resolve);
-      client.once('auth_pairing_required', resolve);
-    });
-
-    // Pasang listener SEBELUM connect()
-    const connectPromise = client.connect();
-
-    // Tunggu server siap
-    serverReadyPromise.then(async () => {
+    // Baileys memancarkan QR baru tiap ~20s selama belum di-scan — tiap QR itu
+    // momen server siap nerima request. Jadi pairing code diperbarui terus,
+    // bukan sekali doang: klien nunggu yg lama, kodenya udah mati di server.
+    // 'auth_pairing_required' diemit bareng tiap 'auth_qr', jadi cukup satu listener.
+    let pairingBusy = false;
+    client.on('auth_pairing_required', async ({ ttlMs } = {}) => {
+      if (pairingBusy) return;
+      pairingBusy = true;
       try {
-        await logBot(botId, 'info', 'Server siap, meminta pairing code...');
         const code = await client.auth.requestPairingCode(phoneNumber);
         const formatted = String(code).match(/.{1,4}/g)?.join('-') || code;
         await logBot(botId, 'info', `Pairing Code: ${formatted}`);
-        broadcast(botId, 'pairing_code', { code: formatted });
+        // ttl ikut umur QR yg barusan diemit (60s utk QR pertama, 20s sisanya)
+        broadcast(botId, 'pairing_code', { code: formatted, ttlMs: ttlMs || 20000 });
       } catch (e) {
         await logBot(botId, 'error', `Gagal mendapatkan pairing code: ${e.message}`);
+      } finally {
+        pairingBusy = false;
       }
     });
 
-    return connectPromise.catch(async (e) => {
+    return client.connect().catch(async (e) => {
       await logBot(botId, 'error', `Connect error: ${e.message}`);
     });
 

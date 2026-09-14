@@ -160,6 +160,7 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
   let meJid = null;
   let closed = false;
   let pendingPhone = null;   // nomor pairing yg diminta sebelum socket siap
+  let qrCount = 0;           // urutan QR di socket ini (ttl: 1st 60s, sisanya 20s)
 
   // ── Kirim proto mentah (tombol/list) — jalur relayMessage ──────────────────
   async function sendRaw(jid, protoContent, opts = {}) {
@@ -196,6 +197,7 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
   // ── Koneksi ───────────────────────────────────────────────────────────────
   function connect() {
     return new Promise((resolve, reject) => {
+      qrCount = 0; // socket baru -> QR pertama balik ke ttl 60s
       try {
         sock = makeWASocket({
           auth: {
@@ -221,10 +223,18 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
         const { connection, lastDisconnect, qr } = u;
 
         if (qr) {
-          ev.emit('auth_qr', { qr, ttlMs: 60000 });
-          // Sinyal "server siap" buat pairing code. Dikirim bareng QR pertama
-          // karena itu momen server benar-benar siap nerima request.
-          ev.emit('auth_pairing_required');
+          // Baileys: QR pertama berlaku 60s, penggantinya 20s
+          // (lib/Socket/socket.js:709 & :723 — qrMs). Timer di UI harus ikut
+          // angka ini, bukan hardcoded, biar countdown-nya jujur.
+          qrCount++;
+          const ttlMs = qrCount === 1 ? 60000 : 20000;
+          // pairingMode: JANGAN emit 'auth_qr'. Kalau diemit, engine broadcast
+          // 'qr' ke UI tiap 20s dan panel pairing ketimpa QR — kode-nya hilang
+          // dari layar persis pas user lagi ngetik.
+          if (!pairingMode) ev.emit('auth_qr', { qr, ttlMs });
+          // Sinyal "server siap" buat pairing code. Dikirim bareng tiap QR —
+          // QR baru = ref baru = kode lama mati, jadi kode baru harus diminta.
+          ev.emit('auth_pairing_required', { ttlMs });
         }
 
         if (connection === 'open') {

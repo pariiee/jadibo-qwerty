@@ -111,6 +111,7 @@
   .pair-ic{width:54px;height:54px;background:#f1f1f3;border-radius:14px;display:flex;align-items:center;justify-content:center}
   .pair-wait{font-size:13px;color:#9a9aa2;font-style:italic;text-align:center}
   .pair-code{background:var(--dark);color:#fff;font-family:Consolas,Menlo,monospace;font-size:28px;font-weight:800;letter-spacing:.35em;padding:16px 10px;border-radius:12px;text-align:center;width:100%}
+  .pair-timer{font-size:12px;color:#9a9aa2;text-align:center}
 
   /* delete modal */
   .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:18px;z-index:60}
@@ -291,6 +292,7 @@
         <div class="pair-wait" id="pair-wait">Menunggu pairing code dari server...</div>
         <div id="pair-box" style="width:100%;display:none;flex-direction:column;align-items:center;gap:12px">
           <div class="pair-code" id="pair-code">——————</div>
+          <div class="pair-timer" id="pair-timer"></div>
           <p>Masukkan kode ini di WhatsApp → Perangkat Tertaut → Tautkan dengan nomor telepon</p>
         </div>
       </div>
@@ -484,7 +486,12 @@
           if (s === 'connected') { dismissQr(); }
         }
         if (d.type === 'qr') showQr(d.payload.qr);
-        if (d.type === 'pairing_code') showPairing(d.payload.code);
+        if (d.type === 'pairing_code') {
+          // Cuma render kalau panelnya masih kebuka — jangan maksa munculin ulang
+          // tiap 20s kalau user udah nutup.
+          if (document.getElementById('qr-panel').classList.contains('show'))
+            showPairing(d.payload.code, d.payload.ttlMs);
+        }
       } catch {}
     };
     ws.onclose = () => {
@@ -513,7 +520,7 @@
       });
     }
   }
-  function showPairing(code) {
+  function showPairing(code, ttlMs) {
     const panel = document.getElementById('qr-panel');
     panel.classList.add('show');
     document.getElementById('mode-qr').classList.remove('show');
@@ -523,8 +530,30 @@
     const box = document.getElementById('pair-box');
     box.style.display = 'flex';
     document.getElementById('pair-code').textContent = code;
+    startPairCountdown(ttlMs || 20000);
+  }
+  // Kode ini cuma hidup sebentar di server. Kalau belum dipakai, kode baru bakal
+  // di-push otomatis — timer ini ngasih tau user sisa waktunya.
+  function startPairCountdown(ttlMs) {
+    const el = document.getElementById('pair-timer');
+    clearInterval(startPairCountdown._t);
+    let left = Math.ceil(ttlMs / 1000);
+    const tick = () => {
+      if (left <= 0) {
+        clearInterval(startPairCountdown._t);
+        // Kode lama udah mati — jangan biarin user ngetik kode basi.
+        document.getElementById('pair-code').textContent = '——————';
+        el.textContent = 'Kode kadaluarsa — meminta kode baru...';
+        return;
+      }
+      el.textContent = 'Kode berlaku ' + left + ' detik lagi';
+      left--;
+    };
+    tick();
+    startPairCountdown._t = setInterval(tick, 1000);
   }
   function dismissQr() {
+    clearInterval(startPairCountdown._t);
     document.getElementById('qr-panel').classList.remove('show');
     document.getElementById('mode-qr').classList.remove('show');
     document.getElementById('mode-pairing').classList.remove('show');
@@ -558,6 +587,7 @@
       document.getElementById('qr-title').textContent = 'Pairing Code';
       document.getElementById('pair-wait').style.display = '';
       document.getElementById('pair-box').style.display = 'none';
+      document.getElementById('pair-timer').textContent = '';
     } else {
       document.getElementById('mode-pairing').classList.remove('show');
       document.getElementById('mode-qr').classList.add('show');
