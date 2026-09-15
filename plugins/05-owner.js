@@ -1219,11 +1219,12 @@ module.exports = async function ownerHandler(ctx) {
       return true;
     }
 
-    // ── test2 — buttonsMessage legacy + header lokasi + thumbnail ────────────
-    // Bentuk yg diminta Pak, contek apa adanya. `sock.message.send` di snippet
-    // = `client.message.send` di adapter (sama). customNodes <biz>/<interactive>
-    // + additionalAttributes NGGAK perlu ditulis — client.js nyuntik sendiri
-    // (buttonNodes() udah kenal buttonsMessage, RAW_PROTO_KEYS juga).
+    // ── test2 — interactiveMessage + header lokasi + thumbnail ───────────────
+    // Tombol 1 = dropdown `single_select` kategori, tombol 2 = `quick_reply`
+    // Owner. WA nggak punya `nativeFlowInfo` di `buttonsMessage`, jadi dropdown
+    // HARUS di `interactiveMessage` — dipaksa `buttonsMessage type: 2` = bubble
+    // ilang. customNodes <biz>/<interactive> NGGAK perlu ditulis — client.js
+    // nyuntik sendiri (RAW_PROTO_KEYS + buttonNodes() udah kenal bentuk ini).
     case 'test2': {
       if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }
       try {
