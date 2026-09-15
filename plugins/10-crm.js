@@ -88,13 +88,48 @@ function toJsLiteral(value, indent = 2, seen = new WeakSet(), depth = 0) {
   return result;
 }
 
-// Key yang ditambahin framework bot lain (mtype, fakeObj, dst) — bukan bagian
-// pesan aslinya, jadi dibuang sebelum di-copy.
+// ─── Key yang ditambahin framework bot lain (mtype, fakeObj, dst) ───────────
+// Bukan bagian pesan aslinya — jangan sampai ke-copy ke kode relay.
 const FRAMEWORK_DECORATED_KEYS = new Set([
   'mtype', 'id', 'chat', 'isBaileys', 'sender', 'fromMe', 'mentionedJid',
   'fakeObj', 'delete', 'copyNForward', 'download', 'key', 'participant',
   'text', 'body', 'name', 'pushName', 'viewonce', 'download1',
 ]);
+
+/** Buang key bungkus + semua fungsi (fungsi nggak bisa di-serialize). */
+function stripFrameworkProps(content) {
+  if (!content || typeof content !== 'object') return content;
+  const output = {};
+  for (const key of Object.keys(content)) {
+    if (FRAMEWORK_DECORATED_KEYS.has(key)) continue;
+    if (typeof content[key] === 'function') continue;
+    output[key] = content[key];
+  }
+  return output;
+}
+
+// Isi relayContent dibungkus proto: { imageMessage: {...} } -> { message: { imageMessage:
+// {...} } }, karena `conn.relayMessage(jid, message, {}` di plugin aslinya ngasih
+// PROTO pesannya (bukan WAMessage). Lihat catatan di buildRelayCode.
+function toProtoContent(content) {
+  const clean = stripFrameworkProps(content);
+  const key = Object.keys(clean).find(k => k.endsWith('Message'));
+  if (!key) return clean;
+  return { message: { [key]: { ...clean[key], ...Object.fromEntries(
+    Object.entries(clean).filter(([k]) => k !== key)
+  ) } } };
+}
+
+/** Kode siap tempel buat kirim ulang pesan ini di bot lain. */
+function buildRelayCode(content, chatExpr = 'm.chat') {
+  return `await conn.relayMessage(${chatExpr}, ${toJsLiteral(toProtoContent(content))}, {});`;
+}
+
+/** Nama tipe pesan dari key proto-nya — dipakai buat nama file. */
+function typeNameFromContent(content) {
+  const key = Object.keys(stripFrameworkProps(content))[0] || 'UnknownMessage';
+  return key.charAt(0).toUpperCase() + key.slice(1);
+}
 
 // ─── Handler ────────────────────────────────────────────────────────────────
 module.exports = async function crmHandler(ctx) {
@@ -109,7 +144,8 @@ module.exports = async function crmHandler(ctx) {
   }
 
   const { reply, client, jid, botData } = ctx;
-  const p = botData.prefix ?? '.';
+  const p = botData.prefix ?? '';
+  const { react, mess } = ctx;   // destructure dulu: ctx.react/mess bisa ke-clobber spread
 
   // Gate: owner bot ATAU nomor di DEVELOPER_NUMBER (sama kaya plugins/09-jarvis.js)
   const devNum    = String(process.env.DEVELOPER_NUMBER || '').replace(/\D/g, '');
@@ -128,25 +164,31 @@ module.exports = async function crmHandler(ctx) {
   }
 
   const content = normalizeForRelay(rawQuoted);
-  for (const k of Object.keys(content)) {
-    if (FRAMEWORK_DECORATED_KEYS.has(k)) delete content[k];
+  const clean = stripFrameworkProps(content);
+
+  // 1. Relay pesannya beneran ke chat ini (efek visual kaya .crm aslinya)
+  try {
+    await client.message.send(jid, clean, { quote: ctx.msg });
+  } catch (e) {
+    await reply(`❌ Gagal me-relay pesan ini: ${e.message || e}`);
+    return true;
   }
 
-  const code = toJsLiteral(content);
-  const head = `📋 *Raw message* — ${Object.keys(content).join(', ') || '(kosong)'}`;
-  const text = `${head}\n\n\`\`\`javascript\n${code}\n\`\`\``;
+  // 2. Kirim kodenya sebagai file .js (bisa kepanjangan buat di-chat)
+  const typeName = typeNameFromContent(clean);
+  const fileName = `${typeName}.js`;
+  const code = buildRelayCode(clean);
+  const caption = `📄 ${fileName}`;
 
-  // WhatsApp mulai rewel di atas ~60k karakter -> kirim sebagai file .js
-  if (text.length <= 60000) {
-    await reply(text);
-  } else {
-    await client.message.send(jid, {
-      type: 'document',
-      media: Buffer.from(code, 'utf8'),
-      mimetype: 'application/javascript',
-      fileName: 'raw-message.js',
-      caption: head,
-    });
-  }
+  await client.message.send(jid, {
+    type: 'document',
+    media: Buffer.from(code, 'utf8'),
+    mimetype: 'application/javascript',
+    fileName,
+    caption,
+  }, { quote: ctx.msg });
+
+  // 3. React ✅ (pakai ctx, bukan ctx. langsung — biar aman kalau di-spread ulang)
+  await react(mess?.reactSuccess || '✅');
   return true;
 };
