@@ -10,6 +10,7 @@
  */
 
 const mess             = require('../config/mess');
+const { lidToPnAsync }   = require('../engine/jid');
 const { genThumbnail } = require('../engine/thumbnail');
 
 // In-memory stores (replace with DB for persistence across restarts)
@@ -325,7 +326,12 @@ module.exports = async function groupHandler(ctx) {
         const results = await client.group.removeParticipants(jid, mentioned);
         const failed = (Array.isArray(results) ? results : []).filter(r => r && r.status !== 'ok');
         if (failed.length > 0) {
-          const reasons = failed.map(r => `${r.jid?.split('@')[0] || '?'} (${r.code || 'error'})`).join(', ');
+          // Tampilkan NOMOR, bukan LID — di grup LID, jid peserta bentuknya '...@lid'
+          // dan angka itu nggak ada artinya buat manusia.
+          const reasons = (await Promise.all(failed.map(async (r) => {
+            const shown = (await lidToPnAsync(client, r.jid)).split('@')[0] || '?';
+            return `${shown} (kode ${r.code || 'error'})`;
+          }))).join(', ');
           await reply(`⚠️ Sebagian gagal dikick: ${reasons}`);
         } else {
           await reply(`✅ Berhasil kick ${mentioned.length} member`);

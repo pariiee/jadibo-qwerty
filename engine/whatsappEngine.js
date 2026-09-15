@@ -405,6 +405,10 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
 
   // ── message ───────────────────────────────────────────────────────────────
   client.on('message', async (event) => {
+    // Safety net: apa pun yang meledak di handler ini harus kelog, jangan mati diem.
+    // Tanpa ini, rejection tanpa catch = proses mati (Node >= 15) -> bot restart dan
+    // command yang lagi diproses nggak pernah dibalas ("bot kadang ga respon").
+    try {
     const { key, message } = event;
 
     // Skip pesan tanpa isi
@@ -806,6 +810,11 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
       } catch (e) {
         console.error(`[Bot ${botId}] 💥 Plugin error [${ctx.command || '?'}]: ${e.message}`);
         await logBot(botId, 'cmderr', `${ctx.command || '?'}: ${e.message}`);
+        // Jangan diem aja: user nunggu balasan, plugin error tanpa pesan kelihatan
+        // kayak bot "ga respon" padahal gagal.
+        if (ctx.isCmd) {
+          await client.message.send(ctx.jid, `⚠️ Error pas jalanin *${ctx.command}*: ${e.message}`).catch(() => {});
+        }
         cmdHandled = true;
         break;
       }
@@ -818,6 +827,10 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
       await logBot(botId, cmdHandled ? 'cmd' : 'cmderr', logLineDisplay);
     } else {
       await logBot(botId, 'info', logLineDisplay);
+    }
+    } catch (err) {
+      console.error(`[Bot ${botId}] 💬 Handler error: ${err.message}`);
+      try { await logBot(botId, 'cmderr', `handler: ${err.message}`); } catch { /* log gagal ya sudah */ }
     }
   });
 

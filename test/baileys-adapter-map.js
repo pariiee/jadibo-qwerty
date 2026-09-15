@@ -5,6 +5,7 @@ const assert = require('assert');
 const EventEmitter = require('events');
 const {
   toBaileysContent, toBaileysOptions, normalizeGroupMeta, isRawProto,
+  normalizeParticipantResults, withTimeout,
 } = require('../engine/baileys/client');
 
 let pass = 0;
@@ -112,4 +113,41 @@ ok("objek incoming punya field yg dibaca engine", () => {
   assert.strictEqual(norm.chatJid, 'g@g.us');
 });
 
-console.log(`\nbaileys-adapter-map: ${pass}/${pass} PASS`);
+// ── 7. Hasil groupParticipantsUpdate: Baileys balikin KODE STRING, bukan 'ok' ──
+// Ini yg bikin kick/add yg SUKSES dilaporin gagal ("kode error undefined").
+ok("status '200' -> ok (bukan gagal)", () => {
+  assert.deepStrictEqual(normalizeParticipantResults([{ status: '200', jid: '1@s.whatsapp.net' }]),
+    [{ jid: '1@s.whatsapp.net', status: 'ok', code: 200 }]);
+});
+ok("status '403' -> error code 403 (kode error kebaca, bukan undefined)", () => {
+  assert.deepStrictEqual(normalizeParticipantResults([{ status: '403', jid: '2@lid' }]),
+    [{ jid: '2@lid', status: 'error', code: 403 }]);
+});
+ok("hasil kosong / field bolong nggak bikin throw", () => {
+  assert.deepStrictEqual(normalizeParticipantResults(undefined), []);
+  assert.deepStrictEqual(normalizeParticipantResults([{ jid: 'x' }]),
+    [{ jid: 'x', status: 'error', code: 0 }]);
+});
+
+(async () => {
+  // ── 8. withTimeout: timer harus dibersihkan ────────────────────────────────
+  // Kalau timer-nya bocor, reject-nya nggak ada yg nangkap -> unhandledRejection
+  // -> proses mati. Ini yg bikin bot "kadang ga respon".
+  let unhandled = 0;
+  process.on('unhandledRejection', () => { unhandled++; });
+  const fast = await withTimeout(Promise.resolve('ok'), 30);
+  if (fast !== 'ok') { console.log('  FAIL withTimeout: nilai nggak kebawa'); process.exit(1); }
+  pass++; console.log('  ok  withTimeout: selesai sebelum batas -> nilainya kebawa');
+  try {
+    await withTimeout(new Promise(() => {}), 20, 'grup');
+    console.log('  FAIL withTimeout: seharusnya error kalau lewat batas'); process.exit(1);
+  } catch (e) {
+    if (!/grup/.test(e.message)) { console.log('  FAIL label: ' + e.message); process.exit(1); }
+    pass++; console.log('  ok  withTimeout: lewat batas -> error berlabel');
+  }
+  await new Promise((r) => setTimeout(r, 60));
+  if (unhandled !== 0) { console.log('  FAIL timer bocor: ' + unhandled + ' unhandledRejection'); process.exit(1); }
+  pass++; console.log('  ok  withTimeout: timer nggak bocor (0 unhandledRejection)');
+
+  console.log(`\nbaileys-adapter-map: ${pass}/${pass} PASS`);
+})();

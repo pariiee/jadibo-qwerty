@@ -203,6 +203,29 @@ function attachMentions(content, mentions) {
 }
 
 /**
+ * Baileys balikin hasil groupParticipantsUpdate sebagai `{ status, jid }` dengan
+ * status = KODE STRING ('200' sukses, '403'/'409' gagal) — bukan 'ok'.
+ * Semua call-site (kick, add, kickall) ngecek `status === 'ok'` + `r.code`, jadi
+ * tanpa normalisasi ini aksi yang SUKSES dilaporin gagal ("kode error undefined").
+ */
+function normalizeParticipantResults(res) {
+  return (Array.isArray(res) ? res : []).map((r) => ({
+    jid: r?.jid,
+    status: String(r?.status) === '200' ? 'ok' : 'error',
+    code: Number(r?.status) || 0,
+  }));
+}
+
+/** Batas waktu, biar query WA yang nggantung nggak nahan handler selamanya. */
+function withTimeout(p, ms, label = 'timeout') {
+  let t;
+  return Promise.race([
+    p.finally(() => clearTimeout(t)),
+    new Promise((_, rej) => { t = setTimeout(() => rej(new Error(`${label} ${ms}ms`)), ms); }),
+  ]);
+}
+
+/**
  * @param {object} o
  * @param {object} o.auth        { creds, keys } dari engine/baileys/auth.js
  * @param {Function} o.saveCreds dipanggil tiap creds.update
@@ -387,6 +410,37 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
     try { sock?.ws?.close(); } catch {}
   }
 
+  // ── Metadata grup: cache + timeout ───────────────────────────────────────────
+  // Satu command grup bisa nanya metadata 3-4x (nama grup, isAdmin, isBotAdmin)
+  // dan tiap tanya = 1 round-trip ke WA. Tanpa cache, WA yang lambat bikin
+  // handler nunggu selamanya -> command nggak pernah dibalas (bot "ga respon").
+  const metaCache = new Map(); // jid -> { meta, at }
+  const META_TTL     = 15000;
+  const META_TIMEOUT = 8000;
+  const dropMeta = (jid) => metaCache.delete(jid);
+
+  async function groupMeta(jid) {
+    const hit = metaCache.get(jid);
+    if (hit && Date.now() - hit.at < META_TTL) return hit.meta;
+    try {
+      const meta = await withTimeout(
+        sock.groupMetadata(jid).then(normalizeGroupMeta), META_TIMEOUT, 'groupMetadata',
+      );
+      metaCache.set(jid, { meta, at: Date.now() });
+      return meta;
+    } catch (e) {
+      if (hit) return hit.meta; // pakai yang basi daripada bikin command mati total
+      throw e;
+    }
+  }
+
+  // Semua update peserta lewat sini: hasilnya dinormalisasi + cache metadata dibuang.
+  const participantsUpdate = (jid, jids, action) =>
+    sock.groupParticipantsUpdate(jid, jids, action).then((res) => {
+      dropMeta(jid);
+      return normalizeParticipantResults(res);
+    });
+
   // ── Wajah client lama ─────────────────────────────────────────────────────────
   const client = {
     // socket asli, buat kode baru yg mau API Baileys langsung
@@ -433,19 +487,20 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
     },
 
     group: {
-      queryGroupMetadata: (jid) => sock.groupMetadata(jid).then(normalizeGroupMeta),
+      queryGroupMetadata: (jid) => groupMeta(jid),
       queryAllGroups: () => sock.groupFetchAllParticipating(),
       queryInviteCode: (jid) => sock.groupInviteCode(jid),
-      addParticipants: (jid, jids) => sock.groupParticipantsUpdate(jid, jids, 'add'),
-      removeParticipants: (jid, jids) => sock.groupParticipantsUpdate(jid, jids, 'remove'),
-      promoteParticipants: (jid, jids) => sock.groupParticipantsUpdate(jid, jids, 'promote'),
-      demoteParticipants: (jid, jids) => sock.groupParticipantsUpdate(jid, jids, 'demote'),
+      addParticipants: (jid, jids) => participantsUpdate(jid, jids, 'add'),
+      removeParticipants: (jid, jids) => participantsUpdate(jid, jids, 'remove'),
+      promoteParticipants: (jid, jids) => participantsUpdate(jid, jids, 'promote'),
+      demoteParticipants: (jid, jids) => participantsUpdate(jid, jids, 'demote'),
       leaveGroup: (jid) => sock.groupLeave(Array.isArray(jid) ? jid[0] : jid),
-      setSubject: (jid, subject) => sock.groupUpdateSubject(jid, subject),
-      setDescription: (jid, desc) => sock.groupUpdateDescription(jid, desc),
-      setSetting: (jid, setting) => sock.groupSettingUpdate(jid, setting),
+      setSubject: (jid, subject) => sock.groupUpdateSubject(jid, subject).then((r) => (dropMeta(jid), r)),
+      setDescription: (jid, desc) => sock.groupUpdateDescription(jid, desc).then((r) => (dropMeta(jid), r)),
+      setSetting: (jid, setting) => sock.groupSettingUpdate(jid, setting).then((r) => (dropMeta(jid), r)),
       joinGroupViaInvite: (code) => sock.groupAcceptInvite(code),
-      approveMembershipRequests: (jid, jids) => sock.groupRequestParticipantsUpdate(jid, jids, 'approve'),
+      approveMembershipRequests: (jid, jids) =>
+        sock.groupRequestParticipantsUpdate(jid, jids, 'approve').then((r) => (dropMeta(jid), r)),
     },
 
     profile: {
@@ -497,4 +552,5 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
 
 module.exports = {
   createClient, toBaileysContent, toBaileysOptions, normalizeGroupMeta, isRawProto, attachMentions,
+  normalizeParticipantResults, withTimeout,
 };

@@ -145,6 +145,11 @@ const ctx = baseCtx;
     }
   });
 
+  await ok('.kick masuk kategori ADMIN, bukan GRUP', async () => {
+    assert.ok(info.CATS.admin.includes('kick'), '.kick nggak ada di kategori admin');
+    assert.ok(!info.CATS.grup.includes('kick'), '.kick masih nyangkut di kategori grup');
+  });
+
   console.log(`\nmenu-buttons: ${pass} PASS, ${fail} FAIL`);
   process.exit(fail ? 1 : 0);
 })();

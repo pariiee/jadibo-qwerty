@@ -350,6 +350,16 @@ async function shutdown() {
   process.exit(0);
 }
 
+// ─── Safety net proses ────────────────────────────────────────────────────────
+// Node >= 15 mematikan proses begitu ada promise rejection tanpa catch: bot restart
+// dan command yg lagi diproses hilang tanpa balasan. Log aja, jangan mati.
+process.on('unhandledRejection', (err) => {
+  console.error('[UnhandledRejection]', err?.message || err);
+});
+process.on('uncaughtException', (err) => {
+  console.error('[UncaughtException]', err?.message || err);
+});
+
 process.on('SIGINT',  shutdown);
 process.on('SIGTERM', shutdown);
 

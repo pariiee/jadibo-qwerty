@@ -58,7 +58,7 @@ const ALL_COMMANDS = [...new Set([
   // Info
   'ping','menu','info','owner','uptime','profile','me','carifitur','totalfitur','limit','uptname','memory','runtime','react',
   // Grup
-  'tagall','tagadmin','tagme','hidetag','ht','kick','kickall','promote','demote',
+  'tagall','tagadmin','tagme','hidetag','ht','kickall','promote','demote',
   'open','close','mute','unmute','slowmode','setname','setdesc','linkgroup','upswgc',
   'grupopen','grupclose','linkgc','setnamegc',
   'groupinfo','grouplist','leavegc','listadmin','getpp','getppgc','ppgc','ppgroup','ppgrup','totag',
@@ -156,7 +156,7 @@ const ALL_COMMANDS = [...new Set([
   'cekprofil','resetprofil','listrank',
   'leaveall','listgroup','setlimitgc',
   'addpremgrup','delpremgrup',
-  'add','promoteme',
+  'add','kick','promoteme',
   'addrespon','uprespon','delrespon','listrespon',
   'addlist','updatelist',
   'reset','setbio','setpp',
@@ -172,7 +172,7 @@ const RM = String.fromCharCode(8206).repeat(4001); // readmore: konten bawah ter
 
 const CATS = {
   info:   ['ping','menu','info','owner','uptime','profile','me','carifitur','totalfitur','limit','uptname','memory','runtime','react'],
-  grup:   ['tagall','tagadmin','tagme','hidetag','ht','kick','kickall','promote','demote','open','close','mute','unmute','slowmode','setname','setdesc','linkgroup','upswgc','grupopen','grupclose','linkgc','setnamegc','groupinfo','grouplist','leavegc','listadmin','getpp','getppgc','ppgc','ppgroup','ppgrup','totag','delete','cekasalmember','absen','mulaiabsen','cekabsen','hapusabsen','afk','listafk','topchat','antidelete','setwelcome','setbye','delwelcome','delbye','setdetect','deldetect','mulaigiveaway','ikut','rollgiveaway','cekgiveaway','cekmenang','hapusgiveaway'],
+  grup:   ['tagall','tagadmin','tagme','hidetag','ht','kickall','promote','demote','open','close','mute','unmute','slowmode','setname','setdesc','linkgroup','upswgc','grupopen','grupclose','linkgc','setnamegc','groupinfo','grouplist','leavegc','listadmin','getpp','getppgc','ppgc','ppgroup','ppgrup','totag','delete','cekasalmember','absen','mulaiabsen','cekabsen','hapusabsen','afk','listafk','topchat','antidelete','setwelcome','setbye','delwelcome','delbye','setdetect','deldetect','mulaigiveaway','ikut','rollgiveaway','cekgiveaway','cekmenang','hapusgiveaway'],
   proteksi: ['on','off','fitur','proteksi','antibot','antilink','antilinkv2','antitoxic','antispam','antitagsw','autosticker','antisticker','viewonce','autolevelup','detect','autoacc','document','nyimak','autoread'],
   rpg:    ['unreg','profile','me','claim','hourly','weekly','dailymisi','kerja','mancing','berburu','hunt','bertarung','fight','dungeon','adventure','koboy','airdrop','maling','lamarkerja','job','gajian','transfer','tf','bank','atm','topkoin','lb','leaderboard','store','beli','inventory','pakai','gacha','slot','jodoh','suitpvp','coinflip','cf','tictactoe','ttt'],
   maker:  ['sticker','s','wm','brat','bratvid','attp','fakech','fakecall','fakecallip','fakedana','fakeovo','fakegcios','fakepptele','rvo','readviewonce','readvo','liat','swgc','upswgc'],
@@ -181,7 +181,7 @@ const CATS = {
   random: ['aceh','kataaceh','batak','katabatak','bijak','china','katachina','dare','tantangan','fakta','faktaunik','fiersa','fiersabesari','jawa','pepatahjawa','katajawa','katabucin','bucin','katasore','sore','minangkabau','minang','kataminang','motivasi','katamotivasi','ngeles','alasan'],
   game:   ['asahotak','toka','hint','nyerah'],
   owner:  ['ban','unban','block','unblock','broadcast','bcgc','bcgcht','backup','restore','clearsession','cleartmp','listblacklist','listblock','addprem','delprem','listprem','addsewa','delsewa','setsewa','ceksewa','listsewa','tambahsewa','addxp','addmoney','addlimit','addhp','resetlimit','listuser','addlevel','dellevel','delmoney','delxp','dellimit','cekprofil','resetprofil','listrank','leaveall','listgroup','setlimitgc','addpremgrup','delpremgrup','addrespon','uprespon','delrespon','listrespon','addlist','updatelist','reset','setbio','setpp','warn','unwarn','delwarn','resetwarn','setwarnlimit','listwarn'],
-  admin:  ['add','promoteme','banmember','unbanmember','clearchat','setppgc','sider','listtotalpesan','setopen','setclose'],
+  admin:  ['add','kick','promoteme','banmember','unbanmember','clearchat','setppgc','sider','listtotalpesan','setopen','setclose'],
 };
 
 // Urutan kategori a-z — dipakai teks `.menu`, sub-judul `.menu all`, dan dropdown.
