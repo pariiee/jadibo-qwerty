@@ -1210,10 +1210,15 @@ module.exports = async function ownerHandler(ctx) {
             },
             contextInfo: {
               mentionedJid: [pnJid + '@s.whatsapp.net'],
-              // Kartu kecil di bawah bubble (bentuk yang sama dipakai ctx.reply()).
-              // groupJid/groupName sengaja kosong — cuma caption yang mau ditampilin.
-              quotedMessage: {
-                groupInviteMessage: { caption: 'yapari.web.id' },
+              // Kartu "verif" di bawah bubble: thumbnail + title + body + sumber klik.
+              externalAdReply: {
+                title: botData.bot_name || 'YaaParBot',
+                body: 'yapari.web.id',
+                mediaType: 1, // IMAGE
+                thumbnail: thumb,
+                sourceUrl: 'https://yapari.web.id',
+                renderLargerThumbnail: false,
+                showAdAttribution: false,
               },
             },
           },
