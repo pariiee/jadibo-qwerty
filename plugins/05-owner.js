@@ -1313,9 +1313,8 @@ module.exports = async function ownerHandler(ctx) {
                 {
                   name: 'single_select',
                   buttonParamsJson: JSON.stringify({
-                    // Label tombol dikosongin atas permintaan Pak — tulisan
-                    // "Pilih Kategori" nggak mau nongol di tombolnya.
-                    title: '',
+                    // Label tombol = emoji folder aja (Pak: "📂 aja gapapa").
+                    title: '📂',
                     sections: [{
                       title: 'Kategori',
                       highlight_label: 'YaaPar Menu',
