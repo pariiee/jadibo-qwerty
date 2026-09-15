@@ -386,21 +386,24 @@ module.exports = async function infoHandler(ctx) {
                 nativeFlowInfo: {
                   name: 'single_select',
                   paramsJson: JSON.stringify({
-                    title: 'List menu Category',
+                    title: 'Menu Category',
                     sections: [{
-                      title: 'Kategori',
-                      highlight_label: 'YaaPar Menu',
-                      rows: Object.entries(CATS).map(([k, v]) => ({
-                        header: '',
-                        title: k.toUpperCase(),
-                        description: `${v.length} Command`,
-                        id: `.menu ${k}`,
-                      })),
+                      title: 'INI SEMUA MENU CATEGORY BOT GWEH',
+                      highlight_label: 'recommended',
+                      rows: [
+                        { header: '', title: 'ALL', description: `Semua Menu (${ALL_COMMANDS.length} fitur)`, id: '.menu all' },
+                        ...Object.entries(CATS).map(([k, v]) => ({
+                          header: '',
+                          title: k.toUpperCase(),
+                          description: `Menu ${k}`,
+                          id: `.menu ${k}`,
+                        })),
+                      ],
                     }],
                   }),
                 },
               },
-              { buttonId: 'btn_owner', buttonText: { displayText: 'owner' }, type: 1 },
+              { buttonId: 'btn_owner', buttonText: { displayText: 'Owner' }, type: 1 },
             ],
           },
         });

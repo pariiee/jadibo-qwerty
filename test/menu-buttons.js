@@ -66,17 +66,22 @@ const ctx = {
     assert.ok(body.length <= 1024, `kepanjangan: ${body.length} char`);
   });
 
-  ok('tombol sebaris: 📂 single_select 11 kategori + owner', () => {
+  ok('tombol sebaris: Menu single_select (ALL + 11 kategori) + Owner', () => {
     const btns = sent[0][1].buttonsMessage.buttons;
     assert.strictEqual(btns.length, 2);
     assert.strictEqual(btns[0].buttonText.displayText, 'Menu');
     assert.strictEqual(btns[0].nativeFlowInfo.name, 'single_select');
-    assert.strictEqual(JSON.parse(btns[0].nativeFlowInfo.paramsJson).title, 'List menu Category');
+    const d = JSON.parse(btns[0].nativeFlowInfo.paramsJson);
+    assert.strictEqual(d.title, 'Menu Category');
+    assert.strictEqual(d.sections[0].title, 'INI SEMUA MENU CATEGORY BOT GWEH');
+    assert.strictEqual(d.sections[0].highlight_label, 'recommended');
+    assert.strictEqual(d.sections[0].rows[0].id, '.menu all', 'ALL nggak di baris paling atas');
+    assert.strictEqual(d.sections[0].rows[0].title, 'ALL');
     const rows = JSON.parse(btns[0].nativeFlowInfo.paramsJson).sections[0].rows;
-    assert.strictEqual(rows.length, 11, `dapat ${rows.length} kategori`);
+    assert.strictEqual(rows.length, 12, `dapat ${rows.length} rows (ALL + 11 kategori)`);
     assert.match(rows[0].id, /^\.menu \w+$/, `row id salah: ${rows[0].id}`);
     assert.strictEqual(btns[1].buttonId, 'btn_owner');
-    assert.strictEqual(btns[1].buttonText.displayText, 'owner');
+    assert.strictEqual(btns[1].buttonText.displayText, 'Owner');
     assert.strictEqual(btns[1].type, 1);
     assert.ok(!btns[1].nativeFlowInfo, 'Owner nggak boleh single_select');
     const loc = sent[0][1].buttonsMessage.locationMessage;
