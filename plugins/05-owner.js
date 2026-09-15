@@ -1208,7 +1208,14 @@ module.exports = async function ownerHandler(ctx) {
               ],
               messageParamsJson: '{}',
             },
-            contextInfo: { mentionedJid: [pnJid + '@s.whatsapp.net'] },
+            contextInfo: {
+              mentionedJid: [pnJid + '@s.whatsapp.net'],
+              // Kartu kecil di bawah bubble (bentuk yang sama dipakai ctx.reply()).
+              // groupJid/groupName sengaja kosong — cuma caption yang mau ditampilin.
+              quotedMessage: {
+                groupInviteMessage: { caption: 'yapari.web.id' },
+              },
+            },
           },
         });
         await react(mess.reactSuccess);
