@@ -9,7 +9,7 @@ const {
   normalizeMessageContent, getContentType,
 } = require('baileys');
 const { toBaileysContent, isRawProto, attachMentions } = require('../engine/baileys/client');
-const { mentionsForChat, cacheLidFromMeta, needsLidResolve } = require('../engine/jid');
+const { mentionsForChat, cacheLidFromMeta, cacheLidFromKey, needsLidResolve, lidToPn, pnToLid } = require('../engine/jid');
 
 let pass = 0, fail = 0;
 const ok = async (label, fn) => {
@@ -90,10 +90,30 @@ const mkOpts = () => ({
     assert.deepStrictEqual(mentionsForChat('x@g.us', ['628999@s.whatsapp.net']), ['628999@s.whatsapp.net']);
   });
 
+  await ok('A9. key pesan bawa PN -> LID ke-map di pesan PERTAMA (tanpa metadata)', () => {
+    // Baileys v7 naruh PN di key: participantAlt/remoteJidAlt (messages-recv ~1277).
+    // Ini yang bikin pesan pertama setelah restart nggak lagi butuh metadata grup.
+    const key = { remoteJid: '120363418054099388@g.us', participant: '999888777@lid',
+                  participantAlt: '628111222333@s.whatsapp.net' };
+    assert.strictEqual(lidToPn('999888777@lid'), '999888777@lid'); // sebelum: mentah
+    cacheLidFromKey(key);
+    assert.strictEqual(lidToPn('999888777@lid'), '628111222333@s.whatsapp.net');
+    assert.strictEqual(pnToLid('628111222333@s.whatsapp.net'), '999888777@lid');
+    // grup LID -> PN: remoteJidAlt nunjuk grup, jangan sampai kepasang jadi "nomor"
+    cacheLidFromKey({ remoteJid: '120363418054099388@g.us', remoteJidAlt: '120363418054099388@g.us' });
+    assert.strictEqual(lidToPn('120363418054099388@g.us'), '120363418054099388@g.us');
+    // DM LID -> PN
+    cacheLidFromKey({ remoteJid: '555444333@lid', remoteJidAlt: '628999888777@s.whatsapp.net' });
+    assert.strictEqual(lidToPn('555444333@lid'), '628999888777@s.whatsapp.net');
+    // tanpa alt -> jangan ngarang
+    cacheLidFromKey({ remoteJid: '628000111222@s.whatsapp.net' });
+    assert.strictEqual(lidToPn('628000111222@s.whatsapp.net'), '628000111222@s.whatsapp.net');
+  });
+
   await ok('A8. LID belum ke-map -> engine wajib baca metadata dulu', () => {
-    // Pesan pertama tiap grup setelah restart: peta LID<->PN kosong. Kalau
-    // metadata nggak dibaca, sender/mention tetap LID -> isOwner meleset
-    // (command owner diem) + @mention jadi teks polos. Ini akar "mesti 2x".
+    // Jaring pengaman terakhir kalau key nggak bawa alt (peta belum keisi).
+    // Kalau metadata nggak dibaca, sender/mention tetap LID -> isOwner meleset
+    // (command owner diem) + @mention jadi teks polos.
     assert.strictEqual(needsLidResolve({ sender: '135468066799657@lid' }), true);
     assert.strictEqual(needsLidResolve({
       sender: '6287778032605@s.whatsapp.net', mentioned: ['135468066799657@lid'] }), true);

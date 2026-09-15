@@ -44,6 +44,25 @@ function cacheLidFromMeta(participants) {
   }
 }
 
+/**
+ * Isi cache dari key pesan masuk. INI SUMBER UTAMANYA, bukan metadata grup.
+ * Baileys v7 naruh PN-nya langsung di key (`participantAlt` / `remoteJidAlt`) dan
+ * nyimpen mapping-nya sendiri ke session.db sebelum emit `messages.upsert`
+ * (lib/Socket/messages-recv.js ~1277). Jadi pesan PERTAMA setelah restart udah
+ * kebaca — nggak nunggu metadata grup, nggak ada network call.
+ */
+function cacheLidFromKey(key) {
+  if (!key) return;
+  for (const [a, b] of [[key.participantAlt, key.participant], [key.remoteJidAlt, key.remoteJid]]) {
+    if (!a || !b || isLid(a) === isLid(b)) continue;
+    const lid = isLid(a) ? String(a) : String(b);
+    const pn  = isLid(a) ? String(b) : String(a);
+    if (!isPn(pn)) continue;
+    lidToPhoneCache.set(lid, pn);
+    phoneToLidCache.set(bare(pn), lid);
+  }
+}
+
 // ─── LID -> nomor telepon ─────────────────────────────────────────────────────
 
 /** Sync: pakai cache saja. Tidak ketemu -> balikin jid apa adanya. */
@@ -52,21 +71,19 @@ function lidToPn(jid) {
   return lidToPhoneCache.get(String(jid)) || jid;
 }
 
-/** Async: cache dulu, lalu contact store (session.db). */
+/** Async: cache dulu, lalu peta LID<->PN punya Baileys sendiri (persist di session.db). */
 async function lidToPnAsync(client, jid) {
   if (!isLid(jid)) return jid;
   const cached = lidToPn(jid);
   if (cached !== jid) return cached;
   try {
-    const rec = await client?.stores?.contacts?.getByJid?.(String(jid));
-    if (rec?.phoneNumber) {
-      const pn = String(rec.phoneNumber);
+    const pn = await client?.lid?.getPn?.(String(jid));
+    if (pn && isPn(pn)) {
       lidToPhoneCache.set(String(jid), pn);
-      const phone = bare(pn);
-      if (phone) phoneToLidCache.set(phone, String(jid));
+      phoneToLidCache.set(bare(pn), String(jid));
       return pn;
     }
-  } catch { /* store tidak ada -> biarkan LID */ }
+  } catch { /* nggak ada -> biarkan LID */ }
   return jid;
 }
 
@@ -80,20 +97,19 @@ function pnToLid(jid) {
   return phoneToLidCache.get(key) || jid;
 }
 
-/** Async: cache dulu, lalu contact store (kolom `lid`, fallback `jid` kalau LID). */
+/** Async: cache dulu, lalu peta LID<->PN punya Baileys sendiri (persist di session.db). */
 async function pnToLidAsync(client, jid) {
   if (!jid) return jid;
   const cached = pnToLid(jid);
   if (cached !== jid) return cached;
   try {
-    const rec = await client?.stores?.contacts?.getByPhoneNumber?.(bare(jid));
-    const lid = rec?.lid || (isLid(rec?.jid) ? rec.jid : null);
-    if (lid) {
+    const lid = await client?.lid?.getLid?.(isPn(jid) ? String(jid) : toPn(jid));
+    if (lid && isLid(lid)) {
       phoneToLidCache.set(bare(jid), String(lid));
       lidToPhoneCache.set(String(lid), isPn(jid) ? String(jid) : toPn(jid));
       return String(lid);
     }
-  } catch { /* store tidak ada -> biarkan apa adanya */ }
+  } catch { /* nggak ada -> biarkan apa adanya */ }
   return jid;
 }
 
@@ -117,9 +133,8 @@ function mentionsForChat(chatJid, list) {
 
 /**
  * Ada JID bentuk LID yang belum ke-map ke nomor? Engine pakai ini buat mutusin
- * perlu baca metadata grup atau nggak — metadata itu SATU-SATUNYA sumber peta
- * LID<->PN (Baileys v7 nggak punya `sock.store` kontak, jadi fallback store di
- * lidToPnAsync() selalu null).
+ * perlu baca metadata grup atau nggak. Peta normalnya udah keisi dari key pesan
+ * (cacheLidFromKey), jadi metadata cuma jaring pengaman terakhir.
  */
 function needsLidResolve({ sender, quotedSender, mentioned } = {}) {
   return [sender, quotedSender, ...(mentioned || [])].some((j) => isLid(j));
@@ -128,7 +143,7 @@ function needsLidResolve({ sender, quotedSender, mentioned } = {}) {
 module.exports = {
   bare, isLid, isPn, toPn, toLid,
   needsLidResolve,
-  cacheLidFromMeta,
+  cacheLidFromMeta, cacheLidFromKey,
   lidToPn, lidToPnAsync,
   pnToLid, pnToLidAsync,
   mentionsForChat,

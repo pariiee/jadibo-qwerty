@@ -33,7 +33,7 @@ const {
   proto,
   Browsers,
 } = require('baileys');
-const { mentionsForChat, cacheLidFromMeta } = require('../jid');
+const { mentionsForChat, cacheLidFromMeta, cacheLidFromKey } = require('../jid');
 
 // Tipe pesan yang `sendMessage` nolak ("Invalid media type") tapi WA biasa
 // nampilin — semua di sini dikirim lewat relayMessage (.owner kirim kontak).
@@ -381,9 +381,15 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
         }
       });
 
-      sock.ev.on('messages.upsert', ({ messages }) => {
+      sock.ev.on('messages.upsert', ({ messages, type }) => {
         for (const m of messages || []) {
-          if (!m.message) continue;
+          // WA taruh PN di key (participantAlt/remoteJidAlt) -> isi peta LID
+          // SEBELUM handler jalan, biar pesan pertama setelah restart kebaca.
+          cacheLidFromKey(m?.key);
+          if (!m.message) {
+            if (type !== 'append') console.log(`[skip] pesan tanpa isi dari ${m?.key?.remoteJid || '?'} (${m?.key?.id || '?'})`);
+            continue;
+          }
           ev.emit('message', normalizeIncoming(m));
         }
       });
@@ -452,6 +458,13 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
     // socket asli, buat kode baru yg mau API Baileys langsung
     get sock() { return sock; },
     get meJid() { return meJid; },
+
+    // Peta LID<->PN milik Baileys sendiri (persist di session.db) — bukan cache
+    // memori kayak di engine/jid.js, jadi masih ada setelah proses restart.
+    lid: {
+      getPn:  async (lid) => { try { return await sock.signalRepository?.lidMapping?.getPNForLID?.(String(lid)) || null; } catch { return null; } },
+      getLid: async (pn)  => { try { return await sock.signalRepository?.lidMapping?.getLIDForPN?.(String(pn)) || null; } catch { return null; } },
+    },
 
     on: (...a) => ev.on(...a),
     once: (...a) => ev.once(...a),
