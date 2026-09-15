@@ -13,6 +13,9 @@ require('dotenv').config();
 const { pool, incrementStat, decrementStat } = require('../config/database');
 const { activeBots, activeGroupsPerBot, activeChannelsPerBot } = require('../controllers/botController');
 const { isPendingSewa } = require('./pendingSewa');
+const { lidToPn, lidToPnAsync } = require('./jid');
+const { renderTemplate } = require('./template');
+const mess = require('../config/mess');
 
 // Track grup yang sudah dikirimi pesan "tidak terdaftar" agar tidak spam
 // Key: `${botId}:${groupJid}` — hapus otomatis setelah 10 menit
@@ -848,6 +851,10 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
 
   // ── Welcome / Bye hook ────────────────────────────────────────────────────
   // adapter emits 'group_participants' when members join/leave
+  //
+  // Kunci pembanding ban (`.banmember`): nomor/ID tanpa domain & suffix device,
+  // LID di-map ke PN pakai cache (sync, nggak nembak network).
+  const banKey = (j) => String(lidToPn(j) || '').split('@')[0].split(':')[0];
   client.on('group_participants', async (event) => {
     try {
       const { jid, participants, action } = event;
@@ -858,10 +865,10 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
         'SELECT welcome_msg, bye_msg, autoacc FROM group_settings WHERE bot_id = ? AND group_jid = ? LIMIT 1',
         [botId, jid]
       );
-      const settings = settingsRows[0];
+      const settings = settingsRows[0] || {};
 
       // ── Autoacc — approve join request ─────────────────────────────────────
-      if (settings?.autoacc && action === 'request') {
+      if (settings.autoacc && action === 'request') {
         try {
           await client.group.approveMembershipRequests(jid, participants);
           await logBot(botId, 'info', `Autoacc: ${participants.length} request join disetujui di ${jid}`);
@@ -871,34 +878,51 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
         return;
       }
 
-      if (!settings) return;
+      // Baris group_settings belum ada? Nggak masalah — teksnya nanti jatuh ke
+      // default .env (mess.welcomeDefault / mess.byeDefault).
 
       let meta = null;
       try { meta = await client.group.queryGroupMetadata(jid); } catch {}
       const groupName = meta?.subject || jid.split('@')[0];
       const groupDesc = meta?.desc || '';
 
+      // ── Ban grup (`.banmember`) ─────────────────────────────────────────────
+      // Sekali baca per event, bukan per participant. Set isinya key yang sudah
+      // dinormalisasi (PN kalau mapping LID-nya ketemu) supaya ban PN tetap kena
+      // walau member masuk lewat LID.
+      let banned = null;
+      if (action === 'add') {
+        try {
+          const [rows] = await pool.execute(
+            'SELECT jid FROM group_ban WHERE bot_id = ? AND group_jid = ?',
+            [botId, jid]
+          );
+          banned = new Set();
+          for (const r of rows) banned.add(banKey(r.jid));
+        } catch { /* tabel group_ban belum ada = nggak ada yang di-ban */ }
+      }
+
       for (const participantJid of participants) {
-        const mention = participantJid.split('@')[0];
-
-        if (action === 'add' && settings.welcome_msg) {
-          const teks = settings.welcome_msg
-            .replace(/@user/g, `@${mention}`)
-            .replace(/@subject/g, groupName)
-            .replace(/@desc/g, groupDesc);
-          await client.message.send(jid, teks, {
-            mentions: [participantJid],
-          });
+        // Pernah di-`.banmember`: tendang lagi tiap kali dia masuk.
+        if (banned?.size && banned.has(banKey(participantJid))) {
+          try {
+            await client.group.removeParticipants(jid, [participantJid]);
+            await logBot(botId, 'info', `Ban grup: ${participantJid} ditolak masuk ${jid}`);
+          } catch (e) {
+            console.error(`[Bot ${botId}] ban enforce error: ${e.message}`);
+          }
+          continue;
         }
 
-        if (action === 'remove' && settings.bye_msg) {
-          const teks = settings.bye_msg
-            .replace(/@user/g, `@${mention}`)
-            .replace(/@subject/g, groupName);
-          await client.message.send(jid, teks, {
-            mentions: [participantJid],
-          });
-        }
+        const template = action === 'add'
+          ? (settings.welcome_msg || mess.welcomeDefault)
+          : (settings.bye_msg || mess.byeDefault);
+        if (!template) continue;
+
+        const { text, mentions } = renderTemplate(template, {
+          groupName, groupDesc, target: participantJid,
+        });
+        await client.message.send(jid, text, { mentions });
       }
     } catch (e) {
       console.error(`[Bot ${botId}] welcome/bye error: ${e.message}`);

@@ -302,7 +302,7 @@ cron.schedule('* * * * *', async () => {
   try {
     // Ambil semua group_settings yang punya open_time atau close_time
     const [rows] = await pool.execute(
-      `SELECT gs.bot_id, gs.group_jid, gs.open_time, gs.close_time
+      `SELECT gs.bot_id, gs.group_jid, gs.open_time, gs.close_time, gs.open_msg, gs.close_msg
        FROM group_settings gs
        WHERE gs.open_time IS NOT NULL OR gs.close_time IS NOT NULL`
     ).catch(() => [[]]);
@@ -316,22 +316,37 @@ cron.schedule('* * * * *', async () => {
     const jamNow = `${HH}.${MM}`;
 
     const { activeBots } = require('./controllers/botController');
+    const { renderTemplate } = require('./engine/template');
+    const messCfg = require('./config/mess');
 
     for (const row of rows) {
       const client = activeBots.get(row.bot_id) || activeBots.get(String(row.bot_id));
       if (!client) continue;
+      const jadwal = [];
+      if (row.open_time === jamNow) jadwal.push({ buka: true, teks: row.open_msg });
+      if (row.close_time === jamNow) jadwal.push({ buka: false, teks: row.close_msg });
 
-      if (row.open_time === jamNow) {
+      for (const j of jadwal) {
         try {
-          await client.group.setSetting(row.group_jid, 'announcement', false);
-          console.log(`[Cron] Grup ${row.group_jid} dibuka jam ${jamNow}`);
-        } catch {}
-      }
-      if (row.close_time === jamNow) {
+          await client.group.setSetting(row.group_jid, 'announcement', !j.buka);
+        } catch { /* bot bukan admin / grup ilang — lanjut kirim teks aja */ }
+
+        // Pesan pengumuman: teks custom grup, kalau kosong pakai default .env
+        const template = j.teks || (j.buka ? messCfg.openDefault : messCfg.closeDefault);
+        if (!template) continue;
+
+        let meta = null;
+        try { meta = await client.group.queryGroupMetadata(row.group_jid); } catch {}
+        const { text, mentions } = renderTemplate(template, {
+          groupName: meta?.subject || row.group_jid.split('@')[0],
+          groupDesc: meta?.desc || '',
+        });
         try {
-          await client.group.setSetting(row.group_jid, 'announcement', true);
-          console.log(`[Cron] Grup ${row.group_jid} ditutup jam ${jamNow}`);
-        } catch {}
+          await client.message.send(row.group_jid, text, { mentions });
+          console.log(`[Cron] Grup ${row.group_jid} ${j.buka ? 'dibuka' : 'ditutup'} jam ${jamNow}`);
+        } catch (e) {
+          console.error('[Cron] Kirim teks jadwal gagal:', e.message);
+        }
       }
     }
   } catch (e) {

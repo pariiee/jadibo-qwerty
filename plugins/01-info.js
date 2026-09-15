@@ -163,8 +163,8 @@ const ALL_COMMANDS = [...new Set([
   // Warn
   'warn','unwarn','delwarn','resetwarn','setwarnlimit','listwarn',
   // Group admin
-  'banmember','unbanmember','clearchat','setppgc','sider','listtotalpesan',
-  'setopen','setclose',
+  'banmember','unbanmember','setppgc','sider','listtotalpesan',
+  'setopen','setclose','catatan',
 ])];
 
 // ── Menu kategori — menu <kategori> / menu all ──────────────────────────────
@@ -181,7 +181,7 @@ const CATS = {
   random: ['aceh','kataaceh','batak','katabatak','bijak','china','katachina','dare','tantangan','fakta','faktaunik','fiersa','fiersabesari','jawa','pepatahjawa','katajawa','katabucin','bucin','katasore','sore','minangkabau','minang','kataminang','motivasi','katamotivasi','ngeles','alasan'],
   game:   ['asahotak','toka','hint','nyerah'],
   owner:  ['ban','unban','block','unblock','broadcast','bcgc','bcgcht','backup','restore','clearsession','cleartmp','listblacklist','listblock','addprem','delprem','listprem','addsewa','delsewa','setsewa','ceksewa','listsewa','tambahsewa','addxp','addmoney','addlimit','addhp','resetlimit','listuser','addlevel','dellevel','delmoney','delxp','dellimit','cekprofil','resetprofil','listrank','leaveall','listgroup','setlimitgc','setgcutama','crm','crm2','addpremgrup','delpremgrup','addrespon','uprespon','delrespon','listrespon','addlist','updatelist','reset','setbio','setpp','warn','unwarn','delwarn','resetwarn','setwarnlimit','listwarn'],
-  admin:  ['add','kick','promoteme','banmember','unbanmember','clearchat','setppgc','sider','listtotalpesan','setopen','setclose'],
+  admin:  ['add','kick','promoteme','banmember','unbanmember','setppgc','sider','listtotalpesan','setopen','setclose','catatan'],
 };
 
 // Urutan kategori a-z — dipakai teks `.menu`, sub-judul `.menu all`, dan dropdown.

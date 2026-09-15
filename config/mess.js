@@ -37,6 +37,17 @@ const mess = {
 
   // QRIS
   qrisDefault:  process.env.QRIS_DEFAULT        || '',
+
+  // ── Teks default jadwal buka/tutup grup (dipakai kalau .setopen/.setclose
+  //    diset tanpa teks pengumuman) ─────────────────────────────────────────
+  openDefault:  process.env.DEFAULT_SETOPEN  || '',
+  closeDefault: process.env.DEFAULT_SETCLOSE || '',
+
+  // ── Teks template welcome/bye (dipakai kalau .setwelcome/.setbye belum diset)
+  //    Placeholder: @user @usertag @subject @groupname @namegc @desc @jam
+  //    @menit @detik @hari @tanggal @bulan @tahun @namabulan
+  welcomeDefault: process.env.DEFAULT_WELCOME || '',
+  byeDefault:     process.env.DEFAULT_SETBYE  || '',
 };
 
 module.exports = mess;

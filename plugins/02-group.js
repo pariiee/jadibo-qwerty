@@ -12,6 +12,7 @@
 const mess             = require('../config/mess');
 const { lidToPnAsync }   = require('../engine/jid');
 const { genThumbnail } = require('../engine/thumbnail');
+const { catatan } = require('../engine/template');
 
 // In-memory stores (replace with DB for persistence across restarts)
 const absenStore      = new Map(); // groupJid -> { title, members: Set<jid> }
@@ -997,10 +998,12 @@ module.exports = async function groupHandler(ctx) {
           `*Cara Penggunaan:*\n${p}setwelcome <teks>\n\n` +
           `*Contoh:*\n${p}setwelcome Halo @user, selamat datang di @subject!\n\n` +
           `┌─ *VARIABEL TERSEDIA*\n` +
-          `▢ *@user* : Tag member baru\n` +
-          `▢ *@subject* : Nama grup\n` +
+          `▢ *@user* / *@usertag* : Tag member baru\n` +
+          `▢ *@subject* / *@groupname* / *@namegc* : Nama grup\n` +
           `▢ *@desc* : Deskripsi grup\n` +
-          `└──────────────`
+          `▢ *@jam* *@menit* *@detik* *@hari* *@tanggal* *@bulan* *@tahun* *@namabulan*\n` +
+          `▢ *@tagdiri* *@tagreply* *@pesanan*\n` +
+          `└──────────────\n\n_Daftar lengkap: ${p}catatan_`
         );
         return true;
       }
@@ -1160,21 +1163,11 @@ module.exports = async function groupHandler(ctx) {
       return true;
     }
 
-    // ── clearchat ─────────────────────────────────────────────────────────────
-    // Kirim 1000 pesan kosong untuk "membersihkan" chat (WA tidak support hapus semua pesan)
-    case 'clearchat': {
-      if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
-      await reply('🧹 Membersihkan chat...');
-      const blanks = Array(300).fill('‎'); // zero-width space
-      for (const b of blanks) {
-        try { await client.message.send(jid, b); } catch {}
-      }
-      await reply('✅ Chat telah dibersihkan!');
-      return true;
-    }
-
     // ── setppgc ───────────────────────────────────────────────────────────────
     // Ganti foto profil grup (reply gambar)
+    // Client signature: setProfilePicture(jid, buffer) — arg-nya JANGAN dibalik,
+    // kalau kebalik Baileys nge-`in`-in string jid dan error
+    // "Cannot use 'in' operator to search for 'stream' in <jid>".
     case 'setppgc': {
       if (!await isBotAdmin()) { await reply(mess.BotAdmin); return true; }
       if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
@@ -1189,7 +1182,7 @@ module.exports = async function groupHandler(ctx) {
         const buffer = await client.message.downloadBytes(
           quotedMsg ? { imageMessage: imgMsg } : ctx.msg.message
         );
-        await client.profile.setProfilePicture(buffer, jid);
+        await client.profile.setProfilePicture(jid, buffer);
         await reply('✅ Foto profil grup berhasil diubah!');
       } catch (e) { await reply(`❌ Gagal ubah foto grup: ${e.message}`); }
       return true;
@@ -1255,59 +1248,80 @@ module.exports = async function groupHandler(ctx) {
     }
 
     // ── setopen / setclose ────────────────────────────────────────────────────
-    // Jadwal buka-tutup otomatis per grup. Format jam: HH.MM
-    case 'setopen': {
+    // Jadwal buka-tutup otomatis per grup (cron di server.js), plus teks
+    // pengumuman yang dikirim ke grup saat jadwalnya jalan.
+    // Format: `.setopen 07.00 <teks>` — teks opsional (default dari .env).
+    case 'setopen':
+    case 'setclose': {
       if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
-      const jam = normalizeJam(args[0]);
-      if (!jam) {
-        await reply(`Penggunaan: ${p}setopen <jam>\n\nContoh: ${p}setopen 07.00\nFormat jam: HH.MM (00.00 - 23.59)`);
+      const isOpen = command === 'setopen';
+
+      // Arg pertama jam (HH.MM) = set jadwalnya; sisa argumen = teks pengumuman.
+      // Tanpa jam = argumennya murni teks pengumuman:
+      //   .setclose Selamat tinggal @user dari @groupname
+      const jam  = normalizeJam(args[0]);
+      const teks = (jam ? args.slice(1) : args).join(' ').trim();
+
+      if (!jam && !teks) {
+        await reply(
+          `⚠️ *Teks ${isOpen ? 'BUKA' : 'TUTUP'} grup belum diisi!*\n\n` +
+          `*Cara Penggunaan:*\n` +
+          `${p}${command} <teks>            → teks pengumuman\n` +
+          `${p}${command} <jam> <teks>      → teks + jadwal otomatis\n\n` +
+          `*Contoh:*\n` +
+          `${p}${command} ${isOpen ? 'Selamat pagi @groupname, grup sudah dibuka!' : 'Selamat tinggal @user dari @groupname'} \n` +
+          `${p}${command} ${isOpen ? '07.00' : '22.00'} ${isOpen ? 'Grup dibuka jam @jam WIB' : 'Grup ditutup jam @jam WIB'}\n\n` +
+          `_Tanpa teks = pakai default dari .env (${isOpen ? 'DEFAULT_SETOPEN' : 'DEFAULT_SETCLOSE'})_\n\n` +
+          catatan(command)
+        );
         return true;
       }
+
+      const kolomJam  = isOpen ? 'open_time' : 'close_time';
+      const kolomTeks = isOpen ? 'open_msg' : 'close_msg';
+
       const { pool: dbPool } = require('../config/database');
-      await dbPool.execute(
-        `INSERT INTO group_settings (bot_id, group_jid, open_time)
-         VALUES (?, ?, ?)
-         ON DUPLICATE KEY UPDATE open_time = VALUES(open_time)`,
-        [botData.id, jid, jam]
-      ).catch(async () => {
-        // Kolom belum ada, buat dulu
-        await dbPool.execute('ALTER TABLE group_settings ADD COLUMN IF NOT EXISTS open_time VARCHAR(10) DEFAULT NULL');
-        await dbPool.execute('ALTER TABLE group_settings ADD COLUMN IF NOT EXISTS close_time VARCHAR(10) DEFAULT NULL');
-        await dbPool.execute(
-          `INSERT INTO group_settings (bot_id, group_jid, open_time)
-           VALUES (?, ?, ?)
-           ON DUPLICATE KEY UPDATE open_time = VALUES(open_time)`,
-          [botData.id, jid, jam]
-        );
-      });
-      await reply(`✅ Jadwal *buka* grup diset ke jam *${jam}* WIB.\nGrup akan otomatis dibuka setiap hari pada jam tersebut.`);
+      // COALESCE: cuma ganti teks = jadwal lama jangan kehapus (dan sebaliknya).
+      const simpan = () => dbPool.execute(
+        `INSERT INTO group_settings (bot_id, group_jid, ${kolomJam}, ${kolomTeks})
+         VALUES (?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE ${kolomJam} = COALESCE(VALUES(${kolomJam}), ${kolomJam}),
+                                 ${kolomTeks} = VALUES(${kolomTeks})`,
+        [botData.id, jid, jam, teks || null]
+      );
+      try { await simpan(); }
+      catch {
+        // DB lama belum punya kolomnya — bikin dulu, terus ulang.
+        for (const ddl of [
+          'ALTER TABLE group_settings ADD COLUMN open_time VARCHAR(10) NULL',
+          'ALTER TABLE group_settings ADD COLUMN close_time VARCHAR(10) NULL',
+          'ALTER TABLE group_settings ADD COLUMN open_msg TEXT NULL',
+          'ALTER TABLE group_settings ADD COLUMN close_msg TEXT NULL',
+        ]) await dbPool.execute(ddl).catch(() => {});
+        await simpan();
+      }
+
+      await reply(
+        `✅ *${isOpen ? 'BUKA' : 'TUTUP'} grup disimpan!*\n` +
+        (jam ? `⏰ Jadwal otomatis: *${jam}* WIB setiap hari.\n` : '') +
+        (teks ? `📝 Teks pengumuman:\n${teks}` : `📝 Teks: default .env (${isOpen ? 'DEFAULT_SETOPEN' : 'DEFAULT_SETCLOSE'})`)
+      );
       return true;
     }
 
-    case 'setclose': {
-      if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
-      const jam = normalizeJam(args[0]);
-      if (!jam) {
-        await reply(`Penggunaan: ${p}setclose <jam>\n\nContoh: ${p}setclose 22.00\nFormat jam: HH.MM (00.00 - 23.59)`);
-        return true;
-      }
-      const { pool: dbPool } = require('../config/database');
-      await dbPool.execute(
-        `INSERT INTO group_settings (bot_id, group_jid, close_time)
-         VALUES (?, ?, ?)
-         ON DUPLICATE KEY UPDATE close_time = VALUES(close_time)`,
-        [botData.id, jid, jam]
-      ).catch(async () => {
-        await dbPool.execute('ALTER TABLE group_settings ADD COLUMN IF NOT EXISTS open_time VARCHAR(10) DEFAULT NULL');
-        await dbPool.execute('ALTER TABLE group_settings ADD COLUMN IF NOT EXISTS close_time VARCHAR(10) DEFAULT NULL');
-        await dbPool.execute(
-          `INSERT INTO group_settings (bot_id, group_jid, close_time)
-           VALUES (?, ?, ?)
-           ON DUPLICATE KEY UPDATE close_time = VALUES(close_time)`,
-          [botData.id, jid, jam]
-        );
-      });
-      await reply(`✅ Jadwal *tutup* grup diset ke jam *${jam}* WIB.\nGrup akan otomatis ditutup setiap hari pada jam tersebut.`);
+    // ── catatan — daftar variable template ────────────────────────────────────
+    case 'catatan': {
+      const topik = (args[0] || '').toLowerCase().replace(/^\./, '');
+      const label = { setwelcome: 'setwelcome', setbye: 'setbye', setleft: 'setbye',
+        setproses: 'setproses', setdone: 'setdone', setlist: 'setlist',
+        setopen: 'setopen', setopen2: 'setopen', setclose: 'setclose',
+        '': 'template' }[topik] || (topik || null);
+      await reply(
+        `📖 *DAFTAR VARIABLE TEMPLATE*\n\n` +
+        `Pakai \`@nama\` di teks ${p}setopen / ${p}setclose / ${p}setwelcome / ${p}setbye / ${p}setproses / ${p}setdone / ${p}setlist.\n` +
+        `Placeholder yang nggak dikenal dibiarkan apa adanya.\n\n` +
+        catatan(label)
+      );
       return true;
     }
 
