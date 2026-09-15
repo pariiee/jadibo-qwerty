@@ -1292,7 +1292,10 @@ module.exports = async function ownerHandler(ctx) {
           buttonsMessage: {
             buttons: [
               {
-                buttonId: 'btnv2_1',
+                // Tombol tetap teks biasa (WA nggak bisa nempel dropdown di
+                // quick-reply). Yang diklik = bot balas bubble dropdown
+                // `single_select` kategori (lihat 07-button case 'btn_cat').
+                buttonId: 'btn_cat',
                 buttonText: { displayText: 'Tombol 1' },
                 type: 1,
               },

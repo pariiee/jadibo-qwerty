@@ -46,6 +46,37 @@ module.exports = async function buttonHandler(ctx) {
           'Dibangun dengan Baileys & node-telegram-bot-api.'
         );
         return true;
+      case 'btn_cat': {
+        // Tombol 1 `.test2` → balas bubble dropdown kategori (single_select).
+        // `buttonsMessage` nggak punya nativeFlowInfo yang dirender WA, jadi
+        // dropdown-nya dikirim sebagai bubble `interactiveMessage` terpisah.
+        const { CATS } = require('./01-info');
+        await client.message.send(jid, {
+          interactiveMessage: {
+            body: { text: '📂 *Pilih Kategori*\nSilakan pilih kategori menu di bawah 👇' },
+            footer: { text: ctx.botData?.footer_text || 'Powered by YaaParBot' },
+            nativeFlowMessage: {
+              buttons: [{
+                name: 'single_select',
+                buttonParamsJson: JSON.stringify({
+                  title: 'Pilih Kategori',
+                  sections: [{
+                    title: 'Kategori',
+                    highlight_label: 'YaaPar Menu',
+                    rows: Object.entries(CATS).map(([k, v]) => ({
+                      title: k.toUpperCase(),
+                      description: `${v.length} Command`,
+                      id: `.menu ${k}`,
+                    })),
+                  }],
+                }),
+              }],
+              messageParamsJson: '{}',
+            },
+          },
+        });
+        return true;
+      }
       case 'btn_owner':
         // Reuse handler .owner — kirim kartu kontak, bukan teks doang
         return await require('./01-info')({ ...ctx, isCmd: true, command: 'owner', args: [] });
