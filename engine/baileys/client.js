@@ -57,6 +57,35 @@ const RAW_PROTO_KEYS = [
 const isRawProto = (c) =>
   !!c && typeof c === 'object' && RAW_PROTO_KEYS.some((k) => c[k] !== undefined);
 
+// ── Ingat pesan yg KITA kirim, buat jawab retry receipt ──────────────────────
+// Penerima yg gagal decrypt minta kirim ulang; Baileys jawab pakai
+// `getMessage(key)`. Kita dulu jawab `undefined` -> permintaan itu di-drop
+// senyap: log bot bilang "terkirim", HP penerima nggak nampilin apa-apa.
+// (Cache internal `messageRetryManager` ada di messages-recv.js:23 tapi
+//  NGGAK PERNAH di-assign di v7 rc14 -> satu-satunya jalan ya getMessage ini.)
+// Key cuma pakai message id: id-nya kita yg bikin & unik, jadi nggak kena
+// masalah LID vs nomor (remoteJid di receipt bisa beda bentuk dari yg kita pakai).
+// ponytail: Map + TTL, bukan store di disk — cukup, retry datang dalam detik.
+const SENT_TTL_MS = 10 * 60 * 1000;
+const SENT_MAX = 300;
+const sentMessages = new Map(); // messageId -> { message, at }
+
+function rememberSent(wam) {
+  const id = wam?.key?.id;
+  if (!id || !wam.message) return;
+  const now = Date.now();
+  for (const [k, v] of sentMessages) if (now - v.at > SENT_TTL_MS) sentMessages.delete(k);
+  while (sentMessages.size >= SENT_MAX) sentMessages.delete(sentMessages.keys().next().value);
+  sentMessages.set(id, { message: wam.message, at: now });
+}
+
+function lookupSent(key) {
+  const rec = key?.id && sentMessages.get(key.id);
+  if (!rec) return undefined;
+  if (Date.now() - rec.at > SENT_TTL_MS) { sentMessages.delete(key.id); return undefined; }
+  return rec.message;
+}
+
 // ── Node biner yg bikin tombol beneran ke-render ─────────────────────────────
 // WA nggak baca tombol cuma dari proto-nya: client resmi juga nempelin node
 // `<biz><interactive type="native_flow"><native_flow/></interactive></biz>`
@@ -262,6 +291,7 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
       messageId: wam.key.id,
       additionalNodes,
     });
+    rememberSent(wam);
     return wam;
   }
 
@@ -291,7 +321,9 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
     // `mentions` boleh nempel di konten ({ text, mentions }) atau di opsi.
     const mentions = mentionsForChat(jid, opts.mentions || content?.mentions);
     if (isRawProto(content)) return sendRaw(jid, withMentions(jid, content, mentions), toBaileysOptions(opts));
-    return sock.sendMessage(jid, attachMentions(toBaileysContent(content), mentions), toBaileysOptions(opts));
+    const wam = await sock.sendMessage(jid, attachMentions(toBaileysContent(content), mentions), toBaileysOptions(opts));
+    rememberSent(wam);
+    return wam;
   }
 
   // ── Event masuk: WAMessage Baileys -> bentuk yg dibaca engine ──────────────
@@ -326,8 +358,9 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
           markOnlineOnConnect: false,
           syncFullHistory: false,
           generateHighQualityLinkPreview: true,
-          // Baileys v7: dipakai buat retry pesan yg gagal decrypt.
-          getMessage: async () => undefined,
+          // Dipakai Baileys buat jawab retry receipt (penerima gagal decrypt
+          // -> minta kirim ulang). Lihat rememberSent() di atas.
+          getMessage: async (key) => lookupSent(key),
         });
       } catch (e) {
         return reject(e);
@@ -572,4 +605,5 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
 module.exports = {
   createClient, toBaileysContent, toBaileysOptions, normalizeGroupMeta, isRawProto, attachMentions,
   normalizeParticipantResults, withTimeout,
+  rememberSent, lookupSent, // buat test retry receipt
 };

@@ -58,8 +58,9 @@ function cacheLidFromKey(key) {
     const lid = isLid(a) ? String(a) : String(b);
     const pn  = isLid(a) ? String(b) : String(a);
     if (!isPn(pn)) continue;
-    lidToPhoneCache.set(lid, pn);
-    phoneToLidCache.set(bare(pn), lid);
+    const norm = toPn(bare(pn)); // buang suffix device (`628xx:0@...`)
+    lidToPhoneCache.set(lid, norm);
+    phoneToLidCache.set(bare(norm), lid);
   }
 }
 
@@ -77,8 +78,9 @@ async function lidToPnAsync(client, jid) {
   const cached = lidToPn(jid);
   if (cached !== jid) return cached;
   try {
-    const pn = await client?.lid?.getPn?.(String(jid));
-    if (pn && isPn(pn)) {
+    const raw = await client?.lid?.getPn?.(String(jid));
+    if (raw && isPn(raw)) {
+      const pn = toPn(bare(raw)); // `628xx:0@s.whatsapp.net` -> `628xx@s.whatsapp.net`
       lidToPhoneCache.set(String(jid), pn);
       phoneToLidCache.set(bare(pn), String(jid));
       return pn;
@@ -103,10 +105,10 @@ async function pnToLidAsync(client, jid) {
   const cached = pnToLid(jid);
   if (cached !== jid) return cached;
   try {
-    const lid = await client?.lid?.getLid?.(isPn(jid) ? String(jid) : toPn(jid));
+    const lid = await client?.lid?.getLid?.(toPn(bare(jid)));
     if (lid && isLid(lid)) {
       phoneToLidCache.set(bare(jid), String(lid));
-      lidToPhoneCache.set(String(lid), isPn(jid) ? String(jid) : toPn(jid));
+      lidToPhoneCache.set(String(lid), toPn(bare(jid)));
       return String(lid);
     }
   } catch { /* nggak ada -> biarkan apa adanya */ }

@@ -8,8 +8,8 @@ const {
   generateWAMessageContent, generateWAMessageFromContent,
   normalizeMessageContent, getContentType,
 } = require('baileys');
-const { toBaileysContent, isRawProto, attachMentions } = require('../engine/baileys/client');
-const { mentionsForChat, cacheLidFromMeta, cacheLidFromKey, needsLidResolve, lidToPn, pnToLid } = require('../engine/jid');
+const { toBaileysContent, isRawProto, attachMentions, rememberSent, lookupSent } = require('../engine/baileys/client');
+const { mentionsForChat, cacheLidFromMeta, cacheLidFromKey, needsLidResolve, lidToPn, pnToLid, lidToPnAsync, pnToLidAsync } = require('../engine/jid');
 
 let pass = 0, fail = 0;
 const ok = async (label, fn) => {
@@ -90,6 +90,23 @@ const mkOpts = () => ({
     assert.deepStrictEqual(mentionsForChat('x@g.us', ['628999@s.whatsapp.net']), ['628999@s.whatsapp.net']);
   });
 
+  await ok('A10. retry receipt dijawab: getMessage nemu pesan yg kita kirim', () => {
+    // Penerima minta kirim ulang -> Baileys panggil getMessage({...key, id}).
+    // Kalau undefined, permintaannya di-drop senyap: log "terkirim" tapi HP
+    // penerima kosong.
+    assert.strictEqual(lookupSent({ id: 'nggak-ada' }), undefined);
+    const wam = { key: { id: 'MSG1', remoteJid: '628111@s.whatsapp.net' }, message: { conversation: 'halo' } };
+    rememberSent(wam);
+    assert.deepStrictEqual(lookupSent({ id: 'MSG1', remoteJid: '135468066799657@lid' }), { conversation: 'halo' });
+    // pesan tanpa isi / tanpa id jangan bikin map kotor
+    rememberSent({ key: { id: 'MSG2' } });
+    assert.strictEqual(lookupSent({ id: 'MSG2' }), undefined);
+    // batas 300: yg paling tua kebuang, yg terbaru tetep ada
+    for (let i = 0; i < 350; i++) rememberSent({ key: { id: 'B' + i }, message: { conversation: 'x' } });
+    assert.strictEqual(lookupSent({ id: 'B349' }) !== undefined, true);
+    assert.strictEqual(lookupSent({ id: 'B0' }), undefined);
+  });
+
   await ok('A9. key pesan bawa PN -> LID ke-map di pesan PERTAMA (tanpa metadata)', () => {
     // Baileys v7 naruh PN di key: participantAlt/remoteJidAlt (messages-recv ~1277).
     // Ini yang bikin pesan pertama setelah restart nggak lagi butuh metadata grup.
@@ -108,6 +125,21 @@ const mkOpts = () => ({
     // tanpa alt -> jangan ngarang
     cacheLidFromKey({ remoteJid: '628000111222@s.whatsapp.net' });
     assert.strictEqual(lidToPn('628000111222@s.whatsapp.net'), '628000111222@s.whatsapp.net');
+    // suffix device (`628xx:0@...`) wajib dibuang — kalau ikut, `.kick` nampilin
+    // "628xx:0" dan perbandingan nomor owner meleset.
+    cacheLidFromKey({ remoteJid: '777666555@lid', remoteJidAlt: '628123456789:0@s.whatsapp.net' });
+    assert.strictEqual(lidToPn('777666555@lid'), '628123456789@s.whatsapp.net');
+  });
+
+  await ok('A11. fallback peta LID bawaan Baileys (persist) juga dinormalisasi', async () => {
+    // Baileys getPNForLID() balikin `628xx:0@s.whatsapp.net`.
+    // LID yg belum ke-cache sama test di atas (kalau udah ke-cache, fallback nggak kepanggil)
+    const fake = { lid: { getPn: async () => '628555666777:0@s.whatsapp.net',
+                         getLid: async () => '555000111@lid' } };
+    assert.strictEqual(await lidToPnAsync(fake, '555000111@lid'), '628555666777@s.whatsapp.net');
+    assert.strictEqual(lidToPn('555000111@lid'), '628555666777@s.whatsapp.net');
+    assert.strictEqual(await pnToLidAsync(fake, '628555666777@s.whatsapp.net'), '555000111@lid');
+    assert.strictEqual(pnToLid('628555666777:0@s.whatsapp.net'), '555000111@lid');
   });
 
   await ok('A8. LID belum ke-map -> engine wajib baca metadata dulu', () => {
