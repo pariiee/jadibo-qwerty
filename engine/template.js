@@ -76,8 +76,7 @@ const VAR_INFO = {
   groupname: 'Nama grup',
   subject:   'Nama grup',
   namegc:    'Nama grup',
-  usertag:   'Tag member (yang join/keluar)',
-  user:      'Sama dengan @usertag',
+  user:      'Tag member (yang join/keluar)',
   tagdiri:   'Tag pengirim',
   tagreply:  'Tag orang yang di-reply',
   jam:       'Jam sekarang',
@@ -93,7 +92,7 @@ const VAR_INFO = {
 };
 
 const VAR_ORDER = [
-  'groupname', 'subject', 'namegc', 'usertag', 'user', 'tagdiri', 'tagreply',
+  'groupname', 'subject', 'namegc', 'user', 'tagdiri', 'tagreply',
   'jam', 'menit', 'detik', 'hari', 'tanggal', 'bulan', 'tahun', 'namabulan', 'desc', 'pesanan',
 ];
 

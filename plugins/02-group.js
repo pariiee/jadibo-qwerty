@@ -1309,9 +1309,12 @@ module.exports = async function groupHandler(ctx) {
       return true;
     }
 
-    // ── catatan — daftar variable template ────────────────────────────────────
-    case 'catatan': {
-      const topik = (args[0] || '').toLowerCase().replace(/^\./, '');
+    // ── catatan / catatanset — daftar variable template ───────────────────────
+    // `.catatanset <topik>` = bentuk pendek, biar nggak perlu spasi.
+    case 'catatan':
+    case 'catatanset': {
+      const topik = (args[0] || command.slice('catatan'.length) || '')
+        .toLowerCase().replace(/^\./, '');
       const label = { setwelcome: 'setwelcome', setbye: 'setbye', setleft: 'setbye',
         setproses: 'setproses', setdone: 'setdone', setlist: 'setlist',
         setopen: 'setopen', setopen2: 'setopen', setclose: 'setclose',

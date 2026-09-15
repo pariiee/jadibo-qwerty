@@ -4,7 +4,8 @@
  * test/template.js
  * Renderer teks template (engine/template.js) — dipakai .setwelcome / .setbye /
  * .setopen / .setclose. Yang dikunci di sini:
- *   - alias name (@user vs @usertag) nggak saling makan
+ *   - alias name (@user vs @usertag) nggak saling makan — @usertag cuma alias
+ *     lama yang masih dirender, yang didokumentasiin cuma @user
  *   - waktu WIB (jam/menit/detik/hari/tanggal/bulan/tahun/namabulan)
  *   - mention cuma sekali walau variable-nya dipakai berkali-kali
  *   - variable asing dibiarin apa adanya (bukan dihapus diem-diem)
@@ -83,7 +84,7 @@ ok('tanpa target -> mention kosong (bukan string "undefined")', () => {
 ok('catatan() nyebut semua variable yang didukung', () => {
   const c = catatan('setclose');
   assert.strictEqual(typeof c, 'string');
-  for (const v of ['@groupname', '@usertag', '@tagdiri', '@tagreply', '@jam', '@namabulan', '@pesanan']) {
+  for (const v of ['@groupname', '@user', '@tagdiri', '@tagreply', '@jam', '@namabulan', '@pesanan']) {
     assert.ok(c.includes(v), `catatan nggak nyebut ${v}`);
   }
 });

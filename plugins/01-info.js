@@ -164,7 +164,7 @@ const ALL_COMMANDS = [...new Set([
   'warn','unwarn','delwarn','resetwarn','setwarnlimit','listwarn',
   // Group admin
   'banmember','unbanmember','setppgc','sider','listtotalpesan',
-  'setopen','setclose','catatan',
+  'setopen','setclose','catatan','catatanset',
 ])];
 
 // ── Menu kategori — menu <kategori> / menu all ──────────────────────────────
