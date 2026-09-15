@@ -61,6 +61,9 @@ module.exports = async function buttonHandler(ctx) {
       default:
         // Button didyoumean (dym:*) bukan urusan plugin ini — biarkan plugin 08 handle
         if (btnId.startsWith('dym:')) return false;
+        // Sisanya (btn_cat, btn_owner, .menu …) ditangani handleRowId — satu
+        // tempat, jadi nggak ada switch kembar yang bisa lupa diubah.
+        if (await handleRowId(btnId)) return true;
         await reply(`✅ Tombol *"${btnId}"* ditekan!\n\nBalas dengan command biasa atau ketik \`.button\` untuk tombol lagi.`);
         return true;
     }
@@ -71,7 +74,9 @@ module.exports = async function buttonHandler(ctx) {
   //     Tambah baris baru cukup di sini; dulu ada 2 switch kembar yang harus
   //     diubah dua kali, dan lupa satu bikin baris jatuh ke default.
   // ═══════════════════════════════════════════════════════════════════════════════
-  const handleRowId = async (rowId) => {
+  // Function declaration (bukan `const` arrow) supaya bisa dipanggil dari switch
+  // `btnId` di atas — arrow `const` kena TDZ kalau dipanggil sebelum barisnya.
+  async function handleRowId(rowId) {
     if (!rowId) return false;
     // Baris dropdown `.menu` → re-dispatch `.menu <kategori>` (handler yang sama)
     const cat = /^menu_cat:(\w+)$/.exec(rowId);
@@ -93,6 +98,38 @@ module.exports = async function buttonHandler(ctx) {
         return await require('./01-info')({ ...ctx, isCmd: true, command: 'menu', args: [] });
       case 'btn_owner':
         return await require('./01-info')({ ...ctx, isCmd: true, command: 'owner', args: [] });
+      case 'btn_cat': {
+        // Tombol 📂 `.test3` (quick_reply) → kirim daftar kategori sebagai
+        // dropdown `single_select`. Nggak bisa nempel di bubble yang sama:
+        // `single_select` selalu penuh sebaris, jadi `[📂] [Owner]` mustahil
+        // kalau salah satunya dropdown — makanya 📂 jadi quick_reply.
+        const { CATS } = require('./01-info');
+        await client.message.send(jid, {
+          interactiveMessage: {
+            body: { text: '📂 *Pilih Kategori*\nKetuk tombol di bawah untuk buka daftar menu.' },
+            footer: { text: ctx.botData?.footer_text || 'Powered by YaaParBot' },
+            nativeFlowMessage: {
+              buttons: [{
+                name: 'single_select',
+                buttonParamsJson: JSON.stringify({
+                  title: '📂',
+                  sections: [{
+                    title: 'Kategori',
+                    highlight_label: 'YaaPar Menu',
+                    rows: Object.entries(CATS).map(([k, v]) => ({
+                      title: k.toUpperCase(),
+                      description: `${v.length} Command`,
+                      id: `.menu ${k}`,
+                    })),
+                  }],
+                }),
+              }],
+              messageParamsJson: '{}',
+            },
+          },
+        });
+        return true;
+      }
       case 'btn_test':
         await reply(`✅ Klik tombol nyampe! id = *${rowId}*`);
         return true;
@@ -100,7 +137,7 @@ module.exports = async function buttonHandler(ctx) {
         await reply(`✅ Opsi *"${rowId}"* dipilih.`);
         return true;
     }
-  };
+  }
 
   if (message?.interactiveResponseMessage) {
     let rowId = '';

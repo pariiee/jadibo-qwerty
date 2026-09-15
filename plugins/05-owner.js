@@ -1344,6 +1344,105 @@ module.exports = async function ownerHandler(ctx) {
       return true;
     }
 
+    // ── test3 — salinan `.test2` + tombol sebaris (quick_reply semua) ───────
+    // Pak minta: `[📂] [Owner]` **kanan-kiri**, bukan atas-bawah. `single_select`
+    // nggak bisa sebaris (tombolnya WA selalu penuh sendiri), jadi tombol 📂 di
+    // sini `quick_reply` id `cmd:.menu` → diklik tetap buka daftar kategori
+    // sebagai teks. Klik row `.menu <cat>` ditangani `handleRowId` di 07-button.
+    case 'test3': {
+      if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }
+      try {
+        await react(mess.reactLoading);
+
+        const banner = fs.readFileSync(
+          path.resolve(botData.banner_url || process.env.BANNER_DEFAULT),
+        );
+        const thumb = await genThumbnail(banner, 'image/jpeg', 300) || banner;
+
+        const pnJid = String(sender).split(':')[0].split('@')[0];
+        const nama  = ctx.pushName || pnJid;
+        const role  = await isOwner(ctx) ? 'Owner' : ctx.isPremium ? 'Premium' : 'Free';
+        const botNm = botData.bot_name || 'YaaParBot';
+        const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
+        const pad = (n) => String(n).padStart(2, '0');
+        const hari = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'][now.getDay()];
+        const tgl  = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}`;
+        const jam  = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+
+        const head = [
+          '╭── *[ 🧾 SELAMAT SIANG ]* ──',
+          `│ 🗓️ Hari : ${hari}`,
+          `│ 📅 Tanggal : ${tgl}`,
+          `│ ⏰ Waktu : ${jam} WIB`,
+          '╰────────────────────────',
+          '',
+          `Hi *${nama}*,`,
+          `_"My name is ${botNm} and I'm here to help you. Feel free to choose a menu or type a command you need."_`,
+          '',
+          '╭── *[ 📌 INFO USER & BOT ]* ──',
+          `│ 🤖 Nama Bot : ${botNm}`,
+          `│ 👤 Nama User : ${nama}`,
+          `│ 👑 Role : ${role}`,
+          `│ ⚡ Limit : 20/20`,
+          `│ 📦 Total Fitur : ${ALL_COMMANDS.length}`,
+          `│ 🔓 Mode : Public`,
+          '╰────────────────────────',
+        ].join('\n');
+
+        const tail = [
+          '╭── *[ 📂 MENU CATEGORY ]* ──',
+          ...Object.entries(CATS).map(([k, v]) => `│ ◦ ${k.toUpperCase()} (${v.length} Fitur)`),
+          '╰────────────────────────',
+          '',
+          '📌 *Catatan:* ',
+          '• Ketuk 📂 untuk daftar kategori.',
+          '• Ketik .menu <kategori> untuk melihat isinya.',
+          '• Semua command: .menu all',
+        ].join('\n');
+
+        const body = head +
+          '\u200e'.repeat(Math.max(0, 1024 - head.length - tail.length - 1)) +
+          '\n' + tail;
+
+        await sock.message.send(jid, {
+          interactiveMessage: {
+            header: {
+              hasMediaAttachment: true,
+              locationMessage: {
+                degreesLatitude: 0,
+                degreesLongitude: 0,
+                name: botNm,
+                address: 'yapari.web.id',
+                jpegThumbnail: thumb,
+              },
+            },
+            body: { text: body },
+            footer: { text: botData.footer_text || 'Powered by YaaParBot' },
+            nativeFlowMessage: {
+              // `quick_reply` semua → WA nempelin sebaris (kanan-kiri), nggak
+              // turun ke baris baru kayak `single_select`.
+              buttons: [
+                {
+                  name: 'quick_reply',
+                  buttonParamsJson: JSON.stringify({ display_text: '📂', id: 'btn_cat' }),
+                },
+                {
+                  name: 'quick_reply',
+                  buttonParamsJson: JSON.stringify({ display_text: 'Owner', id: 'btn_owner' }),
+                },
+              ],
+              messageParamsJson: '{}',
+            },
+          },
+        });
+        await react(mess.reactSuccess);
+      } catch (e) {
+        await react(mess.reactError);
+        await reply(`❌ Gagal: ${e.message}`);
+      }
+      return true;
+    }
+
     case 'setqris': {
       if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }
 
