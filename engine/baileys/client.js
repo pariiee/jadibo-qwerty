@@ -360,7 +360,13 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
           generateHighQualityLinkPreview: true,
           // Dipakai Baileys buat jawab retry receipt (penerima gagal decrypt
           // -> minta kirim ulang). Lihat rememberSent() di atas.
-          getMessage: async (key) => lookupSent(key),
+          // Log-nya sengaja: ini satu-satunya jejak kelihatan kalau ada balasan
+          // yang harus dikirim ulang — "kirim ulang" = WA-nya nyangkut di penerima.
+          getMessage: async (key) => {
+            const found = lookupSent(key);
+            console.log(found ? `[retry] kirim ulang ${key?.id}` : `[retry] ${key?.id} nggak ada di cache`);
+            return found;
+          },
         });
       } catch (e) {
         return reject(e);
