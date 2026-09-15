@@ -243,8 +243,11 @@ module.exports = async function infoHandler(ctx) {
       const title = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
       // ── Menu per-kategori: .menu <kategori> / .menu all ──────────────────
+      // Bentuknya = bentuk menu utama (header lokasi + banner + tombol),
+      // bedanya cuma isi `body` dan tombol kategori yang aktif (penanda ◈).
+      let subBody = null;   // null = menu utama
       if (showCat) {
-        // "all" → gabung semua kategori, satu command per baris (rata kiri, no kolom — 
+        // "all" → gabung semua kategori, satu command per baris (rata kiri, no kolom —
         // biar gampang dibaca & ga kepotong)
         if (showCat === 'all') {
           const blocks = Object.entries(CATS).map(([k, cmds]) => {
@@ -252,22 +255,20 @@ module.exports = async function infoHandler(ctx) {
               cmds.map(c => `┊ ◈ ${p}${c}`).join('\n') +
               `\n╰┈┈┈┈┈┈┈┈`;
           });
-          await reply(`╭┈〔 𝙈𝙀𝙉𝙐 𝘼𝙇𝙇 〕\n┊ ◈ Semua command (${ALL_COMMANDS.length} fitur)\n╰┈┈┈┈┈┈┈┈\n\n${blocks.join('\n\n')}\n\n> _${botData.footer_text || 'Powered by YaaParBot'}_`);
-          return true;
+          subBody = `╭┈〔 𝙈𝙀𝙉𝙐 𝘼𝙇𝙇 〕\n┊ ◈ Semua command (${ALL_COMMANDS.length} fitur)\n╰┈┈┈┈┈┈┈┈\n\n${blocks.join('\n\n')}`;
+        } else {
+          // Kategori tunggal → dua kolom
+          const cmds = CATS[showCat];
+          const cols = [];
+          for (let i = 0; i < cmds.length; i += 2) cols.push(cmds.slice(i, i + 2));
+          subBody =
+            `╭┈〔 ${title(showCat)} Menu 〕\n` +
+            cols.map(col => `┊ ${col.map((c, j) => `${j === 0 ? '◈' : '·'} ${p}${c}`.padEnd(20)).join('│ ')}`).join('\n') +
+            `\n╰┈┈┈┈┈┈┈┈\n\n` +
+            `📝 *${botData.description || process.env.DESC_DEFAULT || ''}*`;
         }
-
-        // Kategori tunggal → dua kolom
-        const cmds = CATS[showCat];
-        const cols = [];
-        for (let i = 0; i < cmds.length; i += 2) cols.push(cmds.slice(i, i + 2));
-        const txt =
-          `╭┈〔 ${title(showCat)} Menu 〕\n` +
-          cols.map(col => `┊ ${col.map((c, j) => `${j === 0 ? '◈' : '·'} ${p}${c}`.padEnd(20)).join('│ ')}`).join('\n') +
-          `\n╰┈┈┈┈┈┈┈┈\n\n` +
-          `📝 *${botData.description || process.env.DESC_DEFAULT || ''}*\n\n` +
-          `> _${botData.footer_text || 'Powered by YaaParBot'}_`;
-        await reply(txt);
-        return true;
+        // Sisa builder menu utama (`captionImg`) dipakai apa adanya — teks panjang
+        // dipotong WA di 1024 char, sumber masalah yang sama, perlakuan yang sama.
       }
 
       // ── Menu utama: sapaan + info user + kategori ────────────────────────
@@ -376,8 +377,8 @@ module.exports = async function infoHandler(ctx) {
               address: 'Jadibot? labs.yapari.web.id',
               ...(thumb ? { jpegThumbnail: thumb } : {}),
             },
-            contentText: captionImg,
-            footerText: botData.footer_text || 'Powered by YaaParBot',
+            contentText: subBody || captionImg,
+            footerText: subBody ? `Ketik ${p}menu all untuk semua command` : (botData.footer_text || 'Powered by YaaParBot'),
             buttons: [
               {
                 buttonId: 'btn_cat',

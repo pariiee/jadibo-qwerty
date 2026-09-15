@@ -3,9 +3,9 @@
 /**
  * test/menu-buttons.js
  * `.menu` harus kirim SATU bubble `buttonsMessage` berisi: header lokasi
- * (thumbnail banner + teks menu) dan dua tombol sebaris — 📂 `single_select`
- * 11 kategori + owner. Kalau ada yang berubah di 01-info.js dan tombolnya
- * balik jadi tidak ada / terpisah / 📂 mati, test ini yang nangkep.
+ * (thumbnail banner + teks menu) dan dua tombol sebaris — `Menu` (`single_select`,
+ * ALL + 11 kategori) + `Owner`. Sub-menu (`.menu <kat>` / `.menu all`) WAJIB pakai
+ * bubble yang sama, bukan balik jadi teks polos.
  */
 
 const assert = require('assert');
@@ -16,8 +16,8 @@ const ROOT = path.resolve(__dirname, '..');
 const info = require(path.join(ROOT, 'plugins/01-info.js'));
 
 let pass = 0, fail = 0;
-const ok = (name, fn) => {
-  try { fn(); console.log(`  ok  ${name}`); pass++; }
+const ok = async (name, fn) => {
+  try { await fn(); console.log(`  ok  ${name}`); pass++; }
   catch (e) { console.error(`  FAIL ${name}\n       ${e.message}`); fail++; }
 };
 
@@ -25,7 +25,7 @@ const ok = (name, fn) => {
 // `send` nyimpen SEMUA argumen — jadi kelihatan kalau `.menu` ngirim >1 bubble.
 const sent = [];
 const push = (...a) => sent.push(a);
-const ctx = {
+const baseCtx = {
   isCmd: true, command: 'menu', args: [],
   botData: { id: 1, prefix: '.', bot_name: 'Qwerty', banner_url: 'assets/banner.jpg',
              footer_text: '© yaparibotz', description: 'tes' },
@@ -35,11 +35,12 @@ const ctx = {
   jid: '6281234567890@s.whatsapp.net', sender: '6281234567890@s.whatsapp.net',
   pushName: 'Al', isOwner: true, isPremium: false, isAdmin: false, msg: { message: {} },
 };
+const ctx = baseCtx;
 
 (async () => {
   await info(ctx);
 
-  ok('menu = 1 bubble `buttonsMessage`; sisa bubble cuma audio (AUDIO_DEFAULT)', () => {
+  await ok('menu = 1 bubble `buttonsMessage`; sisa bubble cuma audio (AUDIO_DEFAULT)', () => {
     const btns = sent.filter(a => a[1] && a[1].buttonsMessage);
     assert.strictEqual(btns.length, 1, `dapat ${btns.length} bubble tombol`);
     const teksGambar = sent.filter(a => a[1] && (a[1].type === 'text' || a[1].type === 'image'));
@@ -47,7 +48,7 @@ const ctx = {
     assert.ok(sent.length <= 2, `bubble kebanyakan: ${sent.length}`);
   });
 
-  ok('header lokasi bawa thumbnail (pola .test3)', () => {
+  await ok('header lokasi bawa thumbnail (pola .test3)', () => {
     const b = sent[0][1].buttonsMessage;
     assert.strictEqual(b.headerType, 6);
     assert.strictEqual(b.locationMessage.degreesLatitude, 0);
@@ -57,7 +58,7 @@ const ctx = {
     assert.ok(thumb[0] === 0xff && thumb[1] === 0xd8, 'bukan JPEG');
   });
 
-  ok('teks menu ikut + dipotong di batas 1024 char WA', () => {
+  await ok('teks menu ikut + dipotong di batas 1024 char WA', () => {
     const body = sent[0][1].buttonsMessage.contentText;
     assert.ok(body.includes('INFO USER & BOT'), 'box INFO hilang');
     assert.ok(body.includes('MENU CATEGORY'), 'box kategori hilang');
@@ -66,7 +67,7 @@ const ctx = {
     assert.ok(body.length <= 1024, `kepanjangan: ${body.length} char`);
   });
 
-  ok('tombol sebaris: Menu single_select (ALL + 11 kategori) + Owner', () => {
+  await ok('tombol sebaris: Menu single_select (ALL + 11 kategori) + Owner', () => {
     const btns = sent[0][1].buttonsMessage.buttons;
     assert.strictEqual(btns.length, 2);
     assert.strictEqual(btns[0].buttonText.displayText, 'Menu');
@@ -90,13 +91,25 @@ const ctx = {
   });
 
   // Thumbnail harus lolos jalur kirim utuh (upload-nya lewat proto, bukan media).
-  ok('payload selamat lewat normalizeMessageContent (Baileys)', () => {
+  await ok('payload selamat lewat normalizeMessageContent (Baileys)', () => {
     const { generateWAMessageFromContent, normalizeMessageContent } = require('baileys');
     const wam = generateWAMessageFromContent('g@g.us', sent[0][1], { userJid: 'me@s.whatsapp.net' });
     const b = normalizeMessageContent(wam.message).buttonsMessage;
     assert.strictEqual(b.buttons[0].nativeFlowInfo.name, 'single_select');
     assert.ok(b.locationMessage.jpegThumbnail.length > 1000, 'thumbnail dibuang di jalur kirim');
     assert.strictEqual(b.locationMessage.address, 'Jadibot? labs.yapari.web.id');
+  });
+
+  await ok('sub-menu (.menu info / .menu all) pakai bubble yang sama — banner + tombol, bukan teks polos', async () => {
+    for (const arg of ['info', 'all']) {
+      sent.length = 0;
+      await info(Object.assign({}, baseCtx, { args: [arg] }));
+      const m = sent.find(a => a[1] && a[1].buttonsMessage);
+      assert.ok(m, `'.menu ${arg}' nggak ngirim buttonsMessage — balik ke teks polos?`);
+      assert.ok(m[1].buttonsMessage.locationMessage.jpegThumbnail, `'.menu ${arg}' kehilangan banner`);
+      assert.strictEqual(m[1].buttonsMessage.buttons.length, 2, `'.menu ${arg}' kehilangan tombol`);
+      assert.ok(!sent.some(a => a[1] && (a[1].type === 'text' || a[1].type === 'image')), `'.menu ${arg}' masih kirim pesan teks terpisah`);
+    }
   });
 
   console.log(`\nmenu-buttons: ${pass} PASS, ${fail} FAIL`);
