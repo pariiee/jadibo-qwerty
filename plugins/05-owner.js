@@ -1236,6 +1236,56 @@ module.exports = async function ownerHandler(ctx) {
         // beneran dirender WA; 300x300 (cover) nggak keluar.
         const thumb = await genThumbnail(banner, 'image/jpeg', 300) || banner;
 
+        // Isi text-nya contek gaya `.menu all`: sapaan + quote + INFO + daftar
+        // kategori. Data diambil dari CATS/ALL_COMMANDS yg sama.
+        const pnJid = String(sender).split(':')[0].split('@')[0];
+        const nama  = ctx.pushName || pnJid;
+        const role  = await isOwner(ctx) ? 'Owner' : ctx.isPremium ? 'Premium' : 'Free';
+        const botNm = botData.bot_name || 'YaaParBot';
+        // Format manual: `toLocaleString('id-ID')` keluar `15/9/2026` + `10.18.08`,
+        // sample Pak `13/09/2026` + `11:12:01`.
+        const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
+        const pad = (n) => String(n).padStart(2, '0');
+        const hari = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'][now.getDay()];
+        const tgl  = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}`;
+        const jam  = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+
+        const head = [
+          `╭ • *🧾  SELAMAT SIANG* • ─`,
+          `│  🗓️ Hari : ${hari}`,
+          `│  📅 Tanggal : ${tgl}`,
+          `│  ⏰ Waktu : ${jam} WIB`,
+          '',
+          `Hi ${nama}`,
+          `"my name is ${botNm} and I'm here to help you. Feel free to choose a menu or type a command you need."`,
+          '',
+          '⪻───≪〔 INFO  〕≫───⪼',
+          `Nama Bot : ${botNm}`,
+          `* Nama user    : ${nama}`,
+          `* role    : ${role}`,
+          `* Limit    : 20/20`,
+          `* total fitur : ${ALL_COMMANDS.length}`,
+          `* mode : Public`,
+        ].join('\n');
+
+        const tail = [
+          'menu category',
+          ...Object.entries(CATS).map(([k, v]) => `│ ◦ ${k.toUpperCase()} (${v.length} Fitur)`),
+          '',
+          '📌 *Note:* ketik *.menu <kategori>* untuk lihat isinya.',
+          'Contoh: *.menu downloader* — semua command: *.menu all*',
+          '',
+          `> _${botData.footer_text || 'ihiii'}_`,
+          'ihiii',
+        ].join('\n');
+
+        // Filler readmore — sama kayak `.menu` (01-info.js): lipatan "Baca
+        // selengkapnya" jatuh persis di bawah baris `mode`, sisa menu kesembunyi.
+        // Budget 1024 char biar aman kalau `contentText` ikut dibatasi kayak caption.
+        const body = head +
+          '\u200e'.repeat(Math.max(0, 1024 - head.length - tail.length - 1)) +
+          '\n' + tail;
+
         await sock.message.send(jid, {
           buttonsMessage: {
             buttons: [
@@ -1254,11 +1304,11 @@ module.exports = async function ownerHandler(ctx) {
               // 0,0 = titik netral, biar nggak gonta-ganti tiap kirim.
               degreesLatitude: 0,
               degreesLongitude: 0,
-              name: botData.bot_name || 'YaaParBot',
+              name: botNm,
               address: 'yapari.web.id',
               jpegThumbnail: thumb,
             },
-            contentText: 'Testing ButtonV2 — location header + legacy buttons',
+            contentText: body,
             footerText: `yapari.web.id`,
             headerType: 6,
           },
