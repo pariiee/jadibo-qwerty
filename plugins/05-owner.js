@@ -1114,12 +1114,7 @@ module.exports = async function ownerHandler(ctx) {
     // ── test — versi vellzy: SATU bubble interactiveMessage, header lokasi ────
     // customNodes <biz>/<interactive> dari kode aslinya NGGAK perlu ditulis di
     // sini — adapter (engine/baileys/client.js sendRaw) udah nambahin otomatis.
-    // `.test2` = `.test` + bottom sheet + fake quoted katalog + Limited Time
-    // Offer. Satu handler biar `.test` yang udah jalan nggak kena imbas kalau
-    // bagian barunya ditolak WA.
-    case 'test':
-    case 'test2': {
-      const v2 = command === 'test2';
+    case 'test': {
       if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }
       try {
         await react(mess.reactLoading);
@@ -1169,7 +1164,7 @@ module.exports = async function ownerHandler(ctx) {
                 jpegThumbnail: thumb,
               },
             },
-            body:   { text: v2 ? `${body}\n\n⚡ *Limited Time Offer*` : body },
+            body:   { text: body },
             footer: { text: `*${botData.bot_name || 'YaaParBot'}*\n*${now}*` },
             nativeFlowMessage: {
               buttons: [
@@ -1211,50 +1206,58 @@ module.exports = async function ownerHandler(ctx) {
                   }),
                 },
               ],
-              // Dua key ini yang bikin WA naikin panel dari bawah (bottom sheet)
-              // dan nempelin strip penawaran di dalamnya.
-              messageParamsJson: v2 ? JSON.stringify({
-                limited_time_offer: {
-                  text: 'Limited Time Offer',
-                  expiration_time: String(Math.floor(Date.now() / 1000) + 86400),
-                },
-                bottom_sheet: {
-                  in_thread_buttons_limit: 10,
-                  divider_indices: [0],
-                  list_title: botData.bot_name || 'YaaParBot',
-                },
-              }) : '{}',
+              messageParamsJson: '{}',
             },
-            // ponytail: externalAdReply di sini bikin WA buang SELURUH bubble
-            // (kejadian 15 Sep: cuma reaksi ✅ yg nongol). Balik ke bentuk yg
-            // terbukti jalan sampai bentuk kartunya ketemu di `.btnprobe` G–J.
-            // v2: quote palsu — nggak ada pesan aslinya, WA ngerender kartu
-            // katalog dari quotedMessage apa adanya.
-            contextInfo: v2 ? {
-              mentionedJid: [pnJid + '@s.whatsapp.net'],
-              stanzaId: `3EB0${Date.now().toString(16).toUpperCase()}FAKE`,
-              participant: sender,
-              quotedMessage: {
-                productMessage: {
-                  product: {
-                    productId: 'yapari-katalog',
-                    title: 'Limited Time Offer',
-                    description: 'yapari.web.id',
-                    currencyCode: 'IDR',
-                    priceAmount1000: 0,
-                    url: 'https://yapari.web.id',
-                    retailerId: 'YaaParBot',
-                    productImage: { mimetype: 'image/jpeg', jpegThumbnail: thumb },
-                  },
-                  businessOwnerJid: sender,
-                  catalog: {
-                    title: botData.bot_name || 'YaaParBot',
-                    description: 'yapari.web.id',
-                    catalogImage: { mimetype: 'image/jpeg', jpegThumbnail: thumb },
-                  },
-                },
+            contextInfo: { mentionedJid: [pnJid + '@s.whatsapp.net'] },
+          },
+        });
+        await react(mess.reactSuccess);
+      } catch (e) {
+        await react(mess.reactError);
+        await reply(`❌ Gagal: ${e.message}`);
+      }
+      return true;
+    }
+
+    // ── test2 — buttonsMessage legacy + header lokasi + thumbnail ────────────
+    // Bentuk yg diminta Pak, contek apa adanya. `sock.message.send` di snippet
+    // = `client.message.send` di adapter (sama). customNodes <biz>/<interactive>
+    // + additionalAttributes NGGAK perlu ditulis — client.js nyuntik sendiri
+    // (buttonNodes() udah kenal buttonsMessage, RAW_PROTO_KEYS juga).
+    case 'test2': {
+      if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }
+      try {
+        await react(mess.reactLoading);
+
+        const banner = fs.readFileSync(
+          path.resolve(botData.banner_url || process.env.BANNER_DEFAULT),
+        );
+        const thumb = await genThumbnail(banner, 'image/jpeg', 300) || banner;
+
+        await sock.message.send(jid, {
+          buttonsMessage: {
+            buttons: [
+              {
+                buttonId: 'btnv2_1',
+                buttonText: { displayText: 'Tombol 1' },
+                type: 1,
               },
-            } : { mentionedJid: [pnJid + '@s.whatsapp.net'] },
+              {
+                buttonId: 'btnv2_2',
+                buttonText: { displayText: 'Tombol 2' },
+                type: 1,
+              },
+            ],
+            locationMessage: {
+              degreesLatitude: -6.2,
+              degreesLongitude: 106.816666,
+              name: botData.bot_name || 'YaaParBot',
+              address: 'yapari.web.id',
+              jpegThumbnail: thumb,
+            },
+            contentText: 'Testing ButtonV2 — location header + legacy buttons',
+            footerText: `yapari.web.id`,
+            headerType: 6,
           },
         });
         await react(mess.reactSuccess);
