@@ -1251,32 +1251,36 @@ module.exports = async function ownerHandler(ctx) {
         const jam  = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
 
         const head = [
-          `╭ • *🧾  SELAMAT SIANG* • ─`,
-          `│  🗓️ Hari : ${hari}`,
-          `│  📅 Tanggal : ${tgl}`,
-          `│  ⏰ Waktu : ${jam} WIB`,
+          '╭── *[ 🧾 SELAMAT SIANG ]* ──',
+          `│ 🗓️ Hari : ${hari}`,
+          `│ 📅 Tanggal : ${tgl}`,
+          `│ ⏰ Waktu : ${jam} WIB`,
+          '╰────────────────────────',
           '',
-          `Hi ${nama}`,
-          `"my name is ${botNm} and I'm here to help you. Feel free to choose a menu or type a command you need."`,
+          `Hi *${nama}*,`,
+          `_"My name is ${botNm} and I'm here to help you. Feel free to choose a menu or type a command you need."_`,
           '',
-          '⪻───≪〔 INFO  〕≫───⪼',
-          `Nama Bot : ${botNm}`,
-          `* Nama user    : ${nama}`,
-          `* role    : ${role}`,
-          `* Limit    : 20/20`,
-          `* total fitur : ${ALL_COMMANDS.length}`,
-          `* mode : Public`,
+          '╭── *[ 📌 INFO USER & BOT ]* ──',
+          `│ 🤖 Nama Bot : ${botNm}`,
+          `│ 👤 Nama User : ${nama}`,
+          `│ 👑 Role : ${role}`,
+          `│ ⚡ Limit : 20/20`,
+          `│ 📦 Total Fitur : ${ALL_COMMANDS.length}`,
+          `│ 🔓 Mode : Public`,
+          '╰────────────────────────',
         ].join('\n');
 
         const tail = [
-          'menu category',
+          '╭── *[ 📂 MENU CATEGORY ]* ──',
           ...Object.entries(CATS).map(([k, v]) => `│ ◦ ${k.toUpperCase()} (${v.length} Fitur)`),
+          '╰────────────────────────',
           '',
-          '📌 *Note:* ketik *.menu <kategori>* untuk lihat isinya.',
-          'Contoh: *.menu downloader* — semua command: *.menu all*',
+          '📌 *Catatan:* ',
+          '• Ketik .menu <kategori> untuk melihat isinya.',
+          '• Contoh: .menu downloader',
+          '• Semua command: .menu all',
           '',
           `> _${botData.footer_text || 'ihiii'}_`,
-          'ihiii',
         ].join('\n');
 
         // Filler readmore — sama kayak `.menu` (01-info.js): lipatan "Baca
