@@ -5,7 +5,7 @@ const assert = require('assert');
 const EventEmitter = require('events');
 const {
   toBaileysContent, toBaileysOptions, normalizeGroupMeta, isRawProto,
-  normalizeParticipantResults, withTimeout,
+  normalizeParticipantResults, withTimeout, asArray,
 } = require('../engine/baileys/client');
 
 let pass = 0;
@@ -148,6 +148,21 @@ ok("hasil kosong / field bolong nggak bikin throw", () => {
   await new Promise((r) => setTimeout(r, 60));
   if (unhandled !== 0) { console.log('  FAIL timer bocor: ' + unhandled + ' unhandledRejection'); process.exit(1); }
   pass++; console.log('  ok  withTimeout: timer nggak bocor (0 unhandledRejection)');
+
+  // ── 9. asArray: objek Baileys -> array ─────────────────────────────────────
+  // groupFetchAllParticipating() balikin { jid: meta }. Call-site (.listgroup,
+  // .leaveall, .bcgc) pakai .length + .map -> objek bikin bot ngaku "nggak ada
+  // di grup mana pun" padahal grupnya ada.
+  ok('asArray: { jid: meta } -> array (listgroup kebaca)', () => {
+    assert.deepStrictEqual(asArray({ a: { id: 'a' }, b: { id: 'b' } }), [{ id: 'a' }, { id: 'b' }]);
+  });
+  ok('asArray: array dibiarin, null -> []', () => {
+    assert.deepStrictEqual(asArray([1, 2]), [1, 2]);
+    assert.deepStrictEqual(asArray(null), []);
+  });
+  ok('asArray: { jid: meta } hasilnya punya .length (gate !groups.length lolos)', () => {
+    assert.strictEqual(asArray({ a: { id: 'a' } }).length, 1);
+  });
 
   console.log(`\nbaileys-adapter-map: ${pass}/${pass} PASS`);
 })();

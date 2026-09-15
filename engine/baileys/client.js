@@ -255,6 +255,15 @@ function withTimeout(p, ms, label = 'timeout') {
 }
 
 /**
+ * Baileys kadang balikin objek `{ jid: value }` padahal call-site nunggu array
+ * (mis. `groupFetchAllParticipating()`). Normalisasi di adapter, bukan di tiap
+ * call-site — biar nggak ada yang kelewat.
+ */
+function asArray(v) {
+  return Array.isArray(v) ? v : Object.values(v || {});
+}
+
+/**
  * @param {object} o
  * @param {object} o.auth        { creds, keys } dari engine/baileys/auth.js
  * @param {Function} o.saveCreds dipanggil tiap creds.update
@@ -546,7 +555,7 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
 
     group: {
       queryGroupMetadata: (jid) => groupMeta(jid),
-      queryAllGroups: () => sock.groupFetchAllParticipating(),
+      queryAllGroups: async () => asArray(await sock.groupFetchAllParticipating()),
       queryInviteCode: (jid) => sock.groupInviteCode(jid),
       addParticipants: (jid, jids) => participantsUpdate(jid, jids, 'add'),
       removeParticipants: (jid, jids) => participantsUpdate(jid, jids, 'remove'),
@@ -610,6 +619,6 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
 
 module.exports = {
   createClient, toBaileysContent, toBaileysOptions, normalizeGroupMeta, isRawProto, attachMentions,
-  normalizeParticipantResults, withTimeout,
+  normalizeParticipantResults, withTimeout, asArray,
   rememberSent, lookupSent, // buat test retry receipt
 };

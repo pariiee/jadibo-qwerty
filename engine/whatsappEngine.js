@@ -195,7 +195,10 @@ function buildContext(client, event, botData) {
             },
           },
         });
-      } catch {
+      } catch (e) {
+        // Kalau dua-duanya gagal, errornya nggak boleh ilang — kalau nggak, bot
+        // kelihatan "diem" padahal kirimannya ditolak WA.
+        console.log(`[send] ${jid} tolak quote (${e?.message || e}) — kirim plain`);
         return client.message.send(jid, full);
       }
     },
