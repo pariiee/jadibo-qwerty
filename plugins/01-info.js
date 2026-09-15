@@ -302,26 +302,37 @@ module.exports = async function infoHandler(ctx) {
         : jamWib < 15 ? 'SELAMAT SIANG'
         : jamWib < 18 ? 'SELAMAT SORE' : 'SELAMAT MALAM';
 
-      const catList = `│  ${Object.keys(CATS).join(' / ')}`;
+      // Teks menu = gaya `.test3` (box `╭── *[ … ]* ──` + kategori per baris).
+      // Satu builder di sini; `.test3` di 05-owner.js cuma alias ke case ini.
+      const catList = Object.entries(CATS)
+        .map(([k, v]) => `│ ◦ ${k.toUpperCase()} (${v.length} Fitur)`)
+        .join('\n');
 
       const head =
-        `╭ • *🧾  ${sapaan}* • ─\n` +
-        `│  🗓️ Hari : ${HARI[wp('weekday')] || wp('weekday')}\n` +
-        `│  📅 Tanggal : ${wp('day')}/${wp('month')}/${wp('year')}\n` +
-        `│  ⏰ Waktu : ${wp('hour')}:${wp('minute')}:${wp('second')} WIB\n\n` +
-        `Hi ${namaUser}\n` +
-        `"my name is ${botData.bot_name} and I'm here to help you. Feel free to choose a menu or type a command you need."\n\n` +
-        `⪻───≪〔 INFO  〕≫───⪼\n` +
-        `Nama Bot : ${botData.bot_name}\n` +
-        `* Nama user    : ${namaUser}\n` +
-        `* role    : ${role}\n` +
-        `* Limit    : ${limitTxt}\n\n`;
+        `╭── *[ 🧾 ${sapaan} ]* ──\n` +
+        `│ 🗓️ Hari : ${HARI[wp('weekday')] || wp('weekday')}\n` +
+        `│ 📅 Tanggal : ${wp('day')}/${wp('month')}/${wp('year')}\n` +
+        `│ ⏰ Waktu : ${wp('hour')}:${wp('minute')}:${wp('second')} WIB\n` +
+        `╰────────────────────────\n\n` +
+        `Hi *${namaUser}*,\n` +
+        `_"My name is ${botData.bot_name} and I'm here to help you. Feel free to choose a menu or type a command you need."_\n\n` +
+        `╭── *[ 📌 INFO USER & BOT ]* ──\n` +
+        `│ 🤖 Nama Bot : ${botData.bot_name}\n` +
+        `│ 👤 Nama User : ${namaUser}\n` +
+        `│ 👑 Role : ${role}\n` +
+        `│ ⚡ Limit : ${limitTxt}\n` +
+        `│ 📦 Total Fitur : ${ALL_COMMANDS.length}\n` +
+        `│ 🔓 Mode : Public\n` +
+        `╰────────────────────────\n`;
 
       const tail =
-        `${catList}\n\n` +
-        `📌 *Note:* ketik *${p}menu <kategori>* untuk lihat isinya.\n` +
-        `Contoh: *${p}menu downloader* — semua command: *${p}menu all*\n\n` +
-        `*_${botData.footer_text || 'Powered by YaaParBot'}_*`;
+        `╭── *[ 📂 MENU CATEGORY ]* ──\n` +
+        `${catList}\n` +
+        `╰────────────────────────\n\n` +
+        `📌 *Catatan:* \n` +
+        `• Ketuk 📂 untuk daftar kategori.\n` +
+        `• Ketik *${p}menu <kategori>* untuk melihat isinya.\n` +
+        `• Semua command: *${p}menu all*`;
 
       // Pesan TEKS: filler readmore 4001 char (`RM`) — lipatan "Baca selengkapnya"
       // jatuh persis di bawah baris `Limit`; sisa menu ke bawah cuma kesembunyi.

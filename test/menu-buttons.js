@@ -59,8 +59,10 @@ const ctx = {
 
   ok('teks menu ikut + dipotong di batas 1024 char WA', () => {
     const body = sent[0][1].buttonsMessage.contentText;
-    assert.ok(body.includes('INFO  '), 'head menu hilang');
-    assert.ok(body.includes('Note:'), 'tail menu hilang');
+    assert.ok(body.includes('INFO USER & BOT'), 'box INFO hilang');
+    assert.ok(body.includes('MENU CATEGORY'), 'box kategori hilang');
+    assert.ok(/│ ◦ [A-Z]+ \(\d+ Fitur\)/.test(body), 'kategori nggak per baris lagi');
+    assert.ok(body.includes('╰────'), 'box penutup hilang');
     assert.ok(body.length <= 1024, `kepanjangan: ${body.length} char`);
   });
 
