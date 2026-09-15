@@ -115,8 +115,19 @@ function mentionsForChat(chatJid, list) {
   return out;
 }
 
+/**
+ * Ada JID bentuk LID yang belum ke-map ke nomor? Engine pakai ini buat mutusin
+ * perlu baca metadata grup atau nggak — metadata itu SATU-SATUNYA sumber peta
+ * LID<->PN (Baileys v7 nggak punya `sock.store` kontak, jadi fallback store di
+ * lidToPnAsync() selalu null).
+ */
+function needsLidResolve({ sender, quotedSender, mentioned } = {}) {
+  return [sender, quotedSender, ...(mentioned || [])].some((j) => isLid(j));
+}
+
 module.exports = {
   bare, isLid, isPn, toPn, toLid,
+  needsLidResolve,
   cacheLidFromMeta,
   lidToPn, lidToPnAsync,
   pnToLid, pnToLidAsync,

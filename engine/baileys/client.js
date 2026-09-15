@@ -33,7 +33,7 @@ const {
   proto,
   Browsers,
 } = require('baileys');
-const { mentionsForChat } = require('../jid');
+const { mentionsForChat, cacheLidFromMeta } = require('../jid');
 
 // Tipe pesan yang `sendMessage` nolak ("Invalid media type") tapi WA biasa
 // nampilin — semua di sini dikirim lewat relayMessage (.owner kirim kontak).
@@ -426,6 +426,12 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
       const meta = await withTimeout(
         sock.groupMetadata(jid).then(normalizeGroupMeta), META_TIMEOUT, 'groupMetadata',
       );
+      // Isi peta LID<->PN dari peserta. Ini SATU-SATUNYA yang jalan: Baileys v7
+      // nggak punya `sock.store` (kontak) — fallback store di engine/jid.js
+      // selalu null. Dulu pengisian cuma di jalur "nama grup belum ke-cache",
+      // jadi tiap habis restart peta-nya kosong: `@mention` jadi teks polos,
+      // deteksi owner meleset (command owner diem) — gejalanya "command mesti 2x".
+      if (meta?.participants) cacheLidFromMeta(meta.participants);
       metaCache.set(jid, { meta, at: Date.now() });
       return meta;
     } catch (e) {

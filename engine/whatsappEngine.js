@@ -82,7 +82,7 @@ const ownerGreetCooldown = new Map();
 const devGreetCooldown   = new Map(); // key: groupJid → timestamp
 // Logika LID↔PN dipusatkan di engine/jid.js supaya cache-nya SATU (dulu tiap
 // file punya Map sendiri → user bisa tampil beda jid di log yang beda).
-const { cacheLidFromMeta, lidToPn: resolveLid, lidToPnAsync: resolveLidAsync } = require('./jid');
+const { needsLidResolve, lidToPn: resolveLid, lidToPnAsync: resolveLidAsync } = require('./jid');
 
 // ─── WS broadcast helper ──────────────────────────────────────────────────────
 let _wsBroadcast = () => {};
@@ -409,6 +409,7 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
     // Tanpa ini, rejection tanpa catch = proses mati (Node >= 15) -> bot restart dan
     // command yang lagi diproses nggak pernah dibalas ("bot kadang ga respon").
     try {
+    const t0 = Date.now(); // buat ngukur command lambat ("bot mesti 2x baru respon")
     const { key, message } = event;
 
     // Skip pesan tanpa isi
@@ -498,19 +499,25 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
     let chatName = jid.split('@')[0];
     try {
       if (ctx.isGroup) {
-        if (groupNameCache.has(jid)) {
-          chatName = groupNameCache.get(jid);
+        const nameHit = groupNameCache.get(jid);
+        if (nameHit) {
+          chatName = nameHit;
           activeGroupsPerBot.get(botId)?.set(jid, chatName);
-        } else {
+        }
+        // Metadata dibaca kalau nama grup belum ke-cache ATAU masih ada JID LID
+        // yang belum ke-map ke nomor. Dari metadata inilah peta LID<->PN diisi
+        // (groupMeta() di engine/baileys/client.js) — urutannya SEBELUM
+        // ctx.sender/ctx.mentioned di-resolve di bawah. Tanpa ini, pesan pertama
+        // tiap grup setelah restart kepakai LID mentah: isOwner meleset (command
+        // owner diem) dan @mention jadi teks polos.
+        if (!nameHit || needsLidResolve(ctx)) {
           const meta = await client.group.queryGroupMetadata(jid);
-          if (meta?.subject) {
+          if (meta?.subject && !nameHit) {
             chatName = meta.subject;
             groupNameCache.set(jid, meta.subject);
             activeGroupsPerBot.get(botId)?.set(jid, meta.subject);
             saveGroupsCache(botId); // persist setiap kali ada grup baru
           }
-          // Populate LID → phone cache dari participant list
-          if (meta?.participants) cacheLidFromMeta(meta.participants);
         }
       }
     } catch { /* fallback ke JID pendek */ }
@@ -820,11 +827,13 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
       }
     }
 
-    // Log warna sesuai hasil
-    console.log(`[Bot ${botId}] ${logLine}`);
+    // Log warna sesuai hasil — command dibarengi durasinya biar kelihatan kalau
+    // handler-nya lambat (gejala "bot ga respon" / mesti kirim 2x).
+    const tookTag = ctx.isCmd ? ` (+${Date.now() - t0}ms)` : '';
+    console.log(`[Bot ${botId}] ${logLine}${tookTag}`);
     if (ctx.isCmd) {
       if (!cmdHandled) console.log(`[Bot ${botId}] ❓ Command tidak dikenal: ${logLine}`);
-      await logBot(botId, cmdHandled ? 'cmd' : 'cmderr', logLineDisplay);
+      await logBot(botId, cmdHandled ? 'cmd' : 'cmderr', `${logLineDisplay}${tookTag}`);
     } else {
       await logBot(botId, 'info', logLineDisplay);
     }

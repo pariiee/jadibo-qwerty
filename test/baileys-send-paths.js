@@ -9,7 +9,7 @@ const {
   normalizeMessageContent, getContentType,
 } = require('baileys');
 const { toBaileysContent, isRawProto, attachMentions } = require('../engine/baileys/client');
-const { mentionsForChat, cacheLidFromMeta } = require('../engine/jid');
+const { mentionsForChat, cacheLidFromMeta, needsLidResolve } = require('../engine/jid');
 
 let pass = 0, fail = 0;
 const ok = async (label, fn) => {
@@ -88,6 +88,18 @@ const mkOpts = () => ({
     assert.deepStrictEqual(mentionsForChat('628@s.whatsapp.net', ['6287778032605@s.whatsapp.net']),
       ['6287778032605@s.whatsapp.net']);
     assert.deepStrictEqual(mentionsForChat('x@g.us', ['628999@s.whatsapp.net']), ['628999@s.whatsapp.net']);
+  });
+
+  await ok('A8. LID belum ke-map -> engine wajib baca metadata dulu', () => {
+    // Pesan pertama tiap grup setelah restart: peta LID<->PN kosong. Kalau
+    // metadata nggak dibaca, sender/mention tetap LID -> isOwner meleset
+    // (command owner diem) + @mention jadi teks polos. Ini akar "mesti 2x".
+    assert.strictEqual(needsLidResolve({ sender: '135468066799657@lid' }), true);
+    assert.strictEqual(needsLidResolve({
+      sender: '6287778032605@s.whatsapp.net', mentioned: ['135468066799657@lid'] }), true);
+    assert.strictEqual(needsLidResolve({
+      sender: '6287778032605@s.whatsapp.net', mentioned: ['6287711105760@s.whatsapp.net'] }), false);
+    assert.strictEqual(needsLidResolve({}), false);
   });
 
   // ═══ JALUR B: proto mentah (tombol) -> relayMessage ══════════════════════
