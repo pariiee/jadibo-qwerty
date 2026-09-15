@@ -4761,27 +4761,35 @@ module.exports = async function toolsHandler(ctx) {
         items = items.filter(it => it.url);
         if (!items.length) throw new Error('Tidak ada media dari API');
         await react(mess.reactSuccess);
-        let n = 0;
+        let n = 0, terkirim = 0;
+        const gagal = [];
         const total = items.length;
         for (const it of items) {
           n++;
           let res;
           try { res = await axios.get(it.url, { responseType: 'arraybuffer', timeout: 60000 }); }
-          catch { continue; }
+          catch (e) { gagal.push(`#${n} unduh ${e.response?.status || e.message}`); continue; }
           const ct  = res.headers['content-type'] || (it.isVideo ? 'video/mp4' : 'image/jpeg');
           const isVid = ct.startsWith('video/') || it.isVideo;
           const thumb = await genThumbnail(Buffer.from(res.data), isVid ? 'video/mp4' : ct);
           const cap = n === 1
             ? `\u{1F4F7} *Instagram*` + (metaTxt ? `\n\n${metaTxt}` : '') + (total > 1 ? `\n${'\u{1F4F7}'} 1 / ${total}` : '') + (caption ? `\n\n${caption}` : '')
             : `\u{1F4F7} ${n} / ${total}`;
-          await client.message.send(jid, {
-            type: isVid ? 'video' : 'image',
-            media: Buffer.from(res.data),
-            mimetype: isVid ? (ct.startsWith('video/') ? ct : 'video/mp4') : ct,
-            caption: cap,
-            ...(thumb ? { jpegThumbnail: thumb } : {}),
-          });
+          try {
+            await client.message.send(jid, {
+              type: isVid ? 'video' : 'image',
+              media: Buffer.from(res.data),
+              mimetype: isVid ? (ct.startsWith('video/') ? ct : 'video/mp4') : ct,
+              caption: cap,
+              ...(thumb ? { jpegThumbnail: thumb } : {}),
+            });
+            terkirim++;
+          } catch (e) { gagal.push(`#${n} kirim ${e.message}`); }
         }
+        // Jangan pernah "centang tapi sepi": kalau SEMUA media gagal, user harus tau
+        // alasannya. Dulu `catch { continue; }` bikin media ilang tanpa jejak sama sekali.
+        console.log(`[ig] ${terkirim}/${total} terkirim${gagal.length ? ' — ' + gagal.join('; ') : ''}`);
+        if (!terkirim) await reply(`❌ Gagal Instagram:\n${gagal.join('\n')}`);
       } catch (e) {
         await react(mess.reactError);
         await reply(`❌ Gagal download Instagram: ${e.message}`);
