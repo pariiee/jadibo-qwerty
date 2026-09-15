@@ -1,0 +1,91 @@
+'use strict';
+
+/**
+ * test/menu-buttons.js
+ * `.menu` harus kirim SATU bubble `buttonsMessage` berisi: header lokasi
+ * (thumbnail banner + teks menu) dan dua tombol sebaris — 📂 `single_select`
+ * 11 kategori + 👤 Owner. Kalau ada yang berubah di 01-info.js dan tombolnya
+ * balik jadi tidak ada / terpisah / 📂 mati, test ini yang nangkep.
+ */
+
+const assert = require('assert');
+const fs     = require('fs');
+const path   = require('path');
+
+const ROOT = path.resolve(__dirname, '..');
+const info = require(path.join(ROOT, 'plugins/01-info.js'));
+
+let pass = 0, fail = 0;
+const ok = (name, fn) => {
+  try { fn(); console.log(`  ok  ${name}`); pass++; }
+  catch (e) { console.error(`  FAIL ${name}\n       ${e.message}`); fail++; }
+};
+
+// ctx minimal: cukup buat case 'menu' (DB gagal → jatuh ke nilai bawaan).
+// `send` nyimpen SEMUA argumen — jadi kelihatan kalau `.menu` ngirim >1 bubble.
+const sent = [];
+const push = (...a) => sent.push(a);
+const ctx = {
+  isCmd: true, command: 'menu', args: [],
+  botData: { id: 1, prefix: '.', bot_name: 'Qwerty', banner_url: 'assets/banner.jpg',
+             footer_text: '© yaparibotz', description: 'tes' },
+  client: { message: { send: push } },
+  sock:   { message: { send: push } },
+  reply:  async () => {}, react: async () => {}, isGroup: false,
+  jid: '6281234567890@s.whatsapp.net', sender: '6281234567890@s.whatsapp.net',
+  pushName: 'Al', isOwner: true, isPremium: false, isAdmin: false, msg: { message: {} },
+};
+
+(async () => {
+  await info(ctx);
+
+  ok('menu = 1 bubble `buttonsMessage`; sisa bubble cuma audio (AUDIO_DEFAULT)', () => {
+    const btns = sent.filter(a => a[1] && a[1].buttonsMessage);
+    assert.strictEqual(btns.length, 1, `dapat ${btns.length} bubble tombol`);
+    const teksGambar = sent.filter(a => a[1] && (a[1].type === 'text' || a[1].type === 'image'));
+    assert.strictEqual(teksGambar.length, 0, 'menu masih dikirim sebagai bubble teks/gambar terpisah');
+    assert.ok(sent.length <= 2, `bubble kebanyakan: ${sent.length}`);
+  });
+
+  ok('header lokasi bawa thumbnail (pola .test3)', () => {
+    const b = sent[0][1].buttonsMessage;
+    assert.strictEqual(b.headerType, 6);
+    assert.strictEqual(b.locationMessage.degreesLatitude, 0);
+    assert.strictEqual(b.locationMessage.degreesLongitude, 0);
+    const thumb = b.locationMessage.jpegThumbnail;
+    assert.ok(thumb && thumb.length > 1000, `thumbnail kosong/terlalu kecil: ${thumb && thumb.length}`);
+    assert.ok(thumb[0] === 0xff && thumb[1] === 0xd8, 'bukan JPEG');
+  });
+
+  ok('teks menu ikut + dipotong di batas 1024 char WA', () => {
+    const body = sent[0][1].buttonsMessage.contentText;
+    assert.ok(body.includes('INFO  '), 'head menu hilang');
+    assert.ok(body.includes('Note:'), 'tail menu hilang');
+    assert.ok(body.length <= 1024, `kepanjangan: ${body.length} char`);
+  });
+
+  ok('tombol sebaris: 📂 single_select 11 kategori + 👤 Owner', () => {
+    const btns = sent[0][1].buttonsMessage.buttons;
+    assert.strictEqual(btns.length, 2);
+    assert.strictEqual(btns[0].buttonText.displayText, '📂');
+    assert.strictEqual(btns[0].nativeFlowInfo.name, 'single_select');
+    const rows = JSON.parse(btns[0].nativeFlowInfo.paramsJson).sections[0].rows;
+    assert.strictEqual(rows.length, 11, `dapat ${rows.length} kategori`);
+    assert.match(rows[0].id, /^\.menu \w+$/, `row id salah: ${rows[0].id}`);
+    assert.strictEqual(btns[1].buttonId, 'btn_owner');
+    assert.strictEqual(btns[1].buttonText.displayText, '👤 Owner');
+  });
+
+  // Thumbnail harus lolos jalur kirim utuh (upload-nya lewat proto, bukan media).
+  ok('payload selamat lewat normalizeMessageContent (Baileys)', () => {
+    const { generateWAMessageFromContent, normalizeMessageContent } = require('baileys');
+    const wam = generateWAMessageFromContent('g@g.us', sent[0][1], { userJid: 'me@s.whatsapp.net' });
+    const b = normalizeMessageContent(wam.message).buttonsMessage;
+    assert.strictEqual(b.buttons[0].nativeFlowInfo.name, 'single_select');
+    assert.ok(b.locationMessage.jpegThumbnail.length > 1000, 'thumbnail dibuang di jalur kirim');
+    assert.strictEqual(b.locationMessage.address, 'yapari.web.id');
+  });
+
+  console.log(`\nmenu-buttons: ${pass} PASS, ${fail} FAIL`);
+  process.exit(fail ? 1 : 0);
+})();

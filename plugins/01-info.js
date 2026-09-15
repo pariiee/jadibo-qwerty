@@ -7,6 +7,7 @@
 
 const os = require('os');
 const { proto } = require('baileys');
+const { genThumbnail } = require('../engine/thumbnail');
 
 const START_TIME = Date.now();
 
@@ -324,6 +325,7 @@ module.exports = async function infoHandler(ctx) {
 
       // Pesan TEKS: filler readmore 4001 char (`RM`) — lipatan "Baca selengkapnya"
       // jatuh persis di bawah baris `Limit`; sisa menu ke bawah cuma kesembunyi.
+      // ponytail: cuma dipakai jalur gagal (`reply(caption)`) + audio caption.
       const caption = head + `${RM}\n` + tail;
 
       // Caption gambar dibatasi WA 1024 char → filler 4001 nggak muat. Sisa jatah
@@ -333,59 +335,66 @@ module.exports = async function infoHandler(ctx) {
         '\u200e'.repeat(Math.max(0, 1024 - head.length - tail.length - 1)) +
         '\n' + tail;
 
-      // ── Kirim menu dalam SATU bubble ─────────────────────────────────────
-      // Bubble = gambar banner (kalau ada) dengan caption = isi menu.
-      // Tombol dropdown `nativeFlowMessage.single_select` DIBUANG atas
-      // permintaan Pak; kategori tetap bisa dibuka lewat `.menu <kategori>`.
-      // ponytail: kalau tombol mau balik lagi, `07-button.js` masih punya
-      // handleRowId untuk id `menu_cat:<kategori>`.
-      let bannerPesan = null;
-      if (process.env.MENU_BANNER === '1') {
-        try {
-          bannerPesan = await _menuBannerHeader(botData);
-        } catch (e) {
-          // Jangan diam — kalau banner gagal, menu tetap terkirim sebagai teks.
-          console.error('[menu] banner gagal:', e.message);
-        }
+      // ── Kirim menu dalam SATU bubble `buttonsMessage` (pola `.test3`) ────
+      // Header lokasi (0,0) = wadah thumbnail banner, jadi gambar + teks +
+      // tombol nempel di satu bubble tanpa upload media (thumbnail ikut inline
+      // di proto). 📂 = `nativeFlowInfo.single_select` 11 kategori, Owner =
+      // tombol biasa — WA render dua-duanya sebaris. Terbukti di HP Pak.
+      // Tombol panah-lama (`07-button.js` id `menu_cat:<kategori>`) tetap ada
+      // sebagai fallback kalau WA balikin id tombol, bukan row id.
+      let thumb = null;
+      try {
+        const bannerPesan = await _menuBannerHeader(botData);
+        if (bannerPesan) thumb = await genThumbnail(bannerPesan.buf, 'image/jpeg', 300);
+      } catch (e) {
+        // Jangan diam — tanpa banner menu tetap terkirim, cuma tanpa thumbnail.
+        console.error('[menu] banner gagal:', e.message);
       }
-      // DEBUG sementara: bikin kelihatan di `pm2 logs` apakah jalur banner jalan.
-      console.log(`[menu] MENU_BANNER=${process.env.MENU_BANNER || '(off)'} banner_url=${botData.banner_url || '(kosong)'} ` +
-                  `BANNER_DEFAULT=${process.env.BANNER_DEFAULT || '(kosong)'} → gambar=${bannerPesan ? `${bannerPesan.buf.length}B (caption = menu)` : '(tidak ada)'}`);
+      console.log(`[menu] banner_url=${botData.banner_url || '(kosong)'} → thumbnail=${thumb ? `${thumb.length}B` : '(tidak ada)'}`);
 
       try {
-        if (bannerPesan) {
-          // Caption WA dibatasi 1024 char — filler readmore di atas sudah
-          // dipangkas otomatis di `captionImg` supaya totalnya pas.
-          await client.message.send(jid, {
-            type: 'image', media: bannerPesan.buf, mimetype: 'image/jpeg',
-            caption: captionImg,
-          });
-        } else {
-          await client.message.send(jid, { type: 'text', text: caption });
-        }
+        await client.message.send(jid, {
+          buttonsMessage: {
+            headerType: 6,
+            locationMessage: {
+              degreesLatitude: 0,
+              degreesLongitude: 0,
+              name: botData.bot_name || 'YaaParBot',
+              address: 'yapari.web.id',
+              ...(thumb ? { jpegThumbnail: thumb } : {}),
+            },
+            contentText: captionImg,
+            footerText: botData.footer_text || 'Powered by YaaParBot',
+            buttons: [
+              {
+                buttonId: 'btn_cat',
+                buttonText: { displayText: '📂' },
+                type: 1,
+                nativeFlowInfo: {
+                  name: 'single_select',
+                  paramsJson: JSON.stringify({
+                    title: '📂',
+                    sections: [{
+                      title: 'Kategori',
+                      highlight_label: 'YaaPar Menu',
+                      rows: Object.entries(CATS).map(([k, v]) => ({
+                        header: '',
+                        title: k.toUpperCase(),
+                        description: `${v.length} Command`,
+                        id: `.menu ${k}`,
+                      })),
+                    }],
+                  }),
+                },
+              },
+              { buttonId: 'btn_owner', buttonText: { displayText: '👤 Owner' }, type: 1 },
+            ],
+          },
+        });
       } catch (e) {
         console.error('[menu] gagal kirim:', e.message);
         await reply(caption); // jangan hilang menunya
       }
-
-      // ── Tombol [menu] [owner] — bubble terpisah ──────────────────────────
-      // Tombol WA tidak bisa menempel di gambar: media bersarang di dalam buttonsMessage nggak
-      // ikut ke-upload oleh engine (bukan soal proto-nya) — payload-nya
-      // round-trip aman, tapi WA nggak render. Jadi tombol dikirim bubble sendiri.
-      try {
-        await client.message.send(jid, {
-          buttonsMessage: {
-            contentText: 'Pilih menu di bawah ini 👇',
-            footerText:  botData.footer_text || 'Powered by YaaParBot',
-            headerType:  proto.Message.ButtonsMessage.HeaderType.TEXT,
-            text:        `📋 *Menu ${botData.bot_name}*`,
-            buttons: [
-              { buttonId: 'btn_all',   buttonText: { displayText: '📋 All Menu' }, type: proto.Message.ButtonsMessage.Button.Type.RESPONSE },
-              { buttonId: 'btn_owner', buttonText: { displayText: '👑 Owner'    }, type: proto.Message.ButtonsMessage.Button.Type.RESPONSE },
-            ],
-          },
-        });
-      } catch { /* tombol opsional — menu tetap terkirim */ }
 
       // ── Audio default (opsional) — voice note bareng menu ────────────────
       // Terima apa saja: .mp3/.m4a/.wav/.ogg atau URL. Yang bukan ogg/opus
