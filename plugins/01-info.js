@@ -243,24 +243,21 @@ module.exports = async function infoHandler(ctx) {
       // ── Menu per-kategori: .menu <kategori> / .menu all ──────────────────
       // Bentuknya = bentuk menu utama (header lokasi + banner + tombol),
       // bedanya cuma isi `body` dan tombol kategori yang aktif (penanda ◈).
-      // `.menu <kategori>` = command kategorinya (muat), `.menu all` = RINGKASAN
-      // kategori + jumlah fitur. Daftar 408 command mentah nggak muat: WA potong
-      // `contentText` di 1024 char, jadi `all` cuma nunjukin pintunya.
+      // `.menu <kategori>` = satu command per baris, urut a-z.
+      // `.menu all` = semua kategori, tiap kategori dikasih sub-judul.
+      // (Kolom `contentText` nggak dipotong WA kayak caption gambar — dump 408
+      //  command ~5.700 char terkirim utuh, sudah kelihatan di HP Pak.)
       let subBody = null;   // null = menu utama
-      const boxHeader = (t) => `╭── *[ ${t} ]* ──`;
+      const subHeader = (t) => `╭── *[ ${t} ]* ──`;
+      const subLines = (k) => [...CATS[k]].sort().map(c => `│ ◦ ${p}${c}`);
       if (showCat === 'all') {
-        subBody = boxHeader('MENU ALL') + '\n' +
-          Object.entries(CATS).map(([k, v]) => `│ ◦ ${k.toUpperCase()} (${v.length} Fitur)`).join('\n') +
+        subBody = subHeader('MENU ALL') + '\n' +
+          Object.keys(CATS).map(k => [`│ 〔 ${k.toUpperCase()} 〕`, ...subLines(k)].join('\n')).join('\n│\n') +
           '\n╰────────────────────────';
       } else if (showCat) {
-        // Kategori tunggal → dua kolom
-        const cmds = CATS[showCat];
-        const cols = [];
-        for (let i = 0; i < cmds.length; i += 2) cols.push(cmds.slice(i, i + 2));
-        subBody = boxHeader(`MENU ${showCat.toUpperCase()}`) + '\n' +
-          cols.map(col => `│ ${col.map((c, j) => `${j === 0 ? '◈' : '·'} ${p}${c}`.padEnd(20)).join('│ ')}`).join('\n') +
-          '\n╰────────────────────────\n\n' +
-          `📝 *${botData.description || process.env.DESC_DEFAULT || ''}*`;
+        subBody = subHeader(`MENU ${showCat.toUpperCase()}`) + '\n' +
+          subLines(showCat).join('\n') +
+          '\n╰────────────────────────';
       }
 
       // ── Menu utama: sapaan + info user + kategori ────────────────────────
@@ -398,7 +395,8 @@ module.exports = async function infoHandler(ctx) {
               ...(thumb ? { jpegThumbnail: thumb } : {}),
             },
             contentText: subBody || captionImg,
-            footerText: subBody ? `Ketik ${p}menu <kategori> untuk lihat commandnya` : (botData.footer_text || 'Powered by YaaParBot'),
+            // Sub-menu: footer dikosongin (Pak: "hapus teks …"). Menu utama tetap FOOTER_TEXT.
+            footerText: subBody ? '' : (botData.footer_text || 'Powered by YaaParBot'),
             buttons: subBody ? [btnMenu] : [btnMenu, btnOwner],
           },
         });

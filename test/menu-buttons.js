@@ -111,18 +111,25 @@ const ctx = baseCtx;
       assert.deepStrictEqual(bm.buttons.map(b => b.buttonText.displayText), ['Menu'],
         `'.menu ${arg}' harusnya cuma tombol Menu (Owner cuma di .menu)`);
       assert.ok(!bm.buttons.some(b => b.buttonId === 'btn_owner'), `'.menu ${arg}' masih bawa tombol Owner`);
-      assert.ok(bm.contentText.length <= 1024, `'.menu ${arg}' kepanjangan: ${bm.contentText.length} char`);
+      assert.strictEqual(bm.footerText, '', `'.menu ${arg}' masih bawa teks footer`);
       assert.ok(!sent.some(a => a[1] && (a[1].type === 'text' || a[1].type === 'image')), `'.menu ${arg}' masih kirim pesan teks terpisah`);
     }
   });
 
-  await ok('.menu all = ringkasan kategori + jumlah fitur, bukan dump 408 command', async () => {
+  await ok('.menu all = sub-judul per kategori + command urut a-z', async () => {
     sent.length = 0;
     await info(Object.assign({}, baseCtx, { args: ['all'] }));
     const body = sent.find(a => a[1] && a[1].buttonsMessage)[1].buttonsMessage.contentText;
     assert.ok(body.includes('*[ MENU ALL ]*'), 'header MENU ALL hilang');
-    assert.match(body, /│ ◦ [A-Z]+ \(\d+ Fitur\)/, 'daftar kategori + jumlah fitur hilang');
-    assert.ok(!body.includes('.ping'), 'masih nge-dump command mentah');
+    assert.match(body, /│ 〔 INFO 〕/, 'sub-judul kategori hilang');
+    assert.ok(body.includes('│ ◦ .ping'), 'command kategori nggak ikut');
+    // tiap blok kategori harus urut a-z
+    const blocks = body.split('│ 〔 ').slice(1);
+    assert.ok(blocks.length === Object.keys(CATS).length, `blok kategori cuma ${blocks.length}`);
+    for (const b of blocks) {
+      const cmds = b.split('\n').filter(l => l.startsWith('│ ◦ ')).map(l => l.slice(4));
+      assert.deepStrictEqual(cmds, [...cmds].sort(), `kategori ${b.split(' 〕')[0]} nggak urut a-z`);
+    }
   });
 
   console.log(`\nmenu-buttons: ${pass} PASS, ${fail} FAIL`);
