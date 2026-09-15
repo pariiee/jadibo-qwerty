@@ -1264,7 +1264,7 @@ module.exports = async function ownerHandler(ctx) {
                 {
                   name: 'single_select',
                   buttonParamsJson: JSON.stringify({
-                    title: '📂 ≡ Kategori',
+                    title: '📂',
                     sections: [{
                       title: 'Kategori',
                       highlight_label: 'YaaPar Menu',
@@ -1489,11 +1489,15 @@ module.exports = async function ownerHandler(ctx) {
           // `buttonsMessage` legacy = satu-satunya bentuk yang tombolnya dirender
           // WA **sebaris kanan-kiri**. `interactiveMessage`/native-flow selalu
           // nempelin tombol penuh per baris (itu yang bikin 📂/Owner numpuk).
+          // Tombol 1 (`📂`) nggak bisa jadi `single_select` di sini: `buttonsMessage`
+          // nggak punya nativeFlowInfo, maksa `type: 2` + nativeFlowInfo → WA buang
+          // SELURUH bubble. Jadi 📂 tetap tombol biasa yang kirim dropdown di
+          // bubble kedua (lihat `case 'btn_cat'` di 07-button.js).
           buttonsMessage: {
             buttons: [
               {
                 buttonId: 'btn_cat',
-                buttonText: { displayText: '📂 ≡' },
+                buttonText: { displayText: '📂' },
                 type: 1,
               },
               {

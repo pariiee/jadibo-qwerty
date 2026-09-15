@@ -8,9 +8,6 @@
  */
 
 const { proto } = require('baileys');
-const fs = require('fs');
-const path = require('path');
-const { genThumbnail } = require('../engine/thumbnail');
 
 // ── Handler ────────────────────────────────────────────────────────────────────
 
@@ -101,56 +98,9 @@ module.exports = async function buttonHandler(ctx) {
         return await require('./01-info')({ ...ctx, isCmd: true, command: 'menu', args: [] });
       case 'btn_owner':
         return await require('./01-info')({ ...ctx, isCmd: true, command: 'owner', args: [] });
-      case 'btn_cat': {
-        // Tombol 📂 `.test3` → kirim daftar kategori sebagai dropdown
-        // `single_select` di bubble kedua (`single_select` nggak bisa nempel di
-        // `buttonsMessage`, jadi nggak bisa sebaris sama tombol Owner).
-        // Header lokasi + thumbnail WAJIB ada: bubble native-flow tanpa header
-        // dirender WA sebagai teks polos — dropdown-nya ilang. Bentuk yang udah
-        // kebukti jalan di `.test` selalu bawa header ini.
-        const { CATS } = require('./01-info');
-        let header;
-        try {
-          const banner = fs.readFileSync(path.resolve(ctx.botData?.banner_url || process.env.BANNER_DEFAULT));
-          const thumb = await genThumbnail(banner, 'image/jpeg', 300) || banner;
-          header = {
-            hasMediaAttachment: true,
-            locationMessage: {
-              degreesLatitude: 0,
-              degreesLongitude: 0,
-              name: ctx.botData?.bot_name || 'YaaParBot',
-              address: 'yapari.web.id',
-              jpegThumbnail: thumb,
-            },
-          };
-        } catch { /* banner nggak kebaca → kirim tanpa header */ }
-        await client.message.send(jid, {
-          interactiveMessage: {
-            ...(header ? { header } : {}),
-            body: { text: '📂 *Pilih Kategori*\nKetuk tombol di bawah untuk buka daftar menu.' },
-            footer: { text: ctx.botData?.footer_text || 'Powered by YaaParBot' },
-            nativeFlowMessage: {
-              buttons: [{
-                name: 'single_select',
-                buttonParamsJson: JSON.stringify({
-                  title: '📂 ≡',
-                  sections: [{
-                    title: 'Kategori',
-                    highlight_label: 'YaaPar Menu',
-                    rows: Object.entries(CATS).map(([k, v]) => ({
-                      title: k.toUpperCase(),
-                      description: `${v.length} Command`,
-                      id: `.menu ${k}`,
-                    })),
-                  }],
-                }),
-              }],
-              messageParamsJson: '{}',
-            },
-          },
-        });
-        return true;
-      }
+      case 'btn_cat':
+        // Tombol 📂 `.test3` → dropdown kategori (payload di 07-button-helpers.js).
+        return await require('./07-button-helpers').sendCategoryDropdown(ctx);
       case 'btn_test':
         await reply(`✅ Klik tombol nyampe! id = *${rowId}*`);
         return true;
