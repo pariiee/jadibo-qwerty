@@ -97,9 +97,28 @@ async function pnToLidAsync(client, jid) {
   return jid;
 }
 
+// ─── mentionedJid buat grup ───────────────────────────────────────────────────
+
+/**
+ * Di grup yang di-address pakai LID, peserta dikenali sebagai `...@lid` —
+ * tag biru cuma nempel kalau `mentionedJid` ikut nyertain bentuk LID-nya.
+ * Teksnya tetap `@<nomor>` (WA yang nampilin nomornya). Non-grup: apa adanya.
+ */
+function mentionsForChat(chatJid, list) {
+  if (!Array.isArray(list) || !list.length) return list;
+  if (!String(chatJid || '').endsWith('@g.us')) return list;
+  const out = [...list];
+  for (const jid of list) {
+    const lid = pnToLid(jid);
+    if (lid !== jid && !out.includes(lid)) out.push(lid);
+  }
+  return out;
+}
+
 module.exports = {
   bare, isLid, isPn, toPn, toLid,
   cacheLidFromMeta,
   lidToPn, lidToPnAsync,
   pnToLid, pnToLidAsync,
+  mentionsForChat,
 };

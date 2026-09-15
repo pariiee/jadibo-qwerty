@@ -8,7 +8,8 @@ const {
   generateWAMessageContent, generateWAMessageFromContent,
   normalizeMessageContent, getContentType,
 } = require('baileys');
-const { toBaileysContent, isRawProto } = require('../engine/baileys/client');
+const { toBaileysContent, isRawProto, attachMentions } = require('../engine/baileys/client');
+const { mentionsForChat, cacheLidFromMeta } = require('../engine/jid');
 
 let pass = 0, fail = 0;
 const ok = async (label, fn) => {
@@ -62,6 +63,31 @@ const mkOpts = () => ({
     }), mkOpts());
     const ci = normalizeMessageContent(res).extendedTextMessage?.contextInfo;
     assert.deepStrictEqual(ci?.mentionedJid, ['628@s.whatsapp.net']);
+  });
+
+  await ok('A7. mentions HARUS nempel di konten — opsi diabaikan Baileys', async () => {
+    // jalur adapter: toBaileysContent + attachMentions (yang dipakai send())
+    const res = await generateWAMessageContent(
+      attachMentions(toBaileysContent({ text: 'halo @628' }), ['628@s.whatsapp.net']), mkOpts());
+    assert.deepStrictEqual(
+      normalizeMessageContent(res).extendedTextMessage.contextInfo.mentionedJid, ['628@s.whatsapp.net']);
+
+    // bukti kenapa harus di konten: lewat opsi, mentionedJid nggak kebentuk
+    const viaOpts = await generateWAMessageContent(toBaileysContent({ text: 'halo @628' }),
+      { ...mkOpts(), mentions: ['628@s.whatsapp.net'] });
+    assert.strictEqual(normalizeMessageContent(viaOpts).extendedTextMessage.contextInfo, undefined);
+  });
+
+  await ok('A6. grup LID: mentionedJid ikut nyertain bentuk LID-nya', () => {
+    cacheLidFromMeta([{ jid: '111222333@lid', phoneNumber: '6287778032605' }]);
+    assert.deepStrictEqual(
+      mentionsForChat('120363418054099388@g.us', ['6287778032605@s.whatsapp.net']),
+      ['6287778032605@s.whatsapp.net', '111222333@lid']
+    );
+    // non-grup / nggak ada mapping -> apa adanya
+    assert.deepStrictEqual(mentionsForChat('628@s.whatsapp.net', ['6287778032605@s.whatsapp.net']),
+      ['6287778032605@s.whatsapp.net']);
+    assert.deepStrictEqual(mentionsForChat('x@g.us', ['628999@s.whatsapp.net']), ['628999@s.whatsapp.net']);
   });
 
   // ═══ JALUR B: proto mentah (tombol) -> relayMessage ══════════════════════

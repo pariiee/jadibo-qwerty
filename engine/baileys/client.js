@@ -33,6 +33,7 @@ const {
   proto,
   Browsers,
 } = require('baileys');
+const { mentionsForChat } = require('../jid');
 
 // Tipe pesan yang `sendMessage` nolak ("Invalid media type") tapi WA biasa
 // nampilin — semua di sini dikirim lewat relayMessage (.owner kirim kontak).
@@ -192,6 +193,16 @@ function normalizeGroupMeta(meta) {
 }
 
 /**
+ * Baileys v7 baca `mentions` dari KONTEN, bukan dari opsi: sendMessage ngebuang
+ * `options.mentions` diam-diam (nggak nyampe ke `contextInfo.mentionedJid`).
+ * Makanya mention harus nempel di kontennya.
+ */
+function attachMentions(content, mentions) {
+  if (!mentions?.length) return content;
+  return { ...content, mentions };
+}
+
+/**
  * @param {object} o
  * @param {object} o.auth        { creds, keys } dari engine/baileys/auth.js
  * @param {Function} o.saveCreds dipanggil tiap creds.update
@@ -231,10 +242,33 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
     return wam;
   }
 
+  // Jalur proto mentah (tombol) nggak lewat generateWAMessageContent, jadi
+  // `mentions` nggak otomatis jadi `contextInfo.mentionedJid` — tempel sendiri.
+  // (Jalur normal diurus Baileys dari opsi `mentions` di send().)
+  function withMentions(jid, content, mentions) {
+    if (!mentions?.length) return content;
+    const key = Object.keys(content).find((k) => k.endsWith('Message'));
+    const inner = key && content[key];
+    if (!inner || typeof inner !== 'object' || Array.isArray(inner)) return content;
+    return {
+      ...content,
+      [key]: {
+        ...inner,
+        contextInfo: {
+          ...(inner.contextInfo || {}),
+          mentionedJid: [...new Set([...(inner.contextInfo?.mentionedJid || []), ...mentions])],
+        },
+      },
+    };
+  }
+
   async function send(jid, content, opts = {}) {
     if (!sock) throw new Error('socket belum siap');
-    if (isRawProto(content)) return sendRaw(jid, content, toBaileysOptions(opts));
-    return sock.sendMessage(jid, toBaileysContent(content), toBaileysOptions(opts));
+    // Tag biru di grup LID butuh bentuk LID-nya ikut — lihat engine/jid.js.
+    // `mentions` boleh nempel di konten ({ text, mentions }) atau di opsi.
+    const mentions = mentionsForChat(jid, opts.mentions || content?.mentions);
+    if (isRawProto(content)) return sendRaw(jid, withMentions(jid, content, mentions), toBaileysOptions(opts));
+    return sock.sendMessage(jid, attachMentions(toBaileysContent(content), mentions), toBaileysOptions(opts));
   }
 
   // ── Event masuk: WAMessage Baileys -> bentuk yg dibaca engine ──────────────
@@ -461,4 +495,6 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
   return client;
 }
 
-module.exports = { createClient, toBaileysContent, toBaileysOptions, normalizeGroupMeta, isRawProto };
+module.exports = {
+  createClient, toBaileysContent, toBaileysOptions, normalizeGroupMeta, isRawProto, attachMentions,
+};
