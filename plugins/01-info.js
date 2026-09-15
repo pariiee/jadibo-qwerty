@@ -315,7 +315,7 @@ module.exports = async function infoHandler(ctx) {
         `│ ⏰ Waktu : ${wp('hour')}:${wp('minute')}:${wp('second')} WIB\n` +
         `╰────────────────────────\n\n` +
         `Hi *${namaUser}*,\n` +
-        `_"My name is ${botData.bot_name} and I'm here to help you. Feel free to choose a menu or type a command you need."_\n\n` +
+        `_"${botData.description || process.env.DESC_DEFAULT || `My name is ${botData.bot_name} and I'm here to help you. Feel free to choose a menu or type a command you need.`}"_\n\n` +
         `╭── *[ 📌 INFO USER & BOT ]* ──\n` +
         `│ 🤖 Nama Bot : ${botData.bot_name}\n` +
         `│ 👤 Nama User : ${namaUser}\n` +
@@ -326,11 +326,11 @@ module.exports = async function infoHandler(ctx) {
         `╰────────────────────────\n`;
 
       const tail =
-        `╭── *[ 📂 MENU CATEGORY ]* ──\n` +
+        `╭── *[ 📋 MENU CATEGORY ]* ──\n` +
         `${catList}\n` +
         `╰────────────────────────\n\n` +
         `📌 *Catatan:* \n` +
-        `• Ketuk 📂 untuk daftar kategori.\n` +
+        `• Ketuk tombol *MENU* untuk daftar kategori.\n` +
         `• Ketik *${p}menu <kategori>* untuk melihat isinya.\n` +
         `• Semua command: *${p}menu all*`;
 
@@ -349,7 +349,7 @@ module.exports = async function infoHandler(ctx) {
       // ── Kirim menu dalam SATU bubble `buttonsMessage` (pola `.test3`) ────
       // Header lokasi (0,0) = wadah thumbnail banner, jadi gambar + teks +
       // tombol nempel di satu bubble tanpa upload media (thumbnail ikut inline
-      // di proto). 📂 = `nativeFlowInfo.single_select` 11 kategori, Owner =
+      // di proto). MENU = `nativeFlowInfo.single_select` 11 kategori, owner =
       // tombol biasa — WA render dua-duanya sebaris. Terbukti di HP Pak.
       // Tombol panah-lama (`07-button.js` id `menu_cat:<kategori>`) tetap ada
       // sebagai fallback kalau WA balikin id tombol, bukan row id.
@@ -371,7 +371,9 @@ module.exports = async function infoHandler(ctx) {
               degreesLatitude: 0,
               degreesLongitude: 0,
               name: botData.bot_name || 'YaaParBot',
-              address: 'yapari.web.id',
+              // Alamat di header lokasi = link API + jadibot (samain pola .env).
+              // ponytail: literal, nggak ada config per-bot buat ini — angkat ke env kalau Pak mau tiap bot beda.
+              address: 'Api? yapari.web.id | Jadibot? labs.yapari.web.id',
               ...(thumb ? { jpegThumbnail: thumb } : {}),
             },
             contentText: captionImg,
@@ -379,12 +381,12 @@ module.exports = async function infoHandler(ctx) {
             buttons: [
               {
                 buttonId: 'btn_cat',
-                buttonText: { displayText: '📂' },
+                buttonText: { displayText: 'MENU' },
                 type: 1,
                 nativeFlowInfo: {
                   name: 'single_select',
                   paramsJson: JSON.stringify({
-                    title: '📂',
+                    title: 'MENU',
                     sections: [{
                       title: 'Kategori',
                       highlight_label: 'YaaPar Menu',
@@ -398,7 +400,7 @@ module.exports = async function infoHandler(ctx) {
                   }),
                 },
               },
-              { buttonId: 'btn_owner', buttonText: { displayText: '👤 Owner' }, type: 1 },
+              { buttonId: 'btn_owner', buttonText: { displayText: 'owner' }, type: 1 },
             ],
           },
         });

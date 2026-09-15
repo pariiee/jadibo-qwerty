@@ -4,7 +4,7 @@
  * test/menu-buttons.js
  * `.menu` harus kirim SATU bubble `buttonsMessage` berisi: header lokasi
  * (thumbnail banner + teks menu) dan dua tombol sebaris — 📂 `single_select`
- * 11 kategori + 👤 Owner. Kalau ada yang berubah di 01-info.js dan tombolnya
+ * 11 kategori + owner. Kalau ada yang berubah di 01-info.js dan tombolnya
  * balik jadi tidak ada / terpisah / 📂 mati, test ini yang nangkep.
  */
 
@@ -66,16 +66,21 @@ const ctx = {
     assert.ok(body.length <= 1024, `kepanjangan: ${body.length} char`);
   });
 
-  ok('tombol sebaris: 📂 single_select 11 kategori + 👤 Owner', () => {
+  ok('tombol sebaris: 📂 single_select 11 kategori + owner', () => {
     const btns = sent[0][1].buttonsMessage.buttons;
     assert.strictEqual(btns.length, 2);
-    assert.strictEqual(btns[0].buttonText.displayText, '📂');
+    assert.strictEqual(btns[0].buttonText.displayText, 'MENU');
     assert.strictEqual(btns[0].nativeFlowInfo.name, 'single_select');
     const rows = JSON.parse(btns[0].nativeFlowInfo.paramsJson).sections[0].rows;
     assert.strictEqual(rows.length, 11, `dapat ${rows.length} kategori`);
     assert.match(rows[0].id, /^\.menu \w+$/, `row id salah: ${rows[0].id}`);
     assert.strictEqual(btns[1].buttonId, 'btn_owner');
-    assert.strictEqual(btns[1].buttonText.displayText, '👤 Owner');
+    assert.strictEqual(btns[1].buttonText.displayText, 'owner');
+    assert.strictEqual(btns[1].type, 1);
+    assert.ok(!btns[1].nativeFlowInfo, 'Owner nggak boleh single_select');
+    const loc = sent[0][1].buttonsMessage.locationMessage;
+    assert.strictEqual(loc.address, 'Api? yapari.web.id | Jadibot? labs.yapari.web.id');
+    assert.ok(loc.degreesLatitude === 0 && loc.degreesLongitude === 0, 'koordinat bukan 0,0');
   });
 
   // Thumbnail harus lolos jalur kirim utuh (upload-nya lewat proto, bukan media).
@@ -85,7 +90,7 @@ const ctx = {
     const b = normalizeMessageContent(wam.message).buttonsMessage;
     assert.strictEqual(b.buttons[0].nativeFlowInfo.name, 'single_select');
     assert.ok(b.locationMessage.jpegThumbnail.length > 1000, 'thumbnail dibuang di jalur kirim');
-    assert.strictEqual(b.locationMessage.address, 'yapari.web.id');
+    assert.strictEqual(b.locationMessage.address, 'Api? yapari.web.id | Jadibot? labs.yapari.web.id');
   });
 
   console.log(`\nmenu-buttons: ${pass} PASS, ${fail} FAIL`);
