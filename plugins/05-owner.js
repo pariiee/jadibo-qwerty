@@ -1114,7 +1114,12 @@ module.exports = async function ownerHandler(ctx) {
     // ── test — versi vellzy: SATU bubble interactiveMessage, header lokasi ────
     // customNodes <biz>/<interactive> dari kode aslinya NGGAK perlu ditulis di
     // sini — adapter (engine/baileys/client.js sendRaw) udah nambahin otomatis.
-    case 'test': {
+    // `.test2` = `.test` + bottom sheet + fake quoted katalog + Limited Time
+    // Offer. Satu handler biar `.test` yang udah jalan nggak kena imbas kalau
+    // bagian barunya ditolak WA.
+    case 'test':
+    case 'test2': {
+      const v2 = command === 'test2';
       if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }
       try {
         await react(mess.reactLoading);
@@ -1164,7 +1169,7 @@ module.exports = async function ownerHandler(ctx) {
                 jpegThumbnail: thumb,
               },
             },
-            body:   { text: body },
+            body:   { text: v2 ? `${body}\n\n⚡ *Limited Time Offer*` : body },
             footer: { text: `*${botData.bot_name || 'YaaParBot'}*\n*${now}*` },
             nativeFlowMessage: {
               buttons: [
@@ -1206,12 +1211,50 @@ module.exports = async function ownerHandler(ctx) {
                   }),
                 },
               ],
-              messageParamsJson: '{}',
+              // Dua key ini yang bikin WA naikin panel dari bawah (bottom sheet)
+              // dan nempelin strip penawaran di dalamnya.
+              messageParamsJson: v2 ? JSON.stringify({
+                limited_time_offer: {
+                  text: 'Limited Time Offer',
+                  expiration_time: String(Math.floor(Date.now() / 1000) + 86400),
+                },
+                bottom_sheet: {
+                  in_thread_buttons_limit: 10,
+                  divider_indices: [0],
+                  list_title: botData.bot_name || 'YaaParBot',
+                },
+              }) : '{}',
             },
             // ponytail: externalAdReply di sini bikin WA buang SELURUH bubble
             // (kejadian 15 Sep: cuma reaksi ✅ yg nongol). Balik ke bentuk yg
             // terbukti jalan sampai bentuk kartunya ketemu di `.btnprobe` G–J.
-            contextInfo: { mentionedJid: [pnJid + '@s.whatsapp.net'] },
+            // v2: quote palsu — nggak ada pesan aslinya, WA ngerender kartu
+            // katalog dari quotedMessage apa adanya.
+            contextInfo: v2 ? {
+              mentionedJid: [pnJid + '@s.whatsapp.net'],
+              stanzaId: `3EB0${Date.now().toString(16).toUpperCase()}FAKE`,
+              participant: sender,
+              quotedMessage: {
+                productMessage: {
+                  product: {
+                    productId: 'yapari-katalog',
+                    title: 'Limited Time Offer',
+                    description: 'yapari.web.id',
+                    currencyCode: 'IDR',
+                    priceAmount1000: 0,
+                    url: 'https://yapari.web.id',
+                    retailerId: 'YaaParBot',
+                    productImage: { mimetype: 'image/jpeg', jpegThumbnail: thumb },
+                  },
+                  businessOwnerJid: sender,
+                  catalog: {
+                    title: botData.bot_name || 'YaaParBot',
+                    description: 'yapari.web.id',
+                    catalogImage: { mimetype: 'image/jpeg', jpegThumbnail: thumb },
+                  },
+                },
+              },
+            } : { mentionedJid: [pnJid + '@s.whatsapp.net'] },
           },
         });
         await react(mess.reactSuccess);
