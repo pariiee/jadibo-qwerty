@@ -1,18 +1,24 @@
-// Self-check: adapter punya SEMUA metode yg dipanggil repo (27 metode).
+// Self-check: adapter punya SEMUA metode yg dipanggil repo.
 // Kalau ada yg bolong, ini yg gagal — bukan nunggu error di VPS.
+// Pelajaran: `queryGroupInviteInfo` bolong di sini padahal dipanggil
+// controllers/botController.js → endpoint resolveInvite 400 terus tanpa ada yg
+// sadar. Daftar ini harus hasil grep ulang tiap kali call-site baru muncul:
+//   grep -rhoE "client\.(message|group|profile|privacy|newsletter|business|auth|stores)\.[a-zA-Z]+" \
+//     --include=*.js engine plugins controllers | sort -u
 const { createClient } = require('../engine/baileys/client');
 const { initAuthCreds } = require('baileys');
 
-// ── metode yg benar-benar dipanggil engine+plugins (hasil grep repo) ─────────
+// ── metode yg benar-benar dipanggil engine+plugins+controllers (hasil grep repo) ─
 const REQUIRED = {
   message: ['send', 'downloadBytes', 'reply', 'read', 'upload'],
-  group: ['queryGroupMetadata', 'queryAllGroups', 'queryInviteCode', 'addParticipants',
-          'promoteParticipants', 'demoteParticipants', 'setSubject', 'setDescription',
-          'setSetting'],
+  group: ['queryGroupMetadata', 'queryAllGroups', 'queryInviteCode', 'queryGroupInviteInfo',
+          'addParticipants', 'removeParticipants', 'promoteParticipants', 'demoteParticipants',
+          'leaveGroup', 'joinGroupViaInvite', 'approveMembershipRequests',
+          'setSubject', 'setDescription', 'setSetting'],
   profile: ['getProfilePicture', 'setProfilePicture', 'setStatus'],
-  privacy: ['blockUser'],
+  privacy: ['blockUser', 'unblockUser'],
   newsletter: ['follow'],
-  business: ['getVerifiedName'],
+  business: ['getVerifiedName', 'getBusinessProfile'],
   auth: ['requestPairingCode'],
   stores: ['contacts'],
 };
