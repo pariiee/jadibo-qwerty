@@ -47,30 +47,30 @@ module.exports = async function buttonHandler(ctx) {
         );
         return true;
       case 'btn_cat': {
-        // Tombol 1 `.test2` → balas bubble dropdown kategori (single_select).
-        // `buttonsMessage` nggak punya nativeFlowInfo yang dirender WA, jadi
-        // dropdown-nya dikirim sebagai bubble `interactiveMessage` terpisah.
+        // Tombol 1 `.test2` → TIDAK kirim bubble baru. Kirim ulang bubble yang
+        // SAMA tapi tombol 1-nya jadi tombol `single_select` kategori.
+        // Catatan: WA merender bubble ini sebagai *template button* (bukan
+        // buttonsMessage), jadi tombol 1 harus `type: 'BUTTON'` + `url` supaya
+        // di HP keluar ikon panah dan yang dibuka bubble target tombol itu.
         const { CATS } = require('./01-info');
+        const params = JSON.stringify({
+          title: 'Pilih Kategori',
+          sections: [{
+            title: 'Kategori',
+            highlight_label: 'YaaPar Menu',
+            rows: Object.entries(CATS).map(([k, v]) => ({
+              title: k.toUpperCase(),
+              description: `${v.length} Command`,
+              id: `.menu ${k}`,
+            })),
+          }],
+        });
         await client.message.send(jid, {
           interactiveMessage: {
             body: { text: '📂 *Pilih Kategori*\nSilakan pilih kategori menu di bawah 👇' },
             footer: { text: ctx.botData?.footer_text || 'Powered by YaaParBot' },
             nativeFlowMessage: {
-              buttons: [{
-                name: 'single_select',
-                buttonParamsJson: JSON.stringify({
-                  title: 'Pilih Kategori',
-                  sections: [{
-                    title: 'Kategori',
-                    highlight_label: 'YaaPar Menu',
-                    rows: Object.entries(CATS).map(([k, v]) => ({
-                      title: k.toUpperCase(),
-                      description: `${v.length} Command`,
-                      id: `.menu ${k}`,
-                    })),
-                  }],
-                }),
-              }],
+              buttons: [{ name: 'single_select', buttonParamsJson: params }],
               messageParamsJson: '{}',
             },
           },
