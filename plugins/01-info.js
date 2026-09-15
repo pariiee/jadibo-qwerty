@@ -330,7 +330,7 @@ module.exports = async function infoHandler(ctx) {
         `${catList}\n` +
         `╰────────────────────────\n\n` +
         `📌 *Catatan:* \n` +
-        `• Ketuk tombol *MENU* untuk daftar kategori.\n` +
+        `• Ketuk tombol *Menu* untuk daftar kategori.\n` +
         `• Ketik *${p}menu <kategori>* untuk melihat isinya.\n` +
         `• Semua command: *${p}menu all*`;
 
@@ -373,7 +373,7 @@ module.exports = async function infoHandler(ctx) {
               name: botData.bot_name || 'YaaParBot',
               // Alamat di header lokasi = link API + jadibot (samain pola .env).
               // ponytail: literal, nggak ada config per-bot buat ini — angkat ke env kalau Pak mau tiap bot beda.
-              address: 'Api? yapari.web.id | Jadibot? labs.yapari.web.id',
+              address: 'Jadibot? labs.yapari.web.id',
               ...(thumb ? { jpegThumbnail: thumb } : {}),
             },
             contentText: captionImg,
@@ -381,12 +381,12 @@ module.exports = async function infoHandler(ctx) {
             buttons: [
               {
                 buttonId: 'btn_cat',
-                buttonText: { displayText: 'MENU' },
+                buttonText: { displayText: 'Menu' },
                 type: 1,
                 nativeFlowInfo: {
                   name: 'single_select',
                   paramsJson: JSON.stringify({
-                    title: 'MENU',
+                    title: 'List menu Category',
                     sections: [{
                       title: 'Kategori',
                       highlight_label: 'YaaPar Menu',

@@ -69,8 +69,9 @@ const ctx = {
   ok('tombol sebaris: 📂 single_select 11 kategori + owner', () => {
     const btns = sent[0][1].buttonsMessage.buttons;
     assert.strictEqual(btns.length, 2);
-    assert.strictEqual(btns[0].buttonText.displayText, 'MENU');
+    assert.strictEqual(btns[0].buttonText.displayText, 'Menu');
     assert.strictEqual(btns[0].nativeFlowInfo.name, 'single_select');
+    assert.strictEqual(JSON.parse(btns[0].nativeFlowInfo.paramsJson).title, 'List menu Category');
     const rows = JSON.parse(btns[0].nativeFlowInfo.paramsJson).sections[0].rows;
     assert.strictEqual(rows.length, 11, `dapat ${rows.length} kategori`);
     assert.match(rows[0].id, /^\.menu \w+$/, `row id salah: ${rows[0].id}`);
@@ -79,7 +80,7 @@ const ctx = {
     assert.strictEqual(btns[1].type, 1);
     assert.ok(!btns[1].nativeFlowInfo, 'Owner nggak boleh single_select');
     const loc = sent[0][1].buttonsMessage.locationMessage;
-    assert.strictEqual(loc.address, 'Api? yapari.web.id | Jadibot? labs.yapari.web.id');
+    assert.strictEqual(loc.address, 'Jadibot? labs.yapari.web.id');
     assert.ok(loc.degreesLatitude === 0 && loc.degreesLongitude === 0, 'koordinat bukan 0,0');
   });
 
@@ -90,7 +91,7 @@ const ctx = {
     const b = normalizeMessageContent(wam.message).buttonsMessage;
     assert.strictEqual(b.buttons[0].nativeFlowInfo.name, 'single_select');
     assert.ok(b.locationMessage.jpegThumbnail.length > 1000, 'thumbnail dibuang di jalur kirim');
-    assert.strictEqual(b.locationMessage.address, 'Api? yapari.web.id | Jadibot? labs.yapari.web.id');
+    assert.strictEqual(b.locationMessage.address, 'Jadibot? labs.yapari.web.id');
   });
 
   console.log(`\nmenu-buttons: ${pass} PASS, ${fail} FAIL`);
