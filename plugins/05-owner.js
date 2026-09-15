@@ -1298,7 +1298,7 @@ module.exports = async function ownerHandler(ctx) {
               },
               {
                 buttonId: 'btnv2_2',
-                buttonText: { displayText: 'Tombol 2' },
+                buttonText: { displayText: 'Owner' },
                 type: 1,
               },
             ],
