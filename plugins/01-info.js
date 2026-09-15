@@ -298,14 +298,18 @@ module.exports = async function infoHandler(ctx) {
         .map(([k, v]) => `│ ◦ ${k.toUpperCase()} (${v.length} Fitur)`)
         .join('\n');
 
-      const head =
+      // Sapaan + info user/bot dipakai SEMUA teks menu (utama & sub-menu)
+      // — Pak: "setiap teks menu tetep ada INFO USER DAN BOT".
+      const headSapa =
         `╭── *[ 🧾 ${sapaan} ]* ──\n` +
         `│ 🗓️ Hari : ${HARI[wp('weekday')] || wp('weekday')}\n` +
         `│ 📅 Tanggal : ${wp('day')}/${wp('month')}/${wp('year')}\n` +
         `│ ⏰ Waktu : ${wp('hour')}:${wp('minute')}:${wp('second')} WIB\n` +
         `╰────────────────────────\n\n` +
         `Hi *${namaUser}*,\n` +
-        `_"${botData.description || process.env.DESC_DEFAULT || `My name is ${botData.bot_name} and I'm here to help you. Feel free to choose a menu or type a command you need.`}"_\n\n` +
+        `_"${botData.description || process.env.DESC_DEFAULT || `My name is ${botData.bot_name} and I'm here to help you. Feel free to choose a menu or type a command you need.`}"_\n\n`;
+
+      const headInfo =
         `╭── *[ 📌 INFO USER & BOT ]* ──\n` +
         `│ 🤖 Nama Bot : ${botData.bot_name}\n` +
         `│ 👤 Nama User : ${namaUser}\n` +
@@ -314,6 +318,8 @@ module.exports = async function infoHandler(ctx) {
         `│ 📦 Total Fitur : ${ALL_COMMANDS.length}\n` +
         `│ 🔓 Mode : Public\n` +
         `╰────────────────────────\n`;
+
+      const head = headSapa + headInfo;
 
       const tail =
         `╭── *[ 📋 MENU CATEGORY ]* ──\n` +
@@ -394,9 +400,10 @@ module.exports = async function infoHandler(ctx) {
               address: 'Jadibot? labs.yapari.web.id',
               ...(thumb ? { jpegThumbnail: thumb } : {}),
             },
-            contentText: subBody || captionImg,
-            // Sub-menu: footer dikosongin (Pak: "hapus teks …"). Menu utama tetap FOOTER_TEXT.
-            footerText: subBody ? '' : (botData.footer_text || 'Powered by YaaParBot'),
+            // Semua teks menu = sapaan+deskripsi (sub-menu aja) + INFO USER & BOT + isi.
+            contentText: subBody ? headInfo + subBody : captionImg,
+            // Footer SELALU ikut — Pak: "tetep ada footer yah setiap menunya atau pesan".
+            footerText: botData.footer_text || 'Powered by YaaParBot',   // footer SELALU ikut (Pak)
             buttons: subBody ? [btnMenu] : [btnMenu, btnOwner],
           },
         });

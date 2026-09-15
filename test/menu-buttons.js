@@ -111,7 +111,14 @@ const ctx = baseCtx;
       assert.deepStrictEqual(bm.buttons.map(b => b.buttonText.displayText), ['Menu'],
         `'.menu ${arg}' harusnya cuma tombol Menu (Owner cuma di .menu)`);
       assert.ok(!bm.buttons.some(b => b.buttonId === 'btn_owner'), `'.menu ${arg}' masih bawa tombol Owner`);
-      assert.strictEqual(bm.footerText, '', `'.menu ${arg}' masih bawa teks footer`);
+      assert.ok(bm.footerText, `'.menu ${arg}' kehilangan footer`);
+      assert.strictEqual(bm.footerText, baseCtx.botData.footer_text, `'.menu ${arg}' footer masih bawaan default`);
+      assert.ok(bm.contentText.includes('*[ 📌 INFO USER & BOT ]*'),
+        `'.menu ${arg}' kehilangan blok INFO USER & BOT`);
+      assert.ok(bm.contentText.includes('│ 🤖 Nama Bot :'), `'.menu ${arg}' kehilangan baris Nama Bot`);
+      assert.ok(bm.contentText.includes('*[ 📌 INFO USER & BOT ]*'),
+        `'.menu ${arg}' kehilangan blok INFO USER & BOT`);
+      assert.ok(bm.contentText.includes('│ 🤖 Nama Bot :'), `'.menu ${arg}' kehilangan baris Nama Bot`);
       assert.ok(!sent.some(a => a[1] && (a[1].type === 'text' || a[1].type === 'image')), `'.menu ${arg}' masih kirim pesan teks terpisah`);
     }
   });
