@@ -2165,6 +2165,48 @@ module.exports = async function ownerHandler(ctx) {
       return true;
     }
 
+    // ── setgcutama ────────────────────────────────────────────────────────────
+    // Alternatif kolom "Grup Utama" di bot-detail: jalanin di grupnya, ID grup
+    // langsung keisi ke kolom main_groups (kebaca di botdetail/konfigurasi) dan
+    // langsung kepake tanpa restart (objek botData-nya sama dengan yang dipakai
+    // gate di engine).
+    case 'setgcutama': {
+      if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }
+      if (!ctx.isGroup) { await reply(mess.OnlyGroup); return true; }
+
+      const list = (botData.main_groups || '').split(/[,\n]/).map(s => s.trim()).filter(Boolean);
+      const off  = ['off', 'hapus', 'del', 'remove', 'unset'].includes((args[0] || '').toLowerCase());
+      const next = off ? list.filter(g => g !== jid) : [...new Set([...list, jid])];
+
+      if (next.length === list.length) {
+        await reply(off
+          ? `ℹ️ Grup ini memang bukan grup utama.`
+          : `ℹ️ Grup ini sudah jadi grup utama.`);
+        return true;
+      }
+
+      const val = next.join(',') || null;
+      await pool.execute('UPDATE bots SET main_groups = ? WHERE id = ?', [val, botId]);
+      botData.main_groups = val; // objek yang sama dengan gate grup di engine
+
+      let nama = jid.split('@')[0];
+      try {
+        const meta = await ctx.client.group.queryGroupMetadata(jid);
+        if (meta?.subject) nama = meta.subject;
+      } catch {}
+
+      if (off) {
+        await reply(`✅ *${nama}* dicabut dari grup utama.`);
+        await reply(next.length
+          ? `🏠 Sisa grup utama (${next.length}):\n${next.map(g => `• ${g}`).join('\n')}`
+          : `⚠️ Daftar grup utama sekarang *kosong* = mode bebas, bot balas di SEMUA grup.`);
+      } else {
+        await reply(`✅ *${nama}* sekarang jadi grup utama.`);
+        await reply(`🏠 ID tersimpan: \`${jid}\`\nTotal grup utama: *${next.length}*\n\n⚠️ Bot bakal keluar dari grup lain yang bukan utama/sewa.`);
+      }
+      return true;
+    }
+
     // ── setlimitgc ────────────────────────────────────────────────────────────
     // Set daily limit khusus untuk grup ini (override daily_limit bot)
     case 'setlimitgc': {
