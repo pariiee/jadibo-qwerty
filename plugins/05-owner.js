@@ -1242,9 +1242,10 @@ module.exports = async function ownerHandler(ctx) {
           'Pilih kategori lewat tombol di bawah 👇',
         ].join('\n');
 
-        // Dua tombol, dua-duanya `single_select` di dalam satu `nativeFlowMessage`.
-        // Emoji di AWAL label = tombol yang native-flow cuma bisa nampilin ikon
-        // (bukan panah list), jadi 📂 ≡ tetep keliatan folder + list.
+        // Dua tombol dalam satu `nativeFlowMessage`: 📂 = `single_select` (buka
+        // bottom sheet kategori langsung, bukan bubble baru), 👤 Owner =
+        // `quick_reply` (sekali ketuk langsung jalanin `.owner`).
+        // Emoji di AWAL label = tombol yang native-flow cuma bisa nampilin ikon.
         await sock.message.send(jid, {
           interactiveMessage: {
             header: {
@@ -1277,15 +1278,8 @@ module.exports = async function ownerHandler(ctx) {
                   }),
                 },
                 {
-                  name: 'single_select',
-                  buttonParamsJson: JSON.stringify({
-                    title: '👤 Owner',
-                    sections: [{
-                      title: 'Owner',
-                      highlight_label: 'YaaPar',
-                      rows: [{ title: 'Kontak Owner', description: 'Hubungi owner bot', id: 'btn_owner' }],
-                    }],
-                  }),
+                  name: 'quick_reply',
+                  buttonParamsJson: JSON.stringify({ display_text: '👤 Owner', id: 'btn_owner' }),
                 },
               ],
               messageParamsJson: '{}',
