@@ -100,16 +100,29 @@ const ctx = baseCtx;
     assert.strictEqual(b.locationMessage.address, 'Jadibot? labs.yapari.web.id');
   });
 
-  await ok('sub-menu (.menu info / .menu all) pakai bubble yang sama — banner + tombol, bukan teks polos', async () => {
+  await ok('sub-menu (.menu info / .menu all) pakai bubble yang sama — banner + tombol Menu SAJA', async () => {
     for (const arg of ['info', 'all']) {
       sent.length = 0;
       await info(Object.assign({}, baseCtx, { args: [arg] }));
       const m = sent.find(a => a[1] && a[1].buttonsMessage);
       assert.ok(m, `'.menu ${arg}' nggak ngirim buttonsMessage — balik ke teks polos?`);
-      assert.ok(m[1].buttonsMessage.locationMessage.jpegThumbnail, `'.menu ${arg}' kehilangan banner`);
-      assert.strictEqual(m[1].buttonsMessage.buttons.length, 2, `'.menu ${arg}' kehilangan tombol`);
+      const bm = m[1].buttonsMessage;
+      assert.ok(bm.locationMessage.jpegThumbnail, `'.menu ${arg}' kehilangan banner`);
+      assert.deepStrictEqual(bm.buttons.map(b => b.buttonText.displayText), ['Menu'],
+        `'.menu ${arg}' harusnya cuma tombol Menu (Owner cuma di .menu)`);
+      assert.ok(!bm.buttons.some(b => b.buttonId === 'btn_owner'), `'.menu ${arg}' masih bawa tombol Owner`);
+      assert.ok(bm.contentText.length <= 1024, `'.menu ${arg}' kepanjangan: ${bm.contentText.length} char`);
       assert.ok(!sent.some(a => a[1] && (a[1].type === 'text' || a[1].type === 'image')), `'.menu ${arg}' masih kirim pesan teks terpisah`);
     }
+  });
+
+  await ok('.menu all = ringkasan kategori + jumlah fitur, bukan dump 408 command', async () => {
+    sent.length = 0;
+    await info(Object.assign({}, baseCtx, { args: ['all'] }));
+    const body = sent.find(a => a[1] && a[1].buttonsMessage)[1].buttonsMessage.contentText;
+    assert.ok(body.includes('*[ MENU ALL ]*'), 'header MENU ALL hilang');
+    assert.match(body, /│ ◦ [A-Z]+ \(\d+ Fitur\)/, 'daftar kategori + jumlah fitur hilang');
+    assert.ok(!body.includes('.ping'), 'masih nge-dump command mentah');
   });
 
   console.log(`\nmenu-buttons: ${pass} PASS, ${fail} FAIL`);

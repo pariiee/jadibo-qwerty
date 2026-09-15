@@ -240,35 +240,27 @@ module.exports = async function infoHandler(ctx) {
       const catKey = (args[0] || '').toLowerCase();
       const showCat = CAT_ALIAS[catKey] || (CATS[catKey] ? catKey : null);
 
-      const title = (s) => s.charAt(0).toUpperCase() + s.slice(1);
-
       // ── Menu per-kategori: .menu <kategori> / .menu all ──────────────────
       // Bentuknya = bentuk menu utama (header lokasi + banner + tombol),
       // bedanya cuma isi `body` dan tombol kategori yang aktif (penanda ◈).
+      // `.menu <kategori>` = command kategorinya (muat), `.menu all` = RINGKASAN
+      // kategori + jumlah fitur. Daftar 408 command mentah nggak muat: WA potong
+      // `contentText` di 1024 char, jadi `all` cuma nunjukin pintunya.
       let subBody = null;   // null = menu utama
-      if (showCat) {
-        // "all" → gabung semua kategori, satu command per baris (rata kiri, no kolom —
-        // biar gampang dibaca & ga kepotong)
-        if (showCat === 'all') {
-          const blocks = Object.entries(CATS).map(([k, cmds]) => {
-            return `╭┈〔 ${title(k)} Menu 〕\n` +
-              cmds.map(c => `┊ ◈ ${p}${c}`).join('\n') +
-              `\n╰┈┈┈┈┈┈┈┈`;
-          });
-          subBody = `╭┈〔 𝙈𝙀𝙉𝙐 𝘼𝙇𝙇 〕\n┊ ◈ Semua command (${ALL_COMMANDS.length} fitur)\n╰┈┈┈┈┈┈┈┈\n\n${blocks.join('\n\n')}`;
-        } else {
-          // Kategori tunggal → dua kolom
-          const cmds = CATS[showCat];
-          const cols = [];
-          for (let i = 0; i < cmds.length; i += 2) cols.push(cmds.slice(i, i + 2));
-          subBody =
-            `╭┈〔 ${title(showCat)} Menu 〕\n` +
-            cols.map(col => `┊ ${col.map((c, j) => `${j === 0 ? '◈' : '·'} ${p}${c}`.padEnd(20)).join('│ ')}`).join('\n') +
-            `\n╰┈┈┈┈┈┈┈┈\n\n` +
-            `📝 *${botData.description || process.env.DESC_DEFAULT || ''}*`;
-        }
-        // Sisa builder menu utama (`captionImg`) dipakai apa adanya — teks panjang
-        // dipotong WA di 1024 char, sumber masalah yang sama, perlakuan yang sama.
+      const boxHeader = (t) => `╭── *[ ${t} ]* ──`;
+      if (showCat === 'all') {
+        subBody = boxHeader('MENU ALL') + '\n' +
+          Object.entries(CATS).map(([k, v]) => `│ ◦ ${k.toUpperCase()} (${v.length} Fitur)`).join('\n') +
+          '\n╰────────────────────────';
+      } else if (showCat) {
+        // Kategori tunggal → dua kolom
+        const cmds = CATS[showCat];
+        const cols = [];
+        for (let i = 0; i < cmds.length; i += 2) cols.push(cmds.slice(i, i + 2));
+        subBody = boxHeader(`MENU ${showCat.toUpperCase()}`) + '\n' +
+          cols.map(col => `│ ${col.map((c, j) => `${j === 0 ? '◈' : '·'} ${p}${c}`.padEnd(20)).join('│ ')}`).join('\n') +
+          '\n╰────────────────────────\n\n' +
+          `📝 *${botData.description || process.env.DESC_DEFAULT || ''}*`;
       }
 
       // ── Menu utama: sapaan + info user + kategori ────────────────────────
@@ -364,6 +356,34 @@ module.exports = async function infoHandler(ctx) {
       }
       console.log(`[menu] banner_url=${botData.banner_url || '(kosong)'} → thumbnail=${thumb ? `${thumb.length}B` : '(tidak ada)'}`);
 
+      // Dropdown kategori dipakai DUA-DUANYA (menu utama & sub-menu) — sub-menu
+      // cuma nggak bawa tombol Owner (Pak: "buttom owner hanya di .menu aja").
+      const btnMenu = {
+        buttonId: 'btn_cat',
+        buttonText: { displayText: 'Menu' },
+        type: 1,
+        nativeFlowInfo: {
+          name: 'single_select',
+          paramsJson: JSON.stringify({
+            title: 'Menu Category',
+            sections: [{
+              title: 'INI SEMUA MENU CATEGORY BOT GWEH',
+              highlight_label: 'recommended',
+              rows: [
+                { header: '', title: 'ALL', description: `Semua Menu (${ALL_COMMANDS.length} fitur)`, id: '.menu all' },
+                ...Object.entries(CATS).map(([k, v]) => ({
+                  header: '',
+                  title: k.toUpperCase(),
+                  description: `Menu ${k}`,
+                  id: `.menu ${k}`,
+                })),
+              ],
+            }],
+          }),
+        },
+      };
+      const btnOwner = { buttonId: 'btn_owner', buttonText: { displayText: 'Owner' }, type: 1 };
+
       try {
         await client.message.send(jid, {
           buttonsMessage: {
@@ -378,34 +398,8 @@ module.exports = async function infoHandler(ctx) {
               ...(thumb ? { jpegThumbnail: thumb } : {}),
             },
             contentText: subBody || captionImg,
-            footerText: subBody ? `Ketik ${p}menu all untuk semua command` : (botData.footer_text || 'Powered by YaaParBot'),
-            buttons: [
-              {
-                buttonId: 'btn_cat',
-                buttonText: { displayText: 'Menu' },
-                type: 1,
-                nativeFlowInfo: {
-                  name: 'single_select',
-                  paramsJson: JSON.stringify({
-                    title: 'Menu Category',
-                    sections: [{
-                      title: 'INI SEMUA MENU CATEGORY BOT GWEH',
-                      highlight_label: 'recommended',
-                      rows: [
-                        { header: '', title: 'ALL', description: `Semua Menu (${ALL_COMMANDS.length} fitur)`, id: '.menu all' },
-                        ...Object.entries(CATS).map(([k, v]) => ({
-                          header: '',
-                          title: k.toUpperCase(),
-                          description: `Menu ${k}`,
-                          id: `.menu ${k}`,
-                        })),
-                      ],
-                    }],
-                  }),
-                },
-              },
-              { buttonId: 'btn_owner', buttonText: { displayText: 'Owner' }, type: 1 },
-            ],
+            footerText: subBody ? `Ketik ${p}menu <kategori> untuk lihat commandnya` : (botData.footer_text || 'Powered by YaaParBot'),
+            buttons: subBody ? [btnMenu] : [btnMenu, btnOwner],
           },
         });
       } catch (e) {
