@@ -1219,6 +1219,81 @@ module.exports = async function ownerHandler(ctx) {
       return true;
     }
 
+    case 'test5': {
+      if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }
+      try {
+        await react(mess.reactWait ?? mess.reactSuccess);
+        const banner = await fs.promises.readFile(
+          path.resolve(botData.banner_url || process.env.BANNER_DEFAULT),
+        );
+        const thumb = await genThumbnail(banner, 'image/jpeg', 300) || banner;
+        const pnJid = String(sender).split(':')[0].split('@')[0];
+        const botNm = botData.bot_name || 'YaaParBot';
+        const body = [
+          '╭─── • *「 MENU BOT 」*',
+          `│ ◦ User : *${ctx.pushName || pnJid}*`,
+          `│ ◦ Total Fitur : *${ALL_COMMANDS.length}*`,
+          `│ ◦ Kategori : *${Object.keys(CATS).length}*`,
+          '╰───────────────────•',
+          '',
+          'Pilih kategori lewat tombol di bawah 👇',
+        ].join('\n');
+
+        // SATU bubble, dua tombol SEBARIS, dua-duanya hidup:
+        //   type 1 (RESPONSE)          → teks biasa, dibales lewat `buttonId`
+        //   type 2 (NATIVE_FLOW)       → `single_select` di dalam `buttonsMessage`
+        // Workaround `type: 1` + `nativeFlowInfo` nggak dipakai: WA baca `type`-nya,
+        // jadi tombolnya cuma ngirim `buttonId` dan `paramsJson`-nya dibuang.
+        await sock.message.send(jid, {
+          buttonsMessage: {
+            headerType: 6,
+            locationMessage: {
+              degreesLatitude: 0,
+              degreesLongitude: 0,
+              name: botNm,
+              address: 'yapari.web.id',
+              jpegThumbnail: thumb,
+            },
+            contentText: body,
+            footerText: botData.footer_text || 'Powered by YaaParBot',
+            buttons: [
+              {
+                buttonId: 'btn_cat',
+                buttonText: { displayText: '📂' },
+                type: 2,
+                nativeFlowInfo: {
+                  name: 'single_select',
+                  paramsJson: JSON.stringify({
+                    title: '📂',
+                    sections: [{
+                      title: 'Kategori',
+                      highlight_label: 'YaaPar Menu',
+                      rows: Object.entries(CATS).map(([k, v]) => ({
+                        header: '',
+                        title: k.toUpperCase(),
+                        description: `${v.length} Command`,
+                        id: `.menu ${k}`,
+                      })),
+                    }],
+                  }),
+                },
+              },
+              {
+                buttonId: 'btn_owner',
+                buttonText: { displayText: '👤 Owner' },
+                type: 1,
+              },
+            ],
+          },
+        });
+        await react(mess.reactSuccess);
+      } catch (e) {
+        await react(mess.reactError);
+        await reply(`❌ Gagal: ${e.message}`);
+      }
+      return true;
+    }
+
     case 'test4': {
       if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }
       try {
@@ -1242,34 +1317,37 @@ module.exports = async function ownerHandler(ctx) {
           'Pilih kategori lewat tombol di bawah 👇',
         ].join('\n');
 
-        // Dua tombol dalam satu `nativeFlowMessage`: 📂 = `single_select` (buka
-        // bottom sheet kategori langsung, bukan bubble baru), 👤 Owner =
-        // `quick_reply` (sekali ketuk langsung jalanin `.owner`).
-        // Emoji di AWAL label = tombol yang native-flow cuma bisa nampilin ikon.
+        // SATU bubble `buttonsMessage`: tombol dirender WA **sebaris kanan-kiri**,
+        // dan `single_select` boleh nempel di sini lewat `nativeFlowInfo`
+        // (`proto.Message.ButtonsMessage.Button.nativeFlowInfo`, field 4 —
+        // ada di WAProto, cuma Baileys nggak punya API-nya).
+        // Jadi 📂 = dropdown beneran + Owner = tombol biasa, dua-duanya sebaris.
         await sock.message.send(jid, {
-          interactiveMessage: {
-            header: {
-              hasMediaAttachment: true,
-              locationMessage: {
-                degreesLatitude: 0,
-                degreesLongitude: 0,
-                name: botNm,
-                address: 'yapari.web.id',
-                jpegThumbnail: thumb,
-              },
+          buttonsMessage: {
+            headerType: 6,
+            locationMessage: {
+              degreesLatitude: 0,
+              degreesLongitude: 0,
+              name: botNm,
+              address: 'yapari.web.id',
+              jpegThumbnail: thumb,
             },
-            body:   { text: body },
-            footer: { text: botData.footer_text || 'Powered by YaaParBot' },
-            nativeFlowMessage: {
-              buttons: [
-                {
+            contentText: body,
+            footerText: botData.footer_text || 'Powered by YaaParBot',
+            buttons: [
+              {
+                buttonId: 'btn_cat',
+                buttonText: { displayText: '📂' },
+                type: 1,
+                nativeFlowInfo: {
                   name: 'single_select',
-                  buttonParamsJson: JSON.stringify({
+                  paramsJson: JSON.stringify({
                     title: '📂',
                     sections: [{
                       title: 'Kategori',
                       highlight_label: 'YaaPar Menu',
                       rows: Object.entries(CATS).map(([k, v]) => ({
+                        header: '',
                         title: k.toUpperCase(),
                         description: `${v.length} Command`,
                         id: `.menu ${k}`,
@@ -1277,13 +1355,13 @@ module.exports = async function ownerHandler(ctx) {
                     }],
                   }),
                 },
-                {
-                  name: 'quick_reply',
-                  buttonParamsJson: JSON.stringify({ display_text: '👤 Owner', id: 'btn_owner' }),
-                },
-              ],
-              messageParamsJson: '{}',
-            },
+              },
+              {
+                buttonId: 'btn_owner',
+                buttonText: { displayText: '👤 Owner' },
+                type: 1,
+              },
+            ],
           },
         });
         await react(mess.reactSuccess);
@@ -1493,6 +1571,22 @@ module.exports = async function ownerHandler(ctx) {
                 buttonId: 'btn_cat',
                 buttonText: { displayText: '📂' },
                 type: 1,
+                nativeFlowInfo: {
+                  name: 'single_select',
+                  paramsJson: JSON.stringify({
+                    title: '📂',
+                    sections: [{
+                      title: 'Kategori',
+                      highlight_label: 'YaaPar Menu',
+                      rows: Object.entries(CATS).map(([k, v]) => ({
+                        header: '',
+                        title: k.toUpperCase(),
+                        description: `${v.length} Command`,
+                        id: `.menu ${k}`,
+                      })),
+                    }],
+                  }),
+                },
               },
               {
                 buttonId: 'btn_owner',
