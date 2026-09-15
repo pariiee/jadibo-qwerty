@@ -1289,35 +1289,49 @@ module.exports = async function ownerHandler(ctx) {
           '\n' + tail;
 
         await sock.message.send(jid, {
-          buttonsMessage: {
-            buttons: [
-              {
-                // Tombol tetap teks biasa (WA nggak bisa nempel dropdown di
-                // quick-reply). Yang diklik = bot balas bubble dropdown
-                // `single_select` kategori (lihat 07-button case 'btn_cat').
-                buttonId: 'btn_cat',
-                buttonText: { displayText: 'Tombol 1' },
-                type: 1,
+          interactiveMessage: {
+            header: {
+              hasMediaAttachment: true,
+              locationMessage: {
+                // 0,0 = titik netral, biar nggak gonta-ganti tiap kirim.
+                degreesLatitude: 0,
+                degreesLongitude: 0,
+                name: botNm,
+                address: 'yapari.web.id',
+                jpegThumbnail: thumb,
               },
-              {
-                buttonId: 'btn_owner',
-                buttonText: { displayText: 'Owner' },
-                type: 1,
-              },
-            ],
-            locationMessage: {
-              // 0,0 = titik netral, biar nggak gonta-ganti tiap kirim.
-              degreesLatitude: 0,
-              degreesLongitude: 0,
-              name: botNm,
-              address: 'yapari.web.id',
-              jpegThumbnail: thumb,
             },
-            contentText: body,
-            // Footer bubble = config `footer_text` per-bot (kolom DB), bukan
-            // host hardcode. Fallback seragam sama `.menu`/`.test`.
-            footerText: botData.footer_text || 'Powered by YaaParBot',
-            headerType: 6,
+            body: { text: body },
+            footer: { text: botData.footer_text || 'Powered by YaaParBot' },
+            nativeFlowMessage: {
+              buttons: [
+                // Tombol 1 = dropdown kategori. Nggak bisa ditempelin ke
+                // `buttonsMessage` (nggak punya nativeFlowInfo → bubble ilang),
+                // jadi `.test2` pindah ke `interactiveMessage` + header lokasi
+                // seperti `.test`. Klik row-nya diteruskan sebagai `.menu <cat>`.
+                {
+                  name: 'single_select',
+                  buttonParamsJson: JSON.stringify({
+                    title: 'Pilih Kategori',
+                    sections: [{
+                      title: 'Kategori',
+                      highlight_label: 'YaaPar Menu',
+                      rows: Object.entries(CATS).map(([k, v]) => ({
+                        title: k.toUpperCase(),
+                        description: `${v.length} Command`,
+                        id: `.menu ${k}`,
+                      })),
+                    }],
+                  }),
+                },
+                // Tombol 2 = jalanin `.owner`
+                {
+                  name: 'quick_reply',
+                  buttonParamsJson: JSON.stringify({ display_text: 'Owner', id: 'btn_owner' }),
+                },
+              ],
+              messageParamsJson: '{}',
+            },
           },
         });
         await react(mess.reactSuccess);
