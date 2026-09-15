@@ -12,15 +12,17 @@ const os   = require('os');
 const path = require('path');
 const fs   = require('fs');
 
-async function genThumbnail(buffer, mimetype, size = 72) {
+async function genThumbnail(buffer, mimetype, size = 72, fit = 'inside') {
   try {
     const mime = (mimetype || '').toLowerCase();
 
     if (/^image\//.test(mime)) {
       // ── Image → sharp resize ──────────────────────────────────────────────
+      // fit default 'inside' (jaga rasio, sisi terpanjang = size) — dipakai
+      // puluhan call-site lain. 'cover' = persis size×size, sisa dipotong.
       const sharp = require('sharp');
       return await sharp(buffer)
-        .resize(size, size, { fit: 'inside' })
+        .resize(size, size, { fit })
         .jpeg({ quality: 80 })
         .toBuffer();
     }

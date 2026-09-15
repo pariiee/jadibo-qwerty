@@ -1232,7 +1232,9 @@ module.exports = async function ownerHandler(ctx) {
         const banner = fs.readFileSync(
           path.resolve(botData.banner_url || process.env.BANNER_DEFAULT),
         );
-        const thumb = await genThumbnail(banner, 'image/jpeg', 300) || banner;
+        // 300x300 persegi (fit cover) — jangan 'inside', hasilnya 300x174 dan
+        // WA nggak ngerender gambarnya di header lokasi.
+        const thumb = await genThumbnail(banner, 'image/jpeg', 300, 'cover') || banner;
 
         await sock.message.send(jid, {
           buttonsMessage: {
@@ -1249,8 +1251,9 @@ module.exports = async function ownerHandler(ctx) {
               },
             ],
             locationMessage: {
-              degreesLatitude: -6.2,
-              degreesLongitude: 106.816666,
+              // 0,0 = titik netral, biar nggak gonta-ganti tiap kirim.
+              degreesLatitude: 0,
+              degreesLongitude: 0,
               name: botData.bot_name || 'YaaParBot',
               address: 'yapari.web.id',
               jpegThumbnail: thumb,
