@@ -1405,34 +1405,32 @@ module.exports = async function ownerHandler(ctx) {
           '\n' + tail;
 
         await sock.message.send(jid, {
-          interactiveMessage: {
-            header: {
-              hasMediaAttachment: true,
-              locationMessage: {
-                degreesLatitude: 0,
-                degreesLongitude: 0,
-                name: botNm,
-                address: 'yapari.web.id',
-                jpegThumbnail: thumb,
+          // `buttonsMessage` legacy = satu-satunya bentuk yang tombolnya dirender
+          // WA **sebaris kanan-kiri**. `interactiveMessage`/native-flow selalu
+          // nempelin tombol penuh per baris (itu yang bikin 📂/Owner numpuk).
+          buttonsMessage: {
+            buttons: [
+              {
+                buttonId: 'btn_cat',
+                buttonText: { displayText: '📂' },
+                type: 1,
               },
+              {
+                buttonId: 'btn_owner',
+                buttonText: { displayText: 'Owner' },
+                type: 1,
+              },
+            ],
+            locationMessage: {
+              degreesLatitude: 0,
+              degreesLongitude: 0,
+              name: botNm,
+              address: 'yapari.web.id',
+              jpegThumbnail: thumb,
             },
-            body: { text: body },
-            footer: { text: botData.footer_text || 'Powered by YaaParBot' },
-            nativeFlowMessage: {
-              // `quick_reply` semua → WA nempelin sebaris (kanan-kiri), nggak
-              // turun ke baris baru kayak `single_select`.
-              buttons: [
-                {
-                  name: 'quick_reply',
-                  buttonParamsJson: JSON.stringify({ display_text: '📂', id: 'btn_cat' }),
-                },
-                {
-                  name: 'quick_reply',
-                  buttonParamsJson: JSON.stringify({ display_text: 'Owner', id: 'btn_owner' }),
-                },
-              ],
-              messageParamsJson: '{}',
-            },
+            contentText: body,
+            footerText: botData.footer_text || 'Powered by YaaParBot',
+            headerType: 6,
           },
         });
         await react(mess.reactSuccess);
