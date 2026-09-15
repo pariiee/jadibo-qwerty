@@ -4761,14 +4761,29 @@ module.exports = async function toolsHandler(ctx) {
         items = items.filter(it => it.url);
         if (!items.length) throw new Error('Tidak ada media dari API');
         await react(mess.reactSuccess);
+        // CDN Instagram (scontent) kadang nolak connect sesaat (ETIMEDOUT), dan VPS ini
+        // nggak punya rute IPv6 (ENETUNREACH) -> kunci IPv4 + ulang sekali.
+        const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+        const unduh = async (url) => {
+          let last;
+          for (let i = 0; i < 2; i++) {
+            try {
+              return await axios.get(url, {
+                responseType: 'arraybuffer', timeout: 60000, family: 4,
+                headers: { 'User-Agent': UA },
+              });
+            } catch (e) { last = e; await new Promise(r => setTimeout(r, 1000)); }
+          }
+          throw new Error(String(last?.response?.status || last?.code || last?.message || 'unknown').slice(0, 140));
+        };
         let n = 0, terkirim = 0;
         const gagal = [];
         const total = items.length;
         for (const it of items) {
           n++;
           let res;
-          try { res = await axios.get(it.url, { responseType: 'arraybuffer', timeout: 60000 }); }
-          catch (e) { gagal.push(`#${n} unduh ${e.response?.status || e.message}`); continue; }
+          try { res = await unduh(it.url); }
+          catch (e) { gagal.push(`#${n} unduh ${e.message}`); continue; }
           const ct  = res.headers['content-type'] || (it.isVideo ? 'video/mp4' : 'image/jpeg');
           const isVid = ct.startsWith('video/') || it.isVideo;
           const thumb = await genThumbnail(Buffer.from(res.data), isVid ? 'video/mp4' : ct);
@@ -4789,7 +4804,10 @@ module.exports = async function toolsHandler(ctx) {
         // Jangan pernah "centang tapi sepi": kalau SEMUA media gagal, user harus tau
         // alasannya. Dulu `catch { continue; }` bikin media ilang tanpa jejak sama sekali.
         console.log(`[ig] ${terkirim}/${total} terkirim${gagal.length ? ' — ' + gagal.join('; ') : ''}`);
-        if (!terkirim) await reply(`❌ Gagal Instagram:\n${gagal.join('\n')}`);
+        if (!terkirim) {
+          const uniq = [...new Set(gagal.map(g => g.replace(/^#\d+ /, '')))];
+          await reply(`❌ Gagal Instagram (${total} media):\n${uniq.join('\n')}`);
+        }
       } catch (e) {
         await react(mess.reactError);
         await reply(`❌ Gagal download Instagram: ${e.message}`);

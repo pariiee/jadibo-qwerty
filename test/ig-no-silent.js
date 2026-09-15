@@ -67,6 +67,20 @@ const mkCtx = () => ({
     assert.ok(!sent.some(m => m.text?.includes('Gagal Instagram')), 'harusnya nggak ada error');
   });
 
+  await ok('connect gagal SEKALI (ETIMEDOUT) → diulang, bukan langsung nyerah', async () => {
+    sent.length = 0;
+    let attempts = 0;
+    axios.get = async (url) => {
+      if (String(url).includes('api/download/instagram')) return API_OK;
+      attempts++;
+      if (attempts === 1) { const e = new Error('connect ETIMEDOUT 57.144.100.192:443'); e.code = 'ETIMEDOUT'; throw e; }
+      return { data: Buffer.from('video'), headers: { 'content-type': 'video/mp4' } };
+    };
+    await handler(mkCtx());
+    assert.ok(attempts >= 2, `nggak diulang (attempts=${attempts})`);
+    assert.ok(sent.some(m => m.type === 'video'), 'video nggak dikirim padahal retry harusnya berhasil');
+  });
+
   axios.get = realGet;
   console.log(`\nig-no-silent: ${pass} PASS, ${fail} FAIL`);
   process.exit(fail ? 1 : 0);
