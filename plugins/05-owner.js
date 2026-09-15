@@ -1219,6 +1219,87 @@ module.exports = async function ownerHandler(ctx) {
       return true;
     }
 
+    case 'test4': {
+      if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }
+      try {
+        await react(mess.reactLoading);
+
+        const banner = fs.readFileSync(
+          path.resolve(botData.banner_url || process.env.BANNER_DEFAULT),
+        );
+        const thumb = await genThumbnail(banner, 'image/jpeg', 300) || banner;
+
+        const pnJid = String(sender).split(':')[0].split('@')[0];
+        const botNm = botData.bot_name || 'YaaParBot';
+
+        const body = [
+          '╭─── • *「 MENU BOT 」*',
+          `│ ◦ User : *${ctx.pushName || pnJid}*`,
+          `│ ◦ Total Fitur : *${ALL_COMMANDS.length}*`,
+          `│ ◦ Kategori : *${Object.keys(CATS).length}*`,
+          '╰───────────────────•',
+          '',
+          'Pilih kategori lewat tombol di bawah 👇',
+        ].join('\n');
+
+        // Dua tombol, dua-duanya `single_select` di dalam satu `nativeFlowMessage`.
+        // Emoji di AWAL label = tombol yang native-flow cuma bisa nampilin ikon
+        // (bukan panah list), jadi 📂 ≡ tetep keliatan folder + list.
+        await sock.message.send(jid, {
+          interactiveMessage: {
+            header: {
+              hasMediaAttachment: true,
+              locationMessage: {
+                degreesLatitude: 0,
+                degreesLongitude: 0,
+                name: botNm,
+                address: 'yapari.web.id',
+                jpegThumbnail: thumb,
+              },
+            },
+            body:   { text: body },
+            footer: { text: botData.footer_text || 'Powered by YaaParBot' },
+            nativeFlowMessage: {
+              buttons: [
+                {
+                  name: 'single_select',
+                  buttonParamsJson: JSON.stringify({
+                    title: '📂 ≡ Kategori',
+                    sections: [{
+                      title: 'Kategori',
+                      highlight_label: 'YaaPar Menu',
+                      rows: Object.entries(CATS).map(([k, v]) => ({
+                        title: k.toUpperCase(),
+                        description: `${v.length} Command`,
+                        id: `.menu ${k}`,
+                      })),
+                    }],
+                  }),
+                },
+                {
+                  name: 'single_select',
+                  buttonParamsJson: JSON.stringify({
+                    title: '👤 Owner',
+                    sections: [{
+                      title: 'Owner',
+                      highlight_label: 'YaaPar',
+                      rows: [{ title: 'Kontak Owner', description: 'Hubungi owner bot', id: 'btn_owner' }],
+                    }],
+                  }),
+                },
+              ],
+              messageParamsJson: '{}',
+            },
+          },
+        });
+        await react(mess.reactSuccess);
+      } catch (e) {
+        await react(mess.reactError);
+        await reply(`❌ Gagal: ${e.message}`);
+      }
+      return true;
+    }
+
     // ── test2 — interactiveMessage + header lokasi + thumbnail ───────────────
     // Tombol 1 = dropdown `single_select` kategori, tombol 2 = `quick_reply`
     // Owner. WA nggak punya `nativeFlowInfo` di `buttonsMessage`, jadi dropdown
@@ -1412,7 +1493,7 @@ module.exports = async function ownerHandler(ctx) {
             buttons: [
               {
                 buttonId: 'btn_cat',
-                buttonText: { displayText: '📂' },
+                buttonText: { displayText: '📂 ≡' },
                 type: 1,
               },
               {
