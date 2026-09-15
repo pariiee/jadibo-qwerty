@@ -175,7 +175,7 @@ module.exports = async function crmHandler(ctx) {
   }
 
   // 2. Kirim kodenya sekaligus: file .js di header + tombol native-flow
-  //    "Lihat kode" (cta_copy) yang nampilin kode monospace + tombol Salin.
+  //    "Salin kode" (cta_copy) — tap = panel kode monospace + tombol Salin.
   //    Header.documentMessage => satu kiriman, file & tombol nempel bareng.
   //    ponytail: cta_copy kepotong kalau kode >~60k char; di situ tombolnya
   //    di-skip, filenya tetap kekirim utuh (gk ada fallback lain di WA).
@@ -197,7 +197,7 @@ module.exports = async function crmHandler(ctx) {
             buttons: [{
               name: 'cta_copy',
               buttonParamsJson: JSON.stringify({
-                display_text: 'Lihat kode',
+                display_text: 'Salin kode',
                 id: String(Date.now()),
                 copy_code: code,
               }),

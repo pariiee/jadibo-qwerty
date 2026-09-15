@@ -5,7 +5,7 @@
  *   - tanpa reply -> diminta reply dulu, bukan diem
  *   - pesan yang di-reply DI-RELAY ulang ke chat
  *   - kodenya dikirim sekaligus: file `.js` di header + tombol native-flow
- *     "Lihat kode" (cta_copy) yang isinya kode relay siap tempel
+ *     "Salin kode" (cta_copy) yang isinya kode relay siap tempel
  *   - key bungkus framework dibuang, fungsi dibuang, Buffer (jpegThumbnail) -> base64
  *
  * Jalanin: node test/crm-copy.js
@@ -100,7 +100,7 @@ const codeText   = () => (isInter() ? params().copy_code : String(codeMsg().medi
     assert.strictEqual(sent.length, 0);
   });
 
-  // 3. owner + reply gambar -> relay + file .js + tombol "Lihat kode"
+  // 3. owner + reply gambar -> relay + file .js + tombol "Salin kode"
   out = []; sent = []; opts = []; reacts = [];
   await handler(ctxOf({ isOwner: true }));
   console.log('\n[3] owner reply gambar:');
@@ -126,9 +126,9 @@ const codeText   = () => (isInter() ? params().copy_code : String(codeMsg().medi
     assert.ok(/ImageMessage\.js/.test(captionOf()));
     assert.strictEqual(header().hasMediaAttachment, true, 'header nggak nandain ada media');
   });
-  ok('tombol "Lihat kode" (cta_copy) bawa kode relay', () => {
+  ok('tombol "Salin kode" (cta_copy) bawa kode relay', () => {
     assert.strictEqual(button().name, 'cta_copy');
-    assert.strictEqual(params().display_text, 'Lihat kode');
+    assert.strictEqual(params().display_text, 'Salin kode');
     assert.ok(params().id, 'id tombol kosong');
     assert.strictEqual(params().copy_code, codeText());
   });
