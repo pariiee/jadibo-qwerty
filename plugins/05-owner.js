@@ -1232,9 +1232,9 @@ module.exports = async function ownerHandler(ctx) {
         const banner = fs.readFileSync(
           path.resolve(botData.banner_url || process.env.BANNER_DEFAULT),
         );
-        // 300x300 persegi (fit cover) — jangan 'inside', hasilnya 300x174 dan
-        // WA nggak ngerender gambarnya di header lokasi.
-        const thumb = await genThumbnail(banner, 'image/jpeg', 300, 'cover') || banner;
+        // Sama kayak `.test`: 300px fit 'inside' → 300x174. Itu ukuran yang
+        // beneran dirender WA; 300x300 (cover) nggak keluar.
+        const thumb = await genThumbnail(banner, 'image/jpeg', 300) || banner;
 
         await sock.message.send(jid, {
           buttonsMessage: {
