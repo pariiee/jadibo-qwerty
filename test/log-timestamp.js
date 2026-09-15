@@ -22,15 +22,20 @@ const ok = (label, got, want) => {
   if (!pass) process.exitCode = 1;
 };
 
-// 13:21:12 UTC -> 20:21:12 WIB
-ok('UTC tanpa penanda -> WIB', logTime('2026-09-14 13:21:12'), '20.21.12');
+// 13:21:12 UTC dirender ke jam LOKAL mesin yg jalanin tes ini (laptop = WIB
+// 20.21.12, server VPS = UTC 13.21.12). Harapan TIDAK di-hardcode: ekspektasi
+// "+07:00" bikin `npm test` merah di server (TZ=UTC) padahal kodenya benar —
+// dan gate yg merah di server = gate yg diabaikan.
+const tz = (iso) => new Date(iso).toLocaleTimeString('id-ID', { hour12: false });
+
+ok('UTC tanpa penanda -> jam lokal', logTime('2026-09-14 13:21:12'), tz('2026-09-14T13:21:12Z'));
 // Yang udah ada 'Z' jangan ditambahin lagi (double-Z = Invalid Date)
-ok('sudah ISO+Z tetap benar', logTime('2026-09-14T13:21:12Z'), '20.21.12');
+ok('sudah ISO+Z tetap benar', logTime('2026-09-14T13:21:12Z'), tz('2026-09-14T13:21:12Z'));
 // Offset eksplisit jangan diutak-atik
-ok('offset +07:00 dihormati', logTime('2026-09-14T13:21:12+07:00'), '13.21.12');
+ok('offset +07:00 dihormati', logTime('2026-09-14T13:21:12+07:00'), tz('2026-09-14T06:21:12Z'));
 // Tanpa timestamp (log live dari WS) -> pakai jam sekarang
 const now = new Date('2026-09-14T13:21:12Z');
-ok('tanpa timestamp -> jam sekarang', logTime(null, now), '20.21.12');
+ok('tanpa timestamp -> jam sekarang', logTime(null, now), tz('2026-09-14T13:21:12Z'));
 // Sampah jangan bikin 'Invalid Date'
 ok('nilai rusak tidak jadi Invalid Date', logTime('bukan-tanggal'), 'bukan-tanggal');
 
