@@ -103,6 +103,29 @@ const mkOpts = () => ({
     assert.strictEqual(b.buttons[0].buttonText.displayText, 'MENU');
   });
 
+  // ═══ `nativeFlowInfo` nempel di tombol `buttonsMessage` (jalur `.test4`) ════
+  // Ini yang bikin tombol sebaris DAN dropdown hidup sekaligus. Kalau Baileys
+  // atau proto-nya berubah dan field ini dibuang di jalur kirim, tombol 📂 bakal
+  // balik jadi tombol mati (bubble kedua) — test ini yang nangkep lebih dulu.
+  await ok('B6. buttonsMessage + nativeFlowInfo.single_select selamat di jalur kirim', () => {
+    const params = JSON.stringify({
+      title: '📂',
+      sections: [{ title: 'Kategori', highlight_label: 'YaaPar Menu',
+        rows: [{ title: 'INFO', description: '14 Command', id: '.menu info' }] }],
+    });
+    const wam = generateWAMessageFromContent('g@g.us', {
+      buttonsMessage: {
+        contentText: 'menu', footerText: 'f', headerType: 6,
+        buttons: [{ buttonId: 'btn_cat', buttonText: { displayText: '📂' }, type: 1,
+          nativeFlowInfo: { name: 'single_select', paramsJson: params } }],
+      },
+    }, { userJid: 'me@s.whatsapp.net' });
+    const b = normalizeMessageContent(wam.message).buttonsMessage;
+    assert.strictEqual(b.buttons[0].buttonId, 'btn_cat');
+    assert.strictEqual(b.buttons[0].nativeFlowInfo.name, 'single_select', 'nativeFlowInfo dibuang');
+    assert.strictEqual(JSON.parse(b.buttons[0].nativeFlowInfo.paramsJson).sections[0].rows[0].id, '.menu info');
+  });
+
   // ═══ .owner kirim kontak — sendMessage nolak, relayMessage nerima ══════════
   // Gejala nyata: [20.43.44] owner: Invalid media type
   await ok('C1. contactMessage dideteksi proto-mentah (jalur relayMessage)', () => {

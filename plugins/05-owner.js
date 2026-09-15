@@ -1219,81 +1219,6 @@ module.exports = async function ownerHandler(ctx) {
       return true;
     }
 
-    case 'test5': {
-      if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }
-      try {
-        await react(mess.reactWait ?? mess.reactSuccess);
-        const banner = await fs.promises.readFile(
-          path.resolve(botData.banner_url || process.env.BANNER_DEFAULT),
-        );
-        const thumb = await genThumbnail(banner, 'image/jpeg', 300) || banner;
-        const pnJid = String(sender).split(':')[0].split('@')[0];
-        const botNm = botData.bot_name || 'YaaParBot';
-        const body = [
-          '╭─── • *「 MENU BOT 」*',
-          `│ ◦ User : *${ctx.pushName || pnJid}*`,
-          `│ ◦ Total Fitur : *${ALL_COMMANDS.length}*`,
-          `│ ◦ Kategori : *${Object.keys(CATS).length}*`,
-          '╰───────────────────•',
-          '',
-          'Pilih kategori lewat tombol di bawah 👇',
-        ].join('\n');
-
-        // SATU bubble, dua tombol SEBARIS, dua-duanya hidup:
-        //   type 1 (RESPONSE)          → teks biasa, dibales lewat `buttonId`
-        //   type 2 (NATIVE_FLOW)       → `single_select` di dalam `buttonsMessage`
-        // Workaround `type: 1` + `nativeFlowInfo` nggak dipakai: WA baca `type`-nya,
-        // jadi tombolnya cuma ngirim `buttonId` dan `paramsJson`-nya dibuang.
-        await sock.message.send(jid, {
-          buttonsMessage: {
-            headerType: 6,
-            locationMessage: {
-              degreesLatitude: 0,
-              degreesLongitude: 0,
-              name: botNm,
-              address: 'yapari.web.id',
-              jpegThumbnail: thumb,
-            },
-            contentText: body,
-            footerText: botData.footer_text || 'Powered by YaaParBot',
-            buttons: [
-              {
-                buttonId: 'btn_cat',
-                buttonText: { displayText: '📂' },
-                type: 2,
-                nativeFlowInfo: {
-                  name: 'single_select',
-                  paramsJson: JSON.stringify({
-                    title: '📂',
-                    sections: [{
-                      title: 'Kategori',
-                      highlight_label: 'YaaPar Menu',
-                      rows: Object.entries(CATS).map(([k, v]) => ({
-                        header: '',
-                        title: k.toUpperCase(),
-                        description: `${v.length} Command`,
-                        id: `.menu ${k}`,
-                      })),
-                    }],
-                  }),
-                },
-              },
-              {
-                buttonId: 'btn_owner',
-                buttonText: { displayText: '👤 Owner' },
-                type: 1,
-              },
-            ],
-          },
-        });
-        await react(mess.reactSuccess);
-      } catch (e) {
-        await react(mess.reactError);
-        await reply(`❌ Gagal: ${e.message}`);
-      }
-      return true;
-    }
-
     case 'test4': {
       if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }
       try {
@@ -1322,6 +1247,7 @@ module.exports = async function ownerHandler(ctx) {
         // (`proto.Message.ButtonsMessage.Button.nativeFlowInfo`, field 4 —
         // ada di WAProto, cuma Baileys nggak punya API-nya).
         // Jadi 📂 = dropdown beneran + Owner = tombol biasa, dua-duanya sebaris.
+        // ✅ TERBUKTI di HP Pak — `type: 1` + `nativeFlowInfo` cukup; `type: 2` dibuang.
         await sock.message.send(jid, {
           buttonsMessage: {
             headerType: 6,
@@ -1459,10 +1385,10 @@ module.exports = async function ownerHandler(ctx) {
             footer: { text: botData.footer_text || 'Powered by YaaParBot' },
             nativeFlowMessage: {
               buttons: [
-                // Tombol 1 = dropdown kategori. Nggak bisa ditempelin ke
-                // `buttonsMessage` (nggak punya nativeFlowInfo → bubble ilang),
-                // jadi `.test2` pindah ke `interactiveMessage` + header lokasi
-                // seperti `.test`. Klik row-nya diteruskan sebagai `.menu <cat>`.
+                // Tombol 1 = dropdown kategori. Di sini `nativeFlowMessage` dipakai
+                // karena `.test2` sengaja nyimpen varian **numpuk** buat pembanding;
+                // versi sebaris (`buttonsMessage` + `nativeFlowInfo`) ada di `.test4`.
+                // Klik row-nya diteruskan sebagai `.menu <cat>`.
                 {
                   name: 'single_select',
                   buttonParamsJson: JSON.stringify({
@@ -1558,13 +1484,10 @@ module.exports = async function ownerHandler(ctx) {
           '\n' + tail;
 
         await sock.message.send(jid, {
-          // `buttonsMessage` legacy = satu-satunya bentuk yang tombolnya dirender
-          // WA **sebaris kanan-kiri**. `interactiveMessage`/native-flow selalu
-          // nempelin tombol penuh per baris (itu yang bikin 📂/Owner numpuk).
-          // Tombol 1 (`📂`) nggak bisa jadi `single_select` di sini: `buttonsMessage`
-          // nggak punya nativeFlowInfo, maksa `type: 2` + nativeFlowInfo → WA buang
-          // SELURUH bubble. Jadi 📂 tetap tombol biasa yang kirim dropdown di
-          // bubble kedua (lihat `case 'btn_cat'` di 07-button.js).
+          // Sama seperti `.test4` — `buttonsMessage` + `nativeFlowInfo.single_select`,
+          // tombol dirender sebaris. ✅ Terbukti di HP Pak pakai `.test4`
+          // (`type: 1` + `nativeFlowInfo`): sebaris DAN tombolnya kepencet.
+          // `.test3` beda teks/footer saja, disimpan buat pembanding.
           buttonsMessage: {
             buttons: [
               {

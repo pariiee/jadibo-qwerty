@@ -99,7 +99,9 @@ module.exports = async function buttonHandler(ctx) {
       case 'btn_owner':
         return await require('./01-info')({ ...ctx, isCmd: true, command: 'owner', args: [] });
       case 'btn_cat':
-        // Tombol 📂 `.test3` → dropdown kategori (payload di 07-button-helpers.js).
+        // Fallback id tombol 📂 kalau WA balikin id tombolnya, bukan row id.
+        // Umumnya lewat atas: `nativeFlowInfo` → `interactiveResponseMessage` →
+        // row id `.menu <cat>` (regex di `handleRowId`).
         return await require('./07-button-helpers').sendCategoryDropdown(ctx);
       case 'btn_test':
         await reply(`✅ Klik tombol nyampe! id = *${rowId}*`);
