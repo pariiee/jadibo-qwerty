@@ -1279,8 +1279,6 @@ module.exports = async function ownerHandler(ctx) {
           '• Ketik .menu <kategori> untuk melihat isinya.',
           '• Contoh: .menu downloader',
           '• Semua command: .menu all',
-          '',
-          `> _${botData.footer_text || 'ihiii'}_`,
         ].join('\n');
 
         // Filler readmore — sama kayak `.menu` (01-info.js): lipatan "Baca
@@ -1313,7 +1311,9 @@ module.exports = async function ownerHandler(ctx) {
               jpegThumbnail: thumb,
             },
             contentText: body,
-            footerText: `yapari.web.id`,
+            // Footer bubble = config `footer_text` per-bot (kolom DB), bukan
+            // host hardcode. Fallback seragam sama `.menu`/`.test`.
+            footerText: botData.footer_text || 'Powered by YaaParBot',
             headerType: 6,
           },
         });
