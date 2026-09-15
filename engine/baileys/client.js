@@ -29,6 +29,7 @@ const {
   DisconnectReason,
   generateWAMessageFromContent,
   normalizeMessageContent,
+  prepareWAMessageMedia,
   isJidGroup,
   proto,
   Browsers,
@@ -324,6 +325,19 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
     };
   }
 
+  // Upload media jadi proto (dipakai header pesan tombol: InteractiveMessage.Header
+  // butuh proto Message.IDocumentMessage, bukan Buffer). Baileys yang ngurus
+  // enkripsi + upload; kita cuma bungkus.
+  async function prepareDocument(buffer, mimetype, fileName) {
+    if (!sock) throw new Error('socket belum siap');
+    return prepareWAMessageMedia(
+      { document: buffer, mimetype, fileName },
+      // mediaUploadTimeoutMs: tanpa ini upload bisa nggantung tanpa batas
+      // (prepareWAMessageMedia nerusin nilainya ke waUploadToServer apa adanya).
+      { upload: sock.waUploadToServer, logger: sock.logger, mediaUploadTimeoutMs: 60000 },
+    );
+  }
+
   async function send(jid, content, opts = {}) {
     if (!sock) throw new Error('socket belum siap');
     // Tag biru di grup LID butuh bentuk LID-nya ikut — lihat engine/jid.js.
@@ -541,6 +555,7 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
 
     message: {
       send,
+      prepareDocument,
       downloadBytes: async (source) => {
         const msg = source?.message ? source : { message: source };
         return baileysDownload(msg, 'buffer', {}, {

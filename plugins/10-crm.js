@@ -174,19 +174,46 @@ module.exports = async function crmHandler(ctx) {
     return true;
   }
 
-  // 2. Kirim kodenya sebagai file .js (bisa kepanjangan buat di-chat)
+  // 2. Kirim kodenya sekaligus: file .js di header + tombol native-flow
+  //    "Lihat kode" (cta_copy) yang nampilin kode monospace + tombol Salin.
+  //    Header.documentMessage => satu kiriman, file & tombol nempel bareng.
+  //    ponytail: cta_copy kepotong kalau kode >~60k char; di situ tombolnya
+  //    di-skip, filenya tetap kekirim utuh (gk ada fallback lain di WA).
   const typeName = typeNameFromContent(clean);
   const fileName = `${typeName}.js`;
   const code = buildRelayCode(clean);
   const caption = `📄 ${fileName}`;
 
-  await client.message.send(jid, {
-    type: 'document',
-    media: Buffer.from(code, 'utf8'),
-    mimetype: 'application/javascript',
-    fileName,
-    caption,
-  }, { quote: ctx.msg });
+  const doc = await client.message.prepareDocument
+    ? await client.message.prepareDocument(Buffer.from(code, 'utf8'), 'application/javascript', fileName)
+    : null;
+
+  const docContent = doc?.documentMessage && code.length <= 60000
+    ? {
+        interactiveMessage: {
+          header: { documentMessage: doc.documentMessage, hasMediaAttachment: true },
+          body: { text: caption },
+          nativeFlowMessage: {
+            buttons: [{
+              name: 'cta_copy',
+              buttonParamsJson: JSON.stringify({
+                display_text: 'Lihat kode',
+                id: String(Date.now()),
+                copy_code: code,
+              }),
+            }],
+          },
+        },
+      }
+    : {
+        type: 'document',
+        media: Buffer.from(code, 'utf8'),
+        mimetype: 'application/javascript',
+        fileName,
+        caption,
+      };
+
+  await client.message.send(jid, docContent, { quote: ctx.msg });
 
   // 3. React ✅ (pakai ctx, bukan ctx. langsung — biar aman kalau di-spread ulang)
   await react(mess?.reactSuccess || '✅');

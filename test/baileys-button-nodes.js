@@ -86,7 +86,10 @@ const imgWam = realBaileys.generateWAMessageFromContent(jid, { image: Buffer.fro
 assert.deepStrictEqual(buttonNodes(norm(imgWam.message)), [], 'C5 FAIL: gambar nggak boleh dapet node <biz>');
 
 // C6: adapter nge-import yang dibutuhin (nggak bakal crash pas runtime)
-assert.ok(/normalizeMessageContent,\s*\n\s*isJidGroup,/.test(src), 'C6 FAIL: normalizeMessageContent/isJidGroup nggak di-import');
+// Cek per-nama, jangan per-urutan: nyisipin import baru di antaranya bukan bug.
+for (const name of ['normalizeMessageContent', 'isJidGroup', 'proto', 'prepareWAMessageMedia']) {
+  assert.ok(src.split('\n').some((l) => l.trim() === name + ','), `C6 FAIL: ${name} nggak di-import`);
+}
 assert.ok(/additionalNodes,\s*\n\s*\}\);/.test(src), 'C7 FAIL: additionalNodes nggak diteruskan ke relayMessage');
 
 void realClient; void fakeSock;
