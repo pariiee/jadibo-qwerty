@@ -1292,9 +1292,28 @@ module.exports = async function ownerHandler(ctx) {
           buttonsMessage: {
             buttons: [
               {
-                buttonId: 'btnv2_1',
-                buttonText: { displayText: 'Tombol 1' },
-                type: 1,
+                // Tombol 1 = dropdown kategori, bukan quick-reply. Bentuk legacy
+                // yang bisa bawa single_select: `type: 2` (NATIVE_FLOW) +
+                // `nativeFlowInfo`; rows-nya id `.menu <kategori>` — 07-button
+                // (handleRowId) sudah nge-dispatch itu ke handler .menu.
+                buttonId: 'btn_cat',
+                buttonText: { displayText: '📂 Kategori' },
+                type: 2,
+                nativeFlowInfo: {
+                  name: 'single_select',
+                  paramsJson: JSON.stringify({
+                    title: 'Pilih Kategori',
+                    sections: [{
+                      title: 'Kategori',
+                      highlight_label: 'YaaPar Menu',
+                      rows: Object.entries(CATS).map(([k, v]) => ({
+                        title: k.toUpperCase(),
+                        description: `${v.length} Command`,
+                        id: `.menu ${k}`,
+                      })),
+                    }],
+                  }),
+                },
               },
               {
                 buttonId: 'btn_owner',
