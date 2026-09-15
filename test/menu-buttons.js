@@ -63,6 +63,8 @@ const ctx = baseCtx;
     assert.ok(body.includes('INFO USER & BOT'), 'box INFO hilang');
     assert.ok(body.includes('MENU CATEGORY'), 'box kategori hilang');
     assert.ok(/│ ◦ [A-Z]+ \(\d+ Fitur\)/.test(body), 'kategori nggak per baris lagi');
+    const catsTxt = [...body.matchAll(/│ ◦ ([A-Z]+) \(\d+ Fitur\)/g)].map(m => m[1]);
+    assert.deepStrictEqual(catsTxt, [...catsTxt].sort(), `kategori teks nggak urut a-z: ${catsTxt}`);
     assert.ok(body.includes('╰────'), 'box penutup hilang');
     assert.ok(body.length <= 1024, `kepanjangan: ${body.length} char`);
   });
@@ -81,6 +83,8 @@ const ctx = baseCtx;
     const rows = JSON.parse(btns[0].nativeFlowInfo.paramsJson).sections[0].rows;
     assert.strictEqual(rows.length, 12, `dapat ${rows.length} rows (ALL + 11 kategori)`);
     assert.match(rows[0].id, /^\.menu \w+$/, `row id salah: ${rows[0].id}`);
+    const catRows = rows.slice(1).map(r => r.id.slice(6));
+    assert.deepStrictEqual(catRows, [...catRows].sort(), `kategori dropdown nggak urut a-z: ${catRows}`);
     assert.strictEqual(btns[1].buttonId, 'btn_owner');
     assert.strictEqual(btns[1].buttonText.displayText, 'Owner');
     assert.strictEqual(btns[1].type, 1);
@@ -133,6 +137,8 @@ const ctx = baseCtx;
     // tiap blok kategori harus urut a-z
     const blocks = body.split('│ 〔 ').slice(1);
     assert.ok(blocks.length === 11, `blok kategori cuma ${blocks.length}`);   // 11 kategori di CATS
+    const heads = blocks.map(b => b.split(' 〕')[0]);
+    assert.deepStrictEqual(heads, [...heads].sort(), `sub-judul kategori nggak urut a-z: ${heads}`);
     for (const b of blocks) {
       const cmds = b.split('\n').filter(l => l.startsWith('│ ◦ ')).map(l => l.slice(4));
       assert.deepStrictEqual(cmds, [...cmds].sort(), `kategori ${b.split(' 〕')[0]} nggak urut a-z`);

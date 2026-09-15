@@ -184,6 +184,10 @@ const CATS = {
   admin:  ['add','promoteme','banmember','unbanmember','clearchat','setppgc','sider','listtotalpesan','setopen','setclose'],
 };
 
+// Urutan kategori a-z — dipakai teks `.menu`, sub-judul `.menu all`, dan dropdown.
+// Pak: "category belum urut yah? dari a sampe z?"
+const CAT_KEYS = Object.keys(CATS).sort();
+
 const CAT_ALIAS = {
   all: 'all', semua: 'all',
   dl: 'downloader', download: 'downloader', downloader: 'downloader',
@@ -252,7 +256,7 @@ module.exports = async function infoHandler(ctx) {
       const subLines = (k) => [...CATS[k]].sort().map(c => `│ ◦ ${p}${c}`);
       if (showCat === 'all') {
         subBody = subHeader('MENU ALL') + '\n' +
-          Object.keys(CATS).map(k => [`│ 〔 ${k.toUpperCase()} 〕`, ...subLines(k)].join('\n')).join('\n│\n') +
+          CAT_KEYS.map(k => [`│ 〔 ${k.toUpperCase()} 〕`, ...subLines(k)].join('\n')).join('\n│\n') +
           '\n╰────────────────────────';
       } else if (showCat) {
         subBody = subHeader(`MENU ${showCat.toUpperCase()}`) + '\n' +
@@ -294,8 +298,8 @@ module.exports = async function infoHandler(ctx) {
 
       // Teks menu = gaya `.test3` (box `╭── *[ … ]* ──` + kategori per baris).
       // Satu builder di sini; `.test3` di 05-owner.js cuma alias ke case ini.
-      const catList = Object.entries(CATS)
-        .map(([k, v]) => `│ ◦ ${k.toUpperCase()} (${v.length} Fitur)`)
+      const catList = CAT_KEYS
+        .map(k => `│ ◦ ${k.toUpperCase()} (${CATS[k].length} Fitur)`)
         .join('\n');
 
       // Sapaan + info user/bot dipakai SEMUA teks menu (utama & sub-menu)
@@ -374,7 +378,7 @@ module.exports = async function infoHandler(ctx) {
               highlight_label: 'recommended',
               rows: [
                 { header: '', title: 'ALL', description: `Semua Menu (${ALL_COMMANDS.length} fitur)`, id: '.menu all' },
-                ...Object.entries(CATS).map(([k, v]) => ({
+                ...CAT_KEYS.map(k => ({
                   header: '',
                   title: k.toUpperCase(),
                   description: `Menu ${k}`,
@@ -588,3 +592,4 @@ module.exports.limitedCmds = new Set([
 module.exports._menuBannerHeader = _menuBannerHeader;
 module.exports.ALL_COMMANDS      = ALL_COMMANDS;
 module.exports.CATS              = CATS;
+module.exports.CAT_KEYS          = CAT_KEYS;
