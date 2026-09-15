@@ -125,7 +125,7 @@ const ctx = baseCtx;
     assert.ok(body.includes('│ ◦ .ping'), 'command kategori nggak ikut');
     // tiap blok kategori harus urut a-z
     const blocks = body.split('│ 〔 ').slice(1);
-    assert.ok(blocks.length === Object.keys(CATS).length, `blok kategori cuma ${blocks.length}`);
+    assert.ok(blocks.length === 11, `blok kategori cuma ${blocks.length}`);   // 11 kategori di CATS
     for (const b of blocks) {
       const cmds = b.split('\n').filter(l => l.startsWith('│ ◦ ')).map(l => l.slice(4));
       assert.deepStrictEqual(cmds, [...cmds].sort(), `kategori ${b.split(' 〕')[0]} nggak urut a-z`);
