@@ -7,6 +7,9 @@
 // Cara pakai: `.btnprobe` di chat pribadi (WA nge-drop listMessage di grup).
 
 const { proto } = require('baileys');
+const fs   = require('fs');
+const path = require('path');
+const { genThumbnail } = require('../engine/thumbnail');
 
 const BTN  = proto.Message.ButtonsMessage.Button.Type;
 const HDR  = proto.Message.ButtonsMessage.HeaderType;
@@ -98,7 +101,70 @@ module.exports = async function btnProbeHandler(ctx) {
     },
   } };
 
-  const variants = [['A', A], ['B', B], ['C', C], ['D', D], ['E', E], ['F', F]];
+  // ── G–J: kartu "verif" (contextInfo.externalAdReply) ────────────────────────
+  // .test mati total begitu externalAdReply ditempel di interactiveMessage-nya
+  // (cuma reaksi ✅ yg nongol). Empat bentuk ini buat nyari batasnya:
+  // G = bentuk .test persis, H = tanpa header lokasi, I = tanpa thumbnail,
+  // J = teks polos (baseline yg paling sering jalan di bot lain).
+  let thumb = null;
+  try {
+    const banner = fs.readFileSync(path.resolve(botData.banner_url || process.env.BANNER_DEFAULT));
+    thumb = await genThumbnail(banner, 'image/jpeg', 300) || banner;
+  } catch { /* banner nggak kebaca -> varian thumbnail di-skip */ }
+
+  const adReply = (pakaiThumb) => ({
+    title: 'YaaParBot',
+    body: 'yapari.web.id',
+    mediaType: 1, // IMAGE
+    ...(pakaiThumb && thumb ? { thumbnail: thumb } : {}),
+    sourceUrl: 'https://yapari.web.id',
+    renderLargerThumbnail: false,
+    showAdAttribution: false,
+  });
+
+  const WEB_JSON = JSON.stringify({
+    display_text: '🌐 Website', url: 'https://yapari.web.id', merchant_url: 'https://yapari.web.id',
+  });
+
+  // 7) bentuk .test persis: header lokasi + tombol + externalAdReply
+  const G = { interactiveMessage: {
+    header: {
+      hasMediaAttachment: true,
+      locationMessage: {
+        degreesLatitude: 0, degreesLongitude: 0,
+        name: 'YaaParBot', address: 'yapari.web.id', jpegThumbnail: thumb,
+      },
+    },
+    body:   { text: 'G. interactive + header lokasi + externalAdReply (bentuk .test)' },
+    footer: { text: footer },
+    nativeFlowMessage: { buttons: [{ name: 'cta_url', buttonParamsJson: WEB_JSON }], messageParamsJson: '{}' },
+    contextInfo: { externalAdReply: adReply(true) },
+  } };
+
+  // 8) interactive tanpa header lokasi + externalAdReply
+  const H = { interactiveMessage: {
+    body:   { text: 'H. interactive TANPA header + externalAdReply (pakai thumbnail)' },
+    footer: { text: footer },
+    nativeFlowMessage: { buttons: [{ name: 'cta_url', buttonParamsJson: WEB_JSON }], messageParamsJson: '{}' },
+    contextInfo: { externalAdReply: adReply(true) },
+  } };
+
+  // 9) interactive + externalAdReply tanpa thumbnail (biar ketahuan thumbnail-nya yg ditolak atau bukan)
+  const I = { interactiveMessage: {
+    body:   { text: 'I. interactive + externalAdReply TANPA thumbnail' },
+    footer: { text: footer },
+    nativeFlowMessage: { buttons: [{ name: 'cta_url', buttonParamsJson: WEB_JSON }], messageParamsJson: '{}' },
+    contextInfo: { externalAdReply: adReply(false) },
+  } };
+
+  // 10) teks polos + externalAdReply — baseline
+  const J = {
+    text: 'J. teks polos + externalAdReply (baseline)',
+    contextInfo: { externalAdReply: adReply(true) },
+  };
+
+  const variants = [['A', A], ['B', B], ['C', C], ['D', D], ['E', E], ['F', F],
+                    ['G', G], ['H', H], ['I', I], ['J', J]];
 
   await react('⏳');
   for (const [label, payload] of variants) {
@@ -112,9 +178,10 @@ module.exports = async function btnProbeHandler(ctx) {
   }
   await react('✅');
   await reply(
-    '☝️ 6 bentuk tombol di atas (A–F).\n\n' +
-    'Balas huruf mana yang tombolnya KELIHATAN di HP lu (boleh lebih dari satu).\n' +
-    'Kalau nggak ada satu pun yang muncul, balas *NGGAK*.'
+    '☝️ 10 bentuk di atas (A–J).\n\n' +
+    'Balas huruf mana yang KELIHATAN di HP lu (boleh lebih dari satu).\n' +
+    'Kalau nggak ada satu pun yang muncul, balas *NGGAK*.\n\n' +
+    'Catatan: G–J itu percobaan kartu "verif" (yapari.web.id) — G = bentuk .test persis.'
   );
   return true;
 };

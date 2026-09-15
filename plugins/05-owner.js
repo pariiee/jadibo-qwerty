@@ -1208,19 +1208,10 @@ module.exports = async function ownerHandler(ctx) {
               ],
               messageParamsJson: '{}',
             },
-            contextInfo: {
-              mentionedJid: [pnJid + '@s.whatsapp.net'],
-              // Kartu "verif" di bawah bubble: thumbnail + title + body + sumber klik.
-              externalAdReply: {
-                title: botData.bot_name || 'YaaParBot',
-                body: 'yapari.web.id',
-                mediaType: 1, // IMAGE
-                thumbnail: thumb,
-                sourceUrl: 'https://yapari.web.id',
-                renderLargerThumbnail: false,
-                showAdAttribution: false,
-              },
-            },
+            // ponytail: externalAdReply di sini bikin WA buang SELURUH bubble
+            // (kejadian 15 Sep: cuma reaksi ✅ yg nongol). Balik ke bentuk yg
+            // terbukti jalan sampai bentuk kartunya ketemu di `.btnprobe` G–J.
+            contextInfo: { mentionedJid: [pnJid + '@s.whatsapp.net'] },
           },
         });
         await react(mess.reactSuccess);
