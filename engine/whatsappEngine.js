@@ -215,6 +215,12 @@ function buildContext(client, event, botData) {
   };
 }
 
+// ─── Bot yang lagi direstart manual → jangan auto-reconnect ──────────────────
+// stopWhatsAppBot() ngehapus IS_RUNNING dari DB (niat user = berhenti), jadi
+// restartBot() harus nge-set balik 1 SEBELUM stop dipanggil — kalau nggak,
+// auto-start pas boot server nganggap bot ini nggak dimau lagi.
+const restartingBots = new Set();
+
 // ─── Main start function ──────────────────────────────────────────────────────
 async function startWhatsAppBot(botData, usePairingCode = false) {
   if (!createClient) throw new Error('baileys tidak terinstall');
@@ -378,12 +384,14 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
       }
 
       if (stoppingBots.has(botId)) {
-        console.log(`[Bot ${botId}] 🛑 Di-stop manual — tidak reconnect`);
-        stoppingBots.delete(botId);
-        // Niat user = berhenti. Ini satu-satunya tempat (selain logout) yang
-        // boleh nol-in is_running dari sisi engine.
-        await pool.execute("UPDATE bots SET is_running = 0 WHERE id = ?", [botId]);
-        return;
+        const isRestart = restartingBots.delete(botId);
+        console.log(`[Bot ${botId}] ${isRestart ? '🔁 Restart manual — start ulang' : '🛑 Di-stop manual — tidak reconnect'}`);
+        if (!isRestart) {
+          // Niat user = berhenti. Ini satu-satunya tempat (selain logout) yang
+          // boleh nol-in is_running dari sisi engine.
+          await pool.execute("UPDATE bots SET is_running = 0 WHERE id = ?", [botId]);
+          return;
+        }
       }
 
       if (isLogout) {
@@ -994,4 +1002,50 @@ async function stopWhatsAppBot(botId) {
   pairingBots.delete(botId); // niat pairing ikut batal pas bot di-stop
 }
 
-module.exports = { startWhatsAppBot, stopWhatsAppBot, setWsBroadcast, getBotGlobalSetting, setBotGlobalSetting };
+// ─── Restart satu bot (dipakai command .restart & HTTP /api/bots/:id/restart) ─
+// JANGAN pakai stopWhatsAppBot(): dia nge-nol-in is_running di DB (niat "stop"),
+// jadi auto-start pas boot server bakal ninggalin bot ini. Di sini kita:
+//   1. tandai restartingBots + is_running=1 DULUAN, biar auto-reconnect ngerti
+//      ini restart (bukan stop) dan statusnya tetap "harus jalan"
+//   2. stopWhatsAppBot() ngehapus entri activeBots (kunci: dia hapus DULUAN baru
+//      tunggu 5 detik; kalau masih ke-panggil nanti, guard aktif di bawah
+//      bikin timer 5 detik itu jadi mubazir — bukan dobel-start)
+//   3. startWhatsAppBot() lagi pakai data fresh dari DB
+async function restartWhatsAppBot(botId) {
+  const inst = activeBots.get(botId);
+  if (!inst) throw new Error('Bot tidak sedang berjalan');
+
+  const [rows] = await pool.execute('SELECT * FROM bots WHERE id = ?', [botId]);
+  const botData = rows[0];
+  if (!botData) throw new Error('Bot tidak ditemukan');
+
+  restartingBots.add(botId);
+  await pool.execute("UPDATE bots SET is_running = 1 WHERE id = ?", [botId]);
+
+  try {
+    await stopWhatsAppBot(botId);
+    await startWhatsAppBot(botData, pairingBots.has(botId));
+  } catch (e) {
+    restartingBots.delete(botId); // gagal -> jangan tinggalin flag nyangkut
+    throw e;
+  }
+}
+
+// Jalanin restart TANPA nunggu proses start selesai — WA nyambung ~10 detik dan
+// handler WA ini nggak boleh kelamaan ditahan (pesan balasan baru kebaca WA).
+function restartWhatsAppBotInBackground(botId) {
+  const [rowsPromise] = [pool.execute('SELECT * FROM bots WHERE id = ?', [botId])];
+  return rowsPromise.then(([rows]) => {
+    const botData = rows[0];
+    if (!botData) throw new Error('Bot tidak ditemukan');
+    restartingBots.add(botId);
+    return pool.execute("UPDATE bots SET is_running = 1 WHERE id = ?", [botId])
+      .then(() => stopWhatsAppBot(botId))
+      .then(() => startWhatsAppBot(botData, pairingBots.has(botId)));
+  }).catch((e) => {
+    restartingBots.delete(botId);
+    throw e;
+  });
+}
+
+module.exports = { startWhatsAppBot, stopWhatsAppBot, restartWhatsAppBot, restartWhatsAppBotInBackground, setWsBroadcast, getBotGlobalSetting, setBotGlobalSetting };

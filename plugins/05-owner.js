@@ -2398,6 +2398,38 @@ module.exports = async function ownerHandler(ctx) {
       return true;
     }
 
+    // ─── RESTART BOT INI SENDIRI (owner + dev) ──────────────────────────
+    case 'restart': {
+      const devNum    = String(process.env.DEVELOPER_NUMBER || '').replace(/\D/g, '');
+      const senderNum = String(ctx.sender || '').split('@')[0].split(':')[0];
+      if (!ctx.isOwner && !(devNum && senderNum === devNum)) {
+        await reply(mess.ownerOnly);
+        return true;
+      }
+
+      // Balas DULU: proses restart ngebunuh koneksi WA bot ini, kalau balasan
+      // dikirim setelahnya nggak akan pernah nyampe.
+      await reply(`🔁 Bot *${botData.bot_name || botId}* lagi di-restart...\nsabar ~10 detik ya, nanti bot nyambung sendiri.`);
+      await react('🔁').catch(() => {});
+
+      // Jalan di background — handler pesan jangan ditahan nunggu handshake WA.
+      const { restartWhatsAppBotInBackground } = require('../engine/whatsappEngine');
+      restartWhatsAppBotInBackground(botId).catch(async (e) => {
+        console.error(`[Bot ${botId}] restart dari command gagal:`, e.message);
+        try {
+          const { logBot } = require('../engine/whatsappEngine');
+          await logBot?.(botId, 'error', `Restart gagal: ${e.message}`);
+        } catch { /* log doang, jangan ikut meledak */ }
+        // Kalau gagal, hidupin balik botnya biar user nggak ditinggal mati.
+        try {
+          const [rows] = await pool.execute('SELECT * FROM bots WHERE id = ?', [botId]);
+          const { startWhatsAppBot } = require('../engine/whatsappEngine');
+          if (rows[0]) await startWhatsAppBot(rows[0], false);
+        } catch { /* udah mentok, cukup di log */ }
+      });
+      return true;
+    }
+
     default:
       return false;
   }

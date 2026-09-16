@@ -311,6 +311,21 @@ async function restartBot(req, res) {
     const bot = await assertOwnership(req, res, req.params.id);
     if (!bot) return;
 
+    const { restartWhatsAppBot } = require('../engine/whatsappEngine');
+    const telegram = bot.platform === 'telegram';
+
+    if (!telegram) {
+      try {
+        // restartWhatsAppBot() nge-tandai is_running=1 + restartingBots dulu,
+        // baru stop, baru start — lihat komentar di engine.
+        await restartWhatsAppBot(bot.id);
+      } catch (e) {
+        return sendError(res, 400, e.message || 'Gagal me-restart bot');
+      }
+      return res.json({ ok: true, message: 'Bot di-restart' });
+    }
+
+    // Jalur telegram tetap seperti semula (stop → start manual)
     if (activeBots.has(bot.id)) {
       const { stopWhatsAppBot } = require('../engine/whatsappEngine');
       await stopWhatsAppBot(bot.id);
@@ -318,14 +333,8 @@ async function restartBot(req, res) {
 
     const [rows] = await pool.execute('SELECT * FROM bots WHERE id = ?', [bot.id]);
     const botData = rows[0];
-
-    if (botData.platform === 'telegram') {
-      const { startTelegramBot } = require('../engine/telegramEngine');
-      await startTelegramBot(botData);
-    } else {
-      const { startWhatsAppBot } = require('../engine/whatsappEngine');
-      await startWhatsAppBot(botData, false);
-    }
+    const { startTelegramBot } = require('../engine/telegramEngine');
+    await startTelegramBot(botData);
 
     return res.json({ ok: true, message: 'Bot di-restart' });
   } catch (err) {
