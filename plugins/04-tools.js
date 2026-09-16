@@ -54,6 +54,29 @@ async function extractMedia(ctx, allowed = ['imageMessage', 'videoMessage', 'sti
   return { msgType: sourceType, buffer, mime, isDirect, isQuoted };
 }
 
+// ─── Helper: pilih N video terbaik dari hasil pencarian TikTok ───────────────
+// Skor = berapa banyak kata kunci (>2 huruf) yang muncul di judul; seri →
+// durasi terpendek; masih seri → peringkat API yang lebih atas.
+// ponytail: heuristik kata-per-kata; upgrade ke fuzzy/embedding kalau hasil
+// teratas sering melenceng. Endpoint tidak mengirim playCount, jadi popularitas
+// belum bisa dipakai sebagai patokan.
+const keyWords = (q) => String(q || '').toLowerCase().split(/\s+/).filter(w => w.length > 2);
+const keyMatch = (title, q) => {
+  const w = keyWords(q);
+  return w.length > 0 && String(title || '').toLowerCase().includes(w[0]);
+};
+
+function pickTopVideos(list, q, n = 3) {
+  const words = keyWords(q);
+  const scored = list.map((v, i) => {
+    const title = String(v.title || '').toLowerCase();
+    const hit   = words.filter(w => title.includes(w)).length;
+    return { v, matcher: words.length ? hit / words.length : 0.5, dur: parseInt(v.duration, 10) || 999, i };
+  });
+  scored.sort((a, b) => b.matcher - a.matcher || a.dur - b.dur || a.i - b.i);
+  return scored.slice(0, n).map(s => s.v);
+}
+
 module.exports = async function toolsHandler(ctx) {
   if (!ctx.isCmd) return false;
 
@@ -4614,6 +4637,56 @@ module.exports = async function toolsHandler(ctx) {
       return true;
     }
 
+    // ── ttsearch — Cari Video TikTok ────────────────────────────────────────
+    case 'ttsearch': {
+      const qTt = args.join(' ').trim();
+      if (!qTt) {
+        await reply(`Penggunaan: *${p}ttsearch* <kata kunci>\nContoh: *${p}ttsearch McQueen kece*`);
+        return true;
+      }
+      try {
+        const axios = require('axios');
+        await react(mess.reactLoading);
+        const { data } = await axios.get(`${process.env.BASE_API}api/search/tiktok-search`, {
+          params: { q: qTt },
+          headers: { 'X-API-Key': process.env.KEY_API },
+          timeout: 30000,
+        });
+        const list = Array.isArray(data?.results) ? data.results : [];
+        if (!list.length) throw new Error('Tidak ada video yang cocok');
+
+        // Hasil API udah urut relevansi, jadi kalau nggak ada satu pun judul
+        // yang cocok dengan kata kunci, jangan diacak — pakai peringkat API apa
+        // adanya. Kecocokan judul cuma dipakai kalau memang ada yang nyambung.
+        const scored  = pickTopVideos(list, qTt, list.length);
+        const matched = scored.some(v => keyMatch(v.title, qTt));
+        const top     = (matched ? scored : list).slice(0, 3);
+
+        await react(mess.reactSuccess);
+        for (let n = 0; n < top.length; n++) {
+          const v = top[n];
+          const cap = `🎵 *TikTok Search* ${n + 1}/${top.length}\n📝 ${String(v.title || '-').slice(0, 220)}\n👤 ${v.author || '-'}${v.duration ? ` · ⏱️ ${v.duration}` : ''}`;
+          try {
+            const vidRes = await axios.get(v.play_url, { responseType: 'arraybuffer', timeout: 90000 });
+            const vbuf   = Buffer.from(vidRes.data);
+            const thumb  = await genThumbnail(vbuf, 'video/mp4');
+            await client.message.send(jid, {
+              type: 'video', media: vbuf, mimetype: 'video/mp4',
+              caption: cap,
+              ...(thumb ? { jpegThumbnail: thumb } : {}),
+            });
+          } catch {
+            // video gagal diunduh → jangan hilangkan hasilnya, kirim link aslinya
+            await reply(`${cap}\n🔗 ${v.tiktok_url || v.play_url}`);
+          }
+        }
+      } catch (e) {
+        await react(mess.reactError);
+        await reply(`❌ Gagal cari video TikTok: ${e.message}`);
+      }
+      return true;
+    }
+
     // ── pinterest — Pinterest Downloader ────────────────────────────────────
     case 'pinterest':
     case 'pindl':
@@ -5444,6 +5517,10 @@ module.exports = async function toolsHandler(ctx) {
       return false;
   }
 };
+
+// Diekspor biar tesnya pakai logika yang sama, bukan salinan yang bisa melenceng.
+module.exports.pickTopVideos = pickTopVideos;
+module.exports.keyMatch      = keyMatch;
 
 // Command yang kena limit untuk user biasa
 module.exports.limitedCmds = new Set([
