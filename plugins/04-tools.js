@@ -4643,18 +4643,31 @@ module.exports = async function toolsHandler(ctx) {
 
     // ── ttsearch — Cari Video TikTok ────────────────────────────────────────
     case 'ttsearch': {
-      const qTt = args.join(' ').trim();
+      // Region opsional di paling belakang: `.ttsearch mcqueen edit indo id`
+      const REGIONS = ['ID','MY','SG','US','GB','JP','KR','TH','VN','PH','IN','BR','MX','TR','SA','AU','CA','DE','FR','IT','ES','NL','RU','CN','TW','HK'];
+      let argsTt  = args.slice();
+      let argRegion = null;
+      const lastTt = String(argsTt[argsTt.length - 1] || '').toLowerCase();
+      if (argsTt.length > 1 && REGIONS.includes(lastTt.toUpperCase()) && lastTt.length === 2) {
+        argRegion = lastTt.toUpperCase();
+        argsTt = argsTt.slice(0, -1);
+      }
+      const qTt = argsTt.join(' ').trim();
       if (!qTt) {
-        await reply(`Penggunaan: *${p}ttsearch* <kata kunci>\nContoh: *${p}ttsearch McQueen kece*`);
+        await reply(`Penggunaan: *${p}ttsearch* <kata kunci> [region]\n`
+          + `Contoh: *${p}ttsearch McQueen kece*\n`
+          + `Contoh: *${p}ttsearch mcqueen edit indo id* → video dari Indonesia\n\n`
+          + `_Kode region: ID MY SG US GB JP KR TH VN PH IN BR MX TR SA AU CA DE FR IT ES NL RU CN TW HK_\n`
+          + `_Tanpa kode region = hasil global (umumnya video luar)._`);
         return true;
       }
       try {
         const axios = require('axios');
         await react(mess.reactLoading);
         const { data } = await axios.get(`${process.env.BASE_API}api/search/tiktok-search`, {
-          params: { q: qTt },
+          params: { q: qTt, ...(argRegion ? { region: argRegion } : {}) },
           headers: { 'X-API-Key': process.env.KEY_API },
-          timeout: 30000,
+          timeout: 45000,
         });
         const list = Array.isArray(data?.results) ? data.results : [];
         if (!list.length) throw new Error('Tidak ada video yang cocok');
@@ -4695,7 +4708,7 @@ module.exports = async function toolsHandler(ctx) {
 
         for (let n = 0; n < top.length; n++) {
           const v = top[n];
-          const cap = `🎵 *TikTok Search* ${n + 1}/${top.length}\n📝 ${String(v.title || '-').slice(0, 220)}\n👤 ${v.author || '-'}${v.duration ? ` · ⏱️ ${v.duration}` : ''}`;
+          const cap = `🎵 *TikTok Search* ${n + 1}/${top.length}${argRegion ? ` · 🌏 ${argRegion}` : ''}\n📝 ${String(v.title || '-').slice(0, 220)}\n👤 ${v.author || '-'}${v.duration ? ` · ⏱️ ${v.duration}` : ''}`;
           try {
             const vbuf  = await ambilVideo(v);
             const thumb = await genThumbnail(vbuf, 'video/mp4');
