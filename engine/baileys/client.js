@@ -70,6 +70,9 @@ const isRawProto = (c) =>
 const SENT_TTL_MS = 10 * 60 * 1000;
 const SENT_MAX = 300;
 const sentMessages = new Map(); // messageId -> { message, at }
+// Hook buat plugin yg mau ikut nyimpen pesan keluar (antidelete di 02-group.js).
+const sentHooks = new Set();
+const onMessageSent = (fn) => { sentHooks.add(fn); return () => sentHooks.delete(fn); };
 
 function rememberSent(wam) {
   const id = wam?.key?.id;
@@ -78,6 +81,9 @@ function rememberSent(wam) {
   for (const [k, v] of sentMessages) if (now - v.at > SENT_TTL_MS) sentMessages.delete(k);
   while (sentMessages.size >= SENT_MAX) sentMessages.delete(sentMessages.keys().next().value);
   sentMessages.set(id, { message: wam.message, at: now });
+  // Pesan yang kita kirim juga bahan antidelete: justru balasan bot yang
+  // paling sering dihapus orang, dan itu nggak pernah lewat jalur pesan masuk.
+  for (const fn of sentHooks) { try { fn(wam); } catch (e) { logger?.error?.(`sentHook: ${e.message}`); } }
 }
 
 function lookupSent(key) {
@@ -640,4 +646,5 @@ module.exports = {
   createClient, toBaileysContent, toBaileysOptions, normalizeGroupMeta, isRawProto, attachMentions,
   normalizeParticipantResults, withTimeout, asArray,
   rememberSent, lookupSent, // buat test retry receipt
+  onMessageSent,             // buat antidelete (plugins/02-group.js)
 };

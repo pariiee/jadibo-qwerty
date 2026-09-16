@@ -19,12 +19,109 @@ const absenStore      = new Map(); // groupJid -> { title, members: Set<jid> }
 const afkStore        = new Map(); // jid -> { reason, since }
 const topchatStore    = new Map(); // groupJid -> Map<jid, count>
 const msgStore        = new Map(); // remoteJid|id -> event (untuk antidelete)
+const fs              = require('fs');
+const path            = require('path');
 
-const fs   = require('fs');
-const path = require('path');
+// Pesan yang BOT kirim sendiri nggak pernah lewat jalur pesan masuk (engine
+// skip `fromMe` di line ~477), jadi store-nya cuma keisi pesan orang lain —
+// padahal yang paling sering dihapus justru balasan bot. Sambung ke adapter.
+try {
+  const { onMessageSent } = require('../engine/baileys/client');
+  if (typeof onMessageSent === 'function') {
+    onMessageSent((wam) => {
+      const jid = wam?.key?.remoteJid;
+      if (jid && jid.endsWith('@g.us')) antideleteRemember(jid, wam.key.id, wam.message, true);
+    });
+  }
+} catch { /* adapter lain (mis. zapo lama) nggak punya hook ini */ }
 
 // Baca antidelete status dari proteksi-settings.json (shared dengan 06-proteksi.js)
 const PROTEKSI_FILE = path.join(__dirname, '..', 'sessions', 'proteksi-settings.json');
+
+// Anti-delete gampang kelihatan "rusak" padahal cuma kehabisan bahan: store-nya
+// RAM, dan tiap bot restart (deploy/preview/crash) isinya hilang. Yang dihapus
+// user belum tentu pesan yang barusan masuk — teks terakhir di grup bisa udah
+// ketimbun command. Jadi simpan juga ke disk, tapi cuma kalau antidelete nyala
+// di grup mana pun: grup yang nggak pakai fitur nggak bayar apa-apa.
+const STORE_FILE  = path.join(__dirname, '..', 'data', 'antidelete-store.json');
+const STORE_MAX   = 800;                         // per grup, yang lama dibuang
+const STORE_TTL   = 2 * 24 * 60 * 60 * 1000;     // 2 hari
+const STORE_SKIP  = new Set(['senderKeyDistributionMessage', 'messageContextInfo', 'protocolMessage', 'reactionMessage']);
+
+// Grup mana pakai antidelete — di-cache, dibaca ulang kalau file setting berubah.
+let _adActive = null, _adMtime = 0;
+function antideleteActiveCache() {
+  try {
+    const mt = fs.statSync(PROTEKSI_FILE).mtimeMs;
+    if (_adActive === null || mt !== _adMtime) {
+      const data = JSON.parse(fs.readFileSync(PROTEKSI_FILE, 'utf8'));
+      _adActive = new Set(Object.keys(data).filter((j) => data[j]?.antidelete === true));
+      _adMtime = mt;
+    }
+  } catch { _adActive = new Set(); }
+  return _adActive;
+}
+
+let _dirty = false;
+// fromMe=true = pesan yang BOT sendiri kirim. Ini yang paling sering dihapus
+// orang (justru balasan bot), tapi nggak pernah lewat jalur pesan masuk — jadi
+// tanpa penanda ini store-nya kosong melompong terus.
+function antideleteRemember(remoteJid, id, message, fromMe = false) {
+  if (!id || !message) return;
+  if (!antideleteActiveCache().size) return;
+  const type = Object.keys(message)[0] || '';
+  if (STORE_SKIP.has(type)) return;
+  msgStore.set(remoteJid + '|' + id, { remoteJid, id, message, at: Date.now(), fromMe });
+  _dirty = true;
+  antideleteFlush();
+}
+
+function antideleteFlush() {
+  if (!_dirty) return;
+  _dirty = false;
+  try {
+    const now = Date.now();
+    const perGroup = new Map();
+    for (const [k, v] of msgStore) {
+      if (now - v.at > STORE_TTL) { msgStore.delete(k); continue; }
+      const g = perGroup.get(v.remoteJid) || [];
+      g.push(v);
+      perGroup.set(v.remoteJid, g);
+    }
+    const out = [];
+    for (const g of perGroup.values()) {
+      g.sort((a, b) => a.at - b.at);
+      out.push(...g.slice(-STORE_MAX));
+    }
+    fs.writeFileSync(STORE_FILE, JSON.stringify(out));
+  } catch { /* store nggak boleh bikin pesan gagal diproses */ }
+}
+
+function antideleteLoad() {
+  try {
+    const now = Date.now();
+    for (const v of JSON.parse(fs.readFileSync(STORE_FILE, 'utf8'))) {
+      if (!v?.id || !v?.message || now - v.at > STORE_TTL) continue;
+      msgStore.set(v.remoteJid + '|' + v.id, { ...v, message: reviveBuffers(v.message) });
+    }
+  } catch { /* nggak ada / rusak = mulai dari kosong */ }
+}
+antideleteLoad();
+
+// JSON nggak kenal Buffer: mediaKey/fileSha256 balik jadi {type:'Buffer',data:[…]}
+// dan downloadMediaMessage nolak itu. Balikin ke Buffer sebelum dipakai.
+function reviveBuffers(obj) {
+  if (Buffer.isBuffer(obj)) return obj;
+  if (Array.isArray(obj)) return obj.map(reviveBuffers);
+  if (obj && typeof obj === 'object') {
+    if (obj.type === 'Buffer' && Array.isArray(obj.data)) return Buffer.from(obj.data);
+    const out = {};
+    for (const k of Object.keys(obj)) out[k] = reviveBuffers(obj[k]);
+    return out;
+  }
+  return obj;
+}
+
 function isAntideleteActive(groupJid) {
   try {
     if (!fs.existsSync(PROTEKSI_FILE)) return false;
@@ -43,20 +140,16 @@ module.exports = async function groupHandler(ctx) {
       if (msgType === 'protocolMessage' && rawMsg.message.protocolMessage?.type === 0) {
         const deletedKey = rawMsg.message.protocolMessage.key;
         const storeKey   = `${deletedKey.remoteJid}|${deletedKey.id}`;
-        console.log(`[Antidelete] delete event jid=${ctx.jid} active=${isAntideleteActive(ctx.jid)} storeKey=${storeKey} stored=${msgStore.has(storeKey)} msgStoreSize=${msgStore.size}`);
         if (isAntideleteActive(ctx.jid)) {
           const stored     = msgStore.get(storeKey);
-          console.log(`[Antidelete] stored keys: ${stored ? JSON.stringify(Object.keys(stored)) : 'null'}, storedMsg keys: ${stored?.message ? JSON.stringify(Object.keys(stored.message)) : 'null'}, deletedKey: ${JSON.stringify(deletedKey)}`);
           if (stored) {
             const storedType    = Object.keys(stored.message)[0];
             const storedContent = stored.message[storedType];
-            // Resolve siapa yang hapus pesan (participant di delete event, fallback ke stored sender)
             const deleterJid = rawMsg.key?.participant || rawMsg.key?.remoteJid || '';
             const deleterPhone = deleterJid.split('@')[0];
             try {
               const headerText = `🛡️ *Anti-Delete*\n@${deleterPhone} ngapain di hapus bang 😹`;
               if (storedType === 'stickerMessage') {
-                // Stiker: kirim stikernya dulu, lalu teks mention terpisah
                 const fixed = Object.assign({}, storedContent);
                 for (const f of ['mediaKey','fileSha256','fileEncSha256']) {
                   if (typeof fixed[f] === 'string') fixed[f] = Buffer.from(fixed[f], 'base64');
@@ -65,22 +158,27 @@ module.exports = async function groupHandler(ctx) {
                 await ctx.client.message.send(ctx.jid, {
                   type: 'sticker', media: buffer, mimetype: storedContent.mimetype || 'image/webp',
                 });
-                await ctx.client.message.send(ctx.jid, {
-                  type: 'text',
-                  text: headerText,
-                  mentions: [deleterJid],
-                });
+                await ctx.client.message.send(ctx.jid, { type: 'text', text: headerText, mentions: [deleterJid] });
               } else if (['imageMessage','videoMessage','audioMessage'].includes(storedType)) {
                 const uploadType = storedType === 'imageMessage' ? 'image'
                   : storedType === 'videoMessage' ? 'video'
                   : (storedContent.ptt ? 'ptt' : 'audio');
+                const mime = storedContent.mimetype || 'application/octet-stream';
                 const fixed = Object.assign({}, storedContent);
                 for (const f of ['mediaKey','fileSha256','fileEncSha256']) {
                   if (typeof fixed[f] === 'string') fixed[f] = Buffer.from(fixed[f], 'base64');
                 }
-                const buffer = await ctx.client.message.downloadBytes({ [storedType]: fixed });
-                const mime   = storedContent.mimetype || 'application/octet-stream';
-                // Caption: hanya tampilkan caption asli kalau ada
+                let buffer;
+                try {
+                  buffer = await ctx.client.message.downloadBytes({ [storedType]: fixed });
+                } catch (dlErr) {
+                  console.log(`[Antidelete] media gagal diunduh: ${dlErr.message}`);
+                  await ctx.client.message.send(ctx.jid, {
+                    type: 'text', text: `${headerText}\n\n⚠️ Medianya udah nggak bisa diunduh`,
+                    mentions: [deleterJid],
+                  }).catch(() => {});
+                  return false;
+                }
                 const extraCaption = storedContent.caption ? `\n\n${storedContent.caption}` : '';
                 await ctx.client.message.send(ctx.jid, {
                   type: uploadType, media: buffer, mimetype: mime,
@@ -88,14 +186,24 @@ module.exports = async function groupHandler(ctx) {
                   mentions: [deleterJid],
                 });
               } else {
-                const text = storedContent?.text || storedContent?.caption || storedContent || '';
+                const text = storedContent?.text || storedContent?.caption || (typeof storedContent === 'string' ? storedContent : '');
                 await ctx.client.message.send(ctx.jid, {
-                  type: 'text',
-                  text: `${headerText}\n\n${text}`,
+                  type: 'text', text: text ? `${headerText}\n\n${text}` : headerText,
                   mentions: [deleterJid],
                 });
               }
-            } catch (e) { console.log(`[Antidelete] gagal kirim ulang: ${e.message}`) }
+            } catch (e) {
+              // Dulu cuma console.log: user nggak dapat apa-apa dan keliatannya
+              // "bot nggak respon". Minimal kasih tahu pesannya kehapus tapi gagal dikirim ulang.
+              console.log(`[Antidelete] gagal kirim ulang: ${e.message}`);
+              try {
+                await ctx.client.message.send(ctx.jid, {
+                  type: 'text',
+                  text: `🛡️ *Anti-Delete*\n@${deleterPhone} hapus pesan, tapi gagal dikirim ulang (${e.message})`,
+                  mentions: [deleterJid],
+                });
+              } catch { /* dua-duanya gagal */ }
+            }
           }
         }
         return false;
@@ -103,13 +211,7 @@ module.exports = async function groupHandler(ctx) {
 
       // ── Store pesan untuk antidelete ─────────────────────────────────────────
       if (rawMsg?.key && rawMsg?.message && msgType !== 'protocolMessage') {
-        const storeKey = `${rawMsg.key.remoteJid}|${rawMsg.key.id}`;
-        msgStore.set(storeKey, rawMsg);
-        // Batasi ukuran store agar tidak bocor memory
-        if (msgStore.size > 5000) {
-          const firstKey = msgStore.keys().next().value;
-          msgStore.delete(firstKey);
-        }
+        antideleteRemember(rawMsg.key.remoteJid, rawMsg.key.id, rawMsg.message, rawMsg.key.fromMe === true);
       }
 
       // ── AFK check ─────────────────────────────────────────────────────────────
