@@ -1890,8 +1890,10 @@ module.exports = async function toolsHandler(ctx) {
     case 'ssweb':
     case 'ss':
     case 'screenshot': {
-      const ssUrl = args[0];
-      if (!ssUrl) { await reply(`Penggunaan: ${p}ssweb <url>\nContoh: ${p}ssweb https://google.com`); return true; }
+      const ssRaw = args.join(' ').trim();
+      if (!ssRaw) { await reply(`Penggunaan: ${p}ssweb <url>\nContoh: ${p}ssweb https://google.com`); return true; }
+      // URL telanjang ("luminara.com") → tambah https:// biar API nggak balikin 400
+      const ssUrl = /^https?:\/\//i.test(ssRaw) ? ssRaw : `https://${ssRaw}`;
       try {
         await react(mess.reactLoading);
         const axios = require('axios');
@@ -1899,11 +1901,11 @@ module.exports = async function toolsHandler(ctx) {
           params: { url: ssUrl }, headers: { 'X-API-Key': process.env.KEY_API }, timeout: 20000,
         });
         const imgUrl = data?.results?.screenshot_url;
-        if (!imgUrl) throw new Error('Gagal screenshot');
+        if (!imgUrl) throw new Error(data?.message || 'Gagal screenshot');
         const res = await axios.get(imgUrl, { responseType: 'arraybuffer', timeout: 30000 });
         await client.message.send(jid, { type: 'image', media: Buffer.from(res.data), mimetype: 'image/jpeg', caption: `🌐 *Screenshot*\n${ssUrl}` });
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.response?.data?.message || e.message}`); }
       return true;
     }
 
@@ -2306,65 +2308,115 @@ module.exports = async function toolsHandler(ctx) {
       return true;
     }
 
-    // ── play — Putar lagu: yt-search → ytmp3 → kirim audio ───────────────
+    // ── play — Putar lagu: yt-dlp lokal (URL terikat IP server sendiri) ──
+    // Akar fix ETIMEDOUT: URL googlevideo IP-locked ke pembuatnya. Kalau URL dibuat
+    // di VPS A, VPS B nggak bisa download (ditolak instan). yt-dlp lokal → URL pakai IP sendiri.
     case 'play': {
       const qPlay = args.join(' ').trim();
       if (!qPlay) { await reply(`Penggunaan: ${p}play <judul lagu>\nContoh: ${p}play dalinda`); return true; }
       try {
         await react(mess.reactLoading);
         const axios = require('axios');
-        const search = require('yt-search');
-        // 1) Cari di YouTube langsung (yt-search, bukan endpoint yts)
-        const look = await search(qPlay);
-        const convert = look.videos?.[0];
-        if (!convert) throw new Error('Lagu tidak ditemukan');
-        if (convert.seconds >= 3600) throw new Error('Video lebih dari 1 jam — coba lagu lain');
-
-        // 2) Konversi ke MP3 via ytmp3
-        const mp3 = await axios.get(`${process.env.BASE_API}api/download/ytmp3`, {
-          params: { url: convert.url }, headers: { 'X-API-Key': process.env.KEY_API }, timeout: 60000,
-        });
-        const mp3Data = mp3.data?.results;
-        if (!mp3Data?.audio?.url) throw new Error('Tidak ada audio dari konverter');
-        // Pilih m4a (itag 140) kalau ada — lebih compatible buat WA daripada webm/opus
-        const m4a = Array.isArray(mp3Data.audios) ? mp3Data.audios.find(a => a.format === 'm4a') : null;
-        const chosen = m4a || mp3Data.audio;
-        const fmt = (chosen.format || '').toLowerCase();
-        const mimeAudio = fmt === 'm4a' ? 'audio/mp4'
-                        : fmt === 'webm' ? 'audio/webm; codecs=opus'
-                        : 'audio/mpeg';
-
-        // 3) Download audio, convert ke MP3 (ffmpeg) biar pasti playable di WA, lalu kirim
-        const audioRes = await axios.get(chosen.url, { responseType: 'arraybuffer', timeout: 120000 });
         const fs = require('fs');
         const os = require('os');
         const path = require('path');
         const { spawn } = require('child_process');
-        const tmpIn  = path.join(os.tmpdir(), `play_in_${Date.now()}.${fmt === 'webm' ? 'webm' : 'm4a'}`);
+
+        // Jalanin yt-dlp. missing=true kalau binary nggak ada (mis. di Windows lokal).
+        const runYtDlp = (argv, timeoutMs = 180000) => new Promise(resolve => {
+          let out = '', err = '', done = false, ch;
+          try { ch = spawn('yt-dlp', argv); } catch (e) { return resolve({ ok: false, out: '', err: String(e.message), missing: true }); }
+          const timer = setTimeout(() => { try { ch.kill('SIGKILL'); } catch {} finish({ ok: false, out, err: err + ' [timeout]' }); }, timeoutMs);
+          const finish = r => { if (!done) { done = true; clearTimeout(timer); resolve(r); } };
+          ch.stdout.on('data', d => { out += d; });
+          ch.stderr.on('data', d => { err += d; });
+          ch.on('error', e => finish({ ok: false, out, err: String(e.message), missing: e.code === 'ENOENT' }));
+          ch.on('close', code => finish({ ok: code === 0, out, err }));
+        });
+
+        const norm = s => String(s || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+        const fmtDur = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+
+        // 1) Cari kandidat: yt-dlp -J kasih durasi → buang kompilasi/full album/live loop
+        let pick = null;
+        const srch = await runYtDlp(['--flat-playlist', '--no-warnings', '-J', `ytsearch10:${qPlay}`], 90000);
+        if (srch.ok) {
+          let list = [];
+          try { list = JSON.parse(srch.out)?.entries || []; } catch {}
+          const tokens = norm(qPlay).split(' ').filter(t => t.length > 1);
+          const scored = list
+            .filter(e => e && e.id && !e.is_live && Number.isFinite(e.duration))
+            .filter(e => e.duration >= 30 && e.duration <= 600)   // 30 detik s/d 10 menit
+            .map(e => {
+              const t = norm(e.title);
+              const hit = tokens.filter(tk => t.includes(tk)).length;
+              return { ...e, _ratio: tokens.length ? hit / tokens.length : 0 };
+            })
+            .sort((a, b) => (b._ratio - a._ratio) || (a.duration - b.duration)); // paling cocok, lalu terpendek
+          pick = scored[0]
+              || list.find(e => e && e.id && Number.isFinite(e.duration) && e.duration <= 3600)  // jaring terakhir
+              || null;
+        }
+
+        // 2) Download audio pakai yt-dlp lokal (URL-nya terikat IP server ini)
+        let audioBuf = null, usedLocal = false;
+        let ytTitle = pick?.title, ytUploader = pick?.uploader, ytDur = pick?.duration_string;
+        if (pick) {
+          const tmpl = path.join(os.tmpdir(), `play_${Date.now()}.%(ext)s`);
+          const dl = await runYtDlp(['-f', 'bestaudio[ext=m4a]/bestaudio', '--no-playlist', '--no-warnings',
+                                     '--no-simulate', '--print', 'after_move:filepath',
+                                     '-o', tmpl, pick.id], 240000);
+          const lines = dl.out.split('\n').map(s => s.trim()).filter(Boolean);
+          const real = lines.reverse().find(l => l.includes(path.sep) || /\.(m4a|webm|mp3|opus|mp4|mka)$/i.test(l));
+          if (dl.ok && real && fs.existsSync(real)) {
+            audioBuf = fs.readFileSync(real);
+            usedLocal = true;
+            try { fs.unlinkSync(real); } catch {}
+          } else if (real) { try { fs.unlinkSync(real); } catch {} }
+        }
+
+        // 3) Fallback: yt-dlp nggak ada / gagal → jalur API lama (yt-search + ytmp3)
+        if (!audioBuf) {
+          const search = require('yt-search');
+          const look = await search(qPlay);
+          const inRange = (look.videos || []).filter(v => v.seconds >= 30 && v.seconds <= 600);
+          const convert = inRange[0] || look.videos?.[0];
+          if (!convert) throw new Error('Lagu tidak ditemukan');
+          const mp3 = await axios.get(`${process.env.BASE_API}api/download/ytmp3`, {
+            params: { url: convert.url }, headers: { 'X-API-Key': process.env.KEY_API }, timeout: 60000,
+          });
+          const d = mp3.data?.results;
+          if (!d?.audio?.url) throw new Error('Tidak ada audio dari konverter');
+          const m4a = Array.isArray(d.audios) ? d.audios.find(a => a.format === 'm4a') : null;
+          const chosen = m4a || d.audio;
+          const res = await axios.get(chosen.url, { responseType: 'arraybuffer', timeout: 120000 });
+          audioBuf = Buffer.from(res.data);
+          ytTitle = d.title || convert.title;
+          ytUploader = d.channel || convert.author?.name;
+          ytDur = d.duration_str || convert.timestamp;
+        }
+
+        // 4) Convert ke MP3 (ffmpeg) biar pasti playable di WA
+        const tmpIn  = path.join(os.tmpdir(), `play_in_${Date.now()}`);
         const tmpOut = path.join(os.tmpdir(), `play_out_${Date.now()}.mp3`);
-        fs.writeFileSync(tmpIn, Buffer.from(audioRes.data));
+        fs.writeFileSync(tmpIn, audioBuf);
+        let finalBuf = audioBuf, ffOk = false;
         try {
           await new Promise((resolve, reject) => {
             const ff = spawn('ffmpeg', ['-y', '-i', tmpIn, '-vn', '-codec:a', 'libmp3lame', '-b:a', '128k', tmpOut]);
             ff.on('error', reject);
             ff.on('close', code => code !== 0 ? reject(new Error(`ffmpeg exit ${code}`)) : resolve());
           });
-        } catch (ffErr) {
-          // Fallback: kalau ffmpeg nggak ada, kirim file asli (m4a/webm)
-          try { fs.unlinkSync(tmpIn); } catch {}
-          await react(mess.reactSuccess);
-          await client.message.send(jid, { type: 'audio', media: Buffer.from(audioRes.data), mimetype: mimeAudio });
-          const durFb = mp3Data.duration_str || convert.timestamp;
-          await reply(`🎵🎵 *${mp3Data.title || convert.title || 'Lagu'}*${durFb ? ` [${durFb}]` : ''}\n🎵🎵 ${mp3Data.channel || convert.author?.name || '-'}${ffErr.code === 'ENOENT' ? '\n_⚠️ ffmpeg tidak ada — audio mungkin tidak playable_' : ''}`);
-          return true;
-        }
-        const mp3Buf = fs.readFileSync(tmpOut);
+          finalBuf = fs.readFileSync(tmpOut);
+          ffOk = true;
+        } catch { /* kirim apa adanya */ }
         try { fs.unlinkSync(tmpIn); } catch {}
         try { fs.unlinkSync(tmpOut); } catch {}
+
         await react(mess.reactSuccess);
-        await client.message.send(jid, { type: 'audio', media: mp3Buf, mimetype: 'audio/mpeg' });
-        const dur = mp3Data.duration_str || convert.timestamp;
-        await reply(`🎵 *${mp3Data.title || convert.title || 'Lagu'}*${dur ? ` [${dur}]` : ''}\n👤 ${mp3Data.channel || convert.author?.name || '-'}`);
+        await client.message.send(jid, { type: 'audio', media: finalBuf, mimetype: ffOk ? 'audio/mpeg' : 'audio/mp4' });
+        const durTxt = ytDur || (pick?.duration ? fmtDur(pick.duration) : '');
+        await reply(`🎵 *${ytTitle || qPlay}*${durTxt ? ` [${durTxt}]` : ''}\n👤 ${ytUploader || '-'}`);
       } catch (e) {
         await react(mess.reactError);
         const msgErr = e?.response?.data?.message || e?.message || '';
@@ -2745,8 +2797,7 @@ module.exports = async function toolsHandler(ctx) {
     }
 
     // ── searchcode — Cari Kode di GitHub ──────────────────────────────────
-    case 'searchcode':
-    case 'caricode': {
+    case 'searchcode': {
       const scArgs = args.join(' ').trim();
       if (!scArgs) { await reply(`Penggunaan: ${p}searchcode <query> [repo]\nContoh: ${p}searchcode hello world`); return true; }
       try {
@@ -3192,9 +3243,11 @@ module.exports = async function toolsHandler(ctx) {
           filename = content.fileName || `file_${Date.now()}.${mimeToExt(mime)}`;
         }
 
-        // Cek ukuran file max 5MB
-        if (buffer.length > 5 * 1024 * 1024) {
-          await reply('Ukuran media tidak boleh melebihi 5MB');
+        // Cek ukuran file. nginx VPS A = client_max_body_size 100m, PHP post_max_size = 100M.
+        // Cap bot 64MB biar aman di bawah keduanya.
+        const MAX_TOURL2_MB = 64;
+        if (buffer.length > MAX_TOURL2_MB * 1024 * 1024) {
+          await reply(`Ukuran media tidak boleh melebihi ${MAX_TOURL2_MB}MB (file ini ${(buffer.length / 1024 / 1024).toFixed(1)}MB)`);
           return true;
         }
 

@@ -107,7 +107,7 @@ const ALL_COMMANDS = [...new Set([
   'discord','stalkdiscord',
   'chess','stalkchess',
   'nimegami','nimegamis','animesearch','shinigami',
-  'spotify','spotifylyrics','slyrics','tiktokphoto','ttkphoto','searchcode','caricode',
+  'spotify','spotifylyrics','slyrics','tiktokphoto','ttkphoto','searchcode',
   'rvo','readviewonce','readvo','liat','crm','crm2',
   // Downloader
   'aio',
@@ -176,12 +176,12 @@ const CATS = {
   proteksi: ['on','off','fitur','proteksi','antibot','antilink','antilinkv2','antitoxic','antispam','antitagsw','autosticker','antisticker','viewonce','autolevelup','detect','autoacc','document','nyimak','autoread'],
   rpg:    ['unreg','profile','me','claim','hourly','weekly','dailymisi','kerja','mancing','berburu','hunt','bertarung','fight','dungeon','adventure','koboy','airdrop','maling','lamarkerja','job','gajian','transfer','tf','bank','atm','topkoin','lb','leaderboard','store','beli','inventory','pakai','gacha','slot','jodoh','suitpvp','coinflip','cf','tictactoe','ttt'],
   maker:  ['sticker','s','wm','brat','bratvid','attp','fakech','fakecall','fakecallip','fakedana','fakeovo','fakegcios','fakepptele','rvo','readviewonce','readvo','liat','swgc','upswgc'],
-  tools:  ['poll','readmore','encode','decode','kalkulator','pick','tourl','tourl2','upload2','upload','pay','tomp4','topng','tovn','2vo','todoc','artinama','igqc','igstoryimg','iqc','ttqc','dafont','dafontdl','lirik','genius','gsmarena','spek','jarak','kbbi','kodepos','bandinghp','comparehp','wilayah','cariwilayah','imei','cekimei','gempa','cuaca','weather','accuweather','prakiraan','checkwa','cekwa','translate','terjemah','tr','qrcode','qr','decodeqr','readqr','ocr','upscale','hd','enhance','ssweb','ss','screenshot','fancytext','fancy','nik','nikinfo','iplookup','ipcek','reverseip','httpheaders','headers','nationalday','hariini','shalat','jadwalshalat','kalendershalat','kshalat','konversitanggal','tanggal','bypass','bypasssfl','bpsfl','drakor','duolingo','npm','resep','steam','play','lk21','lk21trending','lk21search','filmsearch','mcpedl','berita','pinterest','tokopedia','toped','stalktiktok','stalktt','tiktokstalk','roblox','stalkroblox','cekroblox','minecraft','mc','stalkmc','stalkgithub','ghstalk','genshin','stalkgenshin','freefire','ff','stalkff','discord','stalkdiscord','chess','stalkchess','nimegami','nimegamis','animesearch','shinigami','spotify','spotifylyrics','slyrics','tiktokphoto','ttkphoto','searchcode','caricode'],
+  tools:  ['poll','readmore','encode','decode','kalkulator','pick','tourl','tourl2','upload2','upload','pay','tomp4','topng','tovn','2vo','todoc','artinama','igqc','igstoryimg','iqc','ttqc','dafont','dafontdl','lirik','genius','gsmarena','spek','jarak','kbbi','kodepos','bandinghp','comparehp','wilayah','cariwilayah','imei','cekimei','gempa','cuaca','weather','accuweather','prakiraan','checkwa','cekwa','translate','terjemah','tr','qrcode','qr','decodeqr','readqr','ocr','upscale','hd','enhance','ssweb','ss','screenshot','fancytext','fancy','nik','nikinfo','iplookup','ipcek','reverseip','httpheaders','headers','nationalday','hariini','shalat','jadwalshalat','kalendershalat','kshalat','konversitanggal','tanggal','bypass','bypasssfl','bpsfl','drakor','duolingo','npm','resep','steam','play','lk21','lk21trending','lk21search','filmsearch','mcpedl','berita','pinterest','tokopedia','toped','stalktiktok','stalktt','tiktokstalk','roblox','stalkroblox','cekroblox','minecraft','mc','stalkmc','stalkgithub','ghstalk','genshin','stalkgenshin','freefire','ff','stalkff','discord','stalkdiscord','chess','stalkchess','nimegami','nimegamis','animesearch','shinigami','spotify','spotifylyrics','slyrics','tiktokphoto','ttkphoto','searchcode'],
   downloader: ['aio','mediafire','mfdl','likee','likeedl','moddroid','moddroiddl','facebook','fbdl','fb','tgsticker','telesticker','spotify','spotifydl','soundcloud','scdl','sfilemobi','sfile','sfileco','rednote','xiaohongshu','xhs','reddit','redditdl','twitter','twit','xdl','tiktok','tiktokdl','ttdl','tt','pinterest','pindl','pin','threads','threadsdl','youtube','ytdl','yt','gdrive','gdrivedl','instagram','igdl','ig','kuaishou','kwai','kuaishoudl'],
   random: ['aceh','kataaceh','batak','katabatak','bijak','china','katachina','dare','tantangan','fakta','faktaunik','fiersa','fiersabesari','jawa','pepatahjawa','katajawa','katabucin','bucin','katasore','sore','minangkabau','minang','kataminang','motivasi','katamotivasi','ngeles','alasan'],
   game:   ['asahotak','toka','hint','nyerah'],
   owner:  ['ban','unban','block','unblock','broadcast','bcgc','bcgcht','backup','restore','clearsession','cleartmp','listblacklist','listblock','addprem','delprem','listprem','addsewa','delsewa','setsewa','ceksewa','listsewa','tambahsewa','addxp','addmoney','addlimit','addhp','resetlimit','listuser','addlevel','dellevel','delmoney','delxp','dellimit','cekprofil','resetprofil','listrank','leaveall','listgroup','setlimitgc','setgcutama','crm','crm2','addpremgrup','delpremgrup','addrespon','uprespon','delrespon','listrespon','addlist','updatelist','reset','setbio','setpp','warn','unwarn','delwarn','resetwarn','setwarnlimit','listwarn'],
-  admin:  ['add','kick','promoteme','banmember','unbanmember','setppgc','sider','listtotalpesan','setopen','setclose','catatan'],
+  admin:  ['add','kick','promoteme','banmember','unbanmember','setppgc','sider','listtotalpesan','setopen','setclose','catatan','catatanset'],
 };
 
 // Urutan kategori a-z — dipakai teks `.menu`, sub-judul `.menu all`, dan dropdown.
@@ -200,6 +200,14 @@ const CAT_ALIAS = {
   grup: 'grup', group: 'grup', admin: 'admin', groupadmin: 'admin',
   proteksi: 'proteksi', protek: 'proteksi', toggle: 'proteksi',
 };
+
+// Balik: command → kategori. Dipakai `.carifitur` biar kelihatan "gitunya"
+// (Pak: "output carifitur tuh lebih detail di category apa").
+const CMD_CATS = (() => {
+  const m = {};
+  for (const cat of Object.keys(CATS)) for (const c of CATS[cat]) (m[c] = m[c] || []).push(cat);
+  return m;
+})();
 
 module.exports = async function infoHandler(ctx) {
   if (!ctx.isCmd) return false;
@@ -536,14 +544,24 @@ module.exports = async function infoHandler(ctx) {
     }
 
     case 'carifitur': {
-      const q = args.join(' ').toLowerCase();
-      if (!q) { await reply(`Penggunaan: ${p}carifitur <nama command>`); return true; }
-      const found = [...new Set(ALL_COMMANDS.filter(c => c.includes(q)))];
+      const q = args.join(' ').toLowerCase().replace(/^[.\/#!$]/, '').trim();
+      if (!q) { await reply(`Penggunaan: ${p}carifitur <kata kunci>\nContoh: ${p}carifitur play`); return true; }
+      const pool = [...new Set([...ALL_COMMANDS, ...Object.keys(CMD_CATS)])];
+      const found = [...new Set(pool.filter(c => c.includes(q)))].sort();
       if (found.length === 0) {
         await reply(`❌ Tidak ada fitur yang cocok dengan *${q}*`);
-      } else {
-        await reply(`🔍 *Hasil Pencarian: "${q}"*\n\n` + found.map(c => `${p}${c}`).join('\n'));
+        return true;
       }
+      // Dikelompokkan per kategori (urut a-z) biar kelihatan fiturnya masuk "gitunya" mana.
+      const byCat = {};
+      for (const c of found) for (const cat of (CMD_CATS[c] || ['lainnya'])) (byCat[cat] = byCat[cat] || []).push(c);
+      let text = `🔍 *Cari Fitur: "${q}"*\n` +
+        `📊 Ditemukan *${found.length}* command di *${Object.keys(byCat).length}* kategori\n`;
+      for (const cat of Object.keys(byCat).sort()) {
+        text += `\n📂 *${cat.toUpperCase()}* (${byCat[cat].length})\n`;
+        text += byCat[cat].sort().map(c => `▢ ${p}${c}`).join('\n') + '\n';
+      }
+      await reply(text.trimEnd());
       return true;
     }
 
@@ -592,4 +610,5 @@ module.exports.limitedCmds = new Set([
 module.exports._menuBannerHeader = _menuBannerHeader;
 module.exports.ALL_COMMANDS      = ALL_COMMANDS;
 module.exports.CATS              = CATS;
+module.exports.CMD_CATS          = CMD_CATS;
 module.exports.CAT_KEYS          = CAT_KEYS;
