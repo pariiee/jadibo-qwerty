@@ -124,6 +124,35 @@ function restore() {
   assert.strictEqual(sent.length, 1, '5. setelah restart, pesan lama masih bisa dikirim ulang');
   assert.ok(String(sent[0].content.caption).includes('balasan bot'), '5. isinya utuh setelah restart');
 
+  // 6) view-once (foto sekali lihat) yang dihapus -> harus KIRIM ULANG MEDIANYA,
+  //    bukan cuma teks "⚠️ Medianya udah nggak bisa diunduh".
+  sent.length = 0;
+  const { unwrapMessage } = require(path.join(ROOT, 'engine', 'baileys', 'client.js'));
+  await handler(ctx({
+    msg: { key: { remoteJid: GROUP, id: 'VO1', fromMe: false }, message: unwrapMessage({
+      viewOnceMessageV2: { message: { imageMessage: {
+        mediaKey: Buffer.from([7]), mimetype: 'image/jpeg', caption: 'sekali lihat',
+        viewOnce: true, fileLength: 123 } } } }) },
+  }));
+  await handler(ctx({
+    msg: { key: { remoteJid: GROUP, id: 'DEL6', fromMe: false, participant: '628111@s.whatsapp.net' },
+           message: { protocolMessage: { type: 0, key: { remoteJid: GROUP, id: 'VO1' } } } },
+  }));
+  assert.strictEqual(sent.length, 1, '6. view-once harus dikirim ulang sebagai media');
+  assert.strictEqual(sent[0].content.type, 'image', '6. tipenya image, bukan teks peringatan');
+  assert.ok(String(sent[0].content.caption).includes('sekali lihat'), '6. caption aslinya ikut');
+
+  // 7) view-once yang bot kirim sendiri juga harus ter-unwrap & bisa dikirim ulang
+  sent.length = 0;
+  await handler(ctx({
+    msg: { key: { remoteJid: GROUP, id: 'VO2', fromMe: true }, message: unwrapMessage({
+      viewOnceMessageV2: { message: { videoMessage: {
+        mediaKey: Buffer.from([8]), mimetype: 'video/mp4', caption: 'vid sekali lihat' } } } }) },
+  }));
+  const disk3 = JSON.parse(fs.readFileSync(STORE, 'utf8'));
+  assert.strictEqual(disk3.length, 4, '7. view-once keluar ikut tersimpan');
+  assert.strictEqual(Object.keys(disk3[3].message)[0], 'videoMessage', '7. tersimpan dalam bentuk terbuka, bukan bungkusan viewOnce');
+
   restore();
   console.log('✓ antidelete: persisten + pesan keluar bot + media gagal terlihat + grup mati aman');
 })().catch((e) => { restore(); console.error('✗', e.message); process.exit(1); });

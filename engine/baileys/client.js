@@ -58,6 +58,27 @@ const RAW_PROTO_KEYS = [
 const isRawProto = (c) =>
   !!c && typeof c === 'object' && RAW_PROTO_KEYS.some((k) => c[k] !== undefined);
 
+// Media view-once & pesan yang hilang datanya dibungkus dalam `.message` lagi.
+// `msgType` jadi 'viewOnceMessageV2' -> cabang media di plugin nggak kena, dan
+// yang kekirim cuma teks "⚠️ Medianya udah nggak bisa diunduh". Engine yang
+// membuka bungkusnya, jadi SEMUA plugin dapat bentuk yang sama.
+const WRAPPER_KEYS = ['viewOnceMessage', 'viewOnceMessageV2', 'viewOnceMessageV2Extension', 'ephemeralMessage', 'documentWithCaptionMessage'];
+function unwrapMessage(message) {
+  let inner = message;
+  for (let i = 0; i < 5 && inner; i++) {
+    // Media view-once: isi aslinya di .viewOnceMessage(V2...).message
+    const wrapKey = Object.keys(inner).find((k) => WRAPPER_KEYS.includes(k));
+    if (wrapKey && inner[wrapKey]?.message) { inner = inner[wrapKey].message; continue; }
+    // documentWithCaption: isi aslinya di .documentWithCaptionMessage.message.documentMessage.{message,caption}
+    if (inner.documentWithCaptionMessage?.message?.documentMessage) {
+      inner = inner.documentWithCaptionMessage.message.documentMessage.message || inner.documentWithCaptionMessage.message;
+      continue;
+    }
+    break;
+  }
+  return inner ?? message;
+}
+
 // ── Ingat pesan yg KITA kirim, buat jawab retry receipt ──────────────────────
 // Penerima yg gagal decrypt minta kirim ulang; Baileys jawab pakai
 // `getMessage(key)`. Kita dulu jawab `undefined` -> permintaan itu di-drop
@@ -359,7 +380,7 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
   function normalizeIncoming(m) {
     return {
       key: m.key,
-      message: m.message,
+      message: unwrapMessage(m.message),
       chatJid: m.key?.remoteJid,
       pushName: m.pushName,
       messageStubType: m.messageStubType,
@@ -647,4 +668,5 @@ module.exports = {
   normalizeParticipantResults, withTimeout, asArray,
   rememberSent, lookupSent, // buat test retry receipt
   onMessageSent,             // buat antidelete (plugins/02-group.js)
+  unwrapMessage,             // view-once -> media biasa (dipakai banyak plugin)
 };
