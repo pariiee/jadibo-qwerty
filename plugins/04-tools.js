@@ -77,6 +77,22 @@ function pickTopVideos(list, q, n = 3) {
   return scored.slice(0, n).map(s => s.v);
 }
 
+// Jalanin yt-dlp. missing=true kalau binary nggak ada (mis. di Windows lokal).
+// Dipakai bareng oleh `.play` dan `.ttsearch`.
+function runYtDlp(argv, timeoutMs = 180000) {
+  const { spawn } = require('child_process');
+  return new Promise(resolve => {
+    let out = '', err = '', done = false, ch;
+    try { ch = spawn('yt-dlp', argv); } catch (e) { return resolve({ ok: false, out: '', err: String(e.message), missing: true }); }
+    const timer = setTimeout(() => { try { ch.kill('SIGKILL'); } catch {} finish({ ok: false, out, err: err + ' [timeout]' }); }, timeoutMs);
+    const finish = r => { if (!done) { done = true; clearTimeout(timer); resolve(r); } };
+    ch.stdout.on('data', d => { out += d; });
+    ch.stderr.on('data', d => { err += d; });
+    ch.on('error', e => finish({ ok: false, out, err: String(e.message), missing: e.code === 'ENOENT' }));
+    ch.on('close', code => finish({ ok: code === 0, out, err }));
+  });
+}
+
 module.exports = async function toolsHandler(ctx) {
   if (!ctx.isCmd) return false;
 
@@ -2344,18 +2360,6 @@ module.exports = async function toolsHandler(ctx) {
         const os = require('os');
         const path = require('path');
         const { spawn } = require('child_process');
-
-        // Jalanin yt-dlp. missing=true kalau binary nggak ada (mis. di Windows lokal).
-        const runYtDlp = (argv, timeoutMs = 180000) => new Promise(resolve => {
-          let out = '', err = '', done = false, ch;
-          try { ch = spawn('yt-dlp', argv); } catch (e) { return resolve({ ok: false, out: '', err: String(e.message), missing: true }); }
-          const timer = setTimeout(() => { try { ch.kill('SIGKILL'); } catch {} finish({ ok: false, out, err: err + ' [timeout]' }); }, timeoutMs);
-          const finish = r => { if (!done) { done = true; clearTimeout(timer); resolve(r); } };
-          ch.stdout.on('data', d => { out += d; });
-          ch.stderr.on('data', d => { err += d; });
-          ch.on('error', e => finish({ ok: false, out, err: String(e.message), missing: e.code === 'ENOENT' }));
-          ch.on('close', code => finish({ ok: code === 0, out, err }));
-        });
 
         const norm = s => String(s || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
         const fmtDur = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
@@ -4663,13 +4667,38 @@ module.exports = async function toolsHandler(ctx) {
         const top     = (matched ? scored : list).slice(0, 3);
 
         await react(mess.reactSuccess);
+        const fs   = require('fs');
+        const os   = require('os');
+        const path = require('path');
+
+        // CDN hasil search bawaan watermark TikTok. Ambil file asli (watermark-free)
+        // lewat yt-dlp pakai link TikTok-nya. Kalau yt-dlp nggak ada/gagal → fallback
+        // file CDN, lebih baik ada video daripada tidak.
+        const ambilVideo = async v => {
+          const link = v.tiktok_url;
+          if (link) {
+            const tmpl = path.join(os.tmpdir(), `tts_${Date.now()}_${Math.random().toString(36).slice(2, 6)}.%(ext)s`);
+            const dl = await runYtDlp(['-f', 'b[format_id!=download]', '-S', 'vcodec:h264',
+                                                   '--no-playlist', '--no-warnings',
+                                                   '--no-simulate', '--print', 'after_move:filepath', '-o', tmpl, link], 180000);
+            const lines = dl.out.split('\n').map(s => s.trim()).filter(Boolean);
+            const real  = lines.reverse().find(l => /\.(mp4|webm|mkv)$/i.test(l));
+            if (real && fs.existsSync(real)) {
+              const buf = fs.readFileSync(real);
+              try { fs.unlinkSync(real); } catch {}
+              return buf;
+            }
+          }
+          const r = await axios.get(v.play_url, { responseType: 'arraybuffer', timeout: 90000 });
+          return Buffer.from(r.data);
+        };
+
         for (let n = 0; n < top.length; n++) {
           const v = top[n];
           const cap = `🎵 *TikTok Search* ${n + 1}/${top.length}\n📝 ${String(v.title || '-').slice(0, 220)}\n👤 ${v.author || '-'}${v.duration ? ` · ⏱️ ${v.duration}` : ''}`;
           try {
-            const vidRes = await axios.get(v.play_url, { responseType: 'arraybuffer', timeout: 90000 });
-            const vbuf   = Buffer.from(vidRes.data);
-            const thumb  = await genThumbnail(vbuf, 'video/mp4');
+            const vbuf  = await ambilVideo(v);
+            const thumb = await genThumbnail(vbuf, 'video/mp4');
             await client.message.send(jid, {
               type: 'video', media: vbuf, mimetype: 'video/mp4',
               caption: cap,
