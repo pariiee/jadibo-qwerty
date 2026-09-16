@@ -179,10 +179,8 @@ function toBaileysContent(c) {
         video: c.media, ...(c.caption !== undefined && { caption: c.caption }),
         ...(c.mimetype && { mimetype: c.mimetype }),
         ...(c.gifPlayback && { gifPlayback: true }),
-        // ptv = "foto live" (video bulat yg main sekali lalu hilang). Wajib
-        // berpasangan dgn viewOnce, kalau nggak WA nolak/turun jadi video biasa.
-        ...(c.ptv && { ptv: true, viewOnce: true }),
-        ...(!c.ptv && c.viewOnce && { viewOnce: true }), ...withMentions, ...ctx,
+        ...(c.ptv && { ptv: true }),   // ptv = video note (bulat), BUKAN foto live
+        ...(c.viewOnce && { viewOnce: true }), ...withMentions, ...ctx,
       };
 
     case 'audio':

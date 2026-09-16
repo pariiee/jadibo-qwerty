@@ -203,9 +203,10 @@ module.exports = async function groupHandler(ctx) {
                   : (storedContent.ptt ? 'ptt' : 'audio');
                 const mime = storedContent.mimetype || 'application/octet-stream';
                 // Bentuknya dipertahankan: foto sekali-lihat dikirim sekali-lihat
-                // lagi, dan "foto live" (ptv) tetap foto live — bukan turun jadi
-                // video biasa. (`bodyOf`/`cap` baca `storedContent` langsung, jadi
-                // caption TIDAK boleh dihapus dari situ.)
+                // lagi, video note (ptv) tetap video note. (`bodyOf`/`cap` baca
+                // `storedContent` langsung, jadi caption TIDAK boleh dihapus.)
+                // Catatan: "foto live" (motion photo) = foto + video pendamping,
+                // dikirim WA sebagai 2 pesan terpisah — bukan `ptv`.
                 const fixed = Object.assign({}, storedContent);
                 for (const f of ['mediaKey','fileSha256','fileEncSha256']) {
                   if (typeof fixed[f] === 'string') fixed[f] = Buffer.from(fixed[f], 'base64');
@@ -227,7 +228,7 @@ module.exports = async function groupHandler(ctx) {
                 await ctx.client.message.send(ctx.jid, {
                   type: uploadType, media: buffer, mimetype: mime,
                   ...(uploadType === 'document' && { fileName: storedContent.fileName || 'file' }),
-                  ...(isPtv && { ptv: true }),            // foto live
+                  ...(isPtv && { ptv: true }),            // video note (bulat)
                   ...(isViewOnce && { viewOnce: true }),  // sekali lihat
                   caption: isViewOnce ? undefined : cap(),
                   mentions: [deleterJid],

@@ -146,20 +146,20 @@ function restore() {
   assert.strictEqual(sent.length, 2, '6. isi/caption aslinya nyusul jadi pesan kedua');
   assert.ok(String(sent[1].content.text).includes('sekali lihat'), '6. caption aslinya ikut');
 
-  // 6b) FOTO LIVE (video bulat) yang dihapus -> harus balik jadi foto live lagi,
-  //     bukan turun jadi video biasa.
+  // 6b) VIDEO NOTE (ptv) dihapus -> dikirim ulang TETAP video note (bulat).
+  //     (foto live/motion photo bukan ini — dia foto + video terpisah.)
   sent.length = 0;
   await handler(ctx({
-    msg: { key: { remoteJid: GROUP, id: 'VO1B', fromMe: false }, message: unwrapMessage({
-      viewOnceMessageV2: { message: { videoMessage: {
-        mediaKey: Buffer.from([9]), mimetype: 'video/mp4', ptv: true, viewOnce: true } } } }) },
+    msg: { key: { remoteJid: GROUP, id: 'PTV1', fromMe: false }, message: {
+      videoMessage: { mediaKey: Buffer.from([9]), mimetype: 'video/mp4', ptv: true,
+                      seconds: 4, caption: 'catatan video' } } },
   }));
   await handler(ctx({
     msg: { key: { remoteJid: GROUP, id: 'DEL6B', fromMe: false, participant: '628111@s.whatsapp.net' },
-           message: { protocolMessage: { type: 0, key: { remoteJid: GROUP, id: 'VO1B' } } } },
+           message: { protocolMessage: { type: 0, key: { remoteJid: GROUP, id: 'PTV1' } } } },
   }));
-  assert.strictEqual(sent[0].content.ptv, true, '6b. foto live tetap foto live');
-  assert.strictEqual(sent[0].content.viewOnce, true, '6b. + sekali lihat');
+  assert.strictEqual(sent[0].content.type, 'video', '6b. video note balik sbg video');
+  assert.strictEqual(sent[0].content.ptv, true, '6b. tetap video note (bulat), bukan video biasa');
 
   // 7) view-once yang bot kirim sendiri juga harus ter-unwrap & bisa dikirim ulang
   sent.length = 0;
