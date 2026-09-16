@@ -58,7 +58,7 @@ function restore() {
   assert.strictEqual(onDisk[0].message.imageMessage.mediaKey.type, 'Buffer', 'Buffer ke-serialize sebagai JSON (nanti di-revive)');
 
   await handler(ctx({
-    msg: { key: { remoteJid: GROUP, id: 'DEL1', fromMe: true, participant: '628111@s.whatsapp.net' },
+    msg: { key: { remoteJid: GROUP, id: 'DEL1', fromMe: false, participant: '628111@s.whatsapp.net' },
            message: { protocolMessage: { type: 0, key: { remoteJid: GROUP, id: 'IMG1' } } } },
   }));
   assert.strictEqual(sent.length, 1, '1. media harus dikirim ulang setelah dihapus');
@@ -67,7 +67,9 @@ function restore() {
   assert.ok(String(sent[0].content.caption).includes('foto asli'), '1. caption asli ikut diselamatkan');
   assert.deepStrictEqual(sent[0].content.media, Buffer.from('BUF:imageMessage'));
 
-  // 2) pesan KELUAR dari bot (fromMe) -> ini yang paling sering dihapus orang
+  // 2) pesan KELUAR dari bot (fromMe) -> HARUS disimpan (biar bisa dikirim ulang
+  //    saat dihapus), tapi delete yang datang dengan fromMe=true = perintah hapus
+  //    dari bot/owner -> jangan dibalas.
   sent.length = 0;
   await handler(ctx({
     msg: { key: { remoteJid: GROUP, id: 'BOT1', fromMe: true }, message: {
@@ -79,14 +81,21 @@ function restore() {
     msg: { key: { remoteJid: GROUP, id: 'DEL2', fromMe: true, participant: '628111@s.whatsapp.net' },
            message: { protocolMessage: { type: 0, key: { remoteJid: GROUP, id: 'BOT1' } } } },
   }));
-  assert.strictEqual(sent.length, 1, '2. balasan bot harus dikirim ulang saat dihapus');
-  assert.ok(String(sent[0].content.caption).includes('balasan bot'));
+  assert.strictEqual(sent.length, 0, '2. hapus dari bot/owner (fromMe) di-skip, nggak balas');
+
+  // 2b) member lain hapus pesan bot -> baru dibalas, dan teks aslinya dikutip
+  await handler(ctx({
+    msg: { key: { remoteJid: GROUP, id: 'DEL2b', fromMe: false, participant: '628999@s.whatsapp.net' },
+           message: { protocolMessage: { type: 0, key: { remoteJid: GROUP, id: 'BOT1' } } } },
+  }));
+  assert.strictEqual(sent.length, 1, '2b. hapus oleh member biasa tetap dibalas');
+  assert.ok(String(sent[0].content.caption).includes('> balasan bot'), '2b. isi asli tampil sebagai kutipan (>)');
 
   // 3) media gagal diunduh -> user dikasih tahu, bukan diem
   sent.length = 0;
   process.env.AD_DL_FAIL = '1';
   await handler(ctx({
-    msg: { key: { remoteJid: GROUP, id: 'DEL3', fromMe: true, participant: '628111@s.whatsapp.net' },
+    msg: { key: { remoteJid: GROUP, id: 'DEL3', fromMe: false, participant: '628111@s.whatsapp.net' },
            message: { protocolMessage: { type: 0, key: { remoteJid: GROUP, id: 'IMG1' } } } },
   }));
   delete process.env.AD_DL_FAIL;
@@ -109,7 +118,7 @@ function restore() {
   delete require.cache[require.resolve(path.join(ROOT, 'plugins', '02-group.js'))];
   const handlerSetelahRestart = require(path.join(ROOT, 'plugins', '02-group.js'));
   await handlerSetelahRestart(ctx({
-    msg: { key: { remoteJid: GROUP, id: 'DEL4', fromMe: true, participant: '628111@s.whatsapp.net' },
+    msg: { key: { remoteJid: GROUP, id: 'DEL4', fromMe: false, participant: '628111@s.whatsapp.net' },
            message: { protocolMessage: { type: 0, key: { remoteJid: GROUP, id: 'BOT1' } } } },
   }));
   assert.strictEqual(sent.length, 1, '5. setelah restart, pesan lama masih bisa dikirim ulang');

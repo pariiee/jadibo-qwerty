@@ -140,6 +140,34 @@ module.exports = async function groupHandler(ctx) {
       if (msgType === 'protocolMessage' && rawMsg.message.protocolMessage?.type === 0) {
         const deletedKey = rawMsg.message.protocolMessage.key;
         const storeKey   = `${deletedKey.remoteJid}|${deletedKey.id}`;
+        // Kalau yang hapus bot/owner/dev, jangan digubris: mereka memang berhak
+        // hapus, dan dulu ini bikin bot ngomel tiap kali membereskan chat sendiri.
+        const resolveDeleter = ctx.client.contact?.resolveLid;
+        const deleterRaw     = rawMsg.key?.participant || rawMsg.key?.participantPn || rawMsg.key?.remoteJid || '';
+        let deleterNum = String(deleterRaw).split('@')[0].split(':')[0];
+        try { if (resolveDeleter) deleterNum = String(await resolveDeleter(deleterRaw)).split('@')[0].split(':')[0]; } catch { /* pakai yang mentah */ }
+
+        const ownerNum = String(ctx.botData?.owner_number || process.env.OWNER_NUMBER || '').replace(/\D/g, '');
+        const devNums  = String(process.env.DEV_NUMBERS || process.env.DEVELOPER_NUMBERS || process.env.DEVELOPER_NUMBER || '')
+          .split(',').map((n) => n.replace(/\D/g, '')).filter(Boolean);
+
+        // fromMe = bot sendiri yang hapus -> skip. Ini yang bikin "ga ada reaksi"
+        // pas owner/dev beres-beres chat pakai nomor bot.
+        if (rawMsg.key?.fromMe === true) return false;
+        if (deleterNum && ((ownerNum && deleterNum === ownerNum) || devNums.includes(deleterNum))) return false;
+
+        // Admin grup (termasuk owner/dev kalau admin di grup itu) memang berhak
+        // hapus — nggak perlu diomelin. Dicek per-nomor karena ctx.isAdmin dihitung
+        // dari sender pesan, dan di sini sender-nya bukan yang menghapus.
+        try {
+          const meta = await ctx.client.group.queryGroupMetadata(ctx.jid).catch(() => null);
+          const p = meta?.participants?.find((x) =>
+            x.jid?.split('@')[0].split(':')[0] === deleterNum ||
+            x.lid?.split('@')[0].split(':')[0] === deleterNum ||
+            (x.phoneNumber && x.phoneNumber.replace(/\D/g, '').endsWith(deleterNum)));
+          if (p?.isAdmin || p?.isSuperAdmin) return false;
+        } catch { /* metadata gagal -> lanjut saja */ }
+
         if (isAntideleteActive(ctx.jid)) {
           const stored     = msgStore.get(storeKey);
           if (stored) {
@@ -149,6 +177,15 @@ module.exports = async function groupHandler(ctx) {
             const deleterPhone = deleterJid.split('@')[0];
             try {
               const headerText = `🛡️ *Anti-Delete*\n@${deleterPhone} ngapain di hapus bang 😹`;
+              // Satu pesan berkutip: isi aslinya jadi kutipan, header jadi balasannya.
+              // Jadinya jelas "ini lho pesan yang dihapus" — dulu cuma teks mentah.
+              const bodyOf = () => {
+                if (storedType === 'conversation') return String(storedContent || '');
+                if (storedType === 'extendedTextMessage') return storedContent?.text || '';
+                return storedContent?.caption || '';
+              };
+              const cap = (extra = '') => (bodyOf() ? `${headerText}\n\n> ${bodyOf()}${extra}` : `${headerText}${extra}`);
+
               if (storedType === 'stickerMessage') {
                 const fixed = Object.assign({}, storedContent);
                 for (const f of ['mediaKey','fileSha256','fileEncSha256']) {
@@ -158,10 +195,11 @@ module.exports = async function groupHandler(ctx) {
                 await ctx.client.message.send(ctx.jid, {
                   type: 'sticker', media: buffer, mimetype: storedContent.mimetype || 'image/webp',
                 });
-                await ctx.client.message.send(ctx.jid, { type: 'text', text: headerText, mentions: [deleterJid] });
-              } else if (['imageMessage','videoMessage','audioMessage'].includes(storedType)) {
+                await ctx.client.message.send(ctx.jid, { type: 'text', text: cap(), mentions: [deleterJid] });
+              } else if (['imageMessage','videoMessage','audioMessage','documentMessage'].includes(storedType)) {
                 const uploadType = storedType === 'imageMessage' ? 'image'
                   : storedType === 'videoMessage' ? 'video'
+                  : storedType === 'documentMessage' ? 'document'
                   : (storedContent.ptt ? 'ptt' : 'audio');
                 const mime = storedContent.mimetype || 'application/octet-stream';
                 const fixed = Object.assign({}, storedContent);
@@ -174,22 +212,20 @@ module.exports = async function groupHandler(ctx) {
                 } catch (dlErr) {
                   console.log(`[Antidelete] media gagal diunduh: ${dlErr.message}`);
                   await ctx.client.message.send(ctx.jid, {
-                    type: 'text', text: `${headerText}\n\n⚠️ Medianya udah nggak bisa diunduh`,
+                    type: 'text', text: cap('\n\n⚠️ Medianya udah nggak bisa diunduh'),
                     mentions: [deleterJid],
                   }).catch(() => {});
                   return false;
                 }
-                const extraCaption = storedContent.caption ? `\n\n${storedContent.caption}` : '';
                 await ctx.client.message.send(ctx.jid, {
                   type: uploadType, media: buffer, mimetype: mime,
-                  caption: `${headerText}${extraCaption}`,
+                  ...(uploadType === 'document' && { fileName: storedContent.fileName || 'file' }),
+                  caption: cap(),
                   mentions: [deleterJid],
                 });
               } else {
-                const text = storedContent?.text || storedContent?.caption || (typeof storedContent === 'string' ? storedContent : '');
                 await ctx.client.message.send(ctx.jid, {
-                  type: 'text', text: text ? `${headerText}\n\n${text}` : headerText,
-                  mentions: [deleterJid],
+                  type: 'text', text: cap(), mentions: [deleterJid],
                 });
               }
             } catch (e) {
