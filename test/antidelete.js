@@ -63,8 +63,8 @@ function restore() {
   }));
   assert.strictEqual(sent.length, 1, '1. media harus dikirim ulang setelah dihapus');
   assert.strictEqual(sent[0].content.type, 'image');
-  assert.ok(String(sent[0].content.caption).includes('Anti-Delete'), '1. caption ada header anti-delete');
-  assert.ok(String(sent[0].content.caption).includes('foto asli'), '1. caption asli ikut diselamatkan');
+  assert.ok(sent[0].content.caption.includes('Anti-Delete'), '1. caption ada header anti-delete');
+  assert.ok(sent[0].content.caption.includes('foto asli'), '1. caption asli ikut sebagai kutipan, bukan cuma teks polos');
   assert.deepStrictEqual(sent[0].content.media, Buffer.from('BUF:imageMessage'));
 
   // 2) pesan KELUAR dari bot (fromMe) -> HARUS disimpan (biar bisa dikirim ulang
@@ -138,9 +138,28 @@ function restore() {
     msg: { key: { remoteJid: GROUP, id: 'DEL6', fromMe: false, participant: '628111@s.whatsapp.net' },
            message: { protocolMessage: { type: 0, key: { remoteJid: GROUP, id: 'VO1' } } } },
   }));
-  assert.strictEqual(sent.length, 1, '6. view-once harus dikirim ulang sebagai media');
+  assert.strictEqual(sent.length, 2, '6. view-once = media + caption susulan');
   assert.strictEqual(sent[0].content.type, 'image', '6. tipenya image, bukan teks peringatan');
-  assert.ok(String(sent[0].content.caption).includes('sekali lihat'), '6. caption aslinya ikut');
+  assert.strictEqual(sent[0].content.viewOnce, true, '6. tetap sekali-lihat, bukan jadi media biasa');
+  // view-once nggak bawa caption di WA, jadi caption aslinya WAJIB nyusul
+  // sebagai pesan kedua — kalau nggak, isinya hilang.
+  assert.strictEqual(sent.length, 2, '6. isi/caption aslinya nyusul jadi pesan kedua');
+  assert.ok(String(sent[1].content.text).includes('sekali lihat'), '6. caption aslinya ikut');
+
+  // 6b) FOTO LIVE (video bulat) yang dihapus -> harus balik jadi foto live lagi,
+  //     bukan turun jadi video biasa.
+  sent.length = 0;
+  await handler(ctx({
+    msg: { key: { remoteJid: GROUP, id: 'VO1B', fromMe: false }, message: unwrapMessage({
+      viewOnceMessageV2: { message: { videoMessage: {
+        mediaKey: Buffer.from([9]), mimetype: 'video/mp4', ptv: true, viewOnce: true } } } }) },
+  }));
+  await handler(ctx({
+    msg: { key: { remoteJid: GROUP, id: 'DEL6B', fromMe: false, participant: '628111@s.whatsapp.net' },
+           message: { protocolMessage: { type: 0, key: { remoteJid: GROUP, id: 'VO1B' } } } },
+  }));
+  assert.strictEqual(sent[0].content.ptv, true, '6b. foto live tetap foto live');
+  assert.strictEqual(sent[0].content.viewOnce, true, '6b. + sekali lihat');
 
   // 7) view-once yang bot kirim sendiri juga harus ter-unwrap & bisa dikirim ulang
   sent.length = 0;
@@ -150,8 +169,8 @@ function restore() {
         mediaKey: Buffer.from([8]), mimetype: 'video/mp4', caption: 'vid sekali lihat' } } } }) },
   }));
   const disk3 = JSON.parse(fs.readFileSync(STORE, 'utf8'));
-  assert.strictEqual(disk3.length, 4, '7. view-once keluar ikut tersimpan');
-  assert.strictEqual(Object.keys(disk3[3].message)[0], 'videoMessage', '7. tersimpan dalam bentuk terbuka, bukan bungkusan viewOnce');
+  assert.strictEqual(disk3.length, 5, '7. view-once keluar ikut tersimpan');
+  assert.strictEqual(Object.keys(disk3[4].message)[0], 'videoMessage', '7. tersimpan dalam bentuk terbuka, bukan bungkusan viewOnce');
 
   restore();
   console.log('✓ antidelete: persisten + pesan keluar bot + media gagal terlihat + grup mati aman');

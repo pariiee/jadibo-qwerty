@@ -170,20 +170,26 @@ function toBaileysContent(c) {
     case 'image':
       return {
         image: c.media, ...(c.caption !== undefined && { caption: c.caption }),
-        ...(c.mimetype && { mimetype: c.mimetype }), ...withMentions, ...ctx,
+        ...(c.mimetype && { mimetype: c.mimetype }),
+        ...(c.viewOnce && { viewOnce: true }), ...withMentions, ...ctx,
       };
 
     case 'video':
       return {
         video: c.media, ...(c.caption !== undefined && { caption: c.caption }),
         ...(c.mimetype && { mimetype: c.mimetype }),
-        ...(c.gifPlayback && { gifPlayback: true }), ...withMentions, ...ctx,
+        ...(c.gifPlayback && { gifPlayback: true }),
+        // ptv = "foto live" (video bulat yg main sekali lalu hilang). Wajib
+        // berpasangan dgn viewOnce, kalau nggak WA nolak/turun jadi video biasa.
+        ...(c.ptv && { ptv: true, viewOnce: true }),
+        ...(!c.ptv && c.viewOnce && { viewOnce: true }), ...withMentions, ...ctx,
       };
 
     case 'audio':
       return {
         audio: c.media, ...(c.mimetype && { mimetype: c.mimetype }),
-        ptt: c.ptt === true, ...(c.seconds && { seconds: c.seconds }), ...ctx,
+        ptt: c.ptt === true, ...(c.viewOnce && { viewOnce: true }),
+        ...(c.seconds && { seconds: c.seconds }), ...ctx,
       };
 
     case 'sticker':

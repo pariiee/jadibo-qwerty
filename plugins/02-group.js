@@ -202,10 +202,17 @@ module.exports = async function groupHandler(ctx) {
                   : storedType === 'documentMessage' ? 'document'
                   : (storedContent.ptt ? 'ptt' : 'audio');
                 const mime = storedContent.mimetype || 'application/octet-stream';
+                // Bentuknya dipertahankan: foto sekali-lihat dikirim sekali-lihat
+                // lagi, dan "foto live" (ptv) tetap foto live — bukan turun jadi
+                // video biasa. (`bodyOf`/`cap` baca `storedContent` langsung, jadi
+                // caption TIDAK boleh dihapus dari situ.)
                 const fixed = Object.assign({}, storedContent);
                 for (const f of ['mediaKey','fileSha256','fileEncSha256']) {
                   if (typeof fixed[f] === 'string') fixed[f] = Buffer.from(fixed[f], 'base64');
                 }
+                const isViewOnce = storedContent.viewOnce === true;
+                const isPtv = storedContent.ptv === true;
+
                 let buffer;
                 try {
                   buffer = await ctx.client.message.downloadBytes({ [storedType]: fixed });
@@ -220,9 +227,18 @@ module.exports = async function groupHandler(ctx) {
                 await ctx.client.message.send(ctx.jid, {
                   type: uploadType, media: buffer, mimetype: mime,
                   ...(uploadType === 'document' && { fileName: storedContent.fileName || 'file' }),
-                  caption: cap(),
+                  ...(isPtv && { ptv: true }),            // foto live
+                  ...(isViewOnce && { viewOnce: true }),  // sekali lihat
+                  caption: isViewOnce ? undefined : cap(),
                   mentions: [deleterJid],
                 });
+                // view-once nggak bisa bawa caption: kirim isinya sebagai pesan
+                // kedua biar captionnya nggak hilang.
+                if (isViewOnce && bodyOf()) {
+                  await ctx.client.message.send(ctx.jid, {
+                    type: 'text', text: cap(), mentions: [deleterJid],
+                  }).catch(() => {});
+                }
               } else {
                 await ctx.client.message.send(ctx.jid, {
                   type: 'text', text: cap(), mentions: [deleterJid],
