@@ -2,7 +2,7 @@
 /**
  * test/fitur-gcutama.js — kunci 3 hal:
  *   1. `.fitur` sudah nggak didaftarin & nggak ditangani (duplikat `.on` doang)
- *   2. `.gcutama` (nama baru, dulu `.setgcutama`) masih nulis kolom main_groups
+ *   2. `.gcutama` (nama baru, dulu pake awalan `set`) masih nulis kolom main_groups
  *   3. panel web cuma nerima ID grup — link undangan ditolak di FE & endpoint
  *      resolve-nya udah dibuang
  *
@@ -33,8 +33,17 @@ ok(".fitur nggak ada case handler-nya lagi", () => {
 });
 ok(".gcutama yang ditangani (bukan .setgcutama)", () => {
   assert.ok(/case 'gcutama': \{/.test(owner));
-  assert.ok(!/setgcutama/.test(owner), 'masih ada sisa .setgcutama');
   assert.ok(/'setlimitgc','gcutama'/.test(info), 'gcutama nggak ada di daftar command');
+});
+ok("'setgcutama' udah nggak disebut di mana pun", () => {
+  const lama = 'set' + 'gcutama'; // dipecah biar file ini sendiri nggak kedeteksi
+  const me = __filename;
+  const walk = (d) => fs.readdirSync(d, { withFileTypes: true }).flatMap(e =>
+    e.name === 'node_modules' || e.name === '.git' ? []
+    : e.isDirectory() ? walk(path.join(d, e.name))
+    : /\.(js|html|json)$/.test(e.name) ? [path.join(d, e.name)] : []);
+  const hits = walk(root).filter(f => f !== me && fs.readFileSync(f, 'utf8').includes(lama));
+  assert.deepStrictEqual(hits.map(f => path.relative(root, f)), [], 'nama lama masih nempel');
 });
 ok('panel web: placeholder cuma ID grup + hint baru', () => {
   assert.ok(/120363xxxxxxxxxx@g\.us"><\/textarea>/.test(html), 'placeholder masih ada baris link');
