@@ -74,7 +74,7 @@ const ALL_COMMANDS = [...new Set([
   'tagall','tagadmin','tagme','hidetag','ht','kickall','promote','demote',
   'open','close','mute','unmute','slowmode','setname','setdesc','linkgroup','upswgc',
   'grupopen','grupclose','linkgc','setnamegc',
-  'groupinfo','grouplist','leavegc','listadmin','getpp','getppgc','ppgc','ppgroup','ppgrup','totag',
+  'groupinfo','grouplist','leavegc','listadmin','getpp','pp','getppgc','ppgc','ppgroup','ppgrup','totag',
   'delete','cekasalmember','absen','mulaiabsen','cekabsen','hapusabsen',
   'afk','listafk','antidelete','topchat',
   // Sat-set — nama command aslinya tetap `.set*`, cuma kategorinya dikumpul
@@ -196,7 +196,7 @@ const CATS = {
   // 02-group.js nggak diubah — yang bukan admin tetap ditolak.
   // Kategori `admin` & `proteksi` DIHAPUS dari CATS; alias `.menu admin` /
   // `.menu proteksi` tetap diarahkan ke sini (lihat CAT_ALIAS).
-  grup:   ['absen','add','afk','antibot','antidelete','antilink','antilinkv2','antispam','antisticker','antitagsw','antitoxic','autoacc','autosticker','banmember','catatan','cekabsen','cekasalmember','cekgiveaway','cekmenang','close','delbye','deldetect','delete','delwelcome','demote','detect','document','getpp','getppgc','groupinfo','grouplist','grupclose','grupopen','hapusabsen','hapusgiveaway','hidetag','ht','ikut','kick','kickall','leavegc','left','linkgc','linkgroup','listadmin','listafk','listtotalpesan','mulaiabsen','mulaigiveaway','mute','off','on','open','ppgc','ppgroup','ppgrup','promote','proteksi','rollgiveaway','sider','slowmode','tagadmin','tagall','tagme','topchat','totag','unbanmember','unmute','upswgc','viewonce','welcome'],
+  grup:   ['absen','add','afk','antibot','antidelete','antilink','antilinkv2','antispam','antisticker','antitagsw','antitoxic','autoacc','autosticker','banmember','catatan','cekabsen','cekasalmember','cekgiveaway','cekmenang','close','delbye','deldetect','delete','delwelcome','demote','detect','document','getpp','getppgc','groupinfo','grouplist','grupclose','grupopen','hapusabsen','hapusgiveaway','hidetag','ht','ikut','kick','kickall','leavegc','left','linkgc','linkgroup','listadmin','listafk','listtotalpesan','mulaiabsen','mulaigiveaway','mute','off','on','open','pp','ppgc','ppgroup','ppgrup','promote','proteksi','rollgiveaway','sider','slowmode','tagadmin','tagall','tagme','topchat','totag','unbanmember','unmute','upswgc','viewonce','welcome'],
   // Sat-set: SEMUA command `.set*` dikumpul di sini — satu tempat buat nyetel
   // teks welcome/left, nama & deskripsi grup, bio, pp, sewa, limit, warn limit, QRIS.
   // Murni pindah: `setwelcome`/`setleft`/`setbye` juga sudah TIDAK ada lagi di `grup`

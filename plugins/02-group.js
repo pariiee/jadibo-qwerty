@@ -4,7 +4,7 @@
  * plugins/02-group.js
  * Commands: tagall, tagadmin, tagme, hidetag, kick, kickall, promote, demote,
  *           open, close, mute, unmute, slowmode, setname, setdesc, linkgroup,
- *           groupinfo, idgc, grouplist, leavegc, listadmin, getpp, getppgc, totag,
+ *           groupinfo, idgc, grouplist, leavegc, listadmin, pp/getpp, getppgc, totag,
  *           delete, cekasalmember, absen, mulaiabsen, cekabsen, hapusabsen,
  *           afk, listafk, topchat
  */
@@ -762,21 +762,26 @@ module.exports = async function groupHandler(ctx) {
       return true;
     }
 
-    // ── getpp ─────────────────────────────────────────────────────────────────
-    case 'getpp': {
-      // Coba semua path untuk mentionedJid
-      const msgContent = ctx.msg.message;
-      const mentioned =
-        msgContent?.extendedTextMessage?.contextInfo?.mentionedJid ||
-        msgContent?.imageMessage?.contextInfo?.mentionedJid ||
-        msgContent?.conversation?.contextInfo?.mentionedJid ||
-        [];
-      console.log('[getpp] mentioned:', JSON.stringify(mentioned));
-      if (!mentioned.length) {
-        await reply(`Penggunaan: ${p}getpp @mention`);
-        return true;
-      }
-      let target = mentioned[0];
+    // ── pp / getpp ─────────────────────────────────────────────────────────────
+    case 'getpp':
+    case 'pp': {
+      // Sumber target, urutan: mention > reply > (fallback) diri sendiri.
+      // Reply dibaca dari contextInfo message itu sendiri + SEMUA jenis pesan
+      // (dulu cuma `extendedTextMessage`/`imageMessage`/`conversation`, jadi
+      // reply ke video/stiker/dokumen dianggap "nggak ada target").
+      const ci = ctx.msg?.message?.extendedTextMessage?.contextInfo
+              || ctx.msg?.message?.imageMessage?.contextInfo
+              || ctx.msg?.message?.videoMessage?.contextInfo
+              || ctx.msg?.message?.documentMessage?.contextInfo
+              || ctx.msg?.message?.audioMessage?.contextInfo
+              || ctx.msg?.message?.stickerMessage?.contextInfo
+              || ctx.msg?.message?.contactMessage?.contextInfo
+              || {};
+      const mentioned = ctx.mentioned?.length ? ctx.mentioned : (ci.mentionedJid || []);
+
+      // Kalau nggak ada tag & nggak ada reply -> PP pengirim sendiri
+      // (`.pp` di chat pribadi juga jalan, di situ nggak ada mention/reply).
+      const target = mentioned[0] || ci.participant || sender;
       let phoneNum = target.split('@')[0];
 
       // Resolve LID ke phone JID lewat metadata grup
@@ -1561,7 +1566,7 @@ module.exports.limitedCmds = new Set([
   'open','close','mute','unmute','slowmode','setname','setdesc',
   'grupopen','grupclose','linkgc','setnamegc',
   'linkgroup','groupinfo','idgc','grouplist','leavegc','listadmin',
-  'getpp','totag','delete','cekasalmember',
+  'getpp','pp','totag','delete','cekasalmember',
   'mulaiabsen','absen','cekabsen','hapusabsen',
   'afk','listafk','topchat','swgc','upswgc',
 ]);
