@@ -85,7 +85,9 @@ const ALL_COMMANDS = [...new Set([
   'on','off','fitur','proteksi',
   'antibot','antilink','antilinkv2','antitoxic','antidelete',
   'antispam','antitagsw','autosticker','antisticker','viewonce',
-  'autolevelup','detect','autoacc','document','nyimak','autoread',
+  // autolevelup nggak didaftarin — fitur wajib, nggak bisa di-on/off-in, cuma
+  // dikasih tau statusnya di `.on` (nggak ikut dihitung sebagai toggle).
+  'detect','autoacc','document','nyimak','autoread',
   // Fun & Game
   'profile','me','jodoh','suitpvp','rpg','claim','store','beli','inventory','pakai','topkoin',
   'unreg','kerja','transfer','tf','coinflip','cf','tictactoe','ttt',
@@ -195,7 +197,7 @@ const CATS = {
   // dan `setppgc`/`setopen`/`setclose` nggak lagi di `admin` — jangan diduplikat,
   // nanti kelihatan dobel di `.menu all`.
   satset: ['setbio','setbye','setclose','setdesc','setdetect','setgcutama','setleft','setlimitgc','setname','setnamegc','setopen','setpp','setppgc','setqris','setsewa','setwarnlimit','setwelcome'],
-  proteksi: ['on','off','fitur','proteksi','antibot','antilink','antilinkv2','antitoxic','antispam','antitagsw','autosticker','antisticker','viewonce','autolevelup','detect','autoacc','document','welcome','left','nyimak','autoread'],
+  proteksi: ['on','off','fitur','proteksi','antibot','antilink','antilinkv2','antitoxic','antispam','antitagsw','autosticker','antisticker','viewonce','detect','autoacc','document','welcome','left','nyimak','autoread'],
   rpg:    ['unreg','profile','me','claim','hourly','weekly','dailymisi','kerja','mancing','berburu','hunt','bertarung','fight','dungeon','adventure','koboy','airdrop','maling','lamarkerja','job','gajian','transfer','tf','bank','atm','topkoin','lb','leaderboard','store','beli','inventory','pakai','gacha','slot','jodoh','suitpvp','coinflip','cf','tictactoe','ttt'],
   maker:  ['sticker','s','wm','brat','bratvid','attp','fakech','fakecall','fakecallip','fakedana','fakeovo','fakegcios','fakepptele','rvo','readviewonce','readvo','liat','swgc','upswgc'],
   tools:  ['poll','readmore','encode','decode','kalkulator','pick','tourl','tourl2','upload2','upload','pay','tomp4','topng','tovn','2vo','todoc','artinama','igqc','igstoryimg','iqc','ttqc','dafont','dafontdl','lirik','genius','gsmarena','spek','jarak','kbbi','kodepos','bandinghp','comparehp','wilayah','cariwilayah','imei','cekimei','gempa','cuaca','weather','accuweather','prakiraan','checkwa','cekwa','translate','terjemah','tr','qrcode','qr','decodeqr','readqr','ocr','upscale','hd','enhance','ssweb','ss','screenshot','fancytext','fancy','nik','nikinfo','iplookup','ipcek','reverseip','httpheaders','headers','nationalday','hariini','shalat','jadwalshalat','kalendershalat','kshalat','konversitanggal','tanggal','bypass','bypasssfl','bpsfl','drakor','duolingo','npm','resep','steam','play','lk21','lk21trending','lk21search','filmsearch','mcpedl','berita','pinterest','tokopedia','toped','stalktiktok','stalktt','tiktokstalk','roblox','stalkroblox','cekroblox','minecraft','mc','stalkmc','stalkgithub','ghstalk','genshin','stalkgenshin','freefire','ff','stalkff','discord','stalkdiscord','chess','stalkchess','nimegami','nimegamis','animesearch','shinigami','spotify','spotifylyrics','slyrics','tiktokphoto','ttkphoto','ttsearch','searchcode'],
