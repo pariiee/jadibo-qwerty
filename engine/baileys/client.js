@@ -71,8 +71,11 @@ const AI_NODES = [
   { attrs: {}, tag: 'biz' },
 ];
 // Di GRUP client resmi cuma nempelin `<biz/>` — node `<bot>` itu urusan chat
-// pribadi (aturan yang sama dipakai jalur tombol di sendRaw()). Jadi jangan
-// paksa node `<bot>` ke grup.
+// pribadi (aturan yang sama dipakai jalur tombol di sendRaw()).
+// ponytail: DI GRUP LABEL AI NGGAK MUNCUL, apa pun node-nya — dites di grup
+// nyata: varian `bot+biz` / `biz` / tanpa node, ketiganya polos. Kalau WA
+// ngasih varian grup, ganti isi BIZ_NODE (atau tambah cabangnya di sini);
+// sisanya nggak perlu diubah.
 const BIZ_NODE = [{ attrs: {}, tag: 'biz' }];
 function aiNodesFor(jid) {
   return isJidGroup(jid) ? BIZ_NODE : AI_NODES;

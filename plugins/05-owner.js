@@ -2431,10 +2431,11 @@ module.exports = async function ownerHandler(ctx) {
     }
 
     // ─── Debug: varian node pesan ber-label AI ──────────────────────────
-    // WA nampilin label "AI" dari proto-nya (messageContextInfo) + node
-    // penanda. Chat pribadi dapat `<bot biz_bot="1"/><biz/>`, grup cuma
-    // `<biz/>` (aturan client resmi). Tiga varian sekaligus biar sekali tes
-    // ketahuan mana yang WA render di chat yang lagi dipakai.
+    // Hasil tes di grup nyata: DI GRUP LABEL AI NGGAK MUNCUL apa pun node-nya
+    // (1 bot+biz / 2 biz aja / 3 tanpa node = ketiganya polos). Di chat
+    // pribadi cuma varian 1 (bot+biz) yang nongol. Jadi label AI = fitur
+    // chat pribadi; di grup nggak ada yang perlu dikejar. Command ini
+    // ditinggal biar gampang ngecek ulang kalau WA berubah.
     case 'testai': {
       if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }
       const cl = require('../engine/baileys/client');
