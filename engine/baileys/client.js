@@ -70,6 +70,13 @@ const AI_NODES = [
   { attrs: { biz_bot: '1' }, tag: 'bot' },
   { attrs: {}, tag: 'biz' },
 ];
+// Di GRUP client resmi cuma nempelin `<biz/>` — node `<bot>` itu urusan chat
+// pribadi (aturan yang sama dipakai jalur tombol di sendRaw()). Jadi jangan
+// paksa node `<bot>` ke grup.
+const BIZ_NODE = [{ attrs: {}, tag: 'biz' }];
+function aiNodesFor(jid) {
+  return isJidGroup(jid) ? BIZ_NODE : AI_NODES;
+}
 function aiContent(text) {
   return {
     conversation: String(text),
@@ -367,13 +374,13 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
 
   // Pesan berlabel AI. Bukan lewat sendRaw() karena node-nya beda: yang ini
   // `<bot biz_bot="1"/><biz/>` (penanda pesan bot), bukan node tombol.
-  async function sendAi(jid, text) {
+  async function sendAi(jid, text, opts = {}) {
     if (!sock) throw new Error('socket belum siap');
     const message = proto.Message.create(aiContent(text));
     const wam = generateWAMessageFromContent(jid, message, { userJid: meJid || undefined });
     await sock.relayMessage(jid, wam.message, {
       messageId: wam.key.id,
-      additionalNodes: AI_NODES,
+      additionalNodes: opts.nodes ?? aiNodesFor(jid),
     });
     rememberSent(wam);
     return wam;
@@ -415,7 +422,7 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
   async function send(jid, content, opts = {}) {
     if (!sock) throw new Error('socket belum siap');
     // Pesan berlabel AI — WA nampilin tanda "AI" di bubble-nya.
-    if (opts.ai) return sendAi(jid, content?.text ?? content);
+    if (opts.ai) return sendAi(jid, content?.text ?? content, opts);
     // Tag biru di grup LID butuh bentuk LID-nya ikut — lihat engine/jid.js.
     // `mentions` boleh nempel di konten ({ text, mentions }) atau di opsi.
     const mentions = mentionsForChat(jid, opts.mentions || content?.mentions);
@@ -716,7 +723,7 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
 module.exports = {
   createClient, toBaileysContent, toBaileysOptions, normalizeGroupMeta, isRawProto, attachMentions,
   normalizeParticipantResults, withTimeout, asArray,
-  aiContent, AI_NODES,        // pesan berlabel AI (buat test)
+  aiContent, AI_NODES, BIZ_NODE, aiNodesFor,  // pesan berlabel AI (buat test)
   rememberSent, lookupSent, // buat test retry receipt
   onMessageSent,             // buat antidelete (plugins/02-group.js)
   unwrapMessage,             // view-once -> media biasa (dipakai banyak plugin)

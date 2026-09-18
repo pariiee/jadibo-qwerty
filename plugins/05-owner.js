@@ -2430,6 +2430,27 @@ module.exports = async function ownerHandler(ctx) {
       return true;
     }
 
+    // ─── Debug: varian node pesan ber-label AI ──────────────────────────
+    // WA nampilin label "AI" dari proto-nya (messageContextInfo) + node
+    // penanda. Chat pribadi dapat `<bot biz_bot="1"/><biz/>`, grup cuma
+    // `<biz/>` (aturan client resmi). Tiga varian sekaligus biar sekali tes
+    // ketahuan mana yang WA render di chat yang lagi dipakai.
+    case 'testai': {
+      if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }
+      const cl = require('../engine/baileys/client');
+      const variants = [
+        ['1) bot+biz', cl.AI_NODES],
+        ['2) biz aja', cl.BIZ_NODE ?? [{ attrs: {}, tag: 'biz' }]],
+        ['3) tanpa node', []],
+      ];
+      for (const [label, nodes] of variants) {
+        await sock.message.sendAi(jid, `${label} — label AI muncul?`, { nodes });
+        await new Promise((r) => setTimeout(r, 800));
+      }
+      await reply('Udah gw kirim 3 varian di chat ini 👆 mana yang ada label AI-nya?');
+      return true;
+    }
+
     default:
       return false;
   }

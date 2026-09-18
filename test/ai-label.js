@@ -33,9 +33,20 @@ assert.deepStrictEqual(
 );
 assert.strictEqual(cl.AI_NODES[0].attrs.biz_bot, '1');
 
+// 2b. Di grup node `<bot>` jangan dipaksa — aturan client resmi di grup cuma
+// `<biz/>` (sama kayak jalur tombol di sendRaw). Kalau dipaksa, labelnya
+// kemungkinan malah di-drop.
+assert.deepStrictEqual(cl.aiNodesFor('628123@s.whatsapp.net'), cl.AI_NODES,
+  'chat pribadi: bot + biz');
+assert.deepStrictEqual(cl.aiNodesFor('120363418054099388@g.us'), cl.BIZ_NODE,
+  'grup: cuma biz');
+assert.deepStrictEqual(cl.BIZ_NODE, [{ attrs: {}, tag: 'biz' }]);
+assert.ok(/additionalNodes: opts\.nodes \?\? aiNodesFor\(jid\)/.test(clSrc),
+  'sendAi harus milih node sesuai jenis chat (dan masih bisa dioverride buat tes)');
+
 // 3. Jalur kirimnya relayMessage + node AI, bukan sendMessage biasa
 assert.ok(/async function sendAi/.test(clSrc), 'sendAi harus ada');
-assert.ok(/additionalNodes: AI_NODES/.test(clSrc), 'sendAi harus nempelin AI_NODES');
+assert.ok(/const AI_NODES = \[/.test(clSrc), 'AI_NODES harus tetap ada');
 assert.ok(/if \(opts\.ai\) return sendAi/.test(clSrc), 'send(..., { ai: true }) harus ke sendAi');
 assert.ok(/sendAi,/.test(clSrc), 'sendAi harus diekspos lewat client.message');
 assert.ok(/randomBytes\(32\)/.test(clSrc), 'messageSecret wajib dari randomBytes(32)');
