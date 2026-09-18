@@ -70,10 +70,11 @@ const ctxPalsu = (command, args) => ({
   assert.ok(/document/.test(balasSalah), 'document harus tetap ada di daftar (fitur hidup)');
 
   // Daftar command di .menu juga harus bersih dari autolevelup.
-  const barisProteksi = infoSrc.split('\n').find(l => /^\s*proteksi: \[/.test(l)) || '';
-  assert.ok(barisProteksi.length > 0, 'kategori proteksi harus ada di 01-info.js');
-  assert.ok(!/autolevelup/.test(barisProteksi),
-    'autolevelup nggak boleh nyempil di kategori proteksi (.menu proteksi)');
+  // Kategori `proteksi` udah dilebur ke `grup` — toggle-nya nongkrong di sana.
+  const barisToggle = infoSrc.split('\n').find(l => /^\s*grup:\s+\[/.test(l)) || '';
+  assert.ok(barisToggle.length > 0, 'kategori grup harus ada di 01-info.js');
+  assert.ok(!/autolevelup/.test(barisToggle),
+    'autolevelup nggak boleh nyempil di kategori grup (.menu grup)');
 
   // ── 4. Dokumentasi fungsi: tiap fitur toggle punya desc, dan desc-nya tampil ─
   for (const [k, i] of daftarToggle) {

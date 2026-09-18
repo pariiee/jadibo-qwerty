@@ -4,7 +4,7 @@
  * test/menu-buttons.js
  * `.menu` harus kirim SATU bubble `buttonsMessage` berisi: header lokasi
  * (thumbnail banner + teks menu) dan dua tombol sebaris — `Menu` (`single_select`,
- * ALL + 12 kategori) + `Owner`. Sub-menu (`.menu <kat>` / `.menu all`) WAJIB pakai
+ * ALL + 10 kategori) + `Owner`. Sub-menu (`.menu <kat>` / `.menu all`) WAJIB pakai
  * bubble yang sama, bukan balik jadi teks polos.
  */
 
@@ -69,7 +69,7 @@ const ctx = baseCtx;
     assert.ok(body.length <= 1024, `kepanjangan: ${body.length} char`);
   });
 
-  await ok('tombol sebaris: Menu single_select (ALL + 12 kategori) + Owner', () => {
+  await ok('tombol sebaris: Menu single_select (ALL + 10 kategori) + Owner', () => {
     const btns = sent[0][1].buttonsMessage.buttons;
     assert.strictEqual(btns.length, 2);
     assert.strictEqual(btns[0].buttonText.displayText, 'Menu');
@@ -81,7 +81,7 @@ const ctx = baseCtx;
     assert.strictEqual(d.sections[0].rows[0].id, '.menu all', 'ALL nggak di baris paling atas');
     assert.strictEqual(d.sections[0].rows[0].title, 'ALL');
     const rows = JSON.parse(btns[0].nativeFlowInfo.paramsJson).sections[0].rows;
-    assert.strictEqual(rows.length, 13, `dapat ${rows.length} rows (ALL + 12 kategori)`);
+    assert.strictEqual(rows.length, 11, `dapat ${rows.length} rows (ALL + 10 kategori)`);
     assert.match(rows[0].id, /^\.menu \w+$/, `row id salah: ${rows[0].id}`);
     const catRows = rows.slice(1).map(r => r.id.slice(6));
     assert.deepStrictEqual(catRows, [...catRows].sort(), `kategori dropdown nggak urut a-z: ${catRows}`);
@@ -136,7 +136,7 @@ const ctx = baseCtx;
     assert.ok(body.includes('│ ◦ .ping'), 'command kategori nggak ikut');
     // tiap blok kategori harus urut a-z
     const blocks = body.split('│ 〔 ').slice(1);
-    assert.ok(blocks.length === 12, `blok kategori cuma ${blocks.length}`);   // 12 kategori di CATS
+    assert.ok(blocks.length === 10, `blok kategori cuma ${blocks.length}`);   // 10 kategori di CATS
     const heads = blocks.map(b => b.split(' 〕')[0]);
     assert.deepStrictEqual(heads, [...heads].sort(), `sub-judul kategori nggak urut a-z: ${heads}`);
     for (const b of blocks) {
@@ -145,9 +145,26 @@ const ctx = baseCtx;
     }
   });
 
-  await ok('.kick masuk kategori ADMIN, bukan GRUP', async () => {
-    assert.ok(info.CATS.admin.includes('kick'), '.kick nggak ada di kategori admin');
-    assert.ok(!info.CATS.grup.includes('kick'), '.kick masih nyangkut di kategori grup');
+  await ok('.kick/.add masuk kategori GRUP; kategori admin & proteksi udah nggak ada', () => {
+    assert.ok(info.CATS.grup.includes('kick'), '.kick nggak ada di kategori grup');
+    assert.ok(info.CATS.grup.includes('add'), '.add nggak ada di kategori grup');
+    assert.ok(!info.CATS.admin, 'kategori `admin` masih ada');
+    assert.ok(!info.CATS.proteksi, 'kategori `proteksi` masih ada');
+    // Toggle proteksi ikut pindah ke grup juga
+    for (const c of ['antilink', 'welcome', 'on', 'off', 'proteksi']) {
+      assert.ok(info.CATS.grup.includes(c), `.${c} nggak ikut pindah ke grup`);
+    }
+    // Alias lama tetap diarahkan ke grup biar `.menu admin` nggak jadi menu kosong
+    assert.strictEqual(info.CAT_ALIAS.admin, 'grup', 'alias `.menu admin` nggak ke grup');
+    assert.strictEqual(info.CAT_ALIAS.proteksi, 'grup', 'alias `.menu proteksi` nggak ke grup');
+    // Pindah kategori = murni tampilan. Gate izin tetap di handler, JANGAN diubah.
+    const src = fs.readFileSync(path.resolve(__dirname, '..', 'plugins', '02-group.js'), 'utf8');
+    for (const c of ['add', 'kick', 'promote', 'banmember']) {
+      const blk = src.split(`case '${c}':`)[1];
+      assert.ok(blk, `case '${c}' hilang dari 02-group.js`);
+      assert.ok(/isAdmin\(|isBotAdmin\(/.test(blk.slice(0, 700)),
+        `.${c} kehilangan gate admin — pindah kategori nggak boleh ngubah izin`);
+    }
   });
 
   await ok('semua `.set*` kumpul di SAT SET — nggak nyempil di kategori lain', () => {

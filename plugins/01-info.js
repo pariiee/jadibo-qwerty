@@ -190,14 +190,19 @@ const RM = String.fromCharCode(8206).repeat(4001); // readmore: konten bawah ter
 
 const CATS = {
   info:   ['ping','menu','info','owner','uptime','profile','me','carifitur','totalfitur','limit','uptname','memory','runtime','react'],
-  grup:   ['tagall','tagadmin','tagme','hidetag','ht','kickall','promote','demote','open','close','mute','unmute','slowmode','linkgroup','upswgc','grupopen','grupclose','linkgc','groupinfo','grouplist','leavegc','listadmin','getpp','getppgc','ppgc','ppgroup','ppgrup','totag','delete','cekasalmember','absen','mulaiabsen','cekabsen','hapusabsen','afk','listafk','topchat','antidelete','delwelcome','delbye','deldetect','mulaigiveaway','ikut','rollgiveaway','cekgiveaway','cekmenang','hapusgiveaway'],
+  // Command admin grup (`.add`/`.kick`/`banmember`/…) + semua toggle proteksi
+  // (`.antilink`, `.welcome`, `.on`/`.off`, …) numpuk di sini biar cukup satu
+  // menu buat urusan grup. MURNI TAMPILAN: gate `isAdmin()` di handler
+  // 02-group.js nggak diubah — yang bukan admin tetap ditolak.
+  // Kategori `admin` & `proteksi` DIHAPUS dari CATS; alias `.menu admin` /
+  // `.menu proteksi` tetap diarahkan ke sini (lihat CAT_ALIAS).
+  grup:   ['absen','add','afk','antibot','antidelete','antilink','antilinkv2','antispam','antisticker','antitagsw','antitoxic','autoacc','autoread','autosticker','banmember','catatan','cekabsen','cekasalmember','cekgiveaway','cekmenang','close','delbye','deldetect','delete','delwelcome','demote','detect','document','getpp','getppgc','groupinfo','grouplist','grupclose','grupopen','hapusabsen','hapusgiveaway','hidetag','ht','ikut','kick','kickall','leavegc','left','linkgc','linkgroup','listadmin','listafk','listtotalpesan','mulaiabsen','mulaigiveaway','mute','nyimak','off','on','open','ppgc','ppgroup','ppgrup','promote','proteksi','rollgiveaway','sider','slowmode','tagadmin','tagall','tagme','topchat','totag','unbanmember','unmute','upswgc','viewonce','welcome'],
   // Sat-set: SEMUA command `.set*` dikumpul di sini — satu tempat buat nyetel
   // teks welcome/left, nama & deskripsi grup, bio, pp, sewa, limit, warn limit, QRIS.
   // Murni pindah: `setwelcome`/`setleft`/`setbye` juga sudah TIDAK ada lagi di `grup`
-  // dan `setppgc`/`setopen`/`setclose` nggak lagi di `admin` — jangan diduplikat,
-  // nanti kelihatan dobel di `.menu all`.
+  // — jangan diduplikat, nanti kelihatan dobel di `.menu all`.
+  // (`.set*` nggak boleh ada di kategori lain; dites di test/menu-buttons.js.)
   satset: ['setbio','setbye','setclose','setdesc','setdetect','setleft','setlimitgc','setname','setnamegc','setopen','setpp','setppgc','setqris','setsewa','setwarnlimit','setwelcome'],
-  proteksi: ['on','off','proteksi','antibot','antilink','antilinkv2','antitoxic','antispam','antitagsw','autosticker','antisticker','viewonce','detect','autoacc','document','welcome','left','nyimak','autoread'],
   rpg:    ['unreg','profile','me','claim','hourly','weekly','dailymisi','kerja','mancing','berburu','hunt','bertarung','fight','dungeon','adventure','koboy','airdrop','maling','lamarkerja','job','gajian','transfer','tf','bank','atm','topkoin','lb','leaderboard','store','beli','inventory','pakai','gacha','slot','jodoh','suitpvp','coinflip','cf','tictactoe','ttt'],
   maker:  ['sticker','s','wm','brat','bratvid','attp','fakech','fakecall','fakecallip','fakedana','fakeovo','fakegcios','fakepptele','rvo','readviewonce','readvo','liat','swgc','upswgc'],
   tools:  ['poll','readmore','encode','decode','kalkulator','pick','tourl','tourl2','upload2','upload','pay','tomp4','topng','tovn','2vo','todoc','artinama','igqc','igstoryimg','iqc','ttqc','dafont','dafontdl','lirik','genius','gsmarena','spek','jarak','kbbi','kodepos','bandinghp','comparehp','wilayah','cariwilayah','imei','cekimei','gempa','cuaca','weather','accuweather','prakiraan','checkwa','cekwa','translate','terjemah','tr','qrcode','qr','decodeqr','readqr','ocr','upscale','hd','enhance','ssweb','ss','screenshot','fancytext','fancy','nik','nikinfo','iplookup','ipcek','reverseip','httpheaders','headers','nationalday','hariini','shalat','jadwalshalat','kalendershalat','kshalat','konversitanggal','tanggal','bypass','bypasssfl','bpsfl','drakor','duolingo','npm','resep','steam','play','lk21','lk21trending','lk21search','filmsearch','mcpedl','berita','pinterest','tokopedia','toped','stalktiktok','stalktt','tiktokstalk','roblox','stalkroblox','cekroblox','minecraft','mc','stalkmc','stalkgithub','ghstalk','genshin','stalkgenshin','freefire','ff','stalkff','discord','stalkdiscord','chess','stalkchess','nimegami','nimegamis','animesearch','shinigami','spotify','spotifylyrics','slyrics','tiktokphoto','ttkphoto','ttsearch','searchcode'],
@@ -205,7 +210,6 @@ const CATS = {
   random: ['aceh','kataaceh','batak','katabatak','bijak','china','katachina','dare','tantangan','fakta','faktaunik','fiersa','fiersabesari','jawa','pepatahjawa','katajawa','katabucin','bucin','katasore','sore','minangkabau','minang','kataminang','motivasi','katamotivasi','ngeles','alasan'],
   game:   ['asahotak','toka','hint','nyerah'],
   owner:  ['ban','unban','block','unblock','broadcast','bcgc','bcgcht','backup','restore','clearsession','cleartmp','listblacklist','listblock','addprem','delprem','listprem','addsewa','delsewa','ceksewa','listsewa','tambahsewa','addxp','addmoney','addlimit','addhp','resetlimit','listuser','addlevel','dellevel','delmoney','delxp','dellimit','cekprofil','resetprofil','listrank','leaveall','listgroup','crm','crm2','addpremgrup','delpremgrup','addrespon','uprespon','delrespon','listrespon','addlist','updatelist','reset','restart','warn','unwarn','delwarn','resetwarn','listwarn'],
-  admin:  ['add','kick','banmember','unbanmember','sider','listtotalpesan','catatan'],
 };
 
 // Label yang DITAMPILIN. Key kategori nggak boleh ada spasi (dipakai `.menu <key>`
@@ -226,8 +230,10 @@ const CAT_ALIAS = {
   rpg: 'rpg', game: 'game', games: 'game', asahotak: 'game',
   random: 'random', kata: 'random',
   info: 'info', menu: 'info',
-  grup: 'grup', group: 'grup', admin: 'admin', groupadmin: 'admin',
-  proteksi: 'proteksi', protek: 'proteksi', toggle: 'proteksi',
+  // `admin` & `proteksi` nggak punya kategori sendiri lagi — dua-duanya
+  // diarahkan ke `grup` biar `.menu admin` / `.menu proteksi` lama tetap jalan.
+  grup: 'grup', group: 'grup', admin: 'grup', groupadmin: 'grup',
+  proteksi: 'grup', protek: 'grup', toggle: 'grup',
   satset: 'satset', set: 'satset', 'sat-set': 'satset', setelan: 'satset', setting: 'satset',
 };
 

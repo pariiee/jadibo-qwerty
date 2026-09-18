@@ -78,6 +78,9 @@ assert.ok(/group_settings: \[/.test(sync) && /welcome_on/.test(sync) && /bye_on/
 // 10. Fitur kecatat di .menu.
 const info = read('plugins/01-info.js');
 assert.ok(/'setleft'/.test(info), '.setleft harus kecatat di daftar command');
-assert.ok(/'welcome','left'/.test(info), '.on welcome & .on left harus muncul di kategori proteksi');
+// Kategori `proteksi` udah dilebur ke `grup`; toggle welcome/left ikut pindah.
+const barisGrup = info.split('\n').find(l => /^\s*grup:\s+\[/.test(l)) || '';
+assert.ok(/'welcome'/.test(barisGrup) && /'left'/.test(barisGrup),
+  '.on welcome & .on left harus kecatat di kategori grup');
 
 console.log('✓ welcome/left: .on/.off beneran matiin, teks nggak bocor ke default .env');
