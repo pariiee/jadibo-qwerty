@@ -134,6 +134,11 @@ const FITUR_INFO = {
   detect:      { emoji: '🔔', label: 'Detect',      desc: 'Notifikasi perubahan grup (nama, icon, dll)',   scope: 'db' },
   autoacc:     { emoji: '✅', label: 'Autoacc',     desc: 'Auto approve join request grup',               scope: 'db' },
   document:    { emoji: '📄', label: 'Document',    desc: 'Kirim ulang dokumen sebagai file biasa',        scope: 'db' },
+  // welcome/bye: saklar disimpan di kolom sendiri (welcome_on/bye_on), teksnya
+  // nggak kesentuh — jadi off/on bolak-balik nggak ngehapus teks custom.
+  welcome:     { emoji: '👋', label: 'Welcome',     desc: 'Sambutan otomatis saat member masuk grup',      scope: 'db', col: 'welcome_on' },
+  left:        { emoji: '🚪', label: 'Left',        desc: 'Ucapan otomatis saat member keluar grup',       scope: 'db', col: 'bye_on' },
+  bye:         { emoji: '🚪', label: 'Left',        desc: 'Ucapan otomatis saat member keluar grup',       scope: 'db', col: 'bye_on' },
   // Global scope — dikelola engine, toggle via .on/.off diteruskan ke engine
   nyimak:      { emoji: '🤫', label: 'Nyimak',      desc: 'Bot diam total, tidak balas command',           scope: 'global' },
   autoread:    { emoji: '👀', label: 'Autoread',    desc: 'Centang biru semua pesan otomatis',            scope: 'global' },
@@ -142,13 +147,14 @@ const FITUR_INFO = {
 
 // ─── Helper: get DB group setting ─────────────────────────────────────────────
 async function getDbGroupSetting(botId, groupJid) {
+  const kosong = { detect: 0, autoacc: 0, document: 0, welcome_on: 1, bye_on: 1 };
   try {
     const [rows] = await pool.execute(
-      'SELECT detect, autoacc, document FROM group_settings WHERE bot_id = ? AND group_jid = ? LIMIT 1',
+      'SELECT detect, autoacc, document, welcome_on, bye_on FROM group_settings WHERE bot_id = ? AND group_jid = ? LIMIT 1',
       [botId, groupJid]
     );
-    return rows[0] || { detect: 0, autoacc: 0, document: 0 };
-  } catch { return { detect: 0, autoacc: 0, document: 0 }; }
+    return rows[0] || kosong;
+  } catch { return kosong; }
 }
 
 async function setDbGroupSetting(botId, groupJid, col, val) {
@@ -172,7 +178,7 @@ module.exports = async function proteksiHandler(ctx) {
   const skipCmds = new Set([
     'on','off','antibot','antilink','antilinkv2','antitoxic','antidelete',
     'antispam','antitagsw','autosticker','antisticker','viewonce','autolevelup',
-    'detect','welcome','autoacc','document','nyimak','autoread','proteksi','fitur','didyoumean',
+    'detect','welcome','left','bye','autoacc','document','nyimak','autoread','proteksi','fitur','didyoumean',
   ]);
 
   if (isGroup && (!isCmd || !skipCmds.has(command))) {
@@ -367,7 +373,9 @@ module.exports = async function proteksiHandler(ctx) {
         `⬆️ autolevelup : ${st(cfg.autolevelup)}\n` +
         `🔔 detect      : ${st(dbCfg.detect)}\n` +
         `✅ autoacc     : ${st(dbCfg.autoacc)}\n` +
-        `📄 document    : ${st(dbCfg.document)}\n\n` +
+        `📄 document    : ${st(dbCfg.document)}\n` +
+        `👋 welcome     : ${st(dbCfg.welcome_on)}\n` +
+        `🚪 left        : ${st(dbCfg.bye_on)}\n\n` +
         `*── Global (bot) ──*\n` +
         `🤫 nyimak      : ${st(nyimak)}\n` +
         `👀 autoread    : ${st(autoread)}\n` +
@@ -417,10 +425,25 @@ module.exports = async function proteksiHandler(ctx) {
       return true;
     }
 
-    // DB scope (detect, autoacc, document, welcome)
+    // DB scope (detect, autoacc, document, welcome, left)
     if (info.scope === 'db') {
-      await setDbGroupSetting(botData.id, jid, fitur, enable);
-      await reply(`${emoji} *${label}* ${enable ? '✅ Diaktifkan' : '❌ Dinonaktifkan'}\n_${info.desc}_`);
+      const dbNow = await getDbGroupSetting(botData.id, jid);
+      const current = dbNow[info.col || fitur];
+      if (enable && current) {
+        await reply(`${emoji} *${label}* sudah *aktif* sejak tadi. Gunakan \`${p}off ${fitur}\` untuk mematikan.`);
+        return true;
+      }
+      if (!enable && !current) {
+        await reply(`${emoji} *${label}* sudah *mati* sejak tadi. Gunakan \`${p}on ${fitur}\` untuk mengaktifkan.`);
+        return true;
+      }
+      await setDbGroupSetting(botData.id, jid, info.col || fitur, enable);
+      // Saklar OFF di atas teks: teks custom-nya tetap tersimpan, cuma didiemin.
+      const jejak = (fitur === 'welcome' || fitur === 'left')
+        ? (enable ? '\n_Sambutan pakai teks yang tersimpan (kalau belum pernah diatur: teks default)._'
+                  : '\n_Teks custom tetap tersimpan — tinggal `.on` lagi kalau mau dipakai._')
+        : '';
+      await reply(`${emoji} *${label}* ${enable ? '✅ Diaktifkan' : '❌ Dinonaktifkan'}\n_${info.desc}_${jejak}`);
       return true;
     }
 

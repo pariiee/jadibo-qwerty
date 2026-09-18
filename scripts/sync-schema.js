@@ -23,6 +23,11 @@ const TABLES = {
     ['daily_limit',    "INT NOT NULL DEFAULT 20"],
     ['is_running',     "TINYINT(1) NOT NULL DEFAULT 0"],
   ],
+  group_settings: [
+    // Saklar `.on welcome` / `.on left` — DB lama belum punya kolom ini.
+    ['welcome_on', "TINYINT(1) NOT NULL DEFAULT 1"],
+    ['bye_on',     "TINYINT(1) NOT NULL DEFAULT 1"],
+  ],
   rpg_members: [
     // tambahan RPG yang dipakai kode
     ['bank_money',     "BIGINT NOT NULL DEFAULT 0"],
@@ -72,6 +77,8 @@ const CREATE_TABLES = [
     group_jid    VARCHAR(100) NOT NULL,
     welcome_msg  TEXT DEFAULT NULL,
     bye_msg      TEXT DEFAULT NULL,
+    welcome_on   TINYINT(1) NOT NULL DEFAULT 1,
+    bye_on       TINYINT(1) NOT NULL DEFAULT 1,
     detect       TINYINT(1) NOT NULL DEFAULT 0,
     autoacc      TINYINT(1) NOT NULL DEFAULT 0,
     document     TINYINT(1) NOT NULL DEFAULT 0,

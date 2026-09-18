@@ -898,13 +898,15 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
       const { jid, participants, action } = event;
       if (!jid || !participants?.length) return;
       if (!['add', 'remove', 'request'].includes(action)) return;
-
       const [settingsRows] = await pool.execute(
-        'SELECT welcome_msg, bye_msg, autoacc FROM group_settings WHERE bot_id = ? AND group_jid = ? LIMIT 1',
+        'SELECT welcome_msg, bye_msg, autoacc, welcome_on, bye_on FROM group_settings WHERE bot_id = ? AND group_jid = ? LIMIT 1',
         [botId, jid]
       );
       const settings = settingsRows[0] || {};
-
+      // Saklar per grup (`.on welcome` / `.on left`). Baris belum ada = undefined
+      // → dianggap ON, biar grup lama nggak berubah perilakunya.
+      const welcomeOn = settings.welcome_on !== 0;
+      const byeOn     = settings.bye_on !== 0;
       // ── Autoacc — approve join request ─────────────────────────────────────
       if (settings.autoacc && action === 'request') {
         try {
@@ -916,8 +918,14 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
         return;
       }
 
-      // Baris group_settings belum ada? Nggak masalah — teksnya nanti jatuh ke
-      // default .env (mess.welcomeDefault / mess.byeDefault).
+      // 'request' (minta join) bukan masuk/keluar — cuma autoacc yang ngurus.
+      // Dulu event ini lolos ke bawah dan kebagian teks *bye*: orang minta
+      // gabung grup malah disalami ucapan perpisahan.
+      if (action === 'request') return;
+
+      // Perhatian: `??` bukan `||`. Kolom yang di-NULL-kan tetap jatuh ke teks
+      // default .env, tapi sekarang itu cuma kalau saklarnya ON — jadi OFF
+      // beneran diam, bukan ganti ke teks default.
 
       let meta = null;
       try { meta = await client.group.queryGroupMetadata(jid); } catch {}
@@ -953,8 +961,8 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
         }
 
         const template = action === 'add'
-          ? (settings.welcome_msg || mess.welcomeDefault)
-          : (settings.bye_msg || mess.byeDefault);
+          ? (welcomeOn ? (settings.welcome_msg ?? mess.welcomeDefault) : null)
+          : (byeOn ? (settings.bye_msg ?? mess.byeDefault) : null);
         if (!template) continue;
 
         const { text, mentions } = renderTemplate(template, {

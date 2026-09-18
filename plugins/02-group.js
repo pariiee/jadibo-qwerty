@@ -1143,58 +1143,47 @@ module.exports = async function groupHandler(ctx) {
     }
 
     // ── setwelcome ────────────────────────────────────────────────────────────
-    case 'setwelcome': {
+    case 'setwelcome':
+    case 'setleft':
+    case 'setbye': {
       if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
       const { pool: dbPool } = require('../config/database');
+      const isWelcome = command === 'setwelcome';
+      // welcome/left = sepasang: kolom teks + kolom saklarnya.
+      const [colMsg, colOn] = isWelcome
+        ? ['welcome_msg', 'welcome_on']
+        : ['bye_msg',     'bye_on'];
+      const judul = isWelcome ? 'Welcome' : 'Bye';
       const teks = args.join(' ').trim();
       if (!teks) {
         await reply(
-          `⚠️ *Teks welcome belum dimasukkan!*\n\n` +
-          `*Cara Penggunaan:*\n${p}setwelcome <teks>\n\n` +
-          `*Contoh:*\n${p}setwelcome Halo @user, selamat datang di @subject!\n\n` +
+          `⚠️ *Teks ${judul.toLowerCase()} belum dimasukkan!*\n\n` +
+          `*Cara Penggunaan:*\n${p}${command} <teks>\n\n` +
+          `*Contoh:*\n${p}${command} ${isWelcome ? 'Halo @user, selamat datang di @subject!' : 'Selamat tinggal @user, semoga sukses!'}\n\n` +
           `┌─ *VARIABEL TERSEDIA*\n` +
-          `▢ *@user* / *@usertag* : Tag member baru\n` +
+          `▢ *@user* / *@usertag* : Tag ${isWelcome ? 'member baru' : 'member yang keluar'}\n` +
           `▢ *@subject* / *@groupname* / *@namegc* : Nama grup\n` +
           `▢ *@desc* : Deskripsi grup\n` +
           `▢ *@jam* *@menit* *@detik* *@hari* *@tanggal* *@bulan* *@tahun* *@namabulan*\n` +
           `▢ *@tagdiri* *@tagreply* *@pesanan*\n` +
-          `└──────────────\n\n_Daftar lengkap: ${p}catatan_`
+          `└──────────────\n\n_Daftar lengkap: ${p}catatan_\n_Matikan: ${p}off ${isWelcome ? 'welcome' : 'left'}_`
         );
         return true;
       }
+      // Sekalian nyalain — admin yang barusan nulis pesannya nggak mungkin niat matiin.
       await dbPool.execute(
-        `INSERT INTO group_settings (bot_id, group_jid, welcome_msg)
-         VALUES (?, ?, ?)
-         ON DUPLICATE KEY UPDATE welcome_msg = VALUES(welcome_msg)`,
+        `INSERT INTO group_settings (bot_id, group_jid, ${colMsg}, ${colOn})
+         VALUES (?, ?, ?, 1)
+         ON DUPLICATE KEY UPDATE ${colMsg} = VALUES(${colMsg}), ${colOn} = 1`,
         [botData.id, jid, teks]
       );
-      await reply(`✅ *Pesan Welcome Berhasil Diatur!*\n\nPesan ini akan otomatis dikirim ketika ada anggota baru yang bergabung ke dalam grup.`);
-      return true;
-    }
-
-    // ── setbye ────────────────────────────────────────────────────────────────
-    case 'setbye': {
-      if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
-      const { pool: dbPool } = require('../config/database');
-      const teks = args.join(' ').trim();
-      if (!teks) {
-        await reply(
-          `⚠️ *Teks bye belum dimasukkan!*\n\n` +
-          `*Cara Penggunaan:*\n${p}setbye <teks>\n\n` +
-          `*Contoh:*\n${p}setbye Selamat tinggal @user, semoga sukses!\n\n` +
-          `┌─ *VARIABEL TERSEDIA*\n` +
-          `▢ *@user* : Tag member yang keluar\n` +
-          `└──────────────`
-        );
-        return true;
-      }
-      await dbPool.execute(
-        `INSERT INTO group_settings (bot_id, group_jid, bye_msg)
-         VALUES (?, ?, ?)
-         ON DUPLICATE KEY UPDATE bye_msg = VALUES(bye_msg)`,
-        [botData.id, jid, teks]
+      await reply(
+        `✅ *Pesan ${judul} Berhasil Diatur!*\n\n` +
+        (isWelcome
+          ? 'Pesan ini akan otomatis dikirim ketika ada anggota baru yang bergabung ke dalam grup.'
+          : 'Pesan ini akan otomatis dikirim ketika ada anggota yang keluar dari grup.') +
+        `\n\n_Matikan: ${p}off ${isWelcome ? 'welcome' : 'left'}_`
       );
-      await reply(`✅ *Pesan Bye Berhasil Diatur!*\n\nPesan ini akan otomatis dikirim ketika ada anggota yang keluar dari grup.`);
       return true;
     }
 
@@ -1202,11 +1191,13 @@ module.exports = async function groupHandler(ctx) {
     case 'delwelcome': {
       if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
       const { pool: dbPool } = require('../config/database');
+      // Saklarnya sekalian dimatiin: kalau cuma di-NULL, engine jatuh balik ke
+      // teks default .env dan sambutan tetep kekirim — padahal niatnya berhenti.
       await dbPool.execute(
-        'UPDATE group_settings SET welcome_msg = NULL WHERE bot_id = ? AND group_jid = ?',
+        'UPDATE group_settings SET welcome_msg = NULL, welcome_on = 0 WHERE bot_id = ? AND group_jid = ?',
         [botData.id, jid]
       );
-      await reply('✅ Pesan welcome berhasil dihapus.');
+      await reply(`✅ Pesan welcome dihapus & sambutan dimatikan.\n\n_Nyalain lagi: ${p}on welcome_`);
       return true;
     }
 
@@ -1215,10 +1206,10 @@ module.exports = async function groupHandler(ctx) {
       if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
       const { pool: dbPool } = require('../config/database');
       await dbPool.execute(
-        'UPDATE group_settings SET bye_msg = NULL WHERE bot_id = ? AND group_jid = ?',
+        'UPDATE group_settings SET bye_msg = NULL, bye_on = 0 WHERE bot_id = ? AND group_jid = ?',
         [botData.id, jid]
       );
-      await reply('✅ Pesan bye berhasil dihapus.');
+      await reply(`✅ Pesan bye dihapus & ucapan keluar dimatikan.\n\n_Nyalain lagi: ${p}on left_`);
       return true;
     }
 

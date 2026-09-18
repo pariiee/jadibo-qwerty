@@ -178,6 +178,8 @@ CREATE TABLE IF NOT EXISTS group_settings (
   group_jid    VARCHAR(100) NOT NULL,
   welcome_msg  TEXT DEFAULT NULL,
   bye_msg      TEXT DEFAULT NULL,
+  welcome_on   TINYINT(1) NOT NULL DEFAULT 1,
+  bye_on       TINYINT(1) NOT NULL DEFAULT 1,
   detect       TINYINT(1) NOT NULL DEFAULT 0,
   autoacc      TINYINT(1) NOT NULL DEFAULT 0,
   document     TINYINT(1) NOT NULL DEFAULT 0,
