@@ -78,6 +78,8 @@ const SESSIONS_DIR = path.resolve(process.env.SESSIONS_DIR || './sessions');
 
 // Global per-bot settings (nyimak, autoread) — dikelola di config/globalSettings.js
 const { getBotGlobalSetting, setBotGlobalSetting } = require('../config/globalSettings');
+// Cooldown balasan tanpa prefix (nyebut "bot") — per bot per grup.
+const mentionCooldown = new Map();
 
 // ─── Owner & Developer greeting cooldown store ───────────────────────────────
 // key: `${botId}:${groupJid}` → timestamp last greeting
@@ -205,6 +207,9 @@ function buildContext(client, event, botData) {
         return client.message.send(jid, full);
       }
     },
+    // Helper: balas sebagai pesan ber-label AI (messageContextInfo + node bot).
+    // Nggak pakai footer biar tetap kelihatan kayak balasan manusia.
+    replyAI: (text) => client.message.send(jid, { text: String(text) }, { ai: true }),
     // Helper: react with emoji
     react: (emoji) =>
       client.message.send(jid, {
@@ -766,6 +771,25 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
       // log tetap jalan, tapi tidak diproses plugin
       console.log(`[Bot ${botId}] 🤫 nyimak: ${logLine}`);
       return;
+    }
+
+    // ── Balasan tanpa prefix ──────────────────────────────────────────────────
+    // Kalau ada kata "bot" di pesan (bukan command, bukan dari bot sendiri),
+    // balas "oh iyaa banggg" sebagai pesan ber-label AI. Dicek SEBELUM gerbang
+    // registrasi: yang nyebut "bot" harus langsung dibalas, bukan ditawarin
+    // daftar dulu. Cooldown biar nggak jadi spam tiap kali ada yang nyebut bot.
+    // ponytail: kata tunggal apa aja yang persis "bot" — kalau mau "bot," / "bot!"
+    // ikut kebaca, ganti tes-nya jadi /^bot\b/i.
+    if (!ctx.isCmd && ctx.jid && ctx.body.trim().toLowerCase() === 'bot') {
+      const cdKey = `${botId}:${ctx.jid}`;
+      if (Date.now() - (mentionCooldown.get(cdKey) || 0) > 60 * 1000) {
+        mentionCooldown.set(cdKey, Date.now());
+        await ctx.replyAI('oh iyaa banggg').catch((e) => {
+          console.log(`[Bot ${botId}] gagal balas "bot" (label AI): ${e?.message || e}`);
+          return ctx.reply('oh iyaa banggg').catch(() => {});
+        });
+        return;
+      }
     }
 
     // ── Gerbang registrasi — auto-daftar user baru ──────────────────────────

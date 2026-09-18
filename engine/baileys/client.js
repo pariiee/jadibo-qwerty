@@ -21,6 +21,7 @@
  */
 
 const EventEmitter = require('events');
+const { randomBytes } = require('crypto');
 const {
   makeWASocket,
   makeCacheableSignalKeyStore,
@@ -57,6 +58,34 @@ const RAW_PROTO_KEYS = [
 
 const isRawProto = (c) =>
   !!c && typeof c === 'object' && RAW_PROTO_KEYS.some((k) => c[k] !== undefined);
+
+// ── Pesan berlabel "AI" ──────────────────────────────────────────────────────
+// Label AI di bubble cuma nongol kalau pesannya bawa `messageContextInfo`:
+// `messageSecret` (32 byte acak) + `supportPayload` is_ai_message, DAN node
+// `<bot biz_bot="1"/><biz/>`. Baileys nggak punya API-nya — sama kayak tombol,
+// jalurnya relayMessage + proto mentah. Dipisah dari sendRaw() karena node-nya
+// beda: sendRaw nempelin node tombol, ini nempelin node bot/biz.
+const AI_TICKET_ID = '1669945700536053';
+const AI_NODES = [
+  { attrs: { biz_bot: '1' }, tag: 'bot' },
+  { attrs: {}, tag: 'biz' },
+];
+function aiContent(text) {
+  return {
+    conversation: String(text),
+    messageContextInfo: {
+      // Wajib ada isinya (32 byte) walau WA nggak ngecek nilainya — tanpa ini
+      // supportPayload-nya diabaikan dan labelnya nggak muncul.
+      messageSecret: randomBytes(32),
+      supportPayload: JSON.stringify({
+        version: 1,
+        is_ai_message: true,
+        should_show_system_message: true,
+        ticket_id: AI_TICKET_ID,
+      }),
+    },
+  };
+}
 
 // Media view-once & pesan yang hilang datanya dibungkus dalam `.message` lagi.
 // `msgType` jadi 'viewOnceMessageV2' -> cabang media di plugin nggak kena, dan
@@ -336,6 +365,20 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
     return wam;
   }
 
+  // Pesan berlabel AI. Bukan lewat sendRaw() karena node-nya beda: yang ini
+  // `<bot biz_bot="1"/><biz/>` (penanda pesan bot), bukan node tombol.
+  async function sendAi(jid, text) {
+    if (!sock) throw new Error('socket belum siap');
+    const message = proto.Message.create(aiContent(text));
+    const wam = generateWAMessageFromContent(jid, message, { userJid: meJid || undefined });
+    await sock.relayMessage(jid, wam.message, {
+      messageId: wam.key.id,
+      additionalNodes: AI_NODES,
+    });
+    rememberSent(wam);
+    return wam;
+  }
+
   // Jalur proto mentah (tombol) nggak lewat generateWAMessageContent, jadi
   // `mentions` nggak otomatis jadi `contextInfo.mentionedJid` — tempel sendiri.
   // (Jalur normal diurus Baileys dari opsi `mentions` di send().)
@@ -371,6 +414,8 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
 
   async function send(jid, content, opts = {}) {
     if (!sock) throw new Error('socket belum siap');
+    // Pesan berlabel AI — WA nampilin tanda "AI" di bubble-nya.
+    if (opts.ai) return sendAi(jid, content?.text ?? content);
     // Tag biru di grup LID butuh bentuk LID-nya ikut — lihat engine/jid.js.
     // `mentions` boleh nempel di konten ({ text, mentions }) atau di opsi.
     const mentions = mentionsForChat(jid, opts.mentions || content?.mentions);
@@ -586,6 +631,7 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
 
     message: {
       send,
+      sendAi,
       prepareDocument,
       downloadBytes: async (source) => {
         const msg = source?.message ? source : { message: source };
@@ -670,6 +716,7 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
 module.exports = {
   createClient, toBaileysContent, toBaileysOptions, normalizeGroupMeta, isRawProto, attachMentions,
   normalizeParticipantResults, withTimeout, asArray,
+  aiContent, AI_NODES,        // pesan berlabel AI (buat test)
   rememberSent, lookupSent, // buat test retry receipt
   onMessageSent,             // buat antidelete (plugins/02-group.js)
   unwrapMessage,             // view-once -> media biasa (dipakai banyak plugin)
