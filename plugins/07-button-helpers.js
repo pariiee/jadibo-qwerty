@@ -17,7 +17,7 @@ const { genThumbnail } = require('../engine/thumbnail');
  */
 async function sendCategoryDropdown(ctx) {
   const { client, jid } = ctx;
-  const { CATS, CAT_KEYS } = require('./01-info');
+  const { CATS, CAT_KEYS, catLabel } = require('./01-info');
 
   let header;
   try {
@@ -49,7 +49,7 @@ async function sendCategoryDropdown(ctx) {
               title: 'Kategori',
               highlight_label: 'YaaPar Menu',
               rows: CAT_KEYS.map(k => ({
-                title: k.toUpperCase(),
+                title: catLabel(k),
                 description: `${CATS[k].length} Command`,
                 id: `.menu ${k}`,
               })),

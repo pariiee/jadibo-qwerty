@@ -4,7 +4,7 @@
  * test/menu-buttons.js
  * `.menu` harus kirim SATU bubble `buttonsMessage` berisi: header lokasi
  * (thumbnail banner + teks menu) dan dua tombol sebaris — `Menu` (`single_select`,
- * ALL + 11 kategori) + `Owner`. Sub-menu (`.menu <kat>` / `.menu all`) WAJIB pakai
+ * ALL + 12 kategori) + `Owner`. Sub-menu (`.menu <kat>` / `.menu all`) WAJIB pakai
  * bubble yang sama, bukan balik jadi teks polos.
  */
 
@@ -62,14 +62,14 @@ const ctx = baseCtx;
     const body = sent[0][1].buttonsMessage.contentText;
     assert.ok(body.includes('INFO USER & BOT'), 'box INFO hilang');
     assert.ok(body.includes('MENU CATEGORY'), 'box kategori hilang');
-    assert.ok(/│ ◦ [A-Z]+ \(\d+ Fitur\)/.test(body), 'kategori nggak per baris lagi');
-    const catsTxt = [...body.matchAll(/│ ◦ ([A-Z]+) \(\d+ Fitur\)/g)].map(m => m[1]);
+    assert.ok(/│ ◦ [A-Z ]+ \(\d+ Fitur\)/.test(body), 'kategori nggak per baris lagi');
+    const catsTxt = [...body.matchAll(/│ ◦ ([A-Z ]+?) \(\d+ Fitur\)/g)].map(m => m[1]);
     assert.deepStrictEqual(catsTxt, [...catsTxt].sort(), `kategori teks nggak urut a-z: ${catsTxt}`);
     assert.ok(body.includes('╰────'), 'box penutup hilang');
     assert.ok(body.length <= 1024, `kepanjangan: ${body.length} char`);
   });
 
-  await ok('tombol sebaris: Menu single_select (ALL + 11 kategori) + Owner', () => {
+  await ok('tombol sebaris: Menu single_select (ALL + 12 kategori) + Owner', () => {
     const btns = sent[0][1].buttonsMessage.buttons;
     assert.strictEqual(btns.length, 2);
     assert.strictEqual(btns[0].buttonText.displayText, 'Menu');
@@ -81,7 +81,7 @@ const ctx = baseCtx;
     assert.strictEqual(d.sections[0].rows[0].id, '.menu all', 'ALL nggak di baris paling atas');
     assert.strictEqual(d.sections[0].rows[0].title, 'ALL');
     const rows = JSON.parse(btns[0].nativeFlowInfo.paramsJson).sections[0].rows;
-    assert.strictEqual(rows.length, 12, `dapat ${rows.length} rows (ALL + 11 kategori)`);
+    assert.strictEqual(rows.length, 13, `dapat ${rows.length} rows (ALL + 12 kategori)`);
     assert.match(rows[0].id, /^\.menu \w+$/, `row id salah: ${rows[0].id}`);
     const catRows = rows.slice(1).map(r => r.id.slice(6));
     assert.deepStrictEqual(catRows, [...catRows].sort(), `kategori dropdown nggak urut a-z: ${catRows}`);
@@ -136,7 +136,7 @@ const ctx = baseCtx;
     assert.ok(body.includes('│ ◦ .ping'), 'command kategori nggak ikut');
     // tiap blok kategori harus urut a-z
     const blocks = body.split('│ 〔 ').slice(1);
-    assert.ok(blocks.length === 11, `blok kategori cuma ${blocks.length}`);   // 11 kategori di CATS
+    assert.ok(blocks.length === 12, `blok kategori cuma ${blocks.length}`);   // 12 kategori di CATS
     const heads = blocks.map(b => b.split(' 〕')[0]);
     assert.deepStrictEqual(heads, [...heads].sort(), `sub-judul kategori nggak urut a-z: ${heads}`);
     for (const b of blocks) {
@@ -148,6 +148,25 @@ const ctx = baseCtx;
   await ok('.kick masuk kategori ADMIN, bukan GRUP', async () => {
     assert.ok(info.CATS.admin.includes('kick'), '.kick nggak ada di kategori admin');
     assert.ok(!info.CATS.grup.includes('kick'), '.kick masih nyangkut di kategori grup');
+  });
+
+  await ok('semua `.set*` kumpul di SAT SET — nggak nyempil di kategori lain', () => {
+    const setCmds = Object.values(info.CATS).flat().filter(c => c.startsWith('set'));
+    assert.deepStrictEqual([...setCmds].sort(), [...info.CATS.satset].sort(),
+      `ada .set* di luar satset / dobel: ${setCmds.sort().join(', ')}`);
+    assert.strictEqual(info.CAT_LABEL.satset, 'SAT SET', 'label satset bukan "SAT SET"');
+    assert.ok(info.CAT_ALIAS.set === 'satset' && info.CAT_ALIAS['sat-set'] === 'satset',
+      '.menu set / .menu sat-set nggak nunjuk ke satset');
+  });
+
+  await ok('`.menu satset` kebaca — sub-judulnya "MENU SAT SET"', async () => {
+    sent.length = 0;
+    await info({ ...baseCtx, args: ['satset'] });
+    const body = sent[0][1].buttonsMessage.contentText;
+    assert.ok(body.includes('MENU SAT SET'), `sub-judul salah: ${body.split('\n')[1]}`);
+    const cmds = body.split('\n').filter(l => l.startsWith('│ ◦ ')).map(l => l.slice(4));
+    assert.deepStrictEqual(cmds, [...cmds].sort(), 'isi satset nggak urut a-z');
+    assert.ok(cmds.includes('.setwelcome') && cmds.includes('.setqris'), `isi satset kurang: ${cmds.join(' ')}`);
   });
 
   console.log(`\nmenu-buttons: ${pass} PASS, ${fail} FAIL`);

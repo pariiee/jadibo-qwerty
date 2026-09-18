@@ -77,7 +77,10 @@ const ALL_COMMANDS = [...new Set([
   'groupinfo','grouplist','leavegc','listadmin','getpp','getppgc','ppgc','ppgroup','ppgrup','totag',
   'delete','cekasalmember','absen','mulaiabsen','cekabsen','hapusabsen',
   'afk','listafk','antidelete','topchat',
-  'setwelcome','setleft','setbye','delwelcome','delbye','setdetect','deldetect',
+  // Sat-set — nama command aslinya tetap `.set*`, cuma kategorinya dikumpul
+  'setwelcome','setleft','setbye','setopen','setclose','setname','setnamegc','setdesc',
+  'setbio','setpp','setppgc','setqris','setsewa','setlimitgc','setgcutama','setwarnlimit',
+  'delwelcome','delbye','setdetect','deldetect',
   // Proteksi & Toggle
   'on','off','fitur','proteksi',
   'antibot','antilink','antilinkv2','antitoxic','antidelete',
@@ -185,7 +188,13 @@ const RM = String.fromCharCode(8206).repeat(4001); // readmore: konten bawah ter
 
 const CATS = {
   info:   ['ping','menu','info','owner','uptime','profile','me','carifitur','totalfitur','limit','uptname','memory','runtime','react'],
-  grup:   ['tagall','tagadmin','tagme','hidetag','ht','kickall','promote','demote','open','close','mute','unmute','slowmode','setname','setdesc','linkgroup','upswgc','grupopen','grupclose','linkgc','setnamegc','groupinfo','grouplist','leavegc','listadmin','getpp','getppgc','ppgc','ppgroup','ppgrup','totag','delete','cekasalmember','absen','mulaiabsen','cekabsen','hapusabsen','afk','listafk','topchat','antidelete','setwelcome','setleft','setbye','delwelcome','delbye','setdetect','deldetect','mulaigiveaway','ikut','rollgiveaway','cekgiveaway','cekmenang','hapusgiveaway'],
+  grup:   ['tagall','tagadmin','tagme','hidetag','ht','kickall','promote','demote','open','close','mute','unmute','slowmode','linkgroup','upswgc','grupopen','grupclose','linkgc','groupinfo','grouplist','leavegc','listadmin','getpp','getppgc','ppgc','ppgroup','ppgrup','totag','delete','cekasalmember','absen','mulaiabsen','cekabsen','hapusabsen','afk','listafk','topchat','antidelete','delwelcome','delbye','deldetect','mulaigiveaway','ikut','rollgiveaway','cekgiveaway','cekmenang','hapusgiveaway'],
+  // Sat-set: SEMUA command `.set*` dikumpul di sini — satu tempat buat nyetel
+  // teks welcome/left, nama & deskripsi grup, bio, pp, sewa, limit, warn limit, QRIS.
+  // Murni pindah: `setwelcome`/`setleft`/`setbye` juga sudah TIDAK ada lagi di `grup`
+  // dan `setppgc`/`setopen`/`setclose` nggak lagi di `admin` — jangan diduplikat,
+  // nanti kelihatan dobel di `.menu all`.
+  satset: ['setbio','setbye','setclose','setdesc','setdetect','setgcutama','setleft','setlimitgc','setname','setnamegc','setopen','setpp','setppgc','setqris','setsewa','setwarnlimit','setwelcome'],
   proteksi: ['on','off','fitur','proteksi','antibot','antilink','antilinkv2','antitoxic','antispam','antitagsw','autosticker','antisticker','viewonce','autolevelup','detect','autoacc','document','welcome','left','nyimak','autoread'],
   rpg:    ['unreg','profile','me','claim','hourly','weekly','dailymisi','kerja','mancing','berburu','hunt','bertarung','fight','dungeon','adventure','koboy','airdrop','maling','lamarkerja','job','gajian','transfer','tf','bank','atm','topkoin','lb','leaderboard','store','beli','inventory','pakai','gacha','slot','jodoh','suitpvp','coinflip','cf','tictactoe','ttt'],
   maker:  ['sticker','s','wm','brat','bratvid','attp','fakech','fakecall','fakecallip','fakedana','fakeovo','fakegcios','fakepptele','rvo','readviewonce','readvo','liat','swgc','upswgc'],
@@ -193,9 +202,14 @@ const CATS = {
   downloader: ['aio','mediafire','mfdl','likee','likeedl','moddroid','moddroiddl','facebook','fbdl','fb','tgsticker','telesticker','spotify','spotifydl','soundcloud','scdl','sfilemobi','sfile','sfileco','rednote','xiaohongshu','xhs','reddit','redditdl','twitter','twit','xdl','tiktok','tiktokdl','ttdl','tt','pinterest','pindl','pin','threads','threadsdl','youtube','ytdl','yt','gdrive','gdrivedl','instagram','igdl','ig','kuaishou','kwai','kuaishoudl'],
   random: ['aceh','kataaceh','batak','katabatak','bijak','china','katachina','dare','tantangan','fakta','faktaunik','fiersa','fiersabesari','jawa','pepatahjawa','katajawa','katabucin','bucin','katasore','sore','minangkabau','minang','kataminang','motivasi','katamotivasi','ngeles','alasan'],
   game:   ['asahotak','toka','hint','nyerah'],
-  owner:  ['ban','unban','block','unblock','broadcast','bcgc','bcgcht','backup','restore','clearsession','cleartmp','listblacklist','listblock','addprem','delprem','listprem','addsewa','delsewa','setsewa','ceksewa','listsewa','tambahsewa','addxp','addmoney','addlimit','addhp','resetlimit','listuser','addlevel','dellevel','delmoney','delxp','dellimit','cekprofil','resetprofil','listrank','leaveall','listgroup','setlimitgc','setgcutama','crm','crm2','addpremgrup','delpremgrup','addrespon','uprespon','delrespon','listrespon','addlist','updatelist','reset','restart','setbio','setpp','warn','unwarn','delwarn','resetwarn','setwarnlimit','listwarn'],
-  admin:  ['add','kick','promoteme','banmember','unbanmember','setppgc','sider','listtotalpesan','setopen','setclose','catatan','catatanset'],
+  owner:  ['ban','unban','block','unblock','broadcast','bcgc','bcgcht','backup','restore','clearsession','cleartmp','listblacklist','listblock','addprem','delprem','listprem','addsewa','delsewa','ceksewa','listsewa','tambahsewa','addxp','addmoney','addlimit','addhp','resetlimit','listuser','addlevel','dellevel','delmoney','delxp','dellimit','cekprofil','resetprofil','listrank','leaveall','listgroup','crm','crm2','addpremgrup','delpremgrup','addrespon','uprespon','delrespon','listrespon','addlist','updatelist','reset','restart','warn','unwarn','delwarn','resetwarn','listwarn'],
+  admin:  ['add','kick','promoteme','banmember','unbanmember','sider','listtotalpesan','catatan','catatanset'],
 };
+
+// Label yang DITAMPILIN. Key kategori nggak boleh ada spasi (dipakai `.menu <key>`
+// + id tombol), tapi Pak minta kategorinya bernama "sat set" → dipisah di sini.
+const CAT_LABEL = { satset: 'SAT SET' };
+const catLabel = (k) => CAT_LABEL[k] || String(k).toUpperCase();
 
 // Urutan kategori a-z — dipakai teks `.menu`, sub-judul `.menu all`, dan dropdown.
 // Pak: "category belum urut yah? dari a sampe z?"
@@ -212,6 +226,7 @@ const CAT_ALIAS = {
   info: 'info', menu: 'info',
   grup: 'grup', group: 'grup', admin: 'admin', groupadmin: 'admin',
   proteksi: 'proteksi', protek: 'proteksi', toggle: 'proteksi',
+  satset: 'satset', set: 'satset', 'sat-set': 'satset', setelan: 'satset', setting: 'satset',
 };
 
 // Balik: command → kategori. Dipakai `.carifitur` biar kelihatan "gitunya"
@@ -262,7 +277,7 @@ module.exports = async function infoHandler(ctx) {
         : ctx.isPremium ? 'Premium'
         : ctx.isAdmin ? 'Admin' : 'Free';
 
-      const catKey = (args[0] || '').toLowerCase();
+      const catKey = (args.join(' ') || '').toLowerCase().trim();
       const showCat = CAT_ALIAS[catKey] || (CATS[catKey] ? catKey : null);
 
       // ── Menu per-kategori: .menu <kategori> / .menu all ──────────────────
@@ -277,10 +292,10 @@ module.exports = async function infoHandler(ctx) {
       const subLines = (k) => [...CATS[k]].sort().map(c => `│ ◦ ${p}${c}`);
       if (showCat === 'all') {
         subBody = subHeader('MENU ALL') + '\n' +
-          CAT_KEYS.map(k => [`│ 〔 ${k.toUpperCase()} 〕`, ...subLines(k)].join('\n')).join('\n│\n') +
+          CAT_KEYS.map(k => [`│ 〔 ${catLabel(k)} 〕`, ...subLines(k)].join('\n')).join('\n│\n') +
           '\n╰────────────────────────';
       } else if (showCat) {
-        subBody = subHeader(`MENU ${showCat.toUpperCase()}`) + '\n' +
+        subBody = subHeader(`MENU ${catLabel(showCat)}`) + '\n' +
           subLines(showCat).join('\n') +
           '\n╰────────────────────────';
       }
@@ -320,7 +335,7 @@ module.exports = async function infoHandler(ctx) {
       // Teks menu = gaya `.test3` (box `╭── *[ … ]* ──` + kategori per baris).
       // Satu builder di sini; `.test3` di 05-owner.js cuma alias ke case ini.
       const catList = CAT_KEYS
-        .map(k => `│ ◦ ${k.toUpperCase()} (${CATS[k].length} Fitur)`)
+        .map(k => `│ ◦ ${catLabel(k)} (${CATS[k].length} Fitur)`)
         .join('\n');
 
       // Sapaan + info user/bot dipakai SEMUA teks menu (utama & sub-menu)
@@ -401,7 +416,7 @@ module.exports = async function infoHandler(ctx) {
                 { header: '', title: 'ALL', description: `Semua Menu (${ALL_COMMANDS.length} fitur)`, id: '.menu all' },
                 ...CAT_KEYS.map(k => ({
                   header: '',
-                  title: k.toUpperCase(),
+                  title: catLabel(k),
                   description: `Menu ${k}`,
                   id: `.menu ${k}`,
                 })),
@@ -624,4 +639,7 @@ module.exports._menuBannerHeader = _menuBannerHeader;
 module.exports.ALL_COMMANDS      = ALL_COMMANDS;
 module.exports.CATS              = CATS;
 module.exports.CMD_CATS          = CMD_CATS;
+module.exports.catLabel          = catLabel;
+module.exports.CAT_LABEL         = CAT_LABEL;
 module.exports.CAT_KEYS          = CAT_KEYS;
+module.exports.CAT_ALIAS         = CAT_ALIAS;

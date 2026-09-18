@@ -19,7 +19,7 @@ const { uploadInfo } = require('../engine/api');
 const { genThumbnail } = require('../engine/thumbnail');
 const { proto } = require('baileys');
 const { getRankByLevel } = require('./03-fun-rpg');
-const { ALL_COMMANDS, CATS } = require('./01-info');
+const { ALL_COMMANDS, CATS, CAT_KEYS, catLabel } = require('./01-info');
 
 // In-memory stores
 const blockedUsers  = new Map(); // botId -> Set<jid>
@@ -1164,9 +1164,9 @@ module.exports = async function ownerHandler(ctx) {
                     sections: [{
                       title: 'Kategori',
                       highlight_label: 'YaaPar Menu',
-                      rows: Object.entries(CATS).map(([k, v]) => ({
+                      rows: CAT_KEYS.map(k => [k, CATS[k]]).map(([k, v]) => ({
                         header: '',
-                        title: k.toUpperCase(),
+                        title: catLabel(k),
                         description: `${v.length} Command`,
                         id: `.menu ${k}`,
                       })),
@@ -1237,7 +1237,7 @@ module.exports = async function ownerHandler(ctx) {
 
         const tail = [
           '╭── *[ 📂 MENU CATEGORY ]* ──',
-          ...Object.entries(CATS).map(([k, v]) => `│ ◦ ${k.toUpperCase()} (${v.length} Fitur)`),
+          ...CAT_KEYS.map(k => [k, CATS[k]]).map(([k, v]) => `│ ◦ ${catLabel(k)} (${v.length} Fitur)`),
           '╰────────────────────────',
           '',
           '📌 *Catatan:* ',
@@ -1268,9 +1268,9 @@ module.exports = async function ownerHandler(ctx) {
                     sections: [{
                       title: 'Kategori',
                       highlight_label: 'YaaPar Menu',
-                      rows: Object.entries(CATS).map(([k, v]) => ({
+                      rows: CAT_KEYS.map(k => [k, CATS[k]]).map(([k, v]) => ({
                         header: '',
-                        title: k.toUpperCase(),
+                        title: catLabel(k),
                         description: `${v.length} Command`,
                         id: `.menu ${k}`,
                       })),
