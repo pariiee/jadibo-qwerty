@@ -780,9 +780,11 @@ module.exports = async function groupHandler(ctx) {
       const mentioned = ctx.mentioned?.length ? ctx.mentioned : (ci.mentionedJid || []);
 
       // Kalau nggak ada tag & nggak ada reply -> PP pengirim sendiri
-      // (`.pp` di chat pribadi juga jalan, di situ nggak ada mention/reply).
+      // (dipakai `.pp` di grup tanpa argumen). Command ini grup-only karena
+      // 02-group early-return untuk chat pribadi.
       const target = mentioned[0] || ci.participant || sender;
-      let phoneNum = target.split('@')[0];
+      if (!target) { await reply('❌ Nggak bisa nentuin target.'); return true; }
+      let phoneNum = String(target).split('@')[0];
 
       // Resolve LID ke phone JID lewat metadata grup
       const meta = await getMeta();
@@ -790,11 +792,10 @@ module.exports = async function groupHandler(ctx) {
         p.jid === target || p.lid === target
       );
       if (participant?.phoneNumber) {
-        phoneNum = String(participant.phoneNumber).split('@')[0];
-        target = phoneNum + '@s.whatsapp.net';
+        // `phoneNumber` bisa ada tapi null → `String(null)` = "null" (JID sampah).
+        phoneNum = String(participant.phoneNumber).replace(/\D/g, '');
       } else if (target.endsWith('@lid') && participant?.jid && !participant.jid.endsWith('@lid')) {
-        target = participant.jid;
-        phoneNum = target.split('@')[0];
+        phoneNum = String(participant.jid).split('@')[0];
       }
 
       // Adapter balikin string url (bukan {url}) — lihat normalizeProfilePicture.
@@ -808,7 +809,12 @@ module.exports = async function groupHandler(ctx) {
 
       const imgBuffer = ppUrl ? await fetchImageBuffer(ppUrl) : null;
 
-      const mentionTag = mentioned[0].split('@')[0]; // pakai LID number untuk mention tag
+      // `.split('@')` di sini yang dulu bikin "Cannot read properties of
+      // undefined" waktu `.pp` tanpa tag — target bisa dari reply/diri sendiri,
+      // jadi mention-nya juga harus target itu, bukan `mentioned[0]`.
+      const isSelf = target === sender;
+      const tagNum = phoneNum || String(target).split('@')[0];
+      const capTitle = isSelf ? '📸 Foto profil kamu' : `📸 Foto profil @${tagNum}`;
 
       if (imgBuffer) {
         const thumb = await genThumbnail(imgBuffer, 'image/jpeg');
@@ -816,12 +822,14 @@ module.exports = async function groupHandler(ctx) {
           type: 'image',
           media: imgBuffer,
           mimetype: 'image/jpeg',
-          caption: `📸 Foto profil @${mentioned[0].split('@')[0]}`,
-          mentions: [mentioned[0]],
+          caption: capTitle,
+          ...(isSelf ? {} : { mentions: [target] }),
           ...(thumb ? { jpegThumbnail: thumb } : {}),
         });
       } else {
-        await reply('❌ Foto profil tidak ditemukan atau private');
+        await reply(isSelf
+          ? '❌ Kamu belum pasang foto profil (atau diprivasi).'
+          : `❌ @${tagNum} nggak pasang foto profil (atau diprivasi).`);
       }
       return true;
     }
