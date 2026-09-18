@@ -94,8 +94,8 @@ const ctxPalsu = (command, args) => ({
     'status welcome harus ada fungsinya juga');
   assert.ok(!/⬆️ Autolevelup\s*:/.test(status),
     'autolevelup jangan ikut jadi baris toggle di status');
-  assert.ok(/Autolevelup selalu aktif/.test(status),
-    'status harus nyebut autolevelup wajib ON');
+  assert.ok(!/autolevelup/i.test(status),
+    'autolevelup jangan disebut sama sekali di status — dia wajib & auto, buat apa diumumin');
 
   console.log('✓ autolevelup: wajib ON, nggak bisa di-off, dan tiap toggle punya dokumentasi fungsi');
 })().catch((e) => { console.error('FAIL:', e.message); process.exit(1); });

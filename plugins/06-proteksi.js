@@ -393,8 +393,7 @@ module.exports = async function proteksiHandler(ctx) {
         baris('nyimak',      nyimak) +
         baris('autoread',    autoread) +
         baris('didyoumean',  getBotGlobalSetting(botData.id, 'didyoumean')) +
-        `\n_⬆️ Autolevelup selalu aktif — fitur wajib, nggak bisa di-off._\n` +
-        `_Ketik \`${p}on <fitur>\` atau \`${p}off <fitur>\` untuk toggle._`
+        `\n_Ketik \`${p}on <fitur>\` atau \`${p}off <fitur>\` untuk toggle._`
       );
       return true;
     }
