@@ -125,5 +125,33 @@ const stubImage = async () => ({ ok: true, headers: { get: () => 'image/jpeg' },
   assert.match(replied[0], /nggak pasang|tidak ada/i, `balasan: ${replied[0]}`);
   console.log('  ok  target tanpa PP -> pesan jelas');
 
-  console.log('\npp-runtime: 5/5 PASS');
+  // 6. reply ke pesan orang di grup LID -> `ci.participant` masih LID mentah
+  //    (engine cuma resolve `ctx.mentioned`). Dulu caption `@628...` tapi
+  //    mentionedJid isinya LID → nggak match → WA nampilin angka polos,
+  //    bukan mention. Pak: "@tag bener mention, kalo reply harusnya mention
+  //    juga dong bukan nomer".
+  sent = []; replied = [];
+  const lidReplyCtx = makeCtx({ pp: 'https://pps.whatsapp.net/v/t1/abc' });
+  lidReplyCtx.client.lid = { getPn: async () => '628333@s.whatsapp.net' };
+  lidReplyCtx.msg = {
+    key: { id: 'm5' },
+    message: {
+      extendedTextMessage: {
+        text: '.pp',
+        contextInfo: { participant: '151515151515151@lid', quotedMessage: { conversation: 'hai' } },
+      },
+    },
+  };
+  global.fetch = stubImage;
+  await handler(lidReplyCtx);
+  global.fetch = realFetch;
+  assert.strictEqual(sent.length, 1, 'reply LID -> harus kirim gambar');
+  assert.deepStrictEqual(sent[0].mentions, ['628333@s.whatsapp.net'],
+    `mentions harus nomor (biar match caption): ${JSON.stringify(sent[0].mentions)}`);
+  assert.match(sent[0].caption, /@628333/, `caption: ${sent[0].caption}`);
+  assert.ok(!sent[0].caption.includes('151515151515151'),
+    `caption nggak boleh nampilin LID mentah: ${sent[0].caption}`);
+  console.log('  ok  reply ke LID -> di-resolve ke nomor, mention beneran');
+
+  console.log('\npp-runtime: 6/6 PASS');
 })().catch((e) => { console.error('\nFAIL:', e.message); process.exit(1); });

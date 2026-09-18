@@ -783,11 +783,16 @@ module.exports = async function groupHandler(ctx) {
       // siapa pun (termasuk pengirim) — kasih instruksi aja.
       // Command ini grup-only karena 02-group early-return buat chat pribadi,
       // jadi `sender` selalu ada dan cabang `!target` di bawah praktis mati.
-      const target = mentioned[0] || ci.participant || null;
+      let target = mentioned[0] || ci.participant || null;
       if (!target) {
         await reply(`📸 *Foto profil*\n\nTag orangnya atau reply pesannya.\nContoh: \`${p}pp @user\``);
         return true;
       }
+      // Jalur reply: `ci.participant` masih LID mentah — engine cuma resolve
+      // `ctx.mentioned`, bukan participant pesan yang di-quote. Akibatnya teks
+      // `@628...` nggak match `mentionedJid` (isinya `...@lid`) → WA nampilin
+      // angka polos, bukan mention. Samakan bentuknya kayak jalur @tag.
+      target = await lidToPnAsync(client, target);
       let phoneNum = String(target).split('@')[0];
 
       // Resolve LID ke phone JID lewat metadata grup
