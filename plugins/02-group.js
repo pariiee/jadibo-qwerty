@@ -612,19 +612,28 @@ module.exports = async function groupHandler(ctx) {
     case 'setnamegc':
       return module.exports({ ...ctx, command: 'setname' });
 
-    // ── open / close ─────────────────────────────────────────────────────────
+    // ── open / close — kalau grupnya UDAH di posisi yang diminta, jangan
+    // kirim tag-nya lagi (percuma + WA ngirim notif "grup dibuka/ditutup" ke
+    // semua member). Cukup tengok `meta.announce` (Baileys: `!!<announcement>`
+    // = announce ON = grup TUTUP).
     case 'open': {
       if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
       if (!await isBotAdmin()) { await reply(mess.BotAdmin); return true; }
+      const sudahBuka = (await getMeta())?.announce === false;
       await client.group.setSetting(jid, 'open');
-      await reply('🔓 Grup dibuka — semua member bisa kirim pesan');
+      await reply(sudahBuka
+        ? '🔓 *Lah, grupnya udah kebuka dari tadi.*\n\nNgapain jir? Mau ngobrol tinggal ketik aja, nggak usah izin 🗿'
+        : '🔓 *Grup dibuka!*\n\nUdah, pada bisa ngomong sekarang. Ramein dikit jangan pada ngumpet 🗿');
       return true;
     }
     case 'close': {
       if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
       if (!await isBotAdmin()) { await reply(mess.BotAdmin); return true; }
+      const sudahTutup = (await getMeta())?.announce === true;
       await client.group.setSetting(jid, 'close');
-      await reply('🔒 Grup ditutup — hanya admin yang bisa kirim pesan');
+      await reply(sudahTutup
+        ? '🔒 *Grupnya udah ketutup, bang.*\n\nMau ngekunci dua kali? Sabar, jangan drama 🗿'
+        : '🔒 *Grup ditutup!*\n\nSekarang cuma admin yang bisa ngomong. Yang lain sini mah pada sunyi 🗿');
       return true;
     }
 
@@ -632,15 +641,21 @@ module.exports = async function groupHandler(ctx) {
     case 'mute': {
       if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
       if (!await isBotAdmin()) { await reply(mess.BotAdmin); return true; }
+      const sudahMute = (await getMeta())?.announce === true;
       await client.group.setSetting(jid, 'mute');
-      await reply('🔇 Grup di-mute');
+      await reply(sudahMute
+        ? '🔇 *Udah di-mute bang.* Nggak usah dipencet lagi 🗿'
+        : '🔇 *Grup di-mute.*\n\nSemua mode sunyi, cuma admin yang boleh buka suara 🗿');
       return true;
     }
     case 'unmute': {
       if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
       if (!await isBotAdmin()) { await reply(mess.BotAdmin); return true; }
+      const sudahUnmute = (await getMeta())?.announce === false;
       await client.group.setSetting(jid, 'unmute');
-      await reply('🔊 Grup di-unmute');
+      await reply(sudahUnmute
+        ? '🔊 *Udah pada bisa ngomong kok, bang.* Nggak usah di-unmute lagi 🗿'
+        : '🔊 *Grup di-unmute!*\n\nSilakan ngomong, yang lain jangan diem aja 🗿');
       return true;
     }
 
