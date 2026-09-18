@@ -11,6 +11,19 @@ const { genThumbnail } = require('../engine/thumbnail');
 
 const START_TIME = Date.now();
 
+// Umur BOT (bukan umur proses Node). Ini yang dibaca .uptime/.runtime/.info:
+// command .restart cuma mutus koneksi satu bot, jadi process.uptime() dan
+// START_TIME (nempel di proses) nggak pernah kek-reset — semua bot dalam satu
+// proses bakal nunjukin angka yang sama.
+// ponytail: fallback ke START_TIME kalau bot belum pernah connect (mis. lagi
+// pairing) — angkanya memang umur proses, tapi itu yang paling dekat.
+function botUptimeMs(ctx) {
+  try {
+    const at = require('../engine/whatsappEngine').getBotConnectedAt(ctx?.botData?.id);
+    return at ? Date.now() - at : Date.now() - START_TIME;
+  } catch { return Date.now() - START_TIME; }
+}
+
 // ── Helper: baca banner (dipakai kalau MENU_BANNER diaktifkan) ───────────────
 // Percobaan 7dbcd27 (header.imageMessage + jpegThumbnail) upload-nya SUKSES di
 // VPS tapi HP tetap tampil polos; kemungkinan besar sisi WA/akun yang tidak
@@ -232,7 +245,7 @@ module.exports = async function infoHandler(ctx) {
 
     // ── runtime — uptime proses bot ─────────────────────────────────────────
     case 'runtime': {
-      await reply(`⏱️ *Runtime Bot*\n\n${formatUptime(Date.now() - START_TIME)}`);
+      await reply(`⏱️ *Runtime Bot*\n\n${formatUptime(botUptimeMs(ctx))}`);
       return true;
     }
 
@@ -483,7 +496,7 @@ module.exports = async function infoHandler(ctx) {
         `╭━━━ *INFO BOT* ━━━╮\n` +
         `│ Nama   : ${botData.bot_name}\n` +
         `│ Prefix : ${p}\n` +
-        `│ Uptime : ${formatUptime(Date.now() - START_TIME)}\n` +
+        `│ Uptime : ${formatUptime(botUptimeMs(ctx))}\n` +
         `│ RAM    : ${used}/${total} MB\n` +
         `│ Node   : ${process.version}\n` +
         `│ OS     : ${os.type()} ${os.release()}\n` +
@@ -516,7 +529,7 @@ module.exports = async function infoHandler(ctx) {
     }
 
     case 'uptime': {
-      await reply(`⏰ *Uptime Bot*\n${formatUptime(Date.now() - START_TIME)}`);
+      await reply(`⏰ *Uptime Bot*\n${formatUptime(botUptimeMs(ctx))}`);
       return true;
     }
 

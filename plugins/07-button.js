@@ -84,7 +84,14 @@ module.exports = async function buttonHandler(ctx) {
     // Baris native-flow vellzy-style: id langsung ".menu <kategori>"
     const dotmenu = /^\.menu(?:\s+(\w+))?$/.exec(rowId);
     if (dotmenu) return await require('./01-info')({ ...ctx, isCmd: true, command: 'menu', args: dotmenu[1] ? [dotmenu[1]] : [] });
-    if (rowId === '.ping')  { await reply(`🏓 Pong! ${Math.floor(process.uptime())}s`); return true; }
+    // Umur bot (bukan umur proses) — sama kayak .uptime di plugins/01-info.js
+    if (rowId === '.ping')  {
+      const { getBotConnectedAt } = require('../engine/whatsappEngine');
+      const at = getBotConnectedAt(ctx?.botData?.id);
+      const secs = Math.floor(((at ? Date.now() - at : 0) || process.uptime() * 1000) / 1000);
+      await reply(`🏓 Pong! ${secs}s`);
+      return true;
+    }
     if (rowId === '.owner') { return await require('./01-info')({ ...ctx, isCmd: true, command: 'owner', args: [] }); }
 
     switch (rowId) {

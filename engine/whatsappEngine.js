@@ -221,6 +221,13 @@ function buildContext(client, event, botData) {
 // auto-start pas boot server nganggap bot ini nggak dimau lagi.
 const restartingBots = new Set();
 
+// ─── Kapan tiap bot terakhir nyambung ke WA ──────────────────────────────────
+// Dipakai .uptime / .runtime / .info. process.uptime() & START_TIME salah buat
+// ini: keduanya nempel di PROSES, sementara command .restart cuma mutus koneksi
+// satu bot — proses (dan semua bot lain di dalamnya) tetap hidup, jadi
+// uptime-nya nggak pernah kek-reset. Map ini set per koneksi 'open'.
+const botConnectedAt = new Map();
+
 // ─── Main start function ──────────────────────────────────────────────────────
 async function startWhatsAppBot(botData, usePairingCode = false) {
   if (!createClient) throw new Error('baileys tidak terinstall');
@@ -289,6 +296,7 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
 
     if (status === 'open') {
       pairingBots.delete(botId); // pairing selesai — reconnect berikutnya cukup mode normal
+      botConnectedAt.set(botId, Date.now()); // dipakai .uptime — umur bot ini, bukan umur proses
       console.log(`[Bot ${botId}] ✅ Terhubung ke WhatsApp`);
       await logBot(botId, 'info', 'Bot terhubung ke WhatsApp');
       // is_running = 1 di sini bukan sekadar penanda status: server.js:242
@@ -981,6 +989,7 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
 // dan clearSession gagal hapus folder session basi.
 async function stopWhatsAppBot(botId) {
   stoppingBots.add(botId);
+  botConnectedAt.delete(botId); // bot mati -> umur koneksinya jangan dilaporkan lagi
   const inst = activeBots.get(botId);
   if (inst) {
     try {
@@ -1003,8 +1012,8 @@ async function stopWhatsAppBot(botId) {
 }
 
 // ─── Restart satu bot (dipakai command .restart & HTTP /api/bots/:id/restart) ─
-// JANGAN pakai stopWhatsAppBot(): dia nge-nol-in is_running di DB (niat "stop"),
-// jadi auto-start pas boot server bakal ninggalin bot ini. Di sini kita:
+// JANGAN pakai stopWhatsAppBot() sendirian: dia nge-nol-in is_running di DB
+// (niat "stop"), jadi auto-start pas boot server bakal ninggalin bot ini. Di sini kita:
 //   1. tandai restartingBots + is_running=1 DULUAN, biar auto-reconnect ngerti
 //      ini restart (bukan stop) dan statusnya tetap "harus jalan"
 //   2. stopWhatsAppBot() ngehapus entri activeBots (kunci: dia hapus DULUAN baru
@@ -1048,4 +1057,10 @@ function restartWhatsAppBotInBackground(botId) {
   });
 }
 
-module.exports = { startWhatsAppBot, stopWhatsAppBot, restartWhatsAppBot, restartWhatsAppBotInBackground, setWsBroadcast, getBotGlobalSetting, setBotGlobalSetting };
+// Kapan bot terakhir nyambung ke WA (ms epoch, 0 kalau belum pernah).
+// Dipakai .uptime/.runtime/.info — umur bot, bukan umur proses Node.
+function getBotConnectedAt(botId) {
+  return botConnectedAt.get(Number(botId)) || 0;
+}
+
+module.exports = { startWhatsAppBot, stopWhatsAppBot, restartWhatsAppBot, restartWhatsAppBotInBackground, getBotConnectedAt, setWsBroadcast, getBotGlobalSetting, setBotGlobalSetting };
