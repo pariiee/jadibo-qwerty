@@ -154,6 +154,12 @@ const ctx = baseCtx;
     for (const c of ['antilink', 'welcome', 'on', 'off', 'proteksi']) {
       assert.ok(info.CATS.grup.includes(c), `.${c} nggak ikut pindah ke grup`);
     }
+    // Fitur global (nyimak/autoread/didyoumean) gate-nya OWNER BOT, bukan admin
+    // grup — jangan dipajang di menu GRUP, taruh di OWNER.
+    for (const c of ['nyimak', 'autoread', 'didyoumean']) {
+      assert.ok(!info.CATS.grup.includes(c), `.${c} fitur global, jangan di menu grup`);
+      assert.ok(info.CATS.owner.includes(c), `.${c} harus ada di menu owner`);
+    }
     // Alias lama tetap diarahkan ke grup biar `.menu admin` nggak jadi menu kosong
     assert.strictEqual(info.CAT_ALIAS.admin, 'grup', 'alias `.menu admin` nggak ke grup');
     assert.strictEqual(info.CAT_ALIAS.proteksi, 'grup', 'alias `.menu proteksi` nggak ke grup');
