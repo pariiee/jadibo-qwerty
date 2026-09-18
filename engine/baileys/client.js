@@ -35,7 +35,7 @@ const {
   proto,
   Browsers,
 } = require('baileys');
-const { mentionsForChat, cacheLidFromMeta, cacheLidFromKey } = require('../jid');
+const { mentionsForChat, cacheLidFromMeta, cacheLidFromKey, participantJids } = require('../jid');
 
 // Tipe pesan yang `sendMessage` nolak ("Invalid media type") tapi WA biasa
 // nampilin — semua di sini dikirim lewat relayMessage (.owner kirim kontak).
@@ -545,7 +545,9 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
       sock.ev.on('group-participants.update', (u) => {
         ev.emit('group_participants', {
           jid: u.id,
-          participants: u.participants,
+          // Baileys v7 kasih OBJEK peserta, bukan string — normalisasi di sini
+          // biar `@user` di welcome nggak jadi '@[object Object]'.
+          participants: participantJids(u.participants),
           action: u.action,
           author: u.author,
         });

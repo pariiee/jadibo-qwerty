@@ -45,6 +45,26 @@ function cacheLidFromMeta(participants) {
 }
 
 /**
+ * Baileys v7 kirim peserta grup sebagai OBJEK (`{ id, lid, phoneNumber }`), bukan
+ * string. Dulu objek ini diteruskan apa adanya ke engine, jadi `@user` di
+ * welcome/bye tampil `@[object Object]` dan cek `.banmember` nggak pernah kena.
+ * Satu tempat normalisasi — semua pemakai event ikut sehat.
+ * Sambil jalan, isi peta LID<->PN dari data yang udah nempel di objeknya.
+ */
+function participantJids(participants) {
+  const objs = (participants || []).map((p) => {
+    if (typeof p === 'string') return { id: p, jid: p };
+    if (!p || typeof p !== 'object') return { id: '', jid: '' };
+    // `cacheLidFromMeta` baca field `.jid` dan wajib bentuk LID.
+    return { ...p, jid: isLid(p.lid) ? p.lid : (isLid(p.id) ? p.id : p.id || p.lid) };
+  });
+  cacheLidFromMeta(objs);
+  // `id` = bentuk yang dipakai grup (LID kalau grupnya mode LID) — itu yang
+  // harus di-mention, bukan nomornya.
+  return objs.map((p) => String(p.id || p.jid || '')).filter(Boolean);
+}
+
+/**
  * Isi cache dari key pesan masuk. INI SUMBER UTAMANYA, bukan metadata grup.
  * Baileys v7 naruh PN-nya langsung di key (`participantAlt` / `remoteJidAlt`) dan
  * nyimpen mapping-nya sendiri ke session.db sebelum emit `messages.upsert`
@@ -145,7 +165,7 @@ function needsLidResolve({ sender, quotedSender, mentioned } = {}) {
 module.exports = {
   bare, isLid, isPn, toPn, toLid,
   needsLidResolve,
-  cacheLidFromMeta, cacheLidFromKey,
+  participantJids, cacheLidFromMeta, cacheLidFromKey,
   lidToPn, lidToPnAsync,
   pnToLid, pnToLidAsync,
   mentionsForChat,
