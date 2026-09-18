@@ -14,6 +14,20 @@ const { lidToPnAsync }   = require('../engine/jid');
 const { genThumbnail } = require('../engine/thumbnail');
 const { catatan } = require('../engine/template');
 
+// Ambil gambar PP dari url WA (CDN-nya suka balikin HTML kalau link expired).
+// Return Buffer kalau beneran gambar, null kalau enggak — biar caller bisa bilang
+// "PP nggak ada" daripada ngirim sampah/PP default palsu.
+async function fetchImageBuffer(url) {
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
+    if (!res.ok) return null;
+    const type = res.headers.get('content-type') || '';
+    if (type && !type.startsWith('image/')) return null;
+    const buf = Buffer.from(await res.arrayBuffer());
+    return buf.length ? buf : null;
+  } catch { return null; }
+}
+
 // In-memory stores (replace with DB for persistence across restarts)
 const absenStore      = new Map(); // groupJid -> { title, members: Set<jid> }
 const afkStore        = new Map(); // jid -> { reason, since }
@@ -778,24 +792,16 @@ module.exports = async function groupHandler(ctx) {
         phoneNum = target.split('@')[0];
       }
 
-      const DEFAULT_PP = 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png';
-      let ppUrl = DEFAULT_PP;
+      // Adapter balikin string url (bukan {url}) — lihat normalizeProfilePicture.
+      let ppUrl = null;
       try {
-        const pp = await client.profile.getProfilePicture(target, 'image');
-        if (pp?.url) ppUrl = pp.url;
-      } catch {
-        try {
-          const pp = await client.profile.getProfilePicture(phoneNum + '@s.whatsapp.net', 'image');
-          if (pp?.url) ppUrl = pp.url;
-        } catch { /* pakai default */ }
+        ppUrl = await client.profile.getProfilePicture(target, 'image');
+      } catch { /* coba nomor */ }
+      if (!ppUrl) {
+        try { ppUrl = await client.profile.getProfilePicture(phoneNum + '@s.whatsapp.net', 'image'); } catch { /* kosong */ }
       }
 
-      let imgBuffer = null;
-      try {
-        const res = await fetch(ppUrl);
-        const arrBuf = await res.arrayBuffer();
-        imgBuffer = Buffer.from(arrBuf);
-      } catch { /* fallback teks */ }
+      const imgBuffer = ppUrl ? await fetchImageBuffer(ppUrl) : null;
 
       const mentionTag = mentioned[0].split('@')[0]; // pakai LID number untuk mention tag
 
@@ -820,18 +826,8 @@ module.exports = async function groupHandler(ctx) {
     case 'ppgc':
     case 'ppgroup':
     case 'ppgrup': {
-      const DEFAULT_PP_GC = 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png';
-      let ppGcUrl = DEFAULT_PP_GC;
-      try {
-        const pp = await client.profile.getProfilePicture(jid, 'image');
-        if (pp?.url) ppGcUrl = pp.url;
-      } catch { /* pakai default */ }
-
-      let gcImgBuffer = null;
-      try {
-        const res = await fetch(ppGcUrl);
-        gcImgBuffer = Buffer.from(await res.arrayBuffer());
-      } catch { /* fallback teks */ }
+      const ppGcUrl = await client.profile.getProfilePicture(jid, 'image');
+      const gcImgBuffer = ppGcUrl ? await fetchImageBuffer(ppGcUrl) : null;
 
       if (gcImgBuffer) {
         const thumb = await genThumbnail(gcImgBuffer, 'image/jpeg');

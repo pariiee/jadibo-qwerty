@@ -293,6 +293,17 @@ function normalizeGroupMeta(meta) {
 }
 
 /**
+ * Baileys `profilePictureUrl` balikin URL **string** (atau undefined) — bukan
+ * `{ url }`. Call-site lama baca `pp?.url` → selalu undefined → jatuh ke PP
+ * default (ikon orang putih) padahal grupnya punya PP. Normalisasi di adapter,
+ * bukan di tiap call-site: hasilnya SELALU string url atau null.
+ */
+function normalizeProfilePicture(raw) {
+  if (typeof raw === 'string') return raw || null;
+  return (raw && typeof raw === 'object' && raw.url) ? raw.url : null;
+}
+
+/**
  * Baileys v7 baca `mentions` dari KONTEN, bukan dari opsi: sendMessage ngebuang
  * `options.mentions` diam-diam (nggak nyampe ke `contextInfo.mentionedJid`).
  * Makanya mention harus nempel di kontennya.
@@ -675,7 +686,9 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
     },
 
     profile: {
-      getProfilePicture: (jid, type = 'image') => sock.profilePictureUrl(jid, type),
+      // Hasilnya SELALU string url atau null (lihat normalizeProfilePicture) —
+      // jangan baca `pp.url` di call-site.
+      getProfilePicture: async (jid, type = 'image') => normalizeProfilePicture(await sock.profilePictureUrl(jid, type)),
       setProfilePicture: (jid, buffer) => sock.updateProfilePicture(jid, buffer),
       setStatus: (text) => sock.updateProfileStatus(text),
     },
@@ -728,4 +741,5 @@ module.exports = {
   rememberSent, lookupSent, // buat test retry receipt
   onMessageSent,             // buat antidelete (plugins/02-group.js)
   unwrapMessage,             // view-once -> media biasa (dipakai banyak plugin)
+  normalizeProfilePicture,   // kontrak url PP: string|null (buat test)
 };
