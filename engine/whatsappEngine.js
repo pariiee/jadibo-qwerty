@@ -221,6 +221,12 @@ function buildContext(client, event, botData) {
 // auto-start pas boot server nganggap bot ini nggak dimau lagi.
 const restartingBots = new Set();
 
+// botId -> resolve() yang dipanggil pas guard 'connection close' nge-hold close-nya.
+// Dipakai stopWhatsAppBot() buat nunggu koneksi bener-bener lepas (bukan timer
+// nebak-nebak). Kunci: di-release PAS guard, jadi stoppingBots masih ke-set
+// waktu guard baca — dulu urutannya kebalik dan guard-nya nggak pernah kejalan.
+const stopCloseWaiters = new Map();
+
 // ─── Kapan tiap bot terakhir nyambung ke WA ──────────────────────────────────
 // Dipakai .uptime / .runtime / .info. process.uptime() & START_TIME salah buat
 // ini: keduanya nempel di PROSES, sementara command .restart cuma mutus koneksi
@@ -235,6 +241,12 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
   const botId  = botData.id;
   const botDir = path.join(SESSIONS_DIR, `bot_${botId}`);
   fs.mkdirSync(botDir, { recursive: true });
+
+  // Jangan pernah ada DUA soket WA buat nomor yang sama dalam satu proses:
+  // soket kedua bikin WA mutus salah satunya -> bot kelihatan online tapi nggak
+  // jawab, koneksi drop-terus. Ponytail: stopWhatsAppBot() nunggu close, tapi ini
+  // jaring pengaman kalau ada jalur lain manggil start barengan.
+  if (activeBots.has(botId)) { throw new Error(`Bot ${botId} sudah berjalan`); }
 
   // Catat niat pairing SEBELUM apa pun yang bisa gagal — auto-reconnect
   // baca set ini buat milih mode.
@@ -391,15 +403,25 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
         await decrementStat('total_bots_online');
       }
 
+      // Koneksi udah lepas beneran. stopWhatsAppBot() yang lagi nunggu (kalau ini
+      // bagian dari restart) baru boleh lanjut setelah guard di bawah mutusin.
+      const releaseStop = stopCloseWaiters.get(botId);
+      if (releaseStop) { stopCloseWaiters.delete(botId); releaseStop(); }
+
       if (stoppingBots.has(botId)) {
         const isRestart = restartingBots.delete(botId);
-        console.log(`[Bot ${botId}] ${isRestart ? '🔁 Restart manual — start ulang' : '🛑 Di-stop manual — tidak reconnect'}`);
+        console.log(`[Bot ${botId}] ${isRestart ? '🔁 Restart manual — mesin restart yang nge-start' : '🛑 Di-stop manual — tidak reconnect'}`);
         if (!isRestart) {
           // Niat user = berhenti. Ini satu-satunya tempat (selain logout) yang
           // boleh nol-in is_running dari sisi engine.
           await pool.execute("UPDATE bots SET is_running = 0 WHERE id = ?", [botId]);
           return;
         }
+        // Restart: stopWhatsAppBot() yang nunggu close ini, dan dia udah
+        // nge-return sebelum sampai sini (lihat wasRestarting di sana) — jadi
+        // nggak ada yang nge-start dari jalur ini. Jangan diteruskan ke
+        // auto-reconnect di bawah.
+        return;
       }
 
       if (isLogout) {
@@ -990,6 +1012,11 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
 async function stopWhatsAppBot(botId) {
   stoppingBots.add(botId);
   botConnectedAt.delete(botId); // bot mati -> umur koneksinya jangan dilaporkan lagi
+  const wasRestarting = restartingBots.has(botId);
+  // Penanda "close koneksi ini udah dipegang". Guard 'connection close' ngisi ini;
+  // stopWhatsAppBot nungguin kalau lagi restart (biar nggak ada dua soket WA).
+  let closeWaited = false;
+  const closeWait = new Promise(res => stopCloseWaiters.set(botId, () => { closeWaited = true; res(); }));
   const inst = activeBots.get(botId);
   if (inst) {
     try {
@@ -999,9 +1026,10 @@ async function stopWhatsAppBot(botId) {
       // (EPERM di Windows) dan clearSession gagal hapus folder sesi basi.
       try { inst?.__closeAuth?.(); } catch { /* ignore */ }
     } catch { /* ignore */ }
-    // disconnect() kadang resolve sebelum event 'close' kebawa — kasih
-    // waktu event loop buat proses close + bersihin file handle SQLite
-    await new Promise(r => setTimeout(r, 1500));
+    // disconnect() nggak dijamin nunggu event 'close'. Tunggu sampai guard
+    // beneran nge-hold close-nya, max 3 detik — jangan nyangkut nungguin event
+    // yang mungkin nggak pernah dateng (bot udah lepas duluan).
+    if (!closeWaited) await Promise.race([closeWait, new Promise(r => setTimeout(r, 3000))]);
     if (activeBots.has(botId)) {
       activeBots.delete(botId);
       await decrementStat('total_bots_online');
@@ -1009,52 +1037,52 @@ async function stopWhatsAppBot(botId) {
   }
   stoppingBots.delete(botId);
   pairingBots.delete(botId); // niat pairing ikut batal pas bot di-stop
+  // restartingBots JANGAN dibuang di sini kalau ini bagian dari restart: guard
+  // 'close' (baca pointer-nya) yang nentuin log & nyegah auto-reconnect.
+  // Dulu dibuang di sini -> restart kebaca "di-stop manual", dan guard-nya nggak
+  // pernah kejalan sama sekali (0× di log VPS walau .restart udah dipakai).
+  if (!wasRestarting) restartingBots.delete(botId);
 }
 
 // ─── Restart satu bot (dipakai command .restart & HTTP /api/bots/:id/restart) ─
+// Satu jalur restart. restartWhatsAppBotInBackground() cuma alias tanpa await —
+// dulu dia punya logika sendiri (dobel), dan versi dobel itu yang bikin
+// restartingBots dihapus sebelum guard sempat baca (lihat catatan di guard).
 // JANGAN pakai stopWhatsAppBot() sendirian: dia nge-nol-in is_running di DB
-// (niat "stop"), jadi auto-start pas boot server bakal ninggalin bot ini. Di sini kita:
-//   1. tandai restartingBots + is_running=1 DULUAN, biar auto-reconnect ngerti
-//      ini restart (bukan stop) dan statusnya tetap "harus jalan"
-//   2. stopWhatsAppBot() ngehapus entri activeBots (kunci: dia hapus DULUAN baru
-//      tunggu 5 detik; kalau masih ke-panggil nanti, guard aktif di bawah
-//      bikin timer 5 detik itu jadi mubazir — bukan dobel-start)
-//   3. startWhatsAppBot() lagi pakai data fresh dari DB
+// (niat "stop"), jadi auto-start pas boot server bakal ninggalin bot ini.
+// Di sini: tandai restartingBots + is_running=1 DULUAN, baru stop, baru start.
 async function restartWhatsAppBot(botId) {
-  const inst = activeBots.get(botId);
-  if (!inst) throw new Error('Bot tidak sedang berjalan');
-
   const [rows] = await pool.execute('SELECT * FROM bots WHERE id = ?', [botId]);
   const botData = rows[0];
   if (!botData) throw new Error('Bot tidak ditemukan');
 
-  restartingBots.add(botId);
-  await pool.execute("UPDATE bots SET is_running = 1 WHERE id = ?", [botId]);
+  // Cuma buat bot yang lagi jalan — yang mati punya tombol start sendiri.
+  // (Jangan diubah jadi "diam-diam nyalain": bikin user bingung kenapa bot
+  //  nyala sendiri, dan itu keputusan Pak, bukan keputusan engine.)
+  if (!activeBots.has(botId)) throw new Error('Bot tidak sedang berjalan');
 
+  // Alasan harus SATU jalur: command WA .restart & tombol restart di web harus
+  // punya efek yang sama persis. Dulu dua-duanya punya logika sendiri dan
+  // hasilnya beda.
+  restartingBots.add(botId);
   try {
+    await pool.execute("UPDATE bots SET is_running = 1 WHERE id = ?", [botId]);
+    // stopWhatsAppBot() yang nungguin close-nya (lihat wasRestarting di sana) —
+    // jadi balik dari sini artinya koneksi lama udah bener-bener lepas, dan
+    // nggak ada loop auto-reconnect yang ikut nge-start. Baru start yang baru.
     await stopWhatsAppBot(botId);
-    await startWhatsAppBot(botData, pairingBots.has(botId));
+    return await startWhatsAppBot(botData, pairingBots.has(botId));
   } catch (e) {
     restartingBots.delete(botId); // gagal -> jangan tinggalin flag nyangkut
     throw e;
   }
 }
 
-// Jalanin restart TANPA nunggu proses start selesai — WA nyambung ~10 detik dan
-// handler WA ini nggak boleh kelamaan ditahan (pesan balasan baru kebaca WA).
+// Command WA .restart: nggak boleh nunggu handshake (~10 detik) — handler pesan
+// jangan ditahan. Cukup jalanin restartWhatsAppBot() tanpa di-await.
+// Satu jalur: nggak ada logika restart kembar di sini lagi.
 function restartWhatsAppBotInBackground(botId) {
-  const [rowsPromise] = [pool.execute('SELECT * FROM bots WHERE id = ?', [botId])];
-  return rowsPromise.then(([rows]) => {
-    const botData = rows[0];
-    if (!botData) throw new Error('Bot tidak ditemukan');
-    restartingBots.add(botId);
-    return pool.execute("UPDATE bots SET is_running = 1 WHERE id = ?", [botId])
-      .then(() => stopWhatsAppBot(botId))
-      .then(() => startWhatsAppBot(botData, pairingBots.has(botId)));
-  }).catch((e) => {
-    restartingBots.delete(botId);
-    throw e;
-  });
+  return restartWhatsAppBot(botId); // caller nggak await -> jalan di background
 }
 
 // Kapan bot terakhir nyambung ke WA (ms epoch, 0 kalau belum pernah).
