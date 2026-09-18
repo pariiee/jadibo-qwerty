@@ -13,8 +13,10 @@ const BULAN = [
   'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
 ];
 
-// Urutan PENTING: yang lebih panjang dulu, kalau nggak '@user' bakal makan
-// '@usertag' dan hasilnya "@628xxx tag".
+// Urutan PENTING: yang lebih panjang dulu, kalau nggak '@tagsendiri' bakal makan
+// '@tagsend' dan hasilnya "@628xxx dir". `usertag`/`sender`/`subject`/`groupname`
+// tinggal alias lama biar teks yang sudah tersimpan di DB tetap ke-render —
+// sengaja nggak didaftarkan di VAR_INFO/VAR_ORDER (lihat catatan di bawah).
 const KEYS = [
   'groupname', 'subject', 'namegc', 'usertag', 'tagreply', 'tagdiri',
   'pesanan', 'namabulan', 'tanggal', 'bulan', 'tahun', 'hari',

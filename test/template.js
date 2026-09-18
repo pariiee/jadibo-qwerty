@@ -88,7 +88,7 @@ ok('catatan() nyebut semua variable yang didukung', () => {
     assert.ok(c.includes(v), `catatan nggak nyebut ${v}`);
   }
   // Alias lama tetap bisa di-render, tapi JANGAN didaftarkan lagi di catatan.
-  for (const v of ['@subject', '@groupname']) {
+  for (const v of ['@subject', '@groupname', '@usertag']) {
     assert.ok(!c.includes(v), `catatan masih nyebut alias ${v}`);
   }
 });

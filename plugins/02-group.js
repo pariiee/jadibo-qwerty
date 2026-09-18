@@ -1161,7 +1161,7 @@ module.exports = async function groupHandler(ctx) {
           `*Cara Penggunaan:*\n${p}${command} <teks>\n\n` +
           `*Contoh:*\n${p}${command} ${isWelcome ? 'Halo @user, selamat datang di @namegc!' : 'Selamat tinggal @user, semoga sukses!'}\n\n` +
           `┌─ *VARIABEL TERSEDIA*\n` +
-          `▢ *@user* / *@usertag* : Tag ${isWelcome ? 'member baru' : 'member yang keluar'}\n` +
+          `▢ *@user* : Tag ${isWelcome ? 'member baru' : 'member yang keluar'}\n` +
           `▢ *@namegc* : Nama grup\n` +
           `▢ *@desc* : Deskripsi grup\n` +
           `▢ *@jam* *@menit* *@detik* *@hari* *@tanggal* *@bulan* *@tahun* *@namabulan*\n` +
