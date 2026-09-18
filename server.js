@@ -107,7 +107,6 @@ app.post('/api/bots/:id/stop',          apiLimiter, auth.requireAuth, bot.stopBo
 app.post('/api/bots/:id/restart',       apiLimiter, auth.requireAuth, bot.restartBot);
 app.post('/api/bots/:id/clear-session', apiLimiter, auth.requireAuth, bot.clearSession);
 app.get('/api/bots/:id/logs',           apiLimiter, auth.requireAuth, bot.getBotLogs);
-app.post('/api/bots/:id/resolve-invite', apiLimiter, auth.requireAuth, bot.resolveInvite);
 
 // ─── Admin Routes (king only) ─────────────────────────────────────────────────
 app.get('/api/admin/users',          auth.requireAuth, auth.requireKing, auth.listUsers);

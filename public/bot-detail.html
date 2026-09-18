@@ -63,16 +63,6 @@
   .tg .tg-field{display:block}
 
   /* resolve */
-  .resolve-row{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}
-  .resolve-status{font-size:12px;color:var(--muted)}
-  .resolve-status.ok{color:var(--ok)}
-  .resolve-status.bad{color:var(--err)}
-  .resolve-err{margin-top:8px;font-size:12px;color:var(--err);display:none}
-  .resolve-err.show{display:block}
-  .resolve-err div{display:flex;gap:6px;align-items:flex-start;margin-bottom:4px}
-  .resolve-err .ln{font-family:Consolas,Menlo,monospace;font-size:11px;background:#fafafa;border:1px solid var(--border);border-radius:4px;padding:0 4px;word-break:break-all;color:#52525b}
-  .resolve-err svg{flex-shrink:0;margin-top:1px}
-
   /* terminal */
   .term-panel{background:var(--dark);border-color:#26262a;overflow:hidden;padding:0}
   .term-head{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-bottom:1px solid #26262a}
@@ -238,16 +228,8 @@
         </div>
         <div class="field" id="w-maingroups">
           <label for="cfg-maingroups">Grup Utama</label>
-          <textarea class="inp" id="cfg-maingroups" rows="3" style="font-family:Consolas,Menlo,monospace" placeholder="https://chat.whatsapp.com/XXXXXX&#10;120363xxxxxxxxxx@g.us"></textarea>
-          <div class="resolve-row">
-            <button type="button" class="btn btn-dark btn-sm" id="btn-resolve" style="padding:6px 12px;font-size:12px">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M20 12a8 8 0 1 1-2.34-5.66M20 4v6h-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              Resolve &amp; Validasi
-            </button>
-            <span class="resolve-status" id="resolve-status"></span>
-          </div>
-          <div class="resolve-err" id="resolve-errors"></div>
-          <div class="hint">Link undangan atau JID grup, satu per baris. Bot hanya respon di grup ini + grup sewa aktif. Kosongkan = respon semua grup.</div>
+          <textarea class="inp" id="cfg-maingroups" rows="3" style="font-family:Consolas,Menlo,monospace" placeholder="120363xxxxxxxxxx@g.us"></textarea>
+          <div class="hint">Masukan id grup / <code>.gcutama</code> untuk meng set gc utama anda. Satu per baris. Bot hanya respon di grup ini + grup sewa aktif. Kosongkan = respon semua grup.</div>
         </div>
         <div class="field">
           <label for="cfg-daily">Limit Harian</label>
@@ -651,52 +633,20 @@
   }
   function stopPolling() { if (statusPoller) { clearInterval(statusPoller); statusPoller = null; } }
 
-  // ── Resolve main groups (XSS-safe: textContent-based) ───────────
-  function addResolveError(text) {
-    const box = document.getElementById('resolve-errors');
-    box.classList.add('show');
-    const row = document.createElement('div');
-    row.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#dc2626" stroke-width="2"/><path d="M12 8v4m0 4h.01" stroke="#dc2626" stroke-width="2" stroke-linecap="round"/></svg>';
-    const span = document.createElement('span');
-    span.textContent = text;
-    row.appendChild(span);
-    box.appendChild(row);
-  }
-
-  document.getElementById('btn-resolve').addEventListener('click', async () => {
-    const ta = document.getElementById('cfg-maingroups');
-    const st = document.getElementById('resolve-status');
-    const box = document.getElementById('resolve-errors');
-    const lines = ta.value.split('\n').map(s => s.trim()).filter(Boolean);
-    st.className = 'resolve-status';
-    st.textContent = '';
-    box.classList.remove('show');
-    box.innerHTML = '';
-    if (!lines.length) { st.textContent = 'Kosong — skip'; return; }
-    st.textContent = 'Memproses...';
-
-    const resolved = [];
-    let errs = 0;
-    for (const line of lines) {
-      if (/^\d+@g\.us$/.test(line)) { resolved.push(line); continue; }
-      if (!/chat\.whatsapp\.com\//.test(line)) {
-        errs++; addResolveError('Bukan link WA atau JID valid: ' + line); continue;
-      }
-      const d = await api('/api/bots/' + botId + '/resolve-invite', { method: 'POST', body: JSON.stringify({ input: line }) });
-      if (d?.ok) resolved.push(d.jid);
-      else { errs++; addResolveError('Gagal resolve "' + line + '": ' + (d?.message || 'error')); }
-    }
-    ta.value = resolved.join('\n');
-    st.textContent = errs ? (resolved.length + ' berhasil, ' + errs + ' gagal') : ('✓ ' + resolved.length + ' grup terverifikasi');
-    st.className = 'resolve-status' + (errs ? ' bad' : ' ok');
-  });
-
   // ── Save config ──────────────────────────────────────────────────
   document.getElementById('cfg-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const err = document.getElementById('cfg-err');
     err.classList.remove('show');
-    const mg = document.getElementById('cfg-maingroups').value.trim();
+    // Cuma ID grup (JID) yang diterima — link undangan ditolak, bukan di-resolve.
+    const mgList = document.getElementById('cfg-maingroups').value
+      .split('\n').map(s => s.trim()).filter(Boolean);
+    const bad = mgList.find(s => !/^\d+@g\.us$/.test(s));
+    if (bad) {
+      err.textContent = '"' + bad + '" bukan ID grup. Formatnya 120363xxxxxxxxxx@g.us — atau ketik .gcutama di grupnya biar ID-nya keisi sendiri.';
+      err.classList.add('show');
+      return;
+    }
     const body = {
       bot_name: document.getElementById('cfg-name').value.trim(),
       bot_number: document.getElementById('cfg-botnum').value.trim() || undefined,
@@ -709,7 +659,7 @@
       channel_id: document.getElementById('cfg-channel').value.trim() || null,
       qris_url: document.getElementById('cfg-qris').value.trim() || null,
       banner_url: document.getElementById('cfg-banner').value.trim() || null,
-      main_groups: mg ? mg.split('\n').map(s => s.trim()).filter(Boolean).join(',') : null,
+      main_groups: mgList.length ? mgList.join(',') : null,
       daily_limit: parseInt(document.getElementById('cfg-daily').value, 10) || 20
     };
     const d = await api('/api/bots/' + botId, { method: 'PATCH', body: JSON.stringify(body) });

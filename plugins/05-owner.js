@@ -1932,12 +1932,12 @@ module.exports = async function ownerHandler(ctx) {
       return true;
     }
 
-    // ── setgcutama ────────────────────────────────────────────────────────────
+    // ── gcutama ───────────────────────────────────────────────────────────────
     // Alternatif kolom "Grup Utama" di bot-detail: jalanin di grupnya, ID grup
     // langsung keisi ke kolom main_groups (kebaca di botdetail/konfigurasi) dan
     // langsung kepake tanpa restart (objek botData-nya sama dengan yang dipakai
     // gate di engine).
-    case 'setgcutama': {
+    case 'gcutama': {
       if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }
       if (!ctx.isGroup) { await reply(mess.OnlyGroup); return true; }
 

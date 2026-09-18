@@ -1,9 +1,9 @@
 'use strict';
 /**
- * test/setgcutama.js — cek `.setgcutama` beneran nulis kolom main_groups
+ * test/gcutama.js — cek `.gcutama` beneran nulis kolom main_groups
  * (yang kebaca di botdetail/konfigurasi) dan langsung ngubah gate grup di engine.
  *
- * Jalanin: node test/setgcutama.js
+ * Jalanin: node test/gcutama.js
  */
 
 // ── Stub DB sebelum plugin di-require (pool.execute nggak boleh nyentuh MySQL) ──
@@ -24,8 +24,8 @@ const assert  = require('assert');
 const GC = '120363403895277092@g.us';
 let out = [];
 const ctxOf = (botData, args = []) => ({
-  isCmd: true, command: 'setgcutama', args,
-  body: `.setgcutama ${args.join(' ')}`.trim(),
+  isCmd: true, command: 'gcutama', args,
+  body: `.gcutama ${args.join(' ')}`.trim(),
   reply: async (t) => { out.push(t); },
   react: async () => {},
   client: {
@@ -47,7 +47,7 @@ const ctxOf = (botData, args = []) => ({
   let botData = { id: 1, prefix: '.', owner_number: '6287778032605', main_groups: null };
   out = []; sql.length = 0;
   await handler(ctxOf(botData));
-  console.log('\n[1] main_groups NULL -> .setgcutama');
+  console.log('\n[1] main_groups NULL -> .gcutama');
   console.log(out.map(t => '    ' + t.replace(/\n/g, '\n    ')).join('\n'));
   console.log('    SQL: ' + JSON.stringify(sql.filter(s => /main_groups/.test(s[0]))));
   ok('DB ditulis + objek botData ikut berubah (gate langsung kepake)', () => {
@@ -66,7 +66,7 @@ const ctxOf = (botData, args = []) => ({
   botData = { ...botData, main_groups: GC2 };
   out = []; sql.length = 0;
   await handler(ctxOf(botData));
-  console.log('\n[2] main_groups = grup lain -> .setgcutama');
+  console.log('\n[2] main_groups = grup lain -> .gcutama');
   console.log(out.map(t => '    ' + t.replace(/\n/g, '\n    ')).join('\n'));
   ok('nambah, bukan nimpa', () => {
     assert.strictEqual(botData.main_groups, `${GC2},${GC}`);
@@ -85,7 +85,7 @@ const ctxOf = (botData, args = []) => ({
   // 4. off -> dicabut
   out = []; sql.length = 0;
   await handler(ctxOf(botData, ['off']));
-  console.log('\n[4] .setgcutama off');
+  console.log('\n[4] .gcutama off');
   console.log(out.map(t => '    ' + t.replace(/\n/g, '\n    ')).join('\n'));
   ok('dicabut, sisa grup lain masih ada', () => {
     assert.strictEqual(botData.main_groups, GC2);
@@ -96,7 +96,7 @@ const ctxOf = (botData, args = []) => ({
   botData = { ...botData, main_groups: GC };
   out = []; sql.length = 0;
   await handler(ctxOf(botData, ['off']));
-  console.log('\n[5] .setgcutama off (grup terakhir)');
+  console.log('\n[5] .gcutama off (grup terakhir)');
   console.log(out.map(t => '    ' + t.replace(/\n/g, '\n    ')).join('\n'));
   ok('jadi NULL + warning mode bebas', () => {
     assert.strictEqual(botData.main_groups, null);
@@ -111,5 +111,5 @@ const ctxOf = (botData, args = []) => ({
   await handler(dm);
   ok('di DM ditolak (fitur grup doang)', () => assert.ok(out[0].includes('grup')));
 
-  console.log(`\nsetgcutama: ${pass}/${pass} PASS`);
+  console.log(`\ngcutama: ${pass}/${pass} PASS`);
 })().catch(e => { console.error('FAIL: ' + e.message); process.exit(1); });

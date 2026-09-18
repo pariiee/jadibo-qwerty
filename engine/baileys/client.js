@@ -661,10 +661,6 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
       queryGroupMetadata: (jid) => groupMeta(jid),
       queryAllGroups: async () => asArray(await sock.groupFetchAllParticipating()),
       queryInviteCode: (jid) => sock.groupInviteCode(jid),
-      // Kebalikannya: link/kode -> metadata grup. Dipakai panel (resolveInvite)
-      // buat nampilin JID dari link yang di-paste. Sebelum ini method-nya
-      // nggak ada di adapter -> endpoint-nya selalu 400 "Gagal resolve link".
-      queryGroupInviteInfo: (code) => sock.groupGetInviteInfo(code),
       addParticipants: (jid, jids) => participantsUpdate(jid, jids, 'add'),
       removeParticipants: (jid, jids) => participantsUpdate(jid, jids, 'remove'),
       promoteParticipants: (jid, jids) => participantsUpdate(jid, jids, 'promote'),

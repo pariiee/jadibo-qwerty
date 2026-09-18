@@ -186,7 +186,7 @@ module.exports = async function proteksiHandler(ctx) {
   const skipCmds = new Set([
     'on','off','antibot','antilink','antilinkv2','antitoxic','antidelete',
     'antispam','antitagsw','autosticker','antisticker','viewonce',
-    'detect','welcome','left','bye','autoacc','document','nyimak','autoread','proteksi','fitur','didyoumean',
+    'detect','welcome','left','bye','autoacc','document','nyimak','autoread','proteksi','didyoumean',
   ]);
 
   if (isGroup && (!isCmd || !skipCmds.has(command))) {
@@ -489,13 +489,6 @@ module.exports = async function proteksiHandler(ctx) {
         `_Ketik \`${p}on\` untuk lihat semua fitur._`
       );
       return true;
-    }
-
-    // ── .fitur — alias .on tanpa argumen ─────────────────────────────────────
-    case 'fitur': {
-      // Delegate ke .on tanpa argumen
-      const fakeCtx = { ...ctx, command: 'on', args: [] };
-      return module.exports(fakeCtx);
     }
 
     // ── legacy individual toggle — tetap support untuk backward compat ────────

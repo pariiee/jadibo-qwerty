@@ -418,59 +418,10 @@ async function getBotLogs(req, res) {
   }
 }
 
-// ─── POST /api/bots/:id/resolve-invite ───────────────────────────────────────
-// Body: { input: "https://chat.whatsapp.com/XXXX" | "120363xxx@g.us" }
-// Returns: { ok: true, jid, name } or { ok: false, message }
-
-async function resolveInvite(req, res) {
-  try {
-    const bot = await assertOwnership(req, res, req.params.id);
-    if (!bot) return;
-
-    const { input } = req.body;
-    if (!input || typeof input !== 'string')
-      return sendError(res, 400, 'Input tidak boleh kosong');
-
-    const trimmed = input.trim();
-
-    // Sudah JID — validasi format saja
-    if (trimmed.endsWith('@g.us')) {
-      const valid = /^\d+@g\.us$/.test(trimmed);
-      if (!valid) return sendError(res, 400, 'Format JID tidak valid');
-      return res.json({ ok: true, jid: trimmed, name: null });
-    }
-
-    // Extract invite code dari link WA
-    const linkMatch = trimmed.match(/chat\.whatsapp\.com\/([A-Za-z0-9_-]+)/);
-    if (!linkMatch)
-      return sendError(res, 400, 'Bukan link grup WhatsApp atau JID yang valid');
-
-    const code = linkMatch[1];
-
-    // Butuh bot aktif untuk resolve
-    const client = activeBots.get(String(bot.id));
-    if (!client)
-      return sendError(res, 400, 'Bot harus aktif/terhubung untuk resolve link grup');
-
-    try {
-      const info = await client.group.queryGroupInviteInfo(code);
-      const jid  = info.id || info.jid;
-      const name = info.subject || info.name || null;
-      if (!jid) return sendError(res, 400, 'Gagal mendapatkan JID dari link ini');
-      return res.json({ ok: true, jid, name });
-    } catch (e) {
-      return sendError(res, 400, `Gagal resolve link: ${e.message}`);
-    }
-  } catch (err) {
-    console.error('[Bot] resolveInvite error:', err);
-    return sendError(res, 500, 'Terjadi kesalahan server');
-  }
-}
-
 module.exports = {
   activeBots,
   activeGroupsPerBot,
   activeChannelsPerBot,
   listBots, getBot, createBot, updateBot, deleteBot,
-  startBot, stopBot, restartBot, clearSession, getBotLogs, resolveInvite,
+  startBot, stopBot, restartBot, clearSession, getBotLogs,
 };
