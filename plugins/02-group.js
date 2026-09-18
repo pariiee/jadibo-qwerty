@@ -534,27 +534,6 @@ module.exports = async function groupHandler(ctx) {
       return true;
     }
 
-    // ── promoteme (hanya ADMIN yang bisa promote member lain — bukan diri sendiri) ──
-    case 'promoteme': {
-      if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
-      const target = (ctx.msg.message?.extendedTextMessage?.contextInfo?.mentionedJid || [])[0]
-        || ctx.msg.message?.extendedTextMessage?.contextInfo?.participant
-        || null;
-      if (!target) { await reply(`Penggunaan: ${p}promoteme @mention atau reply pesan member`); return true; }
-      if (target === sender) { await reply('Kamu nggak bisa promote diri sendiri.'); return true; }
-      try {
-        await client.group.promoteParticipants(jid, [target]);
-        await client.message.send(jid, {
-          type: 'text',
-          text: `👑 @${target.split('@')[0]} telah dipromote menjadi admin!`,
-          mentions: [target],
-        });
-      } catch (e) {
-        await reply(`❌ Gagal promote: ${e.message}`);
-      }
-      return true;
-    }
-
     // ── kickall ──────────────────────────────────────────────────────────────
     case 'kickall': {
       if (!await isBotAdmin()) { await reply(mess.BotAdmin); return true; }
@@ -1582,7 +1561,7 @@ module.exports = async function groupHandler(ctx) {
 // Command yang kena limit untuk user biasa
 module.exports.limitedCmds = new Set([
   'tagall','tagadmin','tagme','hidetag','ht',
-  'kick','kickall','promote','demote','add','promoteme',
+  'kick','kickall','promote','demote','add',
   'open','close','mute','unmute','slowmode','setname','setdesc',
   'grupopen','grupclose','linkgc','setnamegc',
   'linkgroup','groupinfo','idgc','grouplist','leavegc','listadmin',

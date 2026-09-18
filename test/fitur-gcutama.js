@@ -72,4 +72,15 @@ ok(".catatan jalan, alias duplikatnya dihapus", () => {
   assert.ok(!/catatanset/.test(info), 'catatanset masih kedaftar di plugins/01-info.js');
 });
 
+ok("sisa skalar `promoteme` nol", () => {
+  const lama = 'promote' + 'me'; // dipecah biar file ini sendiri nggak kedeteksi
+  const me = __filename;
+  const walk = (d) => fs.readdirSync(d, { withFileTypes: true }).flatMap(e =>
+    e.name === 'node_modules' || e.name === '.git' ? []
+    : e.isDirectory() ? walk(path.join(d, e.name))
+    : /\.(js|json|html|md)$/.test(e.name) ? [path.join(d, e.name)] : []);
+  const sisa = walk(path.join(__dirname, '..')).filter(f => f !== me).filter(f => fs.readFileSync(f, 'utf8').includes(lama));
+  assert.deepStrictEqual(sisa, [], `masih nyebut ${lama}: ${sisa.join(', ')}`);
+});
+
 console.log(`\nfitur-gcutama: ${pass}/${pass} PASS`);
