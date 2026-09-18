@@ -44,7 +44,7 @@ const mess = {
   closeDefault: process.env.DEFAULT_SETCLOSE || '',
 
   // ── Teks template welcome/bye (dipakai kalau .setwelcome/.setbye belum diset)
-  //    Placeholder: @user @usertag @subject @groupname @namegc @desc @jam
+  //    Placeholder: @user @usertag @namegc @desc @jam
   //    @menit @detik @hari @tanggal @bulan @tahun @namabulan
   welcomeDefault: process.env.DEFAULT_WELCOME || '',
   byeDefault:     process.env.DEFAULT_SETBYE  || '',

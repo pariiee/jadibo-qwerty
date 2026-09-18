@@ -84,8 +84,12 @@ ok('tanpa target -> mention kosong (bukan string "undefined")', () => {
 ok('catatan() nyebut semua variable yang didukung', () => {
   const c = catatan('setclose');
   assert.strictEqual(typeof c, 'string');
-  for (const v of ['@groupname', '@user', '@tagdiri', '@tagreply', '@jam', '@namabulan', '@pesanan']) {
+  for (const v of ['@namegc', '@user', '@tagdiri', '@tagreply', '@jam', '@namabulan', '@pesanan']) {
     assert.ok(c.includes(v), `catatan nggak nyebut ${v}`);
+  }
+  // Alias lama tetap bisa di-render, tapi JANGAN didaftarkan lagi di catatan.
+  for (const v of ['@subject', '@groupname']) {
+    assert.ok(!c.includes(v), `catatan masih nyebut alias ${v}`);
   }
 });
 

@@ -1159,10 +1159,10 @@ module.exports = async function groupHandler(ctx) {
         await reply(
           `⚠️ *Teks ${judul.toLowerCase()} belum dimasukkan!*\n\n` +
           `*Cara Penggunaan:*\n${p}${command} <teks>\n\n` +
-          `*Contoh:*\n${p}${command} ${isWelcome ? 'Halo @user, selamat datang di @subject!' : 'Selamat tinggal @user, semoga sukses!'}\n\n` +
+          `*Contoh:*\n${p}${command} ${isWelcome ? 'Halo @user, selamat datang di @namegc!' : 'Selamat tinggal @user, semoga sukses!'}\n\n` +
           `┌─ *VARIABEL TERSEDIA*\n` +
           `▢ *@user* / *@usertag* : Tag ${isWelcome ? 'member baru' : 'member yang keluar'}\n` +
-          `▢ *@subject* / *@groupname* / *@namegc* : Nama grup\n` +
+          `▢ *@namegc* : Nama grup\n` +
           `▢ *@desc* : Deskripsi grup\n` +
           `▢ *@jam* *@menit* *@detik* *@hari* *@tanggal* *@bulan* *@tahun* *@namabulan*\n` +
           `▢ *@tagdiri* *@tagreply* *@pesanan*\n` +
@@ -1404,7 +1404,7 @@ module.exports = async function groupHandler(ctx) {
 
       // Arg pertama jam (HH.MM) = set jadwalnya; sisa argumen = teks pengumuman.
       // Tanpa jam = argumennya murni teks pengumuman:
-      //   .setclose Selamat tinggal @user dari @groupname
+      //   .setclose Selamat tinggal @user dari @namegc
       const jam  = normalizeJam(args[0]);
       const teks = (jam ? args.slice(1) : args).join(' ').trim();
 
@@ -1415,7 +1415,7 @@ module.exports = async function groupHandler(ctx) {
           `${p}${command} <teks>            → teks pengumuman\n` +
           `${p}${command} <jam> <teks>      → teks + jadwal otomatis\n\n` +
           `*Contoh:*\n` +
-          `${p}${command} ${isOpen ? 'Selamat pagi @groupname, grup sudah dibuka!' : 'Selamat tinggal @user dari @groupname'} \n` +
+          `${p}${command} ${isOpen ? 'Selamat pagi @namegc, grup sudah dibuka!' : 'Selamat tinggal @user dari @namegc'} \n` +
           `${p}${command} ${isOpen ? '07.00' : '22.00'} ${isOpen ? 'Grup dibuka jam @jam WIB' : 'Grup ditutup jam @jam WIB'}\n\n` +
           `_Tanpa teks = pakai default dari .env (${isOpen ? 'DEFAULT_SETOPEN' : 'DEFAULT_SETCLOSE'})_\n\n` +
           catatan(command)

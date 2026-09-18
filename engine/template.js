@@ -72,9 +72,10 @@ function renderTemplate(teks, ctx = {}) {
 }
 
 // Daftar variable buat `.catatan` — sumbernya KEYS di atas, biar nggak beda.
+// ponytail: `groupname` & `subject` masih ADA di KEYS/map (template lama yang
+// sudah tersimpan di DB tetap ke-render), tapi sengaja nggak didaftarkan di sini
+// — nama grup cukup `@namegc`. Hapus dari KEYS juga kalau nggak ada teks lama.
 const VAR_INFO = {
-  groupname: 'Nama grup',
-  subject:   'Nama grup',
   namegc:    'Nama grup',
   user:      'Tag member (yang join/keluar)',
   tagdiri:   'Tag pengirim',
@@ -92,7 +93,7 @@ const VAR_INFO = {
 };
 
 const VAR_ORDER = [
-  'groupname', 'subject', 'namegc', 'user', 'tagdiri', 'tagreply',
+  'namegc', 'user', 'tagdiri', 'tagreply',
   'jam', 'menit', 'detik', 'hari', 'tanggal', 'bulan', 'tahun', 'namabulan', 'desc', 'pesanan',
 ];
 
