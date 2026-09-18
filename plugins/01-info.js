@@ -182,7 +182,7 @@ const ALL_COMMANDS = [...new Set([
   'warn','unwarn','delwarn','resetwarn','setwarnlimit','listwarn',
   // Group admin
   'banmember','unbanmember','setppgc','sider','listtotalpesan',
-  'setopen','setclose','catatan','catatanset',
+  'setopen','setclose','catatan',
 ])];
 
 // ── Menu kategori — menu <kategori> / menu all ──────────────────────────────
@@ -205,7 +205,7 @@ const CATS = {
   random: ['aceh','kataaceh','batak','katabatak','bijak','china','katachina','dare','tantangan','fakta','faktaunik','fiersa','fiersabesari','jawa','pepatahjawa','katajawa','katabucin','bucin','katasore','sore','minangkabau','minang','kataminang','motivasi','katamotivasi','ngeles','alasan'],
   game:   ['asahotak','toka','hint','nyerah'],
   owner:  ['ban','unban','block','unblock','broadcast','bcgc','bcgcht','backup','restore','clearsession','cleartmp','listblacklist','listblock','addprem','delprem','listprem','addsewa','delsewa','ceksewa','listsewa','tambahsewa','addxp','addmoney','addlimit','addhp','resetlimit','listuser','addlevel','dellevel','delmoney','delxp','dellimit','cekprofil','resetprofil','listrank','leaveall','listgroup','crm','crm2','addpremgrup','delpremgrup','addrespon','uprespon','delrespon','listrespon','addlist','updatelist','reset','restart','warn','unwarn','delwarn','resetwarn','listwarn'],
-  admin:  ['add','kick','promoteme','banmember','unbanmember','sider','listtotalpesan','catatan','catatanset'],
+  admin:  ['add','kick','promoteme','banmember','unbanmember','sider','listtotalpesan','catatan'],
 };
 
 // Label yang DITAMPILIN. Key kategori nggak boleh ada spasi (dipakai `.menu <key>`

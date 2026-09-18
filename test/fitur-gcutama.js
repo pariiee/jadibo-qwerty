@@ -6,6 +6,8 @@
  *   3. panel web cuma nerima ID grup — link undangan ditolak di FE & endpoint
  *      resolve-nya udah dibuang
  *
+ * Plus: command alias yang cuma duplikat udah bersih (`.catatanset` == `.catatan`).
+ *
  * Jalanin: node test/fitur-gcutama.js
  */
 const assert = require('assert');
@@ -61,6 +63,13 @@ ok('endpoint resolve-invite + adapter groupGetInviteInfo sudah hilang', () => {
   assert.ok(!/resolveInvite|resolve-invite/.test(ctrl), 'masih ada resolveInvite di controller');
   assert.ok(!/resolve-invite/.test(server), 'route resolve-invite masih kedaftar di server.js');
   assert.ok(!/queryGroupInviteInfo/.test(read('engine/baileys/client.js')));
+});
+
+ok(".catatan jalan, alias duplikatnya dihapus", () => {
+  const group = read('plugins/02-group.js');
+  assert.ok(/case 'catatan': \{/.test(group), "case 'catatan' ilang");
+  assert.ok(!/catatanset/.test(group), 'alias catatanset masih ada');
+  assert.ok(!/catatanset/.test(info), 'catatanset masih kedaftar di plugins/01-info.js');
 });
 
 console.log(`\nfitur-gcutama: ${pass}/${pass} PASS`);
