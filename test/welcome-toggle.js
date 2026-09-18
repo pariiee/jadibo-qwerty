@@ -75,12 +75,18 @@ const sync = read('scripts/sync-schema.js');
 assert.ok(/group_settings: \[/.test(sync) && /welcome_on/.test(sync) && /bye_on/.test(sync),
   'sync-schema harus nambahin welcome_on & bye_on');
 
-// 10. Fitur kecatat di .menu.
+// 10. Fitur kecatat di .menu — tapi cuma sebagai baris ringkas `.on <option>`.
+// Nama saklarnya sendiri disembunyiin dari menu (Pak: "di ringkas aja"), jadi
+// yang dites: `.on` masih ada di kategori grup + welcome/left masih punya saklar.
 const info = read('plugins/01-info.js');
 assert.ok(/'setleft'/.test(info), '.setleft harus kecatat di daftar command');
-// Kategori `proteksi` udah dilebur ke `grup`; toggle welcome/left ikut pindah.
 const barisGrup = info.split('\n').find(l => /^\s*grup:\s+\[/.test(l)) || '';
-assert.ok(/'welcome'/.test(barisGrup) && /'left'/.test(barisGrup),
-  '.on welcome & .on left harus kecatat di kategori grup');
+assert.ok(/'on <option>'/.test(barisGrup) && /'off <option>'/.test(barisGrup),
+  'baris ringkas `.on <option>` nggak kecatat di kategori grup');
+assert.ok(!/'welcome'/.test(barisGrup) && !/'left'/.test(barisGrup),
+  'welcome/left masih dipajang di menu grup — harusnya udah disembunyiin');
+const proteksiSrc = read('plugins/06-proteksi.js');
+assert.ok(/welcome:.*col: 'welcome_on'/.test(proteksiSrc) && /left:.*col: 'bye_on'/.test(proteksiSrc),
+  'saklar welcome/left ilang dari FITUR_INFO');
 
 console.log('✓ welcome/left: .on/.off beneran matiin, teks nggak bocor ke default .env');

@@ -145,20 +145,30 @@ const ctx = baseCtx;
     }
   });
 
-  await ok('.kick/.add masuk kategori GRUP; kategori admin & proteksi udah nggak ada', () => {
+  await ok('saklar on/off disembunyikan dari menu — cuma `.on <option>` yang nongol', () => {
     assert.ok(info.CATS.grup.includes('kick'), '.kick nggak ada di kategori grup');
     assert.ok(info.CATS.grup.includes('add'), '.add nggak ada di kategori grup');
     assert.ok(!info.CATS.admin, 'kategori `admin` masih ada');
     assert.ok(!info.CATS.proteksi, 'kategori `proteksi` masih ada');
-    // Toggle proteksi ikut pindah ke grup juga
-    for (const c of ['antilink', 'welcome', 'on', 'off', 'proteksi']) {
-      assert.ok(info.CATS.grup.includes(c), `.${c} nggak ikut pindah ke grup`);
+    // Satu-satunya jejak saklar di menu = baris ringkas ini.
+    for (const c of ['on <option>', 'off <option>']) {
+      assert.ok(info.CATS.grup.includes(c), `\`${c}\` nggak nongol di menu grup`);
     }
-    // Fitur global (nyimak/autoread/didyoumean) gate-nya OWNER BOT, bukan admin
-    // grup — jangan dipajang di menu GRUP, taruh di OWNER.
-    for (const c of ['nyimak', 'autoread', 'didyoumean']) {
-      assert.ok(!info.CATS.grup.includes(c), `.${c} fitur global, jangan di menu grup`);
-      assert.ok(info.CATS.owner.includes(c), `.${c} harus ada di menu owner`);
+    // Nama fiturnya sendiri JANGAN dipajang — Pak: "di ringkas aja di .on <option>".
+    // Command-nya tetap jalan (handler 06-proteksi.js) + tetap ketemu `.carifitur`.
+    const TOGGLES = ['antibot','antilink','antilinkv2','antitoxic','antidelete','antispam',
+      'antitagsw','antisticker','autosticker','viewonce','detect','autoacc','document',
+      'welcome','left','nyimak','autoread','didyoumean','on','off'];
+    // Beberapa nama (welcome/left/didyoumean) nggak pernah didaftarin di
+    // ALL_COMMANDS — yang penting command-nya masih keurus handler (FITUR_INFO).
+    const { FITUR_INFO } = require('../plugins/06-proteksi');
+    for (const c of TOGGLES) {
+      for (const [cat, cmds] of Object.entries(info.CATS)) {
+        assert.ok(!cmds.includes(c), `.${c} masih dipajang di menu ${cat} — harusnya disembunyiin`);
+      }
+      // Disembunyiin dari menu ≠ dimatiin: command-nya harus tetap kedaftar.
+      assert.ok(info.ALL_COMMANDS.includes(c) || FITUR_INFO[c],
+        `.${c} ilang dari ALL_COMMANDS + FITUR_INFO → command-nya nggak kedispatch lagi`);
     }
     // Alias lama tetap diarahkan ke grup biar `.menu admin` nggak jadi menu kosong
     assert.strictEqual(info.CAT_ALIAS.admin, 'grup', 'alias `.menu admin` nggak ke grup');
