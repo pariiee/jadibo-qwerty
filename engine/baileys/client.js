@@ -679,7 +679,17 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
       leaveGroup: (jid) => sock.groupLeave(Array.isArray(jid) ? jid[0] : jid),
       setSubject: (jid, subject) => sock.groupUpdateSubject(jid, subject).then((r) => (dropMeta(jid), r)),
       setDescription: (jid, desc) => sock.groupUpdateDescription(jid, desc).then((r) => (dropMeta(jid), r)),
-      setSetting: (jid, setting) => sock.groupSettingUpdate(jid, setting).then((r) => (dropMeta(jid), r)),
+      // Baileys bikin tag group LANGSUNG dari string ini:
+      // `groupQuery(jid, 'set', [{ tag: setting, attrs: {} }])`.
+      // Jadi 'announcement' -> <announcement/> = TUTUP grup, dan `.open` yang
+      // dulu ngirim 'announcement' malah nge-close (muncul "berhasil", grup
+      // nggak kebuka). Tag buka grup namanya 'not_announcement'.
+      // Terima dua-duanya: kata kunci enak dibaca dari plugin + tag mentah.
+      setSetting: (jid, setting) => {
+        const OPEN = new Set(['open', 'unmute', 'not_announcement', 'unlocked', 'false', false]);
+        const tag  = OPEN.has(setting) ? 'not_announcement' : 'announcement';
+        return sock.groupSettingUpdate(jid, tag).then((r) => (dropMeta(jid), r));
+      },
       joinGroupViaInvite: (code) => sock.groupAcceptInvite(code),
       approveMembershipRequests: (jid, jids) =>
         sock.groupRequestParticipantsUpdate(jid, jids, 'approve').then((r) => (dropMeta(jid), r)),

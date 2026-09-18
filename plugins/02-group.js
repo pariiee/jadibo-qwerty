@@ -616,14 +616,14 @@ module.exports = async function groupHandler(ctx) {
     case 'open': {
       if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
       if (!await isBotAdmin()) { await reply(mess.BotAdmin); return true; }
-      await client.group.setSetting(jid, 'announcement', false);
+      await client.group.setSetting(jid, 'open');
       await reply('🔓 Grup dibuka — semua member bisa kirim pesan');
       return true;
     }
     case 'close': {
       if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
       if (!await isBotAdmin()) { await reply(mess.BotAdmin); return true; }
-      await client.group.setSetting(jid, 'announcement', true);
+      await client.group.setSetting(jid, 'close');
       await reply('🔒 Grup ditutup — hanya admin yang bisa kirim pesan');
       return true;
     }
@@ -632,14 +632,14 @@ module.exports = async function groupHandler(ctx) {
     case 'mute': {
       if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
       if (!await isBotAdmin()) { await reply(mess.BotAdmin); return true; }
-      await client.group.setSetting(jid, 'announcement', true);
+      await client.group.setSetting(jid, 'mute');
       await reply('🔇 Grup di-mute');
       return true;
     }
     case 'unmute': {
       if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
       if (!await isBotAdmin()) { await reply(mess.BotAdmin); return true; }
-      await client.group.setSetting(jid, 'announcement', false);
+      await client.group.setSetting(jid, 'unmute');
       await reply('🔊 Grup di-unmute');
       return true;
     }
