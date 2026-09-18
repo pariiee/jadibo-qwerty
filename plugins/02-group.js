@@ -779,11 +779,15 @@ module.exports = async function groupHandler(ctx) {
               || {};
       const mentioned = ctx.mentioned?.length ? ctx.mentioned : (ci.mentionedJid || []);
 
-      // Kalau nggak ada tag & nggak ada reply -> PP pengirim sendiri
-      // (dipakai `.pp` di grup tanpa argumen). Command ini grup-only karena
-      // 02-group early-return untuk chat pribadi.
-      const target = mentioned[0] || ci.participant || sender;
-      if (!target) { await reply('❌ Nggak bisa nentuin target.'); return true; }
+      // Target WAJIB eksplisit: tag atau reply. `.pp` polos nggak nampilin PP
+      // siapa pun (termasuk pengirim) — kasih instruksi aja.
+      // Command ini grup-only karena 02-group early-return buat chat pribadi,
+      // jadi `sender` selalu ada dan cabang `!target` di bawah praktis mati.
+      const target = mentioned[0] || ci.participant || null;
+      if (!target) {
+        await reply(`📸 *Foto profil*\n\nTag orangnya atau reply pesannya.\nContoh: \`${p}pp @user\``);
+        return true;
+      }
       let phoneNum = String(target).split('@')[0];
 
       // Resolve LID ke phone JID lewat metadata grup
@@ -810,11 +814,9 @@ module.exports = async function groupHandler(ctx) {
       const imgBuffer = ppUrl ? await fetchImageBuffer(ppUrl) : null;
 
       // `.split('@')` di sini yang dulu bikin "Cannot read properties of
-      // undefined" waktu `.pp` tanpa tag — target bisa dari reply/diri sendiri,
-      // jadi mention-nya juga harus target itu, bukan `mentioned[0]`.
-      const isSelf = target === sender;
+      // undefined" waktu `.pp` tanpa tag — `mentioned` bisa kosong karena
+      // target datang dari reply, jadi jangan baca `mentioned[0]`.
       const tagNum = phoneNum || String(target).split('@')[0];
-      const capTitle = isSelf ? '📸 Foto profil kamu' : `📸 Foto profil @${tagNum}`;
 
       if (imgBuffer) {
         const thumb = await genThumbnail(imgBuffer, 'image/jpeg');
@@ -822,14 +824,12 @@ module.exports = async function groupHandler(ctx) {
           type: 'image',
           media: imgBuffer,
           mimetype: 'image/jpeg',
-          caption: capTitle,
-          ...(isSelf ? {} : { mentions: [target] }),
+          caption: `📸 Foto profil @${tagNum}`,
+          mentions: [target],
           ...(thumb ? { jpegThumbnail: thumb } : {}),
         });
       } else {
-        await reply(isSelf
-          ? '❌ Kamu belum pasang foto profil (atau diprivasi).'
-          : `❌ @${tagNum} nggak pasang foto profil (atau diprivasi).`);
+        await reply(`❌ @${tagNum} nggak pasang foto profil (atau diprivasi).`);
       }
       return true;
     }

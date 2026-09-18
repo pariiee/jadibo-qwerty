@@ -47,9 +47,11 @@ ok('handler: reply dibaca dari SEMUA jenis pesan', () => {
   }
 });
 
-ok('handler: prioritas mention > reply > diri sendiri', () => {
-  assert.match(grup, /const target = mentioned\[0\] \|\| ci\.participant \|\| sender;/,
-    'urutan target berubah — .pp tanpa argumen harus tetap balas sesuatu');
+ok('handler: target WAJIB eksplisit (tag/reply) — `.pp` polos nggak jatuh ke PP sendiri', () => {
+  assert.match(grup, /const target = mentioned\[0\] \|\| ci\.participant \|\| null;/,
+    'urutan target berubah — `.pp` polos harus balas instruksi, bukan PP pengirim');
+  assert.match(grup, /Tag orangnya atau reply pesannya/,
+    'teks instruksi buat `.pp` polos hilang');
 });
 
 ok('handler: pesan "Penggunaan:" yang nyangkut udah nggak ada', () => {
