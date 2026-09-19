@@ -5,6 +5,7 @@
  * Commands: !ping, !menu, !info, !owner, !uptime, !profil, !carifitur, !totalfitur
  */
 
+const { rapikanError } = require('../engine/pesanError');
 const os = require('os');
 const { proto } = require('baileys');
 const { genThumbnail } = require('../engine/thumbnail');
@@ -589,7 +590,7 @@ module.exports = async function infoHandler(ctx) {
           emoji,
         });
       } catch (e) {
-        await reply(`❌ Gagal react: ${e.message}`);
+        await reply(`❌ Gagal react: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -642,7 +643,7 @@ module.exports = async function infoHandler(ctx) {
 
         await reply(txt);
       } catch (e) {
-        await reply(`Gagal cek limit: ${e.message}`);
+        await reply(`Gagal cek limit: ${rapikanError(e)}`);
       }
       return true;
     }

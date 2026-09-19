@@ -53,6 +53,8 @@ const RAW_PROTO_KEYS = [
   'albumMessage', 'productMessage', 'orderMessage', 'eventMessage',
   'pollCreationMessageV3', 'requestPhoneNumberMessage', 'stickerPackMessage',
   'buttonsResponseMessage', 'listResponseMessage', 'highlyStructuredMessage',
+  // Status grup (.swgc): sendMessage nolak ("Invalid media type"), harus relay.
+  'groupStatusMessageV2', 'groupStatusMessage',
   ...RELAY_ONLY_KEYS,
 ];
 
@@ -433,6 +435,22 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
     );
   }
 
+  // Sama seperti prepareDocument(), tapi buat gambar/video/audio yang dikirim
+  // sebagai proto mentah (status grup / .swgc). Balikin `{ imageMessage: {...} }`
+  // / `{ videoMessage: {...} }` yang udah terenkripsi + ke-upload.
+  //
+  // JANGAN panggil `sock.waUploadToServer(buffer, { type, mimetype })` langsung:
+  // signature-nya beda — dia butuh FILE PATH + `fileEncSha256B64`, dan tanpa
+  // `fileEncSha256B64` dia mati di `encodeBase64EncodedStringForUpload` dengan
+  // "Cannot read properties of undefined (reading 'replace')".
+  async function prepareMedia(buffer, { type = 'image', mimetype } = {}) {
+    if (!sock) throw new Error('socket belum siap');
+    return prepareWAMessageMedia(
+      { [type]: buffer, ...(mimetype && { mimetype }) },
+      { upload: sock.waUploadToServer, logger: sock.logger, mediaUploadTimeoutMs: 60000 },
+    );
+  }
+
   async function send(jid, content, opts = {}) {
     if (!sock) throw new Error('socket belum siap');
     // Pesan berlabel AI — WA nampilin tanda "AI" di bubble-nya.
@@ -663,7 +681,10 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
           reuploadRequest: sock?.updateMediaMessage,
         });
       },
-      upload: (buffer, opts) => sock.waUploadToServer(buffer, opts),
+      // Enkripsi + upload buffer -> proto media ({ imageMessage: {...} }).
+      // Yang lama (`sock.waUploadToServer(buffer, { type, mimetype })`) selalu
+      // gagal: signature Baileys beda. Lihat prepareMedia() di atas.
+      prepareMedia: (buffer, opts) => prepareMedia(buffer, opts),
       read: (keys) => sock.readMessages(Array.isArray(keys) ? keys : [keys]),
       reply: (jid, content, opts) => send(jid, content, opts),
     },

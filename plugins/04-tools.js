@@ -5,6 +5,7 @@
  * Commands: sticker, poll, readmore, base64, kalkulator, pick
  */
 
+const { rapikanError } = require('../engine/pesanError');
 const mess           = require('../config/mess');
 const { genThumbnail } = require('../engine/thumbnail');
 const { addStickerExif } = require('../engine/sticker');
@@ -197,7 +198,7 @@ module.exports = async function toolsHandler(ctx) {
           await client.message.send(jid, { type: 'sticker', media: finalBuf, mimetype: 'image/webp' });
         }
       } catch (e) {
-        await reply(`Gagal membuat sticker: ${e.message}`);
+        await reply(`Gagal membuat sticker: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -296,7 +297,7 @@ module.exports = async function toolsHandler(ctx) {
         });
       } catch (e) {
         console.error('[WM] Error:', e.message);
-        await reply(`Gagal mengubah watermark: ${e.message}`);
+        await reply(`Gagal mengubah watermark: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -387,7 +388,7 @@ module.exports = async function toolsHandler(ctx) {
         await react(mess.reactSuccess);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal convert ke voice note: ${e.message}`);
+        await reply(`❌ Gagal convert ke voice note: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -430,7 +431,7 @@ module.exports = async function toolsHandler(ctx) {
         await react(mess.reactSuccess);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal kirim sebagai dokumen: ${e.message}`);
+        await reply(`❌ Gagal kirim sebagai dokumen: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -3345,7 +3346,7 @@ module.exports = async function toolsHandler(ctx) {
           caption:  `💳 *Pembayaran via QRIS*\n\nScan QR di atas untuk melakukan pembayaran.\n\n${botData.footer_text || ''}`.trim(),
         });
       } catch (e) {
-        await reply(`❌ Gagal mengirim gambar QRIS: ${e.message}`);
+        await reply(`❌ Gagal mengirim gambar QRIS: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -3448,7 +3449,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(`🤖 *ChatGPT*\n\n${clean}`);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal: ${e.message}`);
+        await reply(`❌ Gagal: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -3547,7 +3548,7 @@ module.exports = async function toolsHandler(ctx) {
         }
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal download: ${e.message}`);
+        await reply(`❌ Gagal download: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -3601,7 +3602,7 @@ module.exports = async function toolsHandler(ctx) {
         await client.message.send(jid, { type: 'sticker', media: finalBuf, mimetype: 'image/webp' });
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal: ${e.message}`);
+        await reply(`❌ Gagal: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -3665,7 +3666,7 @@ module.exports = async function toolsHandler(ctx) {
         }
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal: ${e.message}`);
+        await reply(`❌ Gagal: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -3719,7 +3720,7 @@ module.exports = async function toolsHandler(ctx) {
         videoBuf[0] = null;
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal download: ${e.message}`);
+        await reply(`❌ Gagal download: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -3773,7 +3774,7 @@ module.exports = async function toolsHandler(ctx) {
         videoBuf[0] = null;
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal download: ${e.message}`);
+        await reply(`❌ Gagal download: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -3829,7 +3830,7 @@ module.exports = async function toolsHandler(ctx) {
         videoBuf[0] = null;
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal download: ${e.message}`);
+        await reply(`❌ Gagal download: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -3867,7 +3868,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(`🧠 *DeepAI*\n\n${text}`);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal: ${e.message}`);
+        await reply(`❌ Gagal: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -3906,7 +3907,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(`🤖 *AI*\n\n${text}`);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal: ${e.message}`);
+        await reply(`❌ Gagal: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -3989,7 +3990,7 @@ module.exports = async function toolsHandler(ctx) {
       } catch (e) {
         await react(mess.reactError);
         console.error(`[bilibili debug] status: ${e.response?.status} url: ${e.config?.url?.slice(0,80)} msg: ${e.message}`);
-        await reply(`❌ Gagal download: ${e.message}`);
+        await reply(`❌ Gagal download: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -4027,7 +4028,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(`✨ *Gemini*\n\n${text}`);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal: ${e.message}`);
+        await reply(`❌ Gagal: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -4078,7 +4079,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(`🎵 *AI Lyrics Generator*\n\n${lyrics}`);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal generate lirik: ${e.message}`);
+        await reply(`❌ Gagal generate lirik: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -4156,7 +4157,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(`🔍 *AI Image Reader*\n\n${answer}`);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal membaca gambar: ${e.message}`);
+        await reply(`❌ Gagal membaca gambar: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -4197,7 +4198,7 @@ module.exports = async function toolsHandler(ctx) {
         }
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal download MediaFire: ${e.message}`);
+        await reply(`❌ Gagal download MediaFire: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -4230,7 +4231,7 @@ module.exports = async function toolsHandler(ctx) {
         }
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal download Likee: ${e.message}`);
+        await reply(`❌ Gagal download Likee: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -4264,7 +4265,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(txt.trim());
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal search ModDroid: ${e.message}`);
+        await reply(`❌ Gagal search ModDroid: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -4302,7 +4303,7 @@ module.exports = async function toolsHandler(ctx) {
         });
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal download Facebook: ${e.message}`);
+        await reply(`❌ Gagal download Facebook: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -4339,7 +4340,7 @@ module.exports = async function toolsHandler(ctx) {
         }
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal download Telegram Sticker: ${e.message}`);
+        await reply(`❌ Gagal download Telegram Sticker: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -4375,7 +4376,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(`🎵 *${title}*${artist ? `\n👤 ${artist}` : ''}`);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal download Spotify: ${e.message}`);
+        await reply(`❌ Gagal download Spotify: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -4408,7 +4409,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(`🎵 *${title}*${artist ? `\n👤 ${artist}` : ''}`);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal download SoundCloud: ${e.message}`);
+        await reply(`❌ Gagal download SoundCloud: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -4442,7 +4443,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(txt.trim());
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal search Sfile.mobi: ${e.message}`);
+        await reply(`❌ Gagal search Sfile.mobi: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -4468,7 +4469,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(`📦 *Sfile.co*\n\nLink download:\n${dlUrl}`);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal download Sfile.co: ${e.message}`);
+        await reply(`❌ Gagal download Sfile.co: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -4502,7 +4503,7 @@ module.exports = async function toolsHandler(ctx) {
         }
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal download RedNote: ${e.message}`);
+        await reply(`❌ Gagal download RedNote: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -4538,7 +4539,7 @@ module.exports = async function toolsHandler(ctx) {
         });
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal download Reddit: ${e.message}`);
+        await reply(`❌ Gagal download Reddit: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -4575,7 +4576,7 @@ module.exports = async function toolsHandler(ctx) {
         });
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal download Twitter: ${e.message}`);
+        await reply(`❌ Gagal download Twitter: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -4636,7 +4637,7 @@ module.exports = async function toolsHandler(ctx) {
         });
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal download TikTok: ${e.message}`);
+        await reply(`❌ Gagal download TikTok: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -4724,7 +4725,7 @@ module.exports = async function toolsHandler(ctx) {
         }
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal cari video TikTok: ${e.message}`);
+        await reply(`❌ Gagal cari video TikTok: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -4759,7 +4760,7 @@ module.exports = async function toolsHandler(ctx) {
         }
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal download Pinterest: ${e.message}`);
+        await reply(`❌ Gagal download Pinterest: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -4798,7 +4799,7 @@ module.exports = async function toolsHandler(ctx) {
         }
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal download Threads: ${e.message}`);
+        await reply(`❌ Gagal download Threads: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -4848,7 +4849,7 @@ module.exports = async function toolsHandler(ctx) {
         }
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal download YouTube: ${e.message}`);
+        await reply(`❌ Gagal download YouTube: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -4875,7 +4876,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(`📂 *Google Drive*\n\nLink download:\n${dlUrl}`);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal download Google Drive: ${e.message}`);
+        await reply(`❌ Gagal download Google Drive: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -4978,7 +4979,7 @@ module.exports = async function toolsHandler(ctx) {
         }
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal download Instagram: ${e.message}`);
+        await reply(`❌ Gagal download Instagram: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -5293,7 +5294,7 @@ module.exports = async function toolsHandler(ctx) {
         });
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal download Kuaishou: ${e.message}`);
+        await reply(`❌ Gagal download Kuaishou: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -5316,7 +5317,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(`🏝️ *Kata Bijak Aceh*\n\n_"${r?.kata}"_\n\n📖 ${r?.arti}`);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal ambil kata Aceh: ${e.message}`);
+        await reply(`❌ Gagal ambil kata Aceh: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -5335,7 +5336,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(`⛰️ *Kata Bijak Batak*\n\n_"${r}"_`);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal ambil kata Batak: ${e.message}`);
+        await reply(`❌ Gagal ambil kata Batak: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -5354,7 +5355,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(`💡 *Kata Bijak*\n\n_"${r?.kata}"_${r?.penulis ? `\n\n— ${r.penulis}` : ''}`);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal ambil kata bijak: ${e.message}`);
+        await reply(`❌ Gagal ambil kata bijak: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -5374,7 +5375,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(`🇨🇳 *Peribahasa China*\n\n${r?.china}\n_${r?.latin}_\n\n📖 ${r?.arti}`);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal ambil kata China: ${e.message}`);
+        await reply(`❌ Gagal ambil kata China: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -5393,7 +5394,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(`🎯 *Dare / Tantangan*\n\n${r}`);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal ambil dare: ${e.message}`);
+        await reply(`❌ Gagal ambil dare: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -5412,7 +5413,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(`🧠 *Fakta Unik*\n\n${r}`);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal ambil fakta: ${e.message}`);
+        await reply(`❌ Gagal ambil fakta: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -5431,7 +5432,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(`✍️ *Fiersa Besari*\n\n_"${r}"_`);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal ambil quote Fiersa: ${e.message}`);
+        await reply(`❌ Gagal ambil quote Fiersa: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -5451,7 +5452,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(`🏔️ *Pepatah Jawa*${r?.jenis ? ` _(${r.jenis})_` : ''}\n\n_"${r?.kata}"_\n\n📖 ${r?.arti}`);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal ambil kata Jawa: ${e.message}`);
+        await reply(`❌ Gagal ambil kata Jawa: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -5473,7 +5474,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(txt);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal ambil kata bucin: ${e.message}`);
+        await reply(`❌ Gagal ambil kata bucin: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -5492,7 +5493,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(`🌅 *Kata Sore*\n\n_"${r}"_`);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal ambil kata sore: ${e.message}`);
+        await reply(`❌ Gagal ambil kata sore: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -5512,7 +5513,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(`🏡 *Kata Minangkabau*\n\n_"${r?.kata}"_\n\n📖 ${r?.arti}`);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal ambil kata Minang: ${e.message}`);
+        await reply(`❌ Gagal ambil kata Minang: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -5531,7 +5532,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(`🔥 *Motivasi*\n\n_"${r}"_`);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal ambil motivasi: ${e.message}`);
+        await reply(`❌ Gagal ambil motivasi: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -5550,7 +5551,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(`😅 *Kata Ngeles*\n\n_"${r?.kata || r}"_`);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal ambil kata ngeles: ${e.message}`);
+        await reply(`❌ Gagal ambil kata ngeles: ${rapikanError(e)}`);
       }
       return true;
     }

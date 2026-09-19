@@ -7,6 +7,7 @@
  *          + tangkap klik button/list response & proses sebagai command
  */
 
+const { rapikanError } = require('../engine/pesanError');
 const { proto } = require('baileys');
 
 // ── Handler ────────────────────────────────────────────────────────────────────
@@ -169,7 +170,7 @@ module.exports = async function buttonHandler(ctx) {
           },
         });
       } catch (e) {
-        await reply(`❌ Gagal kirim buttons: ${e.message}`);
+        await reply(`❌ Gagal kirim buttons: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -215,7 +216,7 @@ module.exports = async function buttonHandler(ctx) {
           },
         });
       } catch (e) {
-        await reply(`❌ Gagal kirim interactive: ${e.message}`);
+        await reply(`❌ Gagal kirim interactive: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -283,7 +284,7 @@ module.exports = async function buttonHandler(ctx) {
 
         await reply(out);
       } catch (e) {
-        await reply(`❌ Gagal cek bisnis: ${e.message}`);
+        await reply(`❌ Gagal cek bisnis: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -389,7 +390,7 @@ module.exports = async function buttonHandler(ctx) {
           await sendList(sendTo);
         } catch (e) {
           console.error('[list] error asli:', e.message, e.code || '');
-          await reply(`❌ Gagal kirim list menu: ${e.message}`);
+          await reply(`❌ Gagal kirim list menu: ${rapikanError(e)}`);
         }
       }
       return true;

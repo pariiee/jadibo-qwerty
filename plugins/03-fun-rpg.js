@@ -7,6 +7,7 @@
  *           rpg, daily, store, beli, inventory, pakai, topkoin
  */
 
+const { rapikanError } = require('../engine/pesanError');
 const crypto = require('crypto');
 const { pool } = require('../config/database');
 
@@ -486,7 +487,7 @@ module.exports = async function funRpgHandler(ctx) {
           `💕 *Jodoh Hari Ini*\n\n@${resolveMentionNum(sender)} ❤️ @${resolveMentionNum(partnerJid)}\n\nKompatibilitas: *${compat}%*\n\n${emoji}`,
           { mentions: [sender, partnerJid] }
         );
-      } catch (e) { await reply(`Gagal mencari jodoh: ${e.message}`); }
+      } catch (e) { await reply(`Gagal mencari jodoh: ${rapikanError(e)}`); }
       return true;
     }
 
@@ -701,7 +702,7 @@ module.exports = async function funRpgHandler(ctx) {
           await client.message.send(jid, txt, { mentions: [target] });
         }
       } catch (e) {
-        await reply(`Gagal load profil: ${e.message}`);
+        await reply(`Gagal load profil: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -722,7 +723,7 @@ module.exports = async function funRpgHandler(ctx) {
           `Koin   : ${formatNum(m.money)} 🪙\n` +
           `Limit  : ${m.lim}`
         );
-      } catch (e) { await reply(`Gagal: ${e.message}`); }
+      } catch (e) { await reply(`Gagal: ${rapikanError(e)}`); }
       return true;
     }
 
@@ -757,7 +758,7 @@ module.exports = async function funRpgHandler(ctx) {
           (isPrem ? `+50 limit\n` : '') +
           `\nTotal koin: ${formatNum(newMoney)} 🪙\nLimit: ${newLim}`
         );
-      } catch (e) { await reply(`Gagal: ${e.message}`); }
+      } catch (e) { await reply(`Gagal: ${rapikanError(e)}`); }
       return true;
     }
 
@@ -781,7 +782,7 @@ module.exports = async function funRpgHandler(ctx) {
         }
         await updateMember(botData.id, sender, { money: Number(m.money) - item.price });
         await reply(`✅ Berhasil membeli *${item.name}*!\nSisa koin: ${formatNum(Number(m.money) - item.price)} 🪙`);
-      } catch (e) { await reply(`Gagal: ${e.message}`); }
+      } catch (e) { await reply(`Gagal: ${rapikanError(e)}`); }
       return true;
     }
 
@@ -810,7 +811,7 @@ module.exports = async function funRpgHandler(ctx) {
         const list     = rows.map((r, i) => `${i + 1}. @${resolveMentionNum(r.jid)} — ${formatNum(r.money)} 🪙`).join('\n');
         const mentions = rows.map(r => r.jid);
         await client.message.send(jid, `🏆 *Top Koin*\n\n${list}`, { mentions: mentions });
-      } catch (e) { await reply(`Gagal: ${e.message}`); }
+      } catch (e) { await reply(`Gagal: ${rapikanError(e)}`); }
       return true;
     }
 

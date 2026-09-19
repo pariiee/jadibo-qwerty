@@ -9,6 +9,7 @@
  * Owner-only commands require the sender to be the bot owner number.
  */
 
+const { rapikanError } = require('../engine/pesanError');
 const path = require('path');
 const fs   = require('fs');
 const { pool } = require('../config/database');
@@ -414,7 +415,7 @@ module.exports = async function ownerHandler(ctx) {
         fs.copyFileSync(dbPath, backupPath);
         await reply(`✅ Backup berhasil: ${path.basename(backupPath)}`);
       } catch (e) {
-        await reply(`Gagal backup: ${e.message}`);
+        await reply(`Gagal backup: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -635,7 +636,7 @@ module.exports = async function ownerHandler(ctx) {
           `✅ *Premium aktif!*\n@${target.split('@')[0]} (${nama})\nExpired: ${expStr}`,
           { mentions: [target] }
         );
-      } catch (e) { await reply(`Gagal: ${e.message}`); }
+      } catch (e) { await reply(`Gagal: ${rapikanError(e)}`); }
       return true;
     }
 
@@ -667,7 +668,7 @@ module.exports = async function ownerHandler(ctx) {
           `✅ Premium @${target.split('@')[0]} (${nama}) dicabut`,
           { mentions: [target] }
         );
-      } catch (e) { await reply(`Gagal: ${e.message}`); }
+      } catch (e) { await reply(`Gagal: ${rapikanError(e)}`); }
       return true;
     }
 
@@ -691,7 +692,7 @@ module.exports = async function ownerHandler(ctx) {
           `⭐ *Daftar Member Premium*\n\n${list}\n\nTotal: ${rows.length}`,
           { mentions: mentions }
         );
-      } catch (e) { await reply(`Gagal: ${e.message}`); }
+      } catch (e) { await reply(`Gagal: ${rapikanError(e)}`); }
       return true;
     }
 
@@ -745,7 +746,7 @@ module.exports = async function ownerHandler(ctx) {
             `_Waktu sewa akan mulai dihitung saat bot pertama kali menerima pesan dari grup tersebut._`
           );
         } catch (e) {
-          await reply(`❌ Gagal simpan sewa: ${e.message}`);
+          await reply(`❌ Gagal simpan sewa: ${rapikanError(e)}`);
         }
         return true;
       }
@@ -823,7 +824,7 @@ module.exports = async function ownerHandler(ctx) {
             `📅 Expired: ${expDate.toLocaleString('id-ID')}`
           );
         } catch (e) {
-          await reply(`❌ Gagal join grup: ${e.message}\n\nPastikan link valid dan bot belum ada di grup.`);
+          await reply(`❌ Gagal join grup: ${rapikanError(e)}\n\nPastikan link valid dan bot belum ada di grup.`);
         }
         return true;
       }
@@ -875,7 +876,7 @@ module.exports = async function ownerHandler(ctx) {
           `⏳ Durasi: ${durStr}\n` +
           `📅 Expired: ${expDate.toLocaleString('id-ID')}`
         );
-      } catch (e) { await reply(`Gagal: ${e.message}`); }
+      } catch (e) { await reply(`Gagal: ${rapikanError(e)}`); }
       return true;
     }
 
@@ -926,7 +927,7 @@ module.exports = async function ownerHandler(ctx) {
             await client.group.leaveGroup([targetJid]);
           } catch { /* non-critical */ }
         }
-      } catch (e) { await reply(`Gagal: ${e.message}`); }
+      } catch (e) { await reply(`Gagal: ${rapikanError(e)}`); }
       return true;
     }
 
@@ -962,7 +963,7 @@ module.exports = async function ownerHandler(ctx) {
         await reply(
           `✅ *Sewa di-reset!*\n\n📅 Expired baru: ${expDate.toLocaleString('id-ID')}`
         );
-      } catch (e) { await reply(`Gagal: ${e.message}`); }
+      } catch (e) { await reply(`Gagal: ${rapikanError(e)}`); }
       return true;
     }
 
@@ -991,7 +992,7 @@ module.exports = async function ownerHandler(ctx) {
           `📅 Expired: ${expDate.toLocaleString('id-ID')}\n` +
           `⏳ Sisa: ${sisaStr}`
         );
-      } catch (e) { await reply(`Gagal: ${e.message}`); }
+      } catch (e) { await reply(`Gagal: ${rapikanError(e)}`); }
       return true;
     }
 
@@ -1020,7 +1021,7 @@ module.exports = async function ownerHandler(ctx) {
           return `${i + 1}. ${status} *${r.group_name || r.group_jid.split('@')[0]}*\n   Sisa: ${sisa}`;
         }).join('\n');
         await reply(`📋 *Daftar Sewa Bot*\n\nTotal: ${rows.length}\n\n${list}\n\n_Ketik ${p}delsewa <nomor> untuk hapus sewa_`);
-      } catch (e) { await reply(`Gagal: ${e.message}`); }
+      } catch (e) { await reply(`Gagal: ${rapikanError(e)}`); }
       return true;
     }
 
@@ -1106,7 +1107,7 @@ module.exports = async function ownerHandler(ctx) {
         }
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal fetch: ${e.message}`);
+        await reply(`❌ Gagal fetch: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -1185,7 +1186,7 @@ module.exports = async function ownerHandler(ctx) {
         await react(mess.reactSuccess);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal: ${e.message}`);
+        await reply(`❌ Gagal: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -1299,7 +1300,7 @@ module.exports = async function ownerHandler(ctx) {
         await react(mess.reactSuccess);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal: ${e.message}`);
+        await reply(`❌ Gagal: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -1355,7 +1356,7 @@ module.exports = async function ownerHandler(ctx) {
 
           await reply(`✅ *QRIS berhasil diupload & disimpan!*\n\n🔗 URL: ${url}\n⏳ Expired: ${expires || 'Permanen'}\n\nKetik ${p}pay untuk test.`);
         } catch (e) {
-          await reply(`❌ Gagal upload QRIS: ${e.message}`);
+          await reply(`❌ Gagal upload QRIS: ${rapikanError(e)}`);
         }
         return true;
       }
@@ -1367,7 +1368,7 @@ module.exports = async function ownerHandler(ctx) {
           await pool.execute('UPDATE bots SET qris_url = ? WHERE id = ?', [url, botId]);
           botData.qris_url = url;
           await reply(`✅ QRIS berhasil disimpan!\n\n🔗 URL: ${url}\n\nKetik ${p}pay untuk test.`);
-        } catch (e) { await reply(`Gagal: ${e.message}`); }
+        } catch (e) { await reply(`Gagal: ${rapikanError(e)}`); }
         return true;
       }
 
@@ -1872,7 +1873,7 @@ module.exports = async function ownerHandler(ctx) {
         }
         await reply(`✅ Berhasil keluar dari *${sukses}/${groups.length} grup*.`);
       } catch (e) {
-        await reply(`❌ Gagal leaveall: ${e.message}`);
+        await reply(`❌ Gagal leaveall: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -1927,7 +1928,7 @@ module.exports = async function ownerHandler(ctx) {
           await reply(header + lines.slice(i, i + CHUNK).join('\n'));
         }
       } catch (e) {
-        await reply(`❌ Gagal ambil list grup: ${e.message}`);
+        await reply(`❌ Gagal ambil list grup: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -2111,7 +2112,7 @@ module.exports = async function ownerHandler(ctx) {
           `📅 Expired baru: *${expDate.toLocaleString('id-ID')}*\n` +
           `📎 ${sisaLama}`
         );
-      } catch (e) { await reply(`❌ Gagal perpanjang sewa: ${e.message}`); }
+      } catch (e) { await reply(`❌ Gagal perpanjang sewa: ${rapikanError(e)}`); }
       return true;
     }
 
@@ -2155,7 +2156,7 @@ module.exports = async function ownerHandler(ctx) {
         if (e.code === 'ER_DUP_ENTRY') {
           await reply(`❌ Key *${triggerKey}* sudah ada. Gunakan ${p}uprespon untuk update.`);
         } else {
-          await reply(`❌ Gagal: ${e.message}`);
+          await reply(`❌ Gagal: ${rapikanError(e)}`);
         }
       }
       return true;
@@ -2188,7 +2189,7 @@ module.exports = async function ownerHandler(ctx) {
         } else {
           await reply(`✅ *Auto Respon Diupdate!*\n\n🔑 Key: *${triggerKey}*\n💬 Respon baru: ${response}`);
         }
-      } catch (e) { await reply(`❌ Gagal: ${e.message}`); }
+      } catch (e) { await reply(`❌ Gagal: ${rapikanError(e)}`); }
       return true;
     }
 
@@ -2212,7 +2213,7 @@ module.exports = async function ownerHandler(ctx) {
         } else {
           await reply(`✅ Auto respon *${triggerKey}* berhasil dihapus.`);
         }
-      } catch (e) { await reply(`❌ Gagal: ${e.message}`); }
+      } catch (e) { await reply(`❌ Gagal: ${rapikanError(e)}`); }
       return true;
     }
 
@@ -2233,7 +2234,7 @@ module.exports = async function ownerHandler(ctx) {
           const header = i === 0 ? `📋 *LIST AUTO RESPON*\nTotal: *${rows.length}*\n\n` : `📋 *(lanjutan)*\n\n`;
           await reply(header + lines.slice(i, i + CHUNK).join('\n'));
         }
-      } catch (e) { await reply(`❌ Gagal: ${e.message}`); }
+      } catch (e) { await reply(`❌ Gagal: ${rapikanError(e)}`); }
       return true;
     }
 
@@ -2277,7 +2278,7 @@ module.exports = async function ownerHandler(ctx) {
         if (e.code === 'ER_DUP_ENTRY') {
           await reply(`❌ Key *${listKey}* sudah ada. Gunakan ${p}updatelist untuk update.`);
         } else {
-          await reply(`❌ Gagal: ${e.message}`);
+          await reply(`❌ Gagal: ${rapikanError(e)}`);
         }
       }
       return true;
@@ -2310,7 +2311,7 @@ module.exports = async function ownerHandler(ctx) {
         } else {
           await reply(`✅ *List Diupdate!*\n\n🔑 Key: *${listKey}*\n📝 Deskripsi baru:\n${listDesc}`);
         }
-      } catch (e) { await reply(`❌ Gagal: ${e.message}`); }
+      } catch (e) { await reply(`❌ Gagal: ${rapikanError(e)}`); }
       return true;
     }
 
@@ -2354,7 +2355,7 @@ module.exports = async function ownerHandler(ctx) {
           await reply(`❌ Target tidak dikenal: *${target}*`); return true;
         }
         await reply(msg);
-      } catch (e) { await reply(`❌ Gagal reset: ${e.message}`); }
+      } catch (e) { await reply(`❌ Gagal reset: ${rapikanError(e)}`); }
       return true;
     }
 
@@ -2370,7 +2371,7 @@ module.exports = async function ownerHandler(ctx) {
       try {
         await ctx.client.profile.setStatus(bio);
         await reply(`✅ Bio bot berhasil diubah:\n_${bio}_`);
-      } catch (e) { await reply(`❌ Gagal ubah bio: ${e.message}`); }
+      } catch (e) { await reply(`❌ Gagal ubah bio: ${rapikanError(e)}`); }
       return true;
     }
 
@@ -2394,7 +2395,7 @@ module.exports = async function ownerHandler(ctx) {
         );
         await ctx.client.profile.setProfilePicture(buffer);
         await reply('✅ Foto profil bot berhasil diubah!');
-      } catch (e) { await reply(`❌ Gagal ubah foto profil: ${e.message}`); }
+      } catch (e) { await reply(`❌ Gagal ubah foto profil: ${rapikanError(e)}`); }
       return true;
     }
 

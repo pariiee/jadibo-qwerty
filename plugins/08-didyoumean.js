@@ -10,6 +10,7 @@
  * Tanpa dependency — pakai Levenshtein distance homemade.
  */
 
+const { rapikanError } = require('../engine/pesanError');
 const fs   = require('fs');
 const path = require('path');
 const { proto } = require('baileys');
@@ -118,7 +119,7 @@ module.exports = async function didyoumeanHandler(ctx) {
         if (handled) return true;
       } catch (e) {
         console.error(`[DidYouMean] Gagal eksekusi ${p}${cmd}:`, e.message);
-        await reply(`❌ Gagal menjalankan *${p}${cmd}*: ${e.message}`).catch(() => {});
+        await reply(`❌ Gagal menjalankan *${p}${cmd}*: ${rapikanError(e)}`).catch(() => {});
         return true;
       }
     }

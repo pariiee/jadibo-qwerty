@@ -10,7 +10,7 @@ const { initAuthCreds } = require('baileys');
 
 // ── metode yg benar-benar dipanggil engine+plugins+controllers (hasil grep repo) ─
 const REQUIRED = {
-  message: ['send', 'downloadBytes', 'reply', 'read', 'upload'],
+  message: ['send', 'downloadBytes', 'reply', 'read', 'prepareMedia'],
   group: ['queryGroupMetadata', 'queryAllGroups', 'queryInviteCode',
           'addParticipants', 'removeParticipants', 'promoteParticipants', 'demoteParticipants',
           'leaveGroup', 'joinGroupViaInvite', 'approveMembershipRequests',

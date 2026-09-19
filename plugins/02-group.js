@@ -9,6 +9,7 @@
  *           afk, listafk, topchat
  */
 
+const { rapikanError } = require('../engine/pesanError');
 const mess             = require('../config/mess');
 const { lidToPnAsync }   = require('../engine/jid');
 const { genThumbnail } = require('../engine/thumbnail');
@@ -507,7 +508,7 @@ module.exports = async function groupHandler(ctx) {
           await reply(`✅ Berhasil kick ${mentioned.length} member`);
         }
       } catch (e) {
-        await reply(`❌ Gagal kick: ${e.message}`);
+        await reply(`❌ Gagal kick: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -543,7 +544,7 @@ module.exports = async function groupHandler(ctx) {
           await reply(`❌ Gagal menambahkan *${normalized}*\nAlasan: ${reason}`);
         }
       } catch (e) {
-        await reply(`❌ Gagal menambahkan *${normalized}*\nAlasan: ${e.message}`);
+        await reply(`❌ Gagal menambahkan *${normalized}*\nAlasan: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -570,7 +571,7 @@ module.exports = async function groupHandler(ctx) {
           await reply(`✅ ${members.length} member berhasil dikick`);
         }
       } catch (e) {
-        await reply(`❌ Gagal kickall: ${e.message}`);
+        await reply(`❌ Gagal kickall: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -1338,7 +1339,7 @@ module.exports = async function groupHandler(ctx) {
         );
         await client.profile.setProfilePicture(jid, buffer);
         await reply('✅ Foto profil grup berhasil diubah!');
-      } catch (e) { await reply(`❌ Gagal ubah foto grup: ${e.message}`); }
+      } catch (e) { await reply(`❌ Gagal ubah foto grup: ${rapikanError(e)}`); }
       return true;
     }
 
@@ -1498,59 +1499,27 @@ module.exports = async function groupHandler(ctx) {
         let content;
 
         if (imgMsg) {
-          const buffer   = await client.message.downloadBytes(quotedMsg ? { imageMessage: imgMsg } : ctx.msg.message);
-          const uploaded = await client.message.upload(buffer, { type: 'image', mimetype: imgMsg.mimetype || 'image/jpeg' });
-          content = {
-            imageMessage: {
-              url:               uploaded.url,
-              mimetype:          imgMsg.mimetype || 'image/jpeg',
-              caption:           caption || '',
-              fileSha256:        uploaded.fileSha256,
-              fileLength:        uploaded.fileLength,
-              height:            uploaded.height  || 512,
-              width:             uploaded.width   || 512,
-              mediaKey:          uploaded.mediaKey,
-              fileEncSha256:     uploaded.fileEncSha256,
-              directPath:        uploaded.directPath,
-              mediaKeyTimestamp: uploaded.mediaKeyTimestamp,
-              jpegThumbnail:     uploaded.jpegThumbnail || undefined,
-            },
-          };
+          const buffer = await client.message.downloadBytes(quotedMsg ? { imageMessage: imgMsg } : ctx.msg.message);
+          const { imageMessage } = await client.message.prepareMedia(buffer, { type: 'image', mimetype: imgMsg.mimetype || 'image/jpeg' });
+          content = { imageMessage: { ...imageMessage, ...(caption && { caption }) } };
         } else if (vidMsg) {
-          const buffer   = await client.message.downloadBytes(quotedMsg ? { videoMessage: vidMsg } : ctx.msg.message);
-          const uploaded = await client.message.upload(buffer, { type: 'video', mimetype: vidMsg.mimetype || 'video/mp4' });
+          const buffer = await client.message.downloadBytes(quotedMsg ? { videoMessage: vidMsg } : ctx.msg.message);
+          const { videoMessage } = await client.message.prepareMedia(buffer, { type: 'video', mimetype: vidMsg.mimetype || 'video/mp4' });
           content = {
             videoMessage: {
-              url:               uploaded.url,
-              mimetype:          vidMsg.mimetype || 'video/mp4',
-              caption:           caption || '',
-              fileSha256:        uploaded.fileSha256,
-              fileLength:        uploaded.fileLength,
-              height:            uploaded.height  || 512,
-              width:             uploaded.width   || 512,
-              mediaKey:          uploaded.mediaKey,
-              fileEncSha256:     uploaded.fileEncSha256,
-              directPath:        uploaded.directPath,
-              mediaKeyTimestamp: uploaded.mediaKeyTimestamp,
-              jpegThumbnail:     uploaded.jpegThumbnail || undefined,
-              seconds:           uploaded.seconds || 1,
+              ...videoMessage,
+              seconds: videoMessage.seconds || vidMsg.seconds || 1,
+              ...(caption && { caption }),
             },
           };
         } else if (audMsg) {
-          const buffer   = await client.message.downloadBytes(quotedMsg ? { audioMessage: audMsg } : ctx.msg.message);
-          const uploaded = await client.message.upload(buffer, { type: 'audio', mimetype: audMsg.mimetype || 'audio/mp4' });
+          const buffer = await client.message.downloadBytes(quotedMsg ? { audioMessage: audMsg } : ctx.msg.message);
+          const { audioMessage } = await client.message.prepareMedia(buffer, { type: 'audio', mimetype: audMsg.mimetype || 'audio/mp4' });
           content = {
             audioMessage: {
-              url:               uploaded.url,
-              mimetype:          audMsg.mimetype || 'audio/mp4',
-              fileSha256:        uploaded.fileSha256,
-              fileLength:        uploaded.fileLength,
-              mediaKey:          uploaded.mediaKey,
-              fileEncSha256:     uploaded.fileEncSha256,
-              directPath:        uploaded.directPath,
-              mediaKeyTimestamp: uploaded.mediaKeyTimestamp,
-              seconds:           uploaded.seconds || 1,
-              ptt:               false,
+              ...audioMessage,
+              seconds: audioMessage.seconds || audMsg.seconds || 1,
+              ptt: false,
             },
           };
         } else if (caption) {
@@ -1576,7 +1545,7 @@ module.exports = async function groupHandler(ctx) {
         }
         await react('✅');
       } catch (e) {
-        await reply(`❌ Gagal kirim status grup: ${e.message}`);
+        await reply(`❌ Gagal kirim status grup: ${rapikanError(e)}`);
       }
       return true;
     }

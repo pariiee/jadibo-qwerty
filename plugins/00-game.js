@@ -17,6 +17,7 @@
  * Rule: 1 grup = 1 game aktif (via sharedStore)
  */
 
+const { rapikanError } = require('../engine/pesanError');
 const { pool }    = require('../config/database');
 const sharedStore = require('../engine/gameStore');
 
@@ -648,7 +649,7 @@ module.exports = async function gameHandler(ctx) {
 
       } catch (e) {
         await react('❌');
-        await reply(`❌ Gagal ambil soal: ${e.message}`);
+        await reply(`❌ Gagal ambil soal: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -831,7 +832,7 @@ module.exports = async function gameHandler(ctx) {
 
       } catch (e) {
         await react('❌');
-        await reply(`❌ Gagal ambil soal: ${e.message}`);
+        await reply(`❌ Gagal ambil soal: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -907,7 +908,7 @@ module.exports = async function gameHandler(ctx) {
 
       } catch (e) {
         await react('❌');
-        await reply(`❌ Gagal ambil soal: ${e.message}`);
+        await reply(`❌ Gagal ambil soal: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -973,7 +974,7 @@ module.exports = async function gameHandler(ctx) {
 
       } catch (e) {
         await react('❌');
-        await reply(`❌ Gagal ambil soal: ${e.message}`);
+        await reply(`❌ Gagal ambil soal: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -1039,7 +1040,7 @@ module.exports = async function gameHandler(ctx) {
 
       } catch (e) {
         await react('❌');
-        await reply(`❌ Gagal ambil soal: ${e.message}`);
+        await reply(`❌ Gagal ambil soal: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -1101,7 +1102,7 @@ module.exports = async function gameHandler(ctx) {
 
       } catch (e) {
         await react('❌');
-        await reply(`❌ Gagal ambil soal: ${e.message}`);
+        await reply(`❌ Gagal ambil soal: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -1154,7 +1155,7 @@ module.exports = async function gameHandler(ctx) {
 
       } catch (e) {
         await react('❌');
-        await reply(`❌ Gagal ambil soal: ${e.message}`);
+        await reply(`❌ Gagal ambil soal: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -1212,7 +1213,7 @@ module.exports = async function gameHandler(ctx) {
 
       } catch (e) {
         await react('❌');
-        await reply(`❌ Gagal ambil soal: ${e.message}`);
+        await reply(`❌ Gagal ambil soal: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -1271,7 +1272,7 @@ module.exports = async function gameHandler(ctx) {
 
       } catch (e) {
         await react('❌');
-        await reply(`❌ Gagal ambil soal: ${e.message}`);
+        await reply(`❌ Gagal ambil soal: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -1336,7 +1337,7 @@ module.exports = async function gameHandler(ctx) {
 
       } catch (e) {
         await react('❌');
-        await reply(`❌ Gagal ambil soal: ${e.message}`);
+        await reply(`❌ Gagal ambil soal: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -1390,7 +1391,7 @@ module.exports = async function gameHandler(ctx) {
 
       } catch (e) {
         await react('❌');
-        await reply(`❌ Gagal ambil soal: ${e.message}`);
+        await reply(`❌ Gagal ambil soal: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -1464,7 +1465,7 @@ module.exports = async function gameHandler(ctx) {
 
       } catch (e) {
         await react('❌');
-        await reply(`❌ Gagal ambil soal: ${e.message}`);
+        await reply(`❌ Gagal ambil soal: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -1530,7 +1531,7 @@ module.exports = async function gameHandler(ctx) {
 
       } catch (e) {
         await react('❌');
-        await reply(`❌ Gagal ambil soal: ${e.message}`);
+        await reply(`❌ Gagal ambil soal: ${rapikanError(e)}`);
       }
       return true;
     }
