@@ -516,7 +516,10 @@ module.exports.statusFitur = async function statusFitur(botId, jid) {
     return `${i.emoji} ${i.label.padEnd(11)}: ${st(on)} — ${i.desc}\n`;
   };
   return (
-    `*── Proteksi ──*\n` +
+    `*── Teks ──*\n` +
+    `👋 Welcome   : ${dbCfg.welcome_msg ? `"${dbCfg.welcome_msg}"` : '_belum diatur_'}\n` +
+    `🚪 Leave     : ${dbCfg.bye_msg ? `"${dbCfg.bye_msg}"` : '_belum diatur_'}\n` +
+    `\n*── Proteksi ──*\n` +
     baris('antibot',     cfg.antibot) +
     baris('antilink',    cfg.antilink) +
     baris('antilinkv2',  cfg.antilinkv2) +
@@ -538,4 +541,29 @@ module.exports.statusFitur = async function statusFitur(botId, jid) {
     baris('autoread',    autoread) +
     baris('didyoumean',  getBotGlobalSetting(botId, 'didyoumean'))
   );
+};
+
+// Baris teks + status fitur buat `.groupinfo` (dipakai bareng blok di atas).
+// Status grup: utama / sewa / biasa — sumbernya sama kayak `.listgroup`
+// (botData.main_groups + tabel bot_sewa), biar nggak bisa beda jawaban.
+module.exports.statusGrup = async function statusGrup(botId, jid, mainGroupsRaw) {
+  const mainGroups = new Set(
+    String(mainGroupsRaw || '').split(/[,\n]/).map(s => s.trim()).filter(Boolean)
+  );
+  if (mainGroups.has(jid)) return '🏠 utama';
+  try {
+    const [rows] = await pool.execute(
+      'SELECT expired_at FROM bot_sewa WHERE bot_id = ? AND group_jid = ? LIMIT 1',
+      [botId, jid]
+    );
+    const exp = rows[0]?.expired_at;
+    if (exp != null) {
+      const sisa = Number(exp) - Date.now();
+      if (sisa <= 0) return '⛔ sewa expired';
+      const d = Math.floor(sisa / 86400000);
+      const h = Math.floor((sisa % 86400000) / 3600000);
+      return `💰 sewa (sisa ${d > 0 ? d + 'h ' : ''}${h}j)`;
+    }
+  } catch { /* bot_sewa nggak ada / DB error → anggap biasa */ }
+  return '👥 biasa';
 };

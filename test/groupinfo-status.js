@@ -37,6 +37,19 @@ tes('.groupinfo manggil statusFitur', () => {
   assert(/proteksi\.statusFitur\(botData\.id, jid\)/.test(P2), '.groupinfo nggak manggil statusFitur');
 });
 
+tes('.groupinfo nampilin: status grup, deskripsi, teks welcome/leave, PP grup', () => {
+  assert(/proteksi\.statusGrup\(botData\.id, jid, botData\.main_groups\)/.test(P2), 'status grup nggak ada');
+  assert(/\*Deskripsi\*/.test(P2), 'blok deskripsi ilang');
+  assert(/welcome_msg/.test(P6) && /bye_msg/.test(P6), 'teks welcome/leave nggak ditampilin');
+  assert(/caption: hdr/.test(P2), 'PP grup nggak dikirim sebagai caption gambar');
+  assert(/else \{\s*\r?\n\s*await reply\(hdr\);/.test(P2), 'fallback teks kalau PP nggak ada ilang');
+});
+
+tes('statusGrup satu sumber sama .listgroup (main_groups + bot_sewa)', () => {
+  assert(/bot_sewa WHERE bot_id = \? AND group_jid = \?/.test(P6), 'statusGrup nggak baca bot_sewa');
+  assert(/🏠 utama/.test(P6) && /sewa expired/.test(P6), 'label status grup ilang');
+});
+
 tes('02-group ngambil proteksi lewat require', () => {
   assert(/require\('\.\/06-proteksi'\)/.test(P2), 'require 06-proteksi nggak ada');
 });

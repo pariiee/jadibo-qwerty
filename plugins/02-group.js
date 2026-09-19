@@ -721,15 +721,35 @@ module.exports = async function groupHandler(ctx) {
       if (!meta) { await reply('Gagal mengambil data grup'); return true; }
       const admins  = meta.participants.filter(p => p.isAdmin).length;
       const members = meta.participants.length;
-      await reply(
+      const status  = await proteksi.statusGrup(botData.id, jid, botData.main_groups);
+      const hdr =
         `📊 *Info Grup*\n\n` +
         `Nama    : ${meta.subject}\n` +
         `JID     : ${jid}\n` +
+        `Status  : ${status}\n` +
         `Member  : ${members}\n` +
         `Admin   : ${admins}\n` +
         `Dibuat  : ${new Date(meta.creation * 1000).toLocaleDateString('id-ID')}\n\n` +
-        await proteksi.statusFitur(botData.id, jid)
-      );
+        `📝 *Deskripsi*\n${meta.desc || '_belum ada deskripsi_'}\n\n` +
+        await proteksi.statusFitur(botData.id, jid);
+
+      // PP grup dikirim sebagai gambar, caption-nya info + status di atas.
+      // Gagal ambil PP = kirim teks aja, jangan bikin command-nya mati.
+      const ppUrl = await client.profile.getProfilePicture(jid, 'image').catch(() => null);
+      const buf   = ppUrl ? await fetchImageBuffer(ppUrl) : null;
+
+      if (buf) {
+        const thumb = await genThumbnail(buf, 'image/jpeg');
+        await client.message.send(jid, {
+          type: 'image',
+          media: buf,
+          mimetype: 'image/jpeg',
+          caption: hdr,
+          ...(thumb ? { jpegThumbnail: thumb } : {}),
+        });
+      } else {
+        await reply(hdr);
+      }
       return true;
     }
 
