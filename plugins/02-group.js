@@ -425,7 +425,7 @@ module.exports = async function groupHandler(ctx) {
 
     // ── hidetag ──────────────────────────────────────────────────────────────
     case 'hidetag':
-    case 'ht': {
+    case 'h': {
       if (!await isBotAdmin()) { await reply(mess.BotAdmin); return true; }
       if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
       const meta = await getMeta();
@@ -1577,7 +1577,7 @@ module.exports = async function groupHandler(ctx) {
 
 // Command yang kena limit untuk user biasa
 module.exports.limitedCmds = new Set([
-  'tagall','tagadmin','tagme','hidetag','ht',
+  'tagall','tagadmin','tagme','hidetag','h',
   'kick','kickall','promote','demote','add','addai',
   'open','close','mute','unmute','slowmode','setname','setdesc',
   'grupopen','grupclose','linkgc','setnamegc',
