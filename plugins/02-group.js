@@ -3,7 +3,7 @@
 /**
  * plugins/02-group.js
  * Commands: tagall, tagadmin, tagme, hidetag, kick, kickall, promote, demote,
- *           open, close, mute, unmute, slowmode, setname, setdesc, linkgroup,
+ *           open, close, mute, unmute, slowmode, setname, setdesc, link,
  *           groupinfo, idgc, leavegc, listadmin, pp/getpp, getppgc, totag,
  *           delete, cekasalmember, absen, mulaiabsen, cekabsen, hapusabsen,
  *           afk, listafk, topchat
@@ -489,7 +489,6 @@ module.exports = async function groupHandler(ctx) {
       return true;
     }
 
-    // ── linkgroup ─────────────────────────────────────────────────────────────
     // ── upswgc ───────────────────────────────────────────────────────────────
     // ── kick ─────────────────────────────────────────────────────────────────
     case 'kick': {
@@ -624,7 +623,7 @@ module.exports = async function groupHandler(ctx) {
     case 'grupclose':
       return module.exports({ ...ctx, command: 'close' });
     case 'linkgc':
-      return module.exports({ ...ctx, command: 'linkgroup' });
+      return module.exports({ ...ctx, command: 'link' });
     case 'setnamegc':
       return module.exports({ ...ctx, command: 'setname' });
 
@@ -705,8 +704,8 @@ module.exports = async function groupHandler(ctx) {
       return true;
     }
 
-    // ── linkgroup ─────────────────────────────────────────────────────────────
-    case 'linkgroup': {
+    // ── link ──────────────────────────────────────────────────────────────────
+    case 'link': {
       if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
       if (!await isBotAdmin()) { await reply(mess.BotAdmin); return true; }
       const inviteCode = await client.group.queryInviteCode(jid);
@@ -1581,7 +1580,7 @@ module.exports.limitedCmds = new Set([
   'kick','kickall','promote','demote','add','addai',
   'open','close','mute','unmute','slowmode','setname','setdesc',
   'grupopen','grupclose','linkgc','setnamegc',
-  'linkgroup','groupinfo','idgc','leavegc','listadmin',
+  'link','groupinfo','idgc','leavegc','listadmin',
   'getpp','pp','totag','delete','cekasalmember',
   'mulaiabsen','absen','cekabsen','hapusabsen',
   'afk','listafk','topchat','swgc','upswgc',
