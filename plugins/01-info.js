@@ -163,7 +163,7 @@ const ALL_COMMANDS = [...new Set([
   'motivasi','katamotivasi',
   'ngeles','alasan',
   // Game Asah Otak
-  'asahotak','toka','hint','nyerah',
+  'asahotak','clue','nyerah',
   // ── tebakbendera / tebakanime / tebakchara / tebakgambar — nggak didaftarin ──
   // Semua game populer itu LAMA: handler-nya `case 'tebakbendera'` di 00-game.js
   // udah ada dari awal, tapi namanya nggak pernah masuk ALL_COMMANDS/CATS → jadi
@@ -219,7 +219,7 @@ const CATS = {
   tools:  ['poll','readmore','encode','decode','kalkulator','pick','tourl','tourl2','upload2','upload','pay','tomp4','topng','tovn','2vo','todoc','artinama','igqc','igstoryimg','iqc','ttqc','dafont','dafontdl','lirik','genius','gsmarena','spek','jarak','kbbi','kodepos','bandinghp','comparehp','wilayah','cariwilayah','imei','cekimei','gempa','cuaca','weather','accuweather','prakiraan','checkwa','cekwa','translate','terjemah','tr','qrcode','qr','decodeqr','readqr','ocr','upscale','hd','enhance','ssweb','ss','screenshot','fancytext','fancy','nik','nikinfo','iplookup','ipcek','reverseip','httpheaders','headers','nationalday','hariini','shalat','jadwalshalat','kalendershalat','kshalat','konversitanggal','tanggal','bypass','bypasssfl','bpsfl','drakor','duolingo','npm','resep','steam','play','lk21','lk21trending','lk21search','filmsearch','mcpedl','berita','pinterest','tokopedia','toped','stalktiktok','stalktt','tiktokstalk','roblox','stalkroblox','cekroblox','minecraft','mc','stalkmc','stalkgithub','ghstalk','genshin','stalkgenshin','freefire','ff','stalkff','discord','stalkdiscord','chess','stalkchess','nimegami','nimegamis','animesearch','shinigami','spotify','spotifylyrics','slyrics','tiktokphoto','ttkphoto','ttsearch','searchcode'],
   downloader: ['aio','mediafire','mfdl','likee','likeedl','moddroid','moddroiddl','facebook','fbdl','fb','tgsticker','telesticker','spotify','spotifydl','soundcloud','scdl','sfilemobi','sfile','sfileco','rednote','xiaohongshu','xhs','reddit','redditdl','twitter','twit','xdl','tiktok','tiktokdl','ttdl','tt','pinterest','pindl','pin','threads','threadsdl','youtube','ytdl','yt','gdrive','gdrivedl','instagram','igdl','ig','kuaishou','kwai','kuaishoudl'],
   random: ['aceh','kataaceh','batak','katabatak','bijak','china','katachina','dare','tantangan','fakta','faktaunik','fiersa','fiersabesari','jawa','pepatahjawa','katajawa','katabucin','bucin','katasore','sore','minangkabau','minang','kataminang','motivasi','katamotivasi','ngeles','alasan'],
-  game:   ['asahotak','hint','nyerah','tebakbendera','tebakchara','tebakgambar','tebakanime','toka'],
+  game:   ['asahotak','clue','nyerah','tebakbendera','tebakchara','tebakgambar','tebakanime'],
   // Fitur global (per-bot, bukan per-grup): `nyimak`/`autoread`/`didyoumean`
   // saklarnya di config/globalSettings.js dan gate-nya OWNER BOT — jadi
   // nongkrongnya di sini, bukan di `grup`. `.on <nama>` tetap dijalanin dari

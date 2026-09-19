@@ -6,7 +6,7 @@
  *
  * Commands:
  *  .asahotak    → tebak jawaban (exact + fuzzy similarity)
- *  .toka/.hint  → hint konsonan disembunyikan
+ *  .clue       → hint konsonan disembunyikan
  *  .caklontong  → tebak absurd ala Cak Lontong, semua teks react 🤔
  *  .family100   → tebak banyak jawaban bersama-sama
  *  .fisika      → pilgan fisika A/B/C/D, skor per level
@@ -629,7 +629,6 @@ module.exports = async function gameHandler(ctx) {
           `┌─────────────────\n` +
           `│ ⏱️ Timeout: *${TIMEOUT_MS / 1000} detik*\n` +
           `│ 💡 Clue: ketik *${p}clue*\n` +
-          `│ 💡 Clue: ketik *${p}clue*\n` +
           `│ 🏳️ Skip: ketik *${p}nyerah*\n` +
           `└─────────────────`;
 
@@ -655,16 +654,13 @@ module.exports = async function gameHandler(ctx) {
     }
 
     // ── clue — bantuan universal untuk semua game aktif ─────────────────────
-    case 'toka':
-    case 'hint':
-    case 'clu':
     case 'clue': {
       if (!activeGame) {
         await reply(`❗ Tidak ada game aktif saat ini.`);
         return true;
       }
 
-      // asahotak — sembunyikan konsonan (sama seperti .toka)
+      // asahotak — sembunyikan konsonan (sama seperti .clue)
       if (activeGame === 'asahotak') {
         const s = asahotakStore.get(jid);
         s.hintUsed = true;
