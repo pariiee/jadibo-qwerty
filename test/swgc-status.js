@@ -85,7 +85,7 @@ const norm = (o) => {
     sendMessage: async () => { throw new Error('nyasar ke sendMessage'); },
     readMessages: () => {},
   });
-  const wam = await c.message.send(JID, { videoMessage: { url: 'https://x/y', mimetype: 'video/mp4' } }, { statusGrup: true });
+  const wam = await c.message.send(JID, { videoMessage: { url: 'https://x/y', mimetype: 'video/mp4', mediaKey: Buffer.alloc(32, 1) } }, { statusGrup: true });
   ok('proto MENTAH + statusGrup -> yg direlay envelope status grup', () => {
     assert.strictEqual(relayed.length, 1, `relay dipanggil ${relayed.length}×`);
     assert.ok(relayed[0].groupStatusMessageV2, 'bukan envelope status grup');

@@ -530,6 +530,13 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
   // publish ack). Persis `groupStatus()` di refrensi-botz/plugins/owner-upswtag.js.
   async function relayStatusGrup(gc, content) {
     if (!sock) throw new Error('socket belum siap');
+    // Guard: konten media TANPA mediaKey = video/foto kosong. WA terima
+    // stanza-nya (emoji centang nongol) tapi statusnya nggak pernah terbit,
+    // dan nggak ada error apa pun. Ini yang bikin `.swgc` "jadi teks doang".
+    const m = content?.imageMessage || content?.videoMessage;
+    if (m && !m.mediaKey) {
+      throw new Error('Media status grup kosong (nggak ada mediaKey) — sumbernya bukan media');
+    }
     const envelope = await groupStatusContent(content, (buf, o) => sock.waUploadToServer(buf, o));
     const wam = await generateWAMessageFromContent(gc, envelope, {});
     await sock.relayMessage(gc, wam.message, { messageId: wam.key.id });
@@ -753,8 +760,15 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
       sendAi,
       prepareDocument,
       downloadBytes: async (source) => {
-        perbaikiBufferMedia(source?.message ?? source);
+        // Tegas: JANGAN cari pesan lain kalau yang diminta nggak ada — gagal aja.
+        // Dulu di sini `source` bisa nyasar ke pesan lain (bukan yg diminta):
+        // `.swgc` di grup jadi nge-download pesan terakhir — ya pesan `.swgc`
+        // itu sendiri (teks) — WA nolak, dan user cuma lihat teksnya.
         const msg = source?.message ? source : { message: source };
+        if (!msg?.message || typeof msg.message === 'string') {
+          throw new Error('Media yang diminta nggak ketemu (pesan teks, bukan media)');
+        }
+        perbaikiBufferMedia(msg.message);
         return baileysDownload(msg, 'buffer', {}, {
           logger,
           reuploadRequest: sock?.updateMediaMessage,

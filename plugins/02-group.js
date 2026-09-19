@@ -1502,7 +1502,12 @@ module.exports = async function groupHandler(ctx) {
         }
       }
 
-      // Ambil media dari quoted message atau pesan saat ini
+      // Ambil media dari quoted message atau pesan saat ini.
+      // PENTING: `.swgc test` di grup HARUS tetap jadi teks status — jalur teks
+      // referensi juga gitu. Dulu `hasMedia` ikut ngitung `quotedMessage` yang
+      // cuma cursor/mention (SELALU ada di reply), jadi `.swgc test` nyasar ke
+      // jalur media, `downloadBytes` gagal, dan hasilnya video KOSONG yang
+      // diterima WA tanpa error.
       const quotedMsg = ctx.msg?.message?.extendedTextMessage?.contextInfo?.quotedMessage;
       const imgMsg    = quotedMsg?.imageMessage  || ctx.msg?.message?.imageMessage;
       const vidMsg    = quotedMsg?.videoMessage  || ctx.msg?.message?.videoMessage;
@@ -1512,11 +1517,11 @@ module.exports = async function groupHandler(ctx) {
         let content;
 
         if (imgMsg) {
-          const buffer = await client.message.downloadBytes(quotedMsg ? { imageMessage: imgMsg } : ctx.msg.message);
+          const buffer = await client.message.downloadBytes({ imageMessage: imgMsg });
           const { imageMessage } = await client.message.prepareMedia(buffer, { type: 'image', mimetype: imgMsg.mimetype || 'image/jpeg' });
           content = { imageMessage: { ...imageMessage, ...(caption && { caption }) } };
         } else if (vidMsg) {
-          const buffer = await client.message.downloadBytes(quotedMsg ? { videoMessage: vidMsg } : ctx.msg.message);
+          const buffer = await client.message.downloadBytes({ videoMessage: vidMsg });
           const { videoMessage } = await client.message.prepareMedia(buffer, { type: 'video', mimetype: vidMsg.mimetype || 'video/mp4' });
           content = {
             videoMessage: {
@@ -1526,17 +1531,18 @@ module.exports = async function groupHandler(ctx) {
             },
           };
         } else if (audMsg) {
-          const buffer = await client.message.downloadBytes(quotedMsg ? { audioMessage: audMsg } : ctx.msg.message);
+          const buffer = await client.message.downloadBytes({ audioMessage: audMsg });
           const { audioMessage } = await client.message.prepareMedia(buffer, { type: 'audio', mimetype: audMsg.mimetype || 'audio/mp4' });
           content = {
             audioMessage: {
               ...audioMessage,
               seconds: audioMessage.seconds || audMsg.seconds || 1,
               ptt: false,
+              ...(caption && { caption }),
             },
           };
         } else if (caption) {
-          content = { extendedTextMessage: { text: caption } };
+          content = { text: caption };
         } else {
           await reply(
             `Cara penggunaan:\n` +
