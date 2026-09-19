@@ -12,7 +12,7 @@
 const { rapikanError } = require('../engine/pesanError');
 const mess             = require('../config/mess');
 const proteksi         = require('./06-proteksi');
-const { lidToPnAsync }   = require('../engine/jid');
+const { lidToPnAsync, bare, toPn, mentionsForChat } = require('../engine/jid');
 const { genThumbnail } = require('../engine/thumbnail');
 const { catatan } = require('../engine/template');
 
@@ -123,6 +123,48 @@ function antideleteLoad() {
   } catch { /* nggak ada / rusak = mulai dari kosong */ }
 }
 antideleteLoad();
+
+// ── Topchat: statistik pesan per member ───────────────────────────────────────
+// Dulu RAM doang: tiap restart (deploy/crash — di VPS udah 185x) angkanya balik
+// ke nol, jadi `.listtotalpesan` kelihatan "sedikit" padahal grupnya rame.
+// Disimpan ke disk, tulis-nya di-debounce biar nggak nge-fsync tiap pesan.
+const TOPCHAT_FILE    = path.join(__dirname, '..', 'data', 'topchat-store.json');
+const TOPCHAT_SAVE_MS = 5000;
+let _tcDirty = false, _tcTimer = null;
+
+function topchatSave() {
+  _tcDirty = false;
+  try {
+    const out = {};
+    for (const [g, m] of topchatStore) out[g] = Object.fromEntries(m);
+    fs.writeFileSync(TOPCHAT_FILE, JSON.stringify(out));
+  } catch { /* statistik nggak boleh bikin pesan gagal diproses */ }
+}
+
+function topchatLoad() {
+  try {
+    const data = JSON.parse(fs.readFileSync(TOPCHAT_FILE, 'utf8'));
+    for (const [g, m] of Object.entries(data)) {
+      topchatStore.set(g, new Map(Object.entries(m).map(([j, c]) => [j, Number(c) || 0])));
+    }
+  } catch { /* belum ada / rusak = mulai dari nol */ }
+}
+
+// Hitung 1 pesan buat statistik. Dipanggil untuk SEMUA pesan grup — command juga
+// pesan, dan di grup tester aktivitasnya justru command: dulu semuanya nggak
+// kehitung, itu sebab kedua angka `.listtotalpesan` kelihatan sedikit.
+function topchatCount(grupJid, senderJid) {
+  if (!grupJid || !senderJid) return;
+  if (!topchatStore.has(grupJid)) topchatStore.set(grupJid, new Map());
+  const tc = topchatStore.get(grupJid);
+  tc.set(senderJid, (tc.get(senderJid) || 0) + 1);
+  _tcDirty = true;
+  if (!_tcTimer) {
+    _tcTimer = setTimeout(() => { _tcTimer = null; if (_tcDirty) topchatSave(); }, TOPCHAT_SAVE_MS);
+    if (_tcTimer.unref) _tcTimer.unref();
+  }
+}
+topchatLoad();
 
 // JSON nggak kenal Buffer: mediaKey/fileSha256 balik jadi {type:'Buffer',data:[…]}
 // dan downloadMediaMessage nolak itu. Balikin ke Buffer sebelum dipakai.
@@ -295,14 +337,21 @@ module.exports = async function groupHandler(ctx) {
           const dur = Math.floor((Date.now() - since) / 1000);
           await ctx.reply(`Selamat datang kembali *${ctx.pushName}*!\nKamu telah AFK selama ${dur} detik.\nAlasan: ${reason || '-'}`);
         }
-        // Topchat tracking
-        if (!topchatStore.has(ctx.jid)) topchatStore.set(ctx.jid, new Map());
-        const tc = topchatStore.get(ctx.jid);
-        tc.set(ctx.sender, (tc.get(ctx.sender) || 0) + 1);
       }
+
+      // Statistik pesan: SEMUA pesan grup, command ikut. Kuncinya nomor polos
+      // (`bare`) — satu orang cuma boleh punya satu baris. Kalau disimpan apa
+      // adanya, `ctx.isCmd` yang di-resolve lewat metadata bikin satu nomor
+      // terpecah jadi `628xx:12@s.whatsapp.net` dan `628xx@s.whatsapp.net`.
+      topchatCount(ctx.jid, bare(ctx.sender));
     }
     return false;
   }
+
+  // Command juga pesan. Blok di atas cuma jalan buat pesan non-command (guard
+  // `!ctx.isCmd` di baris atas), jadi tanpa baris ini member yang cuma main
+  // command nggak pernah kehitung — di grup tester justru itu aktivitas utama.
+  if (ctx.isGroup) topchatCount(ctx.jid, bare(ctx.sender));
 
   const { command, args, reply, react, sock, client, jid, sender, botData } = ctx;
   const p = botData.prefix;
@@ -1170,9 +1219,14 @@ module.exports = async function groupHandler(ctx) {
       const tc = topchatStore.get(jid);
       if (!tc || tc.size === 0) { await reply('Belum ada data chat'); return true; }
       const sorted = [...tc.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10);
-      const list   = sorted.map(([ jid, count ], i) => `${i + 1}. @${jid.split('@')[0]} — ${count} pesan`).join('\n');
-      const mentions = sorted.map(([j]) => j);
-      await client.message.send(jid, { text: `🏆 *Top Chat*\n\n${list}`, mentions: mentions });
+      const list   = sorted.map(([ num, count ], i) => `${i + 1}. @${num} — ${count} pesan`).join('\n');
+      // mentionsForChat nyertain bentuk LID-nya — di grup LID, tag cuma nyantol
+      // kalau `mentionedJid` bawa LID, bukan cuma nomor polos.
+      await client.message.send(jid, {
+        type: 'text',
+        text: `🏆 *Top Chat*\n\n${list}`,
+        mentions: mentionsForChat(jid, sorted.map(([num]) => toPn(num))),
+      });
       return true;
     }
 
@@ -1345,22 +1399,27 @@ module.exports = async function groupHandler(ctx) {
       if (!meta) { await reply('Gagal ambil data grup.'); return true; }
 
       if (!tc || tc.size === 0) {
-        await reply('Belum ada data chat di sesi ini. Tunggu beberapa saat lagi.');
+        await reply('Belum ada data chat sejak bot nyala. Tunggu beberapa saat lagi.');
         return true;
       }
 
-      // Member yang ada di grup tapi tidak ada di topchat = pasif
-      const aktif  = new Set(tc.keys());
-      const semua  = meta.participants.map(p => p.jid || p.lid).filter(Boolean);
-      const pasif  = semua.filter(m => !aktif.has(m));
+      // Member yang ada di grup tapi tidak ada di topchat = pasif.
+      // Wajib LID -> nomor dulu: `bare()` cuma motong '@…', jadi buat peserta
+      // ber-LID hasilnya angka LID (123…) — nggak akan pernah sama dengan kunci
+      // topchat yang nomor asli (628…), dan semua orang kelihatan pasif.
+      const peserta = meta.participants.map(p => p.lid || p.jid).filter(Boolean);
+      const nomor   = await Promise.all(peserta.map(l => lidToPnAsync(sock, l)));
+      const aktif   = new Set(tc.keys());
+      const semua   = [...new Set(nomor.map(bare).filter(Boolean))];
+      const pasif   = semua.filter(m => !aktif.has(m));
 
       if (pasif.length === 0) {
-        await reply('✅ Semua member aktif dalam sesi ini!');
+        await reply('✅ Semua member aktif sejak bot nyala!');
         return true;
       }
 
       const CHUNK = 20;
-      const lines = pasif.map((m, i) => `${i + 1}. @${m.split('@')[0]}`);
+      const lines = pasif.map((m, i) => `${i + 1}. @${m}`);
       for (let i = 0; i < lines.length; i += CHUNK) {
         const header = i === 0
           ? `😴 *MEMBER PASIF*\nTotal: *${pasif.length}/${semua.length} member*\n\n`
@@ -1368,7 +1427,8 @@ module.exports = async function groupHandler(ctx) {
         await client.message.send(jid, {
           type: 'text',
           text: header + lines.slice(i, i + CHUNK).join('\n'),
-          mentions: pasif.slice(i, i + CHUNK),
+          // mentionsForChat nyertain bentuk LID-nya; nomor polos doang nggak nyantol di grup LID.
+          mentions: mentionsForChat(jid, pasif.slice(i, i + CHUNK).map(toPn)),
         });
       }
       return true;
@@ -1378,20 +1438,23 @@ module.exports = async function groupHandler(ctx) {
     case 'listtotalpesan': {
       const tc = topchatStore.get(jid);
       if (!tc || tc.size === 0) {
-        await reply('Belum ada data statistik pesan di sesi ini.');
+        await reply('Belum ada data statistik pesan sejak bot nyala.');
         return true;
       }
       const sorted = [...tc.entries()].sort((a, b) => b[1] - a[1]);
       const CHUNK  = 25;
-      const lines  = sorted.map(([ m, count ], i) => `${i + 1}. @${m.split('@')[0]} — ${count} pesan`);
+      const total  = sorted.reduce((s, [, c]) => s + c, 0);
+      const lines  = sorted.map(([ num, count ], i) => `${i + 1}. @${num} — ${count} pesan`);
       for (let i = 0; i < lines.length; i += CHUNK) {
         const header = i === 0
-          ? `📊 *STATISTIK PESAN GRUP*\nTotal member aktif: *${sorted.length}*\n\n`
+          ? `📊 *STATISTIK PESAN GRUP*\nAngka ini dihitung SEJAK BOT NYALA (bukan dari awal grup).\n\n`
+            + `👥 Member ikut kehitung: *${sorted.length}*\n💬 Total pesan: *${total}*\n\n`
           : `📊 *(lanjutan)*\n\n`;
+        const potong = sorted.slice(i, i + CHUNK);
         await client.message.send(jid, {
           type: 'text',
           text: header + lines.slice(i, i + CHUNK).join('\n'),
-          mentions: sorted.slice(i, i + CHUNK).map(([m]) => m),
+          mentions: mentionsForChat(jid, potong.map(([num]) => toPn(num))),
         });
       }
       return true;
