@@ -1533,10 +1533,10 @@ module.exports = async function groupHandler(ctx) {
           return true;
         }
 
-        // Kirim sebagai groupStatusMessageV2
-        // WA sering balas error 400 meski status berhasil terkirim — tangkap & abaikan
+        // Kirim sebagai status grup. Bentuk proto-nya dirapikan groupStatusContent()
+        // di engine/baileys/client.js (butuh messageSecret — lihat refrensi-botz).
         try {
-          await client.message.send(jid, { groupStatusMessageV2: { message: content } });
+          await client.message.send(jid, content, { statusGrup: true });
         } catch (e) {
           if (!e.message?.includes('400') && !e.message?.includes('negative publish ack')) {
             throw e; // lempar ulang kalau bukan error 400 WA

@@ -36,6 +36,9 @@ const {
   Browsers,
 } = require('baileys');
 const { mentionsForChat, cacheLidFromMeta, cacheLidFromKey, participantJids } = require('../jid');
+// Status grup butuh messageSecret 32 byte — dijaga di dalam envelope DAN
+// messageContextInfo luar. Bentuknya nyontek refrensi-botz/owner-upswtag.js.
+const { randomBytes: acakByte } = require('crypto');
 
 // Tipe pesan yang `sendMessage` nolak ("Invalid media type") tapi WA biasa
 // nampilin — semua di sini dikirim lewat relayMessage (.owner kirim kontak).
@@ -60,6 +63,22 @@ const RAW_PROTO_KEYS = [
 
 const isRawProto = (c) =>
   !!c && typeof c === 'object' && RAW_PROTO_KEYS.some((k) => c[k] !== undefined);
+
+// ── Bentuk status grup (.swgc) ───────────────────────────────────────────────
+// Contek refrensi-botz/plugins/owner-upswtag.js. Yang bikin WA nolak diem-diem
+// (stanza diterima, emoji centang nongol, statusnya nggak pernah jadi) ternyata
+// cuma satu: `messageSecret` 32 byte di dalam groupStatusMessageV2.message.
+//
+// Percobaan sebelumnya ngegelembungin media ke top-level biar getMediaType()
+// nulis <enc mediatype=…> — itu SALAH ARAH: media di top-level bikin WA baca
+// pesannya sebagai media biasa, bukan status grup. Referensi nggak butuh itu.
+function groupStatusContent(content) {
+  const isi = proto.Message.create({
+    ...content,
+    messageContextInfo: { messageSecret: acakByte(32) },
+  });
+  return { groupStatusMessageV2: { message: { ...isi } } };
+}
 
 // ── Pesan berlabel "AI" ──────────────────────────────────────────────────────
 // Label AI di bubble cuma nongol kalau pesannya bawa `messageContextInfo`:
@@ -367,8 +386,10 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
   let qrCount = 0;           // urutan QR di socket ini (ttl: 1st 60s, sisanya 20s)
 
   // ── Kirim proto mentah (tombol/list) — jalur relayMessage ──────────────────
+  // `statusGrup: true` dipakai `.swgc` — bentuknya dirapikan groupStatusContent().
   async function sendRaw(jid, protoContent, opts = {}) {
-    const message = proto.Message.create(protoContent);
+    const isi = opts.statusGrup ? groupStatusContent(protoContent) : protoContent;
+    const message = proto.Message.create(isi);
     const wam = generateWAMessageFromContent(jid, message, {
       userJid: meJid || undefined,
       quoted: opts.quoted,
@@ -458,6 +479,9 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
     // Tag biru di grup LID butuh bentuk LID-nya ikut — lihat engine/jid.js.
     // `mentions` boleh nempel di konten ({ text, mentions }) atau di opsi.
     const mentions = mentionsForChat(jid, opts.mentions || content?.mentions);
+    // Status grup: kontennya media/teks biasa, tapi harus lewat relay (bukan
+    // sendMessage) dan dibungkus groupStatusContent() dulu.
+    if (opts.statusGrup) return sendRaw(jid, withMentions(jid, content, mentions), opts);
     if (isRawProto(content)) return sendRaw(jid, withMentions(jid, content, mentions), toBaileysOptions(opts));
     const wam = await sock.sendMessage(jid, attachMentions(toBaileysContent(content), mentions), toBaileysOptions(opts));
     rememberSent(wam);
@@ -767,6 +791,7 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
 
 module.exports = {
   createClient, toBaileysContent, toBaileysOptions, normalizeGroupMeta, isRawProto, attachMentions,
+  groupStatusContent, // status grup (.swgc) — buat test
   normalizeParticipantResults, withTimeout, asArray,
   aiContent, AI_NODES, BIZ_NODE, aiNodesFor,  // pesan berlabel AI (buat test)
   rememberSent, lookupSent, // buat test retry receipt
