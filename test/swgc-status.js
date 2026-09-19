@@ -39,6 +39,10 @@ const norm = (o) => {
 
 (async () => {
   // ── 1. Envelope kita == envelope referensi ────────────────────────────────
+  // Bekukan jam: `mediaKeyTimestamp` diisi dari `Date.now()`. Dua panggilan
+  // generate di bawah bisa jatuh di detik berbeda → test merah padahal
+  // envelope-nya sama (flaky, bukan bug).
+  Date.now = () => 1789859958000;
   for (const [nama, konten] of [['video', VIDEO], ['teks', TEKS]]) {
     const upload = async () => ({ url: 'https://mmg.whatsapp.net/x.enc', directPath: '/x' });
     const inside = await generateWAMessageContent(konten, { upload });
