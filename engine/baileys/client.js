@@ -68,12 +68,6 @@ const isRawProto = (c) =>
 // satu, stanza tetap diterima (emoji centang nongol) tapi statusnya nggak
 // pernah terbit. Nol error, nol log.
 //
-// CATATAN PENTING: media di status grup CUMA jalan kalau `relayMessage` di
-// Baileys dipatch — `getMediaType()` di sana cuma ngintip key paling luar
-// (ketemu `groupStatusMessageV2`, bukan `imageMessage`) jadi attr `mediatype`
-// di node <enc> nggak ditulis, dan WA diem-diem nge-drop media-nya (teks
-// jalan, gambar/video nggak). Patch-nya di scripts/patch-baileys.js —
-// dijalankan otomatis lewat `npm run postinstall`.
 // Key konten yang udah berupa proto siap-kirim buat status grup (.swgc).
 // prepareMedia() ngehasilin ini, jadi nggak perlu di-generate ulang.
 const STATUS_KONTEN_KEYS = [
@@ -156,6 +150,24 @@ function unwrapMessage(message) {
     break;
   }
   return inner ?? message;
+}
+
+// Field proto yang WAJIB berupa Buffer biar Baileys bisa dekripsi media.
+const FIELD_BUFFER_MEDIA = ['mediaKey', 'fileSha256', 'fileEncSha256'];
+
+// Buffer protobuf kadang dateng sebagai string base64 (hasil round-trip JSON,
+// termasuk `contextInfo.quotedMessage`). `downloadMediaMessage` nolak itu dan
+// gagalnya nggak kebaca — cuma "media nggak ada". Diperbaiki DI SINI, bukan di
+// tiap pemanggil. Aman buat objek apa pun (dibatesin `typeof string`).
+function perbaikiBufferMedia(message) {
+  const isi = unwrapMessage(message);
+  if (!isi || typeof isi !== 'object') return;
+  for (const nilai of Object.values(isi)) {
+    if (!nilai || typeof nilai !== 'object') continue;
+    for (const f of FIELD_BUFFER_MEDIA) {
+      if (typeof nilai[f] === 'string') nilai[f] = Buffer.from(nilai[f], 'base64');
+    }
+  }
 }
 
 // ── Ingat pesan yg KITA kirim, buat jawab retry receipt ──────────────────────
@@ -489,30 +501,38 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
     );
   }
 
-  // Status grup (.swgc). Beda dari sendRaw(): relayMessage-nya dipanggil polos
-  // (`{ messageId }` doang) — tanpa `quoted`, tanpa node tambahan. Persis yang
-  // dilakuin sendGroupStatus() di wolfsocket. Lihat catatan di groupStatusContent().
-  async function relayStatusGrup(jid, content) {
-    if (!sock) throw new Error('socket belum siap');
-    const message = proto.Message.create(await groupStatusContent(content, sock.waUploadToServer));
-    const wam = generateWAMessageFromContent(jid, message, { userJid: meJid || undefined });
-    await sock.relayMessage(jid, wam.message, { messageId: wam.key.id });
-    rememberSent(wam);
-    return wam;
-  }
-
   async function send(jid, content, opts = {}) {
     if (!sock) throw new Error('socket belum siap');
     // Pesan berlabel AI — WA nampilin tanda "AI" di bubble-nya.
     if (opts.ai) return sendAi(jid, content?.text ?? content, opts);
+    // Status grup: kontennya media/teks biasa, tapi bentuk proto & opsi
+    // relayMessage-nya beda → jalur sendiri (relayStatusGrup).
+    // Dicek SEBELUM isRawProto: `content` di sini proto MENTAH dari
+    // prepareMedia() ({ videoMessage: ... }) — isRawProto() bakal ngelempar itu
+    // ke sendRaw() dan status grup jadi media BIASA. Ini bug yg pernah ke VPS.
+    if (opts.statusGrup) return relayStatusGrup(jid, content);
     // Tag biru di grup LID butuh bentuk LID-nya ikut — lihat engine/jid.js.
     // `mentions` boleh nempel di konten ({ text, mentions }) atau di opsi.
     const mentions = mentionsForChat(jid, opts.mentions || content?.mentions);
-    // Status grup: kontennya media/teks biasa, tapi bentuk proto & opsi
-    // relayMessage-nya beda → jalur sendiri (relayStatusGrup).
-    if (opts.statusGrup) return relayStatusGrup(jid, content);
     if (isRawProto(content)) return sendRaw(jid, withMentions(jid, content, mentions), toBaileysOptions(opts));
     const wam = await sock.sendMessage(jid, attachMentions(toBaileysContent(content), mentions), toBaileysOptions(opts));
+    rememberSent(wam);
+    return wam;
+  }
+
+  // ── Envelope status grup (.swgc) ──────────────────────────────────────────
+  // Konten JADI dulu (butuh upload), baru dibungkus. Kalau dibungkus duluan,
+  // generateWAMessageContent() ngeliat key `groupStatusMessageV2` dan media di
+  // dalemnya NGGAK pernah diupload — `<enc>` berangkat tanpa media.
+  //
+  // `relayMessage` dipanggil POLOS (`{ messageId }`) — tanpa `quoted`, tanpa
+  // `additionalNodes`. WA nolak status grup yg bawa quoted (400 / negative
+  // publish ack). Persis `groupStatus()` di refrensi-botz/plugins/owner-upswtag.js.
+  async function relayStatusGrup(gc, content) {
+    if (!sock) throw new Error('socket belum siap');
+    const envelope = await groupStatusContent(content, (buf, o) => sock.waUploadToServer(buf, o));
+    const wam = await generateWAMessageFromContent(gc, envelope, {});
+    await sock.relayMessage(gc, wam.message, { messageId: wam.key.id });
     rememberSent(wam);
     return wam;
   }
@@ -689,6 +709,11 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
   const client = {
     // socket asli, buat kode baru yg mau API Baileys langsung
     get sock() { return sock; },
+    // Test seam: nyolokin socket palsu biar cabang kirim (relayStatusGrup vs
+    // sendRaw vs sendMessage) bisa dikunci tanpa jaringan. Lihat
+    // test/swgc-status.js — urutan cabang di send() pernah kebalik dan lolos
+    // ke VPS tanpa ketahuan.
+    __setSockUntukTes: (s) => { sock = s; },
     get meJid() { return meJid; },
 
     // Peta LID<->PN milik Baileys sendiri (persist di session.db) — bukan cache
@@ -728,6 +753,7 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
       sendAi,
       prepareDocument,
       downloadBytes: async (source) => {
+        perbaikiBufferMedia(source?.message ?? source);
         const msg = source?.message ? source : { message: source };
         return baileysDownload(msg, 'buffer', {}, {
           logger,
@@ -738,6 +764,10 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
       // Yang lama (`sock.waUploadToServer(buffer, { type, mimetype })`) selalu
       // gagal: signature Baileys beda. Lihat prepareMedia() di atas.
       prepareMedia: (buffer, opts) => prepareMedia(buffer, opts),
+      // Status grup (.swgc). WAJIB ada di sini — `client.message.relayStatusGrup`
+      // undefined = TypeError, ketangkep catch handler, user cuma lihat
+      // "❌ Gagal kirim status grup". Lihat test/baileys-adapter-coverage.js.
+      relayStatusGrup: (jid, content) => relayStatusGrup(jid, content),
       read: (keys) => sock.readMessages(Array.isArray(keys) ? keys : [keys]),
       reply: (jid, content, opts) => send(jid, content, opts),
     },
@@ -826,5 +856,6 @@ module.exports = {
   rememberSent, lookupSent, // buat test retry receipt
   onMessageSent,             // buat antidelete (plugins/02-group.js)
   unwrapMessage,             // view-once -> media biasa (dipakai banyak plugin)
+  perbaikiBufferMedia,       // base64 -> Buffer di proto media (buat tes)
   normalizeProfilePicture,   // kontrak url PP: string|null (buat test)
 };

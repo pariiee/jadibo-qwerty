@@ -1485,9 +1485,22 @@ module.exports = async function groupHandler(ctx) {
     // ── swgc (kirim status/story ke grup) ────────────────────────────────────
     case 'swgc':
     case 'upswgc': {
-      if (!await isBotAdmin()) { await reply(mess.BotAdmin); return true; }
+      // Sengaja TANPA gate `isBotAdmin()`: status grup nggak butuh bot jadi
+      // admin (cuma butuh ikut jadi anggota). Referensi juga mencabutnya, dan
+      // buat target grup lain lewat `idgc|caption` gate itu malah salah grup.
+      const teks = args.join(' ').trim();
 
-      const caption = args.join(' ').trim();
+      // Owner boleh nembak ke grup lain: `.swgc <idgc>@g.us|caption`
+      // (persis `refrensi-botz/plugins/owner-upswtag.js`).
+      let targetGc = jid;
+      let caption = teks;
+      if (ctx.isOwner) {
+        const [idgc, ...sisa] = teks.split('|');
+        if (sisa.length && idgc.trim().endsWith('@g.us')) {
+          targetGc = idgc.trim();
+          caption = sisa.join('|').trim();
+        }
+      }
 
       // Ambil media dari quoted message atau pesan saat ini
       const quotedMsg = ctx.msg?.message?.extendedTextMessage?.contextInfo?.quotedMessage;
@@ -1528,15 +1541,17 @@ module.exports = async function groupHandler(ctx) {
           await reply(
             `Cara penggunaan:\n` +
             `• *${p}swgc* <teks> — kirim teks sebagai status grup\n` +
-            `• Reply foto/video/audio lalu ketik *${p}swgc* [caption]`
+            `• Reply foto/video/audio lalu ketik *${p}swgc* [caption]` +
+            (ctx.isOwner ? `\n• *${p}swgc* <idgc>@g.us|caption — kirim ke grup lain` : '')
           );
           return true;
         }
 
-        // Kirim sebagai status grup — relayStatusGrup() di engine/baileys/client.js
-        // (messageSecret + relayMessage tanpa `quoted`; lihat catatan di sana).
+        // Kirim sebagai status grup. relayStatusGrup() polos: envelope
+        // groupStatusMessageV2 + messageSecret, relayMessage `{ messageId }`
+        // doang — tanpa `quoted` (WA nolak status grup yg bawa quoted).
         try {
-          await client.message.send(jid, content, { statusGrup: true });
+          await client.message.relayStatusGrup(targetGc, content);
         } catch (e) {
           if (!e.message?.includes('400') && !e.message?.includes('negative publish ack')) {
             throw e; // lempar ulang kalau bukan error 400 WA
