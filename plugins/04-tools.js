@@ -25,6 +25,22 @@ function mimeToExt(mime) {
   return map[mime] || 'bin';
 }
 
+// ─── Helper: nama file aman buat diupload ────────────────────────────────────
+// `content.fileName` dari proto WA bisa ter-encode URL (mis.
+// "soal_0020_nasib%20buruk.png") atau ada karakter aneh. Dinormalisasi biar
+// nama yang dikirim ke host upload bersih (huruf/angka/titik/dash/underscore),
+// dan ekstensinya selalu disamain sama mime asli.
+function namaFileAman(nama, mime, fallbackExt) {
+  const ext  = fallbackExt || mimeToExt(mime);
+  let bersih = '';
+  try { bersih = decodeURIComponent(String(nama || '')); } catch { bersih = String(nama || ''); }
+  bersih = bersih.split(/[\\/]/).pop()                 // buang path
+                 .replace(/[^A-Za-z0-9._-]/g, '_')     // sisain karakter aman
+                 .replace(/^_+|_+$/g, '');
+  const base = bersih.replace(/\.[A-Za-z0-9]{1,5}$/, '').slice(0, 60);
+  return `${base || `file_${Date.now()}`}.${ext}`;
+}
+
 // In-memory session store: `${botId}:${sender}` -> conversationId
 const gptSessions     = new Map();
 const geminiSessions  = new Map();
@@ -1945,7 +1961,7 @@ module.exports = async function toolsHandler(ctx) {
         const res = await axios.get(imgUrl, { responseType: 'arraybuffer', timeout: 30000 });
         await client.message.send(jid, { type: 'image', media: Buffer.from(res.data), mimetype: 'image/jpeg', caption: `🌐 *Screenshot*\n${ssUrl}` });
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.response?.data?.message || e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${rapikanError(e)}`); }
       return true;
     }
 
@@ -2447,7 +2463,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(`🎵 *${ytTitle || qPlay}*${durTxt ? ` [${durTxt}]` : ''}\n👤 ${ytUploader || '-'}`);
       } catch (e) {
         await react(mess.reactError);
-        const msgErr = e?.response?.data?.message || e?.message || '';
+        const msgErr = rapikanError(e);
         await reply(`❌ Gagal memutar lagu.\n${msgErr ? `_${msgErr}_` : 'Coba lagi nanti atau periksa link.'}`);
       }
       return true;
@@ -3172,7 +3188,7 @@ module.exports = async function toolsHandler(ctx) {
           }
           buffer   = Buffer.from(await client.message.downloadBytes({ [msgType]: fixed }));
           mime     = content.mimetype || 'application/octet-stream';
-          filename = content.fileName || `file_${Date.now()}.${mimeToExt(mime)}`;
+          filename = namaFileAman(content.fileName, mime);
         } else {
           const content = quoted[quotedType];
           const fixed   = Object.assign({}, content);
@@ -3181,7 +3197,7 @@ module.exports = async function toolsHandler(ctx) {
           }
           buffer   = Buffer.from(await client.message.downloadBytes({ [quotedType]: fixed }));
           mime     = content.mimetype || 'application/octet-stream';
-          filename = content.fileName || `file_${Date.now()}.${mimeToExt(mime)}`;
+          filename = namaFileAman(content.fileName, mime);
         }
 
         // Cek ukuran file max 5MB
@@ -3259,7 +3275,7 @@ module.exports = async function toolsHandler(ctx) {
           }
           buffer   = Buffer.from(await client.message.downloadBytes({ [msgType]: fixed }));
           mime     = content.mimetype || 'application/octet-stream';
-          filename = content.fileName || `file_${Date.now()}.${mimeToExt(mime)}`;
+          filename = namaFileAman(content.fileName, mime);
         } else {
           const content = quoted[quotedType];
           const fixed   = Object.assign({}, content);
@@ -3268,7 +3284,7 @@ module.exports = async function toolsHandler(ctx) {
           }
           buffer   = Buffer.from(await client.message.downloadBytes({ [quotedType]: fixed }));
           mime     = content.mimetype || 'application/octet-stream';
-          filename = content.fileName || `file_${Date.now()}.${mimeToExt(mime)}`;
+          filename = namaFileAman(content.fileName, mime);
         }
 
         // Cek ukuran file. nginx VPS A = client_max_body_size 100m, PHP post_max_size = 100M.

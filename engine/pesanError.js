@@ -37,21 +37,38 @@ const RULES = [
   [/ENOSPC/,                                       'penyimpanan server penuh'],
   [/EACCES|EPERM/,                                 'server nggak dikasih izin buat itu'],
   [/entity too large|413|payload too large/i,      'file-nya kebesaran'],
+  // yt-dlp/ffmpeg balikin "Command failed: /usr/local/bin/yt-dlp …" — itu bocorin
+  // isi server, user cukup tahu link-nya nggak didukung.
+  [/Unsupported URL|Command failed|No such file|ENOENT/i, 'link-nya belum didukung'],
   // Error runtime JS (bug di kode kita) — user nggak perlu lihat stack-nya.
   [/Cannot read propert|is not a function|is not defined|undefined \(reading|of null|TypeError|ReferenceError/i,
                                                    'ada gangguan teknis di sisi server'],
 ];
 
-/** Teks yang "bau teknis" = kode error, alamat IP, status HTTP, error runtime JS. */
-const TEKNIS = /E[A-Z]{3,}\b|connect |status code|timeout of|ffmpeg|ffprobe|too many requests|payload too large|\b4\d\d\b|\b5\d\d\b|\d+\.\d+\.\d+\.\d+|Cannot read propert|is not a function|is not defined|undefined \(reading/i;
+/** Teks yang "bau teknis" = kode error, alamat IP, status HTTP, error runtime JS,
+ *  atau jejak isi server (path absolut, nama binary, stack frame).
+ *  PENTING: kode errno dicek case-SENSITIVE — `E[A-Z]{3,}` kalau pakai flag `i`
+ *  ikut nangkep kata biasa ("b**elum**"), jadi pesan ramah malah dianggap mentah. */
+const TEKNIS = [
+  /\bE[A-Z]{3,}\b/,                                   // ETIMEDOUT, ENOTFOUND, … (case-sensitive)
+  /connect |status code|timeout of|too many requests|payload too large|Command failed|Unsupported URL|Cannot read propert|is not a function|is not defined|undefined \(reading|ffmpeg|ffprobe|\b4\d\d\b|\b5\d\d\b|\d+\.\d+\.\d+\.\d+|\/usr\/local\/bin|\/var\/www|node_modules|[A-Z]:\\|\bat\s+[\w.$<>]+\s*\(/i,
+];
+const bauTeknis = (teks) => TEKNIS.some((pola) => pola.test(teks));
 
 function rapikanError(err) {
   if (!err) return 'ada gangguan yang nggak diketahui';
+
+  // Error dari API kita sendiri (axios): server sudah nerjemahin pesannya
+  // (BE api/_lib/pesanaman.js) — pakai itu biar user dapat alasan yang jelas,
+  // bukan "server sumbernya lagi error".
+  const dariApi = err?.response?.data?.message;
+  if (typeof dariApi === 'string' && dariApi.trim() && !bauTeknis(dariApi)) return dariApi.trim();
+
   const mentah = typeof err === 'string' ? err : (err.message || String(err));
   if (!mentah) return 'ada gangguan yang nggak diketahui';
 
   // Kalimat yang udah manusia → biarin apa adanya.
-  if (!TEKNIS.test(mentah)) return mentah;
+  if (!bauTeknis(mentah)) return mentah;
 
   for (const [pola, pesan] of RULES) if (pola.test(mentah)) return pesan;
 

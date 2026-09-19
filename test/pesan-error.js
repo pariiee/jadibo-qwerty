@@ -21,6 +21,9 @@ const KASUS = [
   [new Error('413 Payload Too Large'), 'kebesaran'],
   [new Error("Cannot read properties of undefined (reading 'replace')"), 'gangguan teknis'],
   [new Error('EUNKNOWNCODE: ada yang aneh'), 'gangguan teknis'],   // teknis tanpa aturan: jangan bocorin mentah
+  // Kasus yang dilaporkan user: BE balikin "Command failed: /usr/local/bin/yt-dlp …"
+  [new Error('Command failed: /usr/local/bin/yt-dlp --dump-json --no-playlist https://www.1024tera.com/x\nERROR: Unsupported URL: https://www.1024tera.com/x'),
+   'belum didukung'],
 ];
 
 let pass = 0, fail = 0;
@@ -36,8 +39,23 @@ for (const [err, kunci] of KASUS) {
     assert.ok(!/E[A-Z]{3,}\b/.test(out), `masih ada kode error mentah: "${out}"`);
     assert.ok(!/\d+\.\d+\.\d+\.\d+/.test(out), `masih ada IP mentah: "${out}"`);
     assert.ok(!/:::|2606:/.test(out), `masih ada alamat IPv6 mentah: "${out}"`);
+    // jejak isi server juga nggak boleh lolos
+    assert.ok(!/\/usr\/local\/bin|\/var\/www|Command failed|\bat\s+\w+\s*\(/.test(out), `masih bocorin isi server: "${out}"`);
   });
 }
+
+OK('error axios dari API sendiri → pakai pesan yang sudah dirapikan server', () => {
+  const err = new Error('Request failed with status code 500');
+  err.response = { status: 500, data: { success: false, message: 'Link-nya belum didukung. Coba link lain ya.' } };
+  assert.strictEqual(rapikanError(err), 'Link-nya belum didukung. Coba link lain ya.');
+});
+
+OK('error axios yang pesannya masih mentah → tetap diterjemahin lokal', () => {
+  const err = new Error('Request failed with status code 500');
+  err.response = { status: 500, data: { message: 'Command failed: /usr/local/bin/yt-dlp https://x' } };
+  const out = rapikanError(err);
+  assert.ok(!/Command failed|\/usr\/local\/bin/.test(out), out);
+});
 
 OK('err null/undefined → tetap kalimat manusia', () => {
   assert.ok(rapikanError(null).length > 5);
