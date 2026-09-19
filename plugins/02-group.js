@@ -11,6 +11,7 @@
 
 const { rapikanError } = require('../engine/pesanError');
 const mess             = require('../config/mess');
+const proteksi         = require('./06-proteksi');
 const { lidToPnAsync }   = require('../engine/jid');
 const { genThumbnail } = require('../engine/thumbnail');
 const { catatan } = require('../engine/template');
@@ -713,8 +714,9 @@ module.exports = async function groupHandler(ctx) {
       return true;
     }
 
-    // ── groupinfo ─────────────────────────────────────────────────────────────
-    case 'groupinfo': {
+    // ── groupinfo / infogc ────────────────────────────────────────────────────
+    case 'groupinfo':
+    case 'infogc': {
       const meta = await getMeta();
       if (!meta) { await reply('Gagal mengambil data grup'); return true; }
       const admins  = meta.participants.filter(p => p.isAdmin).length;
@@ -725,7 +727,8 @@ module.exports = async function groupHandler(ctx) {
         `JID     : ${jid}\n` +
         `Member  : ${members}\n` +
         `Admin   : ${admins}\n` +
-        `Dibuat  : ${new Date(meta.creation * 1000).toLocaleDateString('id-ID')}`
+        `Dibuat  : ${new Date(meta.creation * 1000).toLocaleDateString('id-ID')}\n\n` +
+        await proteksi.statusFitur(botData.id, jid)
       );
       return true;
     }

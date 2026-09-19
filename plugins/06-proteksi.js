@@ -358,41 +358,9 @@ module.exports = async function proteksiHandler(ctx) {
 
     // Tanpa argumen → tampilkan status semua fitur
     if (!fitur) {
-      const dbCfg = await getDbGroupSetting(botData.id, jid);
-      // Global state dari engine
-      const nyimak   = getBotGlobalSetting(botData.id, 'nyimak');
-      const autoread = getBotGlobalSetting(botData.id, 'autoread');
-
-      const st = (v) => v ? '✅' : '❌';
-      // Baris status dibaca dari FITUR_INFO biar emoji/nama/fungsi cuma ada di
-      // satu tempat — nambah fitur baru nggak perlu ngedit dua blok.
-      const baris = (k, on) => {
-        const i = FITUR_INFO[k];
-        return `${i.emoji} ${i.label.padEnd(11)}: ${st(on)} — ${i.desc}\n`;
-      };
       await reply(
         `⚙️ *Status Fitur — ${jid.split('@')[0]}*\n\n` +
-        `*── Proteksi ──*\n` +
-        baris('antibot',     cfg.antibot) +
-        baris('antilink',    cfg.antilink) +
-        baris('antilinkv2',  cfg.antilinkv2) +
-        baris('antitoxic',   cfg.antitoxic) +
-        baris('antidelete',  cfg.antidelete) +
-        baris('antispam',    cfg.antispam) +
-        baris('antitagsw',   cfg.antitagsw) +
-        baris('antisticker', cfg.antisticker) +
-        `\n*── Otomatis ──*\n` +
-        baris('autosticker', cfg.autosticker) +
-        baris('viewonce',    cfg.viewonce) +
-        baris('detect',      dbCfg.detect) +
-        baris('autoacc',     dbCfg.autoacc) +
-        baris('document',    dbCfg.document) +
-        baris('welcome',     dbCfg.welcome_on) +
-        baris('left',        dbCfg.bye_on) +
-        `\n*── Global (bot) ──*\n` +
-        baris('nyimak',      nyimak) +
-        baris('autoread',    autoread) +
-        baris('didyoumean',  getBotGlobalSetting(botData.id, 'didyoumean')) +
+        await proteksi.statusFitur(botData.id, jid) +
         `\n_Ketik \`${p}on <fitur>\` atau \`${p}off <fitur>\` untuk toggle._`
       );
       return true;
@@ -534,3 +502,40 @@ module.exports.limitedCmds = new Set([]);
 // ini kehapus dan yang baca `.getSetting` / `.FITUR_INFO` dapet undefined.
 module.exports.getSetting = getSetting;   // dibaca engine & tes
 module.exports.FITUR_INFO = FITUR_INFO;   // daftar fitur + desc buat `.on`/`.off`
+
+// Blok status semua fitur — dipakai `.on` polos DAN `.groupinfo`, biar dua
+// tempat itu nggak bisa beda isi.
+module.exports.statusFitur = async function statusFitur(botId, jid) {
+  const dbCfg    = await getDbGroupSetting(botId, jid);
+  const cfg      = getSetting(jid);
+  const nyimak   = getBotGlobalSetting(botId, 'nyimak');
+  const autoread = getBotGlobalSetting(botId, 'autoread');
+  const st    = (v) => v ? '✅' : '❌';
+  const baris = (k, on) => {
+    const i = FITUR_INFO[k];
+    return `${i.emoji} ${i.label.padEnd(11)}: ${st(on)} — ${i.desc}\n`;
+  };
+  return (
+    `*── Proteksi ──*\n` +
+    baris('antibot',     cfg.antibot) +
+    baris('antilink',    cfg.antilink) +
+    baris('antilinkv2',  cfg.antilinkv2) +
+    baris('antitoxic',   cfg.antitoxic) +
+    baris('antidelete',  cfg.antidelete) +
+    baris('antispam',    cfg.antispam) +
+    baris('antitagsw',   cfg.antitagsw) +
+    baris('antisticker', cfg.antisticker) +
+    `\n*── Otomatis ──*\n` +
+    baris('autosticker', cfg.autosticker) +
+    baris('viewonce',    cfg.viewonce) +
+    baris('detect',      dbCfg.detect) +
+    baris('autoacc',     dbCfg.autoacc) +
+    baris('document',    dbCfg.document) +
+    baris('welcome',     dbCfg.welcome_on) +
+    baris('left',        dbCfg.bye_on) +
+    `\n*── Global (bot) ──*\n` +
+    baris('nyimak',      nyimak) +
+    baris('autoread',    autoread) +
+    baris('didyoumean',  getBotGlobalSetting(botId, 'didyoumean'))
+  );
+};
