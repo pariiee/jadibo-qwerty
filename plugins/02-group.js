@@ -1533,15 +1533,17 @@ module.exports = async function groupHandler(ctx) {
           return true;
         }
 
-        // Kirim sebagai status grup. Bentuk proto-nya dirapikan groupStatusContent()
-        // di engine/baileys/client.js (butuh messageSecret — lihat refrensi-botz).
+        // Kirim sebagai status grup — relayStatusGrup() di engine/baileys/client.js
+        // (messageSecret + relayMessage tanpa `quoted`; lihat catatan di sana).
         try {
           await client.message.send(jid, content, { statusGrup: true });
         } catch (e) {
           if (!e.message?.includes('400') && !e.message?.includes('negative publish ack')) {
             throw e; // lempar ulang kalau bukan error 400 WA
           }
-          // error 400 = WA policy, status tetap terkirim, abaikan
+          // WA nolak di level policy. Jangan ditelan diem-diem — kalau nggak
+          // dicatat, gejalanya cuma "emoji centang tapi status nggak jadi".
+          console.error(`[swgc] WA nolak status grup: ${e.message}`);
         }
         await react('✅');
       } catch (e) {
