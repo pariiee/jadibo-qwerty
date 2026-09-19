@@ -12,6 +12,7 @@
  *  .fisika      → pilgan fisika A/B/C/D, skor per level
  *  .kuisislami  → pilgan islami A/B/C/D
  *  .nyerah      → reveal + reward (berlaku untuk game apapun yang aktif)
+ *  .tebak-*     → tebakbendera, tebakanime, tebakchara, tebakgambar (gambar dari API)
  *
  * Rule: 1 grup = 1 game aktif (via sharedStore)
  */
@@ -166,6 +167,13 @@ const tebakCharaStore = {
   has:    (jid) => sharedStore.has(jid) && sharedStore.get(jid).game === 'tebakchara',
   get:    (jid) => sharedStore.get(jid),
   set:    (jid, data) => sharedStore.set(jid, { ...data, game: 'tebakchara' }),
+  delete: (jid) => sharedStore.delete(jid),
+};
+
+const tebakGambarStore = {
+  has:    (jid) => sharedStore.has(jid) && sharedStore.get(jid).game === 'tebakgambar',
+  get:    (jid) => sharedStore.get(jid),
+  set:    (jid, data) => sharedStore.set(jid, { ...data, game: 'tebakgambar' }),
   delete: (jid) => sharedStore.delete(jid),
 };
 
@@ -561,8 +569,33 @@ module.exports = async function gameHandler(ctx) {
     return true;
   }
 
-  // Kalau bukan command, tidak ada yang perlu diproses
-  if (!isCmd) return false;
+  // ── TEBAKGAMBAR: deteksi jawaban teks bebas (fuzzy, sama kaya sodara-sodaranya) ──
+  if (activeGame === 'tebakgambar' && teksUser && !isCmd) {
+    const session   = tebakGambarStore.get(jid);
+    if (!session) return false;   // soal udah kedaluwarsa — biarin lewat biasa
+    const teksLower = teksUser.toLowerCase().trim();
+    const jawaban   = session.jawaban.toLowerCase().trim();
+    const sim       = similarity(teksLower, jawaban);
+    console.log(`[TEBAKGAMBAR] teks="${teksLower}" jawaban="${jawaban}" sim=${sim.toFixed(2)}`);
+    if (teksLower === jawaban || sim >= 0.85) {
+      clearTimeout(session.timer);
+      tebakGambarStore.delete(jid);
+      const r    = await giveReward(botData.id, sender, 150, 350);
+      const nama = ctx.pushName || sender.split('@')[0];
+      await reply(
+        `✅ *Benar!*\n\n` +
+        `👤 ${nama} menebak dengan benar!\n` +
+        `🖼️ Jawaban: *${session.jawaban}* _(soal #${session.index})_\n` +
+        `${r.emoji} +${r.amount} ${r.label}`
+      );
+    } else if (sim >= 0.65) {
+      await client.message.send(jid, { text: `🤔 *Hampir tepat!* Coba lagi...`, quoted: msg });
+    } else {
+      await react('❌');
+    }
+    return true;
+  }
+
 
   switch (command) {
 
@@ -726,6 +759,15 @@ module.exports = async function gameHandler(ctx) {
           `${w[0]}${'_'.repeat(w.length - 1)}`
         ).join(', ');
         await reply(`💡 *Clue Tebak Karakter:*\n\n\`${clue}\`\n🎌 Anime: *${s.anime[0] || '-'}*`);
+        return true;
+      }
+
+      // tebakgambar — reveal jumlah kata (spasi dipertahankan biar kebaca)
+      if (activeGame === 'tebakgambar') {
+        const s = tebakGambarStore.get(jid);
+        if (!s) { await reply(`❗ Soal tebak gambar udah nggak aktif.`); return true; }
+        const pet = s.jawaban.split(' ').map(w => `${w[0]}${'_'.repeat(w.length - 1)}`).join(' ');
+        await reply(`💡 *Clue Tebak Gambar:*\n\n\`${pet}\`\n_${s.jawaban.replace(/[^\s]/g, '_')}_ (${s.jawaban.length} huruf)`);
         return true;
       }
 
@@ -1431,6 +1473,72 @@ module.exports = async function gameHandler(ctx) {
       return true;
     }
 
+    // ── tebakgambar — mulai game (gambar dari endpoint /api/game/tebak-gambar) ──
+    case 'tebakgambar':
+    case 'tebak-gambar': {
+      if (activeGame === 'tebakgambar') {
+        const s = tebakGambarStore.get(jid);
+        await reply(`⚠️ Masih ada soal tebak gambar aktif! _(soal #${s.index})_\n\nJawab dulu atau ketik *${p}nyerah* untuk skip.`);
+        return true;
+      } else if (activeGame) {
+        await reply(`⚠️ Masih ada game *${activeGame}* aktif di sini!\nKetik *${p}nyerah* untuk mengakhirinya dulu.`);
+        return true;
+      }
+
+      try {
+        const axios = require('axios');
+        await react('🖼️');
+
+        const { data } = await axios.get(`${process.env.BASE_API}api/game/tebak-gambar`, {
+          headers: { 'X-API-Key': process.env.KEY_API },
+          timeout: 15000,
+        });
+
+        const index   = data?.results?.index;
+        const gambar  = data?.results?.image;
+        const jawaban = data?.results?.answer;
+        if (!gambar || !jawaban) throw new Error('Format data soal tidak valid dari API');
+
+        // Download + konversi JPEG, sama kaya tebakanime biar tampil di semua platform
+        const imgResp   = await axios.get(gambar, { responseType: 'arraybuffer', timeout: 15000 });
+        const sharp     = require('sharp');
+        const imgBuffer = await sharp(Buffer.from(imgResp.data)).jpeg({ quality: 90 }).toBuffer();
+
+        const caption =
+          `🖼️ *TEBAK GAMBAR* _(soal #${index})_\n\n` +
+          `_Tebak maksud gambar di atas — jawabannya bisa 1 kata atau 1 kalimat._\n\n` +
+          `┌─────────────────\n` +
+          `│ ⏱️ Timeout: *${TIMEOUT_MS / 1000} detik*\n` +
+          `│ 💬 Ketik jawabannya langsung\n` +
+          `│ 💡 Clue: ketik *${p}clue*\n` +
+          `│ 🏳️ Skip: ketik *${p}nyerah*\n` +
+          `└─────────────────`;
+
+        await client.message.send(jid, {
+          type:     'image',
+          media:    imgBuffer,
+          mimetype: 'image/jpeg',
+          caption,
+        });
+
+        const timer = setTimeout(async () => {
+          if (tebakGambarStore.has(jid)) {
+            tebakGambarStore.delete(jid);
+            try {
+              await client.message.send(jid, `⏰ *Waktu habis!*\n\n🖼️ Jawabannya: *${jawaban}*`);
+            } catch { /* non-critical */ }
+          }
+        }, TIMEOUT_MS);
+
+        tebakGambarStore.set(jid, { index, gambar, jawaban, timer, starter: sender });
+
+      } catch (e) {
+        await react('❌');
+        await reply(`❌ Gagal ambil soal: ${e.message}`);
+      }
+      return true;
+    }
+
     // ── nyerah — universal stop untuk semua game ─────────────────────────────
     case 'nyerah':
     case 'stopasotak': {
@@ -1597,6 +1705,17 @@ module.exports = async function gameHandler(ctx) {
         return true;
       }
 
+      if (activeGame === 'tebakgambar') {
+        const s = tebakGambarStore.get(jid);
+        clearTimeout(s.timer);
+        tebakGambarStore.delete(jid);
+        await reply(
+          `🏳️ *Menyerah!*\n\n` +
+          `🖼️ Jawabannya: *${s.jawaban}* _(soal #${s.index})_`
+        );
+        return true;
+      }
+
       return true;
     }
 
@@ -1606,4 +1725,4 @@ module.exports = async function gameHandler(ctx) {
 };
 
 // Command yang kena limit untuk user biasa
-module.exports.limitedCmds = new Set(['asahotak', 'clue', 'caklontong', 'family100', 'fisika', 'kuisislami', 'math', 'siapakahaku', 'singkatan', 'susunkata', 'tebakanime', 'tebakbendera', 'tebakchara', 'nyerah']);
+module.exports.limitedCmds = new Set(['asahotak', 'clue', 'caklontong', 'family100', 'fisika', 'kuisislami', 'math', 'siapakahaku', 'singkatan', 'susunkata', 'tebakanime', 'tebakbendera', 'tebakchara', 'tebakgambar', 'nyerah']);
