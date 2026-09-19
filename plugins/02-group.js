@@ -137,34 +137,8 @@ function reviveBuffers(obj) {
   return obj;
 }
 
-// Nomor bot AI yang bisa ditambahin via `.addai <kode>`. Tanpa argumen =
-// Meta AI. Pak: "tambahin nomer itu misal .addai <kode>".
-const AI_JID = {
-  meta:        '867051314767696@bot',
-  pedulilindungi: '6281110500567@s.whatsapp.net',
-  wiz:         '4915151853491@s.whatsapp.net',
-  you:         '15854968266@s.whatsapp.net',
-  shmooz:      '12014166644@s.whatsapp.net',
-  jinni:       '447457403599@s.whatsapp.net',
-  guide:       '12058922070@s.whatsapp.net',
-  quitline:    '6282125900597@s.whatsapp.net',
-  copilot:     '18772241042@s.whatsapp.net',
-  sigap:       '628117544433@s.whatsapp.net',
-  chatgpt:     '18002428478@s.whatsapp.net',
-  robof:       '919099913506@s.whatsapp.net',
-  aso:         '6281112159159@s.whatsapp.net',
-  ocs:         '6282182288046@s.whatsapp.net',
-  mobile:      '27767346284@s.whatsapp.net',
-  chatchit:    '905376449086@s.whatsapp.net',
-  luz:         '34613288116@s.whatsapp.net',
-  genie:       '16204458887@s.whatsapp.net',
-  august:      '918738030604@s.whatsapp.net',
-  heypat:      '18442439728@s.whatsapp.net',
-  dola:        '16502234435@s.whatsapp.net',
-  yatter:      '919811046549@s.whatsapp.net',
-  remko:       '6281517084333@s.whatsapp.net',
-  microsoft:   '18772241042@s.whatsapp.net',
-};
+// Meta AI. JID-nya `@bot`, bukan nomor — jangan di-strip jadi angka.
+const JID_META_AI = '867051314767696@bot';
 
 function isAntideleteActive(groupJid) {
   try {
@@ -561,15 +535,8 @@ module.exports = async function groupHandler(ctx) {
         }
         // Normalisasi nomor: hapus +, spasi, dash
         target = { jid: `${numArg.replace(/[^0-9]/g, '')}@s.whatsapp.net`, nama: numArg.replace(/[^0-9]/g, '') };
-      } else if (!numArg) {
-        target = { jid: AI_JID.meta, nama: 'Meta AI' };
-      } else if (AI_JID[numArg.toLowerCase()]) {
-        target = { jid: AI_JID[numArg.toLowerCase()], nama: numArg.toLowerCase() };
-      } else if (numArg.includes('@')) {
-        target = { jid: numArg, nama: numArg }; // JID mentah, dipakai apa adanya
       } else {
-        await reply(`❌ Bot AI *${numArg}* nggak ada di daftar.\n\nYang tersedia:\n${Object.keys(AI_JID).join(', ')}\n\nPakai: ${p}addai <kode>`);
-        return true;
+        target = { jid: JID_META_AI, nama: 'Meta AI' };
       }
       const { jid: targetJid, nama } = target;
       try {
