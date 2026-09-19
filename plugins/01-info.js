@@ -182,7 +182,7 @@ const ALL_COMMANDS = [...new Set([
   'cekprofil','resetprofil','listrank',
   'leaveall','listgroup','setlimitgc','gcutama',
   'addpremgrup','delpremgrup',
-  'add','kick',
+  'add','addai','kick',
   'addrespon','uprespon','delrespon','listrespon',
   'addlist','updatelist',
   'reset','restart','setbio','setpp',
@@ -208,7 +208,7 @@ const CATS = {
   // didaftarin di sini — Pak: "di ringkas aja di `.on <option>`". Command-nya
   // tetap jalan (handler di 06-proteksi.js) dan tetap ketemu `.carifitur`,
   // cuma nggak dipajang di menu. Daftar lengkap + status: `.on` tanpa argumen.
-  grup:   ['absen','add','afk','banmember','catatan','cekabsen','cekasalmember','cekgiveaway','cekmenang','close','delbye','deldetect','delete','delwelcome','demote','getpp','getppgc','groupinfo','grouplist','grupclose','grupopen','hapusabsen','hapusgiveaway','hidetag','ht','ikut','kick','kickall','leavegc','linkgc','linkgroup','listadmin','listafk','listtotalpesan','mulaiabsen','mulaigiveaway','mute','off <option>','on <option>','open','pp','ppgc','ppgroup','ppgrup','promote','proteksi','rollgiveaway','sider','slowmode','tagadmin','tagall','tagme','topchat','totag','unbanmember','unmute','upswgc'],
+  grup:   ['absen','add','addai','afk','banmember','catatan','cekabsen','cekasalmember','cekgiveaway','cekmenang','close','delbye','deldetect','delete','delwelcome','demote','getpp','getppgc','groupinfo','grouplist','grupclose','grupopen','hapusabsen','hapusgiveaway','hidetag','ht','ikut','kick','kickall','leavegc','linkgc','linkgroup','listadmin','listafk','listtotalpesan','mulaiabsen','mulaigiveaway','mute','off <option>','on <option>','open','pp','ppgc','ppgroup','ppgrup','promote','proteksi','rollgiveaway','sider','slowmode','tagadmin','tagall','tagme','topchat','totag','unbanmember','unmute','upswgc'],
   // Sat-set: SEMUA command `.set*` dikumpul di sini — satu tempat buat nyetel
   // teks welcome/left, nama & deskripsi grup, bio, pp, sewa, limit, warn limit, QRIS.
   // Murni pindah: `setwelcome`/`setleft`/`setbye` juga sudah TIDAK ada lagi di `grup`

@@ -514,25 +514,35 @@ module.exports = async function groupHandler(ctx) {
     }
 
     // ── add (tambah member via nomor) ────────────────────────────────────────
-    case 'add': {
+    case 'add':
+    // Tambahin Meta AI: Baileys mau JID-nya, bukan nomor — `867051314767696@bot`
+    // diteruskan apa adanya. Gate `isAdmin()` tetap (yang jalanin harus admin
+    // grup); `isBotAdmin()` nggak perlu, bot nggak nambah dirinya sendiri.
+    case 'addai': {
       if (!await isBotAdmin()) { await reply(mess.BotAdmin); return true; }
       if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
-      const numArg = args[0];
-      if (!numArg) {
+      const isAi    = command === 'addai';
+      const numArg  = args[0];
+      if (isAi) {
+        // nomor diketik buat `add`, JID WA khusus (…@bot/…@lid) buat `addai`
+      } else if (!numArg) {
         await reply(`Penggunaan: ${p}add <nomor>\n\nContoh: ${p}add 6281234567890`);
         return true;
       }
       // Normalisasi nomor: hapus +, spasi, dash
-      const normalized = numArg.replace(/[^0-9]/g, '');
-      const targetJid  = `${normalized}@s.whatsapp.net`;
+      const normalized = isAi
+        ? (args[0] || '867051314767696@bot')
+        : `${numArg.replace(/[^0-9]/g, '')}@s.whatsapp.net`;
       try {
-        const results = await client.group.addParticipants(jid, [targetJid]);
+        const results = await client.group.addParticipants(jid, [normalized]);
         // client adapter return array hasil per-jid: { jid, status: 'ok'|'error', code }
         const res = (Array.isArray(results) ? results : [])[0];
         if (!res) {
           await reply(`⚠️ Tidak ada respon dari WhatsApp saat menambahkan *${normalized}*. Pastikan bot admin grup.`);
         } else if (res.status === 'ok') {
-          await reply(`✅ Berhasil menambahkan *${normalized}* ke grup!`);
+          await reply(isAi
+            ? '✅ Sukses add Meta AI ke grup!'
+            : `✅ Berhasil menambahkan *${normalized}* ke grup!`);
         } else {
           const reason = {
             403: 'nomor ini belum pernah chat bot / privasi nomor, coba minta dia chat bot dulu',
@@ -1582,7 +1592,7 @@ module.exports = async function groupHandler(ctx) {
 // Command yang kena limit untuk user biasa
 module.exports.limitedCmds = new Set([
   'tagall','tagadmin','tagme','hidetag','ht',
-  'kick','kickall','promote','demote','add',
+  'kick','kickall','promote','demote','add','addai',
   'open','close','mute','unmute','slowmode','setname','setdesc',
   'grupopen','grupclose','linkgc','setnamegc',
   'linkgroup','groupinfo','idgc','grouplist','leavegc','listadmin',
