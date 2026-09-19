@@ -137,6 +137,35 @@ function reviveBuffers(obj) {
   return obj;
 }
 
+// Nomor bot AI yang bisa ditambahin via `.addai <kode>`. Tanpa argumen =
+// Meta AI. Pak: "tambahin nomer itu misal .addai <kode>".
+const AI_JID = {
+  meta:        '867051314767696@bot',
+  pedulilindungi: '6281110500567@s.whatsapp.net',
+  wiz:         '4915151853491@s.whatsapp.net',
+  you:         '15854968266@s.whatsapp.net',
+  shmooz:      '12014166644@s.whatsapp.net',
+  jinni:       '447457403599@s.whatsapp.net',
+  guide:       '12058922070@s.whatsapp.net',
+  quitline:    '6282125900597@s.whatsapp.net',
+  copilot:     '18772241042@s.whatsapp.net',
+  sigap:       '628117544433@s.whatsapp.net',
+  chatgpt:     '18002428478@s.whatsapp.net',
+  robof:       '919099913506@s.whatsapp.net',
+  aso:         '6281112159159@s.whatsapp.net',
+  ocs:         '6282182288046@s.whatsapp.net',
+  mobile:      '27767346284@s.whatsapp.net',
+  chatchit:    '905376449086@s.whatsapp.net',
+  luz:         '34613288116@s.whatsapp.net',
+  genie:       '16204458887@s.whatsapp.net',
+  august:      '918738030604@s.whatsapp.net',
+  heypat:      '18442439728@s.whatsapp.net',
+  dola:        '16502234435@s.whatsapp.net',
+  yatter:      '919811046549@s.whatsapp.net',
+  remko:       '6281517084333@s.whatsapp.net',
+  microsoft:   '18772241042@s.whatsapp.net',
+};
+
 function isAntideleteActive(groupJid) {
   try {
     if (!fs.existsSync(PROTEKSI_FILE)) return false;
@@ -513,36 +542,44 @@ module.exports = async function groupHandler(ctx) {
       return true;
     }
 
-    // ── add (tambah member via nomor) ────────────────────────────────────────
+    // ── add (tambah member via nomor) / addai (tambahin bot AI) ──────────────
     case 'add':
-    // Tambahin Meta AI: Baileys mau JID-nya, bukan nomor — `867051314767696@bot`
-    // diteruskan apa adanya. Gate `isAdmin()` tetap (yang jalanin harus admin
-    // grup); `isBotAdmin()` nggak perlu, bot nggak nambah dirinya sendiri.
+    // `.addai` = tambahin bot AI ke grup. Baileys mau JID-nya, bukan nomor:
+    // `.addai` polos -> Meta AI, `.addai <kode>` -> dari tabel AI_JID,
+    // `.addai 628xx@bot` -> JID mentah. Gate `isAdmin()` tetap; `isBotAdmin()`
+    // tetap (bot harus admin biar WA nggak nolak diem-diem).
     case 'addai': {
       if (!await isBotAdmin()) { await reply(mess.BotAdmin); return true; }
       if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
-      const isAi    = command === 'addai';
-      const numArg  = args[0];
-      if (isAi) {
-        // nomor diketik buat `add`, JID WA khusus (…@bot/…@lid) buat `addai`
+      const isAi   = command === 'addai';
+      const numArg = args[0];
+      let target;
+      if (!isAi) {
+        if (!numArg) {
+          await reply(`Penggunaan: ${p}add <nomor>\n\nContoh: ${p}add 6281234567890`);
+          return true;
+        }
+        // Normalisasi nomor: hapus +, spasi, dash
+        target = { jid: `${numArg.replace(/[^0-9]/g, '')}@s.whatsapp.net`, nama: numArg.replace(/[^0-9]/g, '') };
       } else if (!numArg) {
-        await reply(`Penggunaan: ${p}add <nomor>\n\nContoh: ${p}add 6281234567890`);
+        target = { jid: AI_JID.meta, nama: 'Meta AI' };
+      } else if (AI_JID[numArg.toLowerCase()]) {
+        target = { jid: AI_JID[numArg.toLowerCase()], nama: numArg.toLowerCase() };
+      } else if (numArg.includes('@')) {
+        target = { jid: numArg, nama: numArg }; // JID mentah, dipakai apa adanya
+      } else {
+        await reply(`❌ Bot AI *${numArg}* nggak ada di daftar.\n\nYang tersedia:\n${Object.keys(AI_JID).join(', ')}\n\nPakai: ${p}addai <kode>`);
         return true;
       }
-      // Normalisasi nomor: hapus +, spasi, dash
-      const normalized = isAi
-        ? (args[0] || '867051314767696@bot')
-        : `${numArg.replace(/[^0-9]/g, '')}@s.whatsapp.net`;
+      const { jid: targetJid, nama } = target;
       try {
-        const results = await client.group.addParticipants(jid, [normalized]);
+        const results = await client.group.addParticipants(jid, [targetJid]);
         // client adapter return array hasil per-jid: { jid, status: 'ok'|'error', code }
         const res = (Array.isArray(results) ? results : [])[0];
         if (!res) {
-          await reply(`⚠️ Tidak ada respon dari WhatsApp saat menambahkan *${normalized}*. Pastikan bot admin grup.`);
+          await reply(`⚠️ Tidak ada respon dari WhatsApp saat menambahkan *${nama}*. Pastikan bot admin grup.`);
         } else if (res.status === 'ok') {
-          await reply(isAi
-            ? '✅ Sukses add Meta AI ke grup!'
-            : `✅ Berhasil menambahkan *${normalized}* ke grup!`);
+          await reply(`✅ Sukses add *${nama}* ke grup!`);
         } else {
           const reason = {
             403: 'nomor ini belum pernah chat bot / privasi nomor, coba minta dia chat bot dulu',
@@ -551,10 +588,10 @@ module.exports = async function groupHandler(ctx) {
             409: 'sudah menjadi member grup',
             429: 'kecepatan ditahan WhatsApp, coba beberapa menit lagi',
           }[res.code] || `kode error ${res.code}`;
-          await reply(`❌ Gagal menambahkan *${normalized}*\nAlasan: ${reason}`);
+          await reply(`❌ Gagal menambahkan *${nama}*\nAlasan: ${reason}`);
         }
       } catch (e) {
-        await reply(`❌ Gagal menambahkan *${normalized}*\nAlasan: ${rapikanError(e)}`);
+        await reply(`❌ Gagal menambahkan *${nama}*\nAlasan: ${rapikanError(e)}`);
       }
       return true;
     }
