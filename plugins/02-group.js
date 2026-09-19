@@ -817,16 +817,23 @@ module.exports = async function groupHandler(ctx) {
       // siapa pun (termasuk pengirim) — kasih instruksi aja.
       // Command ini grup-only karena 02-group early-return buat chat pribadi,
       // jadi `sender` selalu ada dan cabang `!target` di bawah praktis mati.
-      let target = mentioned[0] || ci.participant || null;
+      // Target WAJIB eksplisit: tag, reply, atau nomor HP (`.pp 628xxx`).
+      // Nomor dicoba setelah tag/reply — tag menang kalau dua-duanya ada.
+      const nomorArg = args.find(a => /^\+?\d{8,15}$/.test(a.replace(/[\s-]/g, '')));
+      let target = mentioned[0] || ci.participant
+        || (nomorArg ? nomorArg.replace(/[\s-]/g, '').replace(/^\+/, '') + '@s.whatsapp.net' : null);
       if (!target) {
-        await reply(`📸 *Foto profil*\n\nTag orangnya atau reply pesannya.\nContoh: \`${p}pp @user\``);
+        await reply(`📸 *Foto profil*\n\nTag orangnya, reply pesannya, atau tulis nomornya.\nContoh: \`${p}pp @user\` / \`${p}pp 6285876902820\``);
         return true;
       }
+      // Nomor HP mentah: jangan di-resolve LID (toLid nolak nomor non-member)
+      // dan jangan dipaksa cari di metadata grup — langsung pakai JID-nya.
+      const dariNomor = !mentioned[0] && !ci.participant && /^[^@]+@s\.whatsapp\.net$/.test(target);
       // Jalur reply: `ci.participant` masih LID mentah — engine cuma resolve
       // `ctx.mentioned`, bukan participant pesan yang di-quote. Akibatnya teks
       // `@628...` nggak match `mentionedJid` (isinya `...@lid`) → WA nampilin
       // angka polos, bukan mention. Samakan bentuknya kayak jalur @tag.
-      target = await lidToPnAsync(client, target);
+      if (!dariNomor) target = await lidToPnAsync(client, target);
       let phoneNum = String(target).split('@')[0];
 
       // Resolve LID ke phone JID lewat metadata grup
@@ -834,7 +841,7 @@ module.exports = async function groupHandler(ctx) {
       const participant = meta?.participants?.find(p =>
         p.jid === target || p.lid === target
       );
-      if (participant?.phoneNumber) {
+      if (!dariNomor && participant?.phoneNumber) {
         // `phoneNumber` bisa ada tapi null → `String(null)` = "null" (JID sampah).
         phoneNum = String(participant.phoneNumber).replace(/\D/g, '');
       } else if (target.endsWith('@lid') && participant?.jid && !participant.jid.endsWith('@lid')) {
@@ -863,8 +870,9 @@ module.exports = async function groupHandler(ctx) {
           type: 'image',
           media: imgBuffer,
           mimetype: 'image/jpeg',
-          caption: `📸 Foto profil @${tagNum}`,
-          mentions: [target],
+          // Non-member: mention-nya nggak bakal ke-render, jadi tulis nomor polos.
+          caption: dariNomor ? `📸 Foto profil ${tagNum}` : `📸 Foto profil @${tagNum}`,
+          ...(dariNomor ? {} : { mentions: [target] }),
           ...(thumb ? { jpegThumbnail: thumb } : {}),
         });
       } else {

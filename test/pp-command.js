@@ -47,12 +47,12 @@ ok('handler: reply dibaca dari SEMUA jenis pesan', () => {
   }
 });
 
-ok('handler: target WAJIB eksplisit (tag/reply) — `.pp` polos nggak jatuh ke PP sendiri', () => {
-  assert.match(grup, /let target = mentioned\[0\] \|\| ci\.participant \|\| null;/,
+ok('handler: target WAJIB eksplisit (tag/reply/nomor) — `.pp` polos nggak jatuh ke PP sendiri', () => {
+  assert.match(grup, /let target = mentioned\[0\] \|\| ci\.participant\s*\n?\s*\|\| \(nomorArg/,
     'urutan target berubah — `.pp` polos harus balas instruksi, bukan PP pengirim');
-  assert.match(grup, /target = await lidToPnAsync\(client, target\);/,
+  assert.match(grup, /if \(!dariNomor\) target = await lidToPnAsync\(client, target\);/,
     'target dari reply (masih LID) nggak di-resolve → caption `@628xx` nggak match mentionedJid → WA nampilin angka polos, bukan mention');
-  assert.match(grup, /Tag orangnya atau reply pesannya/,
+  assert.match(grup, /Tag orangnya, reply pesannya, atau tulis nomornya/,
     'teks instruksi buat `.pp` polos hilang');
 });
 
