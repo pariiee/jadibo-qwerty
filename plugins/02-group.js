@@ -4,7 +4,7 @@
  * plugins/02-group.js
  * Commands: tagall, tagadmin, tagme, hidetag, kick, kickall, promote, demote,
  *           open, close, mute, unmute, slowmode, setname, setdesc, linkgroup,
- *           groupinfo, idgc, grouplist, leavegc, listadmin, pp/getpp, getppgc, totag,
+ *           groupinfo, idgc, leavegc, listadmin, pp/getpp, getppgc, totag,
  *           delete, cekasalmember, absen, mulaiabsen, cekabsen, hapusabsen,
  *           afk, listafk, topchat
  */
@@ -746,25 +746,6 @@ module.exports = async function groupHandler(ctx) {
         `Admin  : ${admins}\n` +
         `Link   : ${link}`
       );
-      return true;
-    }
-
-    // ── grouplist ─────────────────────────────────────────────────────────────
-    case 'grouplist': {
-      try {
-        const groups = await client.group.queryAllGroups();
-        const metas  = await Promise.all(
-          groups.map(g => client.group.queryGroupMetadata(g.jid).catch(() => null))
-        );
-        const list = groups.map((g, i) => {
-          const size = metas[i]?.participants?.length ?? g.size ?? '?';
-          return `${i + 1}. ${g.subject}\n   👥 ${size} member`;
-        }).join('\n\n');
-        await reply(`📋 *Daftar Grup Bot (${groups.length}):*\n\n${list || 'Tidak ada grup'}`);
-      } catch (e) {
-        console.error('[grouplist] Error:', e.message);
-        await reply('Gagal mengambil daftar grup');
-      }
       return true;
     }
 
@@ -1569,7 +1550,7 @@ module.exports.limitedCmds = new Set([
   'kick','kickall','promote','demote','add','addai',
   'open','close','mute','unmute','slowmode','setname','setdesc',
   'grupopen','grupclose','linkgc','setnamegc',
-  'linkgroup','groupinfo','idgc','grouplist','leavegc','listadmin',
+  'linkgroup','groupinfo','idgc','leavegc','listadmin',
   'getpp','pp','totag','delete','cekasalmember',
   'mulaiabsen','absen','cekabsen','hapusabsen',
   'afk','listafk','topchat','swgc','upswgc',

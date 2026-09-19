@@ -1879,7 +1879,8 @@ module.exports = async function ownerHandler(ctx) {
     }
 
     // ── listgroup ─────────────────────────────────────────────────────────────
-    case 'listgroup': {
+    case 'listgroup':
+    case 'listgc': {
       if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }
       try {
         const groups = await ctx.client.group.queryAllGroups().catch(() => null);

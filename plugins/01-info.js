@@ -75,7 +75,7 @@ const ALL_COMMANDS = [...new Set([
   'tagall','tagadmin','tagme','hidetag','ht','kickall','promote','demote',
   'open','close','mute','unmute','slowmode','setname','setdesc','linkgroup','upswgc',
   'grupopen','grupclose','linkgc','setnamegc',
-  'groupinfo','grouplist','leavegc','listadmin','getpp','pp','getppgc','ppgc','ppgroup','ppgrup','totag',
+  'groupinfo','leavegc','listadmin','getpp','pp','getppgc','ppgc','ppgroup','ppgrup','totag',
   'delete','cekasalmember','absen','mulaiabsen','cekabsen','hapusabsen',
   'afk','listafk','antidelete','topchat',
   // Sat-set — nama command aslinya tetap `.set*`, cuma kategorinya dikumpul
@@ -180,7 +180,7 @@ const ALL_COMMANDS = [...new Set([
   'addxp','addmoney','addlimit','addhp','resetlimit','listuser',
   'addlevel','dellevel','delmoney','delxp','dellimit',
   'cekprofil','resetprofil','listrank',
-  'leaveall','listgroup','setlimitgc','gcutama',
+  'leaveall','listgroup','listgc','setlimitgc','gcutama',
   'addpremgrup','delpremgrup',
   'add','addai','kick',
   'addrespon','uprespon','delrespon','listrespon',
@@ -208,7 +208,7 @@ const CATS = {
   // didaftarin di sini — Pak: "di ringkas aja di `.on <option>`". Command-nya
   // tetap jalan (handler di 06-proteksi.js) dan tetap ketemu `.carifitur`,
   // cuma nggak dipajang di menu. Daftar lengkap + status: `.on` tanpa argumen.
-  grup:   ['absen','add','addai','afk','banmember','catatan','cekabsen','cekasalmember','cekgiveaway','cekmenang','close','delbye','delete','delwelcome','demote','getpp','getppgc','groupinfo','grouplist','grupclose','grupopen','hapusabsen','hapusgiveaway','hidetag','ht','ikut','kick','kickall','leavegc','linkgc','linkgroup','listadmin','listafk','listtotalpesan','mulaiabsen','mulaigiveaway','mute','off <option>','on <option>','open','pp','ppgc','ppgroup','ppgrup','promote','proteksi','rollgiveaway','sider','slowmode','tagadmin','tagall','tagme','topchat','totag','unbanmember','unmute','upswgc'],
+  grup:   ['absen','add','addai','afk','banmember','catatan','cekabsen','cekasalmember','cekgiveaway','cekmenang','close','delbye','delete','delwelcome','demote','getpp','getppgc','groupinfo','grupclose','grupopen','hapusabsen','hapusgiveaway','hidetag','ht','ikut','kick','kickall','leavegc','linkgc','linkgroup','listadmin','listafk','listtotalpesan','mulaiabsen','mulaigiveaway','mute','off <option>','on <option>','open','pp','ppgc','ppgroup','ppgrup','promote','proteksi','rollgiveaway','sider','slowmode','tagadmin','tagall','tagme','topchat','totag','unbanmember','unmute','upswgc'],
   // Sat-set: SEMUA command `.set*` dikumpul di sini — satu tempat buat nyetel
   // teks welcome/left, nama & deskripsi grup, bio, pp, sewa, limit, warn limit, QRIS.
   // Murni pindah: `setwelcome`/`setleft`/`setbye` juga sudah TIDAK ada lagi di `grup`
@@ -225,7 +225,7 @@ const CATS = {
   // saklarnya di config/globalSettings.js dan gate-nya OWNER BOT — jadi
   // nongkrongnya di sini, bukan di `grup`. `.on <nama>` tetap dijalanin dari
   // dalam grup, cuma izinnya owner.
-  owner:  ['ban','unban','block','unblock','broadcast','bcgc','bcgcht','backup','restore','clearsession','cleartmp','listblacklist','listblock','addprem','delprem','listprem','addsewa','delsewa','ceksewa','listsewa','tambahsewa','addxp','addmoney','addlimit','addhp','resetlimit','listuser','addlevel','dellevel','delmoney','delxp','dellimit','cekprofil','resetprofil','listrank','leaveall','listgroup','crm','crm2','addpremgrup','delpremgrup','addrespon','uprespon','delrespon','listrespon','addlist','updatelist','reset','restart','warn','unwarn','delwarn','resetwarn','listwarn'],
+  owner:  ['ban','unban','block','unblock','broadcast','bcgc','bcgcht','backup','restore','clearsession','cleartmp','listblacklist','listblock','addprem','delprem','listprem','addsewa','delsewa','ceksewa','listsewa','tambahsewa','addxp','addmoney','addlimit','addhp','resetlimit','listuser','addlevel','dellevel','delmoney','delxp','dellimit','cekprofil','resetprofil','listrank','leaveall','listgroup','listgc','crm','crm2','addpremgrup','delpremgrup','addrespon','uprespon','delrespon','listrespon','addlist','updatelist','reset','restart','warn','unwarn','delwarn','resetwarn','listwarn'],
 };
 
 // Label yang DITAMPILIN. Key kategori nggak boleh ada spasi (dipakai `.menu <key>`
