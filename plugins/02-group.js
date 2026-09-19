@@ -1236,36 +1236,6 @@ module.exports = async function groupHandler(ctx) {
       return true;
     }
 
-    // ── setdetect ─────────────────────────────────────────────────────────────
-    case 'setdetect': {
-      if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
-      if (!await isBotAdmin()) { await reply(mess.BotAdmin); return true; }
-      const { pool: dbPool } = require('../config/database');
-      await dbPool.execute(
-        `INSERT INTO group_settings (bot_id, group_jid, detect)
-         VALUES (?, ?, 1)
-         ON DUPLICATE KEY UPDATE detect = 1`,
-        [botData.id, jid]
-      );
-      await reply('✅ *Group Detect aktif!*\nBot akan mengirim notifikasi perubahan grup (ganti nama, icon, deskripsi, promote/demote admin, dll).');
-      return true;
-    }
-
-    // ── deldetect ─────────────────────────────────────────────────────────────
-    case 'deldetect': {
-      if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
-      if (!await isBotAdmin()) { await reply(mess.BotAdmin); return true; }
-      const { pool: dbPool } = require('../config/database');
-      await dbPool.execute(
-        `INSERT INTO group_settings (bot_id, group_jid, detect)
-         VALUES (?, ?, 0)
-         ON DUPLICATE KEY UPDATE detect = 0`,
-        [botData.id, jid]
-      );
-      await reply('✅ *Group Detect dinonaktifkan.*\nBot tidak akan lagi mengirim notifikasi perubahan grup.');
-      return true;
-    }
-
     // ── banmember (ban lokal grup — kick + catat di group_ban) ──────────────────
     case 'banmember': {
       if (!await isBotAdmin()) { await reply(mess.BotAdmin); return true; }

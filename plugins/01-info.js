@@ -81,7 +81,7 @@ const ALL_COMMANDS = [...new Set([
   // Sat-set — nama command aslinya tetap `.set*`, cuma kategorinya dikumpul
   'setwelcome','setleft','setbye','setopen','setclose','setname','setnamegc','setdesc',
   'setbio','setpp','setppgc','setqris','setsewa','setlimitgc','gcutama','setwarnlimit',
-  'delwelcome','delbye','setdetect','deldetect',
+  'delwelcome','delbye',
   // Proteksi & Toggle
   'on','off','proteksi',
   'antibot','antilink','antilinkv2','antitoxic','antidelete',
@@ -208,13 +208,13 @@ const CATS = {
   // didaftarin di sini — Pak: "di ringkas aja di `.on <option>`". Command-nya
   // tetap jalan (handler di 06-proteksi.js) dan tetap ketemu `.carifitur`,
   // cuma nggak dipajang di menu. Daftar lengkap + status: `.on` tanpa argumen.
-  grup:   ['absen','add','addai','afk','banmember','catatan','cekabsen','cekasalmember','cekgiveaway','cekmenang','close','delbye','deldetect','delete','delwelcome','demote','getpp','getppgc','groupinfo','grouplist','grupclose','grupopen','hapusabsen','hapusgiveaway','hidetag','ht','ikut','kick','kickall','leavegc','linkgc','linkgroup','listadmin','listafk','listtotalpesan','mulaiabsen','mulaigiveaway','mute','off <option>','on <option>','open','pp','ppgc','ppgroup','ppgrup','promote','proteksi','rollgiveaway','sider','slowmode','tagadmin','tagall','tagme','topchat','totag','unbanmember','unmute','upswgc'],
+  grup:   ['absen','add','addai','afk','banmember','catatan','cekabsen','cekasalmember','cekgiveaway','cekmenang','close','delbye','delete','delwelcome','demote','getpp','getppgc','groupinfo','grouplist','grupclose','grupopen','hapusabsen','hapusgiveaway','hidetag','ht','ikut','kick','kickall','leavegc','linkgc','linkgroup','listadmin','listafk','listtotalpesan','mulaiabsen','mulaigiveaway','mute','off <option>','on <option>','open','pp','ppgc','ppgroup','ppgrup','promote','proteksi','rollgiveaway','sider','slowmode','tagadmin','tagall','tagme','topchat','totag','unbanmember','unmute','upswgc'],
   // Sat-set: SEMUA command `.set*` dikumpul di sini — satu tempat buat nyetel
   // teks welcome/left, nama & deskripsi grup, bio, pp, sewa, limit, warn limit, QRIS.
   // Murni pindah: `setwelcome`/`setleft`/`setbye` juga sudah TIDAK ada lagi di `grup`
   // — jangan diduplikat, nanti kelihatan dobel di `.menu all`.
   // (`.set*` nggak boleh ada di kategori lain; dites di test/menu-buttons.js.)
-  satset: ['setbio','setbye','setclose','setdesc','setdetect','setleft','setlimitgc','setname','setnamegc','setopen','setpp','setppgc','setqris','setsewa','setwarnlimit','setwelcome'],
+  satset: ['setbio','setbye','setclose','setdesc','setleft','setlimitgc','setname','setnamegc','setopen','setpp','setppgc','setqris','setsewa','setwarnlimit','setwelcome'],
   rpg:    ['unreg','profile','me','claim','hourly','weekly','dailymisi','kerja','mancing','berburu','hunt','bertarung','fight','dungeon','adventure','koboy','airdrop','maling','lamarkerja','job','gajian','transfer','tf','bank','atm','topkoin','lb','leaderboard','store','beli','inventory','pakai','gacha','slot','jodoh','suitpvp','coinflip','cf','tictactoe','ttt'],
   maker:  ['sticker','s','wm','brat','bratvid','attp','fakech','fakecall','fakecallip','fakedana','fakeovo','fakegcios','fakepptele','rvo','readviewonce','readvo','liat','swgc','upswgc'],
   tools:  ['poll','readmore','encode','decode','kalkulator','pick','tourl','tourl2','upload2','upload','pay','tomp4','topng','tovn','2vo','todoc','artinama','igqc','igstoryimg','iqc','ttqc','dafont','dafontdl','lirik','genius','gsmarena','spek','jarak','kbbi','kodepos','bandinghp','comparehp','wilayah','cariwilayah','imei','cekimei','gempa','cuaca','weather','accuweather','prakiraan','checkwa','cekwa','translate','terjemah','tr','qrcode','qr','decodeqr','readqr','ocr','upscale','hd','enhance','ssweb','ss','screenshot','fancytext','fancy','nik','nikinfo','iplookup','ipcek','reverseip','httpheaders','headers','nationalday','hariini','shalat','jadwalshalat','kalendershalat','kshalat','konversitanggal','tanggal','bypass','bypasssfl','bpsfl','drakor','duolingo','npm','resep','steam','play','lk21','lk21trending','lk21search','filmsearch','mcpedl','berita','pinterest','tokopedia','toped','stalktiktok','stalktt','tiktokstalk','roblox','stalkroblox','cekroblox','minecraft','mc','stalkmc','stalkgithub','ghstalk','genshin','stalkgenshin','freefire','ff','stalkff','discord','stalkdiscord','chess','stalkchess','nimegami','nimegamis','animesearch','shinigami','spotify','spotifylyrics','slyrics','tiktokphoto','ttkphoto','ttsearch','searchcode'],
