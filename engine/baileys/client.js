@@ -555,6 +555,7 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
         const r = await sock.waUploadToServer(tmp, {
           mediaType, fileEncSha256B64: encSha.toString('base64'), timeoutMs: 120000,
         });
+        if (!r?.directPath) throw new Error(`upload ${mediaType} nggak balikin directPath`);
         return {
           directPath: r.directPath, mediaKeyTimestamp: r.ts,
           fileLength: plain.length, fileSha256: sha, fileEncSha256: encSha,
@@ -564,6 +565,16 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
       }
     };
 
+    // `waUploadToServer` ngambil path CDN dari `MEDIA_PATH_MAP[mediaType]`, dan
+    // Baileys NGGAK punya entri 'sticker-pack'/'thumbnail-sticker-pack' → URLnya
+    // jadi `https://hostundefined/...` → upload gagal → kartu blank di HP.
+    // Dua path ini dari MediaType whatsapp-rust (`wacore/src/download.rs`).
+    const PETA = require('baileys/lib/Defaults').MEDIA_PATH_MAP;
+    if (!PETA['sticker-pack']) {
+      PETA['sticker-pack'] = '/mms/sticker-pack';
+      PETA['thumbnail-sticker-pack'] = '/mms/thumbnail-sticker-pack';
+    }
+
     const packId = isi.packId || crypto.randomUUID();
     // `nama`/`publisher` mentah dari plugin: WA suka nampilin emoji "@" di
     // publisher yang isinya username, jadi pembersihan ada di pemanggil.
@@ -571,6 +582,9 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
       unggah(isi.zip, 'sticker-pack', kunciZip),
       unggah(isi.thumb, 'thumbnail-sticker-pack', kunciThumb),
     ]);
+    // Bukti runtime: kalau baris ini nggak muncul di pm2 log, berarti uploadnya
+    // yang gagal, bukan packingnya.
+    console.log(`[pack] ${packId} | ${isi.sticker.length} sticker | zip ${isi.zip.length}B -> ${zip.directPath} | thumb ${isi.thumb.length}B -> ${thumb.directPath}`);
 
     const q = toBaileysOptions(opts).quoted;
     return sendRaw(jid, {
