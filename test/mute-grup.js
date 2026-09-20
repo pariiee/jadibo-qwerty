@@ -82,14 +82,14 @@ assert.ok(idxPlugin > idxGuard, 'guard mute harus jalan sebelum dispatch plugin'
 
 // ── 4. `.mute` nggak boleh nyentuh setting grup WhatsApp lagi ────────────────
 const plugin = fs.readFileSync(path.join(AKAR, 'plugins', '02-group.js'), 'utf8');
-const blokMute = plugin.slice(plugin.indexOf("case 'mute':"), plugin.indexOf("case 'slowmode':"));
+const blokMute = plugin.slice(plugin.indexOf("case 'mute':"), plugin.indexOf("case 'setname':"));
 assert.ok(!/setSetting\s*\(\s*jid\s*,\s*'mute'/.test(blokMute),
   '.mute dilarang manggil setSetting(jid, "mute") — di adapter itu jatuh ke `announcement` = nge-lock grup, persis `.close`');
 assert.ok(blokMute.includes('setMuteGrup(botData.id, jid, true)'), '.mute harus nyetel state mute bot');
 assert.ok(plugin.includes('setMuteGrup(botData.id, jid, false)'), '.unmute harus nyabut state mute');
 
 // ── 5. `.listmute` nampilin NAMA grup, bukan cuma JID ────────────────────────
-const blokList = plugin.slice(plugin.indexOf("case 'listmute':"), plugin.indexOf("case 'slowmode':"));
+const blokList = plugin.slice(plugin.indexOf("case 'listmute':"), plugin.indexOf("case 'setname':"));
 assert.ok(/queryGroupMetadata\(g\)/.test(blokList),
   '.listmute harus ambil nama grup dari metadata, bukan cuma nampilin JID');
 assert.ok(/subject/.test(blokList), '.listmute harus pakai meta.subject sebagai nama grup');

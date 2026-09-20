@@ -3,7 +3,7 @@
 /**
  * plugins/02-group.js
  * Commands: tagall, tagadmin, tagme, hidetag, kick, kickall, promote, demote,
- *           open, close, mute (bisukan bot), unmute, listmute, slowmode,
+ *           open, close, mute (bisukan bot), unmute, listmute,
  *           setname, setdesc, link,
  *           groupinfo, idgc, leavegc, listadmin, pp/getpp, getppgc, totag,
  *           delete, cekasalmember, absen, mulaiabsen, cekabsen, hapusabsen,
@@ -750,12 +750,6 @@ module.exports = async function groupHandler(ctx) {
       }));
       const baris = grupMute.map((g, i) => `${i + 1}. ${nama[i] || '(nama nggak kebaca)'}\n   ${g}`).join('\n');
       await reply(`🔇 *Grup yang dibisukan*\n\n${baris}\n\nTotal: *${grupMute.length}*`);
-      return true;
-    }
-
-    // ── slowmode ──────────────────────────────────────────────────────────────
-    case 'slowmode': {
-      await reply('⏱️ Slowmode diaktifkan (fitur tergantung dukungan WhatsApp API)');
       return true;
     }
 
@@ -1670,7 +1664,7 @@ module.exports = async function groupHandler(ctx) {
 module.exports.limitedCmds = new Set([
   'tagall','tagadmin','tagme','hidetag','h',
   'kick','kickall','promote','demote','add','addai',
-  'open','close','mute','unmute','slowmode','setname','setdesc',
+  'open','close','mute','unmute','setname','setdesc',
   'grupopen','grupclose','linkgc','setnamegc',
   'link','groupinfo','idgc','leavegc','listadmin',
   'getpp','pp','totag','delete','cekasalmember',

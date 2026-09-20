@@ -73,4 +73,16 @@ ok('.mute / .unmute nggak nyentuh setting grup WhatsApp', () => {
   assert.ok(/getMuteGrup/.test(blok('mute')), '.mute harus cek state mute bot');
 });
 
+// `.slowmode` DICABUT. Command-nya cuma balas "Slowmode diaktifkan (fitur
+// tergantung dukungan WhatsApp API)" tanpa aksi apa pun — WA nggak punya slow
+// mode (grep `slowmode|ratelimit` di baileys/lib = nol). Nggak ada gate admin,
+// jadi siapa pun bisa ngetik dan dikasih pesan palsu "berhasil".
+// ponytail: kalau nanti beneran dibikin (throttle per grup), ganti cek ini jadi
+// tes perilaku — bukan sekadar "case-nya ada".
+ok('.slowmode beneran dicabut (case + registry menu)', () => {
+  const info = require('fs').readFileSync(path.join(__dirname, '..', 'plugins', '01-info.js'), 'utf8');
+  assert.ok(!/case 'slowmode'/.test(src), "case 'slowmode' muncul lagi di 02-group.js");
+  assert.ok(!/'slowmode'/.test(info), "'slowmode' nangkring lagi di registry menu (01-info.js)");
+});
+
 console.log(`\n✓ ${PASS} PASS — open/close: mapping niat -> tag WA bener + balasan kontekstual`);
