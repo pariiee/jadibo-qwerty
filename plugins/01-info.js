@@ -656,9 +656,11 @@ module.exports = async function infoHandler(ctx) {
   }
 };
 
-// Command yang kena limit untuk user biasa
+// Command yang kena limit untuk user biasa.
+// CATATAN: 'limit' SENGAJA nggak ada di sini — cek limit itu perintah info,
+// kalau ikut kepotong user bisa kehabisan limit cuma gara-gara ngecek sisa.
 module.exports.limitedCmds = new Set([
-  'limit','react',
+  'react',
 ]);
 
 // Dipakai self-check (tanpa ini helper-nya cuma bisa dites lewat handler penuh).

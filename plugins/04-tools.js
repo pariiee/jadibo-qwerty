@@ -462,7 +462,11 @@ module.exports = async function toolsHandler(ctx) {
       return true;
     }
 
-    // ── base64 ────────────────────────────────────────────────────────────
+    // ── base64 / encode ───────────────────────────────────────────────────
+    // `.base64` ada di limitedCmds + ALL_COMMANDS, tapi handler-nya cuma
+    // `case 'encode'`. Akibatnya `.base64` MOTONG limit lalu bot DIAM —
+    // limit kebuang tanpa balasan. Dua-duanya diarahkan ke blok yang sama.
+    case 'base64':
     case 'encode': {
       const text = args.join(' ');
       if (!text) { await reply(`Penggunaan: ${p}encode <teks>`); return true; }

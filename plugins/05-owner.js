@@ -18,6 +18,7 @@ const { addStickerExif } = require('../engine/sticker');
 const { markPendingSewa } = require('../engine/pendingSewa');
 const { uploadInfo } = require('../engine/api');
 const { genThumbnail } = require('../engine/thumbnail');
+const { participantPhones } = require('../engine/jid');
 const { proto } = require('baileys');
 const { getRankByLevel } = require('./03-fun-rpg');
 const { ALL_COMMANDS, CATS, CAT_KEYS, catLabel } = require('./01-info');
@@ -1551,8 +1552,21 @@ module.exports = async function ownerHandler(ctx) {
       const botId    = ctx.botData.id;
       const defLimit = parseInt(process.env.DEFAULT_LIMIT || '20', 10);
 
-      // Opsional: reset user tertentu atau semua
+      // Siapa yang direset:
+      //  - disebut (@user)   -> cuma dia
+      //  - owner di chat grup -> cuma member grup itu (bukan 59 user sebot)
+      //  - owner di chat pribadi -> semua user bot ini
       const mentioned = getMentionedFromCtx(ctx);
+      const grup       = ctx.isGroup;
+      let anggota = [];
+      if (!mentioned.length && grup) {
+        try {
+          const meta = await ctx.client.group.getMetadata(ctx.jid);
+          anggota = participantPhones(meta?.participants);
+        } catch (e) {
+          console.error(`[Bot ${botId}] resetlimit: gagal baca member grup:`, e.message);
+        }
+      }
       if (mentioned.length > 0) {
         // Reset limit user tertentu
         const results = [];
@@ -1567,8 +1581,18 @@ module.exports = async function ownerHandler(ctx) {
           `✅ *RESET LIMIT*\n\nLimit direset ke *${defLimit}* untuk:\n${results.join('\n')}`,
           { mentions: mentioned }
         );
+      } else if (grup && anggota.length) {
+        // Reset member grup ini aja
+        const ph  = anggota.map(() => '?').join(',');
+        const [res] = await pool.execute(
+          `UPDATE rpg_members SET lim = ? WHERE bot_id = ? AND jid IN (${ph})`,
+          [defLimit, botId, ...anggota]
+        );
+        await reply(`✅ *RESET LIMIT*\n\nLimit member grup ini direset ke *${defLimit}*!\nTotal: *${res.affectedRows} user*`);
+      } else if (grup) {
+        await reply('⚠️ Nggak bisa baca daftar member grup ini, limit nggak direset.');
       } else {
-        // Reset semua user di bot ini
+        // Chat pribadi -> semua user bot ini
         const [res] = await pool.execute(
           'UPDATE rpg_members SET lim = ? WHERE bot_id = ?',
           [defLimit, botId]

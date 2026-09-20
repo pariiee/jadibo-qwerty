@@ -10,6 +10,7 @@
 const { rapikanError } = require('../engine/pesanError');
 const crypto = require('crypto');
 const { pool } = require('../config/database');
+const { isJlidUser } = require('../engine/jid');
 
 // ─── In-memory stores ────────────────────────────────────────────────────────
 const tembakStore    = new Map(); // sender -> target jid
@@ -105,6 +106,7 @@ function cdRemain(lastRaw, cooldownMs) {
 
 /** Ambil atau buat row RPG member di DB */
 async function getOrCreateMember(botId, jid, name) {
+  if (!isJlidUser(jid)) return undefined;   // grup/newsletter/LID: nggak punya baris RPG
   const serial = crypto.createHash('md5').update(`${botId}:${jid}`).digest('hex');
   await pool.execute(
     `INSERT INTO rpg_members (bot_id, jid, name, serial)

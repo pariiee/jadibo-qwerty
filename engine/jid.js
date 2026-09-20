@@ -22,6 +22,7 @@ const bare = (jid) => String(jid || '').split('@')[0].split(':')[0];
 
 const isLid = (jid) => String(jid || '').endsWith('@lid');
 const isPn  = (jid) => String(jid || '').endsWith('@s.whatsapp.net');
+const isJlidUser = (jid) => isPn(jid) && /\d{6,}/.test(String(jid).split('@')[0].split(':')[0]);
 
 /** '62812-3456' -> '628123456@s.whatsapp.net' */
 const toPn  = (num) => `${String(num || '').replace(/\D/g, '')}@s.whatsapp.net`;
@@ -51,6 +52,22 @@ function cacheLidFromMeta(participants) {
  * Satu tempat normalisasi — semua pemakai event ikut sehat.
  * Sambil jalan, isi peta LID<->PN dari data yang udah nempel di objeknya.
  */
+/**
+ * Peserta grup -> daftar nomor (PN). Dipakai buat nyocokin sama tabel yang
+ * kuncinya nomor (mis. rpg_members). LID dipetakan lewat cache; yang belum
+ * ke-petakan dibuang, bukan ditebak.
+ */
+function participantPhones(participants) {
+  const out = [];
+  // participantJids() sekalian ngisi cache LID<->PN dari `phoneNumber` metadata.
+  for (const jid of participantJids(participants)) {
+    const s  = String(jid);
+    const pn = s.endsWith('@s.whatsapp.net') ? s : lidToPn(s);
+    if (isPn(pn)) out.push(pn);
+  }
+  return [...new Set(out)];
+}
+
 function participantJids(participants) {
   const objs = (participants || []).map((p) => {
     if (typeof p === 'string') return { id: p, jid: p };
@@ -165,7 +182,7 @@ function needsLidResolve({ sender, quotedSender, mentioned } = {}) {
 module.exports = {
   bare, isLid, isPn, toPn, toLid,
   needsLidResolve,
-  participantJids, cacheLidFromMeta, cacheLidFromKey,
+  participantJids, participantPhones, cacheLidFromMeta, cacheLidFromKey,
   lidToPn, lidToPnAsync,
   pnToLid, pnToLidAsync,
   mentionsForChat,

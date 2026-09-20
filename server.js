@@ -20,7 +20,7 @@ const cron         = require('node-cron');
 const { testConnection, seedDefaults, getStats, pool } = require('./config/database');
 const auth = require('./controllers/authController');
 const bot  = require('./controllers/botController');
-const { setWsBroadcast: setWsBroadcastWa, startWhatsAppBot } = require('./engine/whatsappEngine');
+const { setWsBroadcast: setWsBroadcastWa, startWhatsAppBot, cekCommandTerdaftar } = require('./engine/whatsappEngine');
 const { setWsBroadcast: setWsBroadcastTg, startTelegramBot } = require('./engine/telegramEngine');
 
 const app    = express();

@@ -88,6 +88,7 @@ const devGreetCooldown   = new Map(); // key: groupJid → timestamp
 // Logika LID↔PN dipusatkan di engine/jid.js supaya cache-nya SATU (dulu tiap
 // file punya Map sendiri → user bisa tampil beda jid di log yang beda).
 const { needsLidResolve, lidToPn: resolveLid, lidToPnAsync: resolveLidAsync, bare } = require('./jid');
+const { buildLimitedCmds } = require('./limitedCmds');
 
 // ─── WS broadcast helper ──────────────────────────────────────────────────────
 let _wsBroadcast = () => {};
@@ -126,24 +127,11 @@ function loadPlugins() {
   return handlers;
 }
 
-// Kumpulkan semua limitedCmds dari tiap plugin jadi satu Set
-function buildLimitedCmds() {
-  const pluginsDir = path.resolve('./plugins');
-  const result = new Set();
-  if (!fs.existsSync(pluginsDir)) return result;
-  const files = fs.readdirSync(pluginsDir).filter(f => f.endsWith('.js')).sort();
-  for (const file of files) {
-    try {
-      const mod = require(path.join(pluginsDir, file));
-      if (mod.limitedCmds instanceof Set) {
-        for (const cmd of mod.limitedCmds) result.add(cmd);
-      }
-    } catch { /* skip */ }
-  }
-  return result;
-}
+// Daftar command kena limit dibaca dari TEKS plugin, bukan require() — lihat
+// catatan panjang di engine/limitedCmds.js kenapa (require.cache nyimpen objek
+// 01-info.js yang belum ada limitedCmds-nya = custom command nggak kepotong).
 
-const PLUGIN_LIMITED_CMDS = buildLimitedCmds();
+const PLUGIN_LIMITED_CMDS = buildLimitedCmds(path.resolve('./plugins'));
 
 // Command yang tetap jalan walau grupnya dibisukan — tanpa ini nggak ada
 // jalan keluar dari `.mute` selain restart bot.
@@ -864,15 +852,15 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
         if (!isRegistered) {
           // Owner — auto-daftar pakai owner_name, tanpa interrupt apapun
           if (ctx.isOwner) {
-            const baseName = (botData.owner_name || ctx.pushName || 'Owner')
+            const baseName = (ctx.pushName || botData.owner_name || 'Owner')
               .replace(/[^a-zA-Z0-9 ]/g, '').trim().slice(0, 20);
             const namaOwner = baseName || 'Owner';
             const defaultLim = botData.daily_limit || parseInt(process.env.DEFAULT_LIMIT || '20', 10);
             await dbPool.execute(
               `INSERT INTO rpg_members (bot_id, jid, name, registered, level, xp, money, lim, healt)
                VALUES (?, ?, ?, 1, 1, 0, 0, ?, 100)
-               ON DUPLICATE KEY UPDATE name = VALUES(name), registered = 1, level = 1, xp = 0, money = 0, lim = ?, healt = 100`,
-              [botId, ctx.sender, namaOwner, defaultLim, defaultLim]
+               ON DUPLICATE KEY UPDATE name = VALUES(name), registered = 1`,
+              [botId, ctx.sender, namaOwner, defaultLim]
             );
           } else {
             // User biasa — auto-register pakai pushName WA
@@ -909,9 +897,11 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
     }
 
     // ── Cek & potong limit per command ───────────────────────────────────────
-    // Owner dan premium skip sepenuhnya — user biasa kena limit kalau command
-    // ada di PLUGIN_LIMITED_CMDS (dikumpulkan dari tiap plugin saat boot)
-    if (ctx.isCmd && ctx.role === 'user' && PLUGIN_LIMITED_CMDS.has(ctx.command)) {
+    // dev/owner/premium skip sepenuhnya — sisanya kena kalau command-nya ada di
+    // PLUGIN_LIMITED_CMDS (dikumpulkan dari tiap plugin saat boot).
+    // Dipakai juga buat nurunin limit di grup yang punya limit_daily sendiri.
+    const kurangiLimit = async (satuan) => {
+      if (!ctx.isCmd || ctx.role !== 'user' || !PLUGIN_LIMITED_CMDS.has(ctx.command)) return true;
       try {
         const { pool: dbPool } = require('../config/database');
         const [limRows] = await dbPool.execute(
@@ -919,19 +909,23 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
           [botId, ctx.sender]
         );
         const curLim = limRows[0]?.lim ?? 0;
-        if (curLim <= 0) {
+        if (curLim < satuan) {
           await client.message.send(ctx.jid,
-            `❌ *Limit habis!*\n\nLimit kamu sudah habis hari ini.\n💎 Sisa limit: *0*\n\nTunggu reset harian jam *00:00* atau hubungi owner untuk tambah limit.`
+            `❌ *Limit habis!*\n\nLimit kamu sudah habis hari ini.\n💎 Sisa limit: *${curLim}*\n\nTunggu reset harian jam *00:00* atau hubungi owner untuk tambah limit.`
           );
-          return;
+          return false;
         }
-        // Potong 1 limit
+        // Potong. `lim >= satuan` di WHERE bikin saldo nggak bisa nembus negatif
+        // walau dua command jalan barengan.
         await dbPool.execute(
-          'UPDATE rpg_members SET lim = lim - 1 WHERE bot_id = ? AND jid = ? AND registered = 1',
-          [botId, ctx.sender]
+          'UPDATE rpg_members SET lim = lim - ? WHERE bot_id = ? AND jid = ? AND registered = 1 AND lim >= ?',
+          [satuan, botId, ctx.sender, satuan]
         );
       } catch { /* non-critical, lanjut */ }
-    }
+      return true;
+    };
+
+    if (!(await kurangiLimit(1))) return;
 
     // Jalankan semua plugin
     let cmdHandled = false;
