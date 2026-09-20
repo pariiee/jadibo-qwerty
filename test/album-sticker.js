@@ -118,8 +118,9 @@ function bacaZip(buf) {
   const k1 = kunciMedia(mediaKey, KUNCI_ZIP);
   const k2 = kunciMedia(mediaKey, KUNCI_THUMB);
   assert.notDeepStrictEqual(k1.cipherKey, k2.cipherKey, 'zip & thumbnail harus kunci beda');
-  assert.notDeepStrictEqual(k1.iv, k2.iv, 'IV harus acak');
+  assert.notDeepStrictEqual(k1.iv, k2.iv, 'zip & thumbnail harus IV beda');
   const e1 = enkripsi(Buffer.from('tes'), k1);
+  assert.ok(e1.iv.equals(k1.iv), 'IV wajib turunan mediaKey, bukan acak');
   assert.strictEqual(e1.body.length % 16, 0, 'CBC harus kelipatan 16');
   const harap = crypto.createHmac('sha256', k1.macKey).update(e1.iv).update(e1.body).digest().subarray(0, 10);
   assert.ok(e1.mac.equals(harap), 'MAC 10 byte salah');
@@ -130,6 +131,21 @@ function bacaZip(buf) {
   const balik = crypto.createDecipheriv('aes-256-cbc', k1.cipherKey, e1.iv);
   assert.strictEqual(Buffer.concat([balik.update(e1.isi.subarray(0, -10)), balik.final()]).toString(), 'tes',
     'isi yang diupload harus bisa didekripsi pakai IV turunan mediaKey');
+
+  // 3b. SIMULASI PENERIMA (WA): cuma modal mediaKey. MAC harus cocok dan header
+  // ZIP harus ADA DI OFFSET 0 — inilah yang bikin pack kepakai, bukan blank.
+  const mk = crypto.randomBytes(32);
+  const kz = kunciMedia(mk, KUNCI_ZIP);
+  const encZip = enkripsi(pack.zip, kz);
+  const mkUlang = kunciMedia(mk, KUNCI_ZIP); // receiver hitung sendiri dari mediaKey
+  const macUlang = crypto.createHmac('sha256', mkUlang.macKey)
+    .update(mkUlang.iv).update(encZip.isi.subarray(0, -10)).digest().subarray(0, 10);
+  assert.ok(macUlang.equals(encZip.isi.subarray(-10)), 'MAC penerima nggak cocok');
+  const dZip = crypto.createDecipheriv('aes-256-cbc', mkUlang.cipherKey, mkUlang.iv);
+  const plainUlang = Buffer.concat([dZip.update(encZip.isi.subarray(0, -10)), dZip.final()]);
+  assert.strictEqual(plainUlang.subarray(0, 4).toString('hex'), '504b0304',
+    'penerima harus lihat header ZIP di offset 0');
+  assert.ok(plainUlang.equals(pack.zip), 'hasil dekripsi penerima != ZIP asli');
 
   // 4. Cover lama masih jalan (kode lama nggak boleh ikut rusak)
   const zip = zipStore([{ nama: 'a.txt', isi: Buffer.from('hai') }]);

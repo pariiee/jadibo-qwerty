@@ -99,9 +99,9 @@ function kunciMedia(mediaKey, info) {
   const { hkdf } = require('baileys');
   const expanded = hkdf(mediaKey, 112, { info });
   return {
-    iv: expanded.subarray(0, 16),
-    cipherKey: expanded.subarray(16, 48),
-    macKey: expanded.subarray(48, 80),
+    iv: Buffer.from(expanded.subarray(0, 16)),
+    cipherKey: Buffer.from(expanded.subarray(16, 48)),
+    macKey: Buffer.from(expanded.subarray(48, 80)),
   };
 }
 
@@ -109,14 +109,17 @@ function kunciMedia(mediaKey, info) {
 // 10 byte terakhir body = HMAC-SHA256(iv‖body)[:10].
 function enkripsi(plain, kunci) {
   const c = require('crypto');
-  const iv = c.randomBytes(16);
+  // IV WAJIB turunan mediaKey (HKDF), BUKAN acak. WA cuma punya mediaKey buat
+  // bikin ulang IV — kalau IV acak, blok pertama CBC jadi sampah dan WA baca
+  // ZIP-nya rusak → pack BLANK. Bukti dari pack sendiri di CDN: pakai IV acak
+  // (rt 207/209) → MAC beda + signature ZIP nggak ada di offset 0; sisa byte
+  // setelah blok 16 sempurna (jadi kuncinya benar, cuma IV-nya salah).
+  const iv = kunci.iv;
   const cipher = c.createCipheriv('aes-256-cbc', kunci.cipherKey, iv);
   const body = Buffer.concat([cipher.update(plain), cipher.final()]);
   const mac = c.createHmac('sha256', kunci.macKey).update(iv).update(body).digest().subarray(0, 10);
   // Yang diupload: ciphertext ‖ mac(10). IV TIDAK ikut — receiver bikin ulang IV
-  // dari mediaKey (HKDF). Kalau IV keikut, ZIP-nya geser 16 byte dan WA nampilin
-  // pack KOSONG (kejadian di rt 207, dibuktikan dari pack asli: header ZIP di
-  // offset 0, punya kita di offset 16).
+  // dari mediaKey (HKDF).
   return { isi: Buffer.concat([body, mac]), iv, body, mac };
 }
 
