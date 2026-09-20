@@ -180,7 +180,7 @@ function needsLidResolve({ sender, quotedSender, mentioned } = {}) {
 }
 
 module.exports = {
-  bare, isLid, isPn, toPn, toLid,
+  bare, isLid, isPn, isJlidUser, toPn, toLid,
   needsLidResolve,
   participantJids, participantPhones, cacheLidFromMeta, cacheLidFromKey,
   lidToPn, lidToPnAsync,

@@ -647,10 +647,14 @@ module.exports = async function funRpgHandler(ctx) {
           m = await getOrCreateMember(botData.id, target, pushName);
         } else {
           m = await findMember(botData.id, target);
-          if (!m) {
-            await reply(`User @${resolveMentionNum(target)} belum terdaftar.\n_Orangnya belum pernah chat bot — suruh dia ketik command apa aja dulu._`);
-            return true;
-          }
+        }
+        // Satu guard buat dua jalur: LID yang belum ke-petakan ke nomor juga
+        // balik `undefined` dari getOrCreateMember.
+        if (!m) {
+          await reply(isSelf
+            ? 'Profil lu belum kebaca nih — coba ketik command lain dulu, terus ulang *.me*.'
+            : `User @${resolveMentionNum(target)} belum terdaftar.\n_Orangnya belum pernah chat bot — suruh dia ketik command apa aja dulu._`);
+          return true;
         }
         // Auto-repair: kalau XP numpuk > threshold (bug lama gacha), langsung
         // level-up & sisakan XP yang bener
