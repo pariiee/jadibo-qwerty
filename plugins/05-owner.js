@@ -1489,7 +1489,7 @@ module.exports = async function ownerHandler(ctx) {
 
       const mention = target.split('@')[0];
       await ctx.client.message.send(ctx.jid,
-        `💰 *ADD MONEY*\n\n@${mention} mendapat *+${Number(jumlah).toLocaleString('id-ID')} koin*\nTotal koin: *${newMoney.toLocaleString('id-ID')}*`,
+        `💰 *ADD MONEY*\n\n@${mention} mendapat *+${Number(jumlah).toLocaleString('id-ID')}*\nTotal: *${newMoney.toLocaleString('id-ID')}*`,
         { mentions: [target] }
       );
       return true;

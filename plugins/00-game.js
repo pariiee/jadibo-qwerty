@@ -49,11 +49,11 @@ function similarity(a, b) {
 
 // ─── Random reward — salah satu dari 5 tipe ──────────────────────────────────
 const REWARD_TYPES = [
-  { field: 'money',      emoji: '💰', label: 'koin'      },
+  { field: 'money',      emoji: '💰', label: 'Money'     },
   { field: 'xp',         emoji: '⭐', label: 'XP'        },
   { field: 'healt',      emoji: '❤️',  label: 'HP'        },
   { field: 'lim',        emoji: '⚡', label: 'lim'       },
-  { field: 'bank_money', emoji: '🏦', label: 'koin bank' },
+  { field: 'bank_money', emoji: '🏦', label: 'Money bank' },
 ];
 
 async function giveReward(botId, sender, minVal, maxVal) {
