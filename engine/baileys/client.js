@@ -36,8 +36,23 @@ const {
   proto,
   Browsers,
 } = require('baileys');
+const path = require('path');
+const os = require('os');
+const fs = require('fs');
+const crypto = require('crypto');
 const { mentionsForChat, cacheLidFromMeta, cacheLidFromKey, participantJids } = require('../jid');
 const { randomBytes: acakByte } = require('crypto');
+
+// `sock.waUploadToServer()` nyari path CDN di tabel ini, dan Baileys v7 belum
+// punya entri buat sticker pack. Ditambahin di sini (bukan nge-patch
+// node_modules) karena node_modules nggak masuk git → nggak ikut ke-deploy.
+// Nilainya nyontek `MediaType::path()` whatsapp-rust. Object-nya sama persis
+// dengan yang dipakai internal Baileys, jadi mutasi di sini kebaca.
+{
+  const { MEDIA_PATH_MAP } = require('baileys');
+  MEDIA_PATH_MAP['sticker-pack'] = '/mms/sticker-pack';
+  MEDIA_PATH_MAP['thumbnail-sticker-pack'] = '/mms/thumbnail-sticker-pack';
+}
 
 // Tipe pesan yang `sendMessage` nolak ("Invalid media type") tapi WA biasa
 // nampilin — semua di sini dikirim lewat relayMessage (.owner kirim kontak).
@@ -513,8 +528,74 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
     );
   }
 
+  // ── Sticker pack (.stele) ─────────────────────────────────────────────────
+  // Dua upload yang HARUS pakai media key yang sama — proto `stickerPackMessage`
+  // cuma nyimpen SATU `mediaKey` buat ZIP pack DAN thumbnailnya. Jadi nggak bisa
+  // lewat prepareMedia() (dia bikin key sendiri-sendiri per panggilan).
+  //
+  // `opts.quoted` di sini bentuknya `{ id, remoteJid, participant, message }`
+  // (gaya lama repo), BUKAN `{ key, message }` — jadi jangan lewat
+  // toBaileysOptions(), nanti `key` hilang dan quotednya ilang.
+  async function kirimStickerPack(jid, isi, opts = {}) {
+    const { kunciMedia, enkripsi } = require('../stickerPack');
+    const mediaKey = crypto.randomBytes(32);
+    const kunciZip = kunciMedia(mediaKey, 'WhatsApp Sticker Pack Keys');
+    const kunciThumb = kunciMedia(mediaKey, 'WhatsApp Sticker Pack Thumbnail Keys');
+
+    const unggah = async (plain, mediaType, kunci) => {
+      const enc = enkripsi(plain, kunci);
+      const sha = crypto.createHash('sha256').update(plain).digest();
+      const encSha = crypto.createHash('sha256').update(enc.isi).digest();
+      // `sock.waUploadToServer` butuh FILE PATH, bukan Buffer — jadi tulis dulu.
+      // `enc.isi` = iv ‖ ciphertext ‖ mac(10 byte terakhir). MAC itu yang bikin
+      // pack/thumbnail diterima WA (media biasa nggak pakai MAC).
+      const tmp = path.join(os.tmpdir(), `pack_${crypto.randomUUID()}`);
+      fs.writeFileSync(tmp, enc.isi);
+      try {
+        const r = await sock.waUploadToServer(tmp, {
+          mediaType, fileEncSha256B64: encSha.toString('base64'), timeoutMs: 120000,
+        });
+        return {
+          directPath: r.directPath, mediaKeyTimestamp: r.ts,
+          fileLength: plain.length, fileSha256: sha, fileEncSha256: encSha,
+        };
+      } finally {
+        try { fs.unlinkSync(tmp); } catch {}
+      }
+    };
+
+    const packId = isi.packId || crypto.randomUUID();
+    // `nama`/`publisher` mentah dari plugin: WA suka nampilin emoji "@" di
+    // publisher yang isinya username, jadi pembersihan ada di pemanggil.
+    const [zip, thumb] = await Promise.all([
+      unggah(isi.zip, 'sticker-pack', kunciZip),
+      unggah(isi.thumb, 'thumbnail-sticker-pack', kunciThumb),
+    ]);
+
+    const q = toBaileysOptions(opts).quoted;
+    return sendRaw(jid, {
+      stickerPackMessage: {
+        name: isi.nama || 'Sticker Pack',
+        publisher: isi.publisher || '',
+        stickerPackId: packId,
+        stickers: isi.sticker,
+        fileLength: zip.fileLength, fileSha256: zip.fileSha256, fileEncSha256: zip.fileEncSha256,
+        mediaKey, directPath: zip.directPath, mediaKeyTimestamp: zip.mediaKeyTimestamp,
+        trayIconFileName: `${packId}.webp`,
+        thumbnailDirectPath: thumb.directPath,
+        thumbnailSha256: thumb.fileSha256, thumbnailEncSha256: thumb.fileEncSha256,
+        thumbnailWidth: 252, thumbnailHeight: 252,
+        stickerPackSize: isi.zip.length,
+        stickerPackOrigin: 2,
+      },
+    }, { quoted: q });
+  }
+
   async function send(jid, content, opts = {}) {
     if (!sock) throw new Error('socket belum siap');
+    // Kartu sticker pack (.stele) — uploadnya nggak bisa lewat prepareMedia():
+    // dobel upload (ZIP + thumbnail) yang HARUS se-mediaKey. Lihat kirimStickerPack.
+    if (content?.paketSticker) return kirimStickerPack(jid, content.paketSticker, opts);
     // Pesan berlabel AI — WA nampilin tanda "AI" di bubble-nya.
     if (opts.ai) return sendAi(jid, content?.text ?? content, opts);
     // Status grup: kontennya media/teks biasa, tapi bentuk proto & opsi

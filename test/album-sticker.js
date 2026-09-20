@@ -1,46 +1,141 @@
-// Uji buatStickerPack: pack = satu WebP berisi N frame (satu sticker = satu frame) + tray PNG 252×252.
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
-const assert = require('assert');
-const { spawnSync } = require('child_process');
-const { buatStickerPack } = require('../engine/sticker');
+'use strict';
 
-const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'uji_pack_'));
-const warna = ['red', 'lime', 'blue', 'yellow'];
-const bufs = warna.map((w, i) => {
-  const f = path.join(dir, `src_${i}.webp`);
-  const r = spawnSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-y', '-f', 'lavfi',
-    '-i', `color=${w}:s=509x512`, '-frames:v', '1', f]);
-  assert.strictEqual(r.status, 0, 'ffmpeg bikin sumber gagal');
-  return fs.readFileSync(f);
-});
+// Bukti format pack (bukan cuma "kodenya jalan"):
+// 1. ZIP store-only isi cover + N sticker, nama file = base64(sha256 isi).webp
+// 2. thumbnail JPEG 252×252
+// 3. media key: dua info HKDF beda → kunci beda; enkripsi diakhiri MAC 10 byte
+const assert = require('assert');
+const crypto = require('crypto');
+const { spawnSync } = require('child_process');
+const {
+  buatPaketSticker, ukuranWebp, kunciMedia, enkripsi, zipStore,
+  UKURAN_TRAY, KUNCI_ZIP, KUNCI_THUMB,
+} = require('../engine/stickerPack');
+
+// Baca central directory ZIP (offset 0, cuma buat entry terakhir) — pembaca
+// independen dari zipStore(), jadi kalau writer-nya salah, ini yang gagal.
+function bacaZip(buf) {
+  const eocd = buf.lastIndexOf(Buffer.from([0x50, 0x4b, 0x05, 0x06]));
+  assert.ok(eocd > 0, 'EOCD ZIP nggak ketemu');
+  const jumlah = buf.readUInt16LE(eocd + 10);
+  let p = buf.readUInt32LE(eocd + 16);
+  const out = [];
+  for (let i = 0; i < jumlah; i++) {
+    assert.strictEqual(buf.readUInt32LE(p), 0x02014b50, 'signature central directory salah');
+    const metode = buf.readUInt16LE(p + 10);
+    const crc = buf.readUInt32LE(p + 16);
+    const ukuran = buf.readUInt32LE(p + 24);
+    const namaLen = buf.readUInt16LE(p + 28);
+    const extraLen = buf.readUInt16LE(p + 30);
+    const komentarLen = buf.readUInt16LE(p + 32);
+    const lokal = buf.readUInt32LE(p + 42);
+    const nama = buf.subarray(p + 46, p + 46 + namaLen).toString();
+    const ukuranLokal = buf.readUInt32LE(lokal + 22);
+    const namaLokal = buf.readUInt16LE(lokal + 26);
+    const extraLokal = buf.readUInt16LE(lokal + 28);
+    const isi = buf.subarray(lokal + 30 + namaLokal + extraLokal, lokal + 30 + namaLokal + extraLokal + ukuranLokal);
+    out.push({ nama, metode, crc, ukuran, isi, namaLokal, extraLokal });
+    p += 46 + namaLen + extraLen + komentarLen;
+  }
+  return out;
+}
 
 (async () => {
-  const pack = await buatStickerPack(bufs, { nama: 'Uji Pack' });
-
-  assert.strictEqual(pack.pack.toString('ascii', 0, 4), 'RIFF', 'pack bukan RIFF');
-  assert.strictEqual(pack.pack.toString('ascii', 8, 12), 'WEBP', 'pack bukan WEBP');
-  let off = 12, anmf = 0, vp8x = false;
-  while (off + 8 <= pack.pack.length) {
-    const id = pack.pack.toString('ascii', off, off + 4);
-    const sz = pack.pack.readUInt32LE(off + 4);
-    if (id === 'ANMF') anmf++;
-    if (id === 'VP8X') vp8x = true;
-    off += 8 + sz + (sz % 2);
+  // Sticker palsu tapi valid: ffmpeg bikin 2 WebP 512×512 + 1 bergerak.
+  const dir = require('fs').mkdtempSync(require('path').join(require('os').tmpdir(), 'uji_pack_'));
+  const ff = (args) => {
+    const r = spawnSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-y', ...args]);
+    assert.strictEqual(r.status, 0, 'ffmpeg gagal: ' + r.stderr);
+  };
+  const sumber = [];
+  const warna = ['1e90ff', 'ff8c00', '32cd32'];
+  for (let i = 0; i < 3; i++) {
+    const f = require('path').join(dir, `u${i}.webp`);
+    // warna beda biar sha256-nya beda (kalau sama, ZIP bakal punya nama duplikat)
+    ff(['-f', 'lavfi', '-i', `color=c=0x${warna[i]}:s=512x512:d=1`,
+      '-frames:v', '1', '-c:v', 'libwebp', f]);
+    sumber.push({ isi: require('fs').readFileSync(f), emoji: ['😋', '', '😎'][i] });
   }
-  assert.ok(vp8x, 'nggak ada chunk VP8X');
-  assert.strictEqual(anmf, bufs.length, `frame pack ${anmf} != sticker ${bufs.length}`);
-  assert.strictEqual(pack.stickers.length, bufs.length, 'metadata sticker nggak sinkron');
-  for (const s of pack.stickers) {
-    assert.ok(/^[A-Za-z0-9+/]{43}=\.webp$/.test(s.fileName), 'fileName bukan base64 sha256: ' + s.fileName);
-    assert.strictEqual(s.isAnimated, false, 'sticker diam kok isAnimated true');
-  }
-  assert.strictEqual(pack.tray.toString('ascii', 1, 4), 'PNG', 'tray bukan PNG');
-  assert.strictEqual(pack.tray.readUInt32BE(16), 252, 'lebar tray bukan 252');
-  assert.strictEqual(pack.tray.readUInt32BE(20), 252, 'tinggi tray bukan 252');
-  assert.ok(pack.pack.length < 500 * 1024, 'pack kegedean: ' + pack.pack.length);
+  // Ke-4 sengaja NON-512 → wajib lewat ffmpeg (pad transparan ke 512×512).
+  const kecil = require('path').join(dir, 'kecil.webp');
+  ff(['-f', 'lavfi', '-i', 'color=c=0xff00ff:s=300x200:d=1', '-frames:v', '1', '-c:v', 'libwebp', kecil]);
+  sumber.push({ isi: require('fs').readFileSync(kecil), emoji: '😴' });
+  assert.deepStrictEqual(ukuranWebp(sumber[0].isi), { w: 512, h: 512, animasi: false },
+    'ukuranWebp harus baca 512×512 dari header');
+  assert.strictEqual(ukuranWebp(sumber[3].isi).w, 300, 'ukuranWebp harus baca 300 dari header');
 
-  console.log(`OK pack ${pack.pack.length}B frame ${anmf} tray ${pack.tray.length}B`);
-  fs.rmSync(dir, { recursive: true, force: true });
-})().catch(e => { console.error('ADA GAGAL:', e.message); process.exit(1); });
+  const packId = 'c3bc2239-1da7-40a4-a75f-c1ccc3e3da46';
+  const pack = await buatPaketSticker(sumber, { nama: 'uji pack', packId });
+
+  // 1. ZIP — 1 cover + 4 sticker
+  const isiZip = bacaZip(pack.zip);
+  assert.strictEqual(isiZip.length, 5, 'harus 5 entry: cover + 4 sticker');
+  assert.strictEqual(isiZip[0].nama, `${packId}.webp`, 'cover wajib entry pertama');
+  assert.deepStrictEqual(isiZip.map((e) => e.metode), [0, 0, 0, 0, 0], 'zip harus store-only (method 0)');
+  assert.strictEqual(isiZip.length, new Set(isiZip.map((e) => e.nama)).size, 'nama entry ZIP harus unik');
+  for (const e of isiZip) {
+    assert.strictEqual(e.ukuran, e.isi.length, `${e.nama}: ukuran lokal != ukuran pusat`);
+    assert.strictEqual(e.crc, require('zlib').crc32(e.isi) >>> 0, `${e.nama}: CRC salah`);
+    assert.ok(e.isi.subarray(0, 4).toString() === 'RIFF' && e.isi.subarray(8, 12).toString() === 'WEBP',
+      `${e.nama}: isinya bukan WebP`);
+    assert.ok(/^[A-Za-z0-9_-]+\.webp$/.test(e.nama) || e.nama === `${packId}.webp`,
+      `${e.nama}: nama harus base64url TANPA padding + .webp`);
+  }
+  // Yang udah 512×512 harus dikirim APA ADANYA (ffmpeg 6.1 di VPS nggak bisa
+  // decode WebP bergerak — jadi jangan lewat ffmpeg kalau nggak perlu).
+  for (let i = 0; i < 3; i++) {
+    assert.ok(isiZip[1 + i].isi.equals(sumber[i].isi), `sticker ${i} 512×512 kena re-encode ffmpeg`);
+  }
+  // Yang 300×200 wajib dipad ke 512×512 oleh ffmpeg.
+  assert.deepStrictEqual(
+    { w: ukuranWebp(isiZip[4].isi).w, h: ukuranWebp(isiZip[4].isi).h }, { w: 512, h: 512 },
+    'sticker non-512 harus dipad jadi 512×512');
+  assert.deepStrictEqual(pack.sticker.map((s) => s.fileName), isiZip.slice(1).map((e) => e.nama),
+    'fileName di proto harus sama dengan nama di ZIP');
+  for (const s of pack.sticker) {
+    const cari = isiZip.find((e) => e.nama === s.fileName);
+    assert.strictEqual(s.fileName, crypto.createHash('sha256').update(cari.isi).digest('base64url') + '.webp',
+      'nama file harus base64url(sha256 isi).webp');
+  }
+  assert.strictEqual(pack.sticker[0].isAnimated, false, 'WebP diam harus isAnimated:false');
+  assert.deepStrictEqual(pack.sticker[1].emojis, [], 'emoji kosong → array kosong (bukan [""])');
+
+  // 2. Thumbnail 252×252 JPEG
+  assert.strictEqual(pack.thumb[0], 0xff, 'thumbnail harus JPEG');
+  assert.strictEqual(pack.thumb[1], 0xd8, 'thumbnail harus JPEG');
+
+  // Dedupe: isi sama → nama ZIP sama → file-nya cukup sekali di ZIP, tapi
+  // sticker kembar TETAP masuk proto (tray di HP nampil 5, bukan 4).
+  const kembar = sumber.concat([{ isi: sumber[0].isi, emoji: '🔁' }]);
+  const packDedupe = await buatPaketSticker(kembar, { nama: 'dedupe', packId });
+  assert.strictEqual(packDedupe.sticker.length, 5, 'sticker kembar tetap masuk proto');
+  assert.strictEqual(bacaZip(packDedupe.zip).length, 5, 'ZIP: cover + 4 file unik');
+  assert.strictEqual(packDedupe.sticker[4].fileName, packDedupe.sticker[0].fileName,
+    'sticker kembar nunjuk file yang sama');
+
+  // 3. Media key
+  const mediaKey = crypto.randomBytes(32);
+  const k1 = kunciMedia(mediaKey, KUNCI_ZIP);
+  const k2 = kunciMedia(mediaKey, KUNCI_THUMB);
+  assert.notDeepStrictEqual(k1.cipherKey, k2.cipherKey, 'zip & thumbnail harus kunci beda');
+  assert.notDeepStrictEqual(k1.iv, k2.iv, 'IV harus acak');
+  const e1 = enkripsi(Buffer.from('tes'), k1);
+  assert.strictEqual(e1.body.length % 16, 0, 'CBC harus kelipatan 16');
+  const harap = crypto.createHmac('sha256', k1.macKey).update(e1.iv).update(e1.body).digest().subarray(0, 10);
+  assert.ok(e1.mac.equals(harap), 'MAC 10 byte salah');
+  assert.strictEqual(e1.isi.length, 16 + e1.body.length + 10, 'isi = iv + ciphertext + mac');
+  assert.ok(e1.isi.subarray(0, 16).equals(e1.iv), 'iv harus di depan');
+  assert.ok(e1.isi.subarray(16, 16 + e1.body.length).equals(e1.body), 'ciphertext di tengah');
+  assert.ok(e1.isi.subarray(-10).equals(e1.mac), '10 byte terakhir = MAC');
+
+  // 4. Cover lama masih jalan (kode lama nggak boleh ikut rusak)
+  const zip = zipStore([{ nama: 'a.txt', isi: Buffer.from('hai') }]);
+  assert.strictEqual(zip.subarray(0, 4).toString('hex'), '504b0304', 'local header ZIP salah');
+  assert.strictEqual(bacaZip(zip)[0].crc, require('zlib').crc32(Buffer.from('hai')) >>> 0);
+
+  assert.strictEqual(UKURAN_TRAY, 252, 'tray WA 252px');
+
+  require('fs').rmSync(dir, { recursive: true, force: true });
+  console.log(`OK pack ${pack.zip.length}B ${pack.sticker.length} sticker tray ${pack.thumb.length}B`);
+  console.log(`OK ZIP ${isiZip.map((e) => e.nama.slice(0, 10)).join(' | ')}`);
+})().catch((e) => { console.error('GAGAL:', e.message); process.exit(1); });
