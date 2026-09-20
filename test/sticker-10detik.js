@@ -37,20 +37,36 @@ const gen = spawnSync('ffmpeg', [
 ], { encoding: 'utf8' });
 assert.strictEqual(gen.status, 0, 'gagal bikin video uji: ' + String(gen.stderr || '').slice(-300));
 
+// Durasi dibaca langsung dari container WebP (chunk ANMF), bukan lewat
+// ffprobe/ffmpeg: ffmpeg 6.1 di VPS nggak mau nge-decode animated WebP
+// (ffmpeg 9 lokal bisa), jadi parser sendiri bebas dari beda versi itu.
+// ANMF payload: 16 byte header, durasi frame = 3 byte little-endian di offset 12.
+function durasiWebp(buf) {
+  assert.strictEqual(buf.toString('ascii', 0, 4), 'RIFF', 'bukan file RIFF');
+  assert.strictEqual(buf.toString('ascii', 8, 12), 'WEBP', 'bukan file WebP');
+  let off = 12, ms = 0, frame = 0;
+  while (off + 8 <= buf.length) {
+    const id   = buf.toString('ascii', off, off + 4);
+    const size = buf.readUInt32LE(off + 4);
+    if (id === 'ANMF') {
+      const p = off + 8;
+      ms += buf[p + 12] | (buf[p + 13] << 8) | (buf[p + 14] << 16);
+      frame++;
+    }
+    off += 8 + size + (size % 2);
+  }
+  return { ms, frame };
+}
+
 (async () => {
   const { buf, tangga } = await videoKeStickerWebp(inMp4, outWebp);
   const kb = Math.round(buf.length / 1024);
+  const { ms, frame } = durasiWebp(buf);
+  const detik = ms / 1000;
 
-  // ffprobe nggak bisa baca durasi animated WebP (format=duration = N/A), jadi
-  // dekode balik ke null dan baca `time=` di stderr — itu bukti yang sama
-  // kayak yang dipakai WhatsApp waktu muter stickernya.
-  const cek = spawnSync('ffmpeg', ['-v', 'info', '-i', outWebp, '-f', 'null', '-'], { encoding: 'utf8' });
-  const m = /time=(\d+):(\d+):(\d+\.\d+)/.exec(String(cek.stderr || ''));
-  const detik = m ? (+m[1]) * 3600 + (+m[2]) * 60 + parseFloat(m[3]) : NaN;
+  console.log(`  video 12 detik → sticker ${kb}KB, durasi ${detik.toFixed(2)}s (${frame} frame), tangga ${tangga ? `${tangga.px}px/${tangga.fps}fps/q${tangga.q}` : '(semua tangga kepakai)'}`);
 
-  console.log(`  video 12 detik → sticker ${kb}KB, durasi ${Number.isFinite(detik) ? detik.toFixed(2) : '?'}s, tangga ${tangga ? `${tangga.px}px/${tangga.fps}fps/q${tangga.q}` : '(semua tangga kepakai)'}`);
-
-  assert.ok(Number.isFinite(detik), 'nggak bisa baca durasi sticker: ' + String(cek.stderr || '').slice(-200));
+  assert.ok(frame > 0, 'sticker nggak punya frame animasi (ANMF kosong)');
   assert.ok(detik >= 9.5, `durasi ${detik}s — harusnya ~10 detik, jangan balik ke 5`);
   assert.ok(buf.length <= 500 * 1024, `sticker ${kb}KB > 500KB (batas WhatsApp)`);
 
