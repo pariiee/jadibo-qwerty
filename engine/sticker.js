@@ -67,10 +67,12 @@ const TARGET_STICKER_KB = 400;
 // Dipakai .s/.sticker (video & GIF), .wm, .attp, .bratvid. Return buffer WebP (belum EXIF).
 // loop=true buat sumber yang lebih pendek dari 10 detik (bratvid 4,5s): diputer
 // ulang sampai penuh 10 detik — kalau nggak, stickernya cuma sepanjang sumbernya.
-// regang=<pengali> buat sumber yang gerakannya cuma muter warna (attp: GIF 0,8s):
-// animasinya DIRENGGANG jadi 10 detik penuh (fps=<frame sumber / detik>), bukan
-// di-loop — di-loop bikin warnanya keliatan ngulang terus.
-async function videoKeStickerWebp(inPath, outPath, { detik = MAX_DETIK_STICKER, tangga = TANGGA_STICKER, loop = false, regang = 0, fps = 0 } = {}) {
+// regang=<pengali> buat sumber yang gerakannya cuma muter warna (attp: GIF 0,8s,
+// 20 warna): diregang jadi 10 detik biar warnanya sekali jalan, bukan ngulang.
+// `halus` WAJIB bareng regang — tanpa interpolasi, 20 warna itu cuma ganti 2×/detik
+// (keliatan diam, user bilang "ga gerak"); dengan minterpolate=blend, frame-nya
+// disisipi warna campuran → ganti ~6×/detik, secepat versi loop yang dulu.
+async function videoKeStickerWebp(inPath, outPath, { detik = MAX_DETIK_STICKER, tangga = TANGGA_STICKER, loop = false, regang = 0, fps = 0, halus = false } = {}) {
   const { spawn } = require('child_process');
   const fs = require('fs');
   const durasi = `00:00:${String(detik).padStart(2, '0')}`;
@@ -81,7 +83,8 @@ async function videoKeStickerWebp(inPath, outPath, { detik = MAX_DETIK_STICKER, 
 
   for (const t of tangga) {
     const rate = fps || t.fps;
-    const vf = `${regang ? `setpts=${regang}*PTS,` : ''}${skala},fps=${rate}`;
+    const vf = `${regang ? `setpts=${regang}*PTS,` : ''}${skala},`
+             + `${halus ? `minterpolate=fps=${rate}:mi_mode=blend,` : ''}fps=${rate}`;
     await new Promise((resolve, reject) => {
       const ff = spawn('ffmpeg', [
         '-y',

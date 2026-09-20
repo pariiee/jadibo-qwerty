@@ -549,17 +549,18 @@ module.exports = async function toolsHandler(ctx) {
           timeout: 30000,
         });
         const buffer = Buffer.from(res.data);
-        // Sumbernya GIF 0,8 detik (BE: FRAME_COUNT 20 × 40ms) yang cuma muter
-        // warna. DIRENGGANG 12,5× jadi 10 detik (20 frame @2fps) biar warna
-        // pelanginya kepencar sepanjang durasi — kalau di-loop, warnanya
-        // keliatan ngulang terus dan stickernya berhenti di frame merah.
+        // Sumbernya GIF 0,8 detik isi 20 warna (BE: FRAME_COUNT 20 × 40ms).
+        // Diregang 12,5× + diinterpolasi jadi 60 frame/10 detik: warnanya jalan
+        // sekali dari merah → kuning → hijau → biru → ungu (nggak ngulang kayak
+        // loop) TAPI tetep ganti ~6×/detik (tanpa interpolasi cuma 2×/detik,
+        // keliatan diam).
         const os   = require('os');
         const path = require('path');
         const fs   = require('fs');
         const tmpIn  = path.join(os.tmpdir(), `attp_in_${Date.now()}.gif`);
         const tmpOut = path.join(os.tmpdir(), `attp_out_${Date.now()}.webp`);
         fs.writeFileSync(tmpIn, buffer);
-        const { buf: webpBuffer } = await videoKeStickerWebp(tmpIn, tmpOut, { regang: 12.5, fps: 2 });
+        const { buf: webpBuffer } = await videoKeStickerWebp(tmpIn, tmpOut, { regang: 12.5, fps: 6, halus: true });
         try { fs.unlinkSync(tmpIn); } catch {}
         try { fs.unlinkSync(tmpOut); } catch {}
         const stickerBuffer = await addStickerExif(webpBuffer, process.env.STICKER_PACK_NAME, process.env.STICKER_AUTHOR);

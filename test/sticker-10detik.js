@@ -32,11 +32,11 @@ assert.ok(!/00:00:0[5-9]/.test(srcPlugin), 'cap durasi 5-9 detik balik lagi di 0
 const blokBratvid = srcPlugin.slice(srcPlugin.indexOf("case 'bratvid':"), srcPlugin.indexOf("case 'bratvid':") + 1500);
 assert.ok(/videoKeStickerWebp\([^)]*loop: true/.test(blokBratvid), '.bratvid harus lewat helper + loop (sumbernya 4,5 detik)');
 
-// `.attp` sumbernya GIF 0,8 detik yang cuma muter warna → DIRENGGANG jadi 10
-// detik, bukan di-loop: kalau di-loop warnanya keliatan ngulang terus dan
-// stickernya berhenti di frame pertama (merah).
+// `.attp` sumbernya GIF 0,8 detik isi 20 warna → DIRENGGANG jadi 10 detik
+// (sekali jalan, nggak ngulang) + diinterpolasi biar warnanya ganti ~6×/detik.
 const blokAttp = srcPlugin.slice(srcPlugin.indexOf("case 'attp':"), srcPlugin.indexOf("case 'attp':") + 1500);
 assert.ok(/videoKeStickerWebp\([^)]*regang: [\d.]+/.test(blokAttp), '.attp harus lewat helper + regang, bukan loop');
+assert.ok(/videoKeStickerWebp\([^)]*halus: true/.test(blokAttp), '.attp harus interpolasi (halus: true) — tanpa itu warnanya cuma ganti 2×/detik dan keliatan diam');
 assert.ok(!/loop: true/.test(blokAttp), '.attp jangan di-loop lagi');
 
 const tmp     = os.tmpdir();
@@ -53,10 +53,12 @@ assert.strictEqual(gen.status, 0, 'gagal bikin video uji: ' + String(gen.stderr 
 // ffprobe/ffmpeg: ffmpeg 6.1 di VPS nggak mau nge-decode animated WebP
 // (ffmpeg 9 lokal bisa), jadi parser sendiri bebas dari beda versi itu.
 // ANMF payload: 16 byte header, durasi frame = 3 byte little-endian di offset 12.
+const crypto = require('crypto');
 function durasiWebp(buf) {
   assert.strictEqual(buf.toString('ascii', 0, 4), 'RIFF', 'bukan file RIFF');
   assert.strictEqual(buf.toString('ascii', 8, 12), 'WEBP', 'bukan file WebP');
   let off = 12, ms = 0, frame = 0;
+  const unik = new Set();
   while (off + 8 <= buf.length) {
     const id   = buf.toString('ascii', off, off + 4);
     const size = buf.readUInt32LE(off + 4);
@@ -64,10 +66,11 @@ function durasiWebp(buf) {
       const p = off + 8;
       ms += buf[p + 12] | (buf[p + 13] << 8) | (buf[p + 14] << 16);
       frame++;
+      unik.add(crypto.createHash('md5').update(buf.slice(p + 16, off + 8 + size)).digest('hex'));
     }
     off += 8 + size + (size % 2);
   }
-  return { ms, frame };
+  return { ms, frame, unik: unik.size };
 }
 
 // Canvas dari chunk VP8X (3 byte little-endian, +1).
@@ -143,9 +146,10 @@ function cek512(buf, label) {
   try { fs.unlinkSync(inPendek); } catch {}
   try { fs.unlinkSync(outPendek); } catch {}
 
-  // ── Kasus .attp: sumber 0,8 detik DIRENGGANG jadi 10 detik ───────────────
-  // Kalau di-loop, frame-nya digandain (0,8s @10fps → 100 frame) dan warnanya
-  // keliatan ngulang; diregang → 20 frame @2fps, sekali jalan sampai habis.
+  // ── Kasus .attp: sumber 0,8 detik DIRENGGANG + DIINTERPOLASI jadi 10 detik ─
+  // Dua-duanya wajib: regang bikin warnanya sekali jalan (nggak ngulang kayak
+  // loop), interpolasi bikin warna ganti ~6×/detik (tanpa itu cuma 2×/detik =
+  // keliatan diam — persis yang user keluhin).
   const inRegang  = path.join(tmp, `tes_sticker_regang_in_${Date.now()}.gif`);
   const outRegang = path.join(tmp, `tes_sticker_regang_out_${Date.now()}.webp`);
   const genRegang = spawnSync('ffmpeg', [
@@ -153,13 +157,20 @@ function cek512(buf, label) {
   ], { encoding: 'utf8' });
   assert.strictEqual(genRegang.status, 0, 'gagal bikin GIF 0,8s: ' + String(genRegang.stderr || '').slice(-200));
 
-  const regang = await videoKeStickerWebp(inRegang, outRegang, { regang: 12.5, fps: 2 });
+  const regang = await videoKeStickerWebp(inRegang, outRegang, { regang: 12.5, fps: 6, halus: true });
   const dRegang = durasiWebp(regang.buf);
-  console.log(`  sumber 0,8 detik + regang 12,5× → sticker ${(dRegang.ms / 1000).toFixed(2)}s (${dRegang.frame} frame), ${Math.round(regang.buf.length / 1024)}KB`);
+  console.log(`  sumber 0,8 detik + regang 12,5× + halus → sticker ${(dRegang.ms / 1000).toFixed(2)}s (${dRegang.frame} frame, ${dRegang.unik} gambar unik), ${Math.round(regang.buf.length / 1024)}KB`);
   assert.ok(dRegang.ms / 1000 >= 9.5, `sumber 0,8s diregang harus 10 detik, ini ${(dRegang.ms / 1000).toFixed(2)}s`);
-  assert.ok(dRegang.frame <= 25, `sumber 0,8s @2fps harusnya ~20 frame, ini ${dRegang.frame} — kayaknya di-loop, bukan diregang`);
+  assert.ok(dRegang.unik > 30, `cuma ${dRegang.unik} gambar unik — interpolasinya nggak jalan, warnanya bakal keliatan diam`);
   assert.ok(regang.buf.length <= 500 * 1024, 'sticker hasil regang > 500KB');
   cek512(regang.buf, 'sumber 0,8s + regang');
+
+  // Tanpa `halus`, frame sumber (20 warna) cuma digandain → ganti 2×/detik.
+  // Ini yang bikin user bilang "ga gerak", jadi jangan sampai balik lagi.
+  const outDatar = path.join(tmp, `tes_sticker_datar_out_${Date.now()}.webp`);
+  const datar = await videoKeStickerWebp(inRegang, outDatar, { regang: 12.5, fps: 6 });
+  assert.ok(durasiWebp(datar.buf).unik <= 20, 'tanpa halus harusnya cuma 20 gambar unik — kalau lebih, ada interpolasi diam-diam');
+  try { fs.unlinkSync(outDatar); } catch {}
 
   try { fs.unlinkSync(inRegang); } catch {}
   try { fs.unlinkSync(outRegang); } catch {}
