@@ -120,6 +120,36 @@ function biayaRepair(type, lv) {
   return Math.ceil(hargaGear(type, lv) * BIAYA_REPAIR);
 }
 
+/**
+ * Baca argumen `.atm` / `.bank` jadi satu aksi. Pure — nggak nyentuh DB.
+ *   []                    → { aksi: 'info' }
+ *   ['100']               → { aksi: 'setor', jumlah: 100 }      (angka polos)
+ *   ['all'] / ['semua']   → { aksi: 'setor', semua: true }
+ *   ['simpan','100']      → { aksi: 'setor', jumlah: 100 }
+ *   ['pull','100']        → { aksi: 'tarik', jumlah: 100 }
+ *   ['pull','all']        → { aksi: 'tarik', semua: true }
+ *   ngawur                → { aksi: 'bantuan' }
+ */
+function bacaAtm(args) {
+  const a = (args[0] || '').toLowerCase();
+  const b = (args[1] || '').toLowerCase();
+  const semuaKata = w => w === 'all' || w === 'semua';
+
+  if (!a || a === 'info' || a === 'saldo') return { aksi: 'info' };
+  if (a === 'pull' || a === 'tarik' || a === 'ambil') {
+    return semuaKata(b) ? { aksi: 'tarik', semua: true }
+                        : { aksi: 'tarik', jumlah: parseInt(b, 10) };
+  }
+  // angka polos = setor. `.atm 100`
+  if (/^\d+$/.test(a)) return { aksi: 'setor', jumlah: parseInt(a, 10) };
+  if (semuaKata(a)) return { aksi: 'setor', semua: true };
+  if (a === 'simpan' || a === 'setor' || a === 'taro') {
+    return semuaKata(b) ? { aksi: 'setor', semua: true }
+                        : { aksi: 'setor', jumlah: parseInt(b, 10) };
+  }
+  return { aksi: 'bantuan' };
+}
+
 // ─── Gear terpasang ──────────────────────────────────────────────────────────
 // Level + durability disimpan di hewan_json.gear, bukan kolom baru.
 // ponytail: kalau nanti gear perlu query lintas-user (mis. "siapa paling banyak
@@ -1635,71 +1665,68 @@ module.exports = async function funRpgHandler(ctx) {
     case 'bank':
     case 'atm': {
       const botId  = botData.id;
-      const sub    = (args[0] || '').toLowerCase();
+      const { aksi, jumlah: minta, semua } = bacaAtm(args);
       const member = await getOrCreateMember(botId, sender, pushName);
       const dompet = Number(member.money) || 0;
       const bank   = Number(member.bank_money) || 0;
-      // `.atm 100` = setor langsung tanpa kata kunci
-      const telanjang = /^\d+$/.test(args[0] || '');
-      const posJumlah = telanjang ? 0 : 1;
 
-      if (!sub || sub === 'info' || sub === 'saldo') {
+      if (aksi === 'info') {
         await reply(
           `🏦 *BANK*\n\n` +
           `👤 ${member.name || pushName}\n\n` +
           `💵 Dompet : *${formatNum(dompet)} koin*\n` +
           `🏦 Bank   : *${formatNum(bank)} koin*\n` +
           `📊 Total  : *${formatNum(dompet + bank)} koin*\n\n` +
-          `${p}bank simpan <jumlah>\n` +
-          `${p}bank tarik <jumlah>`
+          `${p}atm <jumlah> — setor (contoh: ${p}atm 100)\n` +
+          `${p}atm all — setor semua uang di kantong\n` +
+          `${p}atm pull <jumlah> — tarik dari bank\n` +
+          `${p}atm pull all — tarik semua dari bank`
         );
         return true;
       }
 
-      if (telanjang || sub === 'simpan' || sub === 'setor' || sub === 'taro') {
-        const jumlah = parseInt(args[posJumlah], 10);
-        if (!jumlah || isNaN(jumlah) || jumlah <= 0) {
-          await reply(`Penggunaan: ${p}atm <jumlah>`);
+      if (aksi === 'setor') {
+        const n = semua ? dompet : minta;
+        if (!n || isNaN(n) || n <= 0) {
+          await reply(semua
+            ? `❌ Kantong kamu kosong, nggak ada yang bisa disetor.`
+            : `Penggunaan: ${p}atm <jumlah>\natau: ${p}atm all — setor semua uang di kantong`);
           return true;
         }
-        if (jumlah < 10) { await reply('❌ Minimal simpan 10 koin!'); return true; }
-        if (dompet < jumlah) {
+        if (!semua && n < 10) { await reply('❌ Minimal simpan 10 koin!'); return true; }
+        if (dompet < n) {
           await reply(`❌ Koin di dompet tidak cukup!\n\nDompet: *${formatNum(dompet)}*`);
           return true;
         }
-        await updateMember(botId, sender, {
-          money:        dompet - jumlah,
-          bank_money: bank + jumlah,
-        });
+        await updateMember(botId, sender, { money: dompet - n, bank_money: bank + n });
         await reply(
-          `🏦 *SETOR BANK*\n\n` +
-          `✅ *${formatNum(jumlah)} koin* berhasil disimpan!\n\n` +
-          `💵 Dompet : *${formatNum(dompet - jumlah)} koin*\n` +
-          `🏦 Bank   : *${formatNum(bank + jumlah)} koin*`
+          `🏦 *SETOR BANK*${semua ? ' (SEMUA)' : ''}\n\n` +
+          `✅ *${formatNum(n)} koin* berhasil disimpan!\n\n` +
+          `💵 Dompet : *${formatNum(dompet - n)} koin*\n` +
+          `🏦 Bank   : *${formatNum(bank + n)} koin*`
         );
         return true;
       }
 
-      if (sub === 'pull' || sub === 'tarik' || sub === 'ambil') {
-        const jumlah = parseInt(args[1], 10);
-        if (!jumlah || isNaN(jumlah) || jumlah <= 0) {
-          await reply(`Penggunaan: ${p}atm pull <jumlah>`);
+      if (aksi === 'tarik') {
+        const n = semua ? bank : minta;
+        if (!n || isNaN(n) || n <= 0) {
+          await reply(semua
+            ? `❌ Bank kamu kosong, nggak ada yang bisa ditarik.`
+            : `Penggunaan: ${p}atm pull <jumlah>\natau: ${p}atm pull all`);
           return true;
         }
-        if (jumlah < 10) { await reply('❌ Minimal tarik 10 koin!'); return true; }
-        if (bank < jumlah) {
+        if (!semua && n < 10) { await reply('❌ Minimal tarik 10 koin!'); return true; }
+        if (bank < n) {
           await reply(`❌ Saldo bank tidak cukup!\n\nBank: *${formatNum(bank)}*`);
           return true;
         }
-        await updateMember(botId, sender, {
-          money:        dompet + jumlah,
-          bank_money: bank - jumlah,
-        });
+        await updateMember(botId, sender, { money: dompet + n, bank_money: bank - n });
         await reply(
-          `🏦 *TARIK BANK*\n\n` +
-          `✅ *${formatNum(jumlah)} koin* berhasil ditarik!\n\n` +
-          `💵 Dompet : *${formatNum(dompet + jumlah)} koin*\n` +
-          `🏦 Bank   : *${formatNum(bank - jumlah)} koin*`
+          `🏦 *TARIK BANK*${semua ? ' (SEMUA)' : ''}\n\n` +
+          `✅ *${formatNum(n)} koin* berhasil ditarik!\n\n` +
+          `💵 Dompet : *${formatNum(dompet + n)} koin*\n` +
+          `🏦 Bank   : *${formatNum(bank - n)} koin*`
         );
         return true;
       }
@@ -1708,7 +1735,9 @@ module.exports = async function funRpgHandler(ctx) {
         `🏦 *BANK — Perintah*\n\n` +
         `${p}atm — lihat saldo\n` +
         `${p}atm <jumlah> — setor ke bank (contoh: ${p}atm 100)\n` +
+        `${p}atm all — setor SEMUA uang di kantong\n` +
         `${p}atm pull <jumlah> — tarik dari bank\n` +
+        `${p}atm pull all — tarik semua dari bank\n` +
         `${p}bank simpan/tarik <jumlah> — sama aja`
       );
       return true;
@@ -2627,7 +2656,7 @@ module.exports.getRankByLevel = getRankByLevel;
 // Helper murni buat unit test (test/rpg-energi.js). Jangan dipakai dari plugin lain.
 module.exports._uji = {
   energiSekarang, pesanEnergiKurang, barEnergi, biayaRepair, statGear, barisDur,
-  gearDipakai, gearLevel, gearDur, gearAktif, pasangGear, kurangiDur,
+  gearDipakai, gearLevel, gearDur, gearAktif, pasangGear, kurangiDur, bacaAtm,
   bacaJson, bacaItem, KEY_ITEM, KEY_GEAR,
   ENERGI_MAKS, ENERGI_REGEN_MENIT, DUR_MAKS, STORE_ITEMS,
 };
