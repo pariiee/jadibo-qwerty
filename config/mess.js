@@ -37,11 +37,11 @@ const mess = {
 
   // Label peran, urut dari yang paling sakti. Kuncinya = `ctx.role`
   // (dihitung di engine/whatsappEngine.js). Dipakai `.menu`, `.limit`, `.bot`.
+  // Cuma 4: admin grup bukan role, itu hak per grup (ctx.isAdmin).
   roleLabel: {
     dev:     'Developer',
     owner:   'Owner',
     premium: 'Premium',
-    admin:   'Admin grup',
     user:    'User biasa',
   },
 

@@ -650,15 +650,16 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
     ctx.isDev = Boolean(senderNum) && DEV_NUMBERS.has(senderNum);
 
     // ── Role — urutan dari yang paling sakti ─────────────────────────────────
-    // dev > owner > premium > admin grup > user.
+    // dev > owner > premium > user.
     // Dev di ATAS owner: owner itu pemilik bot, dev yang ngoprek kodenya.
     // Dihitung SEKALI di sini, jadi semua tampilan & gate baca sumber yang sama
     // (dulu `.limit` cuma lihat kolom `premium` di DB, jadi owner+dev pun
     // kelihatan 'User biasa').
+    // Admin grup SENGAJA nggak jadi role: itu hak di dalam satu grup
+    // (ctx.isAdmin, dipakai buat gate fitur grup), bukan tingkat pengguna.
     ctx.role = ctx.isDev     ? 'dev'
       : ctx.isOwner          ? 'owner'
       : ctx.isPremium        ? 'premium'
-      : ctx.isAdmin          ? 'admin'
       : 'user';
 
     // ── Owner greeting ────────────────────────────────────────────────────────

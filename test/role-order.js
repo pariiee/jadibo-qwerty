@@ -28,10 +28,12 @@ function cek(nama, fn) {
 
 console.log('test/role-order.js');
 
-cek('label role lengkap & urutannya dev > owner > premium > admin > user', () => {
+cek('label role: cuma 4, urut dev > owner > premium > user', () => {
   const urut = Object.keys(mess.roleLabel);
-  assert.deepStrictEqual(urut, ['dev', 'owner', 'premium', 'admin', 'user'],
+  assert.deepStrictEqual(urut, ['dev', 'owner', 'premium', 'user'],
     `urutan label salah: ${urut.join(' > ')}`);
+  // admin grup itu hak per grup, bukan role
+  assert.ok(!('admin' in mess.roleLabel), 'admin nggak boleh jadi role');
 });
 
 cek('engine hitung ctx.role, dev menang atas owner', () => {
@@ -39,7 +41,7 @@ cek('engine hitung ctx.role, dev menang atas owner', () => {
   // rantai ternary: isDev dulu, baru isOwner, isPremium, isAdmin — terakhir 'user'
   const blok = engine.slice(engine.indexOf('ctx.role ='));
   const urut = [...blok.slice(0, 400).matchAll(/ctx\.is(Dev|Owner|Premium|Admin)/g)].map((m) => m[1]);
-  assert.deepStrictEqual(urut, ['Dev', 'Owner', 'Premium', 'Admin'],
+  assert.deepStrictEqual(urut, ['Dev', 'Owner', 'Premium'],
     `urutan pengecekan role salah: ${urut.join(' > ')}`);
 });
 
@@ -57,8 +59,8 @@ cek('.limit pakai ctx.role, bukan kolom premium mentah', () => {
   assert.ok(/mess\.roleLabel\[ctx\.role\]/.test(blok), '.limit masih nggak baca ctx.role');
   assert.ok(!/isPrem \? '\*Premium\*/.test(blok), ".limit masih pakai ternary isPrem lama");
   assert.ok(!/const \{ name, lim, premium \}/.test(blok), '.limit masih ambil kolom premium');
-  assert.ok(/skipLim \? `\*\$\{lim\}\* \(nggak kepotong\)`/.test(blok),
-    'baris Limit nggak ngejelasin limit-nya nggak kepotong');
+  // dev/owner/premium/admin -> lambang infinity, bukan angka limit yang nyisa
+  assert.ok(/skipLim \? '♾️'/.test(blok), 'role yang skip limit harus tampil ♾️');
 });
 
 cek('cuma role user yang kena gate limit', () => {

@@ -640,7 +640,7 @@ module.exports = async function infoHandler(ctx) {
         const txt =
           `💎 *CEK LIMIT*\n\n` +
           `👤 Nama   : ${name || sender.split('@')[0]}\n` +
-          `💎 Limit  : ${skipLim ? `*${lim}* (nggak kepotong)` : `*${lim}* tersisa`}\n` +
+          `💎 Limit  : ${skipLim ? '♾️' : `*${lim}* tersisa`}\n` +
           `⭐ Status : ${skipLim ? `*${label}*` : label}\n` +
           `🔄 Reset  : Setiap hari jam *00:00 WIB* → ${defLimit} limit`;
 
