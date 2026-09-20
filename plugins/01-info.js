@@ -73,7 +73,7 @@ const ALL_COMMANDS = [...new Set([
   'ping','menu','info','owner','uptime','profile','me','carifitur','totalfitur','limit','uptname','memory','runtime','react',
   // Grup
   'tagall','tagadmin','tagme','hidetag','h','kickall','promote','demote',
-  'open','close','mute','unmute','listmute','setname','setdesc','link','upswgc',
+  'open','close','mute','unmute','listmute','setname','setdesc','link','swgc','upswgc',
   'grupopen','grupclose','linkgc','setnamegc',
   'groupinfo','infogc','leavegc','listadmin','getpp','pp','getppgc','ppgc','ppgroup','totag',
   'delete','cekasalmember','absen','mulaiabsen','cekabsen','hapusabsen',
@@ -208,7 +208,7 @@ const CATS = {
   // didaftarin di sini — Pak: "di ringkas aja di `.on <option>`". Command-nya
   // tetap jalan (handler di 06-proteksi.js) dan tetap ketemu `.carifitur`,
   // cuma nggak dipajang di menu. Daftar lengkap + status: `.on` tanpa argumen.
-  grup:   ['absen','add','addai','afk','banmember','catatan','cekabsen','cekasalmember','cekgiveaway','cekmenang','close','delbye','delete','delwelcome','demote','getpp','getppgc','groupinfo','infogc','grupclose','grupopen','hapusabsen','hapusgiveaway','hidetag','h','ikut','kick','kickall','leavegc','linkgc','link','listadmin','listafk','listmute','listtotalpesan','mulaiabsen','mulaigiveaway','mute','off <option>','on <option>','open','pp','ppgc','ppgroup','promote','proteksi','rollgiveaway','sider','tagadmin','tagall','tagme','topchat','totag','unbanmember','unmute','upswgc'],
+  grup:   ['absen','add','addai','afk','banmember','catatan','cekabsen','cekasalmember','cekgiveaway','cekmenang','close','delbye','delete','delwelcome','demote','getpp','getppgc','groupinfo','infogc','grupclose','grupopen','hapusabsen','hapusgiveaway','hidetag','h','ikut','kick','kickall','leavegc','linkgc','link','listadmin','listafk','listmute','listtotalpesan','mulaiabsen','mulaigiveaway','mute','off <option>','on <option>','open','pp','ppgc','ppgroup','promote','proteksi','rollgiveaway','sider','swgc','tagadmin','tagall','tagme','topchat','totag','unbanmember','unmute','upswgc'],
   // Sat-set: SEMUA command `.set*` dikumpul di sini — satu tempat buat nyetel
   // teks welcome/left, nama & deskripsi grup, bio, pp, sewa, limit, warn limit, QRIS.
   // Murni pindah: `setwelcome`/`setleft`/`setbye` juga sudah TIDAK ada lagi di `grup`
@@ -216,7 +216,7 @@ const CATS = {
   // (`.set*` nggak boleh ada di kategori lain; dites di test/menu-buttons.js.)
   satset: ['setbio','setbye','setclose','setdesc','setleft','setlimitgc','setname','setnamegc','setopen','setpp','setppgc','setqris','setsewa','setwarnlimit','setwelcome'],
   rpg:    ['unreg','profile','me','claim','hourly','weekly','dailymisi','kerja','mancing','berburu','hunt','bertarung','fight','dungeon','adventure','koboy','airdrop','maling','lamarkerja','job','gajian','transfer','tf','bank','atm','topkoin','lb','leaderboard','store','beli','inventory','pakai','gacha','slot','jodoh','suitpvp','coinflip','cf','tictactoe','ttt'],
-  maker:  ['sticker','s','wm','brat','bratvid','attp','fakech','fakecall','fakecallip','fakedana','fakeovo','fakegcios','fakepptele','rvo','readviewonce','readvo','liat','swgc','upswgc'],
+  maker:  ['sticker','s','wm','brat','bratvid','attp','fakech','fakecall','fakecallip','fakedana','fakeovo','fakegcios','fakepptele','rvo','readviewonce','readvo','liat'],
   tools:  ['poll','readmore','encode','decode','kalkulator','pick','tourl','tourl2','upload2','upload','pay','tomp4','topng','tovn','2vo','todoc','artinama','igqc','igstoryimg','iqc','ttqc','dafont','dafontdl','lirik','genius','gsmarena','spek','jarak','kbbi','kodepos','bandinghp','comparehp','wilayah','cariwilayah','imei','cekimei','gempa','cuaca','weather','accuweather','prakiraan','checkwa','cekwa','translate','terjemah','tr','qrcode','qr','decodeqr','readqr','ocr','upscale','hd','enhance','ssweb','ss','screenshot','fancytext','fancy','nik','nikinfo','iplookup','ipcek','reverseip','httpheaders','headers','nationalday','hariini','shalat','jadwalshalat','kalendershalat','kshalat','konversitanggal','tanggal','bypass','bypasssfl','bpsfl','drakor','duolingo','npm','resep','steam','play','lk21','lk21trending','lk21search','filmsearch','mcpedl','berita','pinterest','tokopedia','toped','stalktiktok','stalktt','tiktokstalk','roblox','stalkroblox','cekroblox','minecraft','mc','stalkmc','stalkgithub','ghstalk','genshin','stalkgenshin','freefire','ff','stalkff','discord','stalkdiscord','chess','stalkchess','nimegami','nimegamis','animesearch','shinigami','spotify','spotifylyrics','slyrics','tiktokphoto','ttkphoto','ttsearch','searchcode'],
   downloader: ['aio','mediafire','mfdl','likee','likeedl','moddroid','moddroiddl','facebook','fbdl','fb','tgsticker','telesticker','spotify','spotifydl','soundcloud','scdl','sfilemobi','sfile','sfileco','rednote','xiaohongshu','xhs','reddit','redditdl','twitter','twit','xdl','tiktok','tiktokdl','ttdl','tt','pinterest','pindl','pin','threads','threadsdl','youtube','ytdl','yt','gdrive','gdrivedl','instagram','igdl','ig','kuaishou','kwai','kuaishoudl'],
   random: ['aceh','kataaceh','batak','katabatak','bijak','china','katachina','dare','tantangan','fakta','faktaunik','fiersa','fiersabesari','jawa','pepatahjawa','katajawa','katabucin','bucin','katasore','sore','minangkabau','minang','kataminang','motivasi','katamotivasi','ngeles','alasan'],

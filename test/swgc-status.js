@@ -39,10 +39,17 @@ const norm = (o) => {
 
 (async () => {
   // ── 1. Envelope kita == envelope referensi ────────────────────────────────
-  // Bekukan jam: `mediaKeyTimestamp` diisi dari `Date.now()`. Dua panggilan
-  // generate di bawah bisa jatuh di detik berbeda → test merah padahal
-  // envelope-nya sama (flaky, bukan bug).
-  Date.now = () => 1789859958000;
+  // Bekukan jam. `mediaKeyTimestamp` diisi `unixTimestampSeconds()` milik
+  // baileys, dan itu pakai `new Date().getTime()` — BUKAN `Date.now()`.
+  // Nge-stub `Date.now` doang nggak ngefek: dua panggilan generate di bawah
+  // tetap bisa jatuh di detik berbeda → test merah ~1 dari 5 run (flaky,
+  // bukan bug). Jadi `Date`-nya sekalian yang dibekukan.
+  const JamAsli = Date;
+  const JAM_BEKU = 1789859958000;
+  global.Date = class extends JamAsli {
+    constructor(...a) { super(...(a.length ? a : [JAM_BEKU])); }
+    static now() { return JAM_BEKU; }
+  };
   for (const [nama, konten] of [['video', VIDEO], ['teks', TEKS]]) {
     const upload = async () => ({ url: 'https://mmg.whatsapp.net/x.enc', directPath: '/x' });
     const inside = await generateWAMessageContent(konten, { upload });
@@ -118,6 +125,18 @@ const norm = (o) => {
     const m = { videoMessage: { mediaKey: buf, fileSha256: buf, fileEncSha256: buf } };
     perbaikiBufferMedia(m);
     assert.strictEqual(m.videoMessage.mediaKey, buf);
+  });
+
+  // ── 4. Registry: `swgc` & `upswgc` alias kembar -> WAJIB satu kategori ────
+  // Pernah kejadian: `upswgc` kecatet di `grup` DAN `maker`, sementara `swgc`
+  // cuma di `maker`. Efeknya `.carifitur swgc` nampilin `.upswgc` dobel di 2
+  // kategori, dan `.menu maker` nyembunyiin `.swgc` (padahal command-nya jalan).
+  const info = require('../plugins/01-info');
+  ok('swgc & upswgc satu kategori (nggak nyebar)', () => {
+    assert.deepStrictEqual(info.CMD_CATS.swgc, info.CMD_CATS.upswgc,
+      'swgc & upswgc beda kategori — .carifitur bakal nampilin dobel');
+    assert.strictEqual(info.CMD_CATS.upswgc.length, 1, 'upswgc kecatet di >1 kategori');
+    assert.ok(info.ALL_COMMANDS.includes('swgc'), 'swgc ilang dari ALL_COMMANDS');
   });
 
   console.log(gagal ? `\nswgc-status: ${gagal} FAIL` : '\nswgc-status: semua PASS');

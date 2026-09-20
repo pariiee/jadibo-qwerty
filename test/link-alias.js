@@ -33,7 +33,8 @@ tes('handler aslinya `case \'link\'` (bukan redirect ke diri sendiri)', () => {
 });
 
 tes('registry: ALL_COMMANDS, CATS.grup, limitedCmds pakai `link`', () => {
-  assert.match(P1, /'setdesc','link','upswgc'/, 'ALL_COMMANDS belum `link`');
+  const info = require('../plugins/01-info');
+  assert.ok(info.ALL_COMMANDS.includes('link'), 'ALL_COMMANDS belum `link`');
   assert.match(P1, /'linkgc','link','listadmin'/, 'CATS.grup belum `link`');
   assert.match(P2, /'link','groupinfo','idgc'/, 'limitedCmds belum `link`');
 });
