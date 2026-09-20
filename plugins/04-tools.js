@@ -8,7 +8,7 @@
 const { rapikanError } = require('../engine/pesanError');
 const mess           = require('../config/mess');
 const { genThumbnail } = require('../engine/thumbnail');
-const { addStickerExif, videoKeStickerWebp } = require('../engine/sticker');
+const { addStickerExif, videoKeStickerWebp, buatStickerPack, MAKS_STICKER_PACK } = require('../engine/sticker');
 const { uploadInfo }  = require('../engine/api');
 
 // ─── Helper: mime type → ekstensi file ───────────────────────────────────────
@@ -4291,7 +4291,7 @@ module.exports = async function toolsHandler(ctx) {
       return true;
     }
 
-    // ── tgsticker — Telegram Sticker Downloader ──────────────────────────────
+    // ── tgsticker — Telegram Sticker Downloader (dikirim sebagai SATU pack) ──
     case 'tgsticker':
     case 'telesticker':
     case 'stele': {
@@ -4301,28 +4301,69 @@ module.exports = async function toolsHandler(ctx) {
         return true;
       }
       try {
-        const axios = require('axios');
+        const axios  = require('axios');
+        const crypto = require('crypto');
         await react(mess.reactLoading);
         const { data } = await axios.get(`${process.env.BASE_API}api/download/telesticker`, {
           params: { url },
           headers: { 'X-API-Key': process.env.KEY_API },
           timeout: 30000,
         });
-        const stickers = data?.results?.stickers;
+        const hasil = data?.results || {};
+        const stickers = hasil.stickers;
         if (!stickers || !stickers.length) throw new Error('Tidak ada sticker dari API');
         // Telegram juga punya pack animasi (.tgs) & video (.webm) — cuma .webp yang bisa dikirim apa adanya
         const webp = stickers.filter(s => !s.format || s.format === 'webp');
         if (!webp.length) throw new Error('Pack ini cuma sticker animasi/video, belum didukung');
-        await react(mess.reactSuccess);
-        await reply(`🎭 *Telegram Sticker Pack*\nTotal: ${stickers.length} sticker\nMengirim ${Math.min(5, webp.length)} sticker pertama...`);
-        for (const s of webp.slice(0, 5)) {
+
+        const pilih = webp.slice(0, MAKS_STICKER_PACK);
+        const buffers = [];
+        for (const s of pilih) {
           const sUrl = s.url || s.file_url || s;
           if (!sUrl) continue;
-          try {
-            const res = await axios.get(sUrl, { responseType: 'arraybuffer', timeout: 30000 });
-            await client.message.send(jid, { type: 'sticker', media: Buffer.from(res.data), mimetype: 'image/webp' });
-          } catch {}
+          const res = await axios.get(sUrl, { responseType: 'arraybuffer', timeout: 30000 });
+          buffers.push(Buffer.from(res.data));
         }
+        if (!buffers.length) throw new Error('Sticker-nya nggak bisa diunduh');
+
+        const pack = await buatStickerPack(buffers, { nama: hasil.title || 'Sticker Pack' });
+        // Enkripsi + upload: WebP pack (isi stickernya) + tray icon (thumbnail pack).
+        const { stickerMessage: sm } = await client.message.prepareMedia(pack.pack, { type: 'sticker', mimetype: 'image/webp' });
+        const { imageMessage: im }   = await client.message.prepareMedia(pack.tray, { type: 'image', mimetype: 'image/png' });
+        const packId = crypto.randomUUID();
+        await client.message.send(jid, {
+          stickerPackMessage: {
+            stickers: pack.stickers.map((s, i) => ({
+              fileName: s.fileName,
+              isAnimated: s.isAnimated,
+              isLottie: false,
+              mimetype: 'image/webp',
+              accessibilityLabel: '',
+              ...(pilih[i]?.emoji && { emojis: [pilih[i].emoji] }),
+            })),
+            stickerPackId: packId,
+            name: pack.nama,
+            publisher: 'yapari.web.id',
+            fileLength: pack.pack.length,
+            fileSha256: sm.fileSha256,
+            fileEncSha256: sm.fileEncSha256,
+            mediaKey: sm.mediaKey,
+            directPath: sm.directPath,
+            mediaKeyTimestamp: sm.mediaKeyTimestamp,
+            trayIconFileName: `${packId}.png`,
+            thumbnailDirectPath: im.directPath,
+            thumbnailSha256: im.fileSha256,
+            thumbnailEncSha256: im.fileEncSha256,
+            thumbnailWidth: 252,
+            thumbnailHeight: 252,
+            // sha256 tray icon, hex, terus di-base64 (bentuknya persis punya WA)
+            imageDataHash: Buffer.from(crypto.createHash('sha256').update(pack.tray).digest('hex')).toString('base64'),
+            stickerPackSize: pack.pack.length,
+            stickerPackOrigin: 2,
+          },
+        }, { quoted: msg });
+        await react(mess.reactSuccess);
+        await reply(`📦 *Sticker Pack Telegram*\nNama: ${pack.nama}\nIsi: ${pack.stickers.length} sticker\nUkuran: ${Math.round(pack.pack.length / 1024)} KB\n\nTekan *Tambah* di kartunya buat nyimpen pack-nya ke WhatsApp.`);
       } catch (e) {
         await react(mess.reactError);
         await reply(`❌ Gagal download Telegram Sticker: ${rapikanError(e)}`);

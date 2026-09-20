@@ -7,6 +7,58 @@
  * pakai packname/author dari .env (STICKER_PACK_NAME / STICKER_AUTHOR).
  */
 
+// ─── Bungkus N sticker jadi satu "pack" (album) ──────────────────────────────
+// WhatsApp nampilin pack lewat proto `stickerPackMessage` (bukan kiriman
+// beruntun): pack = SATU file WebP berisi semua sticker sebagai frame, plus
+// tray icon PNG 252×252. `fileName` tiap sticker = `<base64 sha256>.webp` dari
+// isi sticker — itu yang dipakai WA buat ngenalin sticker di dalam pack.
+// ponytail: yang dirakit cuma 2 file itu; kalau WA ternyata nolak (pack kosong
+// di HP), tersangka pertama = urutan/hash fileName, bukan ffmpeg-nya.
+const UKURAN_TRAY = 252;
+const MAKS_STICKER_PACK = 30; // batas pack WhatsApp
+
+async function buatStickerPack(buffers, { nama = 'Sticker Pack' } = {}) {
+  const { spawn } = require('child_process');
+  const crypto    = require('crypto');
+  const fs        = require('fs');
+  const os        = require('os');
+  const path      = require('path');
+
+  const ff = (args) => new Promise((resolve, reject) => {
+    const p = spawn('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-y', ...args]);
+    p.on('error', reject);
+    p.on('close', (code) => (code === 0 ? resolve() : reject(new Error(`ffmpeg exit code ${code}`))));
+  });
+
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pack_'));
+  try {
+    const stickers = [];
+    for (let i = 0; i < buffers.length; i++) {
+      const urut = String(i).padStart(3, '0');
+      const masuk = path.join(dir, `in_${urut}.webp`);
+      const keluar = path.join(dir, `f_${urut}.webp`);
+      fs.writeFileSync(masuk, buffers[i]);
+      // Canvas pack WAJIB 512×512 (sama kayak sticker biasa) — WA nolak yang lain.
+      await ff(['-i', masuk, '-vf', SKALA_512, '-c:v', 'libwebp', keluar]);
+      const isi = fs.readFileSync(keluar);
+      stickers.push({
+        fileName: crypto.createHash('sha256').update(isi).digest('base64') + '.webp',
+        isAnimated: isi.includes('ANIM', 12), // chunk ANIM = WebP bergerak
+      });
+    }
+    // Pack = semua frame digabung jadi satu WebP bergerak (urutan frame = urutan sticker).
+    const packPath = path.join(dir, 'pack.webp');
+    await ff(['-framerate', '1', '-i', path.join(dir, 'f_%03d.webp'),
+      '-c:v', 'libwebp_anim', '-loop', '0', '-q:v', '80', packPath]);
+    const trayPath = path.join(dir, 'tray.png');
+    await ff(['-i', path.join(dir, 'f_000.webp'), '-vf', `scale=${UKURAN_TRAY}:${UKURAN_TRAY}`, trayPath]);
+
+    return { pack: fs.readFileSync(packPath), tray: fs.readFileSync(trayPath), stickers, nama };
+  } finally {
+    try { fs.rmSync(dir, { recursive: true, force: true }); } catch {}
+  }
+}
+
 // ─── Inject EXIF metadata ke WebP sticker pakai node-webpmux ─────────────────
 async function addStickerExif(webpBuffer, packname, author) {
   try {
@@ -55,6 +107,8 @@ async function addStickerExif(webpBuffer, packname, author) {
 // ponytail: 4 tangga udah nutup video 10 detik pada umumnya; tambah tangga
 // kalau nanti masih ada yang kejegal.
 const UKURAN_STICKER = 512;
+// Semua jalur sticker lewat filter ini: px JANGAN pernah dikecilin, cuma scale+pad.
+const SKALA_512 = `scale=${UKURAN_STICKER}:${UKURAN_STICKER}:force_original_aspect_ratio=decrease,pad=${UKURAN_STICKER}:${UKURAN_STICKER}:(ow-iw)/2:(oh-ih)/2:color=0x00000000`;
 const TANGGA_STICKER = [
   { fps: 12, q: 70 },
   { fps: 10, q: 60 },
@@ -76,8 +130,7 @@ async function videoKeStickerWebp(inPath, outPath, { detik = MAX_DETIK_STICKER, 
   const { spawn } = require('child_process');
   const fs = require('fs');
   const durasi = `00:00:${String(detik).padStart(2, '0')}`;
-  const skala = `scale=${UKURAN_STICKER}:${UKURAN_STICKER}:force_original_aspect_ratio=decrease,`
-              + `pad=${UKURAN_STICKER}:${UKURAN_STICKER}:(ow-iw)/2:(oh-ih)/2:color=0x00000000`;
+  const skala = SKALA_512;
   let terakhir = null;
   let terpilih = null;
 
@@ -105,4 +158,4 @@ async function videoKeStickerWebp(inPath, outPath, { detik = MAX_DETIK_STICKER, 
   return { buf: terpilih ? terpilih.buf : terakhir, tangga: terpilih || null };
 }
 
-module.exports = { addStickerExif, videoKeStickerWebp, TANGGA_STICKER, UKURAN_STICKER, MAX_DETIK_STICKER };
+module.exports = { addStickerExif, videoKeStickerWebp, buatStickerPack, TANGGA_STICKER, UKURAN_STICKER, MAX_DETIK_STICKER, MAKS_STICKER_PACK };
