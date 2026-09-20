@@ -146,6 +146,14 @@ function ukuranWebp(buf) {
   return null;
 }
 
+// WA batas 60 sticker PER pack, bukan per total. 130 sticker → 3 pack (60/60/10),
+// tiap pack punya packId sendiri jadi WA nampilin kartu terpisah.
+function bagiSticker(sticker, maks = MAKS_STICKER_PACK) {
+  const out = [];
+  for (let i = 0; i < sticker.length; i += maks) out.push(sticker.slice(i, i + maks));
+  return out;
+}
+
 // ─── Rakit pack ──────────────────────────────────────────────────────────────
 // `sticker`: [{ isi: Buffer, emoji?: string }] — sudah WebP (isi = apa adanya
 // dari Telegram; WA baca dari ZIP, jadi EXIF packname nggak perlu).
@@ -228,5 +236,5 @@ module.exports = {
   buatPaketSticker, ukuranWebp, zipStore,
   // dipakai test/album-sticker.js buat ngecek kunci & enkripsi
   kunciMedia, enkripsi, KUNCI_ZIP, KUNCI_THUMB,
-  UKURAN_TRAY, UKURAN_STICKER_PACK, MIN_STICKER_PACK, MAKS_STICKER_PACK, SKALA_PACK,
+  UKURAN_TRAY, UKURAN_STICKER_PACK, MIN_STICKER_PACK, MAKS_STICKER_PACK, SKALA_PACK, bagiSticker,
 };

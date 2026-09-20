@@ -8,7 +8,7 @@ const assert = require('assert');
 const crypto = require('crypto');
 const { spawnSync } = require('child_process');
 const {
-  buatPaketSticker, ukuranWebp, kunciMedia, enkripsi, zipStore,
+  buatPaketSticker, ukuranWebp, kunciMedia, enkripsi, zipStore, bagiSticker,
   UKURAN_TRAY, KUNCI_ZIP, KUNCI_THUMB,
 } = require('../engine/stickerPack');
 
@@ -153,6 +153,14 @@ function bacaZip(buf) {
   assert.strictEqual(bacaZip(zip)[0].crc, require('zlib').crc32(Buffer.from('hai')) >>> 0);
 
   assert.strictEqual(UKURAN_TRAY, 252, 'tray WA 252px');
+
+  // 5. Pecah pack: WA batas 60 per pack → 130 sticker = 3 kartu (60/60/10)
+  const urut = (n) => Array.from({ length: n }, (_, i) => i);
+  assert.deepStrictEqual(bagiSticker(urut(130)).map((b) => b.length), [60, 60, 10], '130 → 60/60/10');
+  assert.deepStrictEqual(bagiSticker(urut(60)).map((b) => b.length), [60], 'pas 60 → 1 pack');
+  assert.deepStrictEqual(bagiSticker(urut(61)).map((b) => b.length), [60, 1], '61 → 60 + 1');
+  assert.deepStrictEqual(bagiSticker(urut(5)).map((b) => b.length), [5], 'di bawah batas → 1 pack');
+  assert.deepStrictEqual(bagiSticker(urut(130)).flat(), urut(130), 'urutan sticker nggak boleh berubah');
 
   require('fs').rmSync(dir, { recursive: true, force: true });
   console.log(`OK pack ${pack.zip.length}B ${pack.sticker.length} sticker tray ${pack.thumb.length}B`);

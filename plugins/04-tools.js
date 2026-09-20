@@ -4303,7 +4303,7 @@ module.exports = async function toolsHandler(ctx) {
       }
       try {
         const axios  = require('axios');
-        const { buatPaketSticker } = require('../engine/stickerPack');
+        const { buatPaketSticker, bagiSticker } = require('../engine/stickerPack');
         await react(mess.reactLoading);
         const { data } = await axios.get(`${process.env.BASE_API}api/download/telesticker`, {
           params: { url },
@@ -4317,7 +4317,7 @@ module.exports = async function toolsHandler(ctx) {
         const webp = stickers.filter(s => !s.format || s.format === 'webp');
         if (!webp.length) throw new Error('Pack ini cuma sticker animasi/video, belum didukung');
 
-        const pilih = webp.slice(0, MAKS_STICKER_PACK);
+        const pilih = webp;
         const isi = [];
         for (const s of pilih) {
           const sUrl = s.url || s.file_url || s;
@@ -4327,11 +4327,22 @@ module.exports = async function toolsHandler(ctx) {
         }
         if (isi.length < 3) throw new Error(`Pack ini cuma punya ${isi.length} sticker, minimal 3`);
 
-        const pack = await buatPaketSticker(isi, { nama: hasil.title || 'Sticker Pack' });
+        // WA batas 60 sticker PER pack, bukan per total -> 130 sticker = 3 kartu (60/60/10).
+        const nama = hasil.title || 'Sticker Pack';
+        const bagian = bagiSticker(isi);
+        const jumlahPack = bagian.length;
+        const paket = [];
+        for (const b of bagian) {
+          paket.push(await buatPaketSticker(b, {
+            nama: jumlahPack > 1 ? `${nama} (${paket.length + 1}/${jumlahPack})` : nama,
+          }));
+        }
         // Zip pack + thumbnail di-enkripsi & diupload di adapter (harus satu media key).
-        await client.message.send(jid, { paketSticker: pack }, { quoted: msg });
+        for (const p of paket) await client.message.send(jid, { paketSticker: p }, { quoted: msg });
         await react(mess.reactSuccess);
-        await reply(`📦 *Sticker Pack Telegram*\nNama: ${pack.nama}\nIsi: ${pack.sticker.length} sticker\nUkuran: ${Math.round(pack.zip.length / 1024)} KB\n\nTekan *Tambah* di kartunya buat nyimpen pack-nya ke WhatsApp.`);
+        await reply(`📦 *Sticker Pack Telegram*\nNama: ${nama}\nIsi: ${isi.length} sticker`
+          + (jumlahPack > 1 ? ` -> *${jumlahPack} pack* (${paket.map(p => p.sticker.length).join('/')})` : '')
+          + `\nUkuran: ${Math.round(paket.reduce((a, p) => a + p.zip.length, 0) / 1024)} KB\n\nTekan *Tambah* di tiap kartu buat nyimpen pack-nya ke WhatsApp.`);
       } catch (e) {
         await react(mess.reactError);
         await reply(`❌ Gagal download Telegram Sticker: ${rapikanError(e)}`);
