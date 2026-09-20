@@ -113,8 +113,11 @@ function enkripsi(plain, kunci) {
   const cipher = c.createCipheriv('aes-256-cbc', kunci.cipherKey, iv);
   const body = Buffer.concat([cipher.update(plain), cipher.final()]);
   const mac = c.createHmac('sha256', kunci.macKey).update(iv).update(body).digest().subarray(0, 10);
-  // Yang diupload WA: iv ‖ ciphertext ‖ mac(10) — receiver motong 16 depan + 10 belakang.
-  return { isi: Buffer.concat([iv, body, mac]), iv, body, mac };
+  // Yang diupload: ciphertext ‖ mac(10). IV TIDAK ikut — receiver bikin ulang IV
+  // dari mediaKey (HKDF). Kalau IV keikut, ZIP-nya geser 16 byte dan WA nampilin
+  // pack KOSONG (kejadian di rt 207, dibuktikan dari pack asli: header ZIP di
+  // offset 0, punya kita di offset 16).
+  return { isi: Buffer.concat([body, mac]), iv, body, mac };
 }
 
 // ─── Ukuran & animasi WebP dari header (nggak perlu ffmpeg/sharp) ────────────

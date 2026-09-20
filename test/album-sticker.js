@@ -123,10 +123,13 @@ function bacaZip(buf) {
   assert.strictEqual(e1.body.length % 16, 0, 'CBC harus kelipatan 16');
   const harap = crypto.createHmac('sha256', k1.macKey).update(e1.iv).update(e1.body).digest().subarray(0, 10);
   assert.ok(e1.mac.equals(harap), 'MAC 10 byte salah');
-  assert.strictEqual(e1.isi.length, 16 + e1.body.length + 10, 'isi = iv + ciphertext + mac');
-  assert.ok(e1.isi.subarray(0, 16).equals(e1.iv), 'iv harus di depan');
-  assert.ok(e1.isi.subarray(16, 16 + e1.body.length).equals(e1.body), 'ciphertext di tengah');
+  assert.strictEqual(e1.isi.length, e1.body.length + 10, 'isi = ciphertext + mac (IV nggak ikut)');
+  assert.ok(e1.isi.subarray(0, e1.body.length).equals(e1.body), 'ciphertext harus di depan');
   assert.ok(e1.isi.subarray(-10).equals(e1.mac), '10 byte terakhir = MAC');
+  // Regresi rt 207: IV pernah ikut ke-upload → WA baca ZIP geser 16 byte → pack kosong.
+  const balik = crypto.createDecipheriv('aes-256-cbc', k1.cipherKey, e1.iv);
+  assert.strictEqual(Buffer.concat([balik.update(e1.isi.subarray(0, -10)), balik.final()]).toString(), 'tes',
+    'isi yang diupload harus bisa didekripsi pakai IV turunan mediaKey');
 
   // 4. Cover lama masih jalan (kode lama nggak boleh ikut rusak)
   const zip = zipStore([{ nama: 'a.txt', isi: Buffer.from('hai') }]);

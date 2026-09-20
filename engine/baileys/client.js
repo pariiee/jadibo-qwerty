@@ -547,8 +547,8 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
       const sha = crypto.createHash('sha256').update(plain).digest();
       const encSha = crypto.createHash('sha256').update(enc.isi).digest();
       // `sock.waUploadToServer` butuh FILE PATH, bukan Buffer — jadi tulis dulu.
-      // `enc.isi` = iv ‖ ciphertext ‖ mac(10 byte terakhir). MAC itu yang bikin
-      // pack/thumbnail diterima WA (media biasa nggak pakai MAC).
+      // `enc.isi` = ciphertext ‖ mac(10 byte terakhir), TANPA IV (rt 207 salah
+      // kirim IV di depan → pack blank). MAC itu yang bikin pack diterima WA.
       const tmp = path.join(os.tmpdir(), `pack_${crypto.randomUUID()}`);
       fs.writeFileSync(tmp, enc.isi);
       try {
