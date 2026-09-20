@@ -282,7 +282,11 @@ function toBaileysContent(c) {
       };
 
     case 'sticker':
-      return { sticker: c.media, ...ctx };
+      // WA nampilin sticker DIAM (frame pertama doang = "stuck 1 warna") kalau
+      // `isAnimated` nggak ditulis — WA sendiri selalu nulis field ini waktu
+      // ngirim sticker bergerak. Jadi deteksi dari isi file, di satu tempat ini,
+      // biar semua jalur kirim sticker (.s/.attp/.bratvid/.swgc/...) kena.
+      return { sticker: c.media, ...(webpAnimasi(c.media) && { isAnimated: true }), ...ctx };
 
     case 'document':
       return {
@@ -311,6 +315,14 @@ function toBaileysContent(c) {
       // biarkan apa adanya; send() yang memutuskan jalurnya.
       return { ...c, ...withMentions, ...ctx };
   }
+}
+
+/** WebP bergerak? chunk `ANIM` cuma ada di sticker animasi (yg diam cuma VP8/VP8L). */
+function webpAnimasi(media) {
+  return Buffer.isBuffer(media) && media.length > 20 &&
+    media.toString('latin1', 0, 4) === 'RIFF' &&
+    media.toString('latin1', 8, 12) === 'WEBP' &&
+    media.includes('ANIM');
 }
 
 /** opsi gaya lama -> opsi gaya Baileys */

@@ -175,5 +175,22 @@ function cek512(buf, label) {
   try { fs.unlinkSync(inRegang); } catch {}
   try { fs.unlinkSync(outRegang); } catch {}
 
+  // ── WA nampilin sticker DIAM (frame pertama doang = "stuck 1 warna") kalau
+  // `isAnimated` nggak dikirim — WA sendiri selalu nulis field ini. Adapter
+  // harus nulis sendiri dari isi file, bukan nunggu pemanggil.
+  const { toBaileysContent } = require('../engine/baileys/client');
+  assert.strictEqual(toBaileysContent({ type: 'sticker', media: regang.buf }).isAnimated, true,
+    'sticker bergerak wajib dikirim dengan isAnimated: true');
+
+  const inStatis  = path.join(tmp, `tes_sticker_statis_${Date.now()}.webp`);
+  const genStatis = spawnSync('ffmpeg', [
+    '-y', '-v', 'error', '-f', 'lavfi', '-i', 'testsrc2=s=512x512:d=0.1',
+    '-frames:v', '1', '-c:v', 'libwebp', inStatis,
+  ], { encoding: 'utf8' });
+  assert.strictEqual(genStatis.status, 0, 'gagal bikin webp diam: ' + String(genStatis.stderr || '').slice(-200));
+  assert.ok(!('isAnimated' in toBaileysContent({ type: 'sticker', media: fs.readFileSync(inStatis) })),
+    'webp diam jangan dikasih isAnimated');
+  try { fs.unlinkSync(inStatis); } catch {}
+
   console.log('✅ sticker-10detik: canvas 512×512, durasi 10 detik, ≤500KB');
 })();
