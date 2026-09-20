@@ -60,6 +60,17 @@ ok('handler: pesan "Penggunaan:" yang nyangkut udah nggak ada', () => {
   assert.ok(!/Penggunaan: \$\{p\}getpp/.test(grup), 'teks "Penggunaan: .getpp @mention" nyangkut lagi');
 });
 
+// Alias `ppgrup` dicabut (duplikat `ppgroup`). Dijaga di sini biar nggak
+// nyempil balik lewat copy-paste, di handler MAUPUN di registry menu.
+ok('alias `ppgrup` beneran dicabut (handler + registry)', () => {
+  assert.ok(!/case 'ppgrup'/.test(grup), "case 'ppgrup' muncul lagi di 02-group.js");
+  assert.ok(!info.ALL_COMMANDS.includes('ppgrup'), 'ppgrup nangkring lagi di ALL_COMMANDS');
+  assert.ok(!info.CATS.grup.includes('ppgrup'), 'ppgrup nongol lagi di menu grup');
+  // `ppgroup` sendiri harus tetap hidup — yang dicabut cuma aliasnya.
+  assert.ok(/case 'ppgroup':/.test(grup), "case 'ppgroup' ikut kehapus");
+  assert.ok(info.CATS.grup.includes('ppgroup'), 'ppgroup ikut hilang dari menu');
+});
+
 ok('handler: nggak ada console.log sisa debug', () => {
   assert.ok(!/\[getpp\] mentioned:/.test(grup), 'debug log getpp muncul lagi');
 });

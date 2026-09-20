@@ -962,8 +962,7 @@ module.exports = async function groupHandler(ctx) {
     // ── getppgc ───────────────────────────────────────────────────────────────
     case 'getppgc':
     case 'ppgc':
-    case 'ppgroup':
-    case 'ppgrup': {
+    case 'ppgroup': {
       const ppGcUrl = await client.profile.getProfilePicture(jid, 'image');
       const gcImgBuffer = ppGcUrl ? await fetchImageBuffer(ppGcUrl) : null;
 

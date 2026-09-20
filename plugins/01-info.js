@@ -75,7 +75,7 @@ const ALL_COMMANDS = [...new Set([
   'tagall','tagadmin','tagme','hidetag','h','kickall','promote','demote',
   'open','close','mute','unmute','listmute','slowmode','setname','setdesc','link','upswgc',
   'grupopen','grupclose','linkgc','setnamegc',
-  'groupinfo','infogc','leavegc','listadmin','getpp','pp','getppgc','ppgc','ppgroup','ppgrup','totag',
+  'groupinfo','infogc','leavegc','listadmin','getpp','pp','getppgc','ppgc','ppgroup','totag',
   'delete','cekasalmember','absen','mulaiabsen','cekabsen','hapusabsen',
   'afk','listafk','antidelete','topchat',
   // Sat-set — nama command aslinya tetap `.set*`, cuma kategorinya dikumpul
@@ -208,7 +208,7 @@ const CATS = {
   // didaftarin di sini — Pak: "di ringkas aja di `.on <option>`". Command-nya
   // tetap jalan (handler di 06-proteksi.js) dan tetap ketemu `.carifitur`,
   // cuma nggak dipajang di menu. Daftar lengkap + status: `.on` tanpa argumen.
-  grup:   ['absen','add','addai','afk','banmember','catatan','cekabsen','cekasalmember','cekgiveaway','cekmenang','close','delbye','delete','delwelcome','demote','getpp','getppgc','groupinfo','infogc','grupclose','grupopen','hapusabsen','hapusgiveaway','hidetag','h','ikut','kick','kickall','leavegc','linkgc','link','listadmin','listafk','listmute','listtotalpesan','mulaiabsen','mulaigiveaway','mute','off <option>','on <option>','open','pp','ppgc','ppgroup','ppgrup','promote','proteksi','rollgiveaway','sider','slowmode','tagadmin','tagall','tagme','topchat','totag','unbanmember','unmute','upswgc'],
+  grup:   ['absen','add','addai','afk','banmember','catatan','cekabsen','cekasalmember','cekgiveaway','cekmenang','close','delbye','delete','delwelcome','demote','getpp','getppgc','groupinfo','infogc','grupclose','grupopen','hapusabsen','hapusgiveaway','hidetag','h','ikut','kick','kickall','leavegc','linkgc','link','listadmin','listafk','listmute','listtotalpesan','mulaiabsen','mulaigiveaway','mute','off <option>','on <option>','open','pp','ppgc','ppgroup','promote','proteksi','rollgiveaway','sider','slowmode','tagadmin','tagall','tagme','topchat','totag','unbanmember','unmute','upswgc'],
   // Sat-set: SEMUA command `.set*` dikumpul di sini — satu tempat buat nyetel
   // teks welcome/left, nama & deskripsi grup, bio, pp, sewa, limit, warn limit, QRIS.
   // Murni pindah: `setwelcome`/`setleft`/`setbye` juga sudah TIDAK ada lagi di `grup`
