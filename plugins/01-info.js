@@ -13,10 +13,11 @@ const { genThumbnail } = require('../engine/thumbnail');
 
 const START_TIME = Date.now();
 
-// Umur BOT (bukan umur proses Node). Ini yang dibaca .uptime/.runtime/.info:
+// Umur BOT (bukan umur proses Node). Ini yang dibaca .uptime/.info:
 // command .restart cuma mutus koneksi satu bot, jadi process.uptime() dan
 // START_TIME (nempel di proses) nggak pernah kek-reset — semua bot dalam satu
 // proses bakal nunjukin angka yang sama.
+// `.runtime` SENGAJA nggak pakai ini — dia baca umur PROSES (process.uptime()).
 // ponytail: fallback ke START_TIME kalau bot belum pernah connect (mis. lagi
 // pairing) — angkanya memang umur proses, tapi itu yang paling dekat.
 function botUptimeMs(ctx) {
@@ -71,7 +72,7 @@ function formatUptime(ms) {
 
 const ALL_COMMANDS = [...new Set([
   // Info
-  'ping','menu','info','owner','uptime','profile','me','carifitur','totalfitur','limit','uptname','memory','runtime','react',
+  'ping','menu','info','owner','uptime','profile','me','carifitur','totalfitur','limit','uptname','memory','runtime',
   // Grup
   'tagall','tagadmin','tagme','hidetag','h','kickall','promote','demote',
   'open','close','mute','unmute','listmute','setname','setdesc','link','swgc','upswgc',
@@ -198,7 +199,7 @@ const ALL_COMMANDS = [...new Set([
 const RM = String.fromCharCode(8206).repeat(4001); // readmore: konten bawah terlipat "Read more"
 
 const CATS = {
-  info:   ['ping','menu','info','owner','uptime','profile','me','carifitur','totalfitur','limit','uptname','memory','runtime','react'],
+  info:   ['ping','menu','info','owner','uptime','profile','me','carifitur','totalfitur','limit','uptname','memory','runtime'],
   // Command admin grup (`.add`/`.kick`/`.banmember`/…) numpuk di sini biar cukup
   // satu menu buat urusan grup. MURNI TAMPILAN: gate `isAdmin()` di handler
   // 02-group.js nggak diubah — yang bukan admin tetap ditolak.
@@ -283,9 +284,12 @@ module.exports = async function infoHandler(ctx) {
       return true;
     }
 
-    // ── runtime — uptime proses bot ─────────────────────────────────────────
+    // ── runtime — umur PROSES Node (semua bot + web) ────────────────────────
+    // Beda dari .uptime (umur KONEKSI bot ini, iterest saat .restart).
+    // ponytail: satu proses; kalau nanti ada worker terpisah, sumbernya harus
+    // dipisah juga.
     case 'runtime': {
-      await reply(`⏱️ *Runtime Bot*\n\n${formatUptime(botUptimeMs(ctx))}`);
+      await reply(`⏱️ *Runtime Aplikasi*\n${formatUptime(process.uptime() * 1000)}\n_semua proses Node — bot & web_`);
       return true;
     }
 
@@ -532,12 +536,13 @@ module.exports = async function infoHandler(ctx) {
       const total= Math.round(mem.heapTotal / 1024 / 1024);
       await reply(
         `╭━━━ *INFO BOT* ━━━╮\n` +
-        `│ Nama   : ${botData.bot_name}\n` +
-        `│ Prefix : ${p}\n` +
-        `│ Uptime : ${formatUptime(botUptimeMs(ctx))}\n` +
-        `│ RAM    : ${used}/${total} MB\n` +
-        `│ Node   : ${process.version}\n` +
-        `│ OS     : ${os.type()} ${os.release()}\n` +
+        `│ Nama    : ${botData.bot_name}\n` +
+        `│ Prefix  : ${p}\n` +
+        `│ Uptime  : ${formatUptime(botUptimeMs(ctx))} *_(umur bot ini)_*\n` +
+        `│ Runtime : ${formatUptime(process.uptime() * 1000)} *_(umur aplikasi)_*\n` +
+        `│ RAM     : ${used}/${total} MB\n` +
+        `│ Node    : ${process.version}\n` +
+        `│ OS      : ${os.type()} ${os.release()}\n` +
         `╰━━━━━━━━━━━━━━━━━╯`
       );
       return true;
@@ -567,30 +572,7 @@ module.exports = async function infoHandler(ctx) {
     }
 
     case 'uptime': {
-      await reply(`⏰ *Uptime Bot*\n${formatUptime(botUptimeMs(ctx))}`);
-      return true;
-    }
-
-    // ── react — kasih emoji reaction ke pesan yang di-reply ─────────────────
-    case 'react': {
-      const emoji = args[0]?.trim();
-      if (!emoji) { await reply(`Penggunaan: ${p}react <emoji>\nContoh: ${p}react 🔥`); return true; }
-      const quotedKey = msg.message?.extendedTextMessage?.contextInfo;
-      if (!quotedKey?.stanzaId) { await reply(`Reply pesan yang ingin di-react, lalu ketik ${p}react <emoji>`); return true; }
-      try {
-        await client.message.send(jid, {
-          type: 'reaction',
-          target: {
-            id:          quotedKey.stanzaId,
-            remoteJid:   jid,
-            fromMe:      false,
-            participant: quotedKey.participant,
-          },
-          emoji,
-        });
-      } catch (e) {
-        await reply(`❌ Gagal react: ${rapikanError(e)}`);
-      }
+      await reply(`⏰ *Uptime Bot*\n${formatUptime(botUptimeMs(ctx))}\n_sejak bot ini terhubung ke WA_`);
       return true;
     }
 
@@ -660,7 +642,9 @@ module.exports = async function infoHandler(ctx) {
 // CATATAN: 'limit' SENGAJA nggak ada di sini — cek limit itu perintah info,
 // kalau ikut kepotong user bisa kehabisan limit cuma gara-gara ngecek sisa.
 module.exports.limitedCmds = new Set([
-  'react',
+  // KOSONG atas permintaan Pak: `.react` dicabut, dan perintah info
+  // (`limit`, `uptime`, ...) emang nggak boleh kena potong. Isi lagi
+  // kalau ada fitur berat yang mau dibatasi harian.
 ]);
 
 // Dipakai self-check (tanpa ini helper-nya cuma bisa dites lewat handler penuh).

@@ -8,8 +8,8 @@
  *   sementara `plugins/05-owner.js` nge-`require('./01-info')` di baris atas buat
  *   ngambil ALL_COMMANDS. Jadi begitu ada yang require 01-info duluan, objek yang
  *   di-cache di require.cache BELUM punya `limitedCmds` — dan referensi basi itu
- *   yang dipakai selamanya. Hasilnya set-nya isi `menu`+`react` doang, dan
- *   custom command (ai, sticker, hd, play, ...) nggak pernah kepotong limit.
+ *   yang dipakai selamanya. Hasilnya set-nya kepotong sebagian (cuma `menu`),
+ *   dan custom command (ai, sticker, hd, play, ...) nggak pernah kepotong limit.
  *
  * Baca teks = nggak peduli urutan `module.exports`, nggak nge-load modul plugin
  * (yang punya efek samping), dan tetap kebaca walau plugin error saat di-require.
