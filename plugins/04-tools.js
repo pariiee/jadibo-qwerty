@@ -9,7 +9,6 @@ const { rapikanError } = require('../engine/pesanError');
 const mess           = require('../config/mess');
 const { genThumbnail } = require('../engine/thumbnail');
 const { addStickerExif, videoKeStickerWebp } = require('../engine/sticker');
-const { MAKS_STICKER_PACK } = require('../engine/stickerPack');
 const { uploadInfo }  = require('../engine/api');
 
 // ─── Helper: mime type → ekstensi file ───────────────────────────────────────
