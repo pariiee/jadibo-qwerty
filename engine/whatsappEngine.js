@@ -77,7 +77,7 @@ const noopLogger = {
 const SESSIONS_DIR = path.resolve(process.env.SESSIONS_DIR || './sessions');
 
 // Global per-bot settings (nyimak, autoread) — dikelola di config/globalSettings.js
-const { getBotGlobalSetting, setBotGlobalSetting } = require('../config/globalSettings');
+const { getBotGlobalSetting, setBotGlobalSetting, getMuteGrup } = require('../config/globalSettings');
 // Cooldown balasan tanpa prefix (nyebut "bot") — per bot per grup.
 const mentionCooldown = new Map();
 
@@ -144,6 +144,10 @@ function buildLimitedCmds() {
 }
 
 const PLUGIN_LIMITED_CMDS = buildLimitedCmds();
+
+// Command yang tetap jalan walau grupnya dibisukan — tanpa ini nggak ada
+// jalan keluar dari `.mute` selain restart bot.
+const BEBAS_SAAT_MUTE = new Set(['unmute', 'listmute']);
 
 // ─── Build message context for plugins ────────────────────────────────────────
 function buildContext(client, event, botData) {
@@ -770,6 +774,16 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
     if (getBotGlobalSetting(botId, 'nyimak') && ctx.isCmd) {
       // log tetap jalan, tapi tidak diproses plugin
       console.log(`[Bot ${botId}] 🤫 nyimak: ${logLine}`);
+      return;
+    }
+
+    // ── Grup dibisukan (`.mute`) — bot diam total di grup itu ──────────────────
+    // Dicek SEBELUM dispatch plugin, jadi kena semua pesan (command maupun
+    // obrolan) termasuk antispam/welcome yang jalan sendiri. `.unmute` dan
+    // `.listmute` dikecualikan — kalau nggak, nggak ada jalan keluar buat
+    // ngebalikin dan bot cuma bisa di-unmute lewat restart.
+    if (ctx.jid && !BEBAS_SAAT_MUTE.has(ctx.command) && getMuteGrup(botId, ctx.jid)) {
+      console.log(`[Bot ${botId}] 🔇 grup dibisukan, dilewati: ${logLine}`);
       return;
     }
 

@@ -3,13 +3,15 @@
 /**
  * plugins/02-group.js
  * Commands: tagall, tagadmin, tagme, hidetag, kick, kickall, promote, demote,
- *           open, close, mute, unmute, slowmode, setname, setdesc, link,
+ *           open, close, mute (bisukan bot), unmute, listmute, slowmode,
+ *           setname, setdesc, link,
  *           groupinfo, idgc, leavegc, listadmin, pp/getpp, getppgc, totag,
  *           delete, cekasalmember, absen, mulaiabsen, cekabsen, hapusabsen,
  *           afk, listafk, topchat
  */
 
 const { rapikanError } = require('../engine/pesanError');
+const { getMuteGrup, setMuteGrup, daftarMuteGrup } = require('../config/globalSettings');
 const mess             = require('../config/mess');
 const proteksi         = require('./06-proteksi');
 const { lidToPnAsync, bare, toPn, mentionsForChat } = require('../engine/jid');
@@ -701,25 +703,45 @@ module.exports = async function groupHandler(ctx) {
       return true;
     }
 
-    // ── mute / unmute ─────────────────────────────────────────────────────────
+    // ── mute / unmute — bisukan BOT di grup ini ──────────────────────────────
+    // Ini BUKAN setting grup WhatsApp. Grup tetap normal: semua member (termasuk
+    // admin) tetap bisa ngobrol. Yang diem botnya — nggak ngebalas command
+    // maupun obrolan di grup ini. Buat ngunci grup pakai `.close`/`.open`.
+    //
+    // Dulu case ini nyetel setting grup WA lewat adapter dan di adapter itu
+    // jatuh ke tag `announcement` — SAMA PERSIS kayak `.close`. Jadi
+    // `.mute` diam-diam nge-lock grup: admin masih kelihatan tombol kirim, tapi
+    // WA nolak di server dan pesannya gagal (tanda merah). Itu bukan mute.
     case 'mute': {
       if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
-      if (!await isBotAdmin()) { await reply(mess.BotAdmin); return true; }
-      const sudahMute = (await getMeta())?.announce === true;
-      await client.group.setSetting(jid, 'mute');
-      await reply(sudahMute
-        ? '🔇 *Udah di-mute bang.* Nggak usah dipencet lagi 🗿'
-        : '🔇 *Grup di-mute.*\n\nSemua mode sunyi, cuma admin yang boleh buka suara 🗿');
+      if (getMuteGrup(botData.id, jid)) {
+        await reply('🔇 *Bot udah dibisukan di grup ini bang.* Nggak usah dipencet lagi 🗿');
+        return true;
+      }
+      setMuteGrup(botData.id, jid, true);
+      await reply(
+        '🔇 *Bot dibisukan di grup ini.*\n\n' +
+        'Bot berhenti ngebalas di sini — grup tetap normal, semua orang tetap bisa ngobrol.\n' +
+        `Nyalain lagi: *${p}unmute*`
+      );
       return true;
     }
     case 'unmute': {
       if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
-      if (!await isBotAdmin()) { await reply(mess.BotAdmin); return true; }
-      const sudahUnmute = (await getMeta())?.announce === false;
-      await client.group.setSetting(jid, 'unmute');
-      await reply(sudahUnmute
-        ? '🔊 *Udah pada bisa ngomong kok, bang.* Nggak usah di-unmute lagi 🗿'
-        : '🔊 *Grup di-unmute!*\n\nSilakan ngomong, yang lain jangan diem aja 🗿');
+      if (!getMuteGrup(botData.id, jid)) {
+        await reply('🔊 *Bot nggak lagi dibisukan di grup ini kok, bang.* 🗿');
+        return true;
+      }
+      setMuteGrup(botData.id, jid, false);
+      await reply('🔊 *Bot aktif lagi di grup ini!*\n\nSilakan pakai command, yang lain jangan diem aja 🗿');
+      return true;
+    }
+    case 'listmute': {
+      if (!ctx.isOwner) { await reply(mess.ownerOnly); return true; }
+      const grupMute = daftarMuteGrup(botData.id);
+      if (!grupMute.length) { await reply('✅ Nggak ada grup yang dibisukan.'); return true; }
+      const baris = grupMute.map((g, i) => `${i + 1}. ${g}`).join('\n');
+      await reply(`🔇 *Grup yang dibisukan*\n\n${baris}\n\nTotal: *${grupMute.length}*`);
       return true;
     }
 

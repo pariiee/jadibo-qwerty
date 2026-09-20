@@ -32,6 +32,9 @@ const tagFor = (setting) => (OPEN.has(setting) ? 'not_announcement' : 'announcem
 ok("'open' -> not_announcement (buka)", () => assert.strictEqual(tagFor('open'), 'not_announcement'));
 ok("'unmute' -> not_announcement (buka)", () => assert.strictEqual(tagFor('unmute'), 'not_announcement'));
 ok("'close' -> announcement (tutup)", () => assert.strictEqual(tagFor('close'), 'announcement'));
+// Inilah jebakannya: dulu `.mute` ngelewatin fungsi ini juga, jadi `.mute` =
+// nge-lock grup persis `.close` — admin masih bisa ngetik, WA nolak di server,
+// pesannya gagal (tanda merah). Sekarang `.mute` nggak nyentuh setting grup.
 ok("'mute' -> announcement (tutup)", () => assert.strictEqual(tagFor('mute'), 'announcement'));
 ok('kata kunci asing fail-closed -> tutup', () => assert.strictEqual(tagFor('apalah'), 'announcement'));
 
@@ -61,9 +64,13 @@ ok('.close: posisi udah tutup -> balasan "udah ketutup", bukan "Grup ditutup!"',
   assert.ok(/udah ketutup/i.test(b), '.close butuh teks "udah ketutup"');
 });
 
-ok('.mute / .unmute ikut kontekstual', () => {
-  assert.ok(/sudahMute/.test(blok('mute')), '.mute cek posisi');
-  assert.ok(/sudahUnmute/.test(blok('unmute')), '.unmute cek posisi');
+// `.mute`/`.unmute` = bisukan BOT di grup, bukan setting grup WhatsApp.
+// Detailnya diuji di test/mute-grup.js; di sini cuma mastiin keduanya nggak
+// nyerempet jalur `announce` lagi.
+ok('.mute / .unmute nggak nyentuh setting grup WhatsApp', () => {
+  assert.ok(!/setSetting\(jid, '(mute|unmute)'\)/.test(src), '.mute/.unmute dilarang setSetting');
+  assert.ok(!/announce/.test(blok('mute')), '.mute nggak boleh baca meta.announce');
+  assert.ok(/getMuteGrup/.test(blok('mute')), '.mute harus cek state mute bot');
 });
 
 console.log(`\n✓ ${PASS} PASS — open/close: mapping niat -> tag WA bener + balasan kontekstual`);
