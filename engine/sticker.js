@@ -45,4 +45,46 @@ async function addStickerExif(webpBuffer, packname, author) {
   }
 }
 
-module.exports = { addStickerExif };
+// ─── Video/GIF → WebP sticker animasi ───────────────────────────────────────
+// Batas WhatsApp untuk sticker animasi itu UKURAN (500KB), bukan durasi. Jadi
+// durasi dipatok 10 detik dan yang diturunkan bertahap itu resolusi + fps +
+// quality, sampai masuk 400KB (sisain ruang buat EXIF & overhead kirim).
+// ponytail: 3 tangga udah nutup video 10 detik pada umumnya; tambah tangga
+// kalau nanti masih ada yang kejegal.
+const TANGGA_STICKER = [
+  { fps: 12, px: 512, q: 70 },
+  { fps: 10, px: 320, q: 55 },
+  { fps: 8,  px: 256, q: 40 },
+];
+const MAX_DETIK_STICKER = 10;
+const TARGET_STICKER_KB = 400;
+
+// Dipakai .s/.sticker (video & GIF) dan .wm. Return buffer WebP (belum EXIF).
+async function videoKeStickerWebp(inPath, outPath, { detik = MAX_DETIK_STICKER, tangga = TANGGA_STICKER } = {}) {
+  const { spawn } = require('child_process');
+  const fs = require('fs');
+  const durasi = `00:00:${String(detik).padStart(2, '0')}`;
+  let terakhir = null;
+  let terpilih = null;
+
+  for (const t of tangga) {
+    const scale = `scale='min(${t.px},iw)':'min(${t.px},ih)':force_original_aspect_ratio=decrease`;
+    await new Promise((resolve, reject) => {
+      const ff = spawn('ffmpeg', [
+        '-y', '-i', inPath,
+        '-vcodec', 'libwebp',
+        '-vf', `${scale},fps=${t.fps}`,
+        '-loop', '0', '-ss', '00:00:00', '-t', durasi,
+        '-preset', 'default', '-an', '-quality', String(t.q), outPath,
+      ]);
+      ff.on('error', reject);
+      ff.on('close', code => code !== 0 ? reject(new Error(`ffmpeg exit code ${code}`)) : resolve());
+    });
+    terakhir = fs.readFileSync(outPath);
+    if (terakhir.length <= TARGET_STICKER_KB * 1024) { terpilih = { ...t, buf: terakhir }; break; }
+  }
+
+  return { buf: terpilih ? terpilih.buf : terakhir, tangga: terpilih || null };
+}
+
+module.exports = { addStickerExif, videoKeStickerWebp, TANGGA_STICKER, MAX_DETIK_STICKER };

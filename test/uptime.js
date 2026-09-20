@@ -30,4 +30,12 @@ const engSrc = read('engine/whatsappEngine.js');
 assert.ok(/botConnectedAt\.delete\(botId\)/.test(engSrc), 'stopWhatsAppBot harus buang botConnectedAt');
 assert.ok(/botConnectedAt\.set\(botId, Date\.now\(\)\)/.test(engSrc), "koneksi 'open' harus nyetel botConnectedAt");
 
+// 5. .runtime = umur PROSES, .uptime = umur BOT — dua angka yang beda
+assert.ok(/case 'runtime'[\s\S]{0,200}process\.uptime\(\)/.test(info),
+  '.runtime harus baca process.uptime() (umur aplikasi)');
+assert.ok(/case 'uptime'[\s\S]{0,200}botUptimeMs\(ctx\)/.test(info),
+  '.uptime harus baca botUptimeMs(ctx) (umur koneksi bot)');
+assert.ok(!/case 'runtime'[\s\S]{0,200}botUptimeMs/.test(info),
+  ".runtime jangan balik pakai botUptimeMs — hasilnya bakal sama persis kayak .uptime");
+
 console.log('✓ uptime: umur bot (per koneksi), bukan umur proses Node');

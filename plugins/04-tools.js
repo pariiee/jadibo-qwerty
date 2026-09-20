@@ -8,7 +8,7 @@
 const { rapikanError } = require('../engine/pesanError');
 const mess           = require('../config/mess');
 const { genThumbnail } = require('../engine/thumbnail');
-const { addStickerExif } = require('../engine/sticker');
+const { addStickerExif, videoKeStickerWebp } = require('../engine/sticker');
 const { uploadInfo }  = require('../engine/api');
 
 // ─── Helper: mime type → ekstensi file ───────────────────────────────────────
@@ -139,7 +139,6 @@ module.exports = async function toolsHandler(ctx) {
         const sharp     = require('sharp');
         const fs        = require('fs');
         const path      = require('path');
-        const { spawn } = require('child_process');
         const os        = require('os');
 
         let buffer, mime;
@@ -171,35 +170,14 @@ module.exports = async function toolsHandler(ctx) {
           const tmpOut = path.join(tmpDir, `sticker_out_${Date.now()}.webp`);
           fs.writeFileSync(tmpIn, buffer);
 
-          // Coba quality 70 dulu, kalau masih > 400KB turunkan ke 50
-          let quality = 70;
-          let webpBuffer;
-          for (let attempt = 0; attempt < 2; attempt++) {
-            const fps   = attempt === 0 ? 12 : 8;
-            const scale = attempt === 0
-              ? `scale='min(512,iw)':'min(512,ih)':force_original_aspect_ratio=decrease`
-              : `scale='min(256,iw)':'min(256,ih)':force_original_aspect_ratio=decrease`;
-            await new Promise((resolve, reject) => {
-              const ff = spawn('ffmpeg', [
-                '-y', '-i', tmpIn,
-                '-vcodec', 'libwebp',
-                '-vf', `${scale},fps=${fps}`,
-                '-loop', '0', '-ss', '00:00:00', '-t', '00:00:05',
-                '-preset', 'default', '-an', '-quality', String(quality), tmpOut
-              ]);
-              ff.on('error', reject);
-              ff.on('close', code => code !== 0 ? reject(new Error(`ffmpeg exit code ${code}`)) : resolve());
-            });
-            webpBuffer = fs.readFileSync(tmpOut);
-            if (webpBuffer.length <= 400 * 1024) break;
-            quality = 40; // retry dengan quality lebih rendah
-          }
+          // Durasi 10 detik; resolusi/fps/quality turun otomatis kalau kegedean.
+          const { buf: webpBuffer } = await videoKeStickerWebp(tmpIn, tmpOut);
 
           try { fs.unlinkSync(tmpIn); } catch {}
           try { fs.unlinkSync(tmpOut); } catch {}
 
           if (!webpBuffer || webpBuffer.length > 500 * 1024) {
-            await reply(`❌ Sticker terlalu besar (${Math.round(webpBuffer.length/1024)}KB). Coba GIF yang lebih pendek.`);
+            await reply(`❌ Sticker terlalu besar (${Math.round(webpBuffer.length/1024)}KB, batas WA 500KB). Coba videonya lebih pendek.`);
             return true;
           }
 
