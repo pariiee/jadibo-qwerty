@@ -1883,7 +1883,7 @@ module.exports = async function ownerHandler(ctx) {
       const defLim = parseInt(process.env.DEFAULT_LIMIT || '20', 10);
       await pool.execute(
         `UPDATE rpg_members SET level=1, xp=0, money=0, bank_money=0, healt=100, energi=100,
-         last_energi=NULL, sword=0, armor=0, job=NULL, jobexp=0, lim=?, hewan_json=NULL
+         last_energi=NULL, job=NULL, jobexp=0, lim=?, hewan_json=NULL
          WHERE bot_id = ? AND jid = ?`,
         [defLim, botId, target]
       );
@@ -2394,7 +2394,7 @@ module.exports = async function ownerHandler(ctx) {
         let msg = '';
         if (target === 'all') {
           await pool.execute(
-            'UPDATE rpg_members SET level=1, xp=0, money=0, bank_money=0, healt=100, energi=100, last_energi=NULL, sword=0, armor=0, job=NULL, jobexp=0, lim=?, hewan_json=NULL WHERE bot_id=? AND registered=1',
+            'UPDATE rpg_members SET level=1, xp=0, money=0, bank_money=0, healt=100, energi=100, last_energi=NULL, job=NULL, jobexp=0, lim=?, hewan_json=NULL WHERE bot_id=? AND registered=1',
             [defLim, botId]
           );
           msg = '✅ *RESET ALL* — semua stat RPG user direset ke default!';

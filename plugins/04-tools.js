@@ -5595,4 +5595,7 @@ module.exports.limitedCmds = new Set([
   'gdrive','gdrivedl',
   'instagram','igdl','ig',
   'kuaishou','kwai','kuaishoudl',
+  // RPG: tambang, craft, kejahatan
+  'tambang','kebon','tebang','bahan','craft',
+  'skill','penjara','bebaskan','copet','rampok',
 ]);

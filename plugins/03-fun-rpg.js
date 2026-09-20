@@ -57,6 +57,81 @@ const STORE_ITEMS = [
   { id: 11, name: 'Tameng Naga',   price: 75000, type: 'armor',  lv: 4, effect: '+16 DEF' },
 ];
 
+// ─── Bahan mentah, craft, skill, penjara ─────────────────────────────────────
+// Semua state baru (bahan, cooldown, skill, penjara) nempel di hewan_json yang
+// UDAH ADA — jadi nol kolom DB baru. Kuncinya di bawah ini.
+const KEY_BAHAN = 'bahan';   // { Batu: 3, Besi: 1, ... }
+const KEY_CD    = 'cd';      // { tambang: <epoch ms boleh lagi>, copet: ..., ... }
+const KEY_SKILL = 'skill';   // { atk, def, spd, hp }
+const KEY_JAIL  = 'jail';    // <epoch ms bebas>, 0/kosong = bebas
+
+/** Pilih acak berbobot dari list item yang punya `.w`. */
+function pilihBobot(list) {
+  const total = list.reduce((a, b) => a + (Number(b.w) || 0), 0);
+  let r = Math.random() * total;
+  for (const it of list) { r -= Number(it.w) || 0; if (r <= 0) return it; }
+  return list[0];
+}
+
+// 3 spot grind bahan. Bedanya cuma tabelnya.
+const SPOT_BAHAN = {
+  tambang: { nama: '⛏️ Tambang', biaya: 20, xp: 8,
+    isi: [ { n: 'Batu',    w: 45, min: 1, max: 5 },
+           { n: 'Besi',    w: 30, min: 1, max: 3 },
+           { n: 'Emas',    w: 18, min: 1, max: 2 },
+           { n: 'Berlian', w: 7,  min: 1, max: 1 } ] },
+  kebon:   { nama: '🌾 Kebon',   biaya: 15, xp: 6,
+    isi: [ { n: 'Padi',   w: 40, min: 2, max: 6 },
+           { n: 'Jagung', w: 35, min: 1, max: 5 },
+           { n: 'Cabai',  w: 20, min: 1, max: 3 },
+           { n: 'Tebu',   w: 5,  min: 1, max: 2 } ] },
+  tebang:  { nama: '🪓 Tebang',  biaya: 15, xp: 6,
+    isi: [ { n: 'Kayu',   w: 50, min: 2, max: 7 },
+           { n: 'Bambu',  w: 35, min: 1, max: 5 },
+           { n: 'Rotan',  w: 15, min: 1, max: 3 } ] },
+};
+const SPOT_COOLDOWN = 15 * 60 * 1000;
+
+// Kejahatan: hadiah gede, tapi ada peluang gagal → hukuman (menit) di penjara.
+const KEJAHATAN = {
+  copet:  { nama: '🥷 *C O P E T*',  biaya: 10, min: 50,   max: 400,  gagal: 0.45, hukuman: 5,  cooldown: 20 * 60 * 1000 },
+  maling: { nama: '🕵️ *M A L I N G*', biaya: 20, min: 200,  max: 1500, gagal: 0.50, hukuman: 10, cooldown: 45 * 60 * 1000 },
+  rampok: { nama: '🔫 *R A M P O K*', biaya: 35, min: 800,  max: 5000, gagal: 0.55, hukuman: 20, cooldown: 2 * 60 * 60 * 1000 },
+};
+
+// Command yang diblokir waktu lagi di penjara (yang ngasih duit/bahan).
+// Sisanya (profil, inventory, money, beli, repair, bebaskan) tetap jalan.
+const CMD_RISIKO = new Set([
+  'kerja', 'gajian', 'mancing', 'berburu', 'dungeon', 'adventure',
+  'tambang', 'kebon', 'tebang', 'copet', 'maling', 'rampok',
+  'bertarung', 'transfer', 'gacha', 'slot', 'coinflip', 'taruhan',
+]);
+
+// Resep craft: id = nomor item di STORE_ITEMS, bahan = { nama: jumlah }.
+// Urut dari murah ke mahal biar `.craft` enak dibaca.
+const RESEP = [
+  { id: 1,  bahan: { Kayu: 3 } },
+  { id: 3,  bahan: { Cabai: 2, Padi: 1 } },
+  { id: 2,  bahan: { Besi: 2, Kayu: 2 } },
+  { id: 6,  bahan: { Besi: 4, Batu: 3, Kayu: 2 } },
+  { id: 7,  bahan: { Besi: 5, Batu: 4 } },
+  { id: 4,  bahan: { Tebu: 3, Padi: 2 } },
+  { id: 8,  bahan: { Besi: 8, Emas: 3, Rotan: 2 } },
+  { id: 9,  bahan: { Besi: 10, Batu: 8, Bambu: 3 } },
+  { id: 5,  bahan: { Emas: 5, Berlian: 1 } },
+  { id: 10, bahan: { Berlian: 3, Emas: 10, Rotan: 5 } },
+  { id: 11, bahan: { Berlian: 4, Emas: 12, Bambu: 5 } },
+];
+
+// Skill: 4 stat, beli pakai Money. Harga naik tiap level.
+const SKILL_NAMA = { atk: '⚔️ Attack', def: '🛡️ Defense', spd: '💨 Speed', hp: '❤️ Health' };
+const SKILL_MAKS = 50;
+const biayaSkill = (lv) => 200 * (Number(lv) + 1);
+
+// STORE_ITEMS nggak punya field emoji — ambil dari tipe-nya.
+const EMOJI_ITEM = { weapon: '🗡️', armor: '🛡️', potion: '🧪', magic: '📕', special: '🔑' };
+const emojiItem  = (it) => EMOJI_ITEM[it.type] || '📦';
+
 // ─── Energi ──────────────────────────────────────────────────────────────────
 // Energi = ongkos aktivitas grind. Regen otomatis, jadi nggak butuh `.tidur`.
 const ENERGI_MAKS       = 100;
@@ -234,6 +309,48 @@ function bacaGear(member) {
   return (g && typeof g === 'object' && !Array.isArray(g)) ? g : {};
 }
 
+/** Map bahan mentah (nama → jumlah) dari hewan_json. */
+function bacaBahan(member) {
+  const b = bacaJson(member)[KEY_BAHAN];
+  return (b && typeof b === 'object' && !Array.isArray(b)) ? b : {};
+}
+
+/** Skill (atk/def/spd/hp) dari hewan_json — selalu 4 kunci, default 0. */
+function bacaSkill(member) {
+  const s = bacaJson(member)[KEY_SKILL];
+  const out = { atk: 0, def: 0, spd: 0, hp: 0 };
+  if (s && typeof s === 'object') {
+    for (const k of Object.keys(out)) out[k] = Math.max(0, Math.min(SKILL_MAKS, Number(s[k]) || 0));
+  }
+  return out;
+}
+
+// ─── Penjara & cooldown (dua-duanya di hewan_json, nol kolom DB baru) ────────
+
+/** Sisa waktu di penjara dalam ms. 0 = bebas. */
+function sisaPenjara(member) {
+  const bebas = Number(bacaJson(member)[KEY_JAIL]) || 0;
+  return Math.max(0, bebas - Date.now());
+}
+
+function pesanPenjara(ms, p) {
+  const m = Math.floor(ms / 60000);
+  const d = Math.floor((ms % 60000) / 1000);
+  return `🚔 *Kamu sedang di penjara!*\n\nBebas dalam *${m}m ${d}d*.\n\n` +
+    `Mau keluar sekarang? Bayar tebusan: *${p}bebaskan*`;
+}
+
+/** Sisa cooldown command baru (disimpan di hewan_json.cd). */
+function sisaCdJson(member, nama) {
+  const cd = bacaJson(member)[KEY_CD] || {};
+  return Math.max(0, (Number(cd[nama]) || 0) - Date.now());
+}
+
+/** Set cooldown command di objek `data` (hasil bacaJson) — mutasi. */
+function setCdJson(data, nama, ms) {
+  data[KEY_CD] = { ...(data[KEY_CD] || {}), [nama]: Date.now() + ms };
+}
+
 /** Level gear yang beneran dipakai di pertarungan: ada lv DAN durability > 0. */
 function gearDipakai(member, slot) {
   return gearAktif(member, slot) ? gearLevel(member, slot) : 0;
@@ -360,18 +477,59 @@ async function applyXpGain(botId, jid, amount, extraFields = {}) {
   return { member: { ...m, xp, level }, newLevel: level, leveledUp: level > startLevel, levelsGained: level - startLevel };
 }
 
+// ─── Helper: satu handler buat 3 spot bahan (tambang/kebon/tebang) ───────────
+// Bedanya cuma tabel SPOT_BAHAN — jadi nggak perlu 3 case yang isinya kembar.
+async function galiBahan(ctx, kunci) {
+  const { reply, botData, sender, pushName } = ctx;
+  const p      = botData.prefix;
+  const spot   = SPOT_BAHAN[kunci];
+  const botId  = botData.id;
+  const member = await getOrCreateMember(botId, sender, pushName);
+
+  const sisaCd = sisaCdJson(member, kunci);
+  if (sisaCd > 0) {
+    const m = Math.floor(sisaCd / 60000);
+    const d = Math.floor((sisaCd % 60000) / 1000);
+    await reply(`${spot.nama} masih sepi. Balik lagi dalam *${m}m ${d}d*.`);
+    return true;
+  }
+
+  const cukup = await pakaiEnergi(botId, sender, member, spot.biaya);
+  if (!cukup.ok) { await reply(pesanEnergiKurang(cukup.energi, spot.biaya)); return true; }
+
+  // 1–3 kali roll dari tabel berbobot
+  const dapat = {};
+  const roll  = Math.floor(Math.random() * 3) + 1;
+  for (let i = 0; i < roll; i++) {
+    const b = pilihBobot(spot.isi);
+    const n = Math.floor(Math.random() * (b.max - b.min + 1)) + b.min;
+    dapat[b.n] = (dapat[b.n] || 0) + n;
+  }
+
+  const data  = bacaJson(member);
+  const bahan = bacaBahan(member);
+  for (const [n, j] of Object.entries(dapat)) bahan[n] = (bahan[n] || 0) + j;
+  data[KEY_BAHAN] = bahan;
+  setCdJson(data, kunci, SPOT_COOLDOWN);
+
+  const xpGet = spot.xp + (member.premium ? 2 : 0);
+  const { xp, level } = calcXpLevel(member.xp, member.level || 1, xpGet);
+  await updateMember(botId, sender, { xp, level, hewan_json: JSON.stringify(data) });
+
+  let txt = `${spot.nama} — *HASIL*\n\n` +
+    Object.entries(dapat).map(([n, j]) => `• ${n} ×${j}`).join('\n') +
+    `\n\n✨ XP: *+${xpGet}*`;
+  if (level > (member.level || 1)) txt += `\n\n🎉 *LEVEL UP!* Level *${level}* (${getRankByLevel(level)})`;
+  txt += `\n⚡ Energi sisa: *${cukup.energi}*`;
+  await reply(txt);
+  return true;
+}
+
 // ─── Helper: weighted random ikan ────────────────────────────────────────────
 function pickIkan() {
-  const total = Object.values(IKAN_WEIGHTS).reduce((a, b) => a + b, 0);
-  let rand = Math.random() * total;
-  for (const [tier, weight] of Object.entries(IKAN_WEIGHTS)) {
-    rand -= weight;
-    if (rand <= 0) {
-      const pool = IKAN_TABLE.filter(i => i.tier === tier);
-      return pool[Math.floor(Math.random() * pool.length)];
-    }
-  }
-  return IKAN_TABLE[0];
+  const tier = pilihBobot(Object.entries(IKAN_WEIGHTS).map(([t, w]) => ({ t, w }))).t;
+  const pool = IKAN_TABLE.filter(i => i.tier === tier);
+  return pool[Math.floor(Math.random() * pool.length)];
 }
 function renderTTTBoard(board) {
   const nums = ['1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣'];
@@ -435,7 +593,14 @@ module.exports = async function funRpgHandler(ctx) {
               { nama: 'Skeleton', hp: 60,  reward: { min: 250,  max: 600  }, xp: 12 },
             ];
             const monster  = MONSTER_LIST[Math.floor(Math.random() * MONSTER_LIST.length)];
-            const menang   = Math.random() >= 0.35; // 65% chance menang
+            // Skill atk tim nambah peluang menang — biar `.skill` kerasa di dungeon.
+            // ponytail: monster nyerang 1×, jadi buff-nya ⅓ pasukan (def diabaikan,
+            // dungeon lama juga nggak pakai def). Naikin kalau sekalian rombak dungeon.
+            let skTim = 0;
+            for (const pJid of [...new Set(players)]) {
+              try { skTim += bacaSkill(await getOrCreateMember(botId, pJid, resolveMentionNum(pJid))).atk; } catch {}
+            }
+            const menang   = Math.random() < Math.min(0.9, 0.5 + (skTim / 3) / 500);
             const rewardKoin = menang
               ? Math.floor(Math.random() * (monster.reward.max - monster.reward.min + 1)) + monster.reward.min
               : 0;
@@ -656,6 +821,16 @@ module.exports = async function funRpgHandler(ctx) {
   }
 
   if (!isCmd) return false;
+
+  // Satu gerbang penjara: cuma command yang ngasih duit/bahan yang diblokir.
+  // Lihat saldo, tas, toko, dan `.bebaskan` tetap jalan — biar bisa nebus diri.
+  if (CMD_RISIKO.has(command)) {
+    try {
+      const mJail = await getOrCreateMember(botData.id, sender, pushName);
+      const sisa  = sisaPenjara(mJail);
+      if (sisa > 0) { await reply(pesanPenjara(sisa, p)); return true; }
+    } catch { /* DB lagi rewel → biarin handler-nya yang ngeluh */ }
+  }
 
   switch (command) {
 
@@ -890,6 +1065,10 @@ module.exports = async function funRpgHandler(ctx) {
           `┃🛡️ • Armor: ${statGear(m, 'armor')}\n` +
           `┃🏦 • Bank: ${formatNum(m.bank_money || 0)}\n` +
           `┃💼 • Kerja: ${m.job ? `${m.job} (${Number(m.jobexp) || 0}%)` : 'Belum melamar'}\n` +
+          (() => { const s = bacaSkill(m); return (s.atk + s.def + s.hp) > 0
+            ? `┃⚡ • Skill: atk ${s.atk} · def ${s.def} · hp ${s.hp}\n` : ''; })() +
+          (sisaPenjara(m) > 0
+            ? `┃⛓️ • Penjara: ${Math.ceil(sisaPenjara(m) / 60000)} menit lagi\n` : '') +
           `└──────────────\n\n` +
           `┌─⊷ STATUS\n` +
           `┃📌 • Registered: ${m.registered ? 'Yes' : 'No'}\n` +
@@ -1036,6 +1215,7 @@ module.exports = async function funRpgHandler(ctx) {
     case 'inventory': {
       try {
         const m    = await getOrCreateMember(botData.id, sender, pushName);
+        if (!m) { await reply('Tas lu belum kebaca nih — coba ulang sebentar lagi.'); return true; }
         const inv  = bacaItem(m);
         const rows = Object.entries(inv)
           .map(([id, n]) => {
@@ -1054,6 +1234,24 @@ module.exports = async function funRpgHandler(ctx) {
           `🗡️ Sword : ${statGear(m, 'weapon')}\n` +
           `🛡️ Armor : ${statGear(m, 'armor')}\n` +
           `⚡ Energi : ${barEnergi(energiSekarang(m))}`
+        );
+      } catch (e) { await reply(`Gagal: ${rapikanError(e)}`); }
+      return true;
+    }
+
+    // ── bahan — bahan mentah hasil tambang/kebon/tebang ───────────────────────
+    case 'bahan': {
+      try {
+        const m     = await getOrCreateMember(botData.id, sender, pushName);
+        if (!m) { await reply('Bahan lu belum kebaca nih — coba ulang sebentar lagi.'); return true; }
+        const bahan = bacaBahan(m);
+        const rows  = Object.entries(bahan).filter(([, n]) => Number(n) > 0)
+          .sort((a, b) => a[0].localeCompare(b[0]));
+        await reply(
+          `🧺 *Bahan Mentah*\n\n` +
+          (rows.length ? rows.map(([n, j]) => `• ${n} ×${j}`).join('\n') : '_Belum ada bahan._') +
+          `\n\n⛏️ ${p}tambang · 🌾 ${p}kebon · 🪓 ${p}tebang` +
+          `\n🔨 Olah jadi item: ${p}craft`
         );
       } catch (e) { await reply(`Gagal: ${rapikanError(e)}`); }
       return true;
@@ -1359,7 +1557,9 @@ module.exports = async function funRpgHandler(ctx) {
 
       setTimeout(async () => {
         try {
-          const menang  = Math.random() >= 0.5;
+          // Skill atk nambah peluang menang — biar naikin skill kerasa.
+          const skA = bacaSkill(member).atk, skB = bacaSkill(oppRow).atk;
+          const menang  = Math.random() < (skA + 10) / (skA + skB + 20);
           const alasan  = menang
             ? ALASAN_MENANG[Math.floor(Math.random() * ALASAN_MENANG.length)]
             : ALASAN_KALAH[Math.floor(Math.random() * ALASAN_KALAH.length)];
@@ -1661,6 +1861,249 @@ module.exports = async function funRpgHandler(ctx) {
       return true;
     }
 
+    // ── tambang / kebon / tebang — cari bahan mentah ──────────────────────────
+    case 'tambang': case 'kebon': case 'tebang': {
+      return galiBahan({ reply, botData, sender, pushName }, command);
+    }
+
+    // ── bahan — lihat kantong bahan ───────────────────────────────────────────
+    case 'bahan': {
+      const member = await getOrCreateMember(botData.id, sender, pushName);
+      const bahan  = bacaBahan(member);
+      const pakai  = [];
+      for (const r of RESEP) {
+        const it = STORE_ITEMS.find(i => i.id === r.id);
+        if (it) pakai.push(`> ${emojiItem(it)} *${it.name}* ← ${Object.entries(r.bahan).map(([n, j]) => `${n} ${bahan[n] || 0}/${j}`).join(', ')}`);
+      }
+      const isi = Object.entries(bahan).filter(([, j]) => j > 0);
+      await reply(
+        `乂 *🧺 B A H A N* 乂\n\n` +
+        (isi.length ? isi.map(([n, j]) => `  ◦ *${n}* : ${formatNum(j)}`).join('\n')
+                    : '  ◦ _(kosong — coba .tambang / .kebon / .tebang)_') +
+        `\n\n乂 *🔨 R E S E P* 乂\n\n` + pakai.join('\n') +
+        `\n\n> *${p}craft <nama>* untuk bikin`
+      );
+      return true;
+    }
+
+    // ── craft — ubah bahan jadi item ──────────────────────────────────────────
+    case 'craft': {
+      const nama = args.join(' ').trim().toLowerCase();
+      const member = await getOrCreateMember(botData.id, sender, pushName);
+
+      if (!nama) {
+        await reply(
+          `乂 *🔨 C R A F T* 乂\n\n` +
+          RESEP.map(r => {
+            const it = STORE_ITEMS.find(i => i.id === r.id);
+            return it ? `> ${emojiItem(it)} *${it.name}* ← ${Object.entries(r.bahan).map(([n, j]) => `${n} ${j}`).join(', ')}` : null;
+          }).filter(Boolean).join('\n') +
+          `\n\nContoh: *${p}craft Pedang Kayu*`
+        );
+        return true;
+      }
+
+      const resep = RESEP.find(r => {
+        const it = STORE_ITEMS.find(i => i.id === r.id);
+        return it && it.name.toLowerCase() === nama;
+      });
+      if (!resep) {
+        await reply(`❌ Resep *${args.join(' ')}* nggak ada. Lihat daftarnya: *${p}craft*`);
+        return true;
+      }
+
+      const item  = STORE_ITEMS.find(i => i.id === resep.id);
+      const bahan = bacaBahan(member);
+      const kurang = Object.entries(resep.bahan).filter(([n, j]) => (bahan[n] || 0) < j);
+      if (kurang.length) {
+        await reply(
+          `❌ Bahan buat *${item.name}* masih kurang:\n\n` +
+          kurang.map(([n, j]) => `• *${n}* : ${bahan[n] || 0}/${j}`).join('\n') +
+          `\n\nLihat bahanmu: *${p}bahan*`
+        );
+        return true;
+      }
+
+      for (const [n, j] of Object.entries(resep.bahan)) bahan[n] -= j;
+      const data = bacaJson(member);
+      const inv  = bacaItem(member);
+      data[KEY_BAHAN] = bahan;
+      inv[String(item.id)] = (Number(inv[String(item.id)]) || 0) + 1;
+      data[KEY_ITEM] = inv;
+
+      // Gear bikinan sendiri cuma kepasang kalau lebih bagus / yang lama rusak —
+      // sama aturannya kayak `.beli`, biar nggak "turun pangkat".
+      let info;
+      if (item.type === 'weapon' || item.type === 'armor') {
+        const lvLama = gearLevel(member, item.type);
+        if (item.lv > lvLama || (lvLama >= 1 && !gearAktif(member, item.type))) {
+          pasangGear(data, item.type, item.lv, DUR_MAKS);
+          info = `\n\n🗡️ Gear otomatis kepasang — Lv.${item.lv}, dur *${DUR_MAKS}%*.`;
+        } else {
+          info = `\n\n📦 Masuk tas — gear Lv.${item.lv} nggak lebih bagus dari Lv.${lvLama} yang kepasang.`;
+        }
+      } else {
+        info = item.type === 'potion' ? `\n\n🧪 Pakai dengan: *${p}pakai ${item.id}*` : `\n\nCek tas: *${p}inventory*`;
+      }
+      await updateMember(botData.id, sender, { hewan_json: JSON.stringify(data) });
+
+      await reply(
+        `🔨 *C R A F T  S U K S E S*\n\n` +
+        `${emojiItem(item)} *${item.name}* ×1\n\n` +
+        `Bahan terpakai:\n` + Object.entries(resep.bahan).map(([n, j]) => `• ${n} −${j}  _(sisa ${bahan[n]})_`).join('\n') +
+        info
+      );
+      return true;
+    }
+
+    // ── skill — stat yang dibeli pakai Money ─────────────────────────────────
+    case 'skill': {
+      const botId  = botData.id;
+      const member = await getOrCreateMember(botId, sender, pushName);
+      const skill  = bacaSkill(member);
+      const sub    = (args[0] || '').toLowerCase();
+      const map    = { atk: 'atk', attack: 'atk', serang: 'atk',
+                       def: 'def', defense: 'def', pertahanan: 'def',
+                       spd: 'spd', speed: 'spd', kecepatan: 'spd',
+                       hp: 'hp', health: 'hp', darah: 'hp' };
+      const kunci  = map[sub];
+
+      const daftar = () => Object.entries(SKILL_NAMA).map(([k, lbl]) =>
+        `  ◦ ${lbl} : *${skill[k]}*  →  naik: *${formatNum(biayaSkill(skill[k]))}*`
+      ).join('\n');
+
+      if (!kunci) {
+        await reply(
+          `乂 *⚔️ S K I L L* 乂\n\n${daftar()}\n\n` +
+          `  ◦ 👛 Kantong : *${formatNum(Number(member.money) || 0)}*\n` +
+          `  ◦ 📊 Total   : *${formatNum((Number(member.money) || 0) + (Number(member.bank_money) || 0))}*\n\n` +
+          `> *${p}skill <atk|def|spd|hp>* untuk naikin 1 level\n` +
+          `> Maks level: *${SKILL_MAKS}*`
+        );
+        return true;
+      }
+
+      if (skill[kunci] >= SKILL_MAKS) { await reply(`❌ ${SKILL_NAMA[kunci]} sudah mentok *${SKILL_MAKS}*.`); return true; }
+      const harga = biayaSkill(skill[kunci]);
+      if ((Number(member.money) || 0) < harga) {
+        await reply(`❌ Money tidak cukup! Butuh *${formatNum(harga)}*, kamu punya *${formatNum(Number(member.money) || 0)}*.`);
+        return true;
+      }
+
+      skill[kunci] += 1;
+      const data = bacaJson(member);
+      data[KEY_SKILL] = skill;
+      await updateMember(botId, sender, { money: (Number(member.money) || 0) - harga, hewan_json: JSON.stringify(data) });
+
+      await reply(
+        `⚔️ *S K I L L  N A I K*\n\n` +
+        `${SKILL_NAMA[kunci]} → *${skill[kunci]}* (dari ${skill[kunci] - 1})\n` +
+        `💸 Biaya: *${formatNum(harga)}*\n` +
+        `👛 Kantong: *${formatNum((Number(member.money) || 0) - harga)}*`
+      );
+      return true;
+    }
+
+    // ── penjara — status sel, atau (khusus Polisi) kurung orang ──────────────
+    case 'penjara': {
+      const botId  = botData.id;
+      const member = await getOrCreateMember(botId, sender, pushName);
+      const target = getMentioned(ctx)[0];
+
+      if (!target) {
+        const sisa = sisaPenjara(member);
+        if (!sisa) { await reply(`🚔 *P E N J A R A*\n\n_sel kosong — kamu warga taat hukum._`); return true; }
+        await reply(pesanPenjara(sisa, p));
+        return true;
+      }
+
+      if (member.job !== 'polisi') {
+        await reply(`🚫 Cuma *Polisi* yang boleh ngurung orang.\n\nKerja sebagai polisi: *${p}lamarkerja*`);
+        return true;
+      }
+      if (target === sender) { await reply('❌ Nggak bisa nangkep diri sendiri.'); return true; }
+
+      const korban = await getOrCreateMember(botId, target, resolveMentionNum(target));
+      const kd     = bacaJson(korban);
+      kd[KEY_JAIL] = Date.now() + 10 * 60000;
+      await updateMember(botId, target, { hewan_json: JSON.stringify(kd) });
+      await reply(
+        `🚔 *D I T A N G K A P!*\n\n` +
+        `@${resolveMentionNum(target)} dikurung *10 menit* oleh Polisi *${pushName}*.\n\n` +
+        `> Tebus: *${p}bebaskan*`
+      );
+      return true;
+    }
+
+    // ── bebaskan — bayar tebusan biar keluar sel ─────────────────────────────
+    case 'bebaskan': {
+      const botId  = botData.id;
+      const member = await getOrCreateMember(botId, sender, pushName);
+      const sisa   = sisaPenjara(member);
+      if (!sisa) { await reply(`✅ Kamu nggak sedang di penjara.`); return true; }
+
+      const biaya = 200 * Math.max(1, Math.ceil(sisa / 60000));
+      if ((Number(member.money) || 0) < biaya) {
+        await reply(`❌ Tebusan *${formatNum(biaya)}* — Money kamu cuma *${formatNum(Number(member.money) || 0)}*.\n\nTunggu aja *${Math.ceil(sisa / 60000)} menit* atau minta tolong teman.`);
+        return true;
+      }
+      const data = bacaJson(member);
+      delete data[KEY_JAIL];
+      await updateMember(botId, sender, { money: (Number(member.money) || 0) - biaya, hewan_json: JSON.stringify(data) });
+      await reply(`🔓 *B E B A S!*\n\nKamu bayar tebusan *${formatNum(biaya)}* dan keluar dari sel.`);
+      return true;
+    }
+
+    // ── copet / maling / rampok — kejahatan + risiko masuk penjara ───────────
+    case 'copet': case 'maling': case 'rampok': {
+      const botId   = botData.id;
+      const member  = await getOrCreateMember(botId, sender, pushName);
+      const co      = KEJAHATAN[command];
+
+      const sisaJail = sisaPenjara(member);
+      if (sisaJail) { await reply(pesanPenjara(sisaJail, p)); return true; }
+
+      const sisaCd = sisaCdJson(member, command);
+      if (sisaCd > 0) {
+        const m = Math.floor(sisaCd / 60000), d = Math.floor((sisaCd % 60000) / 1000);
+        await reply(`${co.nama} masih panas. Sembunyi dulu *${m}m ${d}d*.`);
+        return true;
+      }
+
+      const cukup = await pakaiEnergi(botId, sender, member, co.biaya);
+      if (!cukup.ok) { await reply(pesanEnergiKurang(cukup.energi, co.biaya)); return true; }
+
+      const data  = bacaJson(member);
+      const skill = bacaSkill(member);
+      setCdJson(data, command, co.cooldown);
+
+      if (Math.random() < co.gagal) {
+        // Gagal — hadiahnya masuk sel. Gerbang `CMD_RISIKO` yang nahan sisanya.
+        data[KEY_JAIL] = Date.now() + co.hukuman * 60000;
+        await updateMember(botId, sender, { hewan_json: JSON.stringify(data) });
+        await reply(
+          `🚨 *T E R T A N G K A P!*\n\n` +
+          `Aksimu kepergok polisi. Kamu dibui *${co.hukuman} menit*.\n\n` +
+          `> Tebus: *${p}bebaskan*`
+        );
+        return true;
+      }
+
+      const hasil = Math.floor(co.min + Math.random() * (co.max - co.min));
+      const bonus = 1 + Math.floor(skill.atk / 20);
+      const uang  = hasil * bonus;
+      await updateMember(botId, sender, { money: (Number(member.money) || 0) + uang, hewan_json: JSON.stringify(data) });
+
+      await reply(
+        `${co.nama} — *BERHASIL*\n\n` +
+        `💰 Dapat: *${formatNum(uang)}*\n` +
+        `👛 Kantong: *${formatNum((Number(member.money) || 0) + uang)}*` +
+        (bonus > 1 ? `\n\n> ⚔️ Attack *${skill.atk}* → bonus ×${bonus}` : '') +
+        `\n\n_⚠️ Gagal = masuk penjara_`
+      );
+      return true;
+    }
+
     // ── money / dompet / saldo ────────────────────────────────────────────────
     case 'money': {
       // Nampilin duit: di kantong + di bank. Transaksinya di `.atm`.
@@ -1903,7 +2346,7 @@ module.exports = async function funRpgHandler(ctx) {
         `UPDATE rpg_members SET
           name = NULL, registered = 0,
           level = 0, xp = 0, money = 0, lim = 0, healt = 0,
-          koin = 0, bank = 0, job = 'Pengangguran',
+          job = 'Pengangguran',
           last_daily = NULL, last_kerja = 0, last_hourly = 0, last_weekly = 0,
           last_dailymisi = 0, last_adventure = 0, last_koboy = 0,
           last_airdrop = 0, last_maling = 0
@@ -2432,9 +2875,10 @@ module.exports = async function funRpgHandler(ctx) {
       const monster  = eligible[Math.floor(Math.random() * eligible.length)];
 
       // Hitung ATK & DEF player
-      const playerAtk = 10 + (level * 3) + (sword * 5);
-      const playerDef = 5  + (level * 2) + (armor * 4);
-      const playerHp  = Number(member.healt) || (50 + level * 10);
+      const sk = bacaSkill(member);
+      const playerAtk = 10 + (level * 3) + (sword * 5) + sk.atk;
+      const playerDef = 5  + (level * 2) + (armor * 4) + sk.def;
+      const playerHp  = (Number(member.healt) || (50 + level * 10)) + (sk.hp * 5);
 
       // Simulasi pertarungan (max 10 ronde)
       let pHp = playerHp;
@@ -2677,6 +3121,9 @@ module.exports._uji = {
   energiSekarang, pesanEnergiKurang, barEnergi, biayaRepair, statGear, barisDur,
   gearDipakai, gearLevel, gearDur, gearAktif, pasangGear, kurangiDur, bacaAtm, formatNum,
   bacaJson, bacaItem, KEY_ITEM, KEY_GEAR,
+  bacaBahan, bacaSkill, sisaPenjara, sisaCdJson, pilihBobot, biayaSkill,
+  KEY_BAHAN, KEY_SKILL, KEY_JAIL, KEY_CD, RESEP, KEJAHATAN, SPOT_BAHAN,
+  SKILL_MAKS, SKILL_NAMA, CMD_RISIKO,
   ENERGI_MAKS, ENERGI_REGEN_MENIT, DUR_MAKS, STORE_ITEMS,
 };
 
@@ -2691,4 +3138,6 @@ module.exports.limitedCmds = new Set([
   'kerja','transfer','tf','coinflip','cf','tictactoe','ttt',
   'gacha','slot','hourly','weekly','dailymisi',
   'adventure','koboy','airdrop','maling','repair',
+  'tambang','kebon','tebang','bahan','craft','skill',
+  'penjara','bebaskan','copet','rampok',
 ]);
