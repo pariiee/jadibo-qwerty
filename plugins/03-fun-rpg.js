@@ -1639,6 +1639,9 @@ module.exports = async function funRpgHandler(ctx) {
       const member = await getOrCreateMember(botId, sender, pushName);
       const dompet = Number(member.money) || 0;
       const bank   = Number(member.bank_money) || 0;
+      // `.atm 100` = setor langsung tanpa kata kunci
+      const telanjang = /^\d+$/.test(args[0] || '');
+      const posJumlah = telanjang ? 0 : 1;
 
       if (!sub || sub === 'info' || sub === 'saldo') {
         await reply(
@@ -1653,10 +1656,10 @@ module.exports = async function funRpgHandler(ctx) {
         return true;
       }
 
-      if (sub === 'simpan' || sub === 'setor') {
-        const jumlah = parseInt(args[1], 10);
+      if (telanjang || sub === 'simpan' || sub === 'setor' || sub === 'taro') {
+        const jumlah = parseInt(args[posJumlah], 10);
         if (!jumlah || isNaN(jumlah) || jumlah <= 0) {
-          await reply(`Penggunaan: ${p}bank simpan <jumlah>`);
+          await reply(`Penggunaan: ${p}atm <jumlah>`);
           return true;
         }
         if (jumlah < 10) { await reply('❌ Minimal simpan 10 koin!'); return true; }
@@ -1677,10 +1680,10 @@ module.exports = async function funRpgHandler(ctx) {
         return true;
       }
 
-      if (sub === 'tarik' || sub === 'ambil') {
+      if (sub === 'pull' || sub === 'tarik' || sub === 'ambil') {
         const jumlah = parseInt(args[1], 10);
         if (!jumlah || isNaN(jumlah) || jumlah <= 0) {
-          await reply(`Penggunaan: ${p}bank tarik <jumlah>`);
+          await reply(`Penggunaan: ${p}atm pull <jumlah>`);
           return true;
         }
         if (jumlah < 10) { await reply('❌ Minimal tarik 10 koin!'); return true; }
@@ -1703,9 +1706,10 @@ module.exports = async function funRpgHandler(ctx) {
 
       await reply(
         `🏦 *BANK — Perintah*\n\n` +
-        `${p}bank info — lihat saldo\n` +
-        `${p}bank simpan <jumlah> — setor ke bank\n` +
-        `${p}bank tarik <jumlah> — ambil dari bank`
+        `${p}atm — lihat saldo\n` +
+        `${p}atm <jumlah> — setor ke bank (contoh: ${p}atm 100)\n` +
+        `${p}atm pull <jumlah> — tarik dari bank\n` +
+        `${p}bank simpan/tarik <jumlah> — sama aja`
       );
       return true;
     }
