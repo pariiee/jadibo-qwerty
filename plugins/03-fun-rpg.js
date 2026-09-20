@@ -1661,6 +1661,23 @@ module.exports = async function funRpgHandler(ctx) {
       return true;
     }
 
+    // ── money / dompet / saldo ────────────────────────────────────────────────
+    case 'money': {
+      // Nampilin duit: di kantong + di bank. Transaksinya di `.atm`.
+      const member = await getOrCreateMember(botData.id, sender, pushName);
+      const dompet = Number(member.money) || 0;
+      const bank   = Number(member.bank_money) || 0;
+      await reply(
+        `💰 *UANG ${member.name || pushName}*\n\n` +
+        `👛 Di kantong : *${formatNum(dompet)} koin*\n` +
+        `🏦 Di bank    : *${formatNum(bank)} koin*\n` +
+        `📊 Total      : *${formatNum(dompet + bank)} koin*\n\n` +
+        `_Setor:_ ${p}atm <jumlah> — _Tarik:_ ${p}atm pull <jumlah>\n` +
+        `_Semua sekaligus:_ ${p}atm all / ${p}atm pull all`
+      );
+      return true;
+    }
+
     // ── bank / atm ────────────────────────────────────────────────────────────
     case 'bank':
     case 'atm': {
@@ -1670,17 +1687,18 @@ module.exports = async function funRpgHandler(ctx) {
       const dompet = Number(member.money) || 0;
       const bank   = Number(member.bank_money) || 0;
 
+      // `.atm` polos = nanya, bukan nampilin saldo (lihat saldo: `.money`)
       if (aksi === 'info') {
         await reply(
-          `🏦 *BANK*\n\n` +
-          `👤 ${member.name || pushName}\n\n` +
-          `💵 Dompet : *${formatNum(dompet)} koin*\n` +
-          `🏦 Bank   : *${formatNum(bank)} koin*\n` +
-          `📊 Total  : *${formatNum(dompet + bank)} koin*\n\n` +
-          `${p}atm <jumlah> — setor (contoh: ${p}atm 100)\n` +
-          `${p}atm all — setor semua uang di kantong\n` +
-          `${p}atm pull <jumlah> — tarik dari bank\n` +
-          `${p}atm pull all — tarik semua dari bank`
+          `🏦 *ATM — mau ngapain?*\n\n` +
+          `📥 *Setor* — taruh uang kantong ke bank\n` +
+          `   ${p}atm 100 — setor 100 koin\n` +
+          `   ${p}atm all — setor SEMUA uang di kantong\n\n` +
+          `📤 *Tarik* — ambil uang dari bank\n` +
+          `   ${p}atm pull 100 — tarik 100 koin\n` +
+          `   ${p}atm pull all — tarik SEMUA dari bank\n\n` +
+          `💡 Mau lihat saldo? Pakai *${p}money*\n` +
+          `_Uang di kantong: *${formatNum(dompet)}* | di bank: *${formatNum(bank)}*_`
         );
         return true;
       }
@@ -1732,13 +1750,13 @@ module.exports = async function funRpgHandler(ctx) {
       }
 
       await reply(
-        `🏦 *BANK — Perintah*\n\n` +
-        `${p}atm — lihat saldo\n` +
+        `🏦 *ATM — Perintah*\n\n` +
         `${p}atm <jumlah> — setor ke bank (contoh: ${p}atm 100)\n` +
         `${p}atm all — setor SEMUA uang di kantong\n` +
-        `${p}atm pull <jumlah> — tarik dari bank\n` +
+        `${p}atm pull <jumlah> — tarik dari bank (contoh: ${p}atm pull 100)\n` +
         `${p}atm pull all — tarik semua dari bank\n` +
-        `${p}bank simpan/tarik <jumlah> — sama aja`
+        `${p}bank simpan/tarik <jumlah> — sama aja\n\n` +
+        `💡 Lihat saldo: *${p}money*`
       );
       return true;
     }
@@ -2668,7 +2686,7 @@ module.exports.limitedCmds = new Set([
   'profil','rpg','daily','claim','store','beli','inventory','pakai','topkoin',
   'suitpvp','suit','berburu','hunt','bertarung','fight',
   'lamarkerja','job','gajian','dungeon',
-  'leaderboard','lb','bank','atm','mancing',
+  'leaderboard','lb','bank','atm','money','mancing',
   'kerja','transfer','tf','coinflip','cf','tictactoe','ttt',
   'gacha','slot','hourly','weekly','dailymisi',
   'adventure','koboy','airdrop','maling','repair',

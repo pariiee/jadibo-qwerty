@@ -41,4 +41,15 @@ const dompetKosong = 0;
 const p = bacaAtm(['all']);
 assert.strictEqual(p.semua ? dompetKosong : p.jumlah, 0);
 
+// `.money` ada di semua titik registry — kalau salah satu kelewat, command-nya
+// ada tapi nggak kepanggil / nggak kepotong limit.
+const { ALL_COMMANDS, CATS } = require('../plugins/01-info.js');
+const { buildLimitedCmds } = require('../engine/limitedCmds.js');
+assert.ok(ALL_COMMANDS.includes('money'), 'money nggak ada di ALL_COMMANDS');
+assert.ok(CATS.rpg.includes('money'), 'money nggak ada di CATS.rpg');
+assert.ok(buildLimitedCmds().has('money'), 'money nggak ada di limitedCmds');
+
+// `.atm` polos harus tetap 'info' (handler yang nanya nominal, bukan saldo)
+assert.deepStrictEqual(bacaAtm([]), { aksi: 'info' });
+
 console.log('rpg-atm: 0 FAIL');
