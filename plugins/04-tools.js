@@ -511,25 +511,14 @@ module.exports = async function toolsHandler(ctx) {
           timeout: 30000,
         });
         const buffer = Buffer.from(res.data);
-        const { spawn } = require('child_process');
+        // Sumbernya MP4 4,5 detik → di-loop biar genap 10 detik.
         const os   = require('os');
         const path = require('path');
         const fs   = require('fs');
-        const tmpIn  = path.join(os.tmpdir(), `bratvid_in_${Date.now()}.webp`);
+        const tmpIn  = path.join(os.tmpdir(), `bratvid_in_${Date.now()}.mp4`);
         const tmpOut = path.join(os.tmpdir(), `bratvid_out_${Date.now()}.webp`);
         fs.writeFileSync(tmpIn, buffer);
-        await new Promise((resolve, reject) => {
-          const ff = spawn('ffmpeg', [
-            '-y', '-i', tmpIn,
-            '-vcodec', 'libwebp',
-            '-vf', `scale='min(512,iw)':'min(512,ih)':force_original_aspect_ratio=decrease,fps=12`,
-            '-loop', '0', '-ss', '00:00:00', '-t', '00:00:05',
-            '-preset', 'default', '-an', '-quality', '70', tmpOut,
-          ]);
-          ff.on('error', reject);
-          ff.on('close', code => code !== 0 ? reject(new Error(`ffmpeg exit ${code}`)) : resolve());
-        });
-        const webpBuffer = fs.readFileSync(tmpOut);
+        const { buf: webpBuffer } = await videoKeStickerWebp(tmpIn, tmpOut, { loop: true });
         try { fs.unlinkSync(tmpIn); } catch {}
         try { fs.unlinkSync(tmpOut); } catch {}
         const stickerBuffer = await addStickerExif(webpBuffer, process.env.STICKER_PACK_NAME, process.env.STICKER_AUTHOR);
@@ -560,26 +549,15 @@ module.exports = async function toolsHandler(ctx) {
           timeout: 30000,
         });
         const buffer = Buffer.from(res.data);
-        // Konversi animated webp via ffmpeg supaya kompatibel WhatsApp mobile
-        const { spawn } = require('child_process');
+        // Sumbernya GIF 0,8 detik (BE: FRAME_COUNT 20 × 40ms), jadi di-loop
+        // biar stickernya genap 10 detik — bukan cuma 0,8 detik.
         const os   = require('os');
         const path = require('path');
         const fs   = require('fs');
-        const tmpIn  = path.join(os.tmpdir(), `attp_in_${Date.now()}.webp`);
+        const tmpIn  = path.join(os.tmpdir(), `attp_in_${Date.now()}.gif`);
         const tmpOut = path.join(os.tmpdir(), `attp_out_${Date.now()}.webp`);
         fs.writeFileSync(tmpIn, buffer);
-        await new Promise((resolve, reject) => {
-          const ff = spawn('ffmpeg', [
-            '-y', '-i', tmpIn,
-            '-vcodec', 'libwebp',
-            '-vf', `scale='min(512,iw)':'min(512,ih)':force_original_aspect_ratio=decrease,fps=12`,
-            '-loop', '0', '-ss', '00:00:00', '-t', '00:00:05',
-            '-preset', 'default', '-an', '-quality', '70', tmpOut,
-          ]);
-          ff.on('error', reject);
-          ff.on('close', code => code !== 0 ? reject(new Error(`ffmpeg exit ${code}`)) : resolve());
-        });
-        const webpBuffer = fs.readFileSync(tmpOut);
+        const { buf: webpBuffer } = await videoKeStickerWebp(tmpIn, tmpOut, { loop: true });
         try { fs.unlinkSync(tmpIn); } catch {}
         try { fs.unlinkSync(tmpOut); } catch {}
         const stickerBuffer = await addStickerExif(webpBuffer, process.env.STICKER_PACK_NAME, process.env.STICKER_AUTHOR);
@@ -3581,10 +3559,15 @@ module.exports = async function toolsHandler(ctx) {
 
         await new Promise((resolve, reject) => {
           const ff = spawn('ffmpeg', [
-            '-y', '-i', tmpIn,
+            '-y',
+            // Sumbernya MP4 4 detik → di-loop biar genap 10 detik. `-t` di depan
+            // `-i` WAJIB: tanpa itu palettegen nunggu EOF yang nggak pernah
+            // datang (input di-loop terus) dan perintahnya nggantung.
+            '-stream_loop', '-1', '-t', '10',
+            '-i', tmpIn,
             '-vcodec', 'libwebp',
             '-vf', "scale='min(512,iw)':'min(512,ih)':force_original_aspect_ratio=decrease,fps=15,pad=512:512:-1:-1:color=white@0.0,split[a][b];[a]palettegen=reserve_transparent=on:transparency_color=ffffff[p];[b][p]paletteuse",
-            '-loop', '0', '-ss', '00:00:00', '-t', '00:00:06',
+            '-loop', '0', '-ss', '00:00:00', '-t', '00:00:10',
             '-preset', 'default', '-an', tmpOut
           ]);
           ff.on('error', reject);

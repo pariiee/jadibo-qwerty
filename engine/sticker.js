@@ -59,8 +59,11 @@ const TANGGA_STICKER = [
 const MAX_DETIK_STICKER = 10;
 const TARGET_STICKER_KB = 400;
 
-// Dipakai .s/.sticker (video & GIF) dan .wm. Return buffer WebP (belum EXIF).
-async function videoKeStickerWebp(inPath, outPath, { detik = MAX_DETIK_STICKER, tangga = TANGGA_STICKER } = {}) {
+// Dipakai .s/.sticker (video & GIF), .wm, .attp, .bratvid. Return buffer WebP (belum EXIF).
+// loop=true buat sumber yang lebih pendek dari 10 detik (attp 0,8s, bratvid 4,5s):
+// diputer ulang sampai penuh 10 detik — kalau nggak, stickernya cuma sepanjang
+// sumbernya walau udah dikasih -t 10.
+async function videoKeStickerWebp(inPath, outPath, { detik = MAX_DETIK_STICKER, tangga = TANGGA_STICKER, loop = false } = {}) {
   const { spawn } = require('child_process');
   const fs = require('fs');
   const durasi = `00:00:${String(detik).padStart(2, '0')}`;
@@ -71,7 +74,9 @@ async function videoKeStickerWebp(inPath, outPath, { detik = MAX_DETIK_STICKER, 
     const scale = `scale='min(${t.px},iw)':'min(${t.px},ih)':force_original_aspect_ratio=decrease`;
     await new Promise((resolve, reject) => {
       const ff = spawn('ffmpeg', [
-        '-y', '-i', inPath,
+        '-y',
+        ...(loop ? ['-stream_loop', '-1'] : []),
+        '-i', inPath,
         '-vcodec', 'libwebp',
         '-vf', `${scale},fps=${t.fps}`,
         '-loop', '0', '-ss', '00:00:00', '-t', durasi,

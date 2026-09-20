@@ -17,15 +17,18 @@ const { videoKeStickerWebp, MAX_DETIK_STICKER } = require('../engine/sticker');
 
 assert.strictEqual(MAX_DETIK_STICKER, 10, 'durasi sticker harus 10 detik');
 
-// Jalur video di plugin harus lewat helper ini — bukan ffmpeg sendiri-sendiri
+// Jalur animasi di plugin harus lewat helper ini — bukan ffmpeg sendiri-sendiri
 // dengan cap 5 detik yang bisa balik lagi tanpa ketahuan.
-// (Cek dibatasi ke blok `case 'sticker'` … `case 'wm'`: .attp/.bratvid masih
-// punya cap 5 detik sendiri karena itu animasi dari server, bukan video user.)
+// `.attp`/`.bratvid` dulu punya cap 5 detik sendiri (sekarang ikut helper).
 const srcPlugin = fs.readFileSync(path.join(__dirname, '..', 'plugins', '04-tools.js'), 'utf8');
 const blokSticker = srcPlugin.slice(srcPlugin.indexOf("case 'sticker':"), srcPlugin.indexOf("case 'wm':"));
 assert.ok(blokSticker.length > 500, 'blok case sticker/wm nggak ketemu di 04-tools.js');
 assert.ok(/videoKeStickerWebp\(/.test(blokSticker), '.s/.sticker harus lewat engine/sticker.videoKeStickerWebp');
-assert.ok(!/00:00:05/.test(blokSticker), 'cap 5 detik balik lagi di jalur .s/.sticker');
+assert.ok(!/00:00:0[5-9]/.test(srcPlugin), 'cap durasi 5-9 detik balik lagi di 04-tools.js — pakai videoKeStickerWebp');
+for (const cmd of ['attp', 'bratvid']) {
+  const blok = srcPlugin.slice(srcPlugin.indexOf(`case '${cmd}':`), srcPlugin.indexOf(`case '${cmd}':`) + 1500);
+  assert.ok(/videoKeStickerWebp\([^)]*loop: true/.test(blok), `.${cmd} harus lewat helper + loop (sumbernya <10 detik)`);
+}
 
 const tmp     = os.tmpdir();
 const inMp4   = path.join(tmp, `tes_sticker_in_${Date.now()}.mp4`);
@@ -91,6 +94,23 @@ function durasiWebp(buf) {
 
   try { fs.unlinkSync(inBerat); } catch {}
   try { fs.unlinkSync(outBerat); } catch {}
+
+  // ── Sumber pendek (kasus .attp: GIF 0,8s) → loop harus genapin 10 detik ───
+  const inPendek  = path.join(tmp, `tes_sticker_pendek_in_${Date.now()}.gif`);
+  const outPendek = path.join(tmp, `tes_sticker_pendek_out_${Date.now()}.webp`);
+  const genPendek = spawnSync('ffmpeg', [
+    '-y', '-v', 'error', '-f', 'lavfi', '-i', 'testsrc2=s=320x320:d=0.8:rate=25', inPendek,
+  ], { encoding: 'utf8' });
+  assert.strictEqual(genPendek.status, 0, 'gagal bikin GIF pendek: ' + String(genPendek.stderr || '').slice(-200));
+
+  const pendek = await videoKeStickerWebp(inPendek, outPendek, { loop: true });
+  const dPendek = durasiWebp(pendek.buf);
+  console.log(`  sumber 0,8 detik + loop → sticker ${(dPendek.ms / 1000).toFixed(2)}s (${dPendek.frame} frame), ${Math.round(pendek.buf.length / 1024)}KB`);
+  assert.ok(dPendek.ms / 1000 >= 9.5, `sumber 0,8s harusnya di-loop jadi 10 detik, ini ${(dPendek.ms / 1000).toFixed(2)}s`);
+  assert.ok(pendek.buf.length <= 500 * 1024, 'sticker hasil loop > 500KB');
+
+  try { fs.unlinkSync(inPendek); } catch {}
+  try { fs.unlinkSync(outPendek); } catch {}
 
   console.log('✅ sticker-10detik: video 12s → sticker 10 detik & ≤500KB');
 })();
