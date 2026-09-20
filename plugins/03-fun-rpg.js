@@ -130,7 +130,7 @@ const biayaSkill = (lv) => 200 * (Number(lv) + 1);
 
 // STORE_ITEMS nggak punya field emoji — ambil dari tipe-nya.
 const EMOJI_ITEM = { weapon: '🗡️', armor: '🛡️', potion: '🧪', magic: '📕', special: '🔑' };
-const emojiItem  = (it) => EMOJI_ITEM[it.type] || '📦';
+const emojiItem  = (it) => EMOJI_ITEM[(it || {}).type] || '📦';
 
 // ─── Energi ──────────────────────────────────────────────────────────────────
 // Energi = ongkos aktivitas grind. Regen otomatis, jadi nggak butuh `.tidur`.
@@ -3121,7 +3121,7 @@ module.exports._uji = {
   energiSekarang, pesanEnergiKurang, barEnergi, biayaRepair, statGear, barisDur,
   gearDipakai, gearLevel, gearDur, gearAktif, pasangGear, kurangiDur, bacaAtm, formatNum,
   bacaJson, bacaItem, KEY_ITEM, KEY_GEAR,
-  bacaBahan, bacaSkill, sisaPenjara, sisaCdJson, pilihBobot, biayaSkill,
+  bacaBahan, bacaSkill, sisaPenjara, sisaCdJson, pilihBobot, biayaSkill, emojiItem,
   KEY_BAHAN, KEY_SKILL, KEY_JAIL, KEY_CD, RESEP, KEJAHATAN, SPOT_BAHAN,
   SKILL_MAKS, SKILL_NAMA, CMD_RISIKO,
   ENERGI_MAKS, ENERGI_REGEN_MENIT, DUR_MAKS, STORE_ITEMS,

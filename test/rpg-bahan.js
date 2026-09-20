@@ -5,7 +5,7 @@ const fs     = require('node:fs');
 const path   = require('node:path');
 
 const {
-  bacaBahan, bacaSkill, sisaPenjara, sisaCdJson, pilihBobot, biayaSkill,
+  bacaBahan, bacaSkill, sisaPenjara, sisaCdJson, pilihBobot, biayaSkill, emojiItem,
   RESEP, KEJAHATAN, SPOT_BAHAN, STORE_ITEMS, SKILL_MAKS,
   KEY_BAHAN, KEY_SKILL, KEY_JAIL, KEY_CD,
 } = require('../plugins/03-fun-rpg.js')._uji;
@@ -79,6 +79,13 @@ for (const [nama, k] of Object.entries(KEJAHATAN)) {
   // hadiah harus lebih gede dari kerja biasa, kalau nggak nggak ada yang mau nyopet
   assert.ok(k.max > 100, `${nama}: hadiah kekecilan buat risiko penjara`);
 }
+
+// ── emojiItem: item null / tipe asing tetap dapet emoji, nggak lempar ────────
+assert.strictEqual(emojiItem({ type: 'weapon' }), '🗡️');
+assert.strictEqual(emojiItem({ type: 'armor' }), '🛡️');
+assert.strictEqual(emojiItem({ type: 'entah' }), '📦');
+assert.strictEqual(emojiItem(null), '📦', 'item null nggak boleh bikin TypeError');
+assert.strictEqual(emojiItem(undefined), '📦');
 
 // ── pilihBobot: selalu balikin anggota list, bobot gede lebih sering ─────────
 const tas = [{ n: 'a', w: 1 }, { n: 'b', w: 99 }];
