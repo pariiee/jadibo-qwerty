@@ -49,9 +49,16 @@ cek('cabang "semua user se-bot" masih ada buat chat pribadi', () => {
     'UPDATE reset-semua buat chat pribadi ilang');
 });
 
+cek('ambil member pakai method yang BENERAN ada di adapter', () => {
+  // `getMetadata` bukan method adapter (adapter: `queryGroupMetadata`) -> dulu
+  // tiap `.resetlimit` di grup mendarat di cabang error, limit nggak pernah reset.
+  assert.ok(/group\.queryGroupMetadata\(/.test(blok), 'nggak manggil group.queryGroupMetadata');
+  assert.ok(!/group\.getMetadata\s*\(/.test(blok), 'manggil method yang nggak ada di adapter');
+});
+
 cek('gagal baca member grup -> nggak ngereset diam-diam', () => {
   assert.ok(/Nggak bisa baca daftar member grup/.test(blok),
-    'kalau getMetadata gagal, langsung reset se-bot tanpa bilang apa-apa');
+    'kalau baca metadata gagal, langsung reset se-bot tanpa bilang apa-apa');
 });
 
 cek('participantPhones: {id LID + phoneNumber} -> nomor', () => {

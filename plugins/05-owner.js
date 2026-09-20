@@ -1558,12 +1558,13 @@ module.exports = async function ownerHandler(ctx) {
       //  - owner di chat pribadi -> semua user bot ini
       const mentioned = getMentionedFromCtx(ctx);
       const grup       = ctx.isGroup;
-      let anggota = [];
+      let anggota = [], gagalBaca = false;
       if (!mentioned.length && grup) {
         try {
-          const meta = await ctx.client.group.getMetadata(ctx.jid);
+          const meta = await ctx.client.group.queryGroupMetadata(ctx.jid);
           anggota = participantPhones(meta?.participants);
         } catch (e) {
+          gagalBaca = true;
           console.error(`[Bot ${botId}] resetlimit: gagal baca member grup:`, e.message);
         }
       }
@@ -1589,8 +1590,13 @@ module.exports = async function ownerHandler(ctx) {
           [defLimit, botId, ...anggota]
         );
         await reply(`✅ *RESET LIMIT*\n\nLimit member grup ini direset ke *${defLimit}*!\nTotal: *${res.affectedRows} user*`);
-      } else if (grup) {
+      } else if (gagalBaca) {
         await reply('⚠️ Nggak bisa baca daftar member grup ini, limit nggak direset.');
+      } else if (grup && !anggota.length) {
+        // Metadata kebaca tapi nggak ada nomor yang bisa dipetakan: grup mode LID
+        // dan anggotanya belum pernah kirim pesan sejak bot nyala. Jujur bilang,
+        // jangan diam-diam reset semua user se-bot.
+        await reply('⚠️ Nggak ada member grup ini yang bisa dipetakan ke nomor, limit nggak direset.');
       } else {
         // Chat pribadi -> semua user bot ini
         const [res] = await pool.execute(
