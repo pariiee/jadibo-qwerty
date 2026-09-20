@@ -116,10 +116,9 @@ function toolSearchCode(pattern) {
 module.exports = async function jarvisHandler(ctx) {
   const { command, args, reply, react, botData, sender, jid, msg } = ctx;
 
-  // Hanya developer — nomor lain diabaikan senyap (fitur rahasia)
-  const devNum    = String(process.env.DEVELOPER_NUMBER || '').replace(/\D/g, '');
-  const senderNum = String(sender || '').split('@')[0].split(':')[0];
-  if (!devNum || senderNum !== devNum) return false;
+  // Hanya developer — nomor lain diabaikan senyap (fitur rahasia).
+  // Peran udah dihitung engine (ctx.isDev) — jangan baca env sendiri lagi.
+  if (!ctx.isDev) return false;
 
   // Bisa dipanggil dengan prefix (.jarvis x) MAUPUN tanpa prefix (jarvis x)
   const body = String(ctx.body || '').trim();

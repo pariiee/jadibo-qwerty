@@ -35,6 +35,16 @@ const mess = {
   onlyPremium:  process.env.MSG_ONLY_PREMIUM   || 'Fitur ini khusus untuk Member Premium!',
   onlySewa:     process.env.MSG_ONLY_SEWA      || 'Grup ini belum menyewa bot!',
 
+  // Label peran, urut dari yang paling sakti. Kuncinya = `ctx.role`
+  // (dihitung di engine/whatsappEngine.js). Dipakai `.menu`, `.limit`, `.bot`.
+  roleLabel: {
+    dev:     'Developer',
+    owner:   'Owner',
+    premium: 'Premium',
+    admin:   'Admin grup',
+    user:    'User biasa',
+  },
+
   // QRIS
   qrisDefault:  process.env.QRIS_DEFAULT        || '',
 

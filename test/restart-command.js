@@ -16,9 +16,9 @@ console.log('✓ 1. .restart kecatat di .menu kategori owner');
 const fs = require('fs');
 const src = fs.readFileSync(path.join(__dirname, '..', 'plugins', '05-owner.js'), 'utf8');
 assert.ok(/case 'restart'/.test(src), '2. case restart ada');
-assert.ok(/ctx\.isOwner\s*&&\s*!\(devNum/.test(src.replace(/\s+/g, ' ').replace(/!ctx\.isOwner/, '!ctx.isOwner'))
-  || /!ctx\.isOwner && !\(devNum && senderNum === devNum\)/.test(src),
-  '2. gate harus owner ATAU dev');
+// Gate-nya sekarang `ctx.isOwner || ctx.isDev` — peran dev dihitung sekali di
+// engine (dulu tiap plugin baca DEVELOPER_NUMBER sendiri, gampang meleset).
+assert.ok(/!ctx\.isOwner && !ctx\.isDev/.test(src), '2. gate harus owner ATAU dev');
 console.log('✓ 2. gate owner + dev ada di case restart');
 
 // ── 3. Urutan is_running=1 sebelum stop ──────────────────────────────────────

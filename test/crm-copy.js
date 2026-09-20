@@ -54,7 +54,7 @@ const ctxOf = (over = {}) => ({
   } },
   jid: '120363403895277092@g.us',
   sender: '6287778032605@s.whatsapp.net',
-  isGroup: true, mentioned: [], isOwner: false,
+  isGroup: true, mentioned: [], isOwner: false, isDev: false,
   mess: { reactSuccess: '✅' },
   botData: { id: 1, prefix: '.', owner_number: '6287778032605', footer_text: 'labs.yapari.web.id' },
   msg: { message: { extendedTextMessage: { text: '.crm', contextInfo: { quotedMessage: quotedImage } } } },
@@ -82,7 +82,7 @@ const codeText   = () => (isInter() ? params().copy_code : String(codeMsg().medi
 
   // 1. user biasa (bukan owner/dev) -> ditolak, pesannya nggak di-relay
   out = []; sent = []; reacts = [];
-  let handled = await handler(ctxOf({ isOwner: false }));
+  let handled = await handler(ctxOf({ isOwner: false, isDev: false }));
   console.log('\n[1] user biasa -> ' + JSON.stringify(out[0]));
   ok('user biasa ditolak + nggak ada yang dikirim', () => {
     assert.strictEqual(handled, true);
@@ -182,16 +182,15 @@ const codeText   = () => (isInter() ? params().copy_code : String(codeMsg().medi
     assert.strictEqual(sent[1].fileName, 'ImageMessage.js');
   });
 
-  // 4. dev (DEVELOPER_NUMBER) boleh walau bukan owner
+  // 4. dev boleh walau bukan owner — peran `isDev` dihitung engine dari
+  //    DEVELOPER_NUMBER (lihat test/role-order.js), plugin cuma baca ctx.isDev.
   out = []; sent = [];
-  process.env.DEVELOPER_NUMBER = '628123456789';
-  await handler(ctxOf({ isOwner: false, sender: '628123456789@s.whatsapp.net' }));
-  console.log('\n[4] dev (DEVELOPER_NUMBER) -> relay=' + !!sent[0] + ' file=' + fileNameOf());
+  await handler(ctxOf({ isOwner: false, isDev: true, sender: '628123456789@s.whatsapp.net' }));
+  console.log('\n[4] dev (ctx.isDev) -> relay=' + !!sent[0] + ' file=' + fileNameOf());
   ok('dev lolos gate walau bukan owner bot', () => {
     assert.ok(sent[0]?.imageMessage, 'dev malah ditolak');
     assert.strictEqual(fileNameOf(), 'ImageMessage.js');
   });
-  delete process.env.DEVELOPER_NUMBER;
 
   // 5. teks biasa (conversation) -> di-relay sebagai extendedTextMessage
   out = []; sent = [];

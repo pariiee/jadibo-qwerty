@@ -87,7 +87,7 @@ const ownerGreetCooldown = new Map();
 const devGreetCooldown   = new Map(); // key: groupJid → timestamp
 // Logika LID↔PN dipusatkan di engine/jid.js supaya cache-nya SATU (dulu tiap
 // file punya Map sendiri → user bisa tampil beda jid di log yang beda).
-const { needsLidResolve, lidToPn: resolveLid, lidToPnAsync: resolveLidAsync } = require('./jid');
+const { needsLidResolve, lidToPn: resolveLid, lidToPnAsync: resolveLidAsync, bare } = require('./jid');
 
 // ─── WS broadcast helper ──────────────────────────────────────────────────────
 let _wsBroadcast = () => {};
@@ -148,6 +148,28 @@ const PLUGIN_LIMITED_CMDS = buildLimitedCmds();
 // Command yang tetap jalan walau grupnya dibisukan — tanpa ini nggak ada
 // jalan keluar dari `.mute` selain restart bot.
 const BEBAS_SAAT_MUTE = new Set(['unmute', 'listmute']);
+
+// Nomor developer — peran TERTINGGI di bot ini. Dev bukan pemilik bot, tapi
+// yang ngoprek kodenya, jadi dia ada di atas owner. Satu daftar dipakai bareng
+// (dulu 3 tempat masing-masing nyalin logika env-nya sendiri):
+//   engine dev-greeting, plugins/10-crm.js, plugins/02-group.js (antidelete)
+// terima DEVELOPER_NUMBER maupun versi jamak (dipisah koma) biar nggak ada
+// nama env yang diabaikan tanpa sengaja.
+const DEV_NUMBERS = new Set(
+  String(process.env.DEV_NUMBERS || process.env.DEVELOPER_NUMBERS || process.env.DEVELOPER_NUMBER || '')
+    .split(',').map((n) => n.replace(/\D/g, '')).filter(Boolean)
+);
+
+/**
+ * Nomor polos pengirim, '' kalau nggak masuk akal.
+ * `ctx.sender` udah di-resolve LID→PN di atas (baris ~579), jadi tinggal `bare`.
+ * Pembanding nomor (owner/dev) WAJIB lewat sini: tanpa gerbang ini, nomor yang
+ * kosong bisa `'' === ''` dan semua orang jadi owner.
+ */
+const nomorPengirim = (jid) => {
+  const n = bare(jid);
+  return /^\d{6,}$/.test(n) ? n : '';
+};
 
 // ─── Build message context for plugins ────────────────────────────────────────
 function buildContext(client, event, botData) {
@@ -585,6 +607,12 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
     // Resolve mentionedJids di ctx juga setelah cache ter-populate
     if (ctx.mentioned) ctx.mentioned = ctx.mentioned.map(m => resolveLid(m));
 
+    // Nomor asli pengirim. Di grup LID, `ctx.sender` bisa masih `...@lid` —
+    // query DB & bandingin ke *_number WAJIB pakai nomor, kalau nggak
+    // isPremium/isOwner/isDev meleset (dev/owner kelihatan kayak user biasa).
+    // Satu sumber dipakai bareng biar nggak ada yang lupa resolve.
+    const senderNum = nomorPengirim(ctx.sender);
+
     // Inject isPremium — query DB, cek juga premium_expired
     ctx.isPremium = false;
     try {
@@ -603,8 +631,7 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
     ctx.isAdmin = false;
     try {
       const ownerNum = botData.owner_number?.replace(/\D/g, '');
-      const senderNum = ctx.sender.split('@')[0].split(':')[0];
-      if (ownerNum && senderNum === ownerNum) ctx.isOwner = true;
+      if (senderNum && senderNum === ownerNum) ctx.isOwner = true;
       if (ctx.isGroup) {
         const meta = await client.group.queryGroupMetadata(jid).catch(() => null);
         if (meta?.participants) {
@@ -616,6 +643,23 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
         }
       }
     } catch { /* fallback false */ }
+
+    // ── Inject isDev — DEVELOPER_NUMBER (boleh >1, dipisah koma) ─────────────
+    // Dev itu peran TERTINGGI: bukan pemilik bot, tapi yang ngoprek kodenya.
+    // Dihitung di sini juga (bukan cuma di greeting) biar role & gate bisa pakai.
+    ctx.isDev = Boolean(senderNum) && DEV_NUMBERS.has(senderNum);
+
+    // ── Role — urutan dari yang paling sakti ─────────────────────────────────
+    // dev > owner > premium > admin grup > user.
+    // Dev di ATAS owner: owner itu pemilik bot, dev yang ngoprek kodenya.
+    // Dihitung SEKALI di sini, jadi semua tampilan & gate baca sumber yang sama
+    // (dulu `.limit` cuma lihat kolom `premium` di DB, jadi owner+dev pun
+    // kelihatan 'User biasa').
+    ctx.role = ctx.isDev     ? 'dev'
+      : ctx.isOwner          ? 'owner'
+      : ctx.isPremium        ? 'premium'
+      : ctx.isAdmin          ? 'admin'
+      : 'user';
 
     // ── Owner greeting ────────────────────────────────────────────────────────
     // Kalau sender adalah owner bot dan pesan di grup, kirim sambutan
@@ -646,11 +690,9 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
     // ── Developer greeting ────────────────────────────────────────────────────
     // Kalau sender adalah developer (dari DEVELOPER_NUMBER env), reply pesannya
     // Cooldown: 1000 detik per grup
-    if (ctx.isGroup && process.env.DEVELOPER_NUMBER) {
+    if (ctx.isGroup && ctx.isDev) {
       try {
-        const devNum    = process.env.DEVELOPER_NUMBER.replace(/\D/g, '');
-        const senderNum = ctx.sender.split('@')[0].split(':')[0];
-        if (senderNum === devNum) {
+        if (ctx.isDev) {
           const cdKey = `dev:${botId}:${jid}`;
           const last  = devGreetCooldown.get(cdKey) || 0;
           if (Date.now() - last > 45 * 60 * 1000) { // 45 menit
@@ -868,7 +910,7 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
     // ── Cek & potong limit per command ───────────────────────────────────────
     // Owner dan premium skip sepenuhnya — user biasa kena limit kalau command
     // ada di PLUGIN_LIMITED_CMDS (dikumpulkan dari tiap plugin saat boot)
-    if (ctx.isCmd && !ctx.isOwner && !ctx.isPremium && PLUGIN_LIMITED_CMDS.has(ctx.command)) {
+    if (ctx.isCmd && ctx.role === 'user' && PLUGIN_LIMITED_CMDS.has(ctx.command)) {
       try {
         const { pool: dbPool } = require('../config/database');
         const [limRows] = await dbPool.execute(

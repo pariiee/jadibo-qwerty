@@ -1208,7 +1208,7 @@ module.exports = async function ownerHandler(ctx) {
 
         const pnJid = String(sender).split(':')[0].split('@')[0];
         const nama  = ctx.pushName || pnJid;
-        const role  = await isOwner(ctx) ? 'Owner' : ctx.isPremium ? 'Premium' : 'Free';
+        const role  = mess.roleLabel[ctx.role] || mess.roleLabel.user;
         const botNm = botData.bot_name || 'YaaParBot';
         const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
         const pad = (n) => String(n).padStart(2, '0');
@@ -2402,9 +2402,7 @@ module.exports = async function ownerHandler(ctx) {
 
     // ─── RESTART BOT INI SENDIRI (owner + dev) ──────────────────────────
     case 'restart': {
-      const devNum    = String(process.env.DEVELOPER_NUMBER || '').replace(/\D/g, '');
-      const senderNum = String(ctx.sender || '').split('@')[0].split(':')[0];
-      if (!ctx.isOwner && !(devNum && senderNum === devNum)) {
+      if (!ctx.isOwner && !ctx.isDev) {
         await reply(mess.ownerOnly);
         return true;
       }

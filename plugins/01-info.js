@@ -6,6 +6,7 @@
  */
 
 const { rapikanError } = require('../engine/pesanError');
+const mess = require('../config/mess');
 const os = require('os');
 const { proto } = require('baileys');
 const { genThumbnail } = require('../engine/thumbnail');
@@ -297,9 +298,7 @@ module.exports = async function infoHandler(ctx) {
     }
 
     case 'menu': {
-      const role = ctx.isOwner ? 'Owner'
-        : ctx.isPremium ? 'Premium'
-        : ctx.isAdmin ? 'Admin' : 'Free';
+      const role = mess.roleLabel[ctx.role] || mess.roleLabel.user;
 
       const catKey = (args.join(' ') || '').toLowerCase().trim();
       const showCat = CAT_ALIAS[catKey] || (CATS[catKey] ? catKey : null);
@@ -630,15 +629,19 @@ module.exports = async function infoHandler(ctx) {
           [botData.id, sender]
         );
         if (!rows[0]) { await reply(`❌ Kamu belum punya profil RPG.\nKetik *${p}uptname <nama>* untuk mulai (profil dibuat otomatis).`); return true; }
-        const { name, lim, premium } = rows[0];
-        const isPrem = premium === 1;
+        const { name, lim } = rows[0];
         const defLimit = parseInt(process.env.DEFAULT_LIMIT || '20', 10);
 
+        // Status ikut urutan role engine (dev > owner > premium > user),
+        // BUKAN cuma kolom `premium` di DB — dulu makanya owner+dev pun
+        // kelihatan 'User biasa'.
+        const label    = mess.roleLabel[ctx.role] || mess.roleLabel.user;
+        const skipLim  = ctx.role !== 'user';   // dev/owner/premium/admin: limit nggak kepotong
         const txt =
           `💎 *CEK LIMIT*\n\n` +
           `👤 Nama   : ${name || sender.split('@')[0]}\n` +
-          `💎 Limit  : *${lim}* tersisa\n` +
-          `⭐ Status : ${isPrem ? '*Premium* (skip limit)' : 'User biasa'}\n` +
+          `💎 Limit  : ${skipLim ? `*${lim}* (nggak kepotong)` : `*${lim}* tersisa`}\n` +
+          `⭐ Status : ${skipLim ? `*${label}*` : label}\n` +
           `🔄 Reset  : Setiap hari jam *00:00 WIB* → ${defLimit} limit`;
 
         await reply(txt);

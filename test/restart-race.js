@@ -21,8 +21,11 @@ const src = fs.readFileSync(path.join(dir, 'engine', 'whatsappEngine.js'), 'utf8
 function body(name) {
   const i = src.indexOf(`function ${name}(`);
   assert.ok(i > -1, `${name} harus ada`);
-  const end = src.indexOf('\n}\n', i);
-  return src.slice(i, end === -1 ? src.length : end);
+  // CRLF-safe: checkout Windows nulis `\r\n}\r\n`, jadi indexOf('\n}\n')
+  // nggak pernah kena -> body() balikin sampai EOF dan assert malah baca
+  // kode fungsi lain (pernah bikin tes ini merah cuma di Windows).
+  const m = /\r?\n\}\r?\n/.exec(src.slice(i));
+  return src.slice(i, m ? i + m.index : src.length);
 }
 
 const stop = body('stopWhatsAppBot');

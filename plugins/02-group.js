@@ -211,13 +211,15 @@ module.exports = async function groupHandler(ctx) {
         try { if (resolveDeleter) deleterNum = String(await resolveDeleter(deleterRaw)).split('@')[0].split(':')[0]; } catch { /* pakai yang mentah */ }
 
         const ownerNum = String(ctx.botData?.owner_number || process.env.OWNER_NUMBER || '').replace(/\D/g, '');
-        const devNums  = String(process.env.DEV_NUMBERS || process.env.DEVELOPER_NUMBERS || process.env.DEVELOPER_NUMBER || '')
-          .split(',').map((n) => n.replace(/\D/g, '')).filter(Boolean);
 
         // fromMe = bot sendiri yang hapus -> skip. Ini yang bikin "ga ada reaksi"
         // pas owner/dev beres-beres chat pakai nomor bot.
         if (rawMsg.key?.fromMe === true) return false;
-        if (deleterNum && ((ownerNum && deleterNum === ownerNum) || devNums.includes(deleterNum))) return false;
+        // Developer: peran global dari ctx (ctx.isDev), bukan `ctx.sender` —
+        // di sini yang dihakimi `deleterNum` (peserta yang hapus), dan biasanya
+        // itu = pengirim balasan otomatis bot, jadi ctx.isDev TIDAK kepakai.
+        if (deleterNum && ctx.isDev) return false;
+        if (deleterNum && ownerNum && deleterNum === ownerNum) return false;
 
         // Admin grup (termasuk owner/dev kalau admin di grup itu) memang berhak
         // hapus — nggak perlu diomelin. Dicek per-nomor karena ctx.isAdmin dihitung

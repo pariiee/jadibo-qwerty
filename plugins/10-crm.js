@@ -147,12 +147,9 @@ module.exports = async function crmHandler(ctx) {
   const p = botData.prefix ?? '';
   const { react, mess } = ctx;   // destructure dulu: ctx.react/mess bisa ke-clobber spread
 
-  // Gate: owner bot ATAU nomor di DEVELOPER_NUMBER (sama kaya plugins/09-jarvis.js)
-  const devNum    = String(process.env.DEVELOPER_NUMBER || '').replace(/\D/g, '');
-  const senderNum = String(ctx.sender || '').split('@')[0].split(':')[0];
-  const isDev     = devNum && senderNum === devNum;
-
-  if (!ctx.isOwner && !isDev) {
+  // Gate: owner bot ATAU developer — peran udah dihitung engine (ctx.isDev),
+  // jadi nggak usah baca DEVELOPER_NUMBER sendiri lagi di sini.
+  if (!ctx.isOwner && !ctx.isDev) {
     await reply('Ehh ini khusus dev & owner aja lho~ 🌸 yamete kudasai (≧◡≦)');
     return true;
   }
