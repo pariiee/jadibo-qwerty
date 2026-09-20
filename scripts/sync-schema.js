@@ -31,14 +31,10 @@ const TABLES = {
   rpg_members: [
     // tambahan RPG yang dipakai kode
     ['bank_money',     "BIGINT NOT NULL DEFAULT 0"],
-    ['bank',           "BIGINT NOT NULL DEFAULT 0"],
-    ['koin',           "BIGINT NOT NULL DEFAULT 0"],
     ['lim',            "INT NOT NULL DEFAULT 100"],
     ['healt',          "INT NOT NULL DEFAULT 100"],
     ['energi',         "INT NOT NULL DEFAULT 100"],
     ['last_energi',    "DATETIME DEFAULT NULL"],
-    ['sword',          "INT NOT NULL DEFAULT 0"],
-    ['armor',          "INT NOT NULL DEFAULT 0"],
     ['job',            "VARCHAR(50) NOT NULL DEFAULT 'Pengangguran'"],
     ['jobexp',         "INT NOT NULL DEFAULT 0"],
     ['hewan_json',     "JSON DEFAULT NULL"],

@@ -136,4 +136,20 @@ for (const f of fs.readdirSync(pluginDir).filter(x => x.endsWith('.js'))) {
 }
 assert.deepStrictEqual(zombie, [], 'masih nulis kolom zombie: ' + JSON.stringify(zombie));
 
+// Schema juga nggak boleh nge-declare ulang — kalau ada, `sync-schema.js` bakal
+// bikin kolomnya HIDUP LAGI tiap deploy (pernah kejadian).
+// Pisah per baris dulu, baru tangkap nama kolomnya: `bank_money` & `topkoin`
+// lolos karena nempel ke huruf lain.
+const ZOMBIE_NAMA = new RegExp(
+  "(?:\\[\\s*'(koin|bank|sword|armor|last_hunt|last_transfer|last_gacha|last_slot)'" +
+  "|`(koin|bank|sword|armor|last_hunt|last_transfer|last_gacha|last_slot)`" +
+  "|^\\s*(koin|bank|sword|armor|last_hunt|last_transfer|last_gacha|last_slot)\\s+[A-Z])"
+);
+for (const berkas of ['schema.sql', 'scripts/sync-schema.js']) {
+  const isi = fs.readFileSync(path.join(__dirname, '..', berkas), 'utf8');
+  const barisKotor = isi.split(/\r?\n/)
+    .filter(l => ZOMBIE_NAMA.test(l) && !/^\s*(--|\/\/|\*)/.test(l));
+  assert.deepStrictEqual(barisKotor, [], `${berkas} masih nyebut kolom zombie:\n` + barisKotor.join('\n'));
+}
+
 console.log('rpg-bahan: 0 FAIL');
