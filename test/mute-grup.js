@@ -88,4 +88,15 @@ assert.ok(!/setSetting\s*\(\s*jid\s*,\s*'mute'/.test(blokMute),
 assert.ok(blokMute.includes('setMuteGrup(botData.id, jid, true)'), '.mute harus nyetel state mute bot');
 assert.ok(plugin.includes('setMuteGrup(botData.id, jid, false)'), '.unmute harus nyabut state mute');
 
-console.log('OK mute-grup: state per grup, tahan restart, guard engine, .mute nggak nyentuh announce');
+// ── 5. `.listmute` nampilin NAMA grup, bukan cuma JID ────────────────────────
+const blokList = plugin.slice(plugin.indexOf("case 'listmute':"), plugin.indexOf("case 'slowmode':"));
+assert.ok(/queryGroupMetadata\(g\)/.test(blokList),
+  '.listmute harus ambil nama grup dari metadata, bukan cuma nampilin JID');
+assert.ok(/subject/.test(blokList), '.listmute harus pakai meta.subject sebagai nama grup');
+
+// Nama gagal kebaca (grup ilang / bot di-kick) jangan bikin balasannya kosong —
+// harus jatuh ke teks pengganti, bukan nampilin "undefined".
+assert.ok(/\(nama nggak kebaca\)/.test(blokList), '.listmute butuh teks pengganti kalau nama nggak kebaca');
+assert.ok(/catch \{ return null; \}/.test(blokList), 'satu grup error jangan bikin seluruh .listmute gagal');
+
+console.log('OK mute-grup: state per grup, tahan restart, guard engine, .mute nggak nyentuh announce, listmute pakai nama grup');

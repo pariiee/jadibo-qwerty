@@ -740,7 +740,15 @@ module.exports = async function groupHandler(ctx) {
       if (!ctx.isOwner) { await reply(mess.ownerOnly); return true; }
       const grupMute = daftarMuteGrup(botData.id);
       if (!grupMute.length) { await reply('✅ Nggak ada grup yang dibisukan.'); return true; }
-      const baris = grupMute.map((g, i) => `${i + 1}. ${g}`).join('\n');
+      // Nama grup diambil dari metadata — bot masih "kenal" grup walau lagi
+      // dibisukan, karena guard mute cuma nahan dispatch plugin, bukan koneksi.
+      const nama = await Promise.all(grupMute.map(async (g) => {
+        try {
+          const meta = await client.group.queryGroupMetadata(g);
+          return meta?.subject || null;
+        } catch { return null; }
+      }));
+      const baris = grupMute.map((g, i) => `${i + 1}. ${nama[i] || '(nama nggak kebaca)'}\n   ${g}`).join('\n');
       await reply(`🔇 *Grup yang dibisukan*\n\n${baris}\n\nTotal: *${grupMute.length}*`);
       return true;
     }
