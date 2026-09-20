@@ -3333,8 +3333,7 @@ module.exports = async function toolsHandler(ctx) {
     // ── rvo / readviewonce ────────────────────────────────────────────────────
     case 'rvo':
     case 'readviewonce':
-    case 'readvo':
-    case 'liat': {
+    case 'readvo': {
       // Harus reply ke pesan view once
       const quoted = ctx.msg?.message?.extendedTextMessage?.contextInfo?.quotedMessage;
       if (!quoted) {
@@ -4294,32 +4293,34 @@ module.exports = async function toolsHandler(ctx) {
 
     // ── tgsticker — Telegram Sticker Downloader ──────────────────────────────
     case 'tgsticker':
-    case 'telesticker': {
+    case 'telesticker':
+    case 'stele': {
       const url = args[0];
       if (!url) {
-        await reply(`Masukkan link sticker pack Telegram.\nContoh: *${p}tgsticker https://t.me/addstickers/...*`);
+        await reply(`Masukkan link sticker pack Telegram.\nContoh: *${p}telesticker https://t.me/addstickers/...*`);
         return true;
       }
       try {
         const axios = require('axios');
         await react(mess.reactLoading);
-        const { data } = await axios.get(`${process.env.BASE_API}api/download/telegram-sticker`, {
+        const { data } = await axios.get(`${process.env.BASE_API}api/download/telesticker`, {
           params: { url },
           headers: { 'X-API-Key': process.env.KEY_API },
           timeout: 30000,
         });
         const stickers = data?.results?.stickers;
         if (!stickers || !stickers.length) throw new Error('Tidak ada sticker dari API');
+        // Telegram juga punya pack animasi (.tgs) & video (.webm) — cuma .webp yang bisa dikirim apa adanya
+        const webp = stickers.filter(s => !s.format || s.format === 'webp');
+        if (!webp.length) throw new Error('Pack ini cuma sticker animasi/video, belum didukung');
         await react(mess.reactSuccess);
-        await reply(`🎭 *Telegram Sticker Pack*\nTotal: ${stickers.length} sticker\nMengirim 5 sticker pertama...`);
-        for (const s of stickers.slice(0, 5)) {
+        await reply(`🎭 *Telegram Sticker Pack*\nTotal: ${stickers.length} sticker\nMengirim ${Math.min(5, webp.length)} sticker pertama...`);
+        for (const s of webp.slice(0, 5)) {
           const sUrl = s.url || s.file_url || s;
           if (!sUrl) continue;
           try {
             const res = await axios.get(sUrl, { responseType: 'arraybuffer', timeout: 30000 });
-            const buf = Buffer.from(res.data);
-            const ct  = res.headers['content-type'] || 'image/webp';
-            await client.message.send(jid, { type: 'sticker', media: buf, mimetype: ct });
+            await client.message.send(jid, { type: 'sticker', media: Buffer.from(res.data), mimetype: 'image/webp' });
           } catch {}
         }
       } catch (e) {
@@ -5552,7 +5553,7 @@ module.exports.keyMatch      = keyMatch;
 // Command yang kena limit untuk user biasa
 module.exports.limitedCmds = new Set([
   'sticker','s','wm','poll','readmore','base64','kalkulator',
-  'pick','tourl','upload','pay','rvo','readviewonce','readvo','liat',
+  'pick','tourl','upload','pay','rvo','readviewonce','readvo',
   'tovn','2vo','todoc',
   'tanyaimg','ailyrics','buatlirik','chatgpt','gpt','resetgpt','gemini','resetgemini','toghibli','ghibli','ai','deepai','resetdeepai',
   // downloader commands
@@ -5560,7 +5561,7 @@ module.exports.limitedCmds = new Set([
   'likee','likeedl',
   'moddroid','moddroiddl',
   'facebook','fbdl','fb',
-  'tgsticker','telesticker',
+  'tgsticker','telesticker','stele',
   'spotify','spotifydl',
   'soundcloud','scdl',
   'sfilemobi','sfile',
