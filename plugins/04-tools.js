@@ -549,15 +549,17 @@ module.exports = async function toolsHandler(ctx) {
           timeout: 30000,
         });
         const buffer = Buffer.from(res.data);
-        // Sumbernya GIF 0,8 detik (BE: FRAME_COUNT 20 × 40ms), jadi di-loop
-        // biar stickernya genap 10 detik — bukan cuma 0,8 detik.
+        // Sumbernya GIF 0,8 detik (BE: FRAME_COUNT 20 × 40ms) yang cuma muter
+        // warna. DIRENGGANG 12,5× jadi 10 detik (20 frame @2fps) biar warna
+        // pelanginya kepencar sepanjang durasi — kalau di-loop, warnanya
+        // keliatan ngulang terus dan stickernya berhenti di frame merah.
         const os   = require('os');
         const path = require('path');
         const fs   = require('fs');
         const tmpIn  = path.join(os.tmpdir(), `attp_in_${Date.now()}.gif`);
         const tmpOut = path.join(os.tmpdir(), `attp_out_${Date.now()}.webp`);
         fs.writeFileSync(tmpIn, buffer);
-        const { buf: webpBuffer } = await videoKeStickerWebp(tmpIn, tmpOut, { loop: true });
+        const { buf: webpBuffer } = await videoKeStickerWebp(tmpIn, tmpOut, { regang: 12.5, fps: 2 });
         try { fs.unlinkSync(tmpIn); } catch {}
         try { fs.unlinkSync(tmpOut); } catch {}
         const stickerBuffer = await addStickerExif(webpBuffer, process.env.STICKER_PACK_NAME, process.env.STICKER_AUTHOR);
