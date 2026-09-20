@@ -121,6 +121,8 @@ CREATE TABLE IF NOT EXISTS rpg_members (
   koin             BIGINT NOT NULL DEFAULT 0,
   lim              INT NOT NULL DEFAULT 100,
   healt            INT NOT NULL DEFAULT 100,
+  energi           INT NOT NULL DEFAULT 100,
+  last_energi      DATETIME DEFAULT NULL,
   sword            INT NOT NULL DEFAULT 0,
   armor            INT NOT NULL DEFAULT 0,
   job              VARCHAR(50) NOT NULL DEFAULT 'Pengangguran',
