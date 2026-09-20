@@ -1113,6 +1113,31 @@ module.exports = async function ownerHandler(ctx) {
       return true;
     }
 
+    // ── test2 — teks "sekali lihat" (view once) lewat proto mentah ─────────
+    // `viewOnceMessage` nggak bisa lewat sendMessage; key-nya udah masuk
+    // RAW_PROTO_KEYS di engine/baileys/client.js → otomatis jalur relayMessage.
+    case 'test2': {
+      if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }
+      try {
+        await react(mess.reactLoading);
+        await sock.message.send(jid, {
+          viewOnceMessage: {
+            message: {
+              extendedTextMessage: {
+                text: 'Welcome to Gboard clipboard, any text you copy will be saved here.',
+                viewOnce: true,
+              },
+            },
+          },
+        }, { quoted: ctx.msg });
+        await react(mess.reactSuccess);
+      } catch (e) {
+        await react(mess.reactError);
+        await reply(`❌ Gagal: ${rapikanError(e)}`);
+      }
+      return true;
+    }
+
     case 'test4': {
       if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }
       try {
