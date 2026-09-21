@@ -31,6 +31,7 @@ const mess = {
   GrupAdmin:    process.env.MSG_ONLY_ADMIN     || 'Fitur ini khusus untuk Admin grup!',
   BotAdmin:     process.env.MSG_BOT_MUST_ADMIN || 'Jadikan bot sebagai Admin grup terlebih dahulu!',
   ownerOnly:    process.env.MSG_ONLY_OWNER     || 'Fitur ini khusus untuk Owner bot!',
+  devOnly:      process.env.MSG_ONLY_DEV       || 'Fitur ini khusus untuk Owner & Developer bot!',
   limitExceeded:process.env.MSG_LIMIT_EXCEEDED || 'Limit penggunaan kamu sudah habis!',
   onlyPremium:  process.env.MSG_ONLY_PREMIUM   || 'Fitur ini khusus untuk Member Premium!',
   onlySewa:     process.env.MSG_ONLY_SEWA      || 'Grup ini belum menyewa bot!',

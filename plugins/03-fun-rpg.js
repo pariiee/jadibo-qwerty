@@ -10,6 +10,7 @@
 const { rapikanError } = require('../engine/pesanError');
 const crypto = require('crypto');
 const { pool } = require('../config/database');
+const mess = require('../config/mess');
 const { isJlidUser } = require('../engine/jid');
 
 // ─── In-memory stores ────────────────────────────────────────────────────────
@@ -1359,7 +1360,7 @@ module.exports = async function funRpgHandler(ctx) {
     case 'topkoin': {
       // Khusus premium
       if (!ctx.isPremium) {
-        await reply(`⭐ Command ini khusus untuk member *Premium*!\n\nHubungi owner untuk upgrade premium.`);
+        await reply(mess.onlyPremium);
         return true;
       }
       try {

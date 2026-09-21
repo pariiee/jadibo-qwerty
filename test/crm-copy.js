@@ -12,6 +12,7 @@
  */
 
 const handler = require('../plugins/10-crm');
+const mess    = require('../config/mess');
 const assert  = require('assert');
 const baileys = require('baileys');
 const fs      = require('fs');
@@ -86,7 +87,7 @@ const codeText   = () => (isInter() ? params().copy_code : String(codeMsg().medi
   console.log('\n[1] user biasa -> ' + JSON.stringify(out[0]));
   ok('user biasa ditolak + nggak ada yang dikirim', () => {
     assert.strictEqual(handled, true);
-    assert.ok(/khusus dev & owner/.test(out[0]), 'balasan gate nggak sesuai');
+    assert.ok(out[0] === mess.devOnly, 'balasan gate nggak sesuai MSG_ONLY_DEV');
     assert.strictEqual(sent.length, 0, 'pesan tetap dikirim walau ditolak');
     assert.strictEqual(reacts.length, 0, 'react jalan walau ditolak');
   });

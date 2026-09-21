@@ -15,6 +15,8 @@
  *      `client.message.send()` udah ngerjain itu (dan paketnya nggak ada di node_modules).
  */
 
+const mess = require('../config/mess');
+
 // ─── Ambil quoted message dari proto pesan masuk ────────────────────────────
 function getQuoted(message) {
   if (!message || typeof message !== 'object') return null;
@@ -145,12 +147,13 @@ module.exports = async function crmHandler(ctx) {
 
   const { reply, client, jid, botData } = ctx;
   const p = botData.prefix ?? '';
-  const { react, mess } = ctx;   // destructure dulu: ctx.react/mess bisa ke-clobber spread
+  const { react } = ctx;   // destructure dulu: ctx.react bisa ke-clobber spread
 
   // Gate: owner bot ATAU developer — peran udah dihitung engine (ctx.isDev),
   // jadi nggak usah baca DEVELOPER_NUMBER sendiri lagi di sini.
+  // Teksnya dari .env (MSG_ONLY_DEV), sama kaya gate lain — jangan hardcode.
   if (!ctx.isOwner && !ctx.isDev) {
-    await reply('Ehh ini khusus dev & owner aja lho~ 🌸 yamete kudasai (≧◡≦)');
+    await reply(mess.devOnly);
     return true;
   }
 
@@ -213,6 +216,6 @@ module.exports = async function crmHandler(ctx) {
   await client.message.send(jid, docContent, { quote: ctx.msg });
 
   // 3. React ✅ (pakai ctx, bukan ctx. langsung — biar aman kalau di-spread ulang)
-  await react(mess?.reactSuccess || '✅');
+  await react(mess.reactSuccess);
   return true;
 };
