@@ -220,6 +220,14 @@ const codeText   = () => (isInter() ? params().copy_code : String(codeMsg().medi
     assert.strictEqual(fileNameOf(), 'ImageMessage.js');
   });
 
+  // 5b. guard: teks gate WAJIB dari .env, bukan hardcode di file
+  ok('teks gate nggak di-hardcode di plugin (harus lewat config/mess)', () => {
+    const src = fs.readFileSync(path.join(__dirname, '..', 'plugins', '10-crm.js'), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+    assert.ok(!/yamete|khusus (dev|owner)/i.test(src), 'teks gate balik di-hardcode');
+    assert.ok(/require\('\.\.\/config\/mess'\)/.test(src), 'plugin nggak ambil config/mess');
+  });
+
   console.log(`\ncrm-copy: ${pass} PASS, ${fail} FAIL`);
   process.exit(fail ? 1 : 0);
 })();

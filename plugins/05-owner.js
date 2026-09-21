@@ -451,7 +451,7 @@ module.exports = async function ownerHandler(ctx) {
 
     // ─── WARN SYSTEM ─────────────────────────────────────────────────────
     case 'warn': {
-      if (!isGroup) { await reply('Hanya untuk grup'); return true; }
+      if (!isGroup) { await reply(mess.OnlyGroup); return true; }
       const mentioned = ctx.msg.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
       if (!mentioned[0]) { await reply(`Penggunaan: ${p}warn @target <alasan>`); return true; }
       const target  = mentioned[0];
@@ -486,7 +486,7 @@ module.exports = async function ownerHandler(ctx) {
     }
 
     case 'unwarn': {
-      if (!isGroup) { await reply('Hanya untuk grup'); return true; }
+      if (!isGroup) { await reply(mess.OnlyGroup); return true; }
       const mentioned = ctx.msg.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
       if (!mentioned[0]) { await reply(`Penggunaan: ${p}unwarn @target`); return true; }
       const target  = mentioned[0];
@@ -506,7 +506,7 @@ module.exports = async function ownerHandler(ctx) {
     }
 
     case 'delwarn': {
-      if (!isGroup) { await reply('Hanya untuk grup'); return true; }
+      if (!isGroup) { await reply(mess.OnlyGroup); return true; }
       const mentioned = ctx.msg.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
       if (!mentioned[0]) { await reply(`Penggunaan: ${p}delwarn @target`); return true; }
       const target = mentioned[0];
@@ -526,7 +526,7 @@ module.exports = async function ownerHandler(ctx) {
     }
 
     case 'resetwarn': {
-      if (!isGroup) { await reply('Hanya untuk grup'); return true; }
+      if (!isGroup) { await reply(mess.OnlyGroup); return true; }
       // Reset semua warn di grup ini
       const keysToDelete = [...warnData.keys()].filter(k => k.startsWith(`${botId}:${jid}:`));
       keysToDelete.forEach(k => warnData.delete(k));
@@ -541,7 +541,7 @@ module.exports = async function ownerHandler(ctx) {
     }
 
     case 'setwarnlimit': {
-      if (!isGroup) { await reply('Hanya untuk grup'); return true; }
+      if (!isGroup) { await reply(mess.OnlyGroup); return true; }
       const limit = parseInt(args[0], 10);
       if (!limit || limit < 1 || limit > 10) {
         await reply(`Penggunaan: ${p}setwarnlimit <1-10>`);
@@ -565,7 +565,7 @@ module.exports = async function ownerHandler(ctx) {
 
     // ── listwarn ──────────────────────────────────────────────────────────────
     case 'listwarn': {
-      if (!isGroup) { await reply('Hanya untuk grup'); return true; }
+      if (!isGroup) { await reply(mess.OnlyGroup); return true; }
 
       // Kumpulkan dari in-memory dulu
       const prefix  = `${botId}:${jid}:`;
@@ -936,7 +936,7 @@ module.exports = async function ownerHandler(ctx) {
     // Set ulang expired date (override, bukan extend)
     case 'setsewa': {
       if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }
-      if (!isGroup) { await reply('❌ Command ini hanya untuk grup'); return true; }
+      if (!isGroup) { await reply(mess.OnlyGroup); return true; }
 
       const durStr = args[0];
       if (!durStr) {
@@ -970,7 +970,7 @@ module.exports = async function ownerHandler(ctx) {
 
     // ── ceksewa ──────────────────────────────────────────────────────────
     case 'ceksewa': {
-      if (!isGroup) { await reply('❌ Command ini hanya untuk grup'); return true; }
+      if (!isGroup) { await reply(mess.OnlyGroup); return true; }
       try {
         const [[row]] = await pool.execute(
           'SELECT group_name, expired_at FROM bot_sewa WHERE bot_id = ? AND group_jid = ?',

@@ -837,7 +837,7 @@ module.exports = async function funRpgHandler(ctx) {
 
     // ── jodoh ──────────────────────────────────────────────────────────────
     case 'jodoh': {
-      if (!isGroup) { await reply('Command ini hanya untuk grup'); return true; }
+      if (!isGroup) { await reply(mess.OnlyGroup); return true; }
       try {
         const meta    = await client.group.queryGroupMetadata(jid);
         const others  = meta.participants.filter(m => {
@@ -922,7 +922,7 @@ module.exports = async function funRpgHandler(ctx) {
     // ─────────────────────────────────────────────────────────────────────
 
     case 'mulaigiveaway': {
-      if (!isGroup) { await reply('Hanya untuk grup'); return true; }
+      if (!isGroup) { await reply(mess.OnlyGroup); return true; }
       if (giveawayStore.has(jid)) { await reply('Sudah ada giveaway aktif'); return true; }
       const [prize, ...titleParts] = args;
       const title = titleParts.join(' ') || 'Hadiah Spesial';
@@ -1379,7 +1379,7 @@ module.exports = async function funRpgHandler(ctx) {
     // ── suitpvp ───────────────────────────────────────────────────────────────
     case 'suitpvp':
     case 'suit': {
-      if (!isGroup) { await reply('Command ini hanya untuk grup'); return true; }
+      if (!isGroup) { await reply(mess.OnlyGroup); return true; }
 
       const SUIT_TIMEOUT = 90000;
       const SUIT_WIN_REWARD = 500;
