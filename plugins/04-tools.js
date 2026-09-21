@@ -10,6 +10,7 @@ const mess           = require('../config/mess');
 const { genThumbnail } = require('../engine/thumbnail');
 const { addStickerExif, videoKeStickerWebp } = require('../engine/sticker');
 const { uploadInfo }  = require('../engine/api');
+const { normalVideo } = require('../engine/normalVideo');
 
 // ─── Helper: mime type → ekstensi file ───────────────────────────────────────
 function mimeToExt(mime) {
@@ -4572,9 +4573,16 @@ module.exports = async function toolsHandler(ctx) {
         const v = videos.sort((a, b) => (b.bitrate || 0) - (a.bitrate || 0))[0];
         const dlUrl = v.url || v.download_url;
         const res = await axios.get(dlUrl, { responseType: 'arraybuffer', timeout: 90000 });
-        const thumb = await genThumbnail(Buffer.from(res.data), 'video/mp4');
+        const buf = Buffer.from(res.data);
+
+        // ponytail: video X sering datang tanpa track audio (klip hasil cut, durasi pas
+        // 1 detik). WA nolak file kayak gitu walau isinya sehat — muncul "video tidak
+        // dapat diputar". Remux passthrough + audio senyap = 0 re-encode, 0 turun kualitas.
+        const bersih = await normalVideo(buf);
+
+        const thumb = await genThumbnail(bersih, 'video/mp4');
         await client.message.send(jid, {
-          type: 'video', media: Buffer.from(res.data), mimetype: 'video/mp4',
+          type: 'video', media: bersih, mimetype: 'video/mp4',
           caption: `🐦 *Twitter/X*`,
           ...(thumb ? { jpegThumbnail: thumb } : {}),
         });
