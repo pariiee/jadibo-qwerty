@@ -1,0 +1,204 @@
+/* ══════════════════════════════════════════════════════════════════════
+   yaparbots — gaya bersama · light default, tombol toggle ke dark
+   Halaman: <link rel="stylesheet" href="/assets/theme.css">
+   ══════════════════════════════════════════════════════════════════════ */
+*{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+:root{
+  --bg:#fafafa;
+  --bg2:#f4f4f5;
+  --card:#ffffff;
+  --card2:#ffffff;
+  --border:#e4e4e7;
+  --border2:#d4d4d8;
+  --txt:#18181b;
+  --muted:#71717a;
+  --dim:#a1a1aa;
+  --dark:#18181b;
+  --dark2:#27272a;
+  --acc:#16a34a;
+  --acc2:#0891b2;
+  --wa:#25D366;
+  --tg:#229ED9;
+  --ok:#16a34a;
+  --warn:#f59e0b;
+  --err:#dc2626;
+  --surf0:rgba(24,24,27,.02);
+  --surf1:rgba(24,24,27,.03);
+  --surf2:rgba(24,24,27,.05);
+  --surf3:rgba(24,24,27,.07);
+  --panelA:#f4f4f5;
+  --panelB:#fafafa;
+  --off:#d4d4d8;
+  --off2:#a1a1aa;
+  --dim2:#a1a1aa;
+  --txt2:#3f3f46;
+  --okTxt:#15803d;
+  --okTxt2:#047857;
+  --errTxt:#dc2626;
+  --warnTxt:#b45309;
+  --infoTxt:#0369a1;
+  --info:#2563eb;
+  --onAcc:#ffffff;
+  --btnPri:#18181b;
+  --ovBg:rgba(24,24,27,.45);
+  --sideBg:#ffffff;
+  --barBg:#ffffff;
+  --scroll:#d4d4d8;
+  --scrollH:#a1a1aa;
+  --tile-green:#ecfdf5;
+  --tile-blue:#eff6ff;
+  --tile-purple:#f5f3ff;
+  --tile-orange:#fff7ed;
+  --glow:0 26px 64px -36px rgba(0,0,0,.9)}
+html.dark{
+  --bg:#0b0b10;
+  --bg2:#111116;
+  --card:#15151b;
+  --card2:#1a1a21;
+  --border:#26262e;
+  --border2:#34343f;
+  --txt:#fafafa;
+  --muted:#a1a1aa;
+  --dim:#71717a;
+  --dark:#05050a;
+  --dark2:#0f0f16;
+  --acc:#22c55e;
+  --acc2:#22d3ee;
+  --wa:#25D366;
+  --tg:#229ED9;
+  --ok:#22c55e;
+  --warn:#fbbf24;
+  --err:#f87171;
+  --surf0:rgba(255,255,255,.015);
+  --surf1:rgba(255,255,255,.03);
+  --surf2:rgba(255,255,255,.06);
+  --surf3:rgba(255,255,255,.07);
+  --panelA:#0f0f16;
+  --panelB:#0a0a0f;
+  --off:#3f3f4a;
+  --off2:#4a4a56;
+  --dim2:#5c5c68;
+  --txt2:#e4e4e7;
+  --okTxt:#86efac;
+  --okTxt2:#a7f3d0;
+  --errTxt:#fca5a5;
+  --warnTxt:#fcd34d;
+  --infoTxt:#7dd3fc;
+  --info:#3b82f6;
+  --onAcc:#04170c;
+  --btnPri:#22c55e;
+  --ovBg:rgba(4,4,7,.72);
+  --sideBg:#0b0b10;
+  --barBg:#0b0b10;
+  --scroll:#34343f;
+  --scrollH:#44444f;
+  --tile-green:#0f2018;
+  --tile-blue:#131a2e;
+  --tile-purple:#1a1330;
+  --tile-orange:#241a0e}
+body{background-color:var(--bg);color:var(--txt);min-height:100vh;
+  font-family:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+  letter-spacing:-.011em;line-height:1.55}
+a{color:inherit;text-decoration:none}
+button,input,select,textarea{font:inherit;color:inherit}
+::selection{background:var(--acc);color:#fff}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--scroll);border-radius:8px}
+::-webkit-scrollbar-thumb:hover{background:var(--scrollH)}
+
+/* ── tombol ganti tema ─────────────────────────────────────────────── */
+.theme-btn{width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;
+  border:1px solid var(--border2);background:var(--card);color:var(--muted);border-radius:8px;
+  cursor:pointer;transition:background .16s,color .16s,border-color .16s;flex-shrink:0}
+.theme-btn:hover{color:var(--txt);border-color:var(--dim);background:var(--surf1)}
+.theme-btn .ic-sun{display:none}
+html.dark .theme-btn .ic-sun{display:block}
+html.dark .theme-btn .ic-moon{display:none}
+
+/* ── tombol ────────────────────────────────────────────────────────── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;
+  cursor:pointer;font-weight:600;font-size:13px;border-radius:10px;padding:9px 14px;
+  font-family:inherit;transition:background .16s,border-color .16s,color .16s}
+.btn-outline{background:var(--card);border:1px solid var(--border2);color:var(--txt)}
+.btn-outline:hover{background:var(--surf1);border-color:var(--dim)}
+.btn-dark{background:var(--btnPri);color:var(--onAcc)}
+.btn-dark:hover{filter:brightness(1.07)}
+.btn-ok{background:rgba(34,197,94,.14);color:var(--okTxt);border:1px solid rgba(34,197,94,.3)}
+.btn-ok:hover{background:rgba(34,197,94,.22)}
+.btn-danger,.btn-stop{background:rgba(239,68,68,.13);color:var(--errTxt);
+  border:1px solid rgba(239,68,68,.3)}
+.btn-danger:hover,.btn-stop:hover{background:rgba(239,68,68,.2)}
+.btn-sm{padding:6px 10px;font-size:12px;border-radius:8px}
+.btn[disabled]{opacity:.45;cursor:not-allowed;filter:none}
+.hidden{display:none!important}
+
+/* ── baris header halaman (topbar) ─────────────────────────────────── */
+.tb-left{display:flex;align-items:center;gap:12px;min-width:0}
+
+/* ── form ──────────────────────────────────────────────────────────── */
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px}
+.field .req,.req{color:var(--errTxt)}
+.inp{width:100%;background:var(--card);border:1px solid var(--border2);border-radius:10px;
+  padding:10px 12px;font-size:13px;color:var(--txt);outline:none;
+  transition:border-color .16s,background .16s}
+.inp::placeholder{color:var(--dim)}
+.inp:hover{border-color:var(--dim)}
+.inp:focus{border-color:var(--acc)}
+select.inp,textarea.inp{font-family:inherit}
+textarea.inp{resize:vertical;min-height:78px}
+.hint{font-size:11px;color:var(--dim);margin-top:5px;line-height:1.5}
+.hint code{font-family:Consolas,Menlo,monospace;background:var(--surf2);
+  padding:1px 5px;border-radius:5px;font-size:11px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.err{color:var(--errTxt);font-size:12px;margin:4px 2px 10px;display:none}
+.err.show{display:block}
+
+/* ── logo ──────────────────────────────────────────────────────────── */
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px;
+  letter-spacing:-.2px;color:var(--txt)}
+.logo-badge{width:30px;height:30px;background:var(--acc);border-radius:8px;display:flex;
+  align-items:center;justify-content:center;flex-shrink:0}
+.logo-sub{display:block;font-size:9px;font-weight:600;letter-spacing:.14em;
+  color:var(--dim);text-transform:uppercase;margin-top:1px}
+
+/* ── panel / modal / label ─────────────────────────────────────────── */
+.panel{background:var(--card);border:none;border-radius:14px;padding:20px}
+.panel h2{font-size:14px;font-weight:700;margin-bottom:14px;letter-spacing:-.2px}
+.sec-label{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--dim);margin-bottom:14px}
+.hide-mob{display:inline}
+.overlay{position:fixed;inset:0;background:var(--ovBg);backdrop-filter:blur(3px);
+  display:none;align-items:center;justify-content:center;padding:20px;z-index:60}
+.overlay.show{display:flex}
+.modal{background:var(--card);border:1px solid var(--border2);border-radius:16px;width:100%;
+  max-width:440px;padding:26px;position:relative;box-shadow:0 24px 60px -32px rgba(24,24,27,.4)}
+.modal h3{font-size:18px;font-weight:700;margin-bottom:4px}
+.modal .m-sub{color:var(--muted);font-size:13px;margin-bottom:18px}
+.modal .acts{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
+.m-sub{color:var(--muted);font-size:13px;margin-bottom:18px}
+
+@media(max-width:768px){
+  .hide-mob{display:none}
+  .row2{grid-template-columns:1fr}
+  .modal{padding:22px}}
+@media(max-width:560px){ .panel{padding:16px} .btn{padding:8px 12px}}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}}
+
+/* ── animasi ────────────────────────────────────────────────────────── */
+@keyframes yb-pulse{50%{opacity:.45;transform:scale(.85)}}
+@keyframes yb-rise{from{opacity:0;transform:translateY(16px)}}
+@keyframes yb-fade{from{opacity:0}}
+/* badge ngambang hero — nyontek wibusoft (kartu kaca + float 8px) */
+@keyframes yb-float{50%{transform:translateY(-8px)}}
+/* percakapan mockup hero — 1 putaran: bot masuk → bubble user → bubble bot */
+@keyframes yb-chat{
+  0%{opacity:0;transform:translateY(8px) scale(.97)}
+  6%,88%{opacity:1;transform:none}
+  96%,100%{opacity:0;transform:translateY(-4px) scale(.99)}}
+.dot{animation:yb-pulse 2.2s ease-in-out infinite}
+.dot.off{animation:none}

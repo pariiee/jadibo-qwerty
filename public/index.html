@@ -3,205 +3,57 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>YaaParBot — WhatsApp &amp; Telegram Gateway</title>
-<style>
-  :root{
-    --bg:#08080b; --bg2:#0e0e13; --card:#131319; --card2:#191921;
-    --border:#26262f; --border2:#34343f;
-    --txt:#f2f2f4; --muted:#9d9daa; --dim:#6d6d7a;
-    --dark:#121218; --dark2:#1e1e27;
-    --acc:#22c55e; --acc2:#06b6d4;
-    --grad:linear-gradient(135deg,#22c55e 0%,#06b6d4 100%);
-    --glow:0 18px 50px -24px rgba(34,197,94,.6);
-    --wa:#25D366; --tg:#229ED9; --ok:#22c55e; --warn:#eab308; --err:#ef4444;
-  }
-  *{margin:0;padding:0;box-sizing:border-box}
-  html{scroll-behavior:smooth}
-  body{
-    font-family:'Segoe UI',system-ui,-apple-system,Arial,sans-serif;color:var(--txt);-webkit-font-smoothing:antialiased;
-    background-color:var(--bg);
-    background-image:
-      radial-gradient(820px 460px at 12% -8%, rgba(34,197,94,.13), transparent 62%),
-      radial-gradient(760px 460px at 88% 2%, rgba(6,182,212,.12), transparent 62%),
-      radial-gradient(900px 520px at 50% 108%, rgba(124,58,237,.10), transparent 65%);
-    background-attachment:fixed;
-  }
-  a{text-decoration:none;color:inherit}
-  ::selection{background:rgba(34,197,94,.32)}
-  .wrap{max-width:1080px;margin:0 auto;padding:0 20px}
-
-  /* buttons */
-  .btn{display:inline-flex;align-items:center;gap:8px;border:none;cursor:pointer;font-weight:600;font-size:14px;border-radius:12px;padding:10px 18px;font-family:inherit;transition:transform .16s ease,box-shadow .16s ease,background .16s ease,border-color .16s ease,filter .16s ease}
-  .btn:hover{transform:translateY(-1px)}
-  .btn:active{transform:translateY(0) scale(.99)}
-  .btn-dark{background:var(--grad);color:#04170c;box-shadow:0 12px 32px -14px rgba(34,197,94,.85)}
-  .btn-dark:hover{box-shadow:0 18px 42px -14px rgba(34,197,94,.95);filter:brightness(1.07)}
-  .btn-outline{background:rgba(255,255,255,.03);border:1px solid var(--border2);color:var(--txt)}
-  .btn-outline:hover{background:rgba(255,255,255,.07);border-color:var(--acc)}
-  .btn-danger{background:rgba(239,68,68,.14);color:#fca5a5;border:1px solid rgba(239,68,68,.3)}
-  .btn-danger:hover{background:rgba(239,68,68,.22)}
-  .btn-ok{background:rgba(34,197,94,.16);color:#86efac;border:1px solid rgba(34,197,94,.3)}
-  .btn-ok:hover{background:rgba(34,197,94,.24)}
-
-  /* navbar */
-  nav{position:sticky;top:0;z-index:40;background:rgba(8,8,11,.72);backdrop-filter:blur(14px) saturate(160%);border-bottom:1px solid var(--border);animation:fadeIn .5s ease both}
-  .nav-in{height:58px;display:flex;align-items:center;justify-content:space-between}
-  .logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;letter-spacing:-.2px}
-  .logo-badge{width:32px;height:32px;background:var(--grad);border-radius:9px;display:flex;align-items:center;justify-content:center;animation:glowPulse 3.2s ease-in-out infinite}
-  .nav-links{display:none;gap:22px;color:var(--muted);font-size:14px}
-  @media(min-width:768px){.nav-links{display:flex}}
-  .nav-links a{position:relative;transition:color .16s}
-  .nav-links a:hover{color:var(--txt)}
-  .nav-links a::after{content:'';position:absolute;left:0;right:100%;bottom:-5px;height:2px;border-radius:2px;background:var(--grad);transition:right .24s cubic-bezier(.22,1,.36,1)}
-  .nav-links a:hover::after{right:0}
-  .nav-actions{display:flex;gap:8px}
-
-  /* hero */
-  .hero{padding:74px 0 46px;text-align:center}
-  .badge-live{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.05);border:1px solid var(--border2);color:#d4d4d8;font-size:12px;font-weight:600;border-radius:999px;padding:7px 14px;margin-bottom:22px;animation:fadeUp .7s cubic-bezier(.22,1,.36,1) .04s both}
-  .dot-live{width:7px;height:7px;border-radius:50%;background:var(--ok);animation:pulse 1.6s infinite,ring 2.4s ease-out infinite}
-  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-  @keyframes ring{0%{box-shadow:0 0 0 0 rgba(34,197,94,.55)}70%{box-shadow:0 0 0 9px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
-  @keyframes glowPulse{0%,100%{box-shadow:0 6px 20px -6px rgba(34,197,94,.75)}50%{box-shadow:0 6px 28px -4px rgba(6,182,212,.95)}}
-  @keyframes shimmer{to{background-position:-220% 0}}
-  @keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
-  @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
-  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-  @keyframes pop{from{opacity:0;transform:translateY(12px) scale(.965)}to{opacity:1;transform:none}}
-  h1{font-size:42px;line-height:1.14;font-weight:800;letter-spacing:-.8px;margin-bottom:18px;animation:fadeUp .7s cubic-bezier(.22,1,.36,1) .12s both}
-  @media(min-width:768px){h1{font-size:58px}}
-  .grad{background:linear-gradient(100deg,#22c55e,#06b6d4,#22c55e);background-size:220% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 5.5s linear infinite}
-  .sub{color:var(--muted);font-size:17px;line-height:1.65;max-width:640px;margin:0 auto 30px;animation:fadeUp .7s cubic-bezier(.22,1,.36,1) .2s both}
-  .hero-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;animation:fadeUp .7s cubic-bezier(.22,1,.36,1) .28s both}
-  .terminal{margin:52px auto 0;max-width:620px;background:linear-gradient(180deg,#0f0f16,#0a0a0f);border:1px solid var(--border2);border-radius:18px;padding:16px;text-align:left;box-shadow:0 34px 80px -34px rgba(0,0,0,.95),0 0 60px -40px rgba(34,197,94,.9);animation:fadeUp .7s cubic-bezier(.22,1,.36,1) .36s both}
-  .term-dots{display:flex;gap:6px;margin-bottom:14px}
-  .term-dots span{width:11px;height:11px;border-radius:50%}
-  .term-label{margin-left:8px;color:var(--dim);font-size:11px;font-family:Consolas,Menlo,monospace}
-  .term-body{font-family:Consolas,Menlo,monospace;font-size:13px;line-height:1.8}
-  .c-ok{color:#4ade80}.c-warn{color:#fbbf24}.c-info{color:#7dd3fc}.c-dim{color:#8b8b99}
-  .caret{color:#4ade80;animation:blink 1s steps(1) infinite}
-
-  /* stats */
-  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin:54px 0 10px}
-  .stat{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--border);border-radius:18px;padding:22px;display:flex;flex-direction:column;gap:6px;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
-  .stat:hover{transform:translateY(-3px);border-color:var(--border2);box-shadow:var(--glow)}
-  .stat b{font-size:32px;font-weight:800;font-variant-numeric:tabular-nums;background:linear-gradient(120deg,#ffffff,#a7f3d0);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-  .stat span{font-size:13px;color:var(--muted)}
-  .stat-foot{width:8px;height:8px;border-radius:50%;margin-top:10px}
-
-  /* features */
-  .sec-label{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:44px 0 6px}
-  h2{font-size:28px;font-weight:800;letter-spacing:-.4px;margin-bottom:22px}
-  .feat{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-bottom:26px}
-  .card{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--border);border-radius:18px;padding:24px;transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
-  .card:hover{transform:translateY(-4px);border-color:var(--border2);box-shadow:0 26px 64px -36px rgba(0,0,0,.98)}
-  .card-dark{background:linear-gradient(var(--card2),var(--card2)) padding-box,var(--grad) border-box;border:1px solid transparent;color:#fff;box-shadow:0 30px 70px -42px rgba(34,197,94,.9)}
-  .card-dark .lead{font-weight:800;font-size:19px;margin-bottom:8px}
-  .card-dark p{color:var(--muted);font-size:14px;line-height:1.6;margin-bottom:16px}
-  .card h4{font-size:16px;font-weight:700;margin:0 0 6px}
-  .card p{color:var(--muted);font-size:14px;line-height:1.6}
-  .icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:14px}
-  .chips{display:flex;flex-wrap:wrap;gap:8px}
-  .chip{background:rgba(255,255,255,.06);border:1px solid var(--border2);color:#c9c9d4;font-size:12px;font-family:Consolas,Menlo,monospace;border-radius:7px;padding:4px 9px;transition:transform .16s ease,border-color .16s ease,color .16s ease}
-  .chip:hover{transform:translateY(-1px);border-color:var(--acc);color:#a7f3d0}
-
-  /* FAQ */
-  .faq{max-width:660px;margin-bottom:30px}
-  .faq-item{border:1px solid var(--border);border-radius:14px;background:linear-gradient(180deg,var(--card2),var(--card));overflow:hidden;margin-bottom:10px;transition:border-color .18s ease}
-  .faq-item:hover{border-color:var(--border2)}
-  .faq-q{width:100%;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px 20px;background:none;border:none;cursor:pointer;font-size:14px;font-weight:600;color:var(--txt);text-align:left;font-family:inherit;transition:background .16s}
-  .faq-q:hover{background:rgba(255,255,255,.03)}
-  .faq-q svg{flex-shrink:0;transition:transform .24s cubic-bezier(.22,1,.36,1)}
-  .faq-item:has(.faq-a.open) .faq-q svg{transform:rotate(180deg)}
-  .faq-a{display:none;padding:0 20px 18px;color:var(--muted);font-size:14px;line-height:1.65}
-  .faq-a.open{display:block;animation:fadeUp .3s ease both}
-
-  /* footer */
-  footer{border-top:1px solid var(--border);margin-top:40px;background:rgba(255,255,255,.012)}
-  .foot-in{max-width:1080px;margin:0 auto;padding:26px 20px;display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between}
-  .foot-logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px}
-  .mini-badge{width:22px;height:22px;background:var(--grad);border-radius:6px;display:flex;align-items:center;justify-content:center}
-  .foot-copy{color:var(--dim);font-size:12px}
-  .foot-links{display:flex;gap:18px;font-size:13px;color:var(--muted)}
-  .foot-links a{transition:color .16s}
-  .foot-links a:hover{color:var(--acc)}
-
-  /* modal */
-  .overlay{position:fixed;inset:0;background:rgba(4,4,7,.72);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;padding:18px;z-index:60}
-  .overlay.show{display:flex;animation:fadeIn .2s ease both}
-  .modal{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--border2);border-radius:18px;width:100%;max-width:390px;padding:30px;position:relative;box-shadow:0 44px 100px -40px #000}
-  .overlay.show .modal{animation:pop .3s cubic-bezier(.22,1,.36,1) both}
-  .modal h3{font-size:20px;font-weight:800;margin-bottom:4px}
-  .modal .m-sub{color:var(--muted);font-size:13px;margin-bottom:20px}
-  .modal-close{position:absolute;top:14px;right:14px;background:none;border:none;cursor:pointer;color:var(--dim);padding:4px;border-radius:8px;transition:.16s}
-  .modal-close:hover{color:var(--txt);background:rgba(255,255,255,.06)}
-  .field{margin-bottom:14px}
-  .field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px}
-  .inp{width:100%;border:1px solid var(--border2);border-radius:12px;padding:11px 14px;font-size:14px;outline:none;font-family:inherit;background:rgba(255,255,255,.04);color:var(--txt);transition:border-color .16s ease,box-shadow .16s ease,background .16s ease}
-  .inp::placeholder{color:#5c5c68}
-  .inp:focus{border-color:var(--acc);background:rgba(255,255,255,.06);box-shadow:0 0 0 3px rgba(34,197,94,.16)}
-  .err{color:#fca5a5;font-size:12px;margin:4px 2px 10px;display:none}
-  .err.show{display:block;animation:fadeUp .22s ease both}
-  .switch-line{font-size:12px;color:var(--dim);text-align:center;margin-top:16px}
-  .switch-line button{background:none;border:none;color:var(--acc);font-weight:700;text-decoration:underline;cursor:pointer;font-size:12px;font-family:inherit}
-  @media(max-width:560px){.hide-mob{display:none!important}}
-
-  /* reveal saat discroll (native scroll-driven; browser lama jatuh ke animasi biasa) */
-  @media (prefers-reduced-motion: no-preference){
-    @supports (animation-timeline: view()){
-      .stat,.card,.faq-item{animation:fadeUp .7s cubic-bezier(.22,1,.36,1) both;animation-timeline:view();animation-range:entry 0% cover 26%}
-    }
-  }
-  @media (prefers-reduced-motion: reduce){
-    *,*::before,*::after{animation:none!important;transition:none!important}
-  }
-</style>
+<title>yaparbots — WhatsApp &amp; Telegram Gateway</title>
+<!-- @include head.html -->
 </head>
-<body>
+<body class="page-index">
 
-<nav>
-  <div class="wrap nav-in">
-    <a href="/" class="logo">
-      <span class="logo-badge">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="#fff"><path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.37 5.07L2 22l5.09-1.34A9.95 9.95 0 0 0 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2z"/></svg>
-      </span>
-      YaaParBot
-    </a>
-    <div class="nav-links">
-      <a href="#features">Fitur</a>
-      <a href="#stats">Statistik</a>
-      <a href="#faq">FAQ</a>
-    </div>
-    <div class="nav-actions">
-      <button class="btn btn-outline" onclick="openAuth('login')">Masuk</button>
-      <button class="btn btn-dark" onclick="openAuth('register')">Daftar</button>
-    </div>
-  </div>
-</nav>
+<!-- @include nav.html -->
 
 <header class="hero">
-  <div class="wrap">
-    <div class="badge-live"><span class="dot-live"></span> Multi-platform Gateway &middot; WhatsApp &amp; Telegram</div>
-    <h1>Bot Gateway yang <span class="grad">Simpel &amp; Powerful</span></h1>
-    <p class="sub">Kelola bot WhatsApp &amp; Telegram kamu dari satu dashboard. Multi-session, 90+ command, real-time monitor — tanpa ribet.</p>
-    <div class="hero-btns">
-      <button class="btn btn-dark" onclick="openAuth('register')">Mulai Sekarang</button>
-      <a class="btn btn-outline" href="#features">Lihat Fitur</a>
-    </div>
-    <div class="terminal">
-      <div class="term-dots">
-        <span style="background:#ef4444"></span><span style="background:#eab308"></span><span style="background:#22c55e"></span>
-        <span class="term-label">YaaParBot Terminal</span>
+  <div class="wrap hero-in">
+    <div class="hero-l">
+      <span class="hero-pill"><span class="pill-dot"></span> Multi-platform Gateway &middot; WhatsApp &amp; Telegram</span>
+      <h1>Bot Gateway yang <span class="grad">Simpel &amp; Powerful</span></h1>
+      <p class="sub">Kelola bot WhatsApp &amp; Telegram kamu dari satu dashboard. Multi-session, 90+ command, real-time monitor — tanpa ribet.</p>
+      <div class="hero-btns">
+        <button class="btn btn-dark" onclick="openAuth('register')">Mulai Sekarang</button>
+        <a class="btn btn-outline" href="#features">Lihat Fitur</a>
       </div>
-      <div class="term-body">
-        <p class="c-ok">[ok] MySQL connected successfully</p>
-        <p class="c-ok">[ok] King account seeded</p>
-        <p class="c-info">[..] Bot &quot;MyBot&quot; starting...</p>
-        <p class="c-warn">[qr] QR_DATA: [scan this code]</p>
-        <p class="c-ok">[ok] Bot terhubung ke WhatsApp</p>
-        <p class="c-dim">[..] Incoming: <span style="color:#60a5fa">!ping</span> from 628xx</p>
-        <p class="c-dim">[..] Replied: <span style="color:#4ade80">Pong! Latensi: 42ms</span></p>
-        <p class="caret">_</p>
+      <div class="hero-trust">
+        <div><b>90+</b><span>Command siap pakai</span></div>
+        <div><b>2</b><span>Slot bot per akun</span></div>
+        <div><b>24/7</b><span>Online nonstop</span></div>
+      </div>
+    </div>
+
+    <div class="hero-visual">
+      <div class="mock-badge mk-b1">
+        <i><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></i>
+        <div><b id="mk-msgs">&mdash;</b><span>pesan ditangani</span></div>
+      </div>
+      <div class="mock-badge mk-b2">
+        <i><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></i>
+        <div><b id="mk-bots">&mdash;</b><span>bot online</span></div>
+      </div>
+      <div class="mock">
+        <div class="mk-bar">
+          <i style="background:#ff5f57"></i><i style="background:#ffbd2e"></i><i style="background:#28c840"></i>
+          <span class="mk-ch"><b></b><span>qwertybots</span></span>
+          <span class="mk-live"><i></i>online</span>
+        </div>
+        <div class="mk-body">
+          <div class="mk-side"><i class="on"></i><i></i><i></i><i></i><i></i></div>
+          <div class="mk-main">
+            <div class="mock-chat">
+              <div class="bub in typing" style="--d:0s"><i></i><i></i><i></i></div>
+              <div class="bub out" style="--d:.5s">halo</div>
+              <div class="bub in" style="--d:1s">Hai guys, aku QwertyBot! Salam kenal 👋</div>
+              <div class="bub out" style="--d:1.5s">bikin bot wa / tele dimana yah?</div>
+              <div class="bub in" style="--d:2s">Jadibot di <b class="bub-cmd">labs.yapari.web.id</b> aja 🚀</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -217,7 +69,7 @@
       </div>
       <div class="stat">
         <b id="stat-users">&mdash;</b><span>Total Pengguna</span>
-        <span class="stat-foot" style="background:#3b82f6"></span>
+        <span class="stat-foot" style="background:var(--info)"></span>
       </div>
       <div class="stat">
         <b id="stat-messages">&mdash;</b><span>Pesan Diproses</span>
@@ -229,40 +81,36 @@
 
 <section id="features">
   <div class="wrap">
-    <p class="sec-label">Kenapa YaaParBot</p>
+    <p class="sec-label">Kenapa yaparbots</p>
     <h2>Semua yang kamu butuhkan, dalam satu platform.</h2>
     <div class="feat">
       <div class="card card-dark" style="grid-column:span 2">
         <div class="lead">90+ Command Siap Pakai</div>
         <p>Dari !ping sampai RPG lengkap, giveaway, warn system, dan owner controls — semua sudah built-in.</p>
-        <div class="chips">
-          <span class="chip">!tagall</span><span class="chip">!rpg</span><span class="chip">!giveaway</span>
-          <span class="chip">!antilink</span><span class="chip">!sticker</span><span class="chip">!warn</span><span class="chip">+84 lainnya</span>
-        </div>
       </div>
       <div class="card">
-        <div class="icon" style="background:#0f2018">
+        <div class="icon" style="background:var(--tile-green)">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z" stroke="#059669" stroke-width="2" stroke-linejoin="round"/></svg>
         </div>
         <h4>Real-time Log</h4>
         <p>Monitor status koneksi dan pesan masuk langsung via WebSocket.</p>
       </div>
       <div class="card">
-        <div class="icon" style="background:#131a2e">
+        <div class="icon" style="background:var(--tile-blue)">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1.5" stroke="#2563eb" stroke-width="2"/><rect x="14" y="3" width="7" height="7" rx="1.5" stroke="#2563eb" stroke-width="2"/><rect x="3" y="14" width="7" height="7" rx="1.5" stroke="#2563eb" stroke-width="2"/><rect x="14" y="14" width="7" height="7" rx="1.5" stroke="#2563eb" stroke-width="2"/></svg>
         </div>
         <h4>Multi-Session Terisolasi</h4>
         <p>Setiap bot punya SQLite session sendiri. Tidak saling ganggu.</p>
       </div>
       <div class="card">
-        <div class="icon" style="background:#1a1330">
+        <div class="icon" style="background:var(--tile-purple)">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#7c3aed" stroke-width="2"/><path d="M12 7v5l3.5 2" stroke="#7c3aed" stroke-width="2" stroke-linecap="round"/></svg>
         </div>
         <h4>QR &amp; Pairing Code</h4>
         <p>Login WhatsApp via scan QR atau pairing code 8 digit langsung dari dashboard.</p>
       </div>
       <div class="card">
-        <div class="icon" style="background:#241a0e">
+        <div class="icon" style="background:var(--tile-orange)">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3.5" stroke="#ea580c" stroke-width="2"/><path d="M3 20c0-3.3 2.7-5 6-5s6 1.7 6 5M16 4.6a3.5 3.5 0 0 1 0 6.8M17.5 15.4c2.1.6 3.5 2 3.5 4.6" stroke="#ea580c" stroke-width="2" stroke-linecap="round"/></svg>
         </div>
         <h4>Role King &amp; User</h4>
@@ -280,20 +128,7 @@
   </div>
 </section>
 
-<footer>
-  <div class="foot-in">
-    <div class="foot-logo">
-      <span class="mini-badge"><svg width="11" height="11" viewBox="0 0 24 24" fill="#fff"><path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.37 5.07L2 22l5.09-1.34A9.95 9.95 0 0 0 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2z"/></svg></span>
-      YaaParBot
-    </div>
-    <p class="foot-copy">&copy; 2026 YaaParBot. All rights reserved.</p>
-    <div class="foot-links">
-      <a href="https://wa.me/" target="_blank" rel="noopener">WhatsApp</a>
-      <a href="https://t.me/" target="_blank" rel="noopener">Telegram</a>
-      <a href="https://github.com/" target="_blank" rel="noopener">GitHub</a>
-    </div>
-  </div>
-</footer>
+<!-- @include footer.html -->
 
 <!-- Auth modal -->
 <div class="overlay" id="auth-overlay">
@@ -376,9 +211,12 @@
 
   // ── Live stats ──────────────────────────────────────────────────
   function updateStats(s) {
+    const short = n => n >= 1000 ? Math.round(n / 1000) + 'k' : String(n);
     document.getElementById('stat-bots').textContent     = (s.total_bots_online ?? 0).toLocaleString('id-ID');
     document.getElementById('stat-users').textContent    = (s.total_users ?? 0).toLocaleString('id-ID');
     document.getElementById('stat-messages').textContent = (s.total_messages ?? 0).toLocaleString('id-ID');
+    document.getElementById('mk-msgs').textContent = short(s.total_messages ?? 0);
+    document.getElementById('mk-bots').textContent = short(s.total_bots_online ?? 0);
   }
   try {
     const ws = new WebSocket((location.protocol === 'https:' ? 'wss' : 'ws') + '://' + location.host);

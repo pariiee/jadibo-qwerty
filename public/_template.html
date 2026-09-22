@@ -1,0 +1,34 @@
+<!--
+  TEMPLATE HALAMAN BARU — 3 langkah:
+  1. copy file ini jadi  public/NAMA.html
+  2. daftarkan di server.js :  app.get('/NAMA', halaman('NAMA.html'));
+  3. gaya khusus halaman ini → tulis di public/assets/page.css, awali `body.page-NAMA `
+     (yang dipakai bareng 2+ halaman → tulis di public/assets/theme.css)
+
+  Partial yang bisa dipakai: head.html, nav.html, sidebar.html, topbar.html, footer.html
+-->
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Judul Halaman — YaaParBot</title>
+<!-- @include head.html -->
+</head>
+<!-- class body = scope gaya di page.css → body.page-NAMA -->
+<body class="page-contoh">
+
+<!-- @include nav.html -->
+
+<main class="wrap">
+  <h1>Judul</h1>
+  <p class="sub">Isi halaman.</p>
+</main>
+
+<!-- @include footer.html -->
+
+<script>
+  /* JS khusus halaman ini. Yang dipakai bareng → taruh di partial/JS bersama. */
+</script>
+</body>
+</html>

@@ -6,6 +6,7 @@
  */
 
 require('dotenv').config();
+const fs           = require('fs');
 const express      = require('express');
 const http         = require('http');
 const WebSocket    = require('ws');
@@ -62,8 +63,9 @@ app.use(cookieParser());
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Static files
-app.use(express.static(path.join(__dirname, 'public')));
+// Static files — index:false supaya '/' tidak disajikan mentah oleh static
+// (halaman harus lewat renderer include di bawah, biar partial ikut dirangkai)
+app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 
 // ─── Rate Limiter ─────────────────────────────────────────────────────────────
 const authLimiter = rateLimit({
@@ -113,13 +115,25 @@ app.get('/api/admin/users',          auth.requireAuth, auth.requireKing, auth.li
 app.patch('/api/admin/users/:id',    auth.requireAuth, auth.requireKing, auth.updateUser);
 app.delete('/api/admin/users/:id',   auth.requireAuth, auth.requireKing, auth.deleteUser);
 
-// ─── SPA Fallback ─────────────────────────────────────────────────────────────
-app.get('/dashboard', (_, res) =>
-  res.sendFile(path.join(__dirname, 'public', 'dashboard.html')));
-app.get('/bot/:id', (_, res) =>
-  res.sendFile(path.join(__dirname, 'public', 'bot-detail.html')));
-app.get('*', (_, res) =>
-  res.sendFile(path.join(__dirname, 'public', 'index.html')));
+// ─── Halaman HTML ─────────────────────────────────────────────────────────────
+// Halaman berisi <!-- @include head.html --> dll; partial di public/partials/
+// dirangkai di sini, jadi halaman baru cukup <link> + include, tanpa duplikat.
+const PUBLIC_HTML = path.join(__dirname, 'public');
+const INCLUDE_RE  = /<!--\s*@include\s+([\w.\/-]+)\s*-->/g;
+const halaman = (nama) => (_, res) => {
+  try {
+    const html = fs.readFileSync(path.join(PUBLIC_HTML, nama), 'utf8')
+      .replace(INCLUDE_RE, (_, f) =>
+        fs.readFileSync(path.join(PUBLIC_HTML, 'partials', f), 'utf8'));
+    res.type('html').send(html);
+  } catch (e) {
+    console.error('[Page]', nama, e.message);
+    res.status(500).type('html').send('<h1>500</h1>');
+  }
+};
+app.get('/dashboard', halaman('dashboard.html'));
+app.get('/bot/:id',   halaman('bot-detail.html'));
+app.get('*',          halaman('index.html'));
 
 // ─── WebSocket Hub ────────────────────────────────────────────────────────────
 // Map: botId -> Set<WebSocket>
