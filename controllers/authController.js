@@ -4,7 +4,9 @@ const bcrypt    = require('bcryptjs');
 const jwt       = require('jsonwebtoken');
 const { pool, incrementStat, decrementStat } = require('../config/database');
 
-const JWT_SECRET  = process.env.JWT_SECRET  || 'changeme';
+// Tanpa fallback: kalau .env bolong, server nolak boot (guard di server.js).
+// Fallback literal bikin token siapa pun bisa dipalsukan tanpa jejak.
+const JWT_SECRET  = process.env.JWT_SECRET;
 const JWT_EXPIRES = process.env.JWT_EXPIRES_IN || '7d';
 const MAX_SLOTS   = parseInt(process.env.MAX_SLOTS_PER_USER || '2', 10);
 
@@ -51,6 +53,10 @@ function requireKing(req, res, next) {
 
 async function register(req, res) {
   try {
+    // Registrasi publik default TUTUP. Buka dengan ALLOW_REGISTER=1 di .env.
+    if (process.env.ALLOW_REGISTER !== '1')
+      return sendError(res, 403, 'Registrasi ditutup. Hubungi admin.');
+
     const { username, password } = req.body;
 
     if (!username || !password)

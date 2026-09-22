@@ -3,7 +3,7 @@
 const path   = require('path');
 const fs     = require('fs');
 const { v4: uuidv4 } = require('uuid');
-const { pool, incrementStat, decrementStat } = require('../config/database');
+const { pool } = require('../config/database');
 
 const SESSIONS_DIR = path.resolve(process.env.SESSIONS_DIR || './sessions');
 const MAX_SLOTS    = parseInt(process.env.MAX_SLOTS_PER_USER || '2', 10);
@@ -295,7 +295,8 @@ async function stopBot(req, res) {
     } catch {}
 
     await pool.execute("UPDATE bots SET status = 'disconnected', is_running = 0 WHERE id = ?", [bot.id]);
-    await decrementStat('total_bots_online');
+    // decrementStat TIDAK di sini: stopWhatsAppBot() sudah nurunin
+    // total_bots_online pas dia buang instance dari activeBots. Dobel = minus.
 
     return res.json({ ok: true, message: 'Bot dihentikan' });
   } catch (err) {

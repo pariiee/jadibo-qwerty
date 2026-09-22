@@ -14,6 +14,10 @@
  *      ada di limitedCmds tapi handler-nya cuma `case 'encode'`)
  *   3. pre-check `curLim <= 0` tanpa gerbang SQL `lim >= 1` -> bisa jadi negatif
  *
+ * Catatan: SEMUA query di sini lewat SATU koneksi (`db`). `USE tmp_xxx` cuma
+ * nempel di koneksi itu — kalau pakai pool, query berikutnya bisa nyasar ke DB
+ * default dan nyisa baris uji `bot_id=9` di DB yang dipakai bot beneran.
+ *
  * Jalankan: node test/limit-potong.js   (atau lewat `npm test`)
  */
 'use strict';
@@ -40,6 +44,9 @@ const SQL_CEK      = ambilPola(/SELECT lim FROM rpg_members WHERE bot_id = \?[^'
 const SQL_POTONG   = ambilPola(/UPDATE rpg_members SET lim = lim - \?[^']*/);
 const SQL_DUPLIKAT = ambilPola(/ON DUPLICATE KEY UPDATE name = VALUES\(name\), registered = 1(, lim = \?)?/);
 
+// Koneksi tunggal untuk seluruh tes — lihat catatan di header.
+let db = null;
+
 let lulus = 0;
 async function cek(nama, fn) {
   try { await fn(); lulus++; console.log(`  \u2705 ${nama}`); }
@@ -55,10 +62,11 @@ async function bisaKonek() {
 }
 
 async function setup() {
-  await pool.query(`DROP DATABASE IF EXISTS \`${TMP}\``);
-  await pool.query(`CREATE DATABASE \`${TMP}\``);
-  await pool.query(`USE \`${TMP}\``);
-  await pool.query(
+  db = await pool.getConnection();
+  await db.query(`DROP DATABASE IF EXISTS \`${TMP}\``);
+  await db.query(`CREATE DATABASE \`${TMP}\``);
+  await db.query(`USE \`${TMP}\``);
+  await db.query(
     `CREATE TABLE rpg_members (
        id INT AUTO_INCREMENT PRIMARY KEY,
        bot_id INT NOT NULL, jid VARCHAR(100) NOT NULL,
@@ -73,13 +81,13 @@ async function setup() {
 /** Jalankan gate potong limit persis seperti engine. */
 async function potong(role, command, isLimited = true, satuan = 1) {
   if (!['user'].includes(role) || !isLimited) return 'skip';
-  const [rows] = await pool.execute(SQL_CEK, [9, 'a@s.whatsapp.net']);
+  const [rows] = await db.execute(SQL_CEK, [9, 'a@s.whatsapp.net']);
   const cur = rows[0]?.lim ?? 0;
   if (cur < satuan) return 'habis';
-  await pool.execute(SQL_POTONG, [satuan, 9, 'a@s.whatsapp.net', satuan]);
+  await db.execute(SQL_POTONG, [satuan, 9, 'a@s.whatsapp.net', satuan]);
   return 'potong';
 }
-const lim = async () => (await pool.execute('SELECT lim FROM rpg_members WHERE bot_id=9 AND jid=?', ['a@s.whatsapp.net']))[0][0]?.lim;
+const lim = async () => (await db.execute('SELECT lim FROM rpg_members WHERE bot_id=9 AND jid=?', ['a@s.whatsapp.net']))[0][0]?.lim;
 
 (async () => {
   console.log('test/limit-potong.js  (DB sementara, bukan DB produksi)');
@@ -90,7 +98,7 @@ const lim = async () => (await pool.execute('SELECT lim FROM rpg_members WHERE b
   }
   try {
     await setup();
-    await pool.execute('INSERT INTO rpg_members (bot_id, jid, name, registered, lim) VALUES (9, ?, ?, 1, 5)',
+    await db.execute('INSERT INTO rpg_members (bot_id, jid, name, registered, lim) VALUES (9, ?, ?, 1, 5)',
       ['a@s.whatsapp.net', 'Uji']);
 
     await cek('user: 5 limit → 3x command → sisa 2', async () => {
@@ -101,7 +109,7 @@ const lim = async () => (await pool.execute('SELECT lim FROM rpg_members WHERE b
     });
 
     await cek('dev & owner: limit nggak kesentuh', async () => {
-      await pool.execute('UPDATE rpg_members SET lim = 7 WHERE bot_id=9');
+      await db.execute('UPDATE rpg_members SET lim = 7 WHERE bot_id=9');
       assert.strictEqual(await potong('dev', 'ai'), 'skip');
       assert.strictEqual(await potong('owner', 'ai'), 'skip');
       assert.strictEqual(await potong('premium', 'ai'), 'skip');
@@ -120,13 +128,13 @@ const lim = async () => (await pool.execute('SELECT lim FROM rpg_members WHERE b
     });
 
     await cek('limit 0: ditolak, saldo nggak jadi -1', async () => {
-      await pool.execute('UPDATE rpg_members SET lim = 0 WHERE bot_id=9');
+      await db.execute('UPDATE rpg_members SET lim = 0 WHERE bot_id=9');
       assert.strictEqual(await potong('user', 'ai'), 'habis');
       assert.strictEqual(await lim(), 0);
     });
 
     await cek('dua command barengan di limit 1: cuma satu yang kepotong', async () => {
-      await pool.execute('UPDATE rpg_members SET lim = 1 WHERE bot_id=9');
+      await db.execute('UPDATE rpg_members SET lim = 1 WHERE bot_id=9');
       const hasil = await Promise.all([potong('user', 'ai'), potong('user', 'ai')]);
       assert.ok(hasil.includes('potong'), 'dua-duanya nggak potong');
       assert.strictEqual(await lim(), 0,
@@ -134,9 +142,9 @@ const lim = async () => (await pool.execute('SELECT lim FROM rpg_members WHERE b
     });
 
     await cek('auto-register user lama: saldo TIDAK balik ke default', async () => {
-      await pool.execute('UPDATE rpg_members SET lim = 3 WHERE bot_id=9');
+      await db.execute('UPDATE rpg_members SET lim = 3 WHERE bot_id=9');
       // ini INSERT yang jalan tiap command (gerbang registrasi di engine)
-      await pool.execute(
+      await db.execute(
         `INSERT INTO rpg_members (bot_id, jid, name, registered, lim)
          VALUES (9, ?, ?, 1, 20) ${SQL_DUPLIKAT}`,
         ['a@s.whatsapp.net', 'Uji Baru']
@@ -146,19 +154,22 @@ const lim = async () => (await pool.execute('SELECT lim FROM rpg_members WHERE b
     });
 
     await cek('auto-register user baru: dapat limit default', async () => {
-      await pool.execute(
+      await db.execute(
         `INSERT INTO rpg_members (bot_id, jid, name, registered, lim)
          VALUES (9, ?, ?, 1, 20) ${SQL_DUPLIKAT}`,
         ['b@s.whatsapp.net', 'Baru']
       );
-      const [r] = await pool.execute('SELECT lim FROM rpg_members WHERE bot_id=9 AND jid=?', ['b@s.whatsapp.net']);
+      const [r] = await db.execute('SELECT lim FROM rpg_members WHERE bot_id=9 AND jid=?', ['b@s.whatsapp.net']);
       assert.strictEqual(r[0].lim, 20, 'user baru nggak dapat limit default');
     });
   } catch (e) {
     console.error('  \u274c setup gagal:', e.message);
     process.exitCode = 1;
   } finally {
-    await pool.query(`DROP DATABASE IF EXISTS \`${TMP}\``).catch(() => {});
+    if (db) {
+      await db.query(`DROP DATABASE IF EXISTS \`${TMP}\``).catch(() => {});
+      db.release();
+    }
     console.log(`\n${lulus} lulus${process.exitCode ? ', ADA GAGAL' : ''}`);
     await pool.end();
   }

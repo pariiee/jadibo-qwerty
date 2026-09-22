@@ -7,6 +7,13 @@
 
 require('dotenv').config();
 
+// Guard boot: JWT_SECRET kosong = token siapa pun bisa ditandatangani sendiri.
+// Lebih baik gagal start daripada jalan dengan pintu kebuka.
+if (!process.env.JWT_SECRET) {
+  console.error('[Boot] JWT_SECRET kosong di .env — server dihentikan.');
+  process.exit(1);
+}
+
 // Paksa SELURUH koneksi keluar lewat IPv4.
 // Host media (googlevideo dkk) mengiklankan AAAA, tapi VPS ini tidak punya
 // rute IPv6: tiap unduhan mencoba IPv6 dulu, mati, lalu IPv4-nya timeout —
@@ -171,7 +178,7 @@ wss.on('connection', (ws, req) => {
 
         let decoded = null;
         try {
-          decoded = jwt.verify(token, process.env.JWT_SECRET || 'changeme');
+          decoded = jwt.verify(token, process.env.JWT_SECRET);
         } catch {
           ws.send(JSON.stringify({ type: 'error', message: 'Unauthorized' }));
           ws.close();

@@ -93,10 +93,17 @@ async function decrementStat(key, amount = 1) {
  */
 async function getStats() {
   const [rows] = await pool.execute('SELECT stat_key, stat_value FROM stats');
-  return rows.reduce((acc, row) => {
+  const acc = rows.reduce((acc, row) => {
     acc[row.stat_key] = Number(row.stat_value);
     return acc;
   }, {});
+  // total_bots_online DIHITUNG, bukan dibaca dari counter: counter-nya drift
+  // (increment tiap connect, decrement tiap close/stop — event yang kelewat
+  // bikin angkanya ngawur, pernah kebaca 493 padahal bot cuma 1). Tulisan ke
+  // kolom stats-nya dibiarin, cuma nggak dibaca lagi.
+  const [[{ n }]] = await pool.execute('SELECT COUNT(*) AS n FROM bots WHERE is_running = 1');
+  acc.total_bots_online = Number(n);
+  return acc;
 }
 
 module.exports = { pool, testConnection, seedDefaults, incrementStat, decrementStat, getStats };

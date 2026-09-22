@@ -1101,6 +1101,9 @@ async function stopWhatsAppBot(botId) {
   let closeWaited = false;
   const closeWait = new Promise(res => stopCloseWaiters.set(botId, () => { closeWaited = true; res(); }));
   const inst = activeBots.get(botId);
+  // Instance Telegram cuma punya destroy(); nggak ada event 'close' yang bakal
+  // dateng, jadi jangan tahan request-nya 3 detik (closeWait di bawah).
+  if (inst && typeof inst.disconnect !== 'function') closeWaited = true;
   if (inst) {
     try {
       if (typeof inst?.disconnect === 'function') await inst.disconnect();
