@@ -77,9 +77,14 @@ const palsu = http.createServer((req, res) => {
   assert.deepStrictEqual(diterima[0], { op: 'start', botId: 7, args: { usePairing: true } },
     'perintah start harus sampai apa adanya ke worker');
 
-  const ids = await bus.sinkron();
-  assert.deepStrictEqual(ids, [7]);
-  assert.ok(bus.isRunning(7) && !bus.isRunning(8), 'cermin "bot jalan" harus ikut worker');
+  // Cermin "bot jalan" udah dihapus total: nggak ada pemakai produksi, jadi
+  // ngerawatnya cuma ngasih beban tiap 10 detik. jangan balik lagi.
+  for (const nama of ['isRunning', 'runningIds', 'sinkron', '_jalan']) {
+    assert.ok(!bus[nama] && !baca('config/engineBus.js').includes('_jalan ='),
+      `engineBus masih punya ${nama} — cermin itu udah nggak dipakai siapa-siapa`);
+  }
+  assert.ok(!/cron\.schedule\('\/10 \* \* \* \* \*'[\s\S]{0,400}sinkron/.test(srv),
+    'cron 10 detik masih nyentuh sinkron — polling balik lagi');
 
   // Worker nolak → pesannya diteruskan, status-nya ikut (400 bukan 500).
   await assert.rejects(() => bus.stop(7), (e) => e.status === 400 && /tidak sedang berjalan/.test(e.message));

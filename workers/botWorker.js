@@ -43,24 +43,29 @@ async function post(path, body) {
   if (!res.ok) throw new Error('HTTP ' + res.status);
 }
 
+// `_siap` = jalur ke web udah kebukti hidup. Tanpa gate ini, tiap event pas web
+// mati bakal nunggu timeout 15 detik di jalur log bot. Begitu ketemu, `_siap`
+// jadi true dan timer di bawah diam permanen.
 async function kirimEvent(ev) {
   if (!_siap) { if (_buffer.length < 500) _buffer.push(ev); return; }
   try { await post('/internal/engine-event', ev); }
   catch { _siap = false; if (_buffer.length < 500) _buffer.push(ev); }
 }
 
+// `ping` cuma buat nguji jalur hidup — web cuma nyalurin ke WebSocket, dan
+// browser ngabaikan tipe yang nggak dikenal. Jadi nggak ada event yang dibuang
+// cuma demi nyocokin status koneksi.
 async function flush() {
   try {
-    await post('/internal/engine-event', { type: 'running', ids: [...activeBots.keys()] });
+    await post('/internal/engine-event', { type: 'ping' });
     _siap = true;
     while (_buffer.length) await post('/internal/engine-event', _buffer.shift());
   } catch { _siap = false; }
 }
 
-// Web bisa belum siap waktu worker boot — deploy restart dua-duanya sekaligus,
-// dan `pm2 restart jadibot` doang nggak ngasih tau worker apa-apa. Timer ini
-// yang nyambungin balik: selama belum tersambung, coba flush tiap 3 detik.
-// Sekali nyambung dia diam total (nggak ada request saat sehat).
+// Web bisa belum siap waktu worker boot (deploy restart dua-duanya sekaligus).
+// Timer ini yang nyambungin balik: selama belum tersambung, coba tiap 3 detik.
+// Sekali nyambung dia diam total — nggak ada request sama sekali saat sehat.
 setInterval(() => { if (!_siap) flush(); }, 3000).unref();
 
 // ─── Perintah dari web ───────────────────────────────────────────────────────
@@ -90,9 +95,6 @@ async function botDariDb(botId) {
 
 async function jalankan({ op, botId, args }) {
   switch (op) {
-    case 'status':
-      return { ids: [...activeBots.keys()] };
-
     case 'start': {
       if (activeBots.has(botId)) { const e = new Error('Bot sudah berjalan'); e.status = 400; throw e; }
       const botData = await botDariDb(botId);
@@ -161,7 +163,6 @@ const server = http.createServer((req, res) => {
       const out = await jalankan({ ...body, botId });
       console.log(`[Worker] ${body.op} bot=${botId} ok`);
       res.writeHead(200, { 'content-type': 'application/json' }).end(JSON.stringify({ ok: true, ...out }));
-      if (body.op !== 'status') kirimEvent({ type: 'running', ids: [...activeBots.keys()] });
     } catch (e) {
       // Error mentah tetap dicatat di log PM2, tapi yang dikirim ke web cuma
       // kalimat yang kita tulis sendiri (e.status di-set) — sisanya umum.
@@ -240,13 +241,10 @@ async function boot() {
     }
   }
   console.log(`[Worker] siap — ${activeBots.size} bot aktif`);
-  // Setelah bot nyala, BUKAN sebelumnya: flush() nge-set `_siap = true`, dan
-  // push pertama saat web balik adalah daftar bot yang jalan. Kalau flush()
-  // dipanggil sebelum auto-start, push di baris ini (dan tiap kirimEvent
-  // sebelumnya) cuma masuk buffer 500 dan nggak pernah ke-flush — web nggak
-  // pernah tau bot hidup lagi setelah worker restart.
+  // Nembak web SETELAH auto-start, bukan sebelum: `flush()` yang nge-set
+  // `_siap = true`, jadi kalau web belum naik, event yang dicatat auto-start
+  // (log/status bot) masih ketahan di buffer dan baru kekirim pas web balik.
   await flush();
-  kirimEvent({ type: 'running', ids: [...activeBots.keys()] });
 }
 
 process.on('unhandledRejection', (e) => console.error('[Worker/UnhandledRejection]', e?.message || e));
