@@ -7,7 +7,7 @@
 
 const { rapikanError } = require('../engine/pesanError');
 const mess           = require('../config/mess');
-const { genThumbnail } = require('../engine/thumbnail');
+const { genThumbnail, jpegkan } = require('../engine/thumbnail');
 const { addStickerExif, videoKeStickerWebp } = require('../engine/sticker');
 const { uploadInfo }  = require('../engine/api');
 const { normalVideo } = require('../engine/normalVideo');
@@ -4623,8 +4623,7 @@ module.exports = async function toolsHandler(ctx) {
           for (let i = 0; i < Math.min(images.length, 10); i++) {
             const imgUrl = images[i];
             const imgRes = await axios.get(imgUrl, { responseType: 'arraybuffer', timeout: 60000 });
-            const ct     = imgRes.headers['content-type'] || 'image/jpeg';
-            const buf    = Buffer.from(imgRes.data);
+            const { buf, ct } = await jpegkan(Buffer.from(imgRes.data), imgRes.headers['content-type']);
             const thumb  = await genThumbnail(buf, ct);
             await client.message.send(jid, {
               type: 'image', media: buf, mimetype: ct,
@@ -4766,9 +4765,9 @@ module.exports = async function toolsHandler(ctx) {
           const imgUrl = img.url || img.download_url || img;
           if (!imgUrl) continue;
           const res = await axios.get(imgUrl, { responseType: 'arraybuffer', timeout: 30000 });
-          const ct  = res.headers['content-type'] || 'image/jpeg';
-          const thumb = await genThumbnail(Buffer.from(res.data), ct);
-          await client.message.send(jid, { type: 'image', media: Buffer.from(res.data), mimetype: ct, caption: `📌 *Pinterest*`, ...(thumb ? { jpegThumbnail: thumb } : {}) });
+          const { buf, ct } = await jpegkan(Buffer.from(res.data), res.headers['content-type']);
+          const thumb = await genThumbnail(buf, ct);
+          await client.message.send(jid, { type: 'image', media: buf, mimetype: ct, caption: `📌 *Pinterest*`, ...(thumb ? { jpegThumbnail: thumb } : {}) });
         }
       } catch (e) {
         await react(mess.reactError);
@@ -4805,8 +4804,9 @@ module.exports = async function toolsHandler(ctx) {
             const thumb = await genThumbnail(Buffer.from(res.data), ct);
             await client.message.send(jid, { type: 'video', media: Buffer.from(res.data), mimetype: ct, caption: `🧵 *Threads*`, ...(thumb ? { jpegThumbnail: thumb } : {}) });
           } else {
-            const thumb = await genThumbnail(Buffer.from(res.data), ct);
-            await client.message.send(jid, { type: 'image', media: Buffer.from(res.data), mimetype: ct, caption: `🧵 *Threads*`, ...(thumb ? { jpegThumbnail: thumb } : {}) });
+            const { buf, ct } = await jpegkan(Buffer.from(res.data), ct);
+            const thumb = await genThumbnail(buf, ct);
+            await client.message.send(jid, { type: 'image', media: buf, mimetype: ct, caption: `🧵 *Threads*`, ...(thumb ? { jpegThumbnail: thumb } : {}) });
           }
         }
       } catch (e) {
@@ -5093,8 +5093,8 @@ module.exports = async function toolsHandler(ctx) {
         const imgUrl = d.body_url || d.head_url || d.skin_render_url;
         if (imgUrl) {
           const res = await axios.get(imgUrl, { responseType: 'arraybuffer', timeout: 15000 });
-          const ct = res.headers['content-type'] || 'image/png';
-          await client.message.send(jid, { type: 'image', media: Buffer.from(res.data), mimetype: ct, caption: text.trim() });
+          const { buf, ct } = await jpegkan(Buffer.from(res.data), res.headers['content-type']);
+          await client.message.send(jid, { type: 'image', media: buf, mimetype: ct, caption: text.trim() });
         } else {
           await reply(text.trim());
         }
