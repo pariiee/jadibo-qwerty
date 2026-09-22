@@ -4847,8 +4847,14 @@ module.exports = async function toolsHandler(ctx) {
         } else {
           const videos = data?.results?.videos;
           if (!videos || !videos.length) throw new Error('Tidak ada video dari API');
-          // Prefer 360p/480p agar tidak terlalu besar
-          const v = videos.find(x => x.quality && (x.quality.includes('360') || x.quality.includes('480'))) || videos[0];
+          // Format video-only (DASH) nggak bisa ditempel di sini tanpa ffmpeg —
+          // dan yang dipilih `videos[0]` dulu malah HLS (isinya manifest .m3u8,
+          // bukan video). Wajib yang `has_audio`: satu file video+suara.
+          const ringan = q => q && (q.includes('360') || q.includes('480'));
+          const v = videos.find(x => x.has_audio && ringan(x.quality))
+                 || videos.find(x => x.has_audio)
+                 || videos.find(x => ringan(x.quality))
+                 || videos[0];
           const dlUrl = v.url || v.download_url;
           const res = await axios.get(dlUrl, { responseType: 'arraybuffer', timeout: 120000 });
           await react(mess.reactSuccess);
