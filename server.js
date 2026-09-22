@@ -270,8 +270,11 @@ app.post('/internal/engine-event', (req, res) => {
 });
 
 // ─── Periodic Stats Broadcast ─────────────────────────────────────────────────
+// Nggak ada polling ke worker di sini. Cermin "bot jalan" (engineBus._jalan)
+// di-push worker tiap berubah lewat kirimEvent({type:'running'}) — polling tiap
+// 10 detik cuma ngasih salinan yang sama dan bikin cron ini bisa kelewat kalau
+// proses lagi sibuk. Satu kali sinkron saat boot tetap ada (lihat boot()).
 cron.schedule('*/10 * * * * *', async () => {
-  engineBus.sinkron(); // murah (localhost) & bikin cermin nggak bisa basi lama
   try {
     const stats = await getStats();
     const payload = JSON.stringify({ type: 'stats', payload: stats });
@@ -296,9 +299,16 @@ async function boot() {
     console.log(`║  Mode : ${(process.env.NODE_ENV || 'development').padEnd(32)}║`);
     console.log('╚══════════════════════════════════════════╝');
     console.log('');
-    // Bot nggak dinyalain di sini — worker yang punya koneksinya. Yang perlu
-    // cuma nyocokin cermin "bot jalan" biar tombolnya nggak salah tebak.
-    engineBus.sinkron();
+    // Bot nggak dinyalain di sini — worker yang punya koneksinya. Yang perlu cuma
+    // nyocokin cermin "bot jalan" biar tombolnya nggak salah tebak. Dicoba beberapa
+    // kali lalu BERHENTI: kalau worker belum naik sama sekali, terus muter = nembak
+    // port kosong seumur hidup. Kalau worker-nya nyala belakangan, dia sendiri yang
+    // nyambung balik (retry flush di botWorker.js) — jadi nggak perlu nunggu di sini.
+    let gagal = 0;
+    const cocokin = setInterval(async () => {
+      if ((await engineBus.sinkron()) !== null || ++gagal >= 5) clearInterval(cocokin);
+    }, 2000);
+    cocokin.unref();
   });
 }
 

@@ -74,7 +74,9 @@ async function sinkron() {
     const d = await call('status');
     terimaEvent({ type: 'running', ids: d.ids });
     return d.ids;
-  } catch { return runningIds(); }
+    // null (bukan daftar kosong) = worker belum nyahut. Caller butuh bedain itu
+    // dari "worker jawab, nggak ada bot jalan" — [] itu jawaban sah.
+  } catch { return null; }
 }
 
 module.exports = {

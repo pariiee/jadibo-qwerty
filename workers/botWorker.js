@@ -57,6 +57,12 @@ async function flush() {
   } catch { _siap = false; }
 }
 
+// Web bisa belum siap waktu worker boot — deploy restart dua-duanya sekaligus,
+// dan `pm2 restart jadibot` doang nggak ngasih tau worker apa-apa. Timer ini
+// yang nyambungin balik: selama belum tersambung, coba flush tiap 3 detik.
+// Sekali nyambung dia diam total (nggak ada request saat sehat).
+setInterval(() => { if (!_siap) flush(); }, 3000).unref();
+
 // ─── Perintah dari web ───────────────────────────────────────────────────────
 // Nunggu koneksi benar-benar hidup. 60 detik = batas sabar buat scan QR;
 // lewat itu bot tetap jalan, cuma web dikasih tau apa adanya.
@@ -222,7 +228,6 @@ async function boot() {
   // (WA bisa 10 detik) jangan bikin web nunggu buat sekadar stop/status.
   await new Promise((ok) => server.listen(PORT, '127.0.0.1', ok));
   console.log(`[Worker] dengerin perintah di 127.0.0.1:${PORT}`);
-  await flush();
 
   const [bots] = await pool.execute('SELECT * FROM bots WHERE is_running = 1');
   if (bots.length) {
@@ -235,6 +240,12 @@ async function boot() {
     }
   }
   console.log(`[Worker] siap — ${activeBots.size} bot aktif`);
+  // Setelah bot nyala, BUKAN sebelumnya: flush() nge-set `_siap = true`, dan
+  // push pertama saat web balik adalah daftar bot yang jalan. Kalau flush()
+  // dipanggil sebelum auto-start, push di baris ini (dan tiap kirimEvent
+  // sebelumnya) cuma masuk buffer 500 dan nggak pernah ke-flush — web nggak
+  // pernah tau bot hidup lagi setelah worker restart.
+  await flush();
   kirimEvent({ type: 'running', ids: [...activeBots.keys()] });
 }
 
