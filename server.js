@@ -6,6 +6,14 @@
  */
 
 require('dotenv').config();
+
+// Urutkan IPv4 lebih dulu untuk SEMUA resolusi DNS proses ini.
+// Banyak host media (googlevideo dkk) mengiklankan AAAA, tapi VPS ini tidak
+// punya rute IPv6 — tiap percobaan unduh lewat IPv6 mati ENETUNREACH, dan
+// pengiriman media besar jadi gagal. Dulu ini ditambal `family: 4` di satu
+// pemanggil axios saja, jadi jalur lain tetap kena.
+require('dns').setDefaultResultOrder('ipv4first');
+
 const fs           = require('fs');
 const express      = require('express');
 const http         = require('http');
