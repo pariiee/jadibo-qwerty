@@ -8,7 +8,7 @@
 const { rapikanError } = require('../engine/pesanError');
 const mess           = require('../config/mess');
 const { genThumbnail, jpegkan } = require('../engine/thumbnail');
-const { addStickerExif, videoKeStickerWebp, gambarKeStickerWebp } = require('../engine/sticker');
+const { addStickerExif, videoKeStickerWebp } = require('../engine/sticker');
 const { uploadInfo }  = require('../engine/api');
 const { normalVideo } = require('../engine/normalVideo');
 
@@ -479,10 +479,11 @@ module.exports = async function toolsHandler(ctx) {
         });
         const buffer = Buffer.from(res.data);
         const ct = res.headers['content-type'] || 'image/jpeg';
-        // BE naruh teks kecil di tengah canvas 500×500 (teks 4 char cuma 2,9% tinta,
-        // 97% putih) → di WA sticker tampil ~180px, keliatan kotak putih kosong.
-        // gambarKeStickerWebp() buang margin + isiin frame. Lihat engine/sticker.js.
-        const webpBuffer = await gambarKeStickerWebp(buffer);
+        const sharp = require('sharp');
+        const webpBuffer = await sharp(buffer)
+          .resize(512, 512, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+          .webp({ quality: 90 })
+          .toBuffer();
         const stickerBuffer = await addStickerExif(webpBuffer, process.env.STICKER_PACK_NAME, process.env.STICKER_AUTHOR);
         await client.message.send(jid, {
           type: 'sticker',

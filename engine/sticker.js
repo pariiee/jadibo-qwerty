@@ -106,19 +106,4 @@ async function videoKeStickerWebp(inPath, outPath, { detik = MAX_DETIK_STICKER, 
   return { buf: terpilih ? terpilih.buf : terakhir, tangga: terpilih || null };
 }
 
-// ─── Gambar diam → WebP sticker ─────────────────────────────────────────────
-// Sumber kayak brat naruh objeknya kecil di tengah canvas (teks 4 char = 2,9%
-// tinta, 97% putih) → di WA sticker tampil ~180px, keliatan kotak putih kosong
-// alias "abu". trim() buang margin sumber, contain ke 512 biar objek ngisi
-// frame (tinta ~23%). `cover` JANGAN: objek 1 huruf digedein ~75× sampai
-// kepotong sisinya.
-async function gambarKeStickerWebp(gambarBuffer) {
-  const sharp = require('sharp');
-  return sharp(gambarBuffer)
-    .trim({ threshold: 10 })
-    .resize(UKURAN_STICKER, UKURAN_STICKER, { fit: 'contain', background: { r: 255, g: 255, b: 255 } })
-    .webp({ quality: 90 })
-    .toBuffer();
-}
-
-module.exports = { addStickerExif, videoKeStickerWebp, gambarKeStickerWebp, TANGGA_STICKER, UKURAN_STICKER, MAX_DETIK_STICKER };
+module.exports = { addStickerExif, videoKeStickerWebp, TANGGA_STICKER, UKURAN_STICKER, MAX_DETIK_STICKER };
