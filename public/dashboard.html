@@ -33,7 +33,7 @@
         </div>
         <h3>Belum ada bot</h3>
         <p>Tambah bot pertama kamu untuk memulai</p>
-        <button class="btn btn-dark" onclick="openAddBot()">Tambah Bot Sekarang</button>
+        <button class="btn btn-dark" data-act="openAddBot">Tambah Bot Sekarang</button>
       </div>
     </div>
   </main>
@@ -42,7 +42,7 @@
 <!-- Add bot modal -->
 <div class="overlay" id="add-overlay">
   <div class="modal">
-    <button class="modal-close" onclick="closeAdd()" aria-label="Tutup">
+    <button class="modal-close" data-act="closeAdd" aria-label="Tutup">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
     </button>
 
@@ -50,11 +50,11 @@
       <h3>Tambah Bot Baru</h3>
       <p class="m-sub">Pilih platform yang ingin kamu gunakan</p>
       <div class="plat-grid">
-        <button class="plat-btn" id="plat-wa" onclick="pickPlatform('whatsapp')">
+        <button class="plat-btn" id="plat-wa" data-act="pickPlatform('whatsapp')">
           <svg width="34" height="34" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.37 5.07L2 22l5.09-1.34A9.95 9.95 0 0 0 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2z" fill="#25D366"/><path d="M17 14.8c-.3-.15-1.77-.87-2.05-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.95 1.17-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.47-.89-.79-1.49-1.77-1.66-2.07-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51h-.81c-.2 0-.52.07-.79.37s-.61 1-.61 1.97.74 2.12.84 2.27c.1.15 1.46 2.22 3.53 3.12.49.21.88.34 1.18.44.5.16.95.14 1.3.08.4-.06 1.22-.5 1.4-.98.17-.48.17-.9.12-1-.05-.1-.2-.15-.5-.3z" fill="#fff"/></svg>
           <span>WhatsApp</span>
         </button>
-        <button class="plat-btn" id="plat-tg" onclick="pickPlatform('telegram')">
+        <button class="plat-btn" id="plat-tg" data-act="pickPlatform('telegram')">
           <svg width="34" height="34" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#229ED9"/><path d="M17.5 7.5 14.7 16.7c-.2.6-.8.8-1.3.5l-2.5-1.9-1.2 1.1c-.1.1-.3.2-.5.2l.2-2.7 5.2-4.7c.2-.2 0-.3-.3-.1L7.2 12.9 4.8 12c-.6-.2-.6-.6.1-.9l12-4.6c.5-.2.9.1.6.1z" fill="#fff"/></svg>
           <span>Telegram</span>
         </button>
@@ -63,7 +63,7 @@
 
     <div id="step-form" style="display:none">
       <div class="back-row">
-        <button class="back-btn" onclick="backStep()" aria-label="Kembali">
+        <button class="back-btn" data-act="backStep" aria-label="Kembali">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M19 12H5m7-7-7 7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         </button>
         <h3>Konfigurasi Bot <span id="form-badge" style="font-weight:400;font-size:13px;color:var(--muted);text-transform:capitalize"></span></h3>
@@ -104,178 +104,6 @@
   </div>
 </div>
 
-<script>
-  // ── Session via cookie — tidak pakai localStorage ────────────────
-  let me = null;
-  async function whoami() {
-    const d = await api('/api/auth/me');
-    if (!d?.ok) { location.href = '/'; return null; }
-    me = d.user;
-    document.getElementById('side-avatar').textContent = (me.username || '?')[0].toUpperCase();
-    document.getElementById('side-name').textContent  = me.username;
-    document.getElementById('side-role').textContent  = me.role;
-    document.getElementById('greeting').textContent   = 'Selamat Datang Kembali, ' + me.username;
-    if (me.role === 'king') document.getElementById('nav-admin').style.display = '';
-    return me;
-  }
-
-  // ── API helper ──────────────────────────────────────────────────
-  async function api(path, opts = {}) {
-    try {
-      const res = await fetch(path, {
-        ...opts,
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) }
-      });
-      if (res.status === 401) { location.href = '/'; return null; }
-      return res.json();
-    } catch { return null; }
-  }
-  async function logout() {
-    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
-    location.href = '/';
-  }
-
-  // ── Data ────────────────────────────────────────────────────────
-  let bots = [];
-  let maxSlots = 2;
-
-  async function loadBots() {
-    const d = await api('/api/bots');
-    if (!d?.ok) return;
-    bots = d.bots;
-    maxSlots = me?.slots_max ?? (me?.role === 'king' ? 999 : 2);
-    renderSlots();
-    renderBots();
-  }
-
-  function renderSlots() {
-    const used = bots.length;
-    const box = document.getElementById('slot-dots');
-    box.innerHTML = '';
-    const show = maxSlots > 12 ? Math.min(used, 12) : maxSlots;
-    for (let i = 0; i < show; i++) {
-      const d = document.createElement('i');
-      if (i < used) d.className = 'on';
-      box.appendChild(d);
-    }
-    document.getElementById('slot-text').textContent = `${used} / ${maxSlots > 12 ? '\u221E' : maxSlots}`;
-  }
-
-  function esc(s) {
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-  }
-  const waIcon = (s) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.37 5.07L2 22l5.09-1.34A9.95 9.95 0 0 0 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2z" fill="#25D366"/></svg>`;
-  const tgIcon = (s) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#229ED9"/></svg>`;
-
-  function renderBots() {
-    const grid = document.getElementById('bot-grid');
-    const empty = document.getElementById('empty-state');
-    grid.innerHTML = '';
-    empty.style.display = bots.length ? 'none' : '';
-
-    const online = bots.filter(b => b.is_running).length;
-    const dot = document.getElementById('live-dot');
-    dot.className = 'dot' + (online ? '' : ' off');
-    document.getElementById('online-text').textContent = `${online} bot online`;
-
-    bots.forEach(bot => {
-      const card = document.createElement('div');
-      card.className = 'bot-card';
-      card.addEventListener('click', () => { location.href = '/bot/' + bot.id; });
-      const on = bot.is_running;
-      const stCls = on ? 'st-on' : (bot.status === 'connecting' ? 'st-wait' : 'st-off');
-      const stTxt = on ? 'Online' : (bot.status === 'connecting' ? 'Connecting' : 'Offline');
-      card.innerHTML =
-        '<div class="bc-top">' +
-          '<div class="bc-platform">' + (bot.platform === 'telegram' ? tgIcon(14) : waIcon(14)) + '<span>' + esc(bot.platform) + '</span></div>' +
-          '<div class="bc-status"><span class="st-dot ' + stCls + '"></span>' + stTxt + '</div>' +
-        '</div>' +
-        '<h3>' + esc(bot.bot_name) + '</h3>' +
-        '<div class="desc">' + (bot.description ? esc(bot.description) : 'Tidak ada deskripsi') + '</div>' +
-        '<div class="bc-meta"><span>Prefix: <b>' + esc(bot.prefix) + '</b></span><span>' + esc(new Date(bot.created_at).toLocaleDateString('id-ID')) + '</span></div>';
-      grid.appendChild(card);
-    });
-
-    if (bots.length < maxSlots) {
-      const add = document.createElement('div');
-      add.className = 'add-card';
-      add.innerHTML = '<div class="add-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#71717a" stroke-width="2" stroke-linecap="round"/></svg></div><span>Tambah Bot</span>';
-      add.addEventListener('click', openAddBot);
-      grid.appendChild(add);
-    }
-  }
-
-  // ── Add bot ─────────────────────────────────────────────────────
-  let platform = 'whatsapp';
-  function openAddBot() {
-    if (bots.length >= maxSlots) { alert('Slot penuh. Maksimal ' + maxSlots + ' bot per akun.'); return; }
-    platform = 'whatsapp';
-    setPlatUI();
-    showStep('platform');
-    document.getElementById('add-overlay').classList.add('show');
-  }
-  function closeAdd() { document.getElementById('add-overlay').classList.remove('show'); }
-  function showStep(s) {
-    document.getElementById('step-platform').style.display = s === 'platform' ? '' : 'none';
-    document.getElementById('step-form').style.display     = s === 'form' ? '' : 'none';
-  }
-  function backStep() { showStep('platform'); }
-  function pickPlatform(p) { platform = p; setPlatUI(); showStep('form'); }
-  function setPlatUI() {
-    document.getElementById('plat-wa').classList.toggle('sel', platform === 'whatsapp');
-    document.getElementById('plat-tg').classList.toggle('sel', platform === 'telegram');
-    document.getElementById('form-badge').textContent = platform;
-    const isTg = platform === 'telegram';
-    document.getElementById('wrap-token').style.display = isTg ? '' : 'none';
-    document.getElementById('wrap-botnum').style.display = isTg ? 'none' : '';
-    const lbl = document.getElementById('lbl-owner');
-    const inp = document.getElementById('f-owner');
-    const hint = document.getElementById('hint-owner');
-    if (isTg) { lbl.textContent = 'Owner Telegram ID'; inp.placeholder = 'Contoh: 123456789'; hint.textContent = 'Telegram user ID pemilik bot — untuk akses command owner-only'; }
-    else { lbl.textContent = 'Nomor Owner'; inp.placeholder = '628xxxxxxxxxx'; hint.textContent = 'Nomor pemilik bot — untuk akses command owner-only'; }
-  }
-
-  document.getElementById('add-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeAdd(); });
-
-  document.getElementById('add-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const err = document.getElementById('add-error');
-    err.classList.remove('show');
-    const body = {
-      platform,
-      bot_name: document.getElementById('f-name').value.trim(),
-      bot_number: document.getElementById('f-botnum').value.trim() || undefined,
-      owner_number: document.getElementById('f-owner').value.trim() || undefined,
-      prefix: document.getElementById('f-prefix').value.trim() || '!',
-      footer_text: document.getElementById('f-footer').value.trim() || 'Powered by yaparbots',
-      telegram_token: document.getElementById('f-token').value.trim() || undefined
-    };
-    const d = await api('/api/bots', { method: 'POST', body: JSON.stringify(body) });
-    if (!d) return;
-    if (d.ok) { closeAdd(); location.href = '/bot/' + d.bot_id; }
-    else { err.textContent = d.message; err.classList.add('show'); }
-  });
-
-  // ── Live stats ──────────────────────────────────────────────────
-  function connectWS() {
-    try {
-      const ws = new WebSocket((location.protocol === 'https:' ? 'wss' : 'ws') + '://' + location.host);
-      ws.onmessage = e => {
-        try {
-          const d = JSON.parse(e.data);
-          if (d.type === 'stats') document.getElementById('online-text').textContent = `${d.payload.total_bots_online} bot online`;
-        } catch {}
-      };
-      ws.onclose = () => setTimeout(connectWS, 5000);
-    } catch {}
-  }
-
-  (async () => {
-    if (!(await whoami())) return;
-    await loadBots();
-    connectWS();
-  })();
-</script>
+<script src="/js/dashboard.js" defer></script>
 </body>
 </html>

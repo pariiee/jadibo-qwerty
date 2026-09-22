@@ -8,19 +8,27 @@ const { pool } = require('../config/database');
 const SESSIONS_DIR = path.resolve(process.env.SESSIONS_DIR || './sessions');
 const MAX_SLOTS    = parseInt(process.env.MAX_SLOTS_PER_USER || '2', 10);
 
-// In-memory map of active Zappo instances: botId -> ZappoClient
-const activeBots = new Map();
-
-// In-memory map of active groups per bot: botId -> Map<groupJid, groupName>
-const activeGroupsPerBot = new Map();
-
-// In-memory map of active channels per bot: botId -> Map<channelJid, channelName>
-const activeChannelsPerBot = new Map();
+// State bot (activeBots dkk) pindah ke engine/runtime.js — hidup di proses
+// worker, bukan di sini. Status bot dibaca worker (engineBus), bukan cermin.
+// nyimpen cerminnya (dikirim worker tiap ada perubahan).
+const engineBus = require('../config/engineBus');
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function sendError(res, status, message) {
   return res.status(status).json({ ok: false, message });
+}
+
+// Pesan engine itu buat kita, bukan buat user: cuma kalimat yang jelas
+// manusiawi yang diteruskan, sisanya jadi pesan umum (jangan bocorin path/errno).
+// Pesan dari worker (lewat engineBus) itu kalimat yang kita tulis sendiri, jadi
+// diteruskan apa adanya. Yang diganti cuma error mentah: jangan sampai user
+// lihat path/errno/stack.
+const STATUS_MANUSIA = new Set([400, 403, 404, 409, 503, 504]);
+function pesanManusia(e, fallback = 'Terjadi kesalahan server') {
+  const st = Number(e?.status) || 0;
+  const m = String(e?.message || '');
+  return m && STATUS_MANUSIA.has(st) ? m : fallback;
 }
 
 function getBotDir(botId) {
@@ -214,11 +222,9 @@ async function deleteBot(req, res) {
     const bot = await assertOwnership(req, res, req.params.id);
     if (!bot) return;
 
-    // Stop if running — pakai stopWhatsAppBot biar auto-reconnect nggak start ulang
-    if (activeBots.has(bot.id)) {
-      const { stopWhatsAppBot } = require('../engine/whatsappEngine');
-      await stopWhatsAppBot(bot.id);
-    }
+    // Matiin dulu lewat worker — kalau nggak, auto-reconnect engine nyalain
+    // ulang bot yang folder sesinya lagi dihapus.
+    await engineBus.stopIfRunning(bot.id);
 
     // Remove session folder — retry karena Windows bisa hold file SQLite
     const dir = getBotDir(bot.id);
@@ -259,23 +265,15 @@ async function startBot(req, res) {
     const [rows] = await pool.execute('SELECT * FROM bots WHERE id = ?', [bot.id]);
     const botData = rows[0];
 
-    if (activeBots.has(bot.id))
-      return sendError(res, 400, 'Bot sudah berjalan');
-
-    // Route ke engine yang sesuai berdasarkan platform
-    if (botData.platform === 'telegram') {
-      const { startTelegramBot } = require('../engine/telegramEngine');
-      await startTelegramBot(botData);
-      return res.json({ ok: true, message: 'Telegram bot berhasil dimulai.' });
-    } else {
-      const { startWhatsAppBot } = require('../engine/whatsappEngine');
-      const usePairingCode = req.body.use_pairing_code === true;
-      await startWhatsAppBot(botData, usePairingCode);
-      return res.json({ ok: true, message: 'Bot sedang memulai. Pantau log untuk QR/Pairing Code.' });
-    }
+    // Engine-nya ada di proses lain — kirim perintah, bukan panggil fungsi.
+    const usePairingCode = req.body.use_pairing_code === true;
+    // Jawaban diambil dari worker, bukan dari cermin lokal — cermin bisa basi,
+    // dan guard "bot sudah berjalan" yang salah bikin bot nggak bisa dinyalain.
+    const out = await engineBus.start(bot.id, usePairingCode);
+    return res.json({ ok: true, message: out.message });
   } catch (err) {
     console.error('[Bot] startBot error:', err);
-    return sendError(res, 500, err.message || 'Terjadi kesalahan server');
+    return sendError(res, err.status || 500, pesanManusia(err));
   }
 }
 
@@ -286,22 +284,15 @@ async function stopBot(req, res) {
     const bot = await assertOwnership(req, res, req.params.id);
     if (!bot) return;
 
-    if (!activeBots.has(bot.id))
-      return sendError(res, 400, 'Bot tidak sedang berjalan');
+    // Nggak ada guard cermin di sini: worker yang tau pasti statusnya dan dia
+    // yang jawab. Guard lokal cuma bisa salah (cermin ke-isi 'running' dari
+    // auto-start saat worker belum selesai baca DB) -> tombol stop mati.
+    const out = await engineBus.stop(bot.id);
 
-    try {
-      const { stopWhatsAppBot } = require('../engine/whatsappEngine');
-      await stopWhatsAppBot(bot.id);
-    } catch {}
-
-    await pool.execute("UPDATE bots SET status = 'disconnected', is_running = 0 WHERE id = ?", [bot.id]);
-    // decrementStat TIDAK di sini: stopWhatsAppBot() sudah nurunin
-    // total_bots_online pas dia buang instance dari activeBots. Dobel = minus.
-
-    return res.json({ ok: true, message: 'Bot dihentikan' });
+    return res.json({ ok: true, message: out.message });
   } catch (err) {
     console.error('[Bot] stopBot error:', err);
-    return sendError(res, 500, 'Terjadi kesalahan server');
+    return sendError(res, err.status || 500, pesanManusia(err));
   }
 }
 
@@ -312,35 +303,13 @@ async function restartBot(req, res) {
     const bot = await assertOwnership(req, res, req.params.id);
     if (!bot) return;
 
-    const { restartWhatsAppBot } = require('../engine/whatsappEngine');
-    const telegram = bot.platform === 'telegram';
-
-    if (!telegram) {
-      try {
-        // restartWhatsAppBot() nge-tandai is_running=1 + restartingBots dulu,
-        // baru stop, baru start — lihat komentar di engine.
-        await restartWhatsAppBot(bot.id);
-      } catch (e) {
-        return sendError(res, 400, e.message || 'Gagal me-restart bot');
-      }
-      return res.json({ ok: true, message: 'Bot di-restart' });
-    }
-
-    // Jalur telegram tetap seperti semula (stop → start manual)
-    if (activeBots.has(bot.id)) {
-      const { stopWhatsAppBot } = require('../engine/whatsappEngine');
-      await stopWhatsAppBot(bot.id);
-    }
-
-    const [rows] = await pool.execute('SELECT * FROM bots WHERE id = ?', [bot.id]);
-    const botData = rows[0];
-    const { startTelegramBot } = require('../engine/telegramEngine');
-    await startTelegramBot(botData);
-
-    return res.json({ ok: true, message: 'Bot di-restart' });
+    // Satu jalur restart, di worker: command WA .restart dan tombol ini
+    // nggak boleh punya logika masing-masing (dulu pernah, hasilnya beda).
+    const out = await engineBus.restart(bot.id);
+    return res.json({ ok: true, message: out.message });
   } catch (err) {
     console.error('[Bot] restartBot error:', err);
-    return sendError(res, 500, 'Terjadi kesalahan server');
+    return sendError(res, err.status || 500, pesanManusia(err));
   }
 }
 
@@ -351,10 +320,7 @@ async function clearSession(req, res) {
     const bot = await assertOwnership(req, res, req.params.id);
     if (!bot) return;
 
-    if (activeBots.has(bot.id)) {
-      const { stopWhatsAppBot } = require('../engine/whatsappEngine');
-      await stopWhatsAppBot(bot.id);
-    }
+    await engineBus.stopIfRunning(bot.id);
 
     // Hapus sesi — retry karena Windows bisa hold file SQLite walau socket udah tutup
     const dir = getBotDir(bot.id);
@@ -420,9 +386,6 @@ async function getBotLogs(req, res) {
 }
 
 module.exports = {
-  activeBots,
-  activeGroupsPerBot,
-  activeChannelsPerBot,
   listBots, getBot, createBot, updateBot, deleteBot,
   startBot, stopBot, restartBot, clearSession, getBotLogs,
 };

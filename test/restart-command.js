@@ -46,7 +46,7 @@ Module._load = function (req, parent, isMain) {
 
   // stub bagian dalam: ganti stop & start lewat activeBots + module.exports gak bisa,
   // jadi kita cek urutan lewat observasi panggilan DB + aktivitas bot.
-  const { activeBots } = require('../controllers/botController');
+  const { activeBots } = require('../engine/runtime');
 
   // restart bot yang nggak jalan -> harus nolak, bukan diam-diam start
   await assert.rejects(() => engine.restartWhatsAppBot(7), /tidak sedang berjalan/,

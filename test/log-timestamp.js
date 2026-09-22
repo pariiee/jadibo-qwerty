@@ -8,7 +8,7 @@
  * barusan terjadi. Bug yg dilaporkan user.
  */
 
-// Salinan fungsi dari public/bot-detail.html — biar tes nggak butuh DOM.
+// Salinan fungsi dari public/js/bot-detail.js — biar tes nggak butuh DOM.
 function logTime(v, now = new Date()) {
   if (!v) return now.toLocaleTimeString('id-ID', { hour12: false });
   const s = /Z|[+-]\d\d:?\d\d$/.test(v) ? v : String(v).replace(' ', 'T') + 'Z';

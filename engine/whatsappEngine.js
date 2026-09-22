@@ -11,7 +11,9 @@ const fs   = require('fs');
 require('dotenv').config();
 
 const { pool, incrementStat, decrementStat } = require('../config/database');
-const { activeBots, activeGroupsPerBot, activeChannelsPerBot } = require('../controllers/botController');
+// State runtime tinggal di engine/runtime.js — Map ini hidup di proses worker,
+// bukan di controller web (lihat komentar di file itu).
+const { activeBots, activeGroupsPerBot, activeChannelsPerBot } = require('./runtime');
 const { isPendingSewa } = require('./pendingSewa');
 const { lidToPn, lidToPnAsync } = require('./jid');
 const { renderTemplate } = require('./template');

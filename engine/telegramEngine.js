@@ -7,7 +7,7 @@
  */
 
 const { pool, incrementStat, decrementStat } = require('../config/database');
-const { activeBots } = require('../controllers/botController');
+const { activeBots } = require('./runtime');
 
 let TelegramBot;
 try {

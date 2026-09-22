@@ -72,13 +72,14 @@ const owner = fs.readFileSync(path.join(dir, 'plugins', '05-owner.js'), 'utf8');
 assert.ok(/restartWhatsAppBotInBackground|restartWhatsAppBot\(/.test(owner),
   'command .restart harus lewat mesin restart');
 const ctrl = fs.readFileSync(path.join(dir, 'controllers', 'botController.js'), 'utf8');
-const ctrlRestart = ctrl.slice(ctrl.indexOf('restartBot'));
-assert.ok(/restartWhatsAppBot\b/.test(ctrlRestart),
-  'route web harus lewat mesin restart yang sama');
-// Cabang WhatsApp harus bersih; stopWhatsAppBot cuma boleh muncul di jalur telegram
-// (yang sengaja dibiarkan seperti semula).
-const ctrlWa = ctrlRestart.slice(0, ctrlRestart.indexOf('telegram'));
-assert.ok(!/stopWhatsAppBot/.test(ctrlWa),
-  'jalur WhatsApp di route restart nggak boleh stop/start manual lagi');
+const ctrlRestart = ctrl.slice(ctrl.indexOf('async function restartBot'));
+assert.ok(/engineBus\.restart\(/.test(ctrlRestart),
+  'route web harus nitip restart ke worker');
+assert.ok(!/restartWhatsAppBot|stopWhatsAppBot/.test(ctrl),
+  'web jangan megang engine bot langsung — itu kerjaan worker');
+// Worker-nya sendiri yang manggil mesin restart yang sama kayak command .restart
+const worker = fs.readFileSync(path.join(dir, 'workers', 'botWorker.js'), 'utf8');
+assert.ok(/wa\.restartWhatsAppBot\(botId\)/.test(worker),
+  'worker harus lewat restartWhatsAppBot — satu jalur sama command .restart');
 
 console.log('✓ restart: satu jalur, satu soket, stop ditunggu, log jujur');

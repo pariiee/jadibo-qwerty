@@ -14,17 +14,7 @@ if (!process.env.JWT_SECRET) {
   process.exit(1);
 }
 
-// Paksa SELURUH koneksi keluar lewat IPv4.
-// Host media (googlevideo dkk) mengiklankan AAAA, tapi VPS ini tidak punya
-// rute IPv6: tiap unduhan mencoba IPv6 dulu, mati, lalu IPv4-nya timeout —
-// media gagal terkirim. Terbukti: axios polos GAGAL, agent family:4 berhasil.
-// setDefaultResultOrder('ipv4first') TIDAK cukup (happy-eyeballs tetap
-// mencoba IPv6 lebih dulu). Dulu ini ditambal `family: 4` di satu pemanggil
-// axios saja, jadi jalur lain tetap kena.
-const dns = require('dns');
-const https = require('https');
-for (const proto of [https, require('http')]) proto.globalAgent = new proto.Agent({ family: 4 });
-dns.setDefaultResultOrder('ipv4first');
+require('./config/net'); // paksa IPv4 (lihat komentarnya) — worker juga pakai
 
 const fs           = require('fs');
 const express      = require('express');
@@ -41,8 +31,7 @@ const cron         = require('node-cron');
 const { testConnection, seedDefaults, getStats, pool } = require('./config/database');
 const auth = require('./controllers/authController');
 const bot  = require('./controllers/botController');
-const { setWsBroadcast: setWsBroadcastWa, startWhatsAppBot, cekCommandTerdaftar } = require('./engine/whatsappEngine');
-const { setWsBroadcast: setWsBroadcastTg, startTelegramBot } = require('./engine/telegramEngine');
+const engineBus = require('./config/engineBus');
 
 const app    = express();
 const server = http.createServer(app);
@@ -55,8 +44,9 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc:    ["'self'"],
-      scriptSrc:     ["'self'", "'unsafe-inline'", 'cdn.tailwindcss.com', 'cdn.jsdelivr.net'],
-      scriptSrcAttr: ["'unsafe-inline'"],
+      // ponytail: nggak ada 'unsafe-inline' di sini. Semua onclick udah pindah ke
+      // data-act (public/js/act.js) dan <script> inline udah jadi file di public/js/.
+      scriptSrc:     ["'self'", 'cdn.tailwindcss.com', 'cdn.jsdelivr.net'],
       styleSrc:      ["'self'", "'unsafe-inline'", 'cdn.tailwindcss.com', 'fonts.googleapis.com'],
       fontSrc:       ["'self'", 'fonts.gstatic.com'],
       imgSrc:        ["'self'", 'data:', 'https:'],
@@ -71,6 +61,21 @@ app.use(helmet({
 // hanya mempercayai proxy dari localhost (cloudflared), jadi X-Forwarded-For
 // dari luar tetap tidak bisa dipalsukan.
 app.set('trust proxy', 'loopback');
+
+// CSRF: cookie sesi sudah httpOnly + SameSite=Lax, jadi POST lintas situs
+// nggak ikut bawa cookie. Sabuk keduanya: tolak request yang Origin-nya bukan
+// host kita. Tanpa token = nggak ada state yang bisa basi/kadaluarsa.
+// Origin kosong = bukan browser (curl, worker internal) → lolos, seperti biasa.
+app.use((req, res, next) => {
+  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
+  const asal = req.get('origin') || req.get('referer');
+  if (!asal) return next();
+  let host;
+  try { host = new URL(asal).host; } catch { host = null; }
+  if (host && host === req.get('host')) return next();
+  console.warn('[CSRF] ditolak:', req.method, req.originalUrl, '←', asal);
+  return res.status(403).json({ ok: false, message: 'Permintaan ditolak' });
+});
 
 app.use(cors({
   origin: process.env.NODE_ENV === 'production'
@@ -245,7 +250,7 @@ const heartbeat = setInterval(() => {
 
 wss.on('close', () => clearInterval(heartbeat));
 
-// ── Inject broadcast function into both engines ──────────────────────────────
+// ── Event bot (log/QR/status) datang dari worker lewat HTTP ─────────────────
 const broadcastFn = (data) => {
   const subs = botSubscribers.get(data.botId);
   if (!subs || subs.size === 0) return;
@@ -254,11 +259,19 @@ const broadcastFn = (data) => {
     if (ws.readyState === WebSocket.OPEN) ws.send(payload);
   });
 };
-setWsBroadcastWa(broadcastFn);
-setWsBroadcastTg(broadcastFn);
+engineBus.pasangEventSink(broadcastFn);
+
+// Cuma 127.0.0.1 (worker) yang boleh nembak ini. Nggak pakai Origin-check CSRF
+// karena bukan browser — kuncinya header, sama kayak worker→web.
+app.post('/internal/engine-event', (req, res) => {
+  if (req.get('x-internal-key') !== engineBus.kunci()) return res.status(403).json({ ok: false });
+  engineBus.terimaEvent(req.body);
+  res.json({ ok: true });
+});
 
 // ─── Periodic Stats Broadcast ─────────────────────────────────────────────────
 cron.schedule('*/10 * * * * *', async () => {
+  engineBus.sinkron(); // murah (localhost) & bikin cermin nggak bisa basi lama
   try {
     const stats = await getStats();
     const payload = JSON.stringify({ type: 'stats', payload: stats });
@@ -267,31 +280,6 @@ cron.schedule('*/10 * * * * *', async () => {
     });
   } catch { /* non-critical */ }
 });
-
-// ─── Boot ─────────────────────────────────────────────────────────────────────
-async function autoStartBots() {
-  try {
-    const [rows] = await pool.execute(
-      "SELECT * FROM bots WHERE is_running = 1"
-    );
-    if (rows.length === 0) return;
-    console.log(`[Boot] Auto-starting ${rows.length} bot(s)...`);
-    for (const botData of rows) {
-      try {
-        if (botData.platform === 'telegram') {
-          await startTelegramBot(botData);
-        } else {
-          await startWhatsAppBot(botData, false);
-        }
-        console.log(`[Boot] Bot "${botData.bot_name}" (${botData.platform}) started`);
-      } catch (e) {
-        console.error(`[Boot] Failed to start bot "${botData.bot_name}": ${e.message}`);
-      }
-    }
-  } catch (e) {
-    console.error('[Boot] Auto-start error:', e.message);
-  }
-}
 
 async function boot() {
   await testConnection();
@@ -308,7 +296,9 @@ async function boot() {
     console.log(`║  Mode : ${(process.env.NODE_ENV || 'development').padEnd(32)}║`);
     console.log('╚══════════════════════════════════════════╝');
     console.log('');
-    await autoStartBots();
+    // Bot nggak dinyalain di sini — worker yang punya koneksinya. Yang perlu
+    // cuma nyocokin cermin "bot jalan" biar tombolnya nggak salah tebak.
+    engineBus.sinkron();
   });
 }
 
@@ -330,71 +320,11 @@ cron.schedule('0 17 * * *', async () => {
   }
 }, { timezone: 'Asia/Jakarta' });
 
-// ─── Cron Jadwal Buka/Tutup Grup Otomatis — setiap menit ─────────────────────
-cron.schedule('* * * * *', async () => {
-  try {
-    // Ambil semua group_settings yang punya open_time atau close_time
-    const [rows] = await pool.execute(
-      `SELECT gs.bot_id, gs.group_jid, gs.open_time, gs.close_time, gs.open_msg, gs.close_msg
-       FROM group_settings gs
-       WHERE gs.open_time IS NOT NULL OR gs.close_time IS NOT NULL`
-    ).catch(() => [[]]);
-
-    if (!rows.length) return;
-
-    // Waktu WIB sekarang
-    const now   = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
-    const HH    = String(now.getHours()).padStart(2, '0');
-    const MM    = String(now.getMinutes()).padStart(2, '0');
-    const jamNow = `${HH}.${MM}`;
-
-    const { activeBots } = require('./controllers/botController');
-    const { renderTemplate } = require('./engine/template');
-    const messCfg = require('./config/mess');
-
-    for (const row of rows) {
-      const client = activeBots.get(row.bot_id) || activeBots.get(String(row.bot_id));
-      if (!client) continue;
-      const jadwal = [];
-      if (row.open_time === jamNow) jadwal.push({ buka: true, teks: row.open_msg });
-      if (row.close_time === jamNow) jadwal.push({ buka: false, teks: row.close_msg });
-
-      for (const j of jadwal) {
-        try {
-          await client.group.setSetting(row.group_jid, 'announcement', !j.buka);
-        } catch { /* bot bukan admin / grup ilang — lanjut kirim teks aja */ }
-
-        // Pesan pengumuman: teks custom grup, kalau kosong pakai default .env
-        const template = j.teks || (j.buka ? messCfg.openDefault : messCfg.closeDefault);
-        if (!template) continue;
-
-        let meta = null;
-        try { meta = await client.group.queryGroupMetadata(row.group_jid); } catch {}
-        const { text, mentions } = renderTemplate(template, {
-          groupName: meta?.subject || row.group_jid.split('@')[0],
-          groupDesc: meta?.desc || '',
-        });
-        try {
-          await client.message.send(row.group_jid, text, { mentions });
-          console.log(`[Cron] Grup ${row.group_jid} ${j.buka ? 'dibuka' : 'ditutup'} jam ${jamNow}`);
-        } catch (e) {
-          console.error('[Cron] Kirim teks jadwal gagal:', e.message);
-        }
-      }
-    }
-  } catch (e) {
-    console.error('[Cron] Jadwal grup error:', e.message);
-  }
-}, { timezone: 'Asia/Jakarta' });
-
 // ─── Graceful Shutdown ────────────────────────────────────────────────────────
+// Status bot TIDAK direset di sini: web restart nggak nginjak bot. Worker
+// yang nulis status disconnected pas dia sendiri yang mati.
 async function shutdown() {
-  console.log('[Shutdown] Resetting bot statuses...');
-  try {
-    await pool.execute(
-      "UPDATE bots SET status = 'disconnected' WHERE status IN ('connected', 'connecting')"
-    );
-  } catch { /* non-critical */ }
+  console.log('[Shutdown] Web berhenti (bot tetap jalan di worker).');
   process.exit(0);
 }
 
