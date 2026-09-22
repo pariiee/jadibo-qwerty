@@ -226,9 +226,26 @@ function lookupSent(key) {
 // (+ `<bot biz_bot="1"/>` di chat pribadi). Tanpa ini WA nampilin teks polos.
 // Diambil dari struktur yg dipakai client resmi (lihat gifted-btns / itsukichan).
 function buttonNodes(normalized) {
-  const nm = normalized?.interactiveMessage?.nativeFlowMessage;
-  const bm = normalized?.buttonsMessage;
-  if (nm || bm) {
+  const im = normalized?.interactiveMessage;
+  // Kartu carousel: `carouselMessage` bikin WA butuh node `interactive` yg SAMA
+  // kayak tombol biasa. Tanpa ini stanza diterima tapi bubble-nya di-drop —
+  // nol error, nol log, persis kayak `.tt` photo webp.
+  if (im && (im.nativeFlowMessage || im.carouselMessage)) {
+    return [
+      {
+        tag: 'biz',
+        attrs: {},
+        content: [
+          {
+            tag: 'interactive',
+            attrs: { type: 'native_flow', v: '1' },
+            content: [{ tag: 'native_flow', attrs: { v: '9', name: 'mixed' } }],
+          },
+        ],
+      },
+    ];
+  }
+  if (normalized?.buttonsMessage) {
     return [
       {
         tag: 'biz',

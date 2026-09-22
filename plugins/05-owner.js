@@ -12,6 +12,9 @@
 const { rapikanError } = require('../engine/pesanError');
 const path = require('path');
 const fs   = require('fs');
+const os   = require('os');
+const { execFileSync } = require('child_process');
+const axios = require('axios');
 const { pool } = require('../config/database');
 const mess = require('../config/mess');
 const { addStickerExif } = require('../engine/sticker');
@@ -1035,7 +1038,6 @@ module.exports = async function ownerHandler(ctx) {
         return true;
       }
       try {
-        const axios = require('axios');
         await react(mess.reactLoading);
 
         const res = await axios.get(fetchUrl, {
@@ -1130,6 +1132,91 @@ module.exports = async function ownerHandler(ctx) {
             },
           },
         }, { quoted: ctx.msg });
+        await react(mess.reactSuccess);
+      } catch (e) {
+        await react(mess.reactError);
+        await reply(`❌ Gagal: ${rapikanError(e)}`);
+      }
+      return true;
+    }
+
+    // ── test5 — kartu geser (carousel) ───────────────────────────────────────
+    // Bentuk proto: `interactiveMessage.carouselMessage.cards[]` — tiap kartu =
+    // InteractiveMessage penuh (header + body + footer + nativeFlowMessage),
+    // jadi BUKAN bentuk flat `{image, title, body, buttons}` ala helper bot lain.
+    // Media kartu TIDAK auto-upload (resolveMediaPayload cuma lihat media di root
+    // pesan) → upload sendiri lewat `client.message.prepareMedia`, lalu taruh di
+    // `header.imageMessage`/`header.videoMessage` + `hasMediaAttachment: true`.
+    // Node `<biz><interactive>` wajib; `buttonNodes()` di adapter sekarang
+    // ngenalin `carouselMessage` (tanpa itu WA drop bubble-nya diem-diem: reaksi
+    // ✅ jalan, nol error, nol output).
+    // Pakai: `.test5 [gambar] [video]` — default gambar = banner, default video =
+    // klip 3 detik hasil ffmpeg dari gambar itu (biar sekali tes, dua kartu).
+    case 'test5': {
+      if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }
+      try {
+        await react(mess.reactLoading);
+
+        const ambil = async (src) => /^https?:\/\//i.test(src)
+          ? Buffer.from((await axios.get(src, { responseType: 'arraybuffer', timeout: 60000 })).data)
+          : fs.readFileSync(path.resolve(src));
+
+        const unggah = async (buf, type, mimetype) =>
+          (await client.message.prepareMedia(buf, { type, mimetype }))[`${type}Message`];
+
+        const gambarSrc = args[0] || botData.banner_url || process.env.BANNER_DEFAULT;
+        const gambarBuf = await ambil(gambarSrc);
+
+        // Video default: dipin dari gambar + ffmpeg. Kalau ffmpeg nggak ada,
+        // kartu video di-skip — kartu gambar tetap terkirim.
+        let videoBuf = null;
+        try {
+          if (args[1]) {
+            videoBuf = await ambil(args[1]);
+          } else {
+            const masuk = path.join(os.tmpdir(), `test5_in_${Date.now()}.jpg`);
+            const keluar = path.join(os.tmpdir(), `test5_out_${Date.now()}.mp4`);
+            fs.writeFileSync(masuk, gambarBuf);
+            execFileSync('ffmpeg', ['-y', '-loop', '1', '-i', masuk, '-t', '3',
+              '-pix_fmt', 'yuv420p', '-vf', 'scale=720:-2', keluar], { stdio: 'ignore' });
+            videoBuf = fs.readFileSync(keluar);
+            fs.rmSync(masuk, { force: true });
+            fs.rmSync(keluar, { force: true });
+          }
+        } catch (e) {
+          console.error('[test5] klip video gagal:', e.message);
+        }
+
+        // Tombol = PERSIS contoh Pak (quick_reply + cta_url).
+        const tombol = [
+          { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: 'Display Button', id: 'ID' }) },
+          { name: 'cta_url', buttonParamsJson: JSON.stringify({ display_text: 'Display Button', url: 'https://www.example.com' }) },
+        ];
+
+        const kartu = (media, judul, isi, kaki) => ({
+          header: { title: judul, hasMediaAttachment: true, ...media },
+          body: { text: isi },
+          footer: { text: kaki },
+          nativeFlowMessage: { buttons: tombol, messageParamsJson: '{}' },
+        });
+
+        const cards = [kartu({ imageMessage: await unggah(gambarBuf, 'image', 'image/jpeg') },
+          'Title Cards', 'Body Cards', 'Footer Cards')];
+
+        if (videoBuf) {
+          cards.push(kartu({ videoMessage: await unggah(videoBuf, 'video', 'video/mp4') },
+            'Title Cards', 'Body Cards', 'Footer Cards'));
+        }
+
+        await sock.message.send(jid, {
+          interactiveMessage: {
+            header: { title: 'Title Message', subtitle: 'Subtitle Message', hasMediaAttachment: false },
+            body: { text: 'Body Message' },
+            footer: { text: 'Footer Message' },
+            carouselMessage: { cards, messageVersion: 1 },
+          },
+        });
+
         await react(mess.reactSuccess);
       } catch (e) {
         await react(mess.reactError);

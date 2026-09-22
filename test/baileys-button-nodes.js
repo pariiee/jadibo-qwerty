@@ -85,6 +85,30 @@ assert.strictEqual(gNodes.length, 1, 'C4 FAIL: grup nggak boleh dapet <bot>');
 const imgWam = realBaileys.generateWAMessageFromContent(jid, { image: Buffer.from([1, 2, 3]), caption: 'menu' }, { userJid: jid });
 assert.deepStrictEqual(buttonNodes(norm(imgWam.message)), [], 'C5 FAIL: gambar nggak boleh dapet node <biz>');
 
+// C5b: CAROUSEL (`.test5`) — `interactiveMessage.carouselMessage` WAJIB dapet node
+// biz yang sama. Sebelum ini `buttonNodes()` cuma ngenal `nativeFlowMessage`, jadi
+// kartunya di-drop WA diem-diem (reaksi ✅ jalan, nol error, nol output).
+const carouselWam = realBaileys.generateWAMessageFromContent(jid, realBaileys.proto.Message.create({
+  interactiveMessage: {
+    body: { text: 'Body Message' },
+    footer: { text: 'Footer Message' },
+    carouselMessage: {
+      cards: [{
+        header: { title: 'Title Cards', hasMediaAttachment: false },
+        body: { text: 'Body Cards' },
+        footer: { text: 'Footer Cards' },
+        nativeFlowMessage: { buttons: [{ name: 'quick_reply', buttonParamsJson: '{"display_text":"D","id":"ID"}' }] },
+      }],
+      messageVersion: 1,
+    },
+  },
+}), { userJid: jid });
+const cNodes = buttonNodes(norm(carouselWam.message));
+assert.strictEqual(cNodes.length, 1, 'C5b FAIL: carouselMessage nggak dapet node <biz>');
+assert.strictEqual(cNodes[0].content[0].attrs.type, 'native_flow');
+assert.strictEqual(norm(carouselWam.message).interactiveMessage.carouselMessage.cards.length, 1,
+  'C5b FAIL: kartu ilang di round-trip proto');
+
 // C6: adapter nge-import yang dibutuhin (nggak bakal crash pas runtime)
 // Cek per-nama, jangan per-urutan: nyisipin import baru di antaranya bukan bug.
 for (const name of ['normalizeMessageContent', 'isJidGroup', 'proto', 'prepareWAMessageMedia']) {
@@ -94,5 +118,5 @@ assert.ok(/additionalNodes,\s*\n\s*\}\);/.test(src), 'C7 FAIL: additionalNodes n
 
 void realClient; void fakeSock;
 
-console.log('PASS: 7 assert — bubble-2 INTERACTIVE bawa node biz+interactive+native_flow, bubble-1 IMAGE bersih');
+console.log('PASS: 8 assert — interactive/buttons/carousel dapat node biz+interactive+native_flow, gambar bersih');
 process.exit(0);
