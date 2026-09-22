@@ -7,12 +7,17 @@
 
 require('dotenv').config();
 
-// Urutkan IPv4 lebih dulu untuk SEMUA resolusi DNS proses ini.
-// Banyak host media (googlevideo dkk) mengiklankan AAAA, tapi VPS ini tidak
-// punya rute IPv6 — tiap percobaan unduh lewat IPv6 mati ENETUNREACH, dan
-// pengiriman media besar jadi gagal. Dulu ini ditambal `family: 4` di satu
-// pemanggil axios saja, jadi jalur lain tetap kena.
-require('dns').setDefaultResultOrder('ipv4first');
+// Paksa SELURUH koneksi keluar lewat IPv4.
+// Host media (googlevideo dkk) mengiklankan AAAA, tapi VPS ini tidak punya
+// rute IPv6: tiap unduhan mencoba IPv6 dulu, mati, lalu IPv4-nya timeout —
+// media gagal terkirim. Terbukti: axios polos GAGAL, agent family:4 berhasil.
+// setDefaultResultOrder('ipv4first') TIDAK cukup (happy-eyeballs tetap
+// mencoba IPv6 lebih dulu). Dulu ini ditambal `family: 4` di satu pemanggil
+// axios saja, jadi jalur lain tetap kena.
+const dns = require('dns');
+const https = require('https');
+for (const proto of [https, require('http')]) proto.globalAgent = new proto.Agent({ family: 4 });
+dns.setDefaultResultOrder('ipv4first');
 
 const fs           = require('fs');
 const express      = require('express');
