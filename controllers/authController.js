@@ -84,7 +84,10 @@ async function register(req, res) {
 
     res.cookie('token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      // req.protocol (bukan NODE_ENV): produksi diakses via HTTPS tunnel DAN
+      // HTTP :3000. Cookie Secure di jalur HTTP dibuang browser -> login sukses
+      // tapi /dashboard selalu 401 dan balik ke '/'.
+      secure: req.protocol === 'https',
       sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
@@ -131,7 +134,10 @@ async function login(req, res) {
 
     res.cookie('token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      // req.protocol (bukan NODE_ENV): produksi diakses via HTTPS tunnel DAN
+      // HTTP :3000. Cookie Secure di jalur HTTP dibuang browser -> login sukses
+      // tapi /dashboard selalu 401 dan balik ke '/'.
+      secure: req.protocol === 'https',
       sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
