@@ -4,12 +4,14 @@
 (function () {
 // ── FAQ ─────────────────────────────────────────────────────────
   const faqs = [
-    { q: 'Berapa batas bot per akun?', a: 'Setiap akun user mendapat 2 slot bot secara default. King (admin) tidak ada batasnya.' },
+    { q: 'Berapa batas bot per akun?', a: 'Satu bot per paket yang aktif. Akun gratis belum dapat slot — slot terbuka setelah kamu klaim Trial atau bayar paket.' },
     { q: 'Platform apa saja yang didukung?', a: 'WhatsApp (via Baileys) dan Telegram (via Bot API). Bisa tambah platform lain lewat plugin.' },
     { q: 'Apakah sesi WhatsApp tersimpan?', a: 'Ya, setiap bot punya file SQLite session tersendiri di folder /sessions/bot_<id>/. Data tidak bercampur antar bot.' },
     { q: 'Bagaimana cara login WhatsApp?', a: 'Kamu bisa memilih Scan QR Code atau Pairing Code (8 digit) yang langsung ditampilkan di dashboard.' },
     { q: 'Apakah bisa custom prefix dan footer?', a: 'Bisa. Setiap bot bisa dikonfigurasi dengan prefix, footer text, nama bot, nomor owner, dan deskripsi sendiri.' },
-    { q: 'Apa itu role King?', a: 'King adalah super admin dengan akses penuh: manajemen semua user, semua bot, dan command owner seperti broadcast dan ban.' }
+    { q: 'Apa beda role user, premium, dan admin?', a: 'User dibatasi kuota paketnya. Premium mendapat jatah lebih. Admin punya akses penuh: kelola semua user, bot, dan harga paket.' },
+    { q: 'Bagaimana cara bayar paket?', a: 'Pilih paket di halaman Langganan, lalu bayar otomatis lewat QRIS atau transfer manual dengan QR. Paket aktif setelah pembayaran terkonfirmasi.' },
+    { q: 'Ada trial?', a: 'Ada. Trial 5 hari gratis: 1 slot bot, 5.000 pesan, masa aktif 5 hari — cuma bisa diklaim sekali seumur akun.' }
   ];
   const faqBox = document.getElementById('faq-list');
   faqs.forEach((f, i) => {
@@ -50,6 +52,56 @@
     ws.onclose = () => setTimeout(() => { try { location.reload(); } catch {} }, 15000);
   } catch {}
   fetch('/api/stats').then(r => r.json()).then(d => { if (d.ok) updateStats(d.stats); }).catch(() => {});
+
+  // ── Harga ───────────────────────────────────────────────────────
+  // Diambil dari /api/plans, bukan ditulis ulang di HTML — kalau admin ubah
+  // harga di /admin, landing ikut berubah (nggak ada angka yang bisa basi).
+  fetch('/api/plans').then(r => r.json()).then(d => {
+    if (!d?.ok) return;
+    const rupiah = n => 'Rp' + Number(n || 0).toLocaleString('id-ID');
+    const grid = document.getElementById('price-grid');
+    d.plans.forEach(p => {
+      const el = document.createElement('div');
+      el.className = 'price-card';
+      el.innerHTML =
+        '<div class="pc-nama">' + p.name + '</div>' +
+        '<div class="pc-harga">' + rupiah(p.price) + '<small> / ' + p.days + ' hari</small></div>' +
+        '<ul class="pc-li">' +
+          '<li>Jumlah Fitur : ' + (p.max_fitur || 0) + '</li>' +
+          '<li>Owner Number : ' + (p.owner_max || 0) + '</li>' +
+          '<li>Received Limit : ' + (p.receive_limit || 0).toLocaleString('id-ID') + '</li>' +
+          '<li>Masa Aktif : ' + (p.days || 0) + ' Hari</li>' +
+          '<li>' + (p.slots || 0) + ' slot bot</li>' +
+        '</ul>' +
+        '<p class="pc-extra">Customize Bot</p>' +
+        '<a class="btn btn-dark" href="/register">Pilih Paket</a>';
+      grid.appendChild(el);
+    });
+    // Trial = dimensinya sama dengan paket (fitur/owner/received/masa aktif),
+    // tapi slotnya baru kelihatan setelah diklaim, jadi angkanya dari /api/plans.
+    if (d.trial) document.getElementById('price-note').textContent =
+      'Belum yakin? Klaim Trial ' + d.trial.days + ' hari gratis dulu — ' + d.trial.slots +
+      ' slot bot, cuma sekali seumur akun.';
+  }).catch(() => {});
+
+  // ── Testimoni ───────────────────────────────────────────────────
+  const tst = [
+    { n: 'Rizky', r: 'Owner Store Bot', t: 'Bot on 24 jam, jarang delay. Pelanggan senang karena balasannya cepat.' },
+    { n: 'Nadia', r: 'Admin Grup Jualan', t: 'Setup-nya cuma scan QR, nggak sampai semenit. Fiturnya banyak banget.' },
+    { n: 'Bagas', r: 'Reseller Bot', t: 'Bisa atur prefix dan footer sendiri, jadi tiap bot klien kelihatan beda.' },
+    { n: 'Sari', r: 'Owner Komunitas', t: 'Limit pesannya jelas kelihatan di dashboard, jadi nggak kaget pas kena batas.' },
+    { n: 'Dimas', r: 'Freelancer', t: 'Harga paketnya masuk akal buat yang baru mulai. Naik paket tinggal bayar lagi.' },
+    { n: 'Putri', r: 'Owner Toko Online', t: 'Menu dan fiturnya kepotong sesuai paket, jadi nggak bingung milih yang mana.' }
+  ];
+  const g = document.getElementById('tst-grid');
+  tst.forEach(x => {
+    const el = document.createElement('div');
+    el.className = 'tst';
+    el.innerHTML =
+      '<p class="tst-t">' + x.t + '</p>' +
+      '<div class="tst-f"><i>' + x.n[0] + '</i><div><b>' + x.n + '</b><span>' + x.r + '</span></div></div>';
+    g.appendChild(el);
+  });
 
   // ── Auth modal ──────────────────────────────────────────────────
   function openAuth(mode) {
