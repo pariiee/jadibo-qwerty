@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Administrator — yaparbots</title>
+<!-- @include head.html -->
+</head>
+<body class="page-admin">
+<div class="app">
+
+  <!-- @include sidebar.html -->
+
+  <main>
+    <!-- @include topbar.html -->
+
+    <div class="content">
+      <div class="tabs" id="tabs">
+        <button class="tab active" data-act="tab('user')">Manajemen User</button>
+        <button class="tab" data-act="tab('bot')">Bot</button>
+        <button class="tab" data-act="tab('order')">Pesanan</button>
+        <button class="tab" data-act="tab('harga')">Harga & Benefit</button>
+      </div>
+
+      <!-- ── Manajemen User ─────────────────────────────────────── -->
+      <section id="pane-user">
+        <div class="adm-bar">
+          <input class="inp" id="cari-user" placeholder="Cari username…" />
+          <button class="btn btn-outline" data-act="muatUser">Muat Ulang</button>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl" id="tbl-user">
+            <thead>
+              <tr>
+                <th>User</th><th>Role</th><th>Paket</th><th>Berakhir</th>
+                <th>Slot</th><th>Bot</th><th>Status</th><th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ── Bot semua user ─────────────────────────────────────── -->
+      <section id="pane-bot" style="display:none">
+        <div class="adm-bar">
+          <input class="inp" id="cari-bot" placeholder="Cari bot / pemilik…" />
+          <button class="btn btn-outline" data-act="muatBot">Muat Ulang</button>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl" id="tbl-bot">
+            <thead>
+              <tr>
+                <th>Bot</th><th>Pemilik</th><th>Platform</th><th>Status</th>
+                <th>Pesan masuk</th><th>Command</th><th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ── Pesanan ────────────────────────────────────────────── -->
+      <section id="pane-order" style="display:none">
+        <div class="adm-bar">
+          <select class="inp" id="filter-order" data-act="muatOrder">
+            <option value="">Semua status</option>
+            <option value="pending">Menunggu</option>
+            <option value="paid">Lunas</option>
+            <option value="rejected">Ditolak</option>
+          </select>
+          <button class="btn btn-outline" data-act="muatOrder">Muat Ulang</button>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl" id="tbl-order">
+            <thead>
+              <tr>
+                <th>Kode</th><th>User</th><th>Paket</th><th>Jumlah</th>
+                <th>Cara</th><th>Status</th><th>Waktu</th><th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ── Harga & Benefit ────────────────────────────────────── -->
+      <section id="pane-harga" style="display:none">
+        <div class="card">
+          <h3>Paket Langganan</h3>
+          <p class="m-sub">Harga per slot dan benefit tiap harga. Paket <b>Gratis</b> tidak bisa dihapus —
+            dia titik jatuh semua akun.</p>
+          <div id="daftar-paket"></div>
+          <button class="btn btn-outline" data-act="tambahPaket">+ Tambah Paket</button>
+          <button class="btn btn-dark" data-act="simpanPaket">Simpan Paket</button>
+        </div>
+
+        <div class="card">
+          <h3>Cara Bayar & QRIS Manual</h3>
+          <div class="field">
+            <label for="f-mode">Mode pembayaran</label>
+            <select class="inp" id="f-mode">
+              <option value="both">Dua-duanya (manual + otomatis)</option>
+              <option value="gateway">Otomatis saja (QRISku)</option>
+              <option value="manual">Manual saja (QRIS statis)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-qris">URL gambar QRIS manual</label>
+            <input class="inp" id="f-qris" placeholder="https://…/qris.png" />
+            <div class="hint">Gambar QRIS milikmu yang dipajang ke user. Harus http/https.</div>
+          </div>
+          <div class="field">
+            <label for="f-trial">Lama Trial (hari)</label>
+            <input class="inp" id="f-trial" type="number" min="1" max="30" />
+            <div class="hint">Trial cuma bisa diklaim sekali per akun.</div>
+          </div>
+          <div class="err" id="harga-error"></div>
+          <button class="btn btn-dark" data-act="simpanSetelan">Simpan Setelan</button>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<!-- Modal: atur langganan satu user -->
+<div class="overlay" id="modal-user">
+  <div class="modal">
+    <button class="modal-close" data-act="tutupUser" aria-label="Tutup">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+    <h3 id="mu-judul">Atur User</h3>
+    <div class="field">
+      <label for="mu-plan">Paket</label>
+      <select class="inp" id="mu-plan"></select>
+    </div>
+    <div class="field">
+      <label for="mu-exp">Berlaku sampai</label>
+      <input class="inp" id="mu-exp" type="date" />
+      <div class="hint">Kosongkan untuk mencabut langganan (turun jadi User).</div>
+    </div>
+    <div class="field">
+      <label for="mu-slot">Slot khusus</label>
+      <input class="inp" id="mu-slot" type="number" min="0" />
+      <div class="hint">Kosongkan untuk ikut jatah paket.</div>
+    </div>
+    <div class="err" id="mu-error"></div>
+    <button class="btn btn-dark submit" data-act="simpanUser">Simpan</button>
+  </div>
+</div>
+
+<!-- Modal log bot — dipakai admin buat lihat error bot user -->
+<div class="overlay" id="log-overlay">
+  <div class="modal">
+    <button class="modal-close" data-act="tutupLog" aria-label="Tutup">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+    <h3 id="log-judul">Log Bot</h3>
+    <p class="m-sub" id="log-sub"></p>
+    <div class="adm-bar">
+      <select class="inp" id="log-level" data-act="muatLog">
+        <option value="">Semua level</option>
+        <option value="error">Error saja</option>
+        <option value="cmderr">Command error</option>
+        <option value="cmd">Command jalan</option>
+        <option value="info">Info</option>
+        <option value="warn">Warning</option>
+      </select>
+      <button class="btn btn-outline" data-act="muatLog">Muat Ulang</button>
+    </div>
+    <div id="terminal"></div>
+  </div>
+</div>
+
+<script src="/js/act.js"></script>
+<script src="/js/admin.js"></script>
+</body>
+</html>

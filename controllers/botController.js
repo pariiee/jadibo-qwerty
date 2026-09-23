@@ -4,9 +4,10 @@ const path   = require('path');
 const fs     = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const { pool } = require('../config/database');
+const { ADMIN_ROLE, slotsOf, ownerMax, receiveLimit } = require('../config/plan');
+const pricingStore = require('../config/pricingStore');
 
 const SESSIONS_DIR = path.resolve(process.env.SESSIONS_DIR || './sessions');
-const MAX_SLOTS    = parseInt(process.env.MAX_SLOTS_PER_USER || '2', 10);
 
 // State bot (activeBots dkk) pindah ke engine/runtime.js — hidup di proses
 // worker, bukan di sini. Status bot dibaca worker (engineBus), bukan cermin.
@@ -40,7 +41,7 @@ function getDbPath(botId) {
 }
 
 /**
- * Ensure the user owns this bot (or is king).
+ * Ensure the user owns this bot (or is admin tertinggi).
  */
 async function assertOwnership(req, res, botId) {
   const [rows] = await pool.execute(
@@ -49,7 +50,7 @@ async function assertOwnership(req, res, botId) {
   );
   if (rows.length === 0) { sendError(res, 404, 'Bot tidak ditemukan'); return null; }
   const bot = rows[0];
-  if (req.user.role !== 'king' && bot.user_id !== req.user.id) {
+  if (req.user.role !== ADMIN_ROLE && bot.user_id !== req.user.id) {
     sendError(res, 403, 'Akses ditolak');
     return null;
   }
@@ -82,16 +83,32 @@ function publicBot(bot) {
 
 async function listBots(req, res) {
   try {
-    const isKing = req.user.role === 'king';
+    const isKing = req.user.role === ADMIN_ROLE;
+    // cmd_count = statistik pemakaian per bot (jumlah command yang benar-benar
+    // dijalankan). Subquery, bukan JOIN + GROUP BY — jumlah bot masih kecil.
+    const kolom = `b.*, (SELECT COUNT(*) FROM bot_logs l WHERE l.bot_id = b.id AND l.level = 'cmd') AS cmd_count`;
+    // Pencarian & batas DI SQL, bukan tarik-semua-lalu-saring-di-browser: begitu
+    // botnya ratusan, cara lama bikin /admin lemot + payload gede.
+    // ponytail: LIMIT tanpa OFFSET. Tambah halaman kalau ada yang punya >500 bot.
+    const limit = Math.min(parseInt(req.query.limit || '500', 10) || 500, 500);
+    const q = String(req.query.q || '').trim().slice(0, 60);
+
+    let where = '';
+    const params = [];
+    if (q) { where += ' AND (b.bot_name LIKE ? OR u.username LIKE ?)'; params.push(`%${q}%`, `%${q}%`); }
+    if (!isKing) { where += ' AND b.user_id = ?'; params.push(req.user.id); }
+
     const query = isKing
-      ? `SELECT b.*, u.username FROM bots b JOIN users u ON u.id = b.user_id ORDER BY b.created_at DESC`
-      : `SELECT * FROM bots WHERE user_id = ? ORDER BY created_at DESC`;
-    const params = isKing ? [] : [req.user.id];
+      ? `SELECT ${kolom}, u.username FROM bots b JOIN users u ON u.id = b.user_id
+         WHERE 1=1${where} ORDER BY b.created_at DESC LIMIT ${limit}`
+      : `SELECT ${kolom}, NULL AS username FROM bots b
+         WHERE 1=1${where} ORDER BY b.created_at DESC LIMIT ${limit}`;
 
     const [bots] = await pool.execute(query, params);
-    // Enrich with runtime status + mask token telegram
+    // publicBot() nge-`...rest` → username yang di-JOIN KEHILANGAN. Ambil dulu.
     const enriched = bots.map(b => ({
       ...publicBot(b),
+      username: b.username,
       // is_running harus dari DB (di-update engine pas connected/disconnected),
       // bukan activeBots.has() — Map itu ke-set SEBELUM connect selesai,
       // jadi polling frontend salah anggap 'connected' & nutup QR yang baru muncul.
@@ -126,14 +143,21 @@ async function getBot(req, res) {
 
 async function createBot(req, res) {
   try {
-    // Slot check
-    if (req.user.role !== 'king') {
+    // Slot check — bolehnya berapa bot ditentukan paket langganan user.
+    const [me] = await pool.execute(
+      'SELECT role, plan, plan_expired_at, plan_slots FROM users WHERE id = ?',
+      [req.user.id]
+    );
+    const maks = slotsOf(me[0], pricingStore.plans());
+    if (maks < 999) {
       const [count] = await pool.execute(
         'SELECT COUNT(*) AS c FROM bots WHERE user_id = ?',
         [req.user.id]
       );
-      if (count[0].c >= MAX_SLOTS)
-        return sendError(res, 400, `Slot penuh. Maksimal ${MAX_SLOTS} bot per akun`);
+      if (count[0].c >= maks)
+        return sendError(res, 400, maks === 0
+          ? 'Akun kamu belum punya slot bot. Klaim Trial gratis atau pilih paket di halaman Langganan.'
+          : `Slot penuh. Paket kamu maksimal ${maks} bot — upgrade untuk tambah slot.`);
     }
 
     const {
@@ -151,13 +175,22 @@ async function createBot(req, res) {
     if (platform === 'telegram' && !telegram_token)
       return sendError(res, 400, 'Token Telegram wajib diisi untuk platform Telegram');
 
+    // Owner number = nomor yang dianggap owner bot. Jumlahnya dibatasi paket.
+    const ownerMaxN = ownerMax(me[0], pricingStore.plans());
+    const jumlahOwner = String(owner_number || '').split(',').map((s) => s.trim()).filter(Boolean).length;
+    if (jumlahOwner > ownerMaxN)
+      return sendError(res, 400, ownerMaxN === 0
+        ? 'Paket kamu belum bisa pakai Owner Number. Upgrade di halaman Langganan.'
+        : `Paket kamu maksimal ${ownerMaxN} Owner Number.`);
+
     const [result] = await pool.execute(
       `INSERT INTO bots
          (user_id, platform, bot_name, bot_number, owner_number, prefix, footer_text,
-          description, telegram_token, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'disconnected')`,
+          description, telegram_token, receive_limit, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'disconnected')`,
       [req.user.id, platform, bot_name, bot_number || null, owner_number || null,
-       prefix, footer_text, description, telegram_token]
+       prefix, footer_text, description, telegram_token,
+       receiveLimit(me[0], pricingStore.plans())]
     );
 
     const botId = result.insertId;
@@ -193,6 +226,18 @@ async function updateBot(req, res) {
     const allowed = ['bot_name', 'bot_number', 'owner_number', 'owner_name', 'prefix', 'footer_text', 'description', 'telegram_token', 'channel_id', 'qris_url', 'banner_url', 'main_groups', 'daily_limit'];
     const sets = [];
     const vals = [];
+
+    // Batas owner number juga berlaku saat edit, bukan cuma saat bikin bot.
+    if (req.body.owner_number !== undefined) {
+      const [me] = await pool.execute(
+        'SELECT role, plan, plan_expired_at FROM users WHERE id = ?', [req.user.id]);
+      const maks = ownerMax(me[0], pricingStore.plans());
+      const n = String(req.body.owner_number || '').split(',').map((s) => s.trim()).filter(Boolean).length;
+      if (n > maks)
+        return sendError(res, 400, maks === 0
+          ? 'Paket kamu belum bisa pakai Owner Number. Upgrade di halaman Langganan.'
+          : `Paket kamu maksimal ${maks} Owner Number.`);
+    }
 
     for (const key of allowed) {
       if (req.body[key] !== undefined) {
@@ -366,7 +411,8 @@ async function clearSession(req, res) {
 }
 
 // ─── GET /api/bots/:id/logs ───────────────────────────────────────────────────
-
+// ponytail: tanpa halaman/`sebelum_id`, cuma `limit` (maks 500). Cukup selama
+// log satu bot masih bisa di-scroll; tambah cursor `id < ?` kalau sudah tidak.
 async function getBotLogs(req, res) {
   try {
     const bot = await assertOwnership(req, res, req.params.id);

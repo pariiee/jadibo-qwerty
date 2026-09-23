@@ -34,11 +34,11 @@ async function testConnection() {
 }
 
 /**
- * Ensure default stats rows and king account exist.
- * @param {string} kingUsername
+ * Ensure default stats rows and admin tertinggi account exist.
+ * @param {string} adminUsername
  * @param {string} hashedPassword
  */
-async function seedDefaults(kingUsername, hashedPassword) {
+async function seedDefaults(adminUsername, hashedPassword) {
   // Stats seed
   await pool.execute(
     `INSERT IGNORE INTO stats (stat_key, stat_value) VALUES
@@ -47,18 +47,19 @@ async function seedDefaults(kingUsername, hashedPassword) {
      ('total_messages', 0)`
   );
 
-  // King seed
+  // Admin tertinggi (role internal: lihat config/plan.js ADMIN_ROLE)
+  const { ADMIN_ROLE } = require('./plan');
   const [rows] = await pool.execute(
     'SELECT id FROM users WHERE role = ? LIMIT 1',
-    ['king']
+    [ADMIN_ROLE]
   );
   if (rows.length === 0) {
     await pool.execute(
       'INSERT INTO users (username, password, role) VALUES (?, ?, ?)',
-      [kingUsername, hashedPassword, 'king']
+      [adminUsername, hashedPassword, ADMIN_ROLE]
     );
     await incrementStat('total_users');
-    console.log(`[DB] King account created: ${kingUsername}`);
+    console.log(`[DB] Akun admin tertinggi dibuat: ${adminUsername}`);
   }
 }
 

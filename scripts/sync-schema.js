@@ -14,6 +14,17 @@ const { pool } = require('../config/database');
 
 const TABLES = {
   // nama tabel -> kolom [nama, definisi]
+  users: [
+    // Langganan per slot. `plan` = id paket, `plan_expired_at` lewat = otomatis
+    // turun jadi user biasa (tanpa cron). `plan_slots` = slot yang diberikan admin
+    // kalau beda dari bawaan paket.
+    ['plan',            "VARCHAR(32) NOT NULL DEFAULT 'user'"],
+    ['plan_expired_at', "DATETIME DEFAULT NULL"],
+    ['plan_slots',      "INT NOT NULL DEFAULT 2"],
+    // Trial 5 hari — SEKALI per akun. `trial_used_at` yang menjaganya, bukan
+    // status paket: kalau user hapus paketnya, trial tidak hidup lagi.
+    ['trial_used_at',   "DATETIME DEFAULT NULL"],
+  ],
   bots: [
     ['owner_name',     "VARCHAR(100) DEFAULT NULL"],
     ['channel_id',     "VARCHAR(100) DEFAULT NULL"],
@@ -21,6 +32,10 @@ const TABLES = {
     ['banner_url',     "TEXT DEFAULT NULL"],
     ['main_groups',    "TEXT DEFAULT NULL"],
     ['daily_limit',    "INT NOT NULL DEFAULT 20"],
+    // `receive_limit` = batas total pesan masuk (dari paket), `received_count`
+    // = hitungannya. Dua-duanya wajib ada barengan.
+    ['receive_limit',  "INT NOT NULL DEFAULT 0"],
+    ['received_count', "INT NOT NULL DEFAULT 0"],
     ['is_running',     "TINYINT(1) NOT NULL DEFAULT 0"],
   ],
   group_settings: [
@@ -114,6 +129,32 @@ const CREATE_TABLES = [
     created_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_bot_key (bot_id, list_key)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+  // orders — tagihan langganan (manual & gateway QRIS)
+  `CREATE TABLE IF NOT EXISTS orders (
+    id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    order_id    VARCHAR(64)  NOT NULL UNIQUE,
+    user_id     INT UNSIGNED NOT NULL,
+    plan        VARCHAR(32)  NOT NULL,
+    amount      INT UNSIGNED NOT NULL,
+    method      VARCHAR(32)  NOT NULL DEFAULT 'qris',
+    status      VARCHAR(16)  NOT NULL DEFAULT 'pending',
+    gateway_ref VARCHAR(120) DEFAULT NULL,
+    qr_payload  TEXT         DEFAULT NULL,
+    qr_image    TEXT         DEFAULT NULL,
+    proof_url   TEXT         DEFAULT NULL,
+    note        VARCHAR(255) DEFAULT NULL,
+    expired_at  DATETIME     DEFAULT NULL,
+    paid_at     DATETIME     DEFAULT NULL,
+    created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_user (user_id),
+    INDEX idx_status (status)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+  // settings — setelan admin (daftar paket, QRIS statis, mode bayar)
+  `CREATE TABLE IF NOT EXISTS settings (
+    \`key\` VARCHAR(64) PRIMARY KEY,
+    value   TEXT NOT NULL
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
 ];
 
 async function columnExists(table, colName) {
@@ -193,6 +234,24 @@ async function run() {
     console.log(`  ! rpg_members.limit/lim: ${e.message}`);
   }
 
+  // 2b) Role admin tertinggi diganti nama: 'king' -> 'kawula' (nama tidak umum,
+  //     tidak bisa ditebak dari luar). Data lama dipindah DULU, baru ENUM
+  //     dipersempit — kalau urutannya kebalik, baris 'king' jadi kosong.
+  try {
+    const [cols] = await pool.execute(
+      "SELECT COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'role'"
+    );
+    if ((cols[0]?.COLUMN_TYPE || '').includes("'king'")) {
+      await pool.execute("UPDATE users SET role = 'kawula' WHERE role = 'king'");
+      await pool.execute(
+        "ALTER TABLE users MODIFY COLUMN role ENUM('user','premium','kawula') NOT NULL DEFAULT 'user'"
+      );
+      console.log("  ~ users.role: 'king' -> 'kawula'");
+    }
+  } catch (e) {
+    console.log(`  ! users.role: ${e.message}`);
+  }
+
   // 3) Buat tabel yang belum ada
   for (const sql of CREATE_TABLES) {
     try {
@@ -202,6 +261,10 @@ async function run() {
       console.log(`  ! create: ${e.message}`);
     }
   }
+
+  // 4) Seed paket langganan tidak ada di sini: paket hidup di tabel `settings`
+  //    (`pricingStore.js`, nilai default DEFAULT_PLANS). Satu sumber saja,
+  //    supaya admin yang mengubah harga tidak ketimpa seed saat boot.
 
   console.log('\n[Sync] Selesai.');
   await pool.end();

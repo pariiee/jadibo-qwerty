@@ -24,7 +24,11 @@ const mess = require('../config/mess');
 
 const PORT      = parseInt(process.env.WORKER_PORT || '3001', 10);
 const WEB_PORT  = parseInt(process.env.PORT || '3000', 10);
-const KUNCI     = process.env.INTERNAL_KEY || process.env.JWT_SECRET;
+// Kunci jalur internal web ↔ worker. Wajib ada dan HARUS beda dari JWT_SECRET:
+// dulu dua-duanya jatuh ke JWT_SECRET, jadi bocor satu kunci = bocor sesi user.
+// Guard `process.exit` ada di dua proses yang baca ini (server.js, botWorker.js) —
+// jadi nilainya dijamin terisi waktu kode di bawahnya jalan.
+const KUNCI = process.env.INTERNAL_KEY;
 
 // ─── Event → web ─────────────────────────────────────────────────────────────
 // Satu jalur: body mentah dikirim ke web, web yang nge-fan-out ke WebSocket.
@@ -87,10 +91,20 @@ function nungguSiap(botId, ms = 60000) {
   });
 }
 
+const { fiturBot } = require('../config/plan');
+const pricingStore = require('../config/pricingStore');
+
 async function botDariDb(botId) {
   const [rows] = await pool.execute('SELECT * FROM bots WHERE id = ?', [botId]);
   if (!rows.length) { const e = new Error('Bot tidak ditemukan'); e.status = 404; throw e; }
-  return rows[0];
+  const bot = rows[0];
+  // Gerbang paket dipasang di sini supaya SEMUA jalur start/restart
+  // (dashboard, boot, respawn) dapat aturan yang sama.
+  const [owner] = await pool.execute(
+    'SELECT role, plan, plan_expired_at FROM users WHERE id = ?', [bot.user_id]).then(([r]) => r);
+  bot.fitur = fiturBot(owner, pricingStore.plans());
+  bot.receive_limit = Number(bot.receive_limit) || 0;
+  return bot;
 }
 
 async function jalankan({ op, botId, args }) {
@@ -215,8 +229,8 @@ cron.schedule('* * * * *', async () => {
 
 // ─── Boot ────────────────────────────────────────────────────────────────────
 async function boot() {
-  if (!KUNCI) {
-    console.error('[Worker] JWT_SECRET/INTERNAL_KEY kosong di .env — worker dihentikan.');
+  if (!process.env.INTERNAL_KEY) {
+    console.error('[Worker] INTERNAL_KEY kosong di .env — worker dihentikan.');
     process.exit(1);
   }
 
@@ -231,12 +245,18 @@ async function boot() {
   console.log(`[Worker] dengerin perintah di 127.0.0.1:${PORT}`);
 
   const [bots] = await pool.execute('SELECT * FROM bots WHERE is_running = 1');
+  // Harga & benefit paket hidup di tabel `settings`; proses ini terpisah dari
+  // web, jadi cache-nya harus diisi sendiri sekali di boot.
+  await pricingStore.refresh();
   if (bots.length) {
     console.log(`[Worker] auto-start ${bots.length} bot`);
     for (const b of bots) {
       try {
-        if (b.platform === 'telegram') await tg.startTelegramBot(b);
-        else await wa.startWhatsAppBot(b, false);
+        // Lewat gerbang paket yang sama dengan jalur start — kalau tidak,
+        // bot yang hidup sebelum deploy tetap bebas fitur.
+        const bd = await botDariDb(b.id);
+        if (bd.platform === 'telegram') await tg.startTelegramBot(bd);
+        else await wa.startWhatsAppBot(bd, false);
       } catch (e) { console.error(`[Worker] auto-start bot ${b.id} gagal:`, e.message); }
     }
   }

@@ -12,7 +12,9 @@
  * buat dilupain. Ganti ke Redis pub/sub kalau worker-nya lebih dari satu.
  */
 const WORKER_URL = `http://127.0.0.1:${process.env.WORKER_PORT || 3001}`;
-const KUNCI = () => process.env.INTERNAL_KEY || process.env.JWT_SECRET;
+// Kunci jalur internal web ↔ worker — kontraknya sama dengan workers/botWorker.js
+// (satu nama env, satu nilai, wajib, terpisah dari JWT_SECRET).
+const KUNCI = () => process.env.INTERNAL_KEY;
 
 let _sink = () => {};
 

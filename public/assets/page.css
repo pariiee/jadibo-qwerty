@@ -41,7 +41,7 @@ body.page-index .logo-badge{width:32px;height:32px;background:var(--acc);border-
 .hero{padding:80px 0 56px;border-bottom:1px solid var(--border)}
 .hero-in{display:grid;gap:48px;align-items:center}
 @media(min-width:1000px){.hero-in{grid-template-columns:1.02fr 1fr;gap:64px}}
-.hero-pill{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--border);border-radius:999px;background:var(--surf);padding:5px 12px;font-size:11.5px;color:var(--muted);margin-bottom:22px}
+.hero-pill{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--border);border-radius:999px;background:var(--surf1);padding:5px 12px;font-size:11.5px;color:var(--muted);margin-bottom:22px}
 .pill-dot{width:6px;height:6px;border-radius:50%;background:var(--ok)}
 .hero h1{font-size:34px;line-height:1.1;font-weight:800;letter-spacing:-1px;margin-bottom:20px}
 @media(min-width:768px){.hero h1{font-size:50px}}
@@ -167,14 +167,14 @@ body.page-index .err{color:var(--errTxt);font-size:12px;margin:4px 2px 10px;disp
 .switch-line button{background:none;border:none;color:var(--acc);font-weight:700;text-decoration:underline;cursor:pointer;font-size:12px;font-family:inherit}
 @media(max-width:560px){.hide-mob{display:none!important}}
 @media (prefers-reduced-motion: reduce){*,*::before,*::after{transition:none!important}}
-body.page-dashboard .btn{display:inline-flex;align-items:center;gap:8px;border:none;cursor:pointer;font-weight:600;font-size:13px;border-radius:10px;padding:9px 14px;font-family:inherit;transition:transform .16s ease,box-shadow .16s ease,background .16s ease,border-color .16s ease,filter .16s ease}
+body.page-dashboard .btn,body.page-admin .btn,body.page-langganan .btn{display:inline-flex;align-items:center;gap:8px;border:none;cursor:pointer;font-weight:600;font-size:13px;border-radius:10px;padding:9px 14px;font-family:inherit;transition:transform .16s ease,box-shadow .16s ease,background .16s ease,border-color .16s ease,filter .16s ease}
 body.page-dashboard .btn-danger{background:rgba(239,68,68,.13);border:1px solid rgba(239,68,68,.3);color:var(--errTxt)}
 .btn-sm{padding:6px 10px;font-size:12px;border-radius:8px}
 /* layout */ .app{display:flex;min-height:100vh}
 aside{width:224px;background:var(--sideBg);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;inset:0 auto 0 0;z-index:40}
-body.page-dashboard .logo{height:58px;display:flex;align-items:center;padding:0 18px;border-bottom:1px solid var(--border)}
+body.page-dashboard .logo,body.page-admin .logo,body.page-langganan .logo{height:58px;display:flex;align-items:center;padding:0 18px;border-bottom:1px solid var(--border)}
 .logo a{display:flex;align-items:center;gap:9px;font-weight:800;font-size:16px}
-body.page-dashboard .logo-badge{width:28px;height:28px;background:var(--acc);border-radius:8px;display:flex;align-items:center;justify-content:center}
+body.page-dashboard .logo-badge,body.page-admin .logo-badge,body.page-langganan .logo-badge{width:28px;height:28px;background:var(--acc);border-radius:8px;display:flex;align-items:center;justify-content:center}
 nav.nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:4px}
 nav.nav a{position:relative;display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:9px;font-size:14px;color:var(--muted);transition:background .16s ease,color .16s ease,transform .16s ease}
 nav.nav a:hover{background:var(--surf2);color:var(--txt);transform:translateX(2px)}
@@ -188,7 +188,7 @@ nav.nav a.active::before{content:'';position:absolute;left:0;top:22%;bottom:22%;
 .logout-btn{display:flex;align-items:center;gap:8px;width:100%;margin-top:8px;background:none;border:none;color:var(--dim);font-size:12px;cursor:pointer;padding:6px 8px;border-radius:8px;font-family:inherit;transition:.16s}
 .logout-btn:hover{color:var(--errTxt);background:rgba(239,68,68,.12)}
 main{flex:1;margin-left:224px;min-width:0}
-body.page-dashboard .topbar{position:sticky;top:0;z-index:30;background:var(--barBg);border-bottom:1px solid var(--border);height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;gap:12px}
+body.page-dashboard .topbar,body.page-admin .topbar,body.page-langganan .topbar{position:sticky;top:0;z-index:30;background:var(--barBg);border-bottom:1px solid var(--border);height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;gap:12px}
 .topbar h1{font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tb-right{display:flex;align-items:center;gap:14px}
 .live-ind{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:12px}
@@ -263,7 +263,7 @@ body.page-bot .topbar{position:sticky;top:0;z-index:30;background:var(--barBg);b
 .ttl{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
 .ttl h1{font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .st{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);flex-shrink:0}
-body.page-bot .dot{width:8px;height:8px;border-radius:50%;background:var(--off)}
+body.page-bot .dot,body.page-admin .dot{width:8px;height:8px;border-radius:50%;background:var(--off)}
 .dot.on{background:var(--ok)}
 .dot.wait{background:var(--warn)}
 .top-actions{display:flex;gap:8px}
@@ -338,3 +338,72 @@ body.page-bot .m-sub{color:var(--muted);font-size:13px;text-align:center;margin-
 .start-card:hover{border-color:var(--acc);background:rgba(34,197,94,.08)}
 .start-card small{font-weight:400;color:var(--muted);font-size:11px;text-align:center;line-height:1.4}
 .hidden{display:none!important}
+
+/* ══ Halaman /admin + /langganan ═══════════════════════════════════════
+   Dulu dua halaman ini nggak punya CSS sama sekali (body-nya page-admin /
+   page-langganan, tapi nol aturan) — makanya tampil polos tanpa sidebar.
+   Semua di-scope ke body biar nggak nabrak dashboard/bot-detail.
+   Helper .muted/.small dipakai bareng .card (yang cuma ada di page-index),
+   jadi dipakai tanpa scope. */
+.muted{color:var(--muted)}
+.small{font-size:12px}
+
+body.page-admin .badge{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.02em;background:var(--surf2);color:var(--txt2)}
+body.page-admin .badge.role-user{background:var(--surf2);color:var(--muted)}
+body.page-admin .badge.role-premium{background:rgba(34,197,94,.15);color:var(--okTxt)}
+body.page-admin .badge.role-kawula{background:rgba(245,158,11,.15);color:var(--warnTxt)}
+body.page-admin .badge.st-pending{background:rgba(245,158,11,.15);color:var(--warnTxt)}
+body.page-admin .badge.st-paid{background:rgba(34,197,94,.15);color:var(--okTxt)}
+body.page-admin .badge.st-rejected{background:rgba(239,68,68,.14);color:var(--errTxt)}
+
+/* tab */
+body.page-admin .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px;border-bottom:1px solid var(--border)}
+body.page-admin .tab{background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;padding:9px 14px;color:var(--muted);font-size:13px;font-weight:600;font-family:inherit;transition:color .16s ease,border-color .16s ease}
+body.page-admin .tab:hover{color:var(--txt)}
+body.page-admin .tab.active{color:var(--txt);border-color:var(--acc)}
+
+/* toolbar + tabel */
+body.page-admin .adm-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+body.page-admin .adm-bar .inp{max-width:280px}
+body.page-admin .tbl-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:14px}
+body.page-admin .tbl{width:100%;border-collapse:collapse;font-size:13px}
+body.page-admin .tbl th{text-align:left;padding:11px 14px;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);border-bottom:1px solid var(--border);white-space:nowrap}
+body.page-admin .tbl td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+body.page-admin .tbl tr:last-child td{border-bottom:none}
+body.page-admin .tbl tbody tr:hover{background:var(--surf1)}
+body.page-admin .tbl td.aksi{white-space:nowrap}
+body.page-admin .tbl td.aksi .btn{margin-right:6px}
+body.page-admin .tbl .kosong{text-align:center;color:var(--dim);padding:34px 14px}
+
+/* form paket */
+body.page-admin .plan-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;align-items:end;border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px}
+body.page-admin .plan-row .field{margin:0}
+body.page-admin .plan-row .acts{display:flex;gap:8px;grid-column:1/-1;justify-content:flex-end}
+
+/* modal (Atur User + Log Bot). Tanpa ini modalnya tampil tanpa latar/border. */
+body.page-admin .modal{background:none;border:1px solid var(--border2);border-radius:18px;width:100%;max-width:520px;padding:28px;position:relative;box-shadow:0 24px 60px -32px rgba(24,24,27,.4);max-height:92vh;overflow-y:auto}
+body.page-admin #log-overlay .modal{max-width:680px}
+body.page-admin .field{margin-bottom:13px}
+body.page-admin .hint{font-size:11px;color:var(--dim);margin-top:5px}
+body.page-admin .err{color:var(--errTxt);font-size:12px;margin:2px;display:none}
+body.page-admin .err.show{display:block}
+body.page-admin #terminal{margin-top:4px;border:1px solid var(--border);border-radius:12px;background:var(--surf1)}
+
+/* kartu harga / langganan */
+body.page-langganan .plan-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+body.page-langganan .plan-card{border:1px solid var(--border);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:8px}
+body.page-langganan .plan-card.aktif{border-color:var(--acc)}
+body.page-langganan .pc-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+body.page-langganan .pc-name{font-size:15px;font-weight:700}
+body.page-langganan .pc-tag{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:rgba(34,197,94,.15);color:var(--okTxt)}
+body.page-langganan .pc-price{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums}
+body.page-langganan .pc-price small{font-size:12px;font-weight:500;color:var(--muted)}
+body.page-langganan .pc-list{list-style:none;display:flex;flex-direction:column;gap:5px;font-size:13px;color:var(--txt2)}
+body.page-langganan .pc-list li::before{content:'•';color:var(--acc);margin-right:8px}
+body.page-langganan .plan-card .btn{margin-top:6px;justify-content:center}
+body.page-langganan .plan-badge{display:inline-block;padding:4px 12px;border-radius:999px;font-size:12px;font-weight:700;background:var(--surf2);color:var(--txt)}
+body.page-langganan .note{border:1px solid var(--border);border-left:3px solid var(--acc);border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:var(--txt2);background:var(--surf1)}
+body.page-langganan .plat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
+body.page-langganan #bayar-qr{width:240px;max-width:100%;border-radius:12px;background:#fff;padding:8px;margin:14px auto;display:block}
+@media(max-width:560px){body.page-langganan .plat-grid{grid-template-columns:1fr}}
+

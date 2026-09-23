@@ -10,9 +10,9 @@
     me = d.user;
     document.getElementById('side-avatar').textContent = (me.username || '?')[0].toUpperCase();
     document.getElementById('side-name').textContent  = me.username;
-    document.getElementById('side-role').textContent  = me.role;
+    document.getElementById('side-role').textContent  = me.role_label || me.role;
     document.getElementById('greeting').textContent   = 'Selamat Datang Kembali, ' + me.username;
-    if (me.role === 'king') document.getElementById('nav-admin').style.display = '';
+    if (me.is_admin) document.getElementById('nav-admin').style.display = '';
     return me;
   }
 
@@ -41,7 +41,7 @@
     const d = await api('/api/bots');
     if (!d?.ok) return;
     bots = d.bots;
-    maxSlots = me?.slots_max ?? (me?.role === 'king' ? 999 : 2);
+    maxSlots = me?.slots_max ?? (me?.is_admin ? 999 : 0);
     renderSlots();
     renderBots();
   }
@@ -106,6 +106,9 @@
   // ── Add bot ─────────────────────────────────────────────────────
   let platform = 'whatsapp';
   function openAddBot() {
+    // Slot 0 = akun gratis. Arahkan ke halaman langganan, bukan cuma alert:
+    // dari situ user bisa langsung klaim Trial atau pilih paket.
+    if (maxSlots === 0) { location.href = '/langganan'; return; }
     if (bots.length >= maxSlots) { alert('Slot penuh. Maksimal ' + maxSlots + ' bot per akun.'); return; }
     platform = 'whatsapp';
     setPlatUI();

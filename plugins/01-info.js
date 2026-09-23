@@ -270,6 +270,11 @@ module.exports = async function infoHandler(ctx) {
   if (!ctx.isCmd) return false;
   const { command, args, reply, react, botData, client, sock, jid, sender, isGroup, msg } = ctx;
   const p = botData.prefix;
+  // Fitur yang boleh tampil di menu. `ctx.fitur` = potongan paket dari worker
+  // (null = admin, semua boleh). Kalau penandanya belum sampai (engine/worker
+  // belum restart), tampilkan semua — jangan kosongkan menu karena itu.
+  const bolehPakai = ctx.fitur ?? botData.fitur;
+  const bolehTampil = Array.isArray(bolehPakai) ? new Set(bolehPakai) : null;
 
   switch (command) {
     // ── memory — RAM usage bot ──────────────────────────────────────────────
@@ -307,8 +312,15 @@ module.exports = async function infoHandler(ctx) {
     case 'menu': {
       const role = mess.roleLabel[ctx.role] || mess.roleLabel.user;
 
+      // Menu HARUS mengikuti paket pemilik bot — tanpa potongan ini user paket
+      // kecil melihat 400 fitur lalu ditolak satu-satu saat dipakai.
+      const pakaiCat = (k) => (bolehTampil ? (CATS[k] || []).filter(c => bolehTampil.has(c)) : [...(CATS[k] || [])]);
+      const catKeysTampil = bolehTampil ? CAT_KEYS.filter(k => pakaiCat(k).length) : CAT_KEYS;
+
       const catKey = (args.join(' ') || '').toLowerCase().trim();
-      const showCat = CAT_ALIAS[catKey] || (CATS[catKey] ? catKey : null);
+      // Kategori yang seluruh isinya di luar paket diperlakukan seperti tidak
+      // ada — jangan kirim sub-menu kosong.
+      const showCat = CAT_ALIAS[catKey] || (pakaiCat(catKey).length ? catKey : null);
 
       // ── Menu per-kategori: .menu <kategori> / .menu all ──────────────────
       // Bentuknya = bentuk menu utama (header lokasi + banner + tombol),
@@ -319,10 +331,10 @@ module.exports = async function infoHandler(ctx) {
       //  command ~5.700 char terkirim utuh, sudah kelihatan di HP Pak.)
       let subBody = null;   // null = menu utama
       const subHeader = (t) => `╭── *[ ${t} ]* ──`;
-      const subLines = (k) => [...CATS[k]].sort().map(c => `│ ◦ ${p}${c}`);
+      const subLines = (k) => pakaiCat(k).sort().map(c => `│ ◦ ${p}${c}`);
       if (showCat === 'all') {
         subBody = subHeader('MENU ALL') + '\n' +
-          CAT_KEYS.map(k => [`│ 〔 ${catLabel(k)} 〕`, ...subLines(k)].join('\n')).join('\n│\n') +
+          catKeysTampil.map(k => [`│ 〔 ${catLabel(k)} 〕`, ...subLines(k)].join('\n')).join('\n│\n') +
           '\n╰────────────────────────';
       } else if (showCat) {
         subBody = subHeader(`MENU ${catLabel(showCat)}`) + '\n' +
@@ -364,8 +376,8 @@ module.exports = async function infoHandler(ctx) {
 
       // Teks menu = gaya `.test3` (box `╭── *[ … ]* ──` + kategori per baris).
       // Satu builder di sini; `.test3` di 05-owner.js cuma alias ke case ini.
-      const catList = CAT_KEYS
-        .map(k => `│ ◦ ${catLabel(k)} (${CATS[k].length} Fitur)`)
+      const catList = catKeysTampil
+        .map(k => `│ ◦ ${catLabel(k)} (${pakaiCat(k).length} Fitur)`)
         .join('\n');
 
       // Sapaan + info user/bot dipakai SEMUA teks menu (utama & sub-menu)

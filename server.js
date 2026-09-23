@@ -13,6 +13,12 @@ if (!process.env.JWT_SECRET) {
   console.error('[Boot] JWT_SECRET kosong di .env — server dihentikan.');
   process.exit(1);
 }
+// Kunci jalur internal web ↔ worker. Kalau kosong dan jatuh ke JWT_SECRET,
+// bocornya satu kunci = bocor sesi user sekalian. Dipisah, dan wajib.
+if (!process.env.INTERNAL_KEY) {
+  console.error('[Boot] INTERNAL_KEY kosong di .env — server dihentikan.');
+  process.exit(1);
+}
 
 require('./config/net'); // paksa IPv4 (lihat komentarnya) — worker juga pakai
 
@@ -31,6 +37,8 @@ const cron         = require('node-cron');
 const { testConnection, seedDefaults, getStats, pool } = require('./config/database');
 const auth = require('./controllers/authController');
 const bot  = require('./controllers/botController');
+const billing = require('./controllers/billingController');
+const pricingStore = require('./config/pricingStore');
 const engineBus = require('./config/engineBus');
 
 const app    = express();
@@ -85,6 +93,16 @@ app.use(cors({
 }));
 
 app.use(cookieParser());
+
+// Webhook QRISku HARUS dapat badan mentah: tanda tangan dihitung dari byte asli.
+// Jadi rute ini dipasang SEBELUM express.json — kalau tidak, JSON sudah diparse
+// dan byte aslinya hilang, verifikasi tidak akan pernah cocok.
+app.post(
+  '/api/payment/webhook',
+  express.raw({ type: '*/*', limit: '256kb' }),
+  billing.webhook
+);
+
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 
@@ -135,10 +153,26 @@ app.post('/api/bots/:id/restart',       apiLimiter, auth.requireAuth, bot.restar
 app.post('/api/bots/:id/clear-session', apiLimiter, auth.requireAuth, bot.clearSession);
 app.get('/api/bots/:id/logs',           apiLimiter, auth.requireAuth, bot.getBotLogs);
 
-// ─── Admin Routes (king only) ─────────────────────────────────────────────────
+// ─── Langganan & Pembayaran ──────────────────────────────────────────────────
+app.get('/api/plans',                apiLimiter, billing.daftarPaket);
+app.post('/api/billing/checkout',    apiLimiter, auth.requireAuth, billing.checkout);
+app.post('/api/billing/trial',       apiLimiter, auth.requireAuth, billing.klaimTrialSendiri);
+app.get('/api/billing/orders',       apiLimiter, auth.requireAuth, billing.daftarOrder);
+// "Cek status" manual — bukan polling. Dijatah 20 detik per transaksi di
+// config/qrisku.js supaya akun QRISku tidak kena ban.
+app.post('/api/billing/orders/:orderId/check', apiLimiter, auth.requireAuth, billing.cekOrder);
+
+// ─── Admin Routes (admin tertinggi saja) ─────────────────────────────────────
 app.get('/api/admin/users',          auth.requireAuth, auth.requireKing, auth.listUsers);
 app.patch('/api/admin/users/:id',    auth.requireAuth, auth.requireKing, auth.updateUser);
 app.delete('/api/admin/users/:id',   auth.requireAuth, auth.requireKing, auth.deleteUser);
+
+app.get('/api/admin/billing/orders',                  auth.requireAuth, auth.requireKing, billing.adminOrders);
+app.post('/api/admin/billing/orders/:orderId/confirm', auth.requireAuth, auth.requireKing, billing.adminKonfirmasi);
+app.post('/api/admin/billing/orders/:orderId/reject',  auth.requireAuth, auth.requireKing, billing.adminTolak);
+app.get('/api/admin/billing/settings',                auth.requireAuth, auth.requireKing, billing.adminSettings);
+app.put('/api/admin/billing/plans',                   auth.requireAuth, auth.requireKing, billing.adminSetPlans);
+app.put('/api/admin/billing/settings',                auth.requireAuth, auth.requireKing, billing.adminSetSettings);
 
 // ─── Halaman HTML ─────────────────────────────────────────────────────────────
 // Halaman berisi <!-- @include head.html --> dll; partial di public/partials/
@@ -158,6 +192,8 @@ const halaman = (nama) => (_, res) => {
 };
 app.get('/dashboard', halaman('dashboard.html'));
 app.get('/bot/:id',   halaman('bot-detail.html'));
+app.get('/langganan', halaman('langganan.html'));
+app.get('/admin',     halaman('admin.html'));
 app.get('*',          halaman('index.html'));
 
 // ─── WebSocket Hub ────────────────────────────────────────────────────────────
@@ -204,7 +240,7 @@ wss.on('connection', (ws, req) => {
             'SELECT user_id FROM bots WHERE id = ?',
             [botIdNum]
           );
-          const owns = rows.length > 0 && (decoded.role === 'king' || rows[0].user_id === decoded.id);
+          const owns = rows.length > 0 && (decoded.role === ADMIN_ROLE || rows[0].user_id === decoded.id);
           if (!owns) {
             ws.send(JSON.stringify({ type: 'error', message: 'Forbidden' }));
             ws.close();
@@ -288,9 +324,13 @@ cron.schedule('*/10 * * * * *', async () => {
 async function boot() {
   await testConnection();
 
-  // Hash king password and seed
+  // Harga paket & setelan QRIS manual dibaca sekali di sini, lalu di-cache.
+  // Tabel `settings` dibuat oleh scripts/sync-schema.js saat deploy.
+  await pricingStore.refresh();
+
+  // Hash admin password and seed
   const hashed = await bcrypt.hash(process.env.KING_PASSWORD || 'king123', 12);
-  await seedDefaults(process.env.KING_USERNAME || 'king', hashed);
+  await seedDefaults(process.env.KING_USERNAME || 'kawula', hashed);
 
   server.listen(PORT, async () => {
     console.log('');
@@ -309,10 +349,22 @@ async function boot() {
 // ─── Auto Reset Limit Harian — setiap hari jam 00:00 WIB (UTC+7) ─────────────
 cron.schedule('0 17 * * *', async () => {
   try {
-    // Reset per-bot sesuai daily_limit masing-masing
-    const [bots] = await pool.execute('SELECT id, daily_limit FROM bots WHERE is_running = 1');
+    // Kuota harian = kuota paket PEMILIK bot. Ikut berubah sendiri kalau paket
+    // naik/turun atau masa aktif habis (kuota 0 = command berhenti).
+    const { kuotaBot, receiveLimit } = require('./config/plan');
+    const [bots] = await pool.execute(`
+      SELECT b.id, b.daily_limit, u.role, u.plan, u.plan_expired_at
+      FROM bots b LEFT JOIN users u ON u.id = b.user_id
+      WHERE b.is_running = 1`);
     for (const bot of bots) {
-      const lim = bot.daily_limit || parseInt(process.env.DEFAULT_LIMIT || '20', 10);
+      const lim = kuotaBot(bot, bot, pricingStore.plans());
+      // Ikut juga `receive_limit`: paket bisa ganti kapan saja, dan kolom itu
+      // menentukan batas TOTAL pesan (engine baca tiap pesan). Tanpa ini, paket
+      // baru cuma berlaku setelah bot di-restart.
+      await pool.execute(
+        'UPDATE bots SET receive_limit = ? WHERE id = ?',
+        [receiveLimit(bot, pricingStore.plans()), bot.id]
+      );
       const [res] = await pool.execute(
         'UPDATE rpg_members SET lim = ? WHERE bot_id = ? AND registered = 1',
         [lim, bot.id]
@@ -321,6 +373,20 @@ cron.schedule('0 17 * * *', async () => {
     }
   } catch (e) {
     console.error('[Cron] Reset limit error:', e.message);
+  }
+}, { timezone: 'Asia/Jakarta' });
+
+// ─── Purge Log Bot — harian 03:00 WIB ────────────────────────────────────────
+// bot_logs nulis SATU baris tiap pesan masuk (engine/whatsappEngine.js), jadi
+// bot yang rame bisa puluhan ribu baris/hari dan nggak ada yang pernah ngehapus.
+// Index (bot_id, created_at) bikin bacanya cepat, BUKAN disk-nya berhenti gemuk.
+cron.schedule('0 20 * * *', async () => {
+  try {
+    const [res] = await pool.execute(
+      'DELETE FROM bot_logs WHERE created_at < NOW() - INTERVAL 14 DAY');
+    if (res.affectedRows) console.log(`[Cron] Purge log: ${res.affectedRows} baris > 14 hari`);
+  } catch (e) {
+    console.error('[Cron] Purge log error:', e.message);
   }
 }, { timezone: 'Asia/Jakarta' });
 

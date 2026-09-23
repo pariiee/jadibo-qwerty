@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Langganan — yaparbots</title>
+<!-- @include head.html -->
+</head>
+<body class="page-langganan">
+<div class="app">
+
+  <!-- @include sidebar.html -->
+
+  <main>
+    <!-- @include topbar.html -->
+
+    <div class="content">
+      <div class="slot-head">
+        <div>
+          <div class="lbl">Paket Kamu</div>
+          <div class="slot-row">
+            <span class="plan-badge" id="plan-badge">Memuat…</span>
+            <span class="slot-txt" id="plan-until"></span>
+          </div>
+        </div>
+        <button class="btn btn-dark" id="btn-trial" data-act="klaimTrial" style="display:none">Klaim Trial 5 Hari</button>
+      </div>
+
+      <div class="note" id="trial-note" style="display:none"></div>
+
+      <div class="grid" id="plan-grid"></div>
+
+      <!-- Pilih cara bayar: dua opsi, user yang menentukan -->
+      <div class="overlay" id="bayar-overlay">
+        <div class="modal">
+          <button class="modal-close" data-act="closeBayar" aria-label="Tutup">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+
+          <div id="step-metode">
+            <h3 id="bayar-judul">Pilih Paket</h3>
+            <p class="m-sub" id="bayar-harga"></p>
+            <div class="plat-grid">
+              <button class="plat-btn" data-act="pilihMetode('gateway')">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z" stroke="#f59e0b" stroke-width="2" stroke-linejoin="round"/></svg>
+                <span>QRIS Otomatis</span>
+                <small>Aktif sendiri, cepat</small>
+              </button>
+              <button class="plat-btn" data-act="pilihMetode('manual')">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" stroke="#0ea5e9" stroke-width="2"/><rect x="14" y="3" width="7" height="7" stroke="#0ea5e9" stroke-width="2"/><rect x="3" y="14" width="7" height="7" stroke="#0ea5e9" stroke-width="2"/><path d="M14 14h3v3h-3zM19 19h2v2h-2z" fill="#0ea5e9"/></svg>
+                <span>QRIS Manual</span>
+                <small>Scan sendiri, admin konfirmasi</small>
+              </button>
+            </div>
+          </div>
+
+          <div id="step-bayar" style="display:none">
+            <h3 id="bayar-judul2">Selesaikan Pembayaran</h3>
+            <p class="m-sub" id="bayar-kode"></p>
+            <div style="text-align:center;margin:14px 0">
+              <img id="bayar-qr" alt="QRIS" style="width:240px;max-width:100%;border-radius:12px;background:#fff;padding:8px" />
+            </div>
+            <p class="m-sub" id="bayar-info"></p>
+            <div style="text-align:center;margin:10px 0">
+              <a id="bayar-tautan" class="btn btn-dark" href="#" target="_blank" rel="noopener" style="display:none">Buka Halaman Bayar</a>
+            </div>
+            <button class="btn btn-outline" id="btn-cek" data-act="cekStatus">Cek Status Pembayaran</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  window.__CSRF__ = null;
+</script>
+<script src="/js/act.js"></script>
+<script src="/js/langganan.js"></script>
+</body>
+</html>

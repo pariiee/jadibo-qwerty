@@ -190,6 +190,10 @@ function buildContext(client, event, botData) {
     client,
     msg:      event,
     botData,
+    // Fitur yang boleh dipakai bot ini, sesuai paket pemilik (null = admin).
+    // Dipasang worker saat start; menu di plugins/01-info.js memakainya supaya
+    // yang tampil = yang benar-benar bisa dipakai.
+    fitur: botData?.fitur,
     jid,
     sender,
     isGroup,
@@ -542,6 +546,27 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
     if (msgType === 'protocolMessage' && !isDeleteEvent) return;
 
     await incrementStat('total_messages');
+
+    // Received limit paket: batas TOTAL pesan yang diterima bot. Dihitung di DB
+    // pakai satu UPDATE atomik (bukan `botData.received_count` yang basi sejak
+    // bot start). affectedRows 0 = kuota sudah habis → command dimatikan, tapi
+    // pesan tetap dihitung supaya angkanya jujur.
+    // ponytail: 1 UPDATE per pesan; pindah ke counter memori + flush berkala
+    // kalau UPDATE-nya jadi panas.
+    if (botData.receive_limit > 0) {
+      const [up] = await pool.execute(
+        'UPDATE bots SET received_count = received_count + 1 WHERE id = ? AND received_count < receive_limit',
+        [botId]
+      );
+      if (up.affectedRows === 0) {
+        // Sekali per jam saja — kalau tiap pesan, tabel log kebanjiran.
+        if (!botData._limitWarnAt || Date.now() - botData._limitWarnAt > 3600e3) {
+          botData._limitWarnAt = Date.now();
+          await logBot(botId, 'limit', `Kuota terima pesan habis (${botData.receive_limit}). Perpanjang paket untuk mengaktifkan lagi.`);
+        }
+        return;
+      }
+    }
 
     const jid = event.chatJid || key?.remoteJid || '';
 
@@ -926,6 +951,18 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
       } catch { /* non-critical, lanjut */ }
       return true;
     };
+
+    // ── Fitur yang tidak termasuk paket ───────────────────────────────────────
+    // `botData.fitur` diisi worker saat start (potongan kategori sesuai
+    // `max_fitur` paket pemilik). Command yang tidak ada di daftar → ditolak.
+    // Kosong = semua ditolak (akun gratis / langganan habis).
+    // ponytail: daftar di-cache di botData, jadi ubah paket admin baru kena
+    // setelah bot di-restart. Tambah refresh berkala kalau itu mengganggu.
+    if (ctx.isCmd && Array.isArray(botData.fitur) && !botData.fitur.includes(ctx.command)) {
+      console.log(`[Bot ${botId}] 🚫 fitur di luar paket: ${logLine}`);
+      await logBot(botId, 'limit', `.${ctx.command} — fitur di luar paket`);
+      return;
+    }
 
     if (!(await kurangiLimit(1))) return;
 

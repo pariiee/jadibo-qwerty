@@ -11,7 +11,11 @@ CREATE TABLE IF NOT EXISTS users (
   id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   username     VARCHAR(50) NOT NULL UNIQUE,
   password     VARCHAR(255) NOT NULL,
-  role         ENUM('user', 'king') NOT NULL DEFAULT 'user',
+  role         ENUM('user', 'premium', 'kawula') NOT NULL DEFAULT 'user',
+  plan            VARCHAR(32) NOT NULL DEFAULT 'user',
+  plan_expired_at DATETIME    DEFAULT NULL,
+  plan_slots      INT         NOT NULL DEFAULT 2,
+  trial_used_at   DATETIME    DEFAULT NULL,
   is_active    TINYINT(1) NOT NULL DEFAULT 1,
   created_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -38,6 +42,10 @@ CREATE TABLE IF NOT EXISTS bots (
   banner_url     TEXT DEFAULT NULL,
   main_groups    TEXT DEFAULT NULL,
   daily_limit    INT NOT NULL DEFAULT 20,
+  -- Batas TOTAL pesan yang boleh diterima bot (received limit paket) + hitungannya.
+  -- Diisi dari paket pemilik saat deploy/bayar; 0 = tidak dibatasi.
+  receive_limit  INT NOT NULL DEFAULT 0,
+  received_count INT NOT NULL DEFAULT 0,
   sqlite_db_path VARCHAR(500) DEFAULT NULL,
   is_running     TINYINT(1) NOT NULL DEFAULT 0,
   status         ENUM('connected', 'disconnected', 'connecting', 'qr_pending') NOT NULL DEFAULT 'disconnected',
@@ -227,6 +235,39 @@ CREATE TABLE IF NOT EXISTS gudang_list (
   created_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (bot_id) REFERENCES bots(id) ON DELETE CASCADE,
   INDEX idx_bot_key (bot_id, list_key)
+) ENGINE=InnoDB;
+
+-- ============================================================
+-- Table: orders  (tagihan langganan: manual & gateway QRIS)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS orders (
+  id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  order_id    VARCHAR(64)  NOT NULL UNIQUE,
+  user_id     INT UNSIGNED NOT NULL,
+  plan        VARCHAR(32)  NOT NULL,
+  amount      INT UNSIGNED NOT NULL,
+  method      VARCHAR(32)  NOT NULL DEFAULT 'qris',
+  status      VARCHAR(16)  NOT NULL DEFAULT 'pending',
+  gateway_ref VARCHAR(120) DEFAULT NULL,
+  qr_payload  TEXT         DEFAULT NULL,
+  qr_image    TEXT         DEFAULT NULL,
+  proof_url   TEXT         DEFAULT NULL,
+  note        VARCHAR(255) DEFAULT NULL,
+  expired_at  DATETIME     DEFAULT NULL,
+  paid_at     DATETIME     DEFAULT NULL,
+  created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_user (user_id),
+  INDEX idx_status (status)
+) ENGINE=InnoDB;
+
+-- ============================================================
+-- Table: settings  (setelan admin: daftar paket, QRIS statis, mode bayar)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS settings (
+  `key` VARCHAR(64) PRIMARY KEY,
+  value TEXT NOT NULL
 ) ENGINE=InnoDB;
 
 -- ============================================================
