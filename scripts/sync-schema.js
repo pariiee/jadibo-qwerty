@@ -235,14 +235,22 @@ async function run() {
   }
 
   // 2b) Role admin tertinggi diganti nama: 'king' -> 'kawula' (nama tidak umum,
-  //     tidak bisa ditebak dari luar). Data lama dipindah DULU, baru ENUM
-  //     dipersempit — kalau urutannya kebalik, baris 'king' jadi kosong.
+  //     ENUM nggak bisa nerima nilai di luar daftarnya. Urutan yang bener:
+  //     LEBAR dulu (masukin 'kawula' tanpa ngebuang nilai lama), BARU pindahin
+  //     data, BARU dipersempit. Kalau dibalik, UPDATE-nya kepotong jadi
+  //     "Data truncated for column 'role'" dan baris lama balik jadi kosong.
   try {
     const [cols] = await pool.execute(
       "SELECT COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'role'"
     );
-    if ((cols[0]?.COLUMN_TYPE || '').includes("'king'")) {
-      await pool.execute("UPDATE users SET role = 'kawula' WHERE role = 'king'");
+    const tipe = cols[0]?.COLUMN_TYPE || '';
+    if (tipe && !tipe.includes("'kawula'")) {
+      // Dilebarin dari tipe yang ADA di DB, bukan dari daftar hardcode — kalau
+      // ada nilai warisan lain, ALTER ini nggak ngebuang barisnya.
+      await pool.execute(
+        `ALTER TABLE users MODIFY COLUMN role ${tipe.replace(/^enum\(/i, "enum('kawula',")} NOT NULL DEFAULT 'user'`
+      );
+      await pool.execute("UPDATE users SET role = 'kawula' WHERE role IN ('king', 'penjaga', 'admin')");
       await pool.execute(
         "ALTER TABLE users MODIFY COLUMN role ENUM('user','premium','kawula') NOT NULL DEFAULT 'user'"
       );
