@@ -194,6 +194,9 @@ app.get('/dashboard', halaman('dashboard.html'));
 app.get('/bot/:id',   halaman('bot-detail.html'));
 app.get('/langganan', halaman('langganan.html'));
 app.get('/admin',     halaman('admin.html'));
+// /login & /register = SATU file, pane dipilih dari pathname (js/auth-page.js).
+app.get('/login',     halaman('login.html'));
+app.get('/register',  halaman('login.html'));
 app.get('*',          halaman('index.html'));
 
 // ─── WebSocket Hub ────────────────────────────────────────────────────────────

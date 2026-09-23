@@ -3,6 +3,17 @@
    di-scope pakai body.page-index / body.page-dashboard / body.page-bot.
    ══════════════════════════════════════════════════════════════════════ */
 
+/* Halaman /login & /register — SATU file (public/login.html), pane-nya
+   dipilih dari body[data-mode] yang di-set js/auth-page.js. */
+body.page-auth{padding:24px 18px;min-height:100vh}
+.auth-wrap{width:100%;max-width:390px;margin:0 auto}
+body.page-auth .modal{background:var(--surf1);border:1px solid var(--border2);border-radius:18px;padding:30px;box-shadow:0 24px 60px -32px rgba(24,24,27,.4);position:relative}
+body.page-auth .modal h3{font-size:20px;font-weight:800;margin-bottom:4px}
+body.page-auth .field{margin-bottom:14px}
+body.page-auth .err{color:var(--errTxt);font-size:12px;margin:4px 2px 10px;display:none}
+body.page-auth .modal .btn{width:100%;justify-content:center}
+body.page-auth .switch-line a{color:var(--acc);font-weight:700}
+
 .wrap{max-width:1200px;margin:0 auto;padding:0 20px}
 /* buttons */ .btn{display:inline-flex;align-items:center;gap:8px;border:none;cursor:pointer;font-weight:600;font-size:14px;border-radius:12px;padding:10px 18px;font-family:inherit;transition:transform .16s ease,box-shadow .16s ease,background .16s ease,border-color .16s ease,filter .16s ease}
 .btn:active{transform:translateY(0) scale(.99)}
