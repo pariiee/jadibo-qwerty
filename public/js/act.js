@@ -26,17 +26,17 @@ document.addEventListener('click', (e) => {
   fn(cocok[2] === undefined ? undefined : bacaArg(cocok[2]), el, e);
 });
 
-window.showToast = function (msg, tipe = 'info') {
+window.showToast = function (msg, tipe) {
   let t = document.getElementById('toast');
   if (!t) {
     t = document.createElement('div');
     t.id = 'toast';
-    t.className = 'fixed bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg text-white text-sm shadow-lg transition-opacity z-[100]';
     document.body.appendChild(t);
   }
-  t.className = t.className.replace(/bg-\S+/g, '') + (tipe === 'error' ? ' bg-red-600' : tipe === 'success' ? ' bg-green-600' : ' bg-gray-800');
+  // gaya dari CSS (#toast) — jangan pakai kelas Tailwind, Tailwind nggak dimuat
+  t.className = tipe === 'error' ? 'toast-error' : tipe === 'success' ? 'toast-success' : '';
   t.textContent = msg;
-  t.style.opacity = '1';
+  t.classList.add('on');
   clearTimeout(window._toastTimer);
-  window._toastTimer = setTimeout(() => { t.style.opacity = '0'; }, 2500);
+  window._toastTimer = setTimeout(() => t.classList.remove('on'), 2500);
 };

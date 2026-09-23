@@ -218,9 +218,9 @@ body.page-dashboard .logo,body.page-admin .logo,body.page-langganan .logo{height
 .logo a{display:flex;align-items:center;gap:9px;font-weight:800;font-size:16px}
 body.page-dashboard .logo-badge,body.page-admin .logo-badge,body.page-langganan .logo-badge{width:28px;height:28px;background:var(--acc);border-radius:8px;display:flex;align-items:center;justify-content:center}
 nav.nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:4px}
-nav.nav a{position:relative;display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:9px;font-size:14px;color:var(--muted);transition:background .16s ease,color .16s ease,transform .16s ease}
-nav.nav a:hover{background:var(--surf2);color:var(--txt);transform:translateX(2px)}
-nav.nav a.active{background:none;color:var(--txt);font-weight:600}
+nav.nav a{position:relative;display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:12px;font-size:14px;color:var(--muted);border:1px solid transparent;transition:background .16s ease,color .16s ease,transform .16s ease,border-color .16s ease}
+nav.nav a:hover{background:var(--surf2);border-color:var(--border);color:var(--txt);transform:translateX(2px)}
+nav.nav a.active{background:var(--surf1);border-color:var(--border2);color:var(--txt);font-weight:600;box-shadow:var(--g1)}
 nav.nav a.active::before{content:'';position:absolute;left:0;top:22%;bottom:22%;width:3px;border-radius:3px;background:var(--acc)}
 .side-user{border-top:1px solid var(--border);padding:12px}
 .side-user .me{display:flex;align-items:center;gap:10px}

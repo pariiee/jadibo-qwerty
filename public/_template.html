@@ -4,6 +4,8 @@
   2. daftarkan di server.js :  app.get('/NAMA', halaman('NAMA.html'));
   3. gaya khusus halaman ini → tulis di public/assets/page.css, awali `body.page-NAMA `
      (yang dipakai bareng 2+ halaman → tulis di public/assets/theme.css)
+     JANGAN set `background:none` di kartu/panel baru — glass.css yang nentuin
+     permukaan kaca (blur + tepi tipis); pakai var(--card)/var(--surf*) saja.
 
   Partial yang bisa dipakai: head.html, nav.html, sidebar.html, topbar.html, footer.html
 -->
