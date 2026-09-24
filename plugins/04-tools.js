@@ -114,6 +114,92 @@ function runYtDlp(argv, timeoutMs = 180000) {
 module.exports = async function toolsHandler(ctx) {
   if (!ctx.isCmd) return false;
 
+  // ─── Helper: cari + unduh audio lagu (yt-dlp local → ffmpeg mp3) ───────────
+  // Dipakai bareng `.play`, `.spotify` (tombol), dan `.spotifydl` (fallback
+  // waktu spotidown.app mati). Balikin { ok, buf, mime, title, artist, dur }
+  // atau { ok:false, alasan } — pemanggil yang ngurus pesan ke user.
+  async function ambilAudioLagu(kueri) {
+    const fs = require('fs');
+    const os = require('os');
+    const path = require('path');
+    const { spawn } = require('child_process');
+
+    const norm = s => String(s || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+
+    // 1) Cari kandidat + saring kompilasi/full album/live loop
+    let pick = null;
+    const srch = await runYtDlp(['--flat-playlist', '--no-warnings', '-J', `ytsearch10:${kueri}`], 90000);
+    if (srch.ok) {
+      let list = [];
+      try { list = JSON.parse(srch.out)?.entries || []; } catch {}
+      const tokens = norm(kueri).split(' ').filter(t => t.length > 1);
+      const scored = list
+        .filter(e => e && e.id && !e.is_live && Number.isFinite(e.duration))
+        .filter(e => e.duration >= 30 && e.duration <= 600)
+        .map(e => {
+          const t = norm(e.title);
+          const hit = tokens.filter(tk => t.includes(tk)).length;
+          return { ...e, _ratio: tokens.length ? hit / tokens.length : 0 };
+        })
+        .sort((a, b) => (b._ratio - a._ratio) || (a.duration - b.duration));
+      pick = scored[0]
+          || list.find(e => e && e.id && Number.isFinite(e.duration) && e.duration <= 3600)
+          || null;
+    }
+    if (!pick) {
+      // yt-dlp nggak ada (mis. lokal Windows) → jalur API lama (yt-search + ytmp3)
+      const axios = require('axios');
+      const search = require('yt-search');
+      const look = await search(kueri);
+      const conv = (look.videos || []).filter(v => v.seconds >= 30 && v.seconds <= 600)[0] || look.videos?.[0];
+      if (!conv) return { ok: false, alasan: 'Lagu tidak ditemukan' };
+      const mp3 = await axios.get(`${process.env.BASE_API}api/download/ytmp3`, {
+        params: { url: conv.url }, headers: { 'X-API-Key': process.env.KEY_API }, timeout: 60000,
+      });
+      const d = mp3.data?.results;
+      if (!d?.audio?.url) return { ok: false, alasan: 'Tidak ada audio dari konverter' };
+      const chosen = (Array.isArray(d.audios) ? d.audios.find(a => a.format === 'm4a') : null) || d.audio;
+      const res = await axios.get(chosen.url, { responseType: 'arraybuffer', timeout: 120000 });
+      return {
+        ok: true, buf: Buffer.from(res.data), mime: chosen.format === 'm4a' ? 'audio/mp4' : 'audio/mpeg',
+        title: d.title || conv.title, artist: d.channel || conv.author?.name, dur: d.duration_str || conv.timestamp,
+      };
+    }
+
+    // 2) Unduh audio lokal (URL-nya terikat IP server ini)
+    const tmpl = path.join(os.tmpdir(), `play_${Date.now()}.%(ext)s`);
+    const dl = await runYtDlp(['-f', 'bestaudio[ext=m4a]/bestaudio', '--no-playlist', '--no-warnings',
+                               '--no-simulate', '--print', 'after_move:filepath',
+                               '-o', tmpl, pick.id], 240000);
+    const filePath = (dl.out || '').trim().split('\n').pop().trim();
+    if (!dl.ok || !filePath || !fs.existsSync(filePath)) return { ok: false, alasan: 'Gagal mengunduh audio' };
+    const rawBuf = fs.readFileSync(filePath);
+    try { fs.unlinkSync(filePath); } catch {}
+
+    // 3) Convert ke MP3 biar pasti playable di WA
+    const tmpIn  = path.join(os.tmpdir(), `play_in_${Date.now()}`);
+    const tmpOut = path.join(os.tmpdir(), `play_out_${Date.now()}.mp3`);
+    fs.writeFileSync(tmpIn, rawBuf);
+    let finalBuf = rawBuf, ffOk = false;
+    try {
+      await new Promise((resolve, reject) => {
+        const ff = spawn('ffmpeg', ['-y', '-i', tmpIn, '-vn', '-codec:a', 'libmp3lame', '-b:a', '128k', tmpOut]);
+        ff.on('error', reject);
+        ff.on('close', code => code !== 0 ? reject(new Error(`ffmpeg exit ${code}`)) : resolve());
+      });
+      finalBuf = fs.readFileSync(tmpOut);
+      ffOk = true;
+    } catch { /* kirim apa adanya */ }
+    try { fs.unlinkSync(tmpIn); } catch {}
+    try { fs.unlinkSync(tmpOut); } catch {}
+
+    const fmtDur = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+    return {
+      ok: true, buf: finalBuf, mime: ffOk ? 'audio/mpeg' : 'audio/mp4',
+      title: pick.title, artist: pick.uploader, dur: pick.duration_string || (pick.duration ? fmtDur(pick.duration) : ''),
+    };
+  }
+
   const { command, args, reply, react, sock, client, jid, sender, msg, botData, isGroup } = ctx;
   const p = botData.prefix;
 
@@ -2336,95 +2422,11 @@ module.exports = async function toolsHandler(ctx) {
       if (!qPlay) { await reply(`Penggunaan: ${p}play <judul lagu>\nContoh: ${p}play dalinda`); return true; }
       try {
         await react(mess.reactLoading);
-        const axios = require('axios');
-        const fs = require('fs');
-        const os = require('os');
-        const path = require('path');
-        const { spawn } = require('child_process');
-
-        const norm = s => String(s || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
-        const fmtDur = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
-
-        // 1) Cari kandidat: yt-dlp -J kasih durasi → buang kompilasi/full album/live loop
-        let pick = null;
-        const srch = await runYtDlp(['--flat-playlist', '--no-warnings', '-J', `ytsearch10:${qPlay}`], 90000);
-        if (srch.ok) {
-          let list = [];
-          try { list = JSON.parse(srch.out)?.entries || []; } catch {}
-          const tokens = norm(qPlay).split(' ').filter(t => t.length > 1);
-          const scored = list
-            .filter(e => e && e.id && !e.is_live && Number.isFinite(e.duration))
-            .filter(e => e.duration >= 30 && e.duration <= 600)   // 30 detik s/d 10 menit
-            .map(e => {
-              const t = norm(e.title);
-              const hit = tokens.filter(tk => t.includes(tk)).length;
-              return { ...e, _ratio: tokens.length ? hit / tokens.length : 0 };
-            })
-            .sort((a, b) => (b._ratio - a._ratio) || (a.duration - b.duration)); // paling cocok, lalu terpendek
-          pick = scored[0]
-              || list.find(e => e && e.id && Number.isFinite(e.duration) && e.duration <= 3600)  // jaring terakhir
-              || null;
-        }
-
-        // 2) Download audio pakai yt-dlp lokal (URL-nya terikat IP server ini)
-        let audioBuf = null, usedLocal = false;
-        let ytTitle = pick?.title, ytUploader = pick?.uploader, ytDur = pick?.duration_string;
-        if (pick) {
-          const tmpl = path.join(os.tmpdir(), `play_${Date.now()}.%(ext)s`);
-          const dl = await runYtDlp(['-f', 'bestaudio[ext=m4a]/bestaudio', '--no-playlist', '--no-warnings',
-                                     '--no-simulate', '--print', 'after_move:filepath',
-                                     '-o', tmpl, pick.id], 240000);
-          const lines = dl.out.split('\n').map(s => s.trim()).filter(Boolean);
-          const real = lines.reverse().find(l => l.includes(path.sep) || /\.(m4a|webm|mp3|opus|mp4|mka)$/i.test(l));
-          if (dl.ok && real && fs.existsSync(real)) {
-            audioBuf = fs.readFileSync(real);
-            usedLocal = true;
-            try { fs.unlinkSync(real); } catch {}
-          } else if (real) { try { fs.unlinkSync(real); } catch {} }
-        }
-
-        // 3) Fallback: yt-dlp nggak ada / gagal → jalur API lama (yt-search + ytmp3)
-        if (!audioBuf) {
-          const search = require('yt-search');
-          const look = await search(qPlay);
-          const inRange = (look.videos || []).filter(v => v.seconds >= 30 && v.seconds <= 600);
-          const convert = inRange[0] || look.videos?.[0];
-          if (!convert) throw new Error('Lagu tidak ditemukan');
-          const mp3 = await axios.get(`${process.env.BASE_API}api/download/ytmp3`, {
-            params: { url: convert.url }, headers: { 'X-API-Key': process.env.KEY_API }, timeout: 60000,
-          });
-          const d = mp3.data?.results;
-          if (!d?.audio?.url) throw new Error('Tidak ada audio dari konverter');
-          const m4a = Array.isArray(d.audios) ? d.audios.find(a => a.format === 'm4a') : null;
-          const chosen = m4a || d.audio;
-          const res = await axios.get(chosen.url, { responseType: 'arraybuffer', timeout: 120000 });
-          audioBuf = Buffer.from(res.data);
-          ytTitle = d.title || convert.title;
-          ytUploader = d.channel || convert.author?.name;
-          ytDur = d.duration_str || convert.timestamp;
-        }
-
-        // 4) Convert ke MP3 (ffmpeg) biar pasti playable di WA
-        const tmpIn  = path.join(os.tmpdir(), `play_in_${Date.now()}`);
-        const tmpOut = path.join(os.tmpdir(), `play_out_${Date.now()}.mp3`);
-        fs.writeFileSync(tmpIn, audioBuf);
-        let finalBuf = audioBuf, ffOk = false;
-        try {
-          await new Promise((resolve, reject) => {
-            const ff = spawn('ffmpeg', ['-y', '-i', tmpIn, '-vn', '-codec:a', 'libmp3lame', '-b:a', '128k', tmpOut]);
-            ff.on('error', reject);
-            ff.on('close', code => code !== 0 ? reject(new Error(`ffmpeg exit ${code}`)) : resolve());
-          });
-          finalBuf = fs.readFileSync(tmpOut);
-          ffOk = true;
-        } catch { /* kirim apa adanya */ }
-        try { fs.unlinkSync(tmpIn); } catch {}
-        try { fs.unlinkSync(tmpOut); } catch {}
-
+        const lagu = await ambilAudioLagu(qPlay);
+        if (!lagu.ok) throw new Error(lagu.alasan);
         await react(mess.reactSuccess);
-        await client.message.send(jid, { type: 'audio', media: finalBuf, mimetype: ffOk ? 'audio/mpeg' : 'audio/mp4' });
-        const durTxt = ytDur || (pick?.duration ? fmtDur(pick.duration) : '');
-        await reply(`🎵 *${ytTitle || qPlay}*${durTxt ? ` [${durTxt}]` : ''}\n👤 ${ytUploader || '-'}`);
+        await client.message.send(jid, { type: 'audio', media: lagu.buf, mimetype: lagu.mime });
+        await reply(`🎵 *${lagu.title || qPlay}*${lagu.dur ? ` [${lagu.dur}]` : ''}\n👤 ${lagu.artist || '-'}`);
       } catch (e) {
         await react(mess.reactError);
         const msgErr = rapikanError(e);
@@ -2698,32 +2700,49 @@ module.exports = async function toolsHandler(ctx) {
       return true;
     }
 
-    // ── spotify — Cari lagu di Spotify
-    // SEARCH pakai nama polos (.spotify); DOWNLOAD pakai akhiran dl (.spotifydl).
+    // ── spotify — Cari lagu di Spotify + langsung kirim audionya
+    // SEARCH + AUDIO pakai nama polos (.spotify); DOWNLOAD dari link pakai (.spotifydl).
+    // Audio TIDAK diambil dari Spotify (DRM tertutup) — diambil dari YouTube lewat
+    // jalur yang sama dengan `.play` (yt-dlp lokal → ffmpeg mp3).
     case 'spotify': {
       const qSpot = args.join(' ').trim();
       if (!qSpot) { await reply(`Penggunaan: ${p}spotify <judul lagu>\nContoh: ${p}spotify alan walker faded`); return true; }
+      const axios = require('axios');
       try {
         await react(mess.reactLoading);
-        const axios = require('axios');
-        const res = await axios.get(`${process.env.BASE_API}api/search/spotify`, {
-          params: { query: qSpot }, headers: { 'X-API-Key': process.env.KEY_API }, timeout: 15000,
-        });
-        const d = res.data?.results;
-        const list = Array.isArray(d) ? d : (d?.tracks || []);
-        if (!list.length) throw new Error('Lagu tidak ditemukan');
-        let text = `🎵 *Hasil Spotify: ${qSpot}*\n\n`;
-        list.slice(0, 5).forEach((s, i) => {
-          text += `*${i+1}. ${s.judul || s.title || s.name || '-'}*\n`;
-          if (s.artis || s.artist) text += `👤 ${s.artis || s.artist}\n`;
-          if (s.album)             text += `💿 ${s.album}\n`;
-          if (s.durasi || s.duration) text += `⏱️ ${s.durasi || s.duration}\n`;
-          if (s.url || s.link || s.tid) text += `🔗 ${s.url || s.link || `https://open.spotify.com/track/${s.tid}`}\n`;
-          text += '\n';
-        });
-        await reply(text.trim());
+        // 1) Metadata Spotify (opsional) — kalau API-nya sedang mati, tetap lanjut
+        let list = [], gagalMeta = false;
+        try {
+          const res = await axios.get(`${process.env.BASE_API}api/search/spotify`, {
+            params: { query: qSpot }, headers: { 'X-API-Key': process.env.KEY_API }, timeout: 15000,
+          });
+          const d = res.data?.results;
+          list = Array.isArray(d) ? d : (d?.tracks || []);
+        } catch { list = []; gagalMeta = true; }
+        const top = list[0];
+        const judulTop = top?.judul || top?.title || top?.name || qSpot;
+        const artisTop = top?.artis || top?.artist || '';
+
+        // 2) Ambil audionya dan kirim sebagai voice note + judul
+        const lagu = await ambilAudioLagu(`${judulTop} ${artisTop}`.trim());
+        if (!lagu.ok) throw new Error(lagu.alasan);
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+        await client.message.send(jid, { type: 'audio', media: lagu.buf, mimetype: lagu.mime });
+
+        const daftar = list.length
+          ? `\n\n*Hasil pencarian:*\n` + list.slice(0, 5).map((s, i) => {
+              const nm = s.judul || s.title || s.name || '-';
+              const ar = s.artis || s.artist;
+              return `*${i + 1}.* ${nm}${ar ? `\n👤 ${ar}` : ''}`;
+            }).join('\n')
+          : '';
+        await reply(`🎵 *${lagu.title || judulTop}*${lagu.dur ? ` [${lagu.dur}]` : ''}\n👤 ${lagu.artist || artisTop || '-'}` +
+                    (gagalMeta ? '\n_Info Spotify sedang tidak tersedia, audio via YouTube._' : '') + daftar);
+      } catch (e) {
+        await react(mess.reactError);
+        const msgErr = rapikanError(e);
+        await reply(`❌ Gagal ambil lagu Spotify.\n${msgErr ? `_${msgErr}_` : `Coba lagi nanti.`}`);
+      }
       return true;
     }
 
@@ -4326,34 +4345,61 @@ module.exports = async function toolsHandler(ctx) {
       return true;
     }
 
-    // ── spotify — Spotify Downloader ─────────────────────────────────────────
+    // ── spotifydl — Download lagu dari LINK Spotify
+    // Coba spotidown.app dulu; kalau sumber itu mati (reCAPTCHA / session token),
+    // otomatis jatuh ke jalur YouTube (artis + judul dari halaman Spotify).
     case 'spotifydl': {
       const url = args[0];
       if (!url) {
         await reply(`Masukkan link Spotify.\nContoh: *${p}spotifydl https://open.spotify.com/track/...*`);
         return true;
       }
+      const axios = require('axios');
+      const kirimAudio = async (buf, mime, judul, artis) => {
+        await client.message.send(jid, { type: 'audio', media: buf, mimetype: mime || 'audio/mpeg' });
+        await reply(`🎵 *${judul || 'Spotify'}*${artis ? `\n👤 ${artis}` : ''}`);
+      };
+      const kueriDariLink = async () => {
+        // oEmbed resmi Spotify → judul + artis tanpa API key
+        const oe = await axios.get('https://open.spotify.com/oembed', {
+          params: { url }, timeout: 15000,
+        });
+        const t = String(oe.data?.title || '');
+        const parts = t.split(' - ').map(s => s.trim()).filter(Boolean);
+        return {
+          judul : parts.length > 1 ? parts.slice(1).join(' - ') : t,
+          artis : parts.length > 1 ? parts[0] : '',
+        };
+      };
       try {
-        const axios = require('axios');
         await react(mess.reactLoading);
-        const { data } = await axios.get(`${process.env.BASE_API}api/download/spotify`, {
-          params: { url },
-          headers: { 'X-API-Key': process.env.KEY_API },
-          timeout: 60000,
-        });
-        const downloads = data?.results?.downloads;
-        if (!downloads || !downloads.length) throw new Error('Tidak ada hasil dari API');
-        const dl = downloads[0];
-        const dlUrl = dl.url || dl.download_url;
-        if (!dlUrl) throw new Error('URL download tidak ditemukan');
-        const res = await axios.get(dlUrl, { responseType: 'arraybuffer', timeout: 60000 });
+        let terkirim = false;
+        try {
+          const { data } = await axios.get(`${process.env.BASE_API}api/download/spotify`, {
+            params: { url },
+            headers: { 'X-API-Key': process.env.KEY_API },
+            timeout: 60000,
+          });
+          const downloads = data?.results?.downloads;
+          if (!downloads || !downloads.length) throw new Error('Tidak ada hasil dari API');
+          const dl = downloads[0];
+          const dlUrl = dl.url || dl.download_url;
+          if (!dlUrl) throw new Error('URL download tidak ditemukan');
+          const res = await axios.get(dlUrl, { responseType: 'arraybuffer', timeout: 60000 });
+          await kirimAudio(Buffer.from(res.data), 'audio/mpeg',
+                           data?.results?.title, data?.results?.artist);
+          terkirim = true;
+        } catch (eApi) {
+          // Sumber spotidown sedang mati → pakai jalur YouTube
+          const { judul, artis } = await kueriDariLink();
+          if (!judul) throw eApi;
+          const lagu = await ambilAudioLagu(`${judul} ${artis}`.trim());
+          if (!lagu.ok) throw eApi;
+          await kirimAudio(lagu.buf, lagu.mime, lagu.title || judul, lagu.artist || artis);
+          terkirim = true;
+        }
+        if (!terkirim) throw new Error('Tidak ada audio yang bisa dikirim');
         await react(mess.reactSuccess);
-        const title = data?.results?.title || 'Spotify';
-        const artist = data?.results?.artist || '';
-        await client.message.send(jid, {
-          type: 'audio', media: Buffer.from(res.data), mimetype: 'audio/mpeg',
-        });
-        await reply(`🎵 *${title}*${artist ? `\n👤 ${artist}` : ''}`);
       } catch (e) {
         await react(mess.reactError);
         await reply(`❌ Gagal download Spotify: ${rapikanError(e)}`);
