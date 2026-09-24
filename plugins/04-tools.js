@@ -2121,8 +2121,8 @@ module.exports = async function toolsHandler(ctx) {
           const d = data?.results;
           if (!d) throw new Error('Data harga nggak tersedia');
           const grup = [
-            ['🥇 Logam Mulia', [d.logam_mulia]],
-            ['📉 Indeks',      [d.indeks]],
+            ['🥇 Logam Mulia', d.logam_mulia],
+            ['📉 Indeks',      d.indeks],
             ['💱 Forex',       d.forex],
             ['🪙 Crypto',      d.crypto],
             ['📈 Saham',       d.saham],
@@ -2136,7 +2136,7 @@ module.exports = async function toolsHandler(ctx) {
             for (const it of items) teks += `${it.symbol.replace(/=X$|\.JK$/, '')} — ${it.harga_format}${panah(it.perubahan_persen)}\n`;
           }
           // Yang gagal jangan disembunyiin, tapi juga jangan bikin pesan penuh.
-          const gagal = (d.daftar || []).filter((x) => x.error).map((x) => x.key.replace(/=X$|\.JK$/, ''));
+          const gagal = (d.gagal || []).map((x) => x.symbol.replace(/=X$|\.JK$/, ''));
           if (gagal.length) teks += `\n_${gagal.join(', ')} lagi nggak kebaca._`;
           teks += `\n\nKetik ${p}harga <simbol> buat detail — mis. ${p}harga BBCA.JK`;
           await reply(teks.trim());

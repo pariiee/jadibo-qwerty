@@ -127,12 +127,12 @@ const ctxHarga = (command, args) => {
   const ln = (symbol, harga_format, perubahan_persen = '1,10%') => ({ symbol, nama: symbol, jenis: 'EQUITY', harga_format, perubahan_persen });
   jawab = () => ({ data: { results: {
     mode: 'ringkasan',
-    logam_mulia: { ...ln('XAUUSD', '$4.257,10'), jenis: 'LOGAM_MULIA', harga_idr: 76172292, updated_at: '2026-09-24T16:01:26Z' },
-    indeks: ln('^JKSE', '7.123,45', '-0,30%'),
-    forex: [ln('USDIDR=X', 'Rp16.150'), ln('EURUSD=X', '1,1374', '-0,20%')],
+    logam_mulia: [{ ...ln('XAUUSD', '$4.257,10'), jenis: 'LOGAM_MULIA', harga_idr: 76172292, updated_at: '2026-09-24T16:01:26Z' }],
+    indeks: [ln('^JKSE', '7.123,45', '-0,30%')],
+    forex: [ln('USDIDR=X', 'Rp16.150'), ln('EURUSD=X', '$1,1374', '-0,20%')],
     crypto: [ln('BTC-USD', '$110.000')],
     saham: [ln('BBCA.JK', 'Rp6.225', '-1,19%'), ln('AAPL', '$336,75')],
-    daftar: [ln('XAUUSD', '$4.257,10'), { key: 'ETH-USD', error: 'timeout' }],
+    gagal: [{ symbol: 'ETH-USD', error: 'Ada gangguan di server.' }],
   } } });
   const semua = ctxHarga('harga', []);
   assert.strictEqual(await handler(semua.ctx), true, '.harga tanpa argumen tetap ditangani');
