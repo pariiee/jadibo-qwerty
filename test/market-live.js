@@ -15,7 +15,7 @@ const teks = [];
 
 const ctx = {
   isCmd: true,
-  command: 'harga',
+  command: 'market',
   args,
   prefix: '.',
   jid: 'uji@s.whatsapp.net',
