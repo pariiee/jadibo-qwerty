@@ -4606,10 +4606,13 @@ module.exports = async function toolsHandler(ctx) {
       try {
         const axios = require('axios');
         await react(mess.reactLoading);
+        // Player API TikTok sering menggantung ~31 dtk lalu upstream balas 503.
+        // Bot WA timeout 30 dtk → user cuma lihat "timeout". Lewat 9 dtk kita
+        // lekas pindah ke sumber cadangan (snaptik.app, terukur ~0,6 dtk).
         const { data } = await axios.get(`${process.env.BASE_API}api/download/tiktok`, {
           params: { url },
           headers: { 'X-API-Key': process.env.KEY_API },
-          timeout: 30000,
+          timeout: 20000,
         });
         const res     = data?.results || {};
         const title   = res.title  || '';
