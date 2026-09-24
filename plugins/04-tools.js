@@ -2710,15 +2710,15 @@ module.exports = async function toolsHandler(ctx) {
           params: { query: qSpot }, headers: { 'X-API-Key': process.env.KEY_API }, timeout: 15000,
         });
         const d = res.data?.results;
-        if (!d) throw new Error('Lagu tidak ditemukan');
-        const list = Array.isArray(d) ? d : [d];
+        const list = Array.isArray(d) ? d : (d?.tracks || []);
+        if (!list.length) throw new Error('Lagu tidak ditemukan');
         let text = `🎵 *Hasil Spotify: ${qSpot}*\n\n`;
         list.slice(0, 5).forEach((s, i) => {
           text += `*${i+1}. ${s.judul || s.title || s.name || '-'}*\n`;
           if (s.artis || s.artist) text += `👤 ${s.artis || s.artist}\n`;
           if (s.album)             text += `💿 ${s.album}\n`;
           if (s.durasi || s.duration) text += `⏱️ ${s.durasi || s.duration}\n`;
-          if (s.url || s.link)     text += `🔗 ${s.url || s.link}\n`;
+          if (s.url || s.link || s.tid) text += `🔗 ${s.url || s.link || `https://open.spotify.com/track/${s.tid}`}\n`;
           text += '\n';
         });
         await reply(text.trim());

@@ -1240,24 +1240,6 @@ module.exports = async function funRpgHandler(ctx) {
       return true;
     }
 
-    // ── bahan — bahan mentah hasil tambang/kebon/tebang ───────────────────────
-    case 'bahan': {
-      try {
-        const m     = await getOrCreateMember(botData.id, sender, pushName);
-        if (!m) { await reply('Bahan lu belum kebaca nih — coba ulang sebentar lagi.'); return true; }
-        const bahan = bacaBahan(m);
-        const rows  = Object.entries(bahan).filter(([, n]) => Number(n) > 0)
-          .sort((a, b) => a[0].localeCompare(b[0]));
-        await reply(
-          `🧺 *Bahan Mentah*\n\n` +
-          (rows.length ? rows.map(([n, j]) => `• ${n} ×${j}`).join('\n') : '_Belum ada bahan._') +
-          `\n\n⛏️ ${p}tambang · 🌾 ${p}kebon · 🪓 ${p}tebang` +
-          `\n🔨 Olah jadi item: ${p}craft`
-        );
-      } catch (e) { await reply(`Gagal: ${rapikanError(e)}`); }
-      return true;
-    }
-
     case 'pakai': {
       try {
         const id = parseInt((args[0] || '').trim(), 10);
