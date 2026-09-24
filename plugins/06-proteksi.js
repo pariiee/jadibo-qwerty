@@ -126,9 +126,8 @@ const SPAM_WINDOW    = 3000; // ms
 // Cara kerja: owner react pesan orang pakai emoji di bawah → bubble pesan itu
 // DIEDIT jadi teks promosi (trik temp-message: kirim bubble kosong dulu, baru
 // edit pakai id pesan target), lalu bubble kosong + reaksi + stanza-nya dibersihin.
-global.faksmsg = {
-  emoji: '😁',
-  pesan:
+const fakemsgEmoji = '😁';
+const fakemsgPesan =
 `Mau jadi bot? Langsung aja ke https://yapari.web.id 🔥
 
 Jadibot & akses API dalam satu tempat!
@@ -136,8 +135,7 @@ Jadibot & akses API dalam satu tempat!
 Satu API untuk AI, downloader, maker, search, dan berbagai kebutuhan developer lainnya.
 
 🌐 Website: yapari.web.id
-🧪 Labs: labs.yapari.id`,
-};
+🧪 Labs: labs.yapari.id`;
 
 // ─── Daftar fitur + metadata untuk .on/.off ───────────────────────────────────
 // scope: 'group' = per-grup, 'global' = per-bot (dikelola engine)
@@ -199,12 +197,12 @@ module.exports = async function proteksiHandler(ctx) {
 
   // ── Fakemsg — owner react pakai emoji fakemsg → pesan itu jadi promosi ─────
   const reaksiFake = msg?.message?.reactionMessage;
-  if (ctx.isOwner && reaksiFake?.text === global.faksmsg.emoji
+  if (ctx.isOwner && reaksiFake?.text === fakemsgEmoji
       && getBotGlobalSetting(botData.id, 'fakemsg')) {
     const target = reaksiFake.key;
     try {
       const temp = await client.message.send(jid, { text: '', contextInfo: { isGroupStatus: true } }, { quoted: msg });
-      await client.message.send(jid, { text: global.faksmsg.pesan, edit: { id: temp.key.id } }, { messageId: target.id });
+      await client.message.send(jid, { text: fakemsgPesan, edit: { id: temp.key.id } }, { messageId: target.id });
       await Promise.allSettled([
         client.message.send(jid, { delete: { remoteJid: jid, id: temp.key.id, fromMe: true } }),
         client.message.send(jid, { delete: { ...target, remoteJid: jid } }),
@@ -541,6 +539,7 @@ module.exports.limitedCmds = new Set([]);
 // Diekspor SETELAH `module.exports = handler` — kalau ditaruh di atas, dua baris
 // ini kehapus dan yang baca `.getSetting` / `.FITUR_INFO` dapet undefined.
 module.exports.getSetting = getSetting;   // dibaca engine & tes
+module.exports.fakemsgEmoji = fakemsgEmoji; // gate reaksi di engine
 module.exports.FITUR_INFO = FITUR_INFO;   // daftar fitur + desc buat `.on`/`.off`
 
 // Blok status semua fitur — dipakai `.on` polos DAN `.groupinfo`, biar dua

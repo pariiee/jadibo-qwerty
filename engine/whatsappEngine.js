@@ -135,6 +135,16 @@ function loadPlugins() {
 
 const PLUGIN_LIMITED_CMDS = buildLimitedCmds(path.resolve('./plugins'));
 
+// Emoji fakemsg buat gate reaksi (baris ~547). `fakemsgEmoji` di-export plugin,
+// tapi plugin cuma ke-load kalau callernya udah siap — kalau nggak, gate ini
+// bakal nolak terus dan fitur mati tanpa jejak. Karena itu emoji-nya juga
+// ditulis di FITUR_INFO, dan itu yang jadi sumber utama.
+const FAKEMSG_EMOJI = (() => {
+  const fallback = Object.values(require('./../plugins/06-proteksi.js').FITUR_INFO || {})
+    .find(f => f && f.scope === 'global' && f.emoji)?.emoji;
+  return require('./../plugins/06-proteksi.js').fakemsgEmoji || fallback;
+})();
+
 // Command yang tetap jalan walau grupnya dibisukan — tanpa ini nggak ada
 // jalan keluar dari `.mute` selain restart bot.
 const BEBAS_SAAT_MUTE = new Set(['unmute', 'listmute']);
@@ -545,7 +555,7 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
     // Reaksi owner pakai emoji fakemsg tetap diteruskan ke plugin (.on fakemsg);
     // reaksi lain dibuang — reaksi bukan pesan, nggak usah dihitung/dibalas.
     const reaksiFakemsg = msgType === 'reactionMessage'
-      && message.reactionMessage?.text === global.faksmsg?.emoji
+      && message.reactionMessage?.text === FAKEMSG_EMOJI
       && getBotGlobalSetting(botId, 'fakemsg');
     if (SKIP_TYPES.includes(msgType) && !reaksiFakemsg) return;
     if (msgType === 'protocolMessage' && !isDeleteEvent) return;
