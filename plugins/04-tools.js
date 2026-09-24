@@ -2105,7 +2105,9 @@ module.exports = async function toolsHandler(ctx) {
     case 'forex':
     case 'kurs':
     case 'emas':
-    case 'gold': {
+    case 'gold':
+    case 'xau':
+    case 'silver': {
       const IKON = { EQUITY: '📈', CRYPTOCURRENCY: '🪙', CURRENCY: '💱', INDEX: '📉', LOGAM_MULIA: '🥇' };
       const ikon = (j) => IKON[j] || '📊';
       // `perubahan_persen` dari API udah string ("-1.19%") — panah ngikut tandanya.
@@ -5754,7 +5756,7 @@ module.exports.keyMatch      = keyMatch;
 // Command yang kena limit untuk user biasa
 module.exports.limitedCmds = new Set([
   'sticker','s','wm','poll','readmore','base64','kalkulator','removebg','rbg',
-  'harga','saham','crypto','koin','forex','kurs','emas','gold',
+  'harga','saham','crypto','koin','forex','kurs','emas','gold','xau','silver',
   'pick','tourl','upload','pay','rvo','readviewonce','readvo',
   'tovn','2vo','todoc',
   'tanyaimg','ailyrics','buatlirik','chatgpt','gpt','resetgpt','gemini','resetgemini','toghibli','ghibli','ai','deepai','resetdeepai',

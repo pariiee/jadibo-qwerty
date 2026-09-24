@@ -48,7 +48,7 @@ const handler = require('../plugins/04-tools');
 const { ALL_COMMANDS, CATS } = require('../plugins/01-info');
 const { limitedCmds } = require('../plugins/04-tools');
 
-const NAMA = ['harga', 'saham', 'crypto', 'koin', 'forex', 'kurs', 'emas', 'gold'];
+const NAMA = ['harga', 'saham', 'crypto', 'koin', 'forex', 'kurs', 'emas', 'gold', 'xau', 'silver'];
 
 // ── 1. Kecatat di menu + kena limit ─────────────────────────────────────────
 for (const c of NAMA) {
