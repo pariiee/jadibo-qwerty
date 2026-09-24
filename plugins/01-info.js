@@ -90,7 +90,7 @@ const ALL_COMMANDS = [...new Set([
   'antispam','antitagsw','autosticker','antisticker','viewonce',
   // autolevelup nggak didaftarin — fitur wajib, nggak bisa di-on/off-in, cuma
   // dikasih tau statusnya di `.on` (nggak ikut dihitung sebagai toggle).
-  'detect','autoacc','document','nyimak','autoread',
+  'detect','autoacc','document','nyimak','autoread','didyoumean','fakemsg',
   // Fun & Game
   'profile','me','jodoh','suitpvp','rpg','claim','store','beli','inventory','pakai','repair','topkoin',
   'unreg','kerja','transfer','tf','coinflip','cf','tictactoe','ttt',

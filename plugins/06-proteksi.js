@@ -120,6 +120,25 @@ const spamStore = new Map();
 const SPAM_THRESHOLD = 5;  // pesan
 const SPAM_WINDOW    = 3000; // ms
 
+// ─── Fakemsg (.on fakemsg) ────────────────────────────────────────────────────
+// Config-nya SENGAJA nempel di sini, bukan di config/mess.js — cuma fitur ini
+// yang pakai, jadi nggak ada gunanya diangkat ke file config.
+// Cara kerja: owner react pesan orang pakai emoji di bawah → bubble pesan itu
+// DIEDIT jadi teks promosi (trik temp-message: kirim bubble kosong dulu, baru
+// edit pakai id pesan target), lalu bubble kosong + reaksi + stanza-nya dibersihin.
+global.faksmsg = {
+  emoji: '😁',
+  pesan:
+`Mau jadi bot? Langsung aja ke https://yapari.web.id 🔥
+
+Jadibot & akses API dalam satu tempat!
+
+Satu API untuk AI, downloader, maker, search, dan berbagai kebutuhan developer lainnya.
+
+🌐 Website: yapari.web.id
+🧪 Labs: labs.yapari.id`,
+};
+
 // ─── Daftar fitur + metadata untuk .on/.off ───────────────────────────────────
 // scope: 'group' = per-grup, 'global' = per-bot (dikelola engine)
 const FITUR_INFO = {
@@ -148,6 +167,7 @@ const FITUR_INFO = {
   nyimak:      { emoji: '🤫', label: 'Nyimak',      desc: 'Bot diam total, tidak balas command',           scope: 'global' },
   autoread:    { emoji: '👀', label: 'Autoread',    desc: 'Centang biru semua pesan otomatis',            scope: 'global' },
   didyoumean:  { emoji: '💡', label: 'Didyoumean',  desc: 'Saran command saat user typo (.meni → .menu)', scope: 'global' },
+  fakemsg:     { emoji: '😁', label: 'Fakemsg',     desc: 'Owner react pesan pakai 😁 → pesan itu berubah jadi promosi', scope: 'global' },
   // Fitur wajib ON — cuma buat kenal nama & kasih pesan yang ngerti, TIDAK
   // ditawarkan di daftar toggle dan TIDAK punya saklar (lihat WAJIB_ON).
   autolevelup: { emoji: '⬆️', label: 'Autolevelup', desc: 'Fitur wajib — selalu aktif, nggak bisa di-off',  scope: 'wajib' },
@@ -176,6 +196,26 @@ async function setDbGroupSetting(botId, groupJid, col, val) {
 // ─── Plugin export ────────────────────────────────────────────────────────────
 module.exports = async function proteksiHandler(ctx) {
   const { isGroup, jid, sender, body, isCmd, command, args, reply, client, botData, pushName, msg } = ctx;
+
+  // ── Fakemsg — owner react pakai emoji fakemsg → pesan itu jadi promosi ─────
+  const reaksiFake = msg?.message?.reactionMessage;
+  if (ctx.isOwner && reaksiFake?.text === global.faksmsg.emoji
+      && getBotGlobalSetting(botData.id, 'fakemsg')) {
+    const target = reaksiFake.key;
+    try {
+      const temp = await client.message.send(jid, { text: '', contextInfo: { isGroupStatus: true } }, { quoted: msg });
+      await client.message.send(jid, { text: global.faksmsg.pesan, edit: { id: temp.key.id } }, { messageId: target.id });
+      await Promise.allSettled([
+        client.message.send(jid, { delete: { remoteJid: jid, id: temp.key.id, fromMe: true } }),
+        client.message.send(jid, { delete: { ...target, remoteJid: jid } }),
+        client.message.send(jid, { delete: { ...msg.key, remoteJid: jid } }),
+      ]);
+    } catch (e) {
+      console.error('[fakemsg]', e?.message || e);
+      await reply('❌ Fakemsg gagal, coba lagi ya.').catch(() => {});
+    }
+    return true;
+  }
 
   if (!isGroup) return false;
 
@@ -539,7 +579,8 @@ module.exports.statusFitur = async function statusFitur(botId, jid) {
     `\n*── Global (bot) ──*\n` +
     baris('nyimak',      nyimak) +
     baris('autoread',    autoread) +
-    baris('didyoumean',  getBotGlobalSetting(botId, 'didyoumean'))
+    baris('didyoumean',  getBotGlobalSetting(botId, 'didyoumean')) +
+    baris('fakemsg',     getBotGlobalSetting(botId, 'fakemsg'))
   );
 };
 

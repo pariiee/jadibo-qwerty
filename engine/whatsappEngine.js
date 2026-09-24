@@ -542,7 +542,12 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
     // Skip pesan sistem (encryption handshake, dll) — bukan pesan user
     // Tapi protocolMessage type 0 (delete) tetap diteruskan untuk antidelete
     const SKIP_TYPES = ['senderKeyDistributionMessage', 'reactionMessage'];
-    if (SKIP_TYPES.includes(msgType)) return;
+    // Reaksi owner pakai emoji fakemsg tetap diteruskan ke plugin (.on fakemsg);
+    // reaksi lain dibuang — reaksi bukan pesan, nggak usah dihitung/dibalas.
+    const reaksiFakemsg = msgType === 'reactionMessage'
+      && message.reactionMessage?.text === global.faksmsg?.emoji
+      && getBotGlobalSetting(botId, 'fakemsg');
+    if (SKIP_TYPES.includes(msgType) && !reaksiFakemsg) return;
     if (msgType === 'protocolMessage' && !isDeleteEvent) return;
 
     await incrementStat('total_messages');
