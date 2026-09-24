@@ -1923,12 +1923,12 @@ module.exports = async function toolsHandler(ctx) {
         if (!hasil.subarray(0, 4).equals(Buffer.from([0x89, 0x50, 0x4E, 0x47]))) {
           throw new Error('Balasan API bukan gambar PNG');
         }
-        // DOKUMEN, bukan image: WA nge-JPEG ulang image message → alpha-nya hilang.
+        // Image message + mimetype image/png: baileys ngunggah byte APA ADANYA
+        // (nggak re-encode), jadi alpha tetep utuh.
         await client.message.send(jid, {
-          type: 'document',
+          type: 'image',
           media: hasil,
           mimetype: 'image/png',
-          fileName: `nobg_${Date.now()}.png`,
         });
         await react(mess.reactSuccess);
       } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${rapikanError(e)}`); }

@@ -3,7 +3,8 @@
  * test/removebg-command.js
  * `.removebg` / `.rbg`: gambar dikirim ke endpoint YaPari `api/tools/removebg`
  * (mode `url`, jadi buffer WA di-upload dulu), hasilnya dikirim balik sebagai
- * DOKUMEN PNG — bukan image message, karena WA nge-JPEG ulang image → alpha rusak.
+ * IMAGE message (mimetype image/png) — baileys upload byte apa adanya, jadi
+ * alpha transparan tetep utuh.
  *
  * Handler dijalankan beneran dengan ctx palsu; axios & engine/api di-stub biar
  * nggak nembak jaringan.
@@ -95,14 +96,13 @@ const ctxGambar = (command, quoted) => {
 
     const out = h.kirim[0];
     assert.ok(out, `.${cmd} harus ngirim hasil`);
-    assert.strictEqual(out.type, 'document', `.${cmd} harus kirim sebagai DOKUMEN (image message bikin alpha hilang)`);
-    assert.strictEqual(out.mimetype, 'image/png', `.${cmd} mimetype harus image/png`);
-    assert.ok(/\.png$/.test(out.fileName), `.${cmd} nama file harus .png, dapat: ${out.fileName}`);
+    assert.strictEqual(out.type, 'image', `.${cmd} harus kirim sebagai IMAGE (bukan dokumen)`);
+    assert.strictEqual(out.mimetype, 'image/png', `.${cmd} mimetype harus image/png biar alpha nggak ilang`);
     assert.ok(out.media.subarray(0, 4).equals(PNG.subarray(0, 4)), `.${cmd} isi harus PNG apa adanya`);
     assert.ok(h.reacts.includes('✅'), `.${cmd} harus react sukses tanpa ada reply error`);
     assert.strictEqual(h.balasan.length, 0, `.${cmd} sukses nggak boleh ada balasan error: ${h.balasan}`);
   }
-  console.log('✓ 2. reply gambar -> upload -> GET ?url= -> dokumen PNG (removebg & rbg)');
+  console.log('✓ 2. reply gambar -> upload -> GET ?url= -> image PNG (removebg & rbg)');
 
   // ── 3. Tanpa gambar → kasih contoh pakai, jangan nembak API ────────────────
   const kosong = ctxGambar('removebg', false);
