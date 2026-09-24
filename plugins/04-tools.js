@@ -2758,8 +2758,14 @@ module.exports = async function toolsHandler(ctx) {
           else if (s.url || s.link) text += `🔗 ${s.url || s.link}\n`;
           text += '\n';
         });
-        text += `_Mau audionya? ${p}spotifydl <link> atau ${p}play <judul>_`;
+        text += `_Download lagu lain: ${p}spotifydl <link>_`;
         await reply(text);
+
+        // Rekomendasi #1 langsung dikirim jadi audio (artis+judul dari Spotify)
+        const top  = list[0];
+        const lagu = await ambilAudioLagu(`${top.name || qSpot} ${(top.artist || '').split(',')[0]}`.trim());
+        if (!lagu.ok) { await react(mess.reactError); await reply(`❌ Gagal ambil audionya.\n_${lagu.alasan || 'Coba lagi nanti.'}_`); return true; }
+        await client.message.send(jid, { type: 'audio', media: lagu.buf, mimetype: lagu.mime });
         await react(mess.reactSuccess);
       } catch (e) {
         await react(mess.reactError);
