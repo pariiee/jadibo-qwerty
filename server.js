@@ -179,11 +179,20 @@ app.put('/api/admin/billing/settings',                auth.requireAuth, auth.req
 // dirangkai di sini, jadi halaman baru cukup <link> + include, tanpa duplikat.
 const PUBLIC_HTML = path.join(__dirname, 'public');
 const INCLUDE_RE  = /<!--\s*@include\s+([\w.\/-]+)\s*-->/g;
+// Versi aset = mtime file. Dipakai di halaman() supaya URL aset berubah tiap
+// file diubah; tanpa ini browser + Cloudflare menyajikan CSS/JS lama sampai 4 jam.
+const mtimeAset = (p) => {
+  try { return Math.round(fs.statSync(path.join(PUBLIC_HTML, p)).mtimeMs); }
+  catch { return 0; }
+};
+
 const halaman = (nama) => (_, res) => {
   try {
     const html = fs.readFileSync(path.join(PUBLIC_HTML, nama), 'utf8')
       .replace(INCLUDE_RE, (_, f) =>
-        fs.readFileSync(path.join(PUBLIC_HTML, 'partials', f), 'utf8'));
+        fs.readFileSync(path.join(PUBLIC_HTML, 'partials', f), 'utf8'))
+      .replace(/(\/(?:assets|js)\/[\w.-]+\.(?:css|js))"/g,
+        (m, p) => `${p}?v=${mtimeAset(p)}"`);
     res.type('html').send(html);
   } catch (e) {
     console.error('[Page]', nama, e.message);

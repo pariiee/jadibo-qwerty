@@ -56,7 +56,15 @@ body.page-index .logo-badge{width:32px;height:32px;background:var(--acc);border-
 .pill-dot{width:6px;height:6px;border-radius:50%;background:var(--ok)}
 .hero h1{font-size:34px;line-height:1.1;font-weight:800;letter-spacing:-1px;margin-bottom:20px}
 @media(min-width:768px){.hero h1{font-size:50px}}
-.hero h1 .grad{background:linear-gradient(120deg,var(--txt),var(--acc));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+/* WAJIB shorthand `background`+`background-clip` dalam SATU deklarasi:
+   menimpa `background-image` saja TIDAK cukup — clip dari rule ini tetap
+   berlaku dan teks jadi KOTAK gradient (bukan huruf).
+   `color:transparent` wajib ada utk Safari: kalau -webkit-text-fill-color
+   diabaikan, Safari pakai `color` → teks tetap transparan. */
+.hero h1 .grad{background:linear-gradient(120deg,var(--txt),var(--acc));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+@supports not ((-webkit-background-clip:text) or (background-clip:text)){
+  .hero h1 .grad{background:none;-webkit-text-fill-color:var(--txt);color:var(--txt)}
+}
 .hero .sub{color:var(--muted);font-size:17px;line-height:1.7;max-width:520px;margin-bottom:32px}
 .hero-btns{display:flex;gap:12px;flex-wrap:wrap}
 .hero-trust{display:flex;flex-wrap:wrap;gap:20px 44px;margin-top:48px;padding-top:32px;border-top:1px solid var(--border)}
