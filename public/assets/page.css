@@ -33,8 +33,8 @@ body.page-index .logo-badge{width:32px;height:32px;background:var(--acc);border-
 @media(min-width:768px){.nav-links{display:flex}}
 .nav-links a{position:relative;transition:color .16s}
 .nav-links a:hover{color:var(--txt)}
-.nav-links a::after{content:'';position:absolute;left:0;right:100%;bottom:-5px;height:2px;border-radius:2px;background:var(--acc);transition:right .24s cubic-bezier(.22,1,.36,1)}
-.nav-links a:hover::after{right:0}
+/* aturan garis bawah + state aktif pindah ke assets/motion.css bareng
+   sisa animasinya (satu tempat buat semua urusan gerak) */
 .nav-actions{display:flex;gap:8px;align-items:center}
 @media(max-width:560px){
   .nav-in{gap:8px}
@@ -132,12 +132,9 @@ body.page-index .hero-l>*:nth-child(3){animation-delay:.12s}
 body.page-index .hero-l>*:nth-child(4){animation-delay:.18s}
 body.page-index .hero-l>*:nth-child(5){animation-delay:.24s}
 body.page-index .hero-visual{animation:yb-rise .7s .12s cubic-bezier(.22,1,.36,1) both}
-/* reveal saat di-scroll — native CSS scroll timeline, opacity saja biar hover tetap jalan */
-@supports (animation-timeline: view()){
-  body.page-index .sec-label,body.page-index h2,body.page-index .stat,body.page-index .card,body.page-index .faq-item,
-  body.page-index .step,body.page-index .price-card,body.page-index .tst{
-    animation:yb-fade linear both;animation-timeline:view();animation-range:entry 12% entry 78%}
-}
+/* Reveal saat di-scroll sudah pindah ke assets/motion.css (dijalankan
+   animation-timeline: view()). Jangan ditulis lagi di sini — dua rule
+   `animation` di elemen yang sama bikin yang kalah jadi kode mati. */
 /* Cara kerja — nomor bulat + garis sambung antar langkah */
 .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-bottom:26px}
 .step{position:relative;background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--border);border-radius:18px;padding:24px;transition:transform .2s ease,border-color .2s ease}

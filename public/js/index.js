@@ -158,7 +158,22 @@
   fetch('/api/auth/me', { credentials: 'include' }).then(r => r.json()).then(d => {
     if (d.ok) location.href = '/dashboard';
   }).catch(() => {});
+  // ── Scroll-spy navbar ───────────────────────────────────────────
+  // Nggak mindahin apa pun, cuma nandain tautan yang lagi dibaca.
+  // Batasnya sempit (-45% atas, -50% bawah) = pita tipis di tengah layar,
+  // jadi cuma satu bagian yang "menang" walaupun dua section kelihatan.
+  const tautan = Array.prototype.slice.call(document.querySelectorAll('.nav-links a[href^="#"]'));
+  if (tautan.length && 'IntersectionObserver' in window) {
+    const io = new IntersectionObserver(function (es) {
+      es.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        tautan.forEach(function (a) { a.classList.toggle('active', a.getAttribute('href') === '#' + e.target.id); });
+      });
+    }, { rootMargin: '-45% 0px -50% 0px' });
+    tautan.forEach(function (a) { const s = document.querySelector(a.getAttribute('href')); if (s) io.observe(s); });
+  }
+
 window.toggleTheme = toggleTheme; window.openAuth = openAuth; window.closeAuth = closeAuth;
-window.switchAuth = switchAuth; window.openFaq = openFaq; window.toggleFaq = toggleFaq;
+window.switchAuth = switchAuth;
 
 })();

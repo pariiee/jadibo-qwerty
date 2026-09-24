@@ -1,0 +1,139 @@
+/* ══════════════════════════════════════════════════════════════════
+   motion.css — gerak & "hidup"-nya halaman
+   Dimuat PALING BELAKANG (lihat partials/head.html).
+
+   Kenapa file ini ada padahal theme.css & page.css sudah punya animasi:
+
+   1. Semua efek di sini nol JS. `animation-timeline: scroll()/view()`
+      mengikat animasi ke posisi scroll langsung di compositor — nggak
+      ada event listener, nggak ada jank di HP. Browser yang belum
+      dukung cuma kehilangan animasinya, tampilannya tetap utuh
+      (makanya semuanya dibungkus @supports).
+
+   2. Animasi kartu SENGAJA dipisah dari rule `.card` di page.css.
+      `animation` menang di cascade atas `transform` biasa, jadi kalau
+      ditaruh di rule yang sama, hover `translateY(-4px)` yang sudah ada
+      mati. Di sini yang dianimasikan `scale`+`opacity`, transform-nya
+      dibiarkan bebas buat hover.
+
+   Aturan main: tiap efek WAJIB punya jalan keluar untuk
+   `prefers-reduced-motion: reduce` (blok terakhir).
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── 1. Keyframes ─────────────────────────────────────────────────── */
+@keyframes m-navdrop { from{ opacity:0; transform:translateY(-14px) } }
+@keyframes m-nav     { from{ background-color:transparent; border-bottom-color:transparent; box-shadow:none }
+                       to  { background-color:var(--barBg); box-shadow:0 12px 32px -24px rgba(16,24,40,.55) } }
+@keyframes m-baca    { from{ transform:scaleX(0) } to{ transform:scaleX(1) } }
+@keyframes m-grad    { 0%,100%{ background-position:0% 50% } 50%{ background-position:100% 50% } }
+@keyframes m-shine   { from{ transform:translateX(-130%) skewX(-18deg) } to{ transform:translateX(230%) skewX(-18deg) } }
+@keyframes m-fade    { from{ opacity:0 } }
+@keyframes m-pop     { from{ opacity:0; transform:translateY(18px) scale(.975) } }
+
+/* ── 2. Navbar ────────────────────────────────────────────────────── */
+/* turun pelan saat halaman pertama dibuka */
+nav{animation:m-navdrop .5s cubic-bezier(.22,1,.36,1) both}
+/* tautan muncul berurutan (di HP tautannya memang disembunyikan page.css) */
+.nav-links a{animation:m-fade .5s ease-out both}
+.nav-links a:nth-child(1){animation-delay:.08s}
+.nav-links a:nth-child(2){animation-delay:.13s}
+.nav-links a:nth-child(3){animation-delay:.18s}
+.nav-links a:nth-child(4){animation-delay:.23s}
+.nav-links a:nth-child(5){animation-delay:.28s}
+/* transparan di paling atas → jadi kaca + garis + bayangan begitu
+   halaman digeser 90px. Semua di compositor, nol scroll listener. */
+@media (prefers-reduced-motion:no-preference){
+  @supports (animation-timeline:scroll()){
+    nav{animation:m-navdrop .5s cubic-bezier(.22,1,.36,1) both,m-nav linear both;
+        animation-timeline:auto,scroll(root block);
+        animation-range:normal,0 90px}
+  }
+}
+/* tautan yang lagi dibaca (dipasang index.js) */
+.nav-links a.active{color:var(--txt)}
+/* garis bawah jalan dari TENGAH keluar (dulu dari kiri: left:0;right:100%) */
+.nav-links a::after{content:'';position:absolute;left:50%;right:50%;bottom:-5px;height:2px;border-radius:2px;
+  background:var(--acc);transition:left .24s cubic-bezier(.22,1,.36,1),right .24s cubic-bezier(.22,1,.36,1)}
+.nav-links a:hover::after,.nav-links a.active::after{left:0;right:0}
+/* anchor jangan nyempil di bawah navbar yang menempel */
+html{scroll-behavior:smooth;scroll-padding-top:76px}
+
+/* ── 3. Batang progres baca (div#baca di index.html) ──────────────── */
+#baca{display:none}
+@media (prefers-reduced-motion:no-preference){
+  @supports (animation-timeline:scroll()){
+    #baca{display:block;position:fixed;left:0;top:0;height:2px;width:100%;z-index:45;
+      pointer-events:none;transform-origin:0 50%;transform:scaleX(0);
+      background:linear-gradient(90deg,var(--acc),var(--acc2));
+      animation:m-baca linear both;animation-timeline:scroll(root block)}
+  }
+}
+
+/* ── 4. Judul hero: gradient yang bergerak ────────────────────────── */
+/* HANYA background-image/size/position yang diubah. Jangan pernah
+   pakai shorthand `background:` di sini — itu menghapus
+   `background-clip:text` dari glass.css dan judulnya jadi kotak
+   gradient (bug "kaya disensor"). */
+/* Warna ujung SENGAJA --txt dua kali (awal & akhir) supaya rata-rata
+   warna teks tetap sama seperti sebelum dianimasikan — yang bergerak cuma
+   sorotan hijaunya. Kalau ujungnya beda, judulnya ikut berubah gelap/terang
+   saat animasi jalan dan kelihatan seperti "keblur" lagi. */
+@media (prefers-reduced-motion:no-preference){
+  .hero h1 .grad{
+    background-image:linear-gradient(120deg,var(--txt),var(--accTxt),var(--txt));
+    background-size:220% 100%;background-position:0% 50%;
+    animation:m-grad 14s ease-in-out infinite}
+}
+
+/* ── 5. Reveal saat di-scroll (native scroll timeline, nol JS) ────── */
+@media (prefers-reduced-motion:no-preference){
+  @supports (animation-timeline:view()){
+    body.page-index .sec-label,body.page-index h2,
+    body.page-index .stat,body.page-index .card,body.page-index .step,
+    body.page-index .price-card,body.page-index .tst,body.page-index .faq-item{
+      animation:m-fade linear both;animation-timeline:view();animation-range:entry 4% entry 42%}
+    /* kartu terasa "diangkat" pas masuk layar — scale, bukan translateY,
+       supaya hover di page.css tetap bisa jalan */
+    body.page-index .stat,body.page-index .card,body.page-index .step,
+    body.page-index .price-card,body.page-index .tst{
+      animation-name:m-pop;animation-range:entry 2% entry 38%}
+    /* baris bertingkat: baris ke-2 & ke-3 nyusul */
+    body.page-index .feat>.card:nth-child(2),body.page-index .stats>.stat:nth-child(2),
+    body.page-index .steps>.step:nth-child(2),body.page-index .price-grid>*:nth-child(2),
+    body.page-index .tst-grid>*:nth-child(2){animation-delay:90ms}
+    body.page-index .feat>.card:nth-child(3),body.page-index .stats>.stat:nth-child(3),
+    body.page-index .steps>.step:nth-child(3),body.page-index .price-grid>*:nth-child(3),
+    body.page-index .tst-grid>*:nth-child(3){animation-delay:180ms}
+    body.page-index .feat>.card:nth-child(4){animation-delay:270ms}
+    body.page-index .feat>.card:nth-child(5){animation-delay:360ms}
+    body.page-index .feat>.card:nth-child(6){animation-delay:450ms}
+  }
+}
+
+/* ── 6. Sentuhan jari: umpan balik di semua yang bisa dipencet ────── */
+.icon{transition:transform .25s cubic-bezier(.34,1.56,.64,1)}
+.card:hover .icon,.price-card:hover .icon{transform:scale(1.08) rotate(-4deg)}
+
+/* tombol utama: sedikit naik + kilau lewat sekali saat disorot */
+.btn-dark{position:relative;overflow:hidden}
+.btn-dark:hover{transform:translateY(-1px) scale(1.015)}
+.btn-dark:active{transform:translateY(0) scale(.985)}
+.btn-dark::after{content:'';position:absolute;top:0;bottom:0;left:0;width:45%;pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.32),transparent);
+  transform:translateX(-130%) skewX(-18deg)}
+.btn-dark:hover::after{animation:m-shine .75s cubic-bezier(.4,0,.2,1)}
+
+/* angka statistik & baris kepercayaan: naik dikit saat disorot */
+.stat b,.hero-trust div b{transition:transform .2s ease}
+.stat:hover b,.hero-trust div:hover b{transform:translateY(-2px)}
+.stat,.step,.tst{transition:transform .22s cubic-bezier(.22,1,.36,1),box-shadow .22s ease,border-color .22s ease}
+.tst:hover,.step:hover{box-shadow:var(--glow)}
+
+/* ── 7. Hormat ke yang minta gerakan minimal ──────────────────────── */
+/* Di sini bukan cuma `animation:none` — elemen yang disembunyikan lewat
+   animasi (navbar) harus dipaksa terlihat lagi, kalau tidak dia hilang. */
+@media (prefers-reduced-motion:reduce){
+  nav{animation:none!important;opacity:1!important;transform:none!important}
+  .nav-links a{animation:none!important}
+  .btn-dark::after{display:none}
+}
