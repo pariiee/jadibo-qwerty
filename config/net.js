@@ -19,3 +19,11 @@ const dns = require('dns');
 
 for (const proto of [https, http]) proto.globalAgent = new proto.Agent({ family: 4 });
 dns.setDefaultResultOrder('ipv4first');
+
+// Box ini jalan UTC. Semua tanggal yang dilihat user (`.market`, stalking,
+// masa aktif sewa, dll) harus WIB — kalau nggak, antara jam 00:00–07:00 WIB
+// tanggalnya ketulis kemarin.
+// CATATAN: ini cuma menolong kalau engine belum pernah nge-format tanggal.
+// Node mengunci zona waktu saat PERTAMA kali dipakai, jadi set setelahnya
+// nggak ngefek — makanya startup wajib: `TZ=Asia/Jakarta node server.js`.
+process.env.TZ = process.env.TZ || 'Asia/Jakarta';

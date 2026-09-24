@@ -2098,7 +2098,7 @@ module.exports = async function toolsHandler(ctx) {
     // `api/tools/harga-saham`, bukan nama command — simbolnya udah jelas
     // sendiri (.JK saham IDX, -USD crypto, =X forex, ^ indeks, XAU logam).
     // Command terpisah per kelas aset = nol manfaat, cuma nambah entri menu.
-    case 'harga':
+    case 'market':
     case 'saham':
     case 'crypto':
     case 'koin':
@@ -2131,7 +2131,9 @@ module.exports = async function toolsHandler(ctx) {
           ].map(([judul, items]) => [judul, (items || []).filter(Boolean)]);
           if (!grup.some(([, items]) => items.length)) throw new Error('Lagi nggak bisa ambil harga, coba lagi bentar ya');
 
-          let teks = `📊 *Harga Terkini*\n_${new Date().toLocaleDateString('id-ID', { dateStyle: 'long' })}_\n`;
+          // Zona waktu WAJIB dipatok: VPS B jalan UTC, jadi tanpa ini jam 05:00 WIB
+          // tanggalnya masih ketulis kemarin (24 Sept UTC).
+          let teks = `📊 *Harga Terkini*\n_${new Date().toLocaleDateString('id-ID', { dateStyle: 'long', timeZone: 'Asia/Jakarta' })}_\n`;
           for (const [judul, items] of grup) {
             if (!items.length) continue;
             teks += `\n*${judul}*\n`;
@@ -2140,7 +2142,7 @@ module.exports = async function toolsHandler(ctx) {
           // Yang gagal jangan disembunyiin, tapi juga jangan bikin pesan penuh.
           const gagal = (d.gagal || []).map((x) => x.symbol.replace(/=X$|\.JK$/, ''));
           if (gagal.length) teks += `\n_${gagal.join(', ')} lagi nggak kebaca._`;
-          teks += `\n\nKetik ${p}harga <simbol> buat detail — mis. ${p}harga BBCA.JK`;
+          teks += `\n\nKetik ${p}market <simbol> buat detail — mis. ${p}market BBCA.JK`;
           await reply(teks.trim());
           await react(mess.reactSuccess);
           return true;
@@ -5756,7 +5758,7 @@ module.exports.keyMatch      = keyMatch;
 // Command yang kena limit untuk user biasa
 module.exports.limitedCmds = new Set([
   'sticker','s','wm','poll','readmore','base64','kalkulator','removebg','rbg',
-  'harga','saham','crypto','koin','forex','kurs','emas','gold','xau','silver',
+  'market','saham','crypto','koin','forex','kurs','emas','gold','xau','silver',
   'pick','tourl','upload','pay','rvo','readviewonce','readvo',
   'tovn','2vo','todoc',
   'tanyaimg','ailyrics','buatlirik','chatgpt','gpt','resetgpt','gemini','resetgemini','toghibli','ghibli','ai','deepai','resetdeepai',
