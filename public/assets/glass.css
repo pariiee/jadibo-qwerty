@@ -153,7 +153,20 @@ body.page-admin .tbl th{background:var(--surf1)}
 body.page-admin .tbl tbody tr:hover{background:var(--surf2)}
 
 /* ── 5. Kontras: teks hijau kecil pakai --accTxt, bukan --acc ─────── */
-.hero h1 .grad{background:linear-gradient(120deg,var(--txt),var(--accTxt))}
+/* JANGAN pakai shorthand `background:` di sini — itu menghapus
+   `background-clip:text` dari page.css, sementara `-webkit-text-fill-color:
+   transparent` tetap jalan → yang tampil KOTAK gradient, teksnya hilang.
+   Hanya ganti warna gradient-nya (background-image), bukan shorthand. */
+.hero h1 .grad{
+  background-image:linear-gradient(120deg,var(--txt),var(--accTxt));
+  -webkit-background-clip:text; background-clip:text;
+  -webkit-text-fill-color:transparent; color:transparent;
+}
+/* Jaring pengaman: kalau browser tidak dukung clip:text, jangan pernah
+   biarkan teksnya transparan — pakai warna solid. */
+@supports not ((-webkit-background-clip:text) or (background-clip:text)){
+  .hero h1 .grad{background-image:none;-webkit-text-fill-color:var(--accTxt);color:var(--accTxt)}
+}
 .mk-live,.bub-cmd,.step p b,.switch-line a,.switch-line button,
 body.page-auth .switch-line a,.foot-links a:hover,body.page-langganan .pc-list li::before{
   color:var(--accTxt)}
