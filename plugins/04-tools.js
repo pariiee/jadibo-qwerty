@@ -9,7 +9,7 @@ const { rapikanError } = require('../engine/pesanError');
 const mess           = require('../config/mess');
 const { genThumbnail, jpegkan } = require('../engine/thumbnail');
 const { addStickerExif, videoKeStickerWebp } = require('../engine/sticker');
-const { uploadInfo, upload, url: apiUrl, auth: apiAuth } = require('../engine/api');
+const { uploadInfo, upload, apiGet, url: apiUrl, auth: apiAuth } = require('../engine/api');
 const { normalVideo } = require('../engine/normalVideo');
 
 // ─── Helper: mime type → ekstensi file ───────────────────────────────────────
@@ -2090,6 +2090,92 @@ module.exports = async function toolsHandler(ctx) {
         await reply(text.trim());
         await react(mess.reactSuccess);
       } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      return true;
+    }
+
+    // ── harga — Harga saham / crypto / forex / logam mulia ────────────────
+    // SATU command buat semua kelas aset. Yang nentuin jenisnya endpoint
+    // `api/tools/harga-saham`, bukan nama command — simbolnya udah jelas
+    // sendiri (.JK saham IDX, -USD crypto, =X forex, ^ indeks, XAU logam).
+    // Command terpisah per kelas aset = nol manfaat, cuma nambah entri menu.
+    case 'harga':
+    case 'saham':
+    case 'crypto':
+    case 'koin':
+    case 'forex':
+    case 'kurs':
+    case 'emas':
+    case 'gold': {
+      const IKON = { EQUITY: '📈', CRYPTOCURRENCY: '🪙', CURRENCY: '💱', INDEX: '📉', LOGAM_MULIA: '🥇' };
+      const ikon = (j) => IKON[j] || '📊';
+      // `perubahan_persen` dari API udah string ("-1.19%") — panah ngikut tandanya.
+      const panah = (pc) => (pc == null ? '' : ` ${String(pc).startsWith('-') ? '🔴' : '🟢'} ${String(pc).replace('-', '')}`);
+      const simbol = args.join(' ').trim().toUpperCase();
+      try {
+        await react(mess.reactLoading);
+
+        // Tanpa simbol = SEMUA kelas aset sekaligus. Endpoint-nya yang default ke
+        // `mode=ringkasan` kalau `symbol` kosong — bot nggak nyimpen daftar apa-apa.
+        if (!simbol) {
+          const { data } = await apiGet('api/tools/harga-saham', { timeout: 30000 });
+          const d = data?.results;
+          if (!d) throw new Error('Data harga nggak tersedia');
+          const grup = [
+            ['🥇 Logam Mulia', [d.logam_mulia]],
+            ['📉 Indeks',      [d.indeks]],
+            ['💱 Forex',       d.forex],
+            ['🪙 Crypto',      d.crypto],
+            ['📈 Saham',       d.saham],
+          ].map(([judul, items]) => [judul, (items || []).filter(Boolean)]);
+          if (!grup.some(([, items]) => items.length)) throw new Error('Lagi nggak bisa ambil harga, coba lagi bentar ya');
+
+          let teks = `📊 *Harga Terkini*\n_${new Date().toLocaleDateString('id-ID', { dateStyle: 'long' })}_\n`;
+          for (const [judul, items] of grup) {
+            if (!items.length) continue;
+            teks += `\n*${judul}*\n`;
+            for (const it of items) teks += `${it.symbol.replace(/=X$|\.JK$/, '')} — ${it.harga_format}${panah(it.perubahan_persen)}\n`;
+          }
+          // Yang gagal jangan disembunyiin, tapi juga jangan bikin pesan penuh.
+          const gagal = (d.daftar || []).filter((x) => x.error).map((x) => x.key.replace(/=X$|\.JK$/, ''));
+          if (gagal.length) teks += `\n_${gagal.join(', ')} lagi nggak kebaca._`;
+          teks += `\n\nKetik ${p}harga <simbol> buat detail — mis. ${p}harga BBCA.JK`;
+          await reply(teks.trim());
+          await react(mess.reactSuccess);
+          return true;
+        }
+
+        const ambil = (s) => apiGet('api/tools/harga-saham', { params: { symbol: s }, timeout: 20000 });
+        let res;
+        try {
+          res = await ambil(simbol);
+        } catch (e) {
+          // `bbca` → BBCA.JK: orang IDX nggak pernah ngetik `.JK`, tapi `AAPL`
+          // polos harus tetep AAPL. Jadi coba apa adanya DULU, tempel `.JK`
+          // cuma kalau ditolak (400 = simbol nggak ada) — bukan nembak `.JK`
+          // di awal, yang bikin saham US nggak pernah ketemu.
+          if (e.response?.status === 400 && /^[A-Z]{2,5}$/.test(simbol)) res = await ambil(`${simbol}.JK`);
+          else throw e;
+        }
+        const d = res.data?.results;
+        if (!d) throw new Error(`Simbol ${simbol} nggak ketemu`);
+
+        let text = `${ikon(d.jenis)} *${d.nama || d.symbol}*\n`;
+        text += `🔖 ${d.symbol}${d.bursa ? ` · ${d.bursa}` : ''}\n\n`;
+        text += `💰 *${d.harga_format || d.harga}*\n`;
+        if (d.perubahan_persen != null) text += `${panah(d.perubahan_persen).trim()} dari penutupan sebelumnya\n`;
+        if (d.harga_idr) text += `🇮🇩 *Rp${d.harga_idr.toLocaleString('id-ID')}* (per troy ounce)\n`;
+        const waktu = d.waktu || d.updated_at;
+        if (waktu) {
+          text += `\n🕐 ${new Date(waktu).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })} ${d.zona_waktu || ''}`.trimEnd();
+        }
+        await reply(text.trim());
+        await react(mess.reactSuccess);
+      } catch (e) {
+        await react(mess.reactError);
+        // Pesan 400 dari API udah kalimat manusia ("Simbol 'X' tidak ditemukan…")
+        // — pakai itu, jangan ditimpa "Request failed with status code 400".
+        await reply(`${mess.error}\n${e.response?.data?.message || e.message}`);
+      }
       return true;
     }
 
@@ -5668,6 +5754,7 @@ module.exports.keyMatch      = keyMatch;
 // Command yang kena limit untuk user biasa
 module.exports.limitedCmds = new Set([
   'sticker','s','wm','poll','readmore','base64','kalkulator','removebg','rbg',
+  'harga','saham','crypto','koin','forex','kurs','emas','gold',
   'pick','tourl','upload','pay','rvo','readviewonce','readvo',
   'tovn','2vo','todoc',
   'tanyaimg','ailyrics','buatlirik','chatgpt','gpt','resetgpt','gemini','resetgemini','toghibli','ghibli','ai','deepai','resetdeepai',
