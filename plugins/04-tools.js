@@ -2553,10 +2553,12 @@ module.exports = async function toolsHandler(ctx) {
       return true;
     }
 
-    // ── pinterest — Search Pinterest ──────────────────────────────────────
-    case 'pinterest': {
+    // ── pinterest / pin — Cari gambar Pinterest
+    // SEARCH pakai nama polos (.pin/.pinterest); DOWNLOAD pakai akhiran dl (.pindl).
+    case 'pinterest':
+    case 'pin': {
       const qPin = args.join(' ').trim();
-      if (!qPin) { await reply(`Penggunaan: ${p}pinterest <query>\nContoh: ${p}pinterest anime`); return true; }
+      if (!qPin) { await reply(`Penggunaan: ${p}pin <query>\nContoh: ${p}pin anime`); return true; }
       try {
         await react(mess.reactLoading);
         const axios = require('axios');
@@ -2696,7 +2698,8 @@ module.exports = async function toolsHandler(ctx) {
       return true;
     }
 
-    // ── spotify — Search Lagu di Spotify ──────────────────────────────────
+    // ── spotify — Cari lagu di Spotify
+    // SEARCH pakai nama polos (.spotify); DOWNLOAD pakai akhiran dl (.spotifydl).
     case 'spotify': {
       const qSpot = args.join(' ').trim();
       if (!qSpot) { await reply(`Penggunaan: ${p}spotify <judul lagu>\nContoh: ${p}spotify alan walker faded`); return true; }
@@ -3062,33 +3065,6 @@ module.exports = async function toolsHandler(ctx) {
         if (d.total > 15) text += `\n_...dan ${d.total - 15} hasil lainnya_`;
         await reply(text);
         await react(mess.reactSuccess);
-      } catch (e) {
-        await react(mess.reactError);
-        await reply(`${mess.error}\n${e.message}`);
-      }
-      return true;
-    }
-
-    // ── artinama ──────────────────────────────────────────────────────────
-    case 'artinama': {
-      const nama = args.join(' ').trim();
-      if (!nama) { await reply(`Penggunaan: ${p}artinama <nama>\nContoh: ${p}artinama Budi`); return true; }
-      try {
-        await react(mess.reactLoading);
-        const axios = require('axios');
-        const { data } = await axios.get(`${process.env.BASE_API}api/search/arti-nama`, {
-          params: { nama },
-          headers: { 'X-API-Key': process.env.KEY_API },
-          timeout: 15000,
-        });
-        if (!data?.success || !data?.results) {
-          await react(mess.reactError);
-          await reply(mess.error);
-          return true;
-        }
-        const { nama: namaHasil, arti } = data.results;
-        await react(mess.reactSuccess);
-        await reply(`📖 *Arti Nama: ${namaHasil}*\n\n${arti}`);
       } catch (e) {
         await react(mess.reactError);
         await reply(`${mess.error}\n${e.message}`);
@@ -4351,11 +4327,10 @@ module.exports = async function toolsHandler(ctx) {
     }
 
     // ── spotify — Spotify Downloader ─────────────────────────────────────────
-    case 'spotify':
     case 'spotifydl': {
       const url = args[0];
       if (!url) {
-        await reply(`Masukkan link Spotify.\nContoh: *${p}spotify https://open.spotify.com/track/...*`);
+        await reply(`Masukkan link Spotify.\nContoh: *${p}spotifydl https://open.spotify.com/track/...*`);
         return true;
       }
       try {
@@ -4745,12 +4720,10 @@ module.exports = async function toolsHandler(ctx) {
     }
 
     // ── pinterest — Pinterest Downloader ────────────────────────────────────
-    case 'pinterest':
-    case 'pindl':
-    case 'pin': {
+    case 'pindl': {
       const url = args[0];
       if (!url) {
-        await reply(`Masukkan link Pinterest.\nContoh: *${p}pinterest https://pinterest.com/pin/...*`);
+        await reply(`Masukkan link Pinterest.\nContoh: *${p}pindl https://pinterest.com/pin/...*`);
         return true;
       }
       try {
@@ -5598,7 +5571,7 @@ module.exports.limitedCmds = new Set([
   'moddroid','moddroiddl',
   'facebook','fbdl','fb',
   'tgsticker','telesticker','stele',
-  'spotify','spotifydl',
+  'spotifydl',
   'soundcloud','scdl',
   'sfilemobi','sfile',
   'sfileco',
@@ -5606,7 +5579,7 @@ module.exports.limitedCmds = new Set([
   'reddit','redditdl',
   'twitter','twit','xdl',
   'tiktok','tiktokdl','ttdl','tt',
-  'pinterest','pindl','pin',
+  'pindl',
   'threads','threadsdl',
   'youtube','ytdl','yt',
   'gdrive','gdrivedl',
