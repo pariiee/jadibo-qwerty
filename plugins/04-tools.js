@@ -2,14 +2,14 @@
 
 /**
  * plugins/04-tools.js
- * Commands: sticker, poll, readmore, base64, kalkulator, pick
+ * Commands: sticker, poll, readmore, base64, kalkulator, pick, removebg
  */
 
 const { rapikanError } = require('../engine/pesanError');
 const mess           = require('../config/mess');
 const { genThumbnail, jpegkan } = require('../engine/thumbnail');
 const { addStickerExif, videoKeStickerWebp } = require('../engine/sticker');
-const { uploadInfo }  = require('../engine/api');
+const { uploadInfo, upload, url: apiUrl, auth: apiAuth } = require('../engine/api');
 const { normalVideo } = require('../engine/normalVideo');
 
 // ─── Helper: mime type → ekstensi file ───────────────────────────────────────
@@ -1899,6 +1899,39 @@ module.exports = async function toolsHandler(ctx) {
         await reply(text.trim());
         await react(mess.reactSuccess);
       } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      return true;
+    }
+
+    // ── removebg — Hapus background gambar (Pixelcut, lewat API YaPari) ────
+    case 'removebg':
+    case 'rbg': {
+      const media = await extractMedia(ctx, ['imageMessage']);
+      if (!media) {
+        await reply(`Reply gambar dengan ${p}removebg, atau kirim gambar dengan caption ${p}removebg`);
+        return true;
+      }
+      try {
+        await react(mess.reactLoading);
+        // Buffer WA → URL publik dulu; endpoint-nya yang ngunduh (mode `url`).
+        const imgUrl = await upload(media.buffer, namaFileAman(null, media.mime), media.mime);
+        const axios  = require('axios');
+        const res    = await axios.get(apiUrl('api/tools/removebg'), {
+          params: { url: imgUrl }, headers: apiAuth(),
+          responseType: 'arraybuffer', timeout: 60000,
+        });
+        const hasil = Buffer.from(res.data);
+        if (!hasil.subarray(0, 4).equals(Buffer.from([0x89, 0x50, 0x4E, 0x47]))) {
+          throw new Error('Balasan API bukan gambar PNG');
+        }
+        // DOKUMEN, bukan image: WA nge-JPEG ulang image message → alpha-nya hilang.
+        await client.message.send(jid, {
+          type: 'document',
+          media: hasil,
+          mimetype: 'image/png',
+          fileName: `nobg_${Date.now()}.png`,
+        });
+        await react(mess.reactSuccess);
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${rapikanError(e)}`); }
       return true;
     }
 
@@ -5634,7 +5667,7 @@ module.exports.keyMatch      = keyMatch;
 
 // Command yang kena limit untuk user biasa
 module.exports.limitedCmds = new Set([
-  'sticker','s','wm','poll','readmore','base64','kalkulator',
+  'sticker','s','wm','poll','readmore','base64','kalkulator','removebg','rbg',
   'pick','tourl','upload','pay','rvo','readviewonce','readvo',
   'tovn','2vo','todoc',
   'tanyaimg','ailyrics','buatlirik','chatgpt','gpt','resetgpt','gemini','resetgemini','toghibli','ghibli','ai','deepai','resetdeepai',
