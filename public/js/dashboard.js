@@ -68,7 +68,7 @@
     elSlot.textContent = String(beli);
     elSlot.className = 'val' + (beli > 0 && used >= beli ? ' warn' : '');
     document.getElementById('st-slot-sub').textContent =
-      me?.admin ? `Administrator \u2014 tak terbatas, ${used} terpakai`
+      me?.is_admin ? `Administrator \u2014 tak terbatas, ${used} terpakai`
       : beli === 0 ? 'Belum ada slot \u2014 klaim Trial atau beli paket'
       : used >= beli ? `Slot penuh \u2014 ${used} dari ${beli} terpakai`
       : `Sisa ${beli - used} slot lagi dari ${beli}`;

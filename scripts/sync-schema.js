@@ -20,7 +20,7 @@ const TABLES = {
     // kalau beda dari bawaan paket.
     ['plan',            "VARCHAR(32) NOT NULL DEFAULT 'user'"],
     ['plan_expired_at', "DATETIME DEFAULT NULL"],
-    ['plan_slots',      "INT NOT NULL DEFAULT 2"],
+    ['plan_slots',      "INT NOT NULL DEFAULT 0"],
     // Trial 5 hari — SEKALI per akun. `trial_used_at` yang menjaganya, bukan
     // status paket: kalau user hapus paketnya, trial tidak hidup lagi.
     ['trial_used_at',   "DATETIME DEFAULT NULL"],

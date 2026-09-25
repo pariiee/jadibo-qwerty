@@ -5,7 +5,6 @@ const jwt       = require('jsonwebtoken');
 const { pool, incrementStat, decrementStat } = require('../config/database');
 const { ADMIN_ROLE, roleOf, slotsOf, paketOf } = require('../config/plan');
 const pricingStore = require('../config/pricingStore');
-const billing = require('./billingController');
 
 // Tanpa fallback: kalau .env bolong, server nolak boot (guard di server.js).
 // Fallback literal bikin token siapa pun bisa dipalsukan tanpa jejak.
@@ -89,8 +88,9 @@ async function register(req, res) {
 
     await incrementStat('total_users');
 
-    // Trial 5 hari otomatis buat akun baru (sekali seumur akun).
-    await billing.klaimTrial(result.insertId).catch(() => {});
+    // Trial TIDAK auto-aktif — user harus buka /langganan dan klik klaim sendiri
+    // (POST /api/billing/trial). Auto-di sini bikin akun baru langsung nyala
+    // tanpa diminta dan bikin tombol klaimnya jadi mubazir.
 
     const token = signToken({ id: result.insertId, username, role: 'user' });
 
@@ -183,18 +183,11 @@ async function me(req, res) {
     );
     if (rows.length === 0) return sendError(res, 404, 'User tidak ditemukan');
 
-    // Trial 5 hari diklaim di sini, bukan lewat skrip migrasi: akun lama pun
-    // kebagian sekali, akun baru langsung dapat. `trial_used_at` penjaganya.
-    if (!rows[0].trial_used_at) {
-      const trial = await billing.klaimTrial(req.user.id);
-      if (trial) {
-        const [ulang] = await pool.execute(
-          'SELECT id, username, role, plan, plan_expired_at, plan_slots, trial_used_at, created_at FROM users WHERE id = ?',
-          [req.user.id]
-        );
-        rows[0] = ulang[0];
-      }
-    }
+    // JANGAN klaim trial di sini. Dulu iya ("akun baru langsung dapat"), tapi
+    // efeknya SETIAP halaman yang manggil /api/auth/me ngeklaim trial tanpa
+    // user minta — role langsung Unreal, langganan lompat 5 hari, dan tombol
+    // "Klaim Trial" di /langganan jadi mubazir. Sekarang cuma POST
+    // /api/billing/trial (klaimTrialSendiri) yang boleh nyalain.
 
     // slot usage
     const [bots] = await pool.execute(
@@ -228,15 +221,10 @@ async function me(req, res) {
         trial_used_at: u.trial_used_at,
         slots_used: bots[0].count,
         slots_max: slotsOf(u, pricingStore.plans()),
-        // Nol = balik ke jatah paket. `slotsOf` ngasih admin 999 + ngeganti jatah
-        // paket kalau admin nulis di kolom "Slot khusus" — jadi angka itu nggak
-        // bisa dipakai buat bilang "jatah yang sudah dibeli". Kartu dashboard
-        // pakai ini: slot dibeli vs slot yang dipakai.
-        slots_beli: Number(u.plan_slots) || Number(paketOf(u.plan, pricingStore.plans())?.slots) || 0,
-        // Administrator punya jatah tak terbatas (slotsOf → 999) DAN masih ada
-        // kolom override `plan_slots` dari admin panel. Kartu dashboard pakai
-        // angka mentah plan_slots buat ngomong "jatah kamu berapa".
-        admin: !!admin,
+        // Kartu dashboard mau "slot yang dibeli", dan itu BUKAN `slotsOf()` —
+        // yang itu jatah OPERASIONAL (admin 999, plus kolom `plan_slots` yang
+        // menang atas paket). Urutannya: jatah paket dulu, baru override admin.
+        slots_beli: (paketOf(u.plan, pricingStore.plans())?.slots ?? Number(u.plan_slots)) || 0,
         daily_limit: plan.daily_limit,
         created_at: u.created_at,
       },

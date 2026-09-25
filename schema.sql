@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS users (
   role         ENUM('user', 'premium', 'kawula') NOT NULL DEFAULT 'user',
   plan            VARCHAR(32) NOT NULL DEFAULT 'user',
   plan_expired_at DATETIME    DEFAULT NULL,
-  plan_slots      INT         NOT NULL DEFAULT 2,
+  plan_slots      INT         NOT NULL DEFAULT 0,
   trial_used_at   DATETIME    DEFAULT NULL,
   is_active    TINYINT(1) NOT NULL DEFAULT 1,
   created_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
