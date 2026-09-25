@@ -13,7 +13,14 @@
         headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) }
       });
       if (res.status === 401) { location.href = '/'; return null; }
-      if (res.status === 403) { location.href = '/dashboard'; return null; }
+      // 403 = bukan admin. Dulu cuma diem-diem lempar ke /dashboard, jadi
+      // kelihatan seperti halaman yang "balik sendiri". Kasih alasannya.
+      if (res.status === 403) {
+        const j = await res.json().catch(() => ({}));
+        alert(j.message || 'Akses ditolak');
+        location.href = '/dashboard';
+        return null;
+      }
       return res.json();
     } catch { return null; }
   }
@@ -319,7 +326,11 @@
   document.addEventListener('DOMContentLoaded', async () => {
     const d = await api('/api/auth/me');
     if (!d?.ok) { location.href = '/'; return; }
-    if (!d.user.is_admin) { location.href = '/dashboard'; return; }
+    if (!d.user.is_admin) {
+      alert('Halaman ini cuma untuk Administrator (' + (d.user.role_label || d.user.role) + '). Kalau role kamu baru diubah, login ulang dulu.');
+      location.href = '/dashboard';
+      return;
+    }
     document.getElementById('side-avatar').textContent = (d.user.username || '?')[0].toUpperCase();
     document.getElementById('side-name').textContent = d.user.username;
     document.getElementById('side-role').textContent = d.user.role_label || d.user.role;

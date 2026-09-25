@@ -44,11 +44,28 @@ function requireAuth(req, res, next) {
 // ─── Middleware: izin admin tertinggi (role internal `kawula`) ──────────────
 // Satu tempat untuk cek izin admin. Kalau nama role berubah, cukup ubah
 // ADMIN_ROLE di config/plan.js — jangan sebar string 'kawula' di file lain.
-function requireKing(req, res, next) {
-  if (req.user?.role !== ADMIN_ROLE) {
+//
+// Role dibaca dari DB, BUKAN dari `req.user.role`. Token nyimpen role pas login;
+// kalau role diubah setelah itu, token lama tetap bilang yang lama — admin yang
+// sah ditolak 403 ("balik ke dashboard") sampai dia login ulang. Sekalian nutup
+// lubang `is_active`: akun yang dinonaktifkan tetap bisa nembus kalau cuma
+// percaya token.
+async function requireKing(req, res, next) {
+  try {
+    const [rows] = await pool.execute(
+      'SELECT role, is_active FROM users WHERE id = ?',
+      [req.user?.id]
+    );
+    const u = rows[0];
+    if (!u || !u.is_active || u.role !== ADMIN_ROLE)
+      return sendError(res, 403, 'Akses ditolak — akun ini bukan administrator');
+
+    req.user.role = u.role;
+    next();
+  } catch (err) {
+    console.error('[Auth] requireKing error:', err);
     return sendError(res, 403, 'Akses ditolak');
   }
-  next();
 }
 
 // ─── POST /api/auth/register ──────────────────────────────────────────────────
