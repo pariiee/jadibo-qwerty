@@ -201,7 +201,11 @@ const halaman = (nama) => (_, res) => {
 };
 app.get('/dashboard', halaman('dashboard.html'));
 app.get('/bot/:id',   halaman('bot-detail.html'));
-app.get('/langganan', halaman('langganan.html'));
+app.get('/pricing',    halaman('pricing.html'));
+// Tautan lama: bot sempat ngasih pesan "buka halaman Langganan", dan orang
+// mungkin sudah bookmark /langganan. Tanpa ini, /langganan jatuh ke catch-all
+// dan diam-diam nampilin landing page — bingung, bukan 404 yang jelas.
+app.get('/langganan', (_, res) => res.redirect(301, '/pricing'));
 app.get('/admin',     halaman('admin.html'));
 // /login & /register = SATU file, pane dipilih dari pathname (js/auth-page.js).
 app.get('/login',     halaman('login.html'));

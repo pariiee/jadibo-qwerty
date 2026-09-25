@@ -134,16 +134,16 @@ body.page-admin .modal,body.page-bot .modal,body.page-auth .modal,.term-panel{
 .overlay{backdrop-filter:blur(6px) saturate(120%);-webkit-backdrop-filter:blur(6px) saturate(120%)}
 
 /* navbar, topbar, sidebar = kaca juga, tapi tetap kebaca pas di-scroll */
-nav,body.page-dashboard .topbar,body.page-admin .topbar,body.page-langganan .topbar,
+nav,body.page-dashboard .topbar,body.page-admin .topbar,body.page-pricing .topbar,
 body.page-bot .topbar,aside{
   backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur)}
-body.page-dashboard .topbar,body.page-admin .topbar,body.page-langganan .topbar,
+body.page-dashboard .topbar,body.page-admin .topbar,body.page-pricing .topbar,
 body.page-bot .topbar{border-bottom:1px solid var(--border2)}
 
 /* input & tombol ikut kaca */
 .inp,select.inp,textarea.inp,.theme-btn,.modal-close,.add-card,.plat-btn,
 .start-card,.add-ic,.empty .ic,.pair-ic,.icon,.qr-body canvas,.tbl-wrap,
-.log-line,body.page-langganan .note,body.page-admin .plan-row{
+.log-line,body.page-pricing .note,body.page-admin .plan-row{
   backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
 .btn-outline{backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
 .add-card{border:2px dashed var(--border2) !important}
@@ -168,7 +168,7 @@ body.page-admin .tbl tbody tr:hover{background:var(--surf2)}
   .hero h1 .grad{background-image:none;-webkit-text-fill-color:var(--accTxt);color:var(--accTxt)}
 }
 .mk-live,.bub-cmd,.step p b,.switch-line a,.switch-line button,
-body.page-auth .switch-line a,.foot-links a:hover,body.page-langganan .pc-list li::before{
+body.page-auth .switch-line a,.foot-links a:hover,body.page-pricing .pc-list li::before{
   color:var(--accTxt)}
 .mk-live i{background:var(--acc)}
 /* tombol gelap di tema gelap dibalik → teks gelap di latarnya */
@@ -187,11 +187,11 @@ h2{font-size:clamp(21px,5vw,28px)}
 .steps{grid-template-columns:repeat(auto-fit,minmax(min(230px,100%),1fr))}
 .price-grid{grid-template-columns:repeat(auto-fit,minmax(min(215px,100%),1fr))}
 .tst-grid{grid-template-columns:repeat(auto-fit,minmax(min(250px,100%),1fr))}
-body.page-langganan .plan-grid{grid-template-columns:repeat(auto-fill,minmax(min(240px,100%),1fr))}
+body.page-pricing .plan-grid{grid-template-columns:repeat(auto-fill,minmax(min(240px,100%),1fr))}
 img,canvas,svg,video{max-width:100%}
 @media(max-width:560px){
   #terminal{height:min(300px,46vh)}
-  .ctrl-grid,.row2,.start-cards,body.page-langganan .plat-grid{grid-template-columns:1fr}
+  .ctrl-grid,.row2,.start-cards,body.page-pricing .plat-grid{grid-template-columns:1fr}
   .modal{padding:20px}
   body.page-admin .adm-bar .inp{max-width:100%}
 }

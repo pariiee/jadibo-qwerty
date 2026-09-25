@@ -156,7 +156,7 @@ async function createBot(req, res) {
       );
       if (count[0].c >= maks)
         return sendError(res, 400, maks === 0
-          ? 'Akun kamu belum punya slot bot. Klaim Trial gratis atau pilih paket di halaman Langganan.'
+          ? 'Akun kamu belum punya slot bot. Klaim Trial gratis atau pilih paket di halaman Pricing.'
           : `Slot penuh. Paket kamu maksimal ${maks} bot — upgrade untuk tambah slot.`);
     }
 
@@ -180,7 +180,7 @@ async function createBot(req, res) {
     const jumlahOwner = String(owner_number || '').split(',').map((s) => s.trim()).filter(Boolean).length;
     if (jumlahOwner > ownerMaxN)
       return sendError(res, 400, ownerMaxN === 0
-        ? 'Paket kamu belum bisa pakai Owner Number. Upgrade di halaman Langganan.'
+        ? 'Paket kamu belum bisa pakai Owner Number. Upgrade di halaman Pricing.'
         : `Paket kamu maksimal ${ownerMaxN} Owner Number.`);
 
     const [result] = await pool.execute(
@@ -235,7 +235,7 @@ async function updateBot(req, res) {
       const n = String(req.body.owner_number || '').split(',').map((s) => s.trim()).filter(Boolean).length;
       if (n > maks)
         return sendError(res, 400, maks === 0
-          ? 'Paket kamu belum bisa pakai Owner Number. Upgrade di halaman Langganan.'
+          ? 'Paket kamu belum bisa pakai Owner Number. Upgrade di halaman Pricing.'
           : `Paket kamu maksimal ${maks} Owner Number.`);
     }
 

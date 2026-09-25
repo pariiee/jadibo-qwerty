@@ -1,4 +1,4 @@
-// Trial = hak yang DIKLAIM user di /langganan, bukan hadiah otomatis saat daftar.
+// Trial = hak yang DIKLAIM user di /pricing, bukan hadiah otomatis saat daftar.
 // Kalau ada yang nempelkin lagi `klaimTrial` ke jalur daftar atau /api/auth/me,
 // akun baru langsung jadi "Unreal" + dapat slot tanpa pernah minta. Tes ini nangkap itu.
 const fs = require('fs');
@@ -35,11 +35,25 @@ for (const f of ['schema.sql', 'scripts/sync-schema.js']) {
   }
 }
 
-// 4. Tombol klaim manual harus ada di /langganan.
-const lgn = baca('public/js/langganan.js');
+// 4. Tombol klaim manual harus ada di /pricing.
+const lgn = baca('public/js/pricing.js');
 if (!/btn-trial/.test(lgn) || !/\/api\/billing\/trial/.test(lgn)) {
-  console.error('✗ /langganan nggak punya jalur klaim trial manual');
+  console.error('✗ /pricing nggak punya jalur klaim trial manual');
   process.exit(1);
 }
 
-console.log('✓ trial: nggak ada auto-klaim, kartu pakai slot paket, klaim manual di /langganan');
+// 5. Rute + label halaman: "langganan" sudah pensiun, semua harus "pricing".
+//    Kalau ada file/link yang ketinggalan, halaman jadi 404 — tes ini yang nahan.
+const server = baca('server.js');
+if (!/app\.get\('\/pricing'/.test(server)) {
+  console.error('✗ server.js nggak punya rute /pricing');
+  process.exit(1);
+}
+for (const f of ['public/pricing.html', 'public/js/pricing.js', 'public/partials/sidebar.html', 'public/js/dashboard.js']) {
+  if (/\/langganan|page-langganan|Langganan/.test(baca(f))) {
+    console.error(`✗ ${f} masih menyebut langganan`);
+    process.exit(1);
+  }
+}
+
+console.log('✓ trial: nggak ada auto-klaim, kartu pakai slot paket, klaim manual di /pricing');

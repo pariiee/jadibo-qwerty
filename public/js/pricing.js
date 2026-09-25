@@ -1,4 +1,4 @@
-// Halaman Langganan — daftar paket, klaim trial, dan 2 opsi bayar.
+// Halaman Pricing — daftar paket, klaim trial, dan 2 opsi bayar.
 // Aturan main: semua keputusan (harga, slot, masa aktif) datang dari server.
 // Halaman ini cuma menampilkan dan mengirim pilihan.
 (function () {
@@ -29,7 +29,7 @@
     document.getElementById('side-avatar').textContent = (me.username || '?')[0].toUpperCase();
     document.getElementById('side-name').textContent = me.username;
     document.getElementById('side-role').textContent = me.role_label || me.role;
-    document.getElementById('greeting').textContent = 'Langganan & Paket';
+    document.getElementById('greeting').textContent = 'Pricing & Paket';
     if (me.is_admin) document.getElementById('nav-admin').style.display = '';
     renderStatus();
     return me;

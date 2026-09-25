@@ -15,11 +15,11 @@ window.closeSidebar = function () {
 };
 
 // Menu aktif ikut halaman yang sedang dibuka. Dulu `active` ditulis mati di
-// sidebar.html (selalu "Dashboard"), jadi di /langganan & /admin salah nyala.
+// sidebar.html (selalu "Dashboard"), jadi di /pricing & /admin salah nyala.
 document.addEventListener('DOMContentLoaded', function () {
   var kini = (location.pathname.replace(/\/+$/, '') || '/');
   // cocokkan nama halamannya saja, biar jalan juga waktu diakses sebagai
-  // /langganan.html (preview) maupun /langganan (rute server.js)
+  // /pricing.html (preview) maupun /pricing (rute server.js)
   var nama = kini === '/' ? 'index' : kini.split('/').pop().replace(/\.html$/, '');
   if (/^\/bot\//.test(kini)) nama = 'dashboard';   // halaman detail bot = anak Dashboard
   document.querySelectorAll('#sidebar .nav a[href]').forEach(function (a) {

@@ -232,14 +232,14 @@ body.page-index .err{color:var(--errTxt);font-size:12px;margin:4px 2px 10px;disp
 .switch-line button{background:none;border:none;color:var(--acc);font-weight:700;text-decoration:underline;cursor:pointer;font-size:12px;font-family:inherit}
 @media(max-width:560px){.hide-mob{display:none!important}}
 @media (prefers-reduced-motion: reduce){*,*::before,*::after{transition:none!important}}
-body.page-dashboard .btn,body.page-admin .btn,body.page-langganan .btn{display:inline-flex;align-items:center;gap:8px;border:none;cursor:pointer;font-weight:600;font-size:13px;border-radius:10px;padding:9px 14px;font-family:inherit;transition:transform .16s ease,box-shadow .16s ease,background .16s ease,border-color .16s ease,filter .16s ease}
+body.page-dashboard .btn,body.page-admin .btn,body.page-pricing .btn{display:inline-flex;align-items:center;gap:8px;border:none;cursor:pointer;font-weight:600;font-size:13px;border-radius:10px;padding:9px 14px;font-family:inherit;transition:transform .16s ease,box-shadow .16s ease,background .16s ease,border-color .16s ease,filter .16s ease}
 body.page-dashboard .btn-danger{background:rgba(239,68,68,.13);border:1px solid rgba(239,68,68,.3);color:var(--errTxt)}
 .btn-sm{padding:6px 10px;font-size:12px;border-radius:8px}
 /* layout */ .app{display:flex;min-height:100vh}
 aside{width:224px;background:var(--sideBg);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;inset:0 auto 0 0;z-index:40}
-body.page-dashboard .logo,body.page-admin .logo,body.page-langganan .logo{height:58px;display:flex;align-items:center;padding:0 18px;border-bottom:1px solid var(--border)}
+body.page-dashboard .logo,body.page-admin .logo,body.page-pricing .logo{height:58px;display:flex;align-items:center;padding:0 18px;border-bottom:1px solid var(--border)}
 .logo a{display:flex;align-items:center;gap:9px;font-weight:800;font-size:16px}
-body.page-dashboard .logo-badge,body.page-admin .logo-badge,body.page-langganan .logo-badge{width:28px;height:28px;background:var(--acc);border-radius:8px;display:flex;align-items:center;justify-content:center}
+body.page-dashboard .logo-badge,body.page-admin .logo-badge,body.page-pricing .logo-badge{width:28px;height:28px;background:var(--acc);border-radius:8px;display:flex;align-items:center;justify-content:center}
 nav.nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:4px}
 nav.nav a{position:relative;display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:12px;font-size:14px;color:var(--muted);border:1px solid transparent;transition:background .16s ease,color .16s ease,transform .16s ease,border-color .16s ease}
 nav.nav a:hover{background:var(--surf2);border-color:var(--border);color:var(--txt);transform:translateX(2px)}
@@ -253,7 +253,7 @@ nav.nav a.active::before{content:'';position:absolute;left:0;top:22%;bottom:22%;
 .logout-btn{display:flex;align-items:center;gap:8px;width:100%;margin-top:8px;background:none;border:none;color:var(--dim);font-size:12px;cursor:pointer;padding:6px 8px;border-radius:8px;font-family:inherit;transition:.16s}
 .logout-btn:hover{color:var(--errTxt);background:rgba(239,68,68,.12)}
 main{flex:1;margin-left:224px;min-width:0}
-body.page-dashboard .topbar,body.page-admin .topbar,body.page-langganan .topbar{position:sticky;top:0;z-index:30;background:var(--barBg);border-bottom:1px solid var(--border);height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;gap:12px}
+body.page-dashboard .topbar,body.page-admin .topbar,body.page-pricing .topbar{position:sticky;top:0;z-index:30;background:var(--barBg);border-bottom:1px solid var(--border);height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;gap:12px}
 .topbar h1{font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tb-right{display:flex;align-items:center;gap:14px}
 body.page-dashboard .dot{width:7px;height:7px;border-radius:50%;background:var(--ok)}
@@ -403,9 +403,9 @@ body.page-bot .m-sub{color:var(--muted);font-size:13px;text-align:center;margin-
 .start-card small{font-weight:400;color:var(--muted);font-size:11px;text-align:center;line-height:1.4}
 .hidden{display:none!important}
 
-/* ══ Halaman /admin + /langganan ═══════════════════════════════════════
+/* ══ Halaman /admin + /pricing ═══════════════════════════════════════
    Dulu dua halaman ini nggak punya CSS sama sekali (body-nya page-admin /
-   page-langganan, tapi nol aturan) — makanya tampil polos tanpa sidebar.
+   page-pricing, tapi nol aturan) — makanya tampil polos tanpa sidebar.
    Semua di-scope ke body biar nggak nabrak dashboard/bot-detail.
    Helper .muted/.small dipakai bareng .card (yang cuma ada di page-index),
    jadi dipakai tanpa scope. */
@@ -453,23 +453,23 @@ body.page-admin .err{color:var(--errTxt);font-size:12px;margin:2px;display:none}
 body.page-admin .err.show{display:block}
 body.page-admin #terminal{margin-top:4px;border:1px solid var(--border);border-radius:12px;background:var(--surf1)}
 
-/* kartu harga / langganan */
-body.page-langganan .plan-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
-body.page-langganan .plan-card{border:1px solid var(--border);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:8px}
-body.page-langganan .plan-card.aktif{border-color:var(--acc)}
-body.page-langganan .pc-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
-body.page-langganan .pc-name{font-size:15px;font-weight:700}
-body.page-langganan .pc-tag{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:rgba(34,197,94,.15);color:var(--okTxt)}
-body.page-langganan .pc-price{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums}
-body.page-langganan .pc-price small{font-size:12px;font-weight:500;color:var(--muted)}
-body.page-langganan .pc-list{list-style:none;display:flex;flex-direction:column;gap:5px;font-size:13px;color:var(--txt2)}
-body.page-langganan .pc-list li::before{content:'•';color:var(--acc);margin-right:8px}
-body.page-langganan .plan-card .btn{margin-top:6px;justify-content:center}
-body.page-langganan .plan-badge{display:inline-block;padding:4px 12px;border-radius:999px;font-size:12px;font-weight:700;background:var(--surf2);color:var(--txt)}
-body.page-langganan .note{border:1px solid var(--border);border-left:3px solid var(--acc);border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:var(--txt2);background:var(--surf1)}
-body.page-langganan .plat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
-body.page-langganan #bayar-qr{width:240px;max-width:100%;border-radius:12px;background:#fff;padding:8px;margin:14px auto;display:block}
-@media(max-width:560px){body.page-langganan .plat-grid{grid-template-columns:1fr}}
+/* kartu harga / pricing */
+body.page-pricing .plan-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+body.page-pricing .plan-card{border:1px solid var(--border);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:8px}
+body.page-pricing .plan-card.aktif{border-color:var(--acc)}
+body.page-pricing .pc-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+body.page-pricing .pc-name{font-size:15px;font-weight:700}
+body.page-pricing .pc-tag{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:rgba(34,197,94,.15);color:var(--okTxt)}
+body.page-pricing .pc-price{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums}
+body.page-pricing .pc-price small{font-size:12px;font-weight:500;color:var(--muted)}
+body.page-pricing .pc-list{list-style:none;display:flex;flex-direction:column;gap:5px;font-size:13px;color:var(--txt2)}
+body.page-pricing .pc-list li::before{content:'•';color:var(--acc);margin-right:8px}
+body.page-pricing .plan-card .btn{margin-top:6px;justify-content:center}
+body.page-pricing .plan-badge{display:inline-block;padding:4px 12px;border-radius:999px;font-size:12px;font-weight:700;background:var(--surf2);color:var(--txt)}
+body.page-pricing .note{border:1px solid var(--border);border-left:3px solid var(--acc);border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:var(--txt2);background:var(--surf1)}
+body.page-pricing .plat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
+body.page-pricing #bayar-qr{width:240px;max-width:100%;border-radius:12px;background:#fff;padding:8px;margin:14px auto;display:block}
+@media(max-width:560px){body.page-pricing .plat-grid{grid-template-columns:1fr}}
 
 /* ─── Dashboard: kartu ringkasan + FAQ ─────────────────────────────────────── */
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:22px}

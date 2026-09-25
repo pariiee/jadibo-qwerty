@@ -10,7 +10,7 @@
     { q: 'Bagaimana cara login WhatsApp?', a: 'Kamu bisa memilih Scan QR Code atau Pairing Code (8 digit) yang langsung ditampilkan di dashboard.' },
     { q: 'Apakah bisa custom prefix dan footer?', a: 'Bisa. Setiap bot bisa dikonfigurasi dengan prefix, footer text, nama bot, nomor owner, dan deskripsi sendiri.' },
     { q: 'Apa beda role user, premium, dan admin?', a: 'User dibatasi kuota paketnya. Premium mendapat jatah lebih. Admin punya akses penuh: kelola semua user, bot, dan harga paket.' },
-    { q: 'Bagaimana cara bayar paket?', a: 'Pilih paket di halaman Langganan, lalu bayar otomatis lewat QRIS atau transfer manual dengan QR. Paket aktif setelah pembayaran terkonfirmasi.' },
+    { q: 'Bagaimana cara bayar paket?', a: 'Pilih paket di halaman Pricing, lalu bayar otomatis lewat QRIS atau transfer manual dengan QR. Paket aktif setelah pembayaran terkonfirmasi.' },
     { q: 'Ada trial?', a: 'Ada. Trial 5 hari gratis: 1 slot bot, 5.000 pesan, masa aktif 5 hari — cuma bisa diklaim sekali seumur akun.' }
   ];
   const faqBox = document.getElementById('faq-list');

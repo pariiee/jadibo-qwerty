@@ -105,7 +105,7 @@ async function register(req, res) {
 
     await incrementStat('total_users');
 
-    // Trial TIDAK auto-aktif — user harus buka /langganan dan klik klaim sendiri
+    // Trial TIDAK auto-aktif — user harus buka /pricing dan klik klaim sendiri
     // (POST /api/billing/trial). Auto-di sini bikin akun baru langsung nyala
     // tanpa diminta dan bikin tombol klaimnya jadi mubazir.
 
@@ -203,7 +203,7 @@ async function me(req, res) {
     // JANGAN klaim trial di sini. Dulu iya ("akun baru langsung dapat"), tapi
     // efeknya SETIAP halaman yang manggil /api/auth/me ngeklaim trial tanpa
     // user minta — role langsung Unreal, langganan lompat 5 hari, dan tombol
-    // "Klaim Trial" di /langganan jadi mubazir. Sekarang cuma POST
+    // "Klaim Trial" di /pricing jadi mubazir. Sekarang cuma POST
     // /api/billing/trial (klaimTrialSendiri) yang boleh nyalain.
 
     // slot usage

@@ -97,7 +97,7 @@
       document.getElementById('st-exp-sub').textContent = hari <= 0 ? 'Berakhir hari ini' : `Sisa ${hari} hari`;
     } else if (me.trial_used) {
       txt('st-exp', 'Tidak ada', 'dim');
-      document.getElementById('st-exp-sub').textContent = 'Paket berakhir \u2014 perpanjang di halaman Langganan';
+      document.getElementById('st-exp-sub').textContent = 'Paket berakhir \u2014 perpanjang di halaman Pricing';
     } else {
       txt('st-exp', 'Tidak ada', 'dim');
       document.getElementById('st-exp-sub').textContent = `Belum ambil paket \u2014 klaim Trial ${me.trial_hari ?? 3} hari gratis`;
@@ -154,9 +154,9 @@
   // ── Add bot ─────────────────────────────────────────────────────
   let platform = 'whatsapp';
   function openAddBot() {
-    // Slot 0 = akun gratis. Arahkan ke halaman langganan, bukan cuma alert:
+    // Slot 0 = akun gratis. Arahkan ke halaman pricing, bukan cuma alert:
     // dari situ user bisa langsung klaim Trial atau pilih paket.
-    if (maxSlots === 0) { location.href = '/langganan'; return; }
+    if (maxSlots === 0) { location.href = '/pricing'; return; }
     if (bots.length >= maxSlots) { alert('Slot penuh. Maksimal ' + maxSlots + ' bot per akun.'); return; }
     platform = 'whatsapp';
     setPlatUI();
