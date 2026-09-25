@@ -15,6 +15,31 @@
     <!-- @include topbar.html -->
 
     <div class="content">
+      <!-- Kartu ringkasan. Datanya dari /api/auth/me + /api/bots — nggak ada
+           endpoint baru, jadi nggak ada request tambahan. -->
+      <div class="stats">
+        <div class="stat">
+          <div class="lbl">Role</div>
+          <div class="val" id="st-role">—</div>
+          <div class="sub" id="st-role-sub"></div>
+        </div>
+        <div class="stat">
+          <div class="lbl">Kedaluwarsa</div>
+          <div class="val" id="st-exp">—</div>
+          <div class="sub" id="st-exp-sub"></div>
+        </div>
+        <div class="stat">
+          <div class="lbl">Bot Online</div>
+          <div class="val" id="st-online">0</div>
+          <div class="sub" id="st-online-sub"></div>
+        </div>
+        <div class="stat">
+          <div class="lbl">Total Slot</div>
+          <div class="val" id="st-slot">0 / 0</div>
+          <div class="sub" id="st-slot-sub"></div>
+        </div>
+      </div>
+
       <div class="slot-head">
         <div>
           <div class="lbl">Slot Bot Kamu</div>
@@ -35,6 +60,87 @@
         <p>Tambah bot pertama kamu untuk memulai</p>
         <button class="btn btn-dark" data-act="openAddBot">Tambah Bot Sekarang</button>
       </div>
+
+      <!-- FAQ: <details> bawaan browser, jadi nol JavaScript. -->
+      <section class="faq">
+        <div class="faq-head">
+          <h2>FAQ</h2>
+          <p>Pertanyaan yang sering ditanyakan</p>
+        </div>
+
+        <details>
+          <summary>Bagaimana cara mengaktifkan bot WhatsApp?</summary>
+          <div class="ans">
+            Buka bot kamu, tekan <b>Start</b>, lalu pilih <b>Scan QR</b> atau <b>Pairing Code</b>.
+            Kalau pakai QR: buka WhatsApp di HP → titik tiga → <b>Perangkat Tertaut</b> → <b>Tautkan Perangkat</b>,
+            lalu scan QR yang muncul. Kalau pakai Pairing Code, isi dulu <b>Nomor Bot WA</b> di form Konfigurasi,
+            baru masukkan 8 digit kodenya di HP. Bot langsung online setelah tersambung.
+          </div>
+        </details>
+
+        <details>
+          <summary>Bagaimana kalau bot tiba-tiba offline?</summary>
+          <div class="ans">
+            Tekan <b>Stop</b> lalu <b>Start</b> kembali. Kalau masih bermasalah, coba <b>Hapus Sesi</b>
+            dan lakukan scan QR ulang. Sesi WhatsApp Web kadang putus karena perangkat utama offline lama
+            atau koneksi tidak stabil.
+          </div>
+        </details>
+
+        <details>
+          <summary>Apakah saya bisa pakai nomor WhatsApp utama untuk bot?</summary>
+          <div class="ans">
+            Bisa, tapi tidak disarankan. Bot ini jalan sebagai <b>perangkat tertaut</b> — sama seperti WhatsApp Web.
+            Nomor yang dipakai bot berisiko lebih tinggi kena <b>pembatasan sementara</b> kalau mengirim pesan
+            terlalu banyak atau terlalu cepat, dan HP utamanya harus tetap online sesekali supaya sesi tidak putus.
+            Paling aman pakai <b>nomor terpisah</b> khusus bot.
+          </div>
+        </details>
+
+        <details>
+          <summary>Bagaimana cara mengaktifkan bot Telegram?</summary>
+          <div class="ans">
+            Bot Telegram tidak pakai QR. Buat bot dulu lewat <code>@BotFather</code> di Telegram untuk dapat
+            <b>token</b>, lalu tambahkan bot baru di dashboard dan tempel tokennya di kolom
+            <b>Token Telegram</b>. Setelah itu tekan <b>Start</b> — bot langsung jalan tanpa scan apa pun.
+            Isi juga <b>Owner Telegram ID</b> kalau mau mengunci command owner-only.
+          </div>
+        </details>
+
+        <details>
+          <summary>Kenapa nomor bot saya tidak bisa dipakai untuk Telegram?</summary>
+          <div class="ans">
+            WhatsApp dan Telegram itu dua platform terpisah — satu bot cuma jalan di satu platform.
+            Nomor WA nggak ada hubungannya dengan bot Telegram; yang dipakai Telegram adalah
+            <b>token</b> dari <code>@BotFather</code>, bukan nomor telepon.
+          </div>
+        </details>
+
+        <details>
+          <summary>Berapa lama sesi WhatsApp bertahan?</summary>
+          <div class="ans">
+            Selama tidak di-logout dari HP dan perangkat utama pernah online, sesinya bertahan lama.
+            Sesi baru hilang kalau kamu menekan <b>Hapus Sesi</b>, menghapus bot, logout semua perangkat
+            dari HP, atau WhatsApp sendiri memutus sesi karena tidak aktif terlalu lama.
+          </div>
+        </details>
+
+        <details>
+          <summary>Apakah bot bisa dipakai di banyak grup sekaligus?</summary>
+          <div class="ans">
+            Bisa. Satu bot bisa masuk banyak grup — yang dibatasi per akun itu jumlah <b>slot bot</b>,
+            bukan jumlah grup. Cek sisa slot kamu di kartu <b>Total Slot</b> di atas.
+          </div>
+        </details>
+
+        <details>
+          <summary>Apakah bot saya mati kalau saya tutup browser ini?</summary>
+          <div class="ans">
+            Tidak. Bot jalan di server, bukan di browser kamu. Halaman ini cuma buat kontrol dan lihat log,
+            jadi bot tetap online walau browser ditutup atau HP dimatikan.
+          </div>
+        </details>
+      </section>
     </div>
   </main>
 </div>

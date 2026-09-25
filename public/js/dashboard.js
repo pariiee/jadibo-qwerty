@@ -13,6 +13,7 @@
     document.getElementById('side-role').textContent  = me.role_label || me.role;
     document.getElementById('greeting').textContent   = 'Selamat Datang Kembali, ' + me.username;
     if (me.is_admin) document.getElementById('nav-admin').style.display = '';
+    renderStats();
     return me;
   }
 
@@ -39,10 +40,12 @@
 
   async function loadBots() {
     const d = await api('/api/bots');
-    if (!d?.ok) return;
-    bots = d.bots;
     maxSlots = me?.slots_max ?? (me?.is_admin ? 999 : 0);
+    // Daftar bot gagal? Kartu ringkasan tetap keisi — jangan tinggalin strip.
+    if (!d?.ok) { renderStats(); return; }
+    bots = d.bots;
     renderSlots();
+    renderStats();
     renderBots();
   }
 
@@ -57,6 +60,46 @@
       box.appendChild(d);
     }
     document.getElementById('slot-text').textContent = `${used} / ${maxSlots > 12 ? '\u221E' : maxSlots}`;
+    document.getElementById('st-slot').textContent = `${used} / ${maxSlots > 12 ? '\u221E' : maxSlots}`;
+    document.getElementById('st-slot-sub').textContent = maxSlots > 12
+      ? 'Slot tak terbatas' : (used >= maxSlots ? 'Slot penuh' : `Sisa ${maxSlots - used} slot kosong`);
+  }
+
+  // ── Kartu ringkasan ─────────────────────────────────────────────
+  // "Bot Online" = bot milik user sendiri, dihitung dari /api/bots.
+  // endpoint /stats nggak dipakai karena angkanya global (bocorin jumlah
+  // pelanggan ke semua user) dan bikin request tambahan tiap 10 detik.
+  function renderStats() {
+    const txt = (id, v, cls) => {
+      const el = document.getElementById(id);
+      el.textContent = v;
+      el.className = 'val' + (cls ? ' ' + cls : '');
+    };
+
+    txt('st-role', me.role_label || me.role || '\u2014');
+    document.getElementById('st-role-sub').textContent = me.is_admin
+      ? 'Akses penuh ke panel Administrator'
+      : (me.plan_name ? `Paket ${me.plan_name}` : 'Paket Gratis');
+
+    const exp = me.plan_expired_at ? new Date(me.plan_expired_at) : null;
+    const hari = exp ? Math.ceil((exp - Date.now()) / 86400000) : null;
+    if (me.plan_aktif && exp) {
+      txt('st-exp', exp.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }), hari <= 3 ? 'warn' : 'ok');
+      document.getElementById('st-exp-sub').textContent = hari <= 0 ? 'Berakhir hari ini' : `Sisa ${hari} hari`;
+    } else if (me.trial_used) {
+      txt('st-exp', 'Tidak ada', 'dim');
+      document.getElementById('st-exp-sub').textContent = 'Paket berakhir \u2014 perpanjang di halaman Langganan';
+    } else {
+      txt('st-exp', 'Tidak ada', 'dim');
+      document.getElementById('st-exp-sub').textContent = `Belum ambil paket \u2014 klaim Trial ${me.trial_hari ?? 3} hari gratis`;
+    }
+
+    const online = bots.filter(b => b.is_running).length;
+    txt('st-online', String(online), online ? 'ok' : 'dim');
+    document.getElementById('st-online-sub').textContent = bots.length
+      ? `dari ${bots.length} bot kamu` : 'Belum ada bot';
+
+    // Ditulis dari renderSlots() pas /api/bots selesai.
   }
 
   function esc(s) {
