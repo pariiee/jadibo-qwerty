@@ -32,6 +32,8 @@ cek("label role: cuma 4, urut dev > owner > premium > user", () => {
   const urut = Object.keys(mess.roleLabel);
   assert.deepStrictEqual(urut, ["dev", "owner", "premium", "user"],
     `urutan label salah: ${urut.join(" > ")}`);
+  assert.strictEqual(mess.roleLabel.user, "Basic", "role user harus tampil 'Basic'");
+  assert.strictEqual(mess.roleLabel.premium, "Unreal", "role premium harus tampil 'Unreal'");
   // admin grup itu hak per grup, bukan role
   assert.ok(!("admin" in mess.roleLabel), "admin nggak boleh jadi role");
 });

@@ -217,7 +217,7 @@ async function me(req, res) {
         // Label untuk tampilan. Dashboard TIDAK boleh menulis nama role mentah,
         // biar nama internal admin tidak muncul di UI.
         role_label: u.role === ADMIN_ROLE ? 'Administrator'
-                  : roleOf(u) === 'premium' ? 'Premium' : 'User',
+                  : roleOf(u) === 'premium' ? 'Unreal' : 'Basic',
         is_admin: admin,
         plan_id: plan.id,
         plan_name: plan.name,

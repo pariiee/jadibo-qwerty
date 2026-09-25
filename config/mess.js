@@ -42,8 +42,8 @@ const mess = {
   roleLabel: {
     dev:     'Developer',
     owner:   'Owner',
-    premium: 'Premium',
-    user:    'User biasa',
+    premium: 'Unreal',
+    user:    'Basic',
   },
 
   // QRIS
