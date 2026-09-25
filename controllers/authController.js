@@ -3,7 +3,7 @@
 const bcrypt    = require('bcryptjs');
 const jwt       = require('jsonwebtoken');
 const { pool, incrementStat, decrementStat } = require('../config/database');
-const { ADMIN_ROLE, roleOf, slotsOf } = require('../config/plan');
+const { ADMIN_ROLE, roleOf, slotsOf, paketOf } = require('../config/plan');
 const pricingStore = require('../config/pricingStore');
 const billing = require('./billingController');
 
@@ -228,6 +228,15 @@ async function me(req, res) {
         trial_used_at: u.trial_used_at,
         slots_used: bots[0].count,
         slots_max: slotsOf(u, pricingStore.plans()),
+        // Nol = balik ke jatah paket. `slotsOf` ngasih admin 999 + ngeganti jatah
+        // paket kalau admin nulis di kolom "Slot khusus" — jadi angka itu nggak
+        // bisa dipakai buat bilang "jatah yang sudah dibeli". Kartu dashboard
+        // pakai ini: slot dibeli vs slot yang dipakai.
+        slots_beli: Number(u.plan_slots) || Number(paketOf(u.plan, pricingStore.plans())?.slots) || 0,
+        // Administrator punya jatah tak terbatas (slotsOf → 999) DAN masih ada
+        // kolom override `plan_slots` dari admin panel. Kartu dashboard pakai
+        // angka mentah plan_slots buat ngomong "jatah kamu berapa".
+        admin: !!admin,
         daily_limit: plan.daily_limit,
         created_at: u.created_at,
       },

@@ -19,9 +19,16 @@ for (const id of KARTU) {
   assert.ok(html.includes(`id="${id}"`), `kartu hilang: ${id}`);
   assert.ok(html.includes(`id="${id}-sub"`), `sub-label kartu hilang: ${id}-sub`);
 }
-for (const lbl of ['Role', 'Kedaluwarsa', 'Bot Online', 'Total Slot']) {
+for (const lbl of ['Role', 'Kedaluwarsa', 'Bot Online', 'Slot yang sudah dibeli']) {
   assert.ok(html.includes(`>${lbl}<`), `label kartu hilang: ${lbl}`);
 }
+
+// Indikator "N bot online" di topbar sudah dibuang — kalau balik lagi tanpa
+// sengaja, dashboard.js bakal null pas nulis ke #online-text.
+assert.ok(!/id="online-text"/.test(html), 'topbar masih ada #online-text');
+assert.ok(!/id="live-dot"/.test(html), 'topbar masih ada #live-dot');
+assert.ok(!/getElementById\('online-text'\)/.test(baca(path.join('js', 'dashboard.js'))),
+  'dashboard.js masih nulis ke #online-text yang udah dibuang');
 
 // ── FAQ ─────────────────────────────────────────────────────────────────────
 assert.ok(/FAQ/.test(html) && /Pertanyaan yang sering ditanyakan/.test(html), 'judul FAQ ilang');

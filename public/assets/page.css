@@ -256,7 +256,6 @@ main{flex:1;margin-left:224px;min-width:0}
 body.page-dashboard .topbar,body.page-admin .topbar,body.page-langganan .topbar{position:sticky;top:0;z-index:30;background:var(--barBg);border-bottom:1px solid var(--border);height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;gap:12px}
 .topbar h1{font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tb-right{display:flex;align-items:center;gap:14px}
-.live-ind{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:12px}
 body.page-dashboard .dot{width:7px;height:7px;border-radius:50%;background:var(--ok)}
 .dot.off{background:var(--off);animation:none;box-shadow:none}
 .content{padding:24px}

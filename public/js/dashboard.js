@@ -51,18 +51,27 @@
 
   function renderSlots() {
     const used = bots.length;
+    // Tampilan pakai JATAH YANG DIBELI (`slots_beli`). `maxSlots` cuma buat
+    // nentuin boleh nambah bot apa nggak — di situ admin dapet 999, dan angka
+    // itu yang bikin baris ini nulis "1 / ∞" padahal jatahnya 2.
+    const beli = me?.slots_beli ?? maxSlots;
     const box = document.getElementById('slot-dots');
     box.innerHTML = '';
-    const show = maxSlots > 12 ? Math.min(used, 12) : maxSlots;
-    for (let i = 0; i < show; i++) {
+    for (let i = 0; i < Math.min(beli, 12); i++) {
       const d = document.createElement('i');
       if (i < used) d.className = 'on';
       box.appendChild(d);
     }
-    document.getElementById('slot-text').textContent = `${used} / ${maxSlots > 12 ? '\u221E' : maxSlots}`;
-    document.getElementById('st-slot').textContent = `${used} / ${maxSlots > 12 ? '\u221E' : maxSlots}`;
-    document.getElementById('st-slot-sub').textContent = maxSlots > 12
-      ? 'Slot tak terbatas' : (used >= maxSlots ? 'Slot penuh' : `Sisa ${maxSlots - used} slot kosong`);
+    document.getElementById('slot-text').textContent = `${used} / ${beli}`;
+
+    const elSlot = document.getElementById('st-slot');
+    elSlot.textContent = String(beli);
+    elSlot.className = 'val' + (beli > 0 && used >= beli ? ' warn' : '');
+    document.getElementById('st-slot-sub').textContent =
+      me?.admin ? `Administrator \u2014 tak terbatas, ${used} terpakai`
+      : beli === 0 ? 'Belum ada slot \u2014 klaim Trial atau beli paket'
+      : used >= beli ? `Slot penuh \u2014 ${used} dari ${beli} terpakai`
+      : `Sisa ${beli - used} slot lagi dari ${beli}`;
   }
 
   // ── Kartu ringkasan ─────────────────────────────────────────────
@@ -99,7 +108,8 @@
     document.getElementById('st-online-sub').textContent = bots.length
       ? `dari ${bots.length} bot kamu` : 'Belum ada bot';
 
-    // Ditulis dari renderSlots() pas /api/bots selesai.
+    // Slot pun belum keisi di jalur ini — /api/bots nggak jalan, jadi `used` nggak
+    // diketahui. Jangan timpa angka terakhir yang udah bener sama tebakan.
   }
 
   function esc(s) {
@@ -113,11 +123,6 @@
     const empty = document.getElementById('empty-state');
     grid.innerHTML = '';
     empty.style.display = bots.length ? 'none' : '';
-
-    const online = bots.filter(b => b.is_running).length;
-    const dot = document.getElementById('live-dot');
-    dot.className = 'dot' + (online ? '' : ' off');
-    document.getElementById('online-text').textContent = `${online} bot online`;
 
     bots.forEach(bot => {
       const card = document.createElement('div');
@@ -201,23 +206,13 @@
   });
 
   // ── Live stats ──────────────────────────────────────────────────
-  function connectWS() {
-    try {
-      const ws = new WebSocket((location.protocol === 'https:' ? 'wss' : 'ws') + '://' + location.host);
-      ws.onmessage = e => {
-        try {
-          const d = JSON.parse(e.data);
-          if (d.type === 'stats') document.getElementById('online-text').textContent = `${d.payload.total_bots_online} bot online`;
-        } catch {}
-      };
-      ws.onclose = () => setTimeout(connectWS, 5000);
-    } catch {}
-  }
+  // Socket dashboard dibuang bareng indikator "bot online" di topbar — satu-satunya
+  // yang dia dengerin cuma pesan `stats`. Log live tetap jalan di /bot/:id
+  // (bot-detail.js punya socket sendiri).
 
   (async () => {
     if (!(await whoami())) return;
     await loadBots();
-    connectWS();
   })();
 window.openAddBot = openAddBot; window.closeAdd = closeAdd;
 window.showStep = showStep; window.backStep = backStep; window.pickPlatform = pickPlatform;
