@@ -126,7 +126,7 @@
         '<td>' + (u.bot_count ?? u.slots_used ?? 0) + '</td>' +
         '<td>' + (u.is_active ? '<span class="dot on"></span> Aktif' : '<span class="dot off"></span> Nonaktif') + '</td>' +
         '<td class="aksi">' +
-          '<button class="btn btn-sm btn-outline" data-act="bukaUser(' + u.id + ')">Langganan</button>' +
+          '<button class="btn btn-sm btn-outline" data-act="bukaUser(' + u.id + ')" title="Atur paket & masa aktif">Paket</button>' +
           '<button class="btn btn-sm btn-outline" data-act="toggleAktif(' + u.id + ',' + (u.is_active ? 0 : 1) + ')">' +
             (u.is_active ? 'Matikan' : 'Aktifkan') + '</button>' +
         '</td>';
@@ -149,10 +149,12 @@
     const u = cacheUser.find((x) => x.id === id);
     if (!u) return;
     userAktif = u;
-    document.getElementById('mu-judul').textContent = 'Langganan: ' + u.username;
+    document.getElementById('mu-judul').textContent = 'Paket: ' + u.username;
 
     const sel = document.getElementById('mu-plan');
-    sel.innerHTML = '<option value="user">Gratis (turun jadi User)</option>';
+    // value tetap id paket (`user` = paket gratis, ikut enum DB) — cuma
+    // tulisannya yang ikut label role yang sekarang ("Basic").
+    sel.innerHTML = '<option value="user">Gratis (turun jadi Basic)</option>';
     paket.forEach((p) => {
       const o = document.createElement('option');
       o.value = p.id;
@@ -188,7 +190,7 @@
     const d = await api('/api/admin/users/' + userAktif.id, { method: 'PATCH', body: JSON.stringify(body) });
     if (!d?.ok) { err.textContent = d?.message || 'Gagal menyimpan'; return; }
     tutupUser();
-    showToast('Langganan diperbarui', 'success');
+    showToast('Paket diperbarui', 'success');
     muatUser();
   }
 

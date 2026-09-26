@@ -49,7 +49,7 @@ if (!/app\.get\('\/pricing'/.test(server)) {
   console.error('✗ server.js nggak punya rute /pricing');
   process.exit(1);
 }
-for (const f of ['public/pricing.html', 'public/js/pricing.js', 'public/partials/sidebar.html', 'public/js/dashboard.js']) {
+for (const f of ['public/pricing.html', 'public/js/pricing.js', 'public/partials/sidebar.html', 'public/js/dashboard.js', 'public/admin.html', 'public/js/admin.js']) {
   if (/\/langganan|page-langganan|Langganan/.test(baca(f))) {
     console.error(`✗ ${f} masih menyebut langganan`);
     process.exit(1);
