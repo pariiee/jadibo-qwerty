@@ -472,28 +472,31 @@ body.page-pricing #bayar-qr{width:240px;max-width:100%;border-radius:12px;backgr
 @media(max-width:560px){body.page-pricing .plat-grid{grid-template-columns:1fr}}
 
 /* ─── Dashboard: kartu ringkasan + FAQ ─────────────────────────────────────── */
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:22px}
-.stat{border:1px solid var(--border);border-radius:14px;padding:15px 16px;background:var(--surf1)}
-.stat .lbl{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-bottom:9px}
-.stat .val{font-size:22px;font-weight:800;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.stat .val.ok{color:var(--okTxt)}
-.stat .val.warn{color:var(--warnTxt)}
-.stat .val.err{color:var(--errTxt)}
-.stat .val.dim{color:var(--dim);font-weight:600}
-.stat .sub{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.45}
+/* .stats/.stat juga dipakai kartu statistik di landing. Tanpa `body.page-dashboard`
+   di depan, blok ini nutupin punya landing dan kartunya jadi kotak polos — nol
+   efek visual, cuma CSS yang kalah urutan. `.faq` sama: dipakai dua halaman. */
+body.page-dashboard .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:22px}
+body.page-dashboard .stat{border:1px solid var(--border);border-radius:14px;padding:15px 16px;background:var(--surf1)}
+body.page-dashboard .stat .lbl{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-bottom:9px}
+body.page-dashboard .stat .val{font-size:22px;font-weight:800;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+body.page-dashboard .stat .val.ok{color:var(--okTxt)}
+body.page-dashboard .stat .val.warn{color:var(--warnTxt)}
+body.page-dashboard .stat .val.err{color:var(--errTxt)}
+body.page-dashboard .stat .val.dim{color:var(--dim);font-weight:600}
+body.page-dashboard .stat .sub{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.45}
 
-.faq{margin-top:36px;border-top:1px solid var(--border);padding-top:26px;max-width:760px}
-.faq-head{margin-bottom:16px}
-.faq-head h2{font-size:16px;font-weight:700}
-.faq-head p{font-size:13px;color:var(--muted);margin-top:3px}
-.faq details{border:1px solid var(--border);border-radius:12px;background:var(--surf0);margin-bottom:8px;overflow:hidden}
-.faq details[open]{background:var(--surf1);border-color:var(--border2)}
-.faq summary{cursor:pointer;padding:14px 16px;font-size:13.5px;font-weight:600;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px}
-.faq summary::-webkit-details-marker{display:none}
-.faq summary::after{content:'+';font-size:17px;font-weight:400;color:var(--dim);flex:0 0 auto;line-height:1}
-.faq details[open] summary::after{content:'\2212'}
-.faq summary:hover{color:var(--txt)}
-.faq .ans{padding:0 16px 15px;font-size:13px;color:var(--txt2);line-height:1.65}
-.faq .ans b{color:var(--txt);font-weight:600}
-.faq .ans code{font-family:Consolas,Menlo,monospace;background:var(--surf2);padding:1px 5px;border-radius:4px;font-size:12px}
+body.page-dashboard .faq{margin-top:36px;border-top:1px solid var(--border);padding-top:26px;max-width:760px}
+body.page-dashboard .faq-head{margin-bottom:16px}
+body.page-dashboard .faq-head h2{font-size:16px;font-weight:700}
+body.page-dashboard .faq-head p{font-size:13px;color:var(--muted);margin-top:3px}
+body.page-dashboard .faq details{border:1px solid var(--border);border-radius:12px;background:var(--surf0);margin-bottom:8px;overflow:hidden}
+body.page-dashboard .faq details[open]{background:var(--surf1);border-color:var(--border2)}
+body.page-dashboard .faq summary{cursor:pointer;padding:14px 16px;font-size:13.5px;font-weight:600;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px}
+body.page-dashboard .faq summary::-webkit-details-marker{display:none}
+body.page-dashboard .faq summary::after{content:'+';font-size:17px;font-weight:400;color:var(--dim);flex:0 0 auto;line-height:1}
+body.page-dashboard .faq details[open] summary::after{content:'\2212'}
+body.page-dashboard .faq summary:hover{color:var(--txt)}
+body.page-dashboard .faq .ans{padding:0 16px 15px;font-size:13px;color:var(--txt2);line-height:1.65}
+body.page-dashboard .faq .ans b{color:var(--txt);font-weight:600}
+body.page-dashboard .faq .ans code{font-family:Consolas,Menlo,monospace;background:var(--surf2);padding:1px 5px;border-radius:4px;font-size:12px}
 

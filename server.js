@@ -39,6 +39,7 @@ const auth = require('./controllers/authController');
 const bot  = require('./controllers/botController');
 const billing = require('./controllers/billingController');
 const pricingStore = require('./config/pricingStore');
+const beban        = require('./config/beban');
 const engineBus = require('./config/engineBus');
 
 const app    = express();
@@ -426,6 +427,14 @@ process.on('uncaughtException', (err) => {
 
 process.on('SIGINT',  shutdown);
 process.on('SIGTERM', shutdown);
+
+// ─── Monitor beban host — tiap menit ─────────────────────────────────────────
+// Cuma buat JEJAK. Kalau box-nya rebutan I/O lagi, di `pm2 logs` kelihatan jam
+// mulai & selesainya — cukup buat nagih ke hosting, tanpa nebak-nebak.
+cron.schedule('* * * * *', () => {
+  const baris = beban.cek();
+  if (baris) console.warn(baris);
+}, { timezone: 'Asia/Jakarta' });
 
 boot().catch((err) => {
   console.error('[Boot] Fatal error:', err);
