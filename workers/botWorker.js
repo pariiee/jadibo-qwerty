@@ -227,6 +227,56 @@ cron.schedule('* * * * *', async () => {
   }
 }, { timezone: 'Asia/Jakarta' });
 
+// ─── Watchdog bot: "harusnya jalan tapi nyangkut" -> nyalain sendiri ─────────
+//
+// Akar keluhan "bot abis bikin stiker / download video gede tiba-tiba diem,
+// harus spam cmd baru on": engine cuma reconnect di handler 'connection close'.
+// Kalau socket mati TANPA event itu, nggak ada yang nyalain ulang dan user yang
+// harus turun tangan. Watchdog ini nutup celah itu — dia nanya tiap 20 detik
+// "bot yang is_running=1 tapi engine-nya nggak nyambung?" lalu restart sendiri.
+//
+// Kenapa nunggu 3 cek dulu (60 detik): startWhatsAppBot() masukin client ke
+// activeBots SEBELUM handshake kelar (whatsappEngine.js:311), jadi bot yang
+// sedang connect normal juga kelihatan "belum nyambung" selama ~10-15 detik.
+// Tanpa grace period, watchdog bakal nyolot tiap reconnect normal. Guard
+// `sudah berjalan` nyegah socket dobel, tapi log-nya jadi sampah.
+const CekBotNyangkutMs = 20000;
+const BatasCekNyangkut  = 3;              // 3 × 20 detik = 60 detik nyangkut baru diulang
+const nyangkutBerapaKali = new Map();     // botId -> berapa cek berturut-turut nyangkut
+
+setInterval(async () => {
+  try {
+    const [rows] = await pool.execute('SELECT id, platform FROM bots WHERE is_running = 1');
+    const idJalan = new Set(rows.map((r) => Number(r.id)));
+    for (const id of nyangkutBerapaKali.keys()) {
+      if (!idJalan.has(id)) nyangkutBerapaKali.delete(id);   // bot dimatiin user: lupain
+    }
+
+    for (const row of rows) {
+      const id = Number(row.id);
+      // Telegram belum punya probe liveness — cuma dijalur WA.
+      if (row.platform === 'telegram') continue;
+      if (!wa.botNyangkut(id)) { nyangkutBerapaKali.delete(id); continue; }
+
+      const n = (nyangkutBerapaKali.get(id) || 0) + 1;
+      nyangkutBerapaKali.set(id, n);
+      if (n < BatasCekNyangkut) continue;                    // kasih kesempatan reconnect normal
+      nyangkutBerapaKali.delete(id);
+
+      console.log(`[Worker] Bot ${id} nyangkut ${n} cek berturut-turut — restart otomatis`);
+      try {
+        const bd = await botDariDb(id);
+        await wa.startWhatsAppBot(bd, false);
+        console.log(`[Worker] Bot ${id} dinyalain ulang otomatis`);
+      } catch (e) {
+        console.error(`[Worker] Watchdog bot ${id} gagal nyalain: ${e.message}`);
+      }
+    }
+  } catch (e) {
+    console.error('[Worker] Watchdog error:', e.message);
+  }
+}, CekBotNyangkutMs);
+
 // ─── Boot ────────────────────────────────────────────────────────────────────
 async function boot() {
   if (!process.env.INTERNAL_KEY) {
@@ -267,11 +317,41 @@ async function boot() {
   await flush();
 }
 
-process.on('unhandledRejection', (e) => console.error('[Worker/UnhandledRejection]', e?.message || e));
-process.on('uncaughtException',  (e) => console.error('[Worker/UncaughtException]',  e?.message || e));
+// Handler ini SENGAJA bikin proses MATI, bukan cuma nyetak pesan.
+//
+// Bug lama (akar keluhan "bot diem, harus spam cmd baru on"):
+//   process.on('uncaughtException', (e) => console.error(...));
+// Cuma nyetak. Proses tetap hidup tapi state-nya udah rusak — socket WA mati,
+// nggak ada event 'close', jadi nggak ada reconnect, dan PM2 nggak bisa nolong
+// karena prosesnya nggak pernah exit (`autorestart: true` nggak jalan kalau
+// prosesnya masih hidup). Hasilnya bot ZOMBIE: status online, tapi tuli.
+//
+// Keluar paksa = PM2 langsung nyalain ulang (< 1 detik) + auto-start bot balik.
+// Jauh lebih cepat daripada user spam `.s` nunggu event loop kosong.
+process.on('unhandledRejection', (e) => {
+  console.error('[Worker/UnhandledRejection]', e?.stack || e?.message || e);
+  process.exit(1);
+});
+process.on('uncaughtException', (e) => {
+  console.error('[Worker/UncaughtException]', e?.stack || e?.message || e);
+  process.exit(1);
+});
 
 async function shutdown() {
   console.log('[Worker] Shutdown — status bot direset');
+  // Tutup socket dulu, BARU keluar.
+  //
+  // Bug lama: process.exit(0) langsung, socket WA nggak pernah ditutup. WA masih
+  // pegang sesi lama, lalu proses pengganti nyambung ke nomor yang sama 1-2 detik
+  // kemudian -> tabrakan sesi -> WA mutus salah satunya -> bot baliknya lama atau
+  // nggak nyantol sama sekali. Nunggu di sini ngasih WA kesempatan nge-rilis dulu.
+  for (const [id, inst] of activeBots) {
+    if (typeof inst?.disconnect !== 'function') continue;
+    try {
+      await Promise.race([inst.disconnect(), new Promise(r => setTimeout(r, 1500))]);
+    } catch { /* socket udah mati: nggak masalah */ }
+    void id;
+  }
   try {
     await pool.execute("UPDATE bots SET status = 'disconnected' WHERE status IN ('connected','connecting')");
   } catch {}

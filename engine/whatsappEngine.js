@@ -483,7 +483,26 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
   });
 
   // ── message ───────────────────────────────────────────────────────────────
-  client.on('message', async (event) => {
+  client.on('message', (event) => {
+    // Pesan berikutnya JANGAN nunggu pesan ini selesai.
+    //
+    // Bug lama (keluhan "abis bikin stiker/downlod video gede tiba-tiba diem,
+    // harus spam .s .s .s dulu"): handler ini `async` dan di-await pemanggilnya,
+    // jadi satu .tt yang nyangkut 115 detik (yt-dlp timeout 180s, axios 120s)
+    // NGEBLOCK semua pesan berikutnya. Balasan nongol sekaligus setelah kerjaan
+    // beratnya kelar — dan kalau lebih dari ~5 menit, WA udah nge-drop balasannya
+    // (pesan persistent), jadi bot kelihatan mati permanen.
+    //
+    // Sekarang tiap pesan jalan sendiri-sendiri; spam `.s` nggak nambah apa-apa
+    // karena `.s` pertama memang udah dikerjain.
+    // ponytail: tanpa batas jumlah paralel — kalau 1 grup spam 20 command berat
+    // sekaligus, tambah antrian berbatas per bot.
+    prosesPesan(event).catch((e) => {
+      console.error(`[Bot ${botId}] 💬 Handler error (luar): ${e?.message || e}`);
+    });
+  });
+
+  async function prosesPesan(event) {
     // Safety net: apa pun yang meledak di handler ini harus kelog, jangan mati diem.
     // Tanpa ini, rejection tanpa catch = proses mati (Node >= 15) -> bot restart dan
     // command yang lagi diproses nggak pernah dibalas ("bot kadang ga respon").
@@ -1014,7 +1033,7 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
       console.error(`[Bot ${botId}] 💬 Handler error: ${err.message}`);
       try { await logBot(botId, 'cmderr', `handler: ${err.message}`); } catch { /* log gagal ya sudah */ }
     }
-  });
+  }
 
   // ── Welcome / Bye hook ────────────────────────────────────────────────────
   // adapter emits 'group_participants' when members join/leave
@@ -1231,4 +1250,24 @@ function getBotConnectedAt(botId) {
   return botConnectedAt.get(Number(botId)) || 0;
 }
 
-module.exports = { startWhatsAppBot, stopWhatsAppBot, restartWhatsAppBot, restartWhatsAppBotInBackground, getBotConnectedAt, setWsBroadcast, getBotGlobalSetting, setBotGlobalSetting };
+// ─── Probe liveness buat watchdog ────────────────────────────────────────────
+// "Bot harusnya jalan tapi engine-nya nggak nyambung?" — dipakai workers/botWorker.js
+// biar bisa nge-restart sendiri tanpa nunggu event 'connection close'.
+//
+// KENAPA INI PERLU: engine cuma nyoba reconnect di handler 'connection close'.
+// Kalau socket mati TANPA event itu (WA putus diam-diam, proses setengah mati,
+// sesi tabrakan abis restart), nggak ada yang nyalain ulang — user yang harus
+// turun tangan spam command. Itu akar keluhan "bot diem, harus spam cmd baru on".
+//
+// Aman buat pairing: bot yang lagi nunggu scan (pairingBots) atau lagi di-stop/
+// di-restart (stoppingBots/restartingBots) NGGAK pernah dilaporin nyangkut.
+function botNyangkut(botId) {
+  if (stoppingBots.has(botId) || pairingBots.has(botId) || restartingBots.has(botId)) return false;
+  const inst = activeBots.get(botId);
+  if (!inst) return true;                                  // nggak ada client padahal harus jalan
+  // Telegram client nggak punya isConnected; cukup ada instance = hidup.
+  if (typeof inst.isConnected !== 'boolean') return false;
+  return !inst.isConnected;                                // ada client tapi socketnya mati
+}
+
+module.exports = { startWhatsAppBot, stopWhatsAppBot, restartWhatsAppBot, restartWhatsAppBotInBackground, getBotConnectedAt, setWsBroadcast, getBotGlobalSetting, setBotGlobalSetting, botNyangkut };
