@@ -187,14 +187,14 @@ const mtimeAset = (p) => {
   catch { return 0; }
 };
 
-const halaman = (nama) => (_, res) => {
+const halaman = (nama, kode = 200) => (_, res) => {
   try {
     const html = fs.readFileSync(path.join(PUBLIC_HTML, nama), 'utf8')
       .replace(INCLUDE_RE, (_, f) =>
         fs.readFileSync(path.join(PUBLIC_HTML, 'partials', f), 'utf8'))
       .replace(/(\/(?:assets|js)\/[\w.-]+\.(?:css|js))"/g,
         (m, p) => `${p}?v=${mtimeAset(p)}"`);
-    res.type('html').send(html);
+    res.status(kode).type('html').send(html);
   } catch (e) {
     console.error('[Page]', nama, e.message);
     res.status(500).type('html').send('<h1>500</h1>');
@@ -211,7 +211,12 @@ app.get('/admin',     halaman('admin.html'));
 // /login & /register = SATU file, pane dipilih dari pathname (js/auth-page.js).
 app.get('/login',     halaman('login.html'));
 app.get('/register',  halaman('login.html'));
-app.get('*',          halaman('index.html'));
+// `/` WAJIB eksplisit: tanpa ini dia dilayani catch-all, dan begitu catch-all
+// berubah jadi 404, landing page ikut jadi 404.
+app.get('/',          halaman('index.html'));
+// Sisa rute = 404 beneran. Dulu catch-all-nya menyajikan landing page dengan
+// status 200, jadi URL salah ketik kelihatan "berhasil" — user cuma bingung.
+app.get('*',          halaman('404.html', 404));
 
 // ─── WebSocket Hub ────────────────────────────────────────────────────────────
 // Map: botId -> Set<WebSocket>

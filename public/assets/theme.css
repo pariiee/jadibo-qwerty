@@ -97,13 +97,24 @@ html.dark{
   --tile-blue:#131a2e;
   --tile-purple:#1a1330;
   --tile-orange:#241a0e}
+
+/* ── 404 ───────────────────────────────────────────────────────────────
+   Dipakai public/404.html. Tanpa gaya ini halaman 404 cuma teks polos:
+   tidak ada aturan h1/p di theme.css, dan .wrap di glass.css cuma
+   menyetel padding samping, bukan lebar maksimum. */
+.nf{padding-top:clamp(56px,14vh,110px);padding-bottom:clamp(56px,14vh,110px);max-width:640px}
+.nf-code{font-size:12px;font-weight:800;letter-spacing:.18em;color:var(--accTxt);margin:0 0 12px}
+.nf h1{font-size:clamp(26px,6vw,38px);font-weight:800;letter-spacing:-.03em;line-height:1.15;margin:0 0 12px}
+.nf-sub{color:var(--muted);font-size:16px;line-height:1.7;margin:0 0 26px;max-width:460px}
+.nf-act{display:flex;flex-wrap:wrap;gap:10px}
+
 body{background-color:var(--bg);color:var(--txt);min-height:100vh;
   font-family:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
   -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
   letter-spacing:-.011em;line-height:1.55}
 a{color:inherit;text-decoration:none}
 button,input,select,textarea{font:inherit;color:inherit}
-::selection{background:var(--acc);color:#fff}
+::selection{background:var(--acc);color:var(--onAcc)}
 ::-webkit-scrollbar{width:9px;height:9px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--scroll);border-radius:8px}

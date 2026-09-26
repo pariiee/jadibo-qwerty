@@ -126,13 +126,13 @@ body.page-index .logo-badge{width:32px;height:32px;background:var(--acc);border-
 .mock-chat{display:flex;flex-direction:column;justify-content:flex-end;gap:10px;padding:14px 14px 26px;min-height:0;overflow:hidden}
 .mock-chat .bub{max-width:78%;font-size:12.5px;line-height:1.45;padding:9px 12px;border-radius:14px;animation:yb-chat 7s var(--d,0s) ease-in-out infinite both}
 .mock-chat .bub.in{align-self:flex-start;background:var(--bg2);border:1px solid var(--border);border-bottom-left-radius:5px;color:var(--txt)}
-.mock-chat .bub.out{align-self:flex-end;background:var(--acc);color:#fff;font-weight:700;letter-spacing:.3px;border-bottom-right-radius:5px}
+.mock-chat .bub.out{align-self:flex-end;background:var(--acc);color:var(--onAcc);font-weight:700;letter-spacing:.3px;border-bottom-right-radius:5px}
 .mock-chat .bub.typing{display:flex;gap:4px;padding:11px 13px}
 .mock-chat .bub.typing i{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:yb-pulse 1.2s ease-in-out infinite}
 .mock-chat .bub.typing i:nth-child(2){animation-delay:.15s}
 .mock-chat .bub.typing i:nth-child(3){animation-delay:.3s}
 .mock-chat .bub-cmd{color:var(--acc);font-weight:700;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
-.mock-chat .bub.out .bub-cmd{color:#fff}
+.mock-chat .bub.out .bub-cmd{color:var(--onAcc)}
 @media(max-width:640px){
   .mock-chat{padding:10px 10px 26px;gap:5px}
   .mock-chat .bub{font-size:11.5px;padding:7px 10px}}
@@ -150,7 +150,7 @@ body.page-index .hero-visual{animation:yb-rise .7s .12s cubic-bezier(.22,1,.36,1
 .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-bottom:26px}
 .step{position:relative;background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--border);border-radius:18px;padding:24px;transition:transform .2s ease,border-color .2s ease}
 .step:hover{transform:translateY(-4px);border-color:var(--border2)}
-.step i{display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:var(--acc);color:#fff;font-weight:800;font-size:13px;font-style:normal;margin-bottom:14px}
+.step i{display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:var(--acc);color:var(--onAcc);font-weight:800;font-size:13px;font-style:normal;margin-bottom:14px}
 .step h4{font-size:16px;font-weight:700;margin:0 0 6px}
 .step p{color:var(--muted);font-size:14px;line-height:1.6}
 .step p b{color:var(--acc);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px}
@@ -173,7 +173,7 @@ body.page-index .hero-visual{animation:yb-rise .7s .12s cubic-bezier(.22,1,.36,1
 .tst:hover{transform:translateY(-4px);border-color:var(--border2)}
 .tst-t{color:var(--muted);font-size:14px;line-height:1.65;margin:0}
 .tst-f{display:flex;align-items:center;gap:11px;margin-top:auto}
-.tst-f i{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:var(--acc);color:#fff;font-weight:800;font-size:14px;font-style:normal;flex-shrink:0}
+.tst-f i{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:var(--acc);color:var(--onAcc);font-weight:800;font-size:14px;font-style:normal;flex-shrink:0}
 .tst-f b{display:block;font-size:13.5px;font-weight:700}
 .tst-f span{color:var(--dim);font-size:12px}
 /* stats — sel siku, angka mono, label micro */

@@ -34,4 +34,21 @@ assert.ok(/COUNT\(\*\) AS n FROM bots WHERE is_running = 1/.test(db),
 assert.ok(/async function requireKing[\s\S]{0,400}SELECT role, is_active FROM users/.test(auth),
   'requireKing harus baca role dari DB, bukan dari payload token');
 
+// Catch-all dulu menyajikan landing page dengan status 200: URL salah ketik
+// kelihatan "berhasil" dan user cuma bingung. Sekarang harus 404 sungguhan —
+// dan `/` wajib punya rute sendiri, kalau tidak landing page ikut 404.
+assert.ok(/app\.get\('\/',\s+halaman\('index\.html'\)\)/.test(srv),
+  "rute '/' harus eksplisit, kalau tidak landing page kebawa catch-all 404");
+assert.ok(/app\.get\('\*',\s+halaman\('404\.html',\s*404\)\)/.test(srv),
+  'catch-all harus menyajikan 404.html dengan status 404');
+assert.ok(/const halaman = \(nama, kode = 200\)/.test(srv),
+  'halaman() harus bisa menerima status HTTP');
+
+// Nav landing dipakai juga oleh 404.html. Anchor tanpa '/' mati begitu
+// halamannya bukan landing.
+const nav = fs.readFileSync(path.join(dir, 'public', 'partials', 'nav.html'), 'utf8');
+assert.ok(!/href="#[a-z]/.test(nav),
+  'anchor nav harus absolut ke /#... supaya jalan dari halaman selain landing');
+assert.ok(/href="\/#features"/.test(nav), 'anchor nav harus menunjuk ke /#features');
+
 console.log('web-hardening OK');
