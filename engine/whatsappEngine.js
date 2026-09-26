@@ -18,6 +18,7 @@ const { isPendingSewa } = require('./pendingSewa');
 const { lidToPn, lidToPnAsync } = require('./jid');
 const { renderTemplate } = require('./template');
 const mess = require('../config/mess');
+const { rapikanError } = require('./pesanError');
 
 // Track grup yang sudah dikirimi pesan "tidak terdaftar" agar tidak spam
 // Key: `${botId}:${groupJid}` — hapus otomatis setelah 10 menit
@@ -995,6 +996,13 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
     if (ctx.isCmd && Array.isArray(botData.fitur) && !botData.fitur.includes(ctx.command)) {
       console.log(`[Bot ${botId}] 🚫 fitur di luar paket: ${logLine}`);
       await logBot(botId, 'limit', `.${ctx.command} — fitur di luar paket`);
+      // Dulu `return;` telanjang: member ngetik command, bot nggak bales apa-apa,
+      // dia nyangka botnya mati. Selalu kasih tahu alasannya.
+      const pf = botData.prefix || '.';
+      await client.message.send(ctx.jid,
+        `🔒 Command *${pf}${ctx.command}* belum ada di paket bot ini.\n\n` +
+        `Ketik *${pf}menu* buat lihat yang tersedia.`
+      ).catch(() => {});
       return;
     }
 
@@ -1012,7 +1020,9 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
         // Jangan diem aja: user nunggu balasan, plugin error tanpa pesan kelihatan
         // kayak bot "ga respon" padahal gagal.
         if (ctx.isCmd) {
-          await client.message.send(ctx.jid, `⚠️ Error pas jalanin *${ctx.command}*: ${e.message}`).catch(() => {});
+          // JANGAN kirim `e.message` mentah ke WA. Dulu member bisa nerima "Timeout",
+          // "ECONNABORTED", atau stack kode. rapikanError() sudah punya padanannya.
+          await client.message.send(ctx.jid, `⚠️ Error pas jalanin *${ctx.command}*: ${rapikanError(e)}`).catch(() => {});
         }
         cmdHandled = true;
         break;
@@ -1024,7 +1034,19 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
     const tookTag = ctx.isCmd ? ` (+${Date.now() - t0}ms)` : '';
     console.log(`[Bot ${botId}] ${logLine}${tookTag}`);
     if (ctx.isCmd) {
-      if (!cmdHandled) console.log(`[Bot ${botId}] ❓ Command tidak dikenal: ${logLine}`);
+      const pf = botData.prefix || '.';
+      // ── Titik terakhir yang dijamin kena semua command ─────────────────────
+      // Kalau nggak ada plugin yang ngaku (`cmdHandled` masih false), engine ini
+      // SATU-SATUNYA tempat yang masih bisa ngejawab — tapi dulu cuma `log` ke
+      // console. Member ngetik `.toimg`/`.getnumber`/`.blacklist`, bot diem, dia
+      // nyangka botnya rusak (42x kejadian cuma di SATU log). Selalu bales.
+      if (!cmdHandled) {
+        console.log(`[Bot ${botId}] ❓ Command tidak dikenal: ${logLine}`);
+        await client.message.send(ctx.jid,
+          `❓ Command *${pf}${ctx.command}* nggak ada.\n\n` +
+          `Ketik *${pf}menu* buat lihat semua command yang tersedia.`
+        ).catch(() => {});
+      }
       await logBot(botId, cmdHandled ? 'cmd' : 'cmderr', `${logLineDisplay}${tookTag}`);
     } else {
       await logBot(botId, 'info', logLineDisplay);

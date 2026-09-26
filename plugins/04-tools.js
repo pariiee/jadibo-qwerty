@@ -4780,12 +4780,18 @@ module.exports = async function toolsHandler(ctx) {
         // Player API TikTok sering menggantung ~31 dtk lalu upstream balas 503.
         // Bot WA timeout 30 dtk → user cuma lihat "timeout". Lewat 9 dtk kita
         // lekas pindah ke sumber cadangan (snaptik.app, terukur ~0,6 dtk).
+        // Angkanya dulu 20000 padahal komentar ini nulis 9 dtk — link mati jadi
+        // bikin member nunggu 14 dtk (terukur di log) sebelum dikasih error.
         const { data } = await axios.get(`${process.env.BASE_API}api/download/tiktok`, {
           params: { url },
           headers: { 'X-API-Key': process.env.KEY_API },
-          timeout: 20000,
+          timeout: 8000,
         });
         const res     = data?.results || {};
+        // BE udah ngasih alasan yang manusiawi ("linknya udah nggak ada", "ini post
+        // foto, bukan video"). Dulu alasan itu dibuang dan diganti kalimat generik,
+        // jadi member nggak pernah tahu kenapa gagalnya.
+        const alasanBe = data?.message || '';
         const title   = res.title  || '';
         const author  = res.author?.nickname || '';
         const caption = `🎵 *TikTok*${title ? `\n${title}` : ''}${author ? `\n👤 ${author}` : ''}`;
@@ -4810,7 +4816,7 @@ module.exports = async function toolsHandler(ctx) {
 
         // ── Video biasa ───────────────────────────────────────────────────────
         const dlUrl = res.video?.no_watermark;
-        if (!dlUrl) throw new Error('Media tidak ditemukan di response API');
+        if (!dlUrl) throw new Error(alasanBe || 'Media tidak ditemukan di response API');
         const vidRes = await axios.get(dlUrl, { responseType: 'arraybuffer', timeout: 90000 });
         await react(mess.reactSuccess);
         const vbuf  = Buffer.from(vidRes.data);
