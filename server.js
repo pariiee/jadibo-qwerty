@@ -29,6 +29,9 @@ const wss    = new WebSocket.Server({ server });
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
 
+// Panel ini & panel Baileys berbagi tabel `bots` di DB yang sama.
+const { ENGINE_BOT_ID, mine, isMine } = require('./config/engineScope');
+
 // ─── Security & Middleware ────────────────────────────────────────────────────
 app.use(helmet({
   contentSecurityPolicy: {
@@ -166,7 +169,8 @@ wss.on('connection', (ws, req) => {
             'SELECT user_id FROM bots WHERE id = ?',
             [botIdNum]
           );
-          const owns = rows.length > 0 && (decoded.role === 'king' || rows[0].user_id === decoded.id);
+          const owns = rows.length > 0 && (decoded.role === 'king' || rows[0].user_id === decoded.id)
+            && isMine(botIdNum);
           if (!owns) {
             ws.send(JSON.stringify({ type: 'error', message: 'Forbidden' }));
             ws.close();
@@ -238,8 +242,9 @@ cron.schedule('*/10 * * * * *', async () => {
 // ─── Boot ─────────────────────────────────────────────────────────────────────
 async function autoStartBots() {
   try {
+    const [sc, sp] = mine('id', 'AND');
     const [rows] = await pool.execute(
-      "SELECT * FROM bots WHERE is_running = 1"
+      `SELECT * FROM bots WHERE is_running = 1${sc}`, sp
     );
     if (rows.length === 0) return;
     console.log(`[Boot] Auto-starting ${rows.length} bot(s)...`);
@@ -283,7 +288,8 @@ async function boot() {
 cron.schedule('0 17 * * *', async () => {
   try {
     // Reset per-bot sesuai daily_limit masing-masing
-    const [bots] = await pool.execute('SELECT id, daily_limit FROM bots WHERE is_running = 1');
+    const [sc, sp] = mine('id', 'AND');
+    const [bots] = await pool.execute(`SELECT id, daily_limit FROM bots WHERE is_running = 1${sc}`, sp);
     for (const bot of bots) {
       const lim = bot.daily_limit || parseInt(process.env.DEFAULT_LIMIT || '20', 10);
       const [res] = await pool.execute(
@@ -343,8 +349,9 @@ cron.schedule('* * * * *', async () => {
 async function shutdown() {
   console.log('[Shutdown] Resetting bot statuses...');
   try {
+    const [sc, sp] = mine('id', 'AND');
     await pool.execute(
-      "UPDATE bots SET status = 'disconnected' WHERE status IN ('connected', 'connecting')"
+      `UPDATE bots SET status = 'disconnected' WHERE status IN ('connected', 'connecting')${sc}`, sp
     );
   } catch { /* non-critical */ }
   process.exit(0);

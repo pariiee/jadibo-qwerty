@@ -8,6 +8,9 @@ const { pool, incrementStat, decrementStat } = require('../config/database');
 const SESSIONS_DIR = path.resolve(process.env.SESSIONS_DIR || './sessions');
 const MAX_SLOTS    = parseInt(process.env.MAX_SLOTS_PER_USER || '2', 10);
 
+// Panel ini (zapo) & panel Baileys berbagi tabel `bots` di DB yang sama.
+const { mine, isMine } = require('../config/engineScope');
+
 // In-memory map of active Zappo instances: botId -> ZappoClient
 const activeBots = new Map();
 
@@ -41,6 +44,13 @@ async function assertOwnership(req, res, botId) {
   );
   if (rows.length === 0) { sendError(res, 404, 'Bot tidak ditemukan'); return null; }
   const bot = rows[0];
+  // Guard engine: panel zapo & panel Baileys berbagi tabel `bots`. Tanpa ini,
+  // start/stop/restart dari panel zapo bisa menjalankan bot Baileys pakai
+  // engine zapo (rebutan nomor). ENGINE_BOT_ID membatasi panel ke barisnya sendiri.
+  if (!isMine(bot.id)) {
+    sendError(res, 403, `Bot #${bot.id} bukan milik panel ini`);
+    return null;
+  }
   if (req.user.role !== 'king' && bot.user_id !== req.user.id) {
     sendError(res, 403, 'Akses ditolak');
     return null;
@@ -75,10 +85,12 @@ function publicBot(bot) {
 async function listBots(req, res) {
   try {
     const isKing = req.user.role === 'king';
+    // Batasi ke baris bots milik panel ini (lihat config/engineScope.js).
+    const [sc, sp] = mine(isKing ? 'b.id' : 'id', isKing ? 'WHERE' : 'AND');
     const query = isKing
-      ? `SELECT b.*, u.username FROM bots b JOIN users u ON u.id = b.user_id ORDER BY b.created_at DESC`
-      : `SELECT * FROM bots WHERE user_id = ? ORDER BY created_at DESC`;
-    const params = isKing ? [] : [req.user.id];
+      ? `SELECT b.*, u.username FROM bots b JOIN users u ON u.id = b.user_id${sc} ORDER BY b.created_at DESC`
+      : `SELECT * FROM bots WHERE user_id = ?${sc} ORDER BY created_at DESC`;
+    const params = isKing ? sp : [req.user.id, ...sp];
 
     const [bots] = await pool.execute(query, params);
     // Enrich with runtime status + mask token telegram
