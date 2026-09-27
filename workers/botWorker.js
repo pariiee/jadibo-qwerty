@@ -30,6 +30,13 @@ const WEB_PORT  = parseInt(process.env.PORT || '3000', 10);
 // jadi nilainya dijamin terisi waktu kode di bawahnya jalan.
 const KUNCI = process.env.INTERNAL_KEY;
 
+// ─── Bot milik panel lain ────────────────────────────────────────────────────
+// Panel labs (proses ini) & panel zapo (/var/www/jadibot-zapo) berbagi tabel
+// `bots` yang sama. Bot ber-platform `zapo` dijalankan engine zapo di sana;
+// kalau worker ini ikut nyalain, dua engine rebutan nomor yang sama dan WA-nya
+// logout. Jadi baris itu disaring dari SEMUA jalur start di sini.
+const PLATFORM_PANEL_LAIN = process.env.ENGINE_LAIN_PLATFORM || 'zapo';
+
 // ─── Event → web ─────────────────────────────────────────────────────────────
 // Satu jalur: body mentah dikirim ke web, web yang nge-fan-out ke WebSocket.
 // Kalau web lagi restart, event ditahan di buffer (max 500) lalu dikirim pas
@@ -98,6 +105,15 @@ async function botDariDb(botId) {
   const [rows] = await pool.execute('SELECT * FROM bots WHERE id = ?', [botId]);
   if (!rows.length) { const e = new Error('Bot tidak ditemukan'); e.status = 404; throw e; }
   const bot = rows[0];
+  // Bot panel lain ditolak di sini, bukan di router: botDariDb() udah jadi
+  // gerbang bersama SEMUA jalur start/restart (dashboard, boot, respawn).
+  // Tanpa ini, menu Start di panel zapo pun berujung engine Baileys lewat
+  // watchdog/boot panel ini.
+  if (bot.platform === PLATFORM_PANEL_LAIN) {
+    const e = new Error(`Bot ini dijalankan lewat panel ${PLATFORM_PANEL_LAIN} — Start dari sana, ya.`);
+    e.status = 400;
+    throw e;
+  }
   // Gerbang paket dipasang di sini supaya SEMUA jalur start/restart
   // (dashboard, boot, respawn) dapat aturan yang sama.
   const [owner] = await pool.execute(
@@ -246,7 +262,8 @@ const nyangkutBerapaKali = new Map();     // botId -> berapa cek berturut-turut 
 
 setInterval(async () => {
   try {
-    const [rows] = await pool.execute('SELECT id, platform FROM bots WHERE is_running = 1');
+    const [rows] = await pool.execute(
+      'SELECT id, platform FROM bots WHERE is_running = 1 AND platform <> ?', [PLATFORM_PANEL_LAIN]);
     const idJalan = new Set(rows.map((r) => Number(r.id)));
     for (const id of nyangkutBerapaKali.keys()) {
       if (!idJalan.has(id)) nyangkutBerapaKali.delete(id);   // bot dimatiin user: lupain
@@ -256,6 +273,9 @@ setInterval(async () => {
       const id = Number(row.id);
       // Telegram belum punya probe liveness — cuma dijalur WA.
       if (row.platform === 'telegram') continue;
+      // Bot panel lain nggak pernah dinyalain proses ini, jadi nggak mungkin
+      // "nyangkut" di sini: kalau ikut dicek, tiap 60 detik dia bakal di-Start
+      // pakai engine Baileys dan nabrak engine zapo.
       if (!wa.botNyangkut(id)) { nyangkutBerapaKali.delete(id); continue; }
 
       const n = (nyangkutBerapaKali.get(id) || 0) + 1;
@@ -294,7 +314,8 @@ async function boot() {
   await new Promise((ok) => server.listen(PORT, '127.0.0.1', ok));
   console.log(`[Worker] dengerin perintah di 127.0.0.1:${PORT}`);
 
-  const [bots] = await pool.execute('SELECT * FROM bots WHERE is_running = 1');
+  const [bots] = await pool.execute(
+    'SELECT * FROM bots WHERE is_running = 1 AND platform <> ?', [PLATFORM_PANEL_LAIN]);
   // Harga & benefit paket hidup di tabel `settings`; proses ini terpisah dari
   // web, jadi cache-nya harus diisi sendiri sekali di boot.
   await pricingStore.refresh();
