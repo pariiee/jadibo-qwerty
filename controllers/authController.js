@@ -3,6 +3,7 @@
 const bcrypt    = require('bcryptjs');
 const jwt       = require('jsonwebtoken');
 const { pool, incrementStat, decrementStat } = require('../config/database');
+const { ADMIN_ROLE } = require('../config/roles');
 
 const JWT_SECRET  = process.env.JWT_SECRET  || 'changeme';
 const JWT_EXPIRES = process.env.JWT_EXPIRES_IN || '7d';
@@ -41,7 +42,7 @@ function requireAuth(req, res, next) {
 // ─── Middleware: only king ────────────────────────────────────────────────────
 
 function requireKing(req, res, next) {
-  if (req.user?.role !== 'king') {
+  if (req.user?.role !== ADMIN_ROLE) {
     return sendError(res, 403, 'Akses ditolak: hanya King yang bisa melakukan ini');
   }
   next();
@@ -176,7 +177,7 @@ async function me(req, res) {
       user: {
         ...rows[0],
         slots_used: bots[0].count,
-        slots_max: req.user.role === 'king' ? 999 : MAX_SLOTS,
+        slots_max: req.user.role === ADMIN_ROLE ? 999 : MAX_SLOTS,
       },
     });
   } catch (err) {
@@ -214,7 +215,7 @@ async function updateUser(req, res) {
     const vals = [];
 
     if (is_active !== undefined) { sets.push('is_active = ?'); vals.push(is_active ? 1 : 0); }
-    if (role && ['user', 'king'].includes(role)) { sets.push('role = ?'); vals.push(role); }
+    if (role && ['user', 'premium', ADMIN_ROLE].includes(role)) { sets.push('role = ?'); vals.push(role); }
     if (password) {
       const hashed = await bcrypt.hash(password, 12);
       sets.push('password = ?');

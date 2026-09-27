@@ -3,6 +3,8 @@
 const mysql = require('mysql2/promise');
 require('dotenv').config();
 
+const { ADMIN_ROLE } = require('./roles');
+
 // ─── Connection Pool ──────────────────────────────────────────────────────────
 const pool = mysql.createPool({
   host:            process.env.DB_HOST     || 'localhost',
@@ -47,18 +49,18 @@ async function seedDefaults(kingUsername, hashedPassword) {
      ('total_messages', 0)`
   );
 
-  // King seed
+  // Admin seed (role `kawula` — lihat config/roles.js)
   const [rows] = await pool.execute(
     'SELECT id FROM users WHERE role = ? LIMIT 1',
-    ['king']
+    [ADMIN_ROLE]
   );
   if (rows.length === 0) {
     await pool.execute(
       'INSERT INTO users (username, password, role) VALUES (?, ?, ?)',
-      [kingUsername, hashedPassword, 'king']
+      [kingUsername, hashedPassword, ADMIN_ROLE]
     );
     await incrementStat('total_users');
-    console.log(`[DB] King account created: ${kingUsername}`);
+    console.log(`[DB] Admin account created: ${kingUsername}`);
   }
 }
 

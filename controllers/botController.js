@@ -4,6 +4,7 @@ const path   = require('path');
 const fs     = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const { pool, incrementStat, decrementStat } = require('../config/database');
+const { ADMIN_ROLE } = require('../config/roles');
 
 const SESSIONS_DIR = path.resolve(process.env.SESSIONS_DIR || './sessions');
 const MAX_SLOTS    = parseInt(process.env.MAX_SLOTS_PER_USER || '2', 10);
@@ -51,7 +52,7 @@ async function assertOwnership(req, res, botId) {
     sendError(res, 403, `Bot #${bot.id} bukan milik panel ini`);
     return null;
   }
-  if (req.user.role !== 'king' && bot.user_id !== req.user.id) {
+  if (req.user.role !== ADMIN_ROLE && bot.user_id !== req.user.id) {
     sendError(res, 403, 'Akses ditolak');
     return null;
   }
@@ -84,7 +85,7 @@ function publicBot(bot) {
 
 async function listBots(req, res) {
   try {
-    const isKing = req.user.role === 'king';
+    const isKing = req.user.role === ADMIN_ROLE;
     // Batasi ke baris bots milik panel ini (lihat config/engineScope.js).
     const [sc, sp] = mine(isKing ? 'b.id' : 'id', isKing ? 'WHERE' : 'AND');
     const query = isKing
@@ -131,7 +132,7 @@ async function getBot(req, res) {
 async function createBot(req, res) {
   try {
     // Slot check
-    if (req.user.role !== 'king') {
+    if (req.user.role !== ADMIN_ROLE) {
       const [count] = await pool.execute(
         'SELECT COUNT(*) AS c FROM bots WHERE user_id = ?',
         [req.user.id]

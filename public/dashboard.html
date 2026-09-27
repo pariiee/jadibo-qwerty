@@ -268,7 +268,7 @@
     document.getElementById('side-name').textContent  = me.username;
     document.getElementById('side-role').textContent  = me.role;
     document.getElementById('greeting').textContent   = 'Selamat Datang Kembali, ' + me.username;
-    if (me.role === 'king') document.getElementById('nav-admin').style.display = '';
+    if (me.role === 'kawula') document.getElementById('nav-admin').style.display = '';
     return me;
   }
 
@@ -297,7 +297,7 @@
     const d = await api('/api/bots');
     if (!d?.ok) return;
     bots = d.bots;
-    maxSlots = me?.slots_max ?? (me?.role === 'king' ? 999 : 2);
+    maxSlots = me?.slots_max ?? (me?.role === 'kawula' ? 999 : 2);
     renderSlots();
     renderBots();
   }

@@ -31,6 +31,7 @@ const PORT = parseInt(process.env.PORT || '3000', 10);
 
 // Panel ini & panel Baileys berbagi tabel `bots` di DB yang sama.
 const { ENGINE_BOT_ID, mine, isMine } = require('./config/engineScope');
+const { ADMIN_ROLE } = require('./config/roles');
 
 // ─── Security & Middleware ────────────────────────────────────────────────────
 app.use(helmet({
@@ -169,7 +170,7 @@ wss.on('connection', (ws, req) => {
             'SELECT user_id FROM bots WHERE id = ?',
             [botIdNum]
           );
-          const owns = rows.length > 0 && (decoded.role === 'king' || rows[0].user_id === decoded.id)
+          const owns = rows.length > 0 && (decoded.role === ADMIN_ROLE || rows[0].user_id === decoded.id)
             && isMine(botIdNum);
           if (!owns) {
             ws.send(JSON.stringify({ type: 'error', message: 'Forbidden' }));
@@ -270,7 +271,7 @@ async function boot() {
 
   // Hash king password and seed
   const hashed = await bcrypt.hash(process.env.KING_PASSWORD || 'king123', 12);
-  await seedDefaults(process.env.KING_USERNAME || 'king', hashed);
+  await seedDefaults(process.env.KING_USERNAME || 'admin', hashed);
 
   server.listen(PORT, async () => {
     console.log('');
