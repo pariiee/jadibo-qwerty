@@ -27,6 +27,17 @@ function botUptimeMs(ctx) {
   } catch { return Date.now() - START_TIME; }
 }
 
+// ── Helper: nama + versi engine WhatsApp yang BENERAN dipakai ────────────────
+// Nama library dibaca dari package.json-nya, bukan string hardcode — biar kalau
+// zapo-js di-upgrade/diganti, `.info` ikut sendiri. Gagal baca = 'tidak
+// terinstall' (modulnya optional; engine memang di-skip kalau nggak ada).
+function infoEngine() {
+  try {
+    const { version } = require('zapo-js/package.json');
+    return `zapo-js v${version}`;
+  } catch { return 'zapo-js (tidak terinstall)'; }
+}
+
 // ── Helper: baca banner (dipakai kalau MENU_BANNER diaktifkan) ───────────────
 // Percobaan 7dbcd27 (header.imageMessage + jpegThumbnail) upload-nya SUKSES di
 // VPS tapi HP tetap tampil polos; kemungkinan besar sisi WA/akun yang tidak
@@ -559,6 +570,7 @@ module.exports = async function infoHandler(ctx) {
         `│ RAM     : ${used}/${total} MB\n` +
         `│ Node    : ${process.version}\n` +
         `│ OS      : ${os.type()} ${os.release()}\n` +
+        `│ Engine  : ${infoEngine()}\n` +
         `╰━━━━━━━━━━━━━━━━━╯`
       );
       return true;
