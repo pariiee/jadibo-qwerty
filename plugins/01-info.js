@@ -27,6 +27,18 @@ function botUptimeMs(ctx) {
   } catch { return Date.now() - START_TIME; }
 }
 
+// ── Helper: nama + versi engine WhatsApp yang BENERAN dipakai ────────────────
+// Dua adapter hidup di repo ini: `baileys` (branch main) & `zapo-js` (branch
+// zapo-deploy). Versinya dibaca dari package.json paket yang terpasang — bukan
+// string hardcode — biar ikut sendiri kalau di-upgrade. Kandidatnya dua karena
+// file ini di-cherry-pick ke dua branch; yang nggak terpasang langsung di-skip.
+function infoEngine() {
+  for (const [paket, label] of [['baileys', 'Baileys'], ['zapo-js', 'zapo-js']]) {
+    try { return `${label} v${require(paket + '/package.json').version}`; } catch { /* coba berikutnya */ }
+  }
+  return 'tidak terinstall';
+}
+
 // ── Helper: baca banner (dipakai kalau MENU_BANNER diaktifkan) ───────────────
 // Percobaan 7dbcd27 (header.imageMessage + jpegThumbnail) upload-nya SUKSES di
 // VPS tapi HP tetap tampil polos; kemungkinan besar sisi WA/akun yang tidak
@@ -559,6 +571,7 @@ module.exports = async function infoHandler(ctx) {
         `│ RAM     : ${used}/${total} MB\n` +
         `│ Node    : ${process.version}\n` +
         `│ OS      : ${os.type()} ${os.release()}\n` +
+        `│ Engine  : ${infoEngine()}\n` +
         `╰━━━━━━━━━━━━━━━━━╯`
       );
       return true;
