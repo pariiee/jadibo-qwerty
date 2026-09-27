@@ -431,7 +431,163 @@ async function getBotLogs(req, res) {
   }
 }
 
+// ─── GET /api/bots/:id/stats ──────────────────────────────────────────────────
+// Statistik dari `bot_logs` yang SUDAH ada — 0 tabel baru. Bentuk barisnya
+// (engine/whatsappEngine.js:775-790 logLineDisplay):
+//   cmd  : `Nama: .tt link`        (yg kehitung cuma `cmd`, `cmderr` dibuang)
+//   info : `Nama: teks` atau `Nama: .s` (command yg nggak dibalas)
+// Jadi kolom pertama = NAMA USER: `cmd` = pemakai command, `info` = yang nulis.
+// Statistik dibaca dari pola TEKS `bot_logs.message`, bukan kolom terstruktur.
+// Formatnya ditulis di engine/whatsappEngine.js:1066-1068 dan sudah dicek ke
+// 25 baris produksi (VPS B):
+//   grup  : "<Nama> @ <Nama Grup>: <.cmd argumen> (+4983ms)"
+//   DM    : "<Nama>: <.cmd argumen> (+814ms)"
+//   media : "<Nama> @ <Nama Grup> [stiker] (+12ms)"      ← body kosong, nggak ada ": "
+// Yang gampang salah: " @ " itu pemisah nama↔grup dan letaknya SEBELUM ": ",
+// bukan sesudah command. Sisa ekor yang harus dibuang cuma " (+Nms)" dan " [tipe]".
+//
+// Batas yang diketahui (bukan bug, tapi bisa salah hitung):
+//   - nama grup yang mengandung ": " bikin potongan nama/command meleset
+//   - nama pengirim yang mengandung " @ " dianggap pemisah grup
+// Keduanya cuma bikin satu baris salah hitung, bukan bikin halaman error.
+// Kalau ini keliru di data nyata, jalan keluarnya: simpan `sender_name` sebagai
+// kolom sendiri di bot_logs, bukan nambah regex.
+const ADA_AT   = `LOCATE(' @ ', message) > 0`;
+const ADA_KOLOM = `LOCATE(': ', message) > 0`;
+const AT_DULU  = `(${ADA_AT} AND (NOT ${ADA_KOLOM} OR LOCATE(' @ ', message) < LOCATE(': ', message)))`;
+const NAMA = `TRIM(REGEXP_REPLACE(REGEXP_REPLACE(IF(${AT_DULU},
+  SUBSTRING_INDEX(message, ' @ ', 1),
+  SUBSTRING_INDEX(message, ': ', 1)),
+  ' \\\\(\\\\+[0-9]+ms\\\\)$', ''), ' \\\\[[^]]*\\\\]$', ''))`;
+const GRUP = `TRIM(IF(${AT_DULU},
+  REGEXP_REPLACE(REGEXP_REPLACE(
+    SUBSTRING_INDEX(SUBSTRING(message, LOCATE(' @ ', message) + 3), ': ', 1),
+    ' \\\\(\\\\+[0-9]+ms\\\\)$', ''), ' \\\\[[^]]*\\\\]$', ''),
+  ''))`;
+// Isi pesan = semuanya setelah ": " pertama, minus ekor " (+Nms)".
+const BODY = `TRIM(REGEXP_REPLACE(SUBSTRING(message, LOCATE(': ', message) + 2), ' \\\\(\\\\+[0-9]+ms\\\\)$', ''))`;
+// Nama command = token PERTAMA isi pesan ('.tt video lucu' → '.tt').
+// Baris media nggak punya ": " → BODY kosong → CMD kosong → kebuang filter '.%'.
+// Command yang cuma titik ('.' / '..') dibuang: itu bukan command, nggak ada di
+// registry (scripts/audit-cmd.js), cuma ketikan nyasar.
+const CMD   = `TRIM(SUBSTRING_INDEX(${BODY}, ' ', 1))`;
+// CAST('4983ms' AS UNSIGNED) = 4983 — nggak butuh lookahead regex.
+const WAKTU = `CAST(REGEXP_SUBSTR(message, '[0-9]+ms') AS UNSIGNED)`;
+
+// Baris yang beneran pesan user. Baris sistem (lifecycle engine: "Memulai bot
+// ...", "Bot terhubung ke WhatsApp", "Paired sebagai") juga masuk level 'info',
+// tapi nggak punya ": " maupun " @ " — dan NAMA-nya jadi seluruh isi baris.
+// Efek samping yang diterima: media di DM (nggak ada ": ") ikut kebuang.
+const BARIS_USER = `(${ADA_KOLOM} OR ${ADA_AT})`;
+const CMD_OK = `cmd LIKE '.%' AND TRIM(BOTH '.' FROM cmd) <> ''`;
+
+async function getBotStats(req, res) {
+  try {
+    const bot = await assertOwnership(req, res, req.params.id);
+    if (!bot) return;
+
+    const hari = Math.min(Math.max(parseInt(req.query.hari || '30', 10) || 30, 1), 365);
+
+    // `info` = tiap pesan masuk, `cmd` = yang beneran dibalas. Baris `info`
+    // (termasuk media) tetap kehitung sebagai aktivitas user.
+    const [[ringkas]] = await pool.execute(
+      `SELECT
+         SUM(level = 'cmd')    AS cmd_total,
+         SUM(level = 'cmderr') AS err_total,
+         SUM(level = 'limit')  AS limit_total,
+         COUNT(*)              AS baris_total,
+         COUNT(DISTINCT IF(level IN ('cmd','info') AND ${BARIS_USER}, ${NAMA}, NULL)) AS usr_total,
+         COUNT(DISTINCT IF(level = 'cmd' AND ${BARIS_USER}, ${CMD}, NULL))           AS cmd_unik
+       FROM bot_logs WHERE bot_id = ?`,
+      [bot.id]
+    );
+
+    const [cmd] = await pool.execute(
+      `SELECT ${CMD} AS cmd, COUNT(*) AS n, AVG(${WAKTU}) AS ms
+         FROM bot_logs
+        WHERE bot_id = ? AND level = 'cmd' AND ${ADA_KOLOM}
+        GROUP BY cmd HAVING ${CMD_OK}
+        ORDER BY n DESC, cmd LIMIT 12`,
+      [bot.id]
+    );
+
+    const [usr] = await pool.execute(
+      `SELECT
+         ${NAMA} AS nama,
+         ${GRUP} AS grup,
+         SUM(level = 'cmd') AS ncmd,
+         COUNT(*) AS n,
+         MAX(created_at) AS terakhir
+       FROM bot_logs
+      WHERE bot_id = ? AND level IN ('cmd','info') AND ${BARIS_USER}
+      GROUP BY nama, grup ORDER BY n DESC LIMIT 15`,
+      [bot.id]
+    );
+
+    const [harian] = await pool.execute(
+      `SELECT DATE(created_at) AS tgl, COUNT(*) AS n
+         FROM bot_logs
+        WHERE bot_id = ? AND level = 'cmd' AND created_at >= NOW() - INTERVAL ? DAY
+        GROUP BY tgl ORDER BY tgl`,
+      [bot.id, hari]
+    );
+
+    // Command yang sering gagal. `cmderr` punya dua bentuk: baris command biasa
+    // (level cmd yang gagal) dan 'handler: <pesan>' dari engine @1072 — yang
+    // kedua nggak punya nama command, jadi kebuang sendiri sama filter '.%'.
+    const [error] = await pool.execute(
+      `SELECT ${CMD} AS cmd, COUNT(*) AS n
+         FROM bot_logs
+        WHERE bot_id = ? AND level = 'cmderr' AND ${ADA_KOLOM}
+        GROUP BY cmd HAVING cmd LIKE '.%'
+        ORDER BY n DESC LIMIT 8`,
+      [bot.id]
+    );
+
+    return res.json({
+      ok: true,
+      ringkas: {
+        cmd_total:   Number(ringkas.cmd_total || 0),
+        cmd_unik:    Number(ringkas.cmd_unik || 0),
+        user_aktif:  Number(ringkas.usr_total || 0),
+        err_total:   Number(ringkas.err_total || 0),
+        limit_total: Number(ringkas.limit_total || 0),
+        baris_total: Number(ringkas.baris_total || 0),
+        hari,
+      },
+      // nama = pushName (kalau kosong jatuh ke nomor, lihat engine @775)
+      cmd: cmd.map(c => ({ ...c, n: Number(c.n), ms: c.ms === null ? null : Math.round(Number(c.ms)) })),
+      user: usr.map(u => ({ ...u, ncmd: Number(u.ncmd || 0), n: Number(u.n || 0) })),
+      error: error.map(e => ({ ...e, n: Number(e.n) })),
+      harian,
+    });
+  } catch (err) {
+    console.error('[Bot] getBotStats error:', err);
+    return sendError(res, 500, 'Terjadi kesalahan server');
+  }
+}
+
+// ─── GET /api/bots/:id/config ─────────────────────────────────────────────────
+// Export config sebagai file JSON (atribut `download` di FE yang ngunduh).
+// Token Telegram IKUT tapi sudah DIMASK publicBot() — jadi file ini aman
+// di-share, dan import nggak akan pernah nimpa token asli.
+async function exportConfig(req, res) {
+  try {
+    const bot = await assertOwnership(req, res, req.params.id);
+    if (!bot) return;
+
+    // Buang yang bukan config — biar file-nya bersih waktu di-import balik.
+    const { id, user_id, is_running, status, sqlite_db_path, created_at, updated_at, ...cfg } = publicBot(bot);
+    const nama = String(bot.bot_name || 'bot').replace(/[^\w.-]+/g, '_');
+    res.setHeader('Content-Disposition', `attachment; filename="config-${bot.id}-${nama}.json"`);
+    return res.json({ v: 1, bot: cfg });
+  } catch (err) {
+    console.error('[Bot] exportConfig error:', err);
+    return sendError(res, 500, 'Terjadi kesalahan server');
+  }
+}
+
 module.exports = {
   listBots, getBot, createBot, updateBot, deleteBot,
-  startBot, stopBot, restartBot, clearSession, getBotLogs,
+  startBot, stopBot, restartBot, clearSession, getBotLogs, getBotStats, exportConfig,
 };

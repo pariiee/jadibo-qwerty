@@ -282,6 +282,11 @@ body.page-dashboard .dot{width:7px;height:7px;border-radius:50%;background:var(-
 .bot-card .desc{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:8px}
 .bc-meta{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--muted);border-top:1px solid var(--border);padding-top:10px}
 .bc-meta b{color:var(--okTxt2);font-weight:600;font-family:Consolas,Menlo,monospace}
+/* Tombol di kartu bot: Config (setup) vs Statistik — /bot/:id sekarang statistik,
+   jadi kartu butuh dua pintu eksplisit, bukan satu klik yang nebak-nebak. */
+.bc-acts{display:flex;gap:8px;margin-top:10px}
+.bc-btn{flex:1;border:1px solid var(--border);background:var(--surf1);color:var(--txt);border-radius:9px;padding:7px 10px;font:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:border-color .16s ease,background .16s ease}
+.bc-btn:hover{border-color:var(--border2);background:var(--surf2)}
 .add-card{background:var(--surf0);border:2px dashed var(--border2);border-radius:16px;min-height:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;cursor:pointer;color:var(--dim);font-size:14px;font-weight:600;transition:transform .18s ease,border-color .18s ease,background .18s ease,color .18s ease}
 .add-card:hover{border-color:var(--acc);background:rgba(34,197,94,.06);color:var(--txt)}
 .add-ic{width:42px;height:42px;border-radius:12px;background:var(--surf2);display:flex;align-items:center;justify-content:center}
@@ -499,4 +504,28 @@ body.page-dashboard .faq summary:hover{color:var(--txt)}
 body.page-dashboard .faq .ans{padding:0 16px 15px;font-size:13px;color:var(--txt2);line-height:1.65}
 body.page-dashboard .faq .ans b{color:var(--txt);font-weight:600}
 body.page-dashboard .faq .ans code{font-family:Consolas,Menlo,monospace;background:var(--surf2);padding:1px 5px;border-radius:4px;font-size:12px}
+
+/* ─── Statistik bot (/bot/:id) ────────────────────────────────────────────────
+   `.stats`/`.stat` dasar udah ada (dipakai landing + dashboard). Di sini cuma
+   nambah yang khusus tabel/batang, dan ngasih kolom penuh ke .stats-wrap biar
+   nggak nyangkut di kolom kiri grid `.layout` (2fr 3fr). */
+body.page-bot .stats-wrap{grid-column:1/-1;display:flex;flex-direction:column;gap:18px;width:100%}
+body.page-bot .stats{max-width:none;margin:0}
+body.page-bot .stat .k{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+body.page-bot .stat small{font-size:11.5px;color:var(--dim)}
+body.page-bot .two{display:grid;grid-template-columns:1fr;gap:18px}
+@media(min-width:1024px){body.page-bot .two{grid-template-columns:1fr 1fr}}
+body.page-bot .tbl{width:100%;border-collapse:collapse;font-size:13px}
+body.page-bot .tbl th{text-align:left;padding:10px 12px;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);border-bottom:1px solid var(--border);white-space:nowrap}
+body.page-bot .tbl td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+body.page-bot .tbl tr:last-child td{border-bottom:none}
+body.page-bot .tbl tbody tr:hover{background:var(--surf1)}
+body.page-bot .tbl b{font-variant-numeric:tabular-nums}
+body.page-bot .muted{color:var(--dim)}
+/* Batang harian CSS-only: tinggi relatif ke hari paling ramai — nol library. */
+body.page-bot .chart{display:flex;align-items:flex-end;gap:6px;height:150px;padding-top:8px;overflow-x:auto}
+body.page-bot .bar{flex:1 0 34px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;gap:6px;min-width:0}
+body.page-bot .bar .fill{width:100%;max-width:44px;min-height:2px;border-radius:6px 6px 2px 2px;background:linear-gradient(180deg,var(--ok),var(--border2))}
+body.page-bot .bar span{font-size:10px;color:var(--dim);white-space:nowrap}
+body.page-bot input[type=file].inp{padding:9px 10px;font-size:12.5px;cursor:pointer}
 

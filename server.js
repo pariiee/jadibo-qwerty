@@ -153,6 +153,8 @@ app.post('/api/bots/:id/stop',          apiLimiter, auth.requireAuth, bot.stopBo
 app.post('/api/bots/:id/restart',       apiLimiter, auth.requireAuth, bot.restartBot);
 app.post('/api/bots/:id/clear-session', apiLimiter, auth.requireAuth, bot.clearSession);
 app.get('/api/bots/:id/logs',           apiLimiter, auth.requireAuth, bot.getBotLogs);
+app.get('/api/bots/:id/stats',          apiLimiter, auth.requireAuth, bot.getBotStats);
+app.get('/api/bots/:id/config',         apiLimiter, auth.requireAuth, bot.exportConfig);
 
 // ─── Langganan & Pembayaran ──────────────────────────────────────────────────
 app.get('/api/plans',                apiLimiter, billing.daftarPaket);
@@ -202,6 +204,10 @@ const halaman = (nama, kode = 200) => (_, res) => {
 };
 app.get('/dashboard', halaman('dashboard.html'));
 app.get('/bot/:id',   halaman('bot-detail.html'));
+// Setup bot dipisah dari /bot/:id — di sana sekarang statistik. Halaman ini
+// yang megang form konfigurasi + import/export, dan punya pemilih bot sendiri
+// (dropdown) biar user multi-slot nggak perlu bolak-balik ke dashboard.
+app.get('/config/:id', halaman('config.html'));
 app.get('/pricing',    halaman('pricing.html'));
 // Tautan lama: bot sempat ngasih pesan "buka halaman Langganan", dan orang
 // mungkin sudah bookmark /langganan. Tanpa ini, /langganan jatuh ke catch-all

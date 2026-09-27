@@ -22,8 +22,10 @@ const ok = (name, fn) => { fn(); pass++; console.log('  ok  ' + name); };
 const info = read('plugins/01-info.js');
 const proteksi = read('plugins/06-proteksi.js');
 const owner = read('plugins/05-owner.js');
-// HTML + script-nya (script inline dipindah ke public/js/* biar CSP ketat)
-const html = read('public/bot-detail.html') + read('public/js/bot-detail.js');
+// HTML + script-nya (script inline dipindah ke public/js/* biar CSP ketat).
+// Panel config sekarang di /config/:id — form-nya pindah ke partial
+// public/partials/config-form.html, JS-nya ke public/js/config.js.
+const html = read('public/config.html') + read('public/partials/config-form.html') + read('public/js/config.js');
 const ctrl = read('controllers/botController.js');
 const server = read('server.js');
 

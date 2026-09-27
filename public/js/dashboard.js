@@ -138,8 +138,16 @@
         '</div>' +
         '<h3>' + esc(bot.bot_name) + '</h3>' +
         '<div class="desc">' + (bot.description ? esc(bot.description) : 'Tidak ada deskripsi') + '</div>' +
-        '<div class="bc-meta"><span>Prefix: <b>' + esc(bot.prefix) + '</b></span><span>' + esc(new Date(bot.created_at).toLocaleDateString('id-ID')) + '</span></div>';
+        '<div class="bc-meta"><span>Prefix: <b>' + esc(bot.prefix) + '</b></span><span>' + esc(new Date(bot.created_at).toLocaleDateString('id-ID')) + '</span></div>' +
+        // Setup pindah ke /config/:id, /bot/:id sekarang statistik. Dua tombol
+        // eksplisit biar user nggak nebak-nebak isi kartunya.
+        '<div class="bc-acts">' +
+          '<button class="bc-btn" data-cfg>Config</button>' +
+          '<button class="bc-btn" data-stat>Statistik</button>' +
+        '</div>';
       grid.appendChild(card);
+      card.querySelector('[data-cfg]').addEventListener('click', (e) => { e.stopPropagation(); location.href = '/config/' + bot.id; });
+      card.querySelector('[data-stat]').addEventListener('click', (e) => { e.stopPropagation(); location.href = '/bot/' + bot.id; });
     });
 
     if (bots.length < maxSlots) {
@@ -201,7 +209,7 @@
     };
     const d = await api('/api/bots', { method: 'POST', body: JSON.stringify(body) });
     if (!d) return;
-    if (d.ok) { closeAdd(); location.href = '/bot/' + d.bot_id; }
+    if (d.ok) { closeAdd(); location.href = '/config/' + d.bot_id; }
     else { err.textContent = d.message; err.classList.add('show'); }
   });
 

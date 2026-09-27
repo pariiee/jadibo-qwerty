@@ -42,6 +42,7 @@ assert.ok(!/'unsafe-inline'/.test(srv.split('scriptSrc')[1].split(']')[0]),
   "scriptSrc masih 'unsafe-inline'");
 assert.ok(!/scriptSrcAttr/.test(srv), 'scriptSrcAttr harus hilang bareng handler inline');
 const html = ['public/index.html', 'public/dashboard.html', 'public/bot-detail.html',
+  'public/config.html', 'public/partials/config-form.html', 'public/partials/control.html',
   'public/partials/head.html', 'public/partials/nav.html', 'public/partials/sidebar.html',
   'public/partials/topbar.html', 'public/partials/footer.html'].map(baca).join('\n');
 const sisa = html.match(/\son[a-z]+\s*=\s*["']/g) || [];
