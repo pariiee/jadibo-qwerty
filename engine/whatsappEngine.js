@@ -21,6 +21,17 @@ const notifiedUnregistered = new Map();
 // Bot yang sedang di-stop / clear-session — auto-reconnect harus skip
 const stoppingBots = new Set();
 
+// Bot yang lagi restart: stop normal nge-nol-in is_running di DB, padahal niatnya
+// nyalain lagi — auto-start pas boot server bakal ninggalin bot ini.
+const restartingBots = new Set();
+
+// Kapan bot terakhir nyambung ke WA (ms epoch, 0 kalau belum pernah).
+// Dipakai .uptime/.runtime/.info — umur bot, bukan umur proses Node.
+const botConnectedAt = new Map();
+
+// Bot yang minta pairing code (bukan QR) — diteruskan ke start ulang.
+const pairingBots = new Set();
+
 // ─── Persist activeGroups per bot ────────────────────────────────────────────
 const GROUPS_CACHE_DIR = path.join(__dirname, '../data');
 if (!fs.existsSync(GROUPS_CACHE_DIR)) fs.mkdirSync(GROUPS_CACHE_DIR, { recursive: true });
@@ -84,6 +95,9 @@ const devGreetCooldown   = new Map(); // key: groupJid → timestamp
 // Logika LID↔PN dipusatkan di engine/jid.js supaya cache-nya SATU (dulu tiap
 // file punya Map sendiri → user bisa tampil beda jid di log yang beda).
 const { cacheLidFromMeta, lidToPn: resolveLid, lidToPnAsync: resolveLidAsync } = require('./jid');
+// Adapter kontrak `client.*` (sama persis dengan engine/baileys/client.js) —
+// plugins dari `main` nggak perlu diubah, semua beda Baileys vs zapo di file itu.
+const { createClient: buatAdapter } = require('./zapo/client');
 
 // ─── WS broadcast helper ──────────────────────────────────────────────────────
 let _wsBroadcast = () => {};
@@ -266,6 +280,11 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
     logger
   );
 
+  // Adapter: yang dikasih ke plugin sebagai `ctx.sock`/`ctx.client`. Engine
+  // sendiri tetap pegang `client` mentah buat siklus hidup (connect/event),
+  // jadi jalur pesan-masuk yang udah kebukti jalan nggak kesentuh.
+  const api = buatAdapter({ client, botJid: null, logger }).client;
+
   // Simpan ke activeBots
   activeBots.set(botId, client);
 
@@ -299,6 +318,7 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
     if (status === 'open') {
       console.log(`[Bot ${botId}] ✅ Terhubung ke WhatsApp`);
       await logBot(botId, 'info', 'Bot terhubung ke WhatsApp');
+      botConnectedAt.set(botId, Date.now());
       await pool.execute("UPDATE bots SET status = 'connected', is_running = 1 WHERE id = ?", [botId]);
       await incrementStat('total_bots_online');
       broadcast(botId, 'status', { status: 'connected' });
@@ -494,7 +514,9 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
       locationMessage:       'lokasi',
     }[msgType] || msgType;
 
-    const ctx = buildContext(client, event, botData);
+    // `api` (adapter) bukan `client` mentah — plugin dari `main` manggil
+    // `ctx.sock.message.send`, dan adapter yang nerjemahin ke zapo.
+    const ctx = buildContext(api, event, botData);
 
     // Resolusi nama chat — cache grup agar tidak fetch setiap pesan
     let chatName = jid.split('@')[0];
@@ -904,6 +926,8 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
     serverReadyPromise.then(async () => {
       try {
         await logBot(botId, 'info', 'Server siap, meminta pairing code...');
+        // zapo: requestPairingCode(phone, shouldShowPushNotification?, customCode?)
+        // param ke-2 = boolean, param ke-3 = kode 8 char (uppercase A-Z/0-9).
         const code = await client.auth.requestPairingCode(phoneNumber);
         const formatted = String(code).match(/.{1,4}/g)?.join('-') || code;
         await logBot(botId, 'info', `Pairing Code: ${formatted}`);
@@ -949,4 +973,45 @@ async function stopWhatsAppBot(botId) {
   stoppingBots.delete(botId);
 }
 
-module.exports = { startWhatsAppBot, stopWhatsAppBot, setWsBroadcast, getBotGlobalSetting, setBotGlobalSetting };
+// ─── Restart satu bot (command `.restart` & HTTP /api/bots/:id/restart) ───────
+// SATU jalur restart. Jangan pakai stopWhatsAppBot() sendirian: dia nge-nol-in
+// is_running di DB (niat "stop"), jadi auto-start pas boot server bakal
+// ninggalin bot ini. Di sini: tandai restartingBots + is_running=1 DULUAN.
+async function restartWhatsAppBot(botId) {
+  botId = Number(botId);
+  const [rows] = await pool.execute('SELECT * FROM bots WHERE id = ?', [botId]);
+  const botData = rows[0];
+  if (!botData) throw new Error('Bot tidak ditemukan');
+  if (!activeBots.has(botId)) throw new Error('Bot tidak sedang berjalan');
+
+  restartingBots.add(botId);
+  try {
+    await pool.execute('UPDATE bots SET is_running = 1 WHERE id = ?', [botId]);
+    await stopWhatsAppBot(botId);
+    return await startWhatsAppBot(botData, pairingBots.has(botId));
+  } catch (e) {
+    restartingBots.delete(botId); // gagal -> jangan tinggalin flag nyangkut
+    throw e;
+  }
+}
+
+// Command WA `.restart` nggak boleh nunggu handshake (~10 detik) — handler
+// pesan jangan ditahan. Cukup jalanin restartWhatsAppBot() tanpa di-await.
+function restartWhatsAppBotInBackground(botId) {
+  return restartWhatsAppBot(botId);
+}
+
+// Kapan bot terakhir nyambung ke WA (ms epoch, 0 kalau belum pernah).
+function getBotConnectedAt(botId) {
+  return botConnectedAt.get(Number(botId)) || 0;
+}
+
+function botNyangkut(botId) {
+  return restartingBots.has(Number(botId));
+}
+
+module.exports = {
+  startWhatsAppBot, stopWhatsAppBot,
+  restartWhatsAppBot, restartWhatsAppBotInBackground, getBotConnectedAt, botNyangkut,
+  setWsBroadcast, getBotGlobalSetting, setBotGlobalSetting,
+};

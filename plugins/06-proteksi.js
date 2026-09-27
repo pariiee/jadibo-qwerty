@@ -4,7 +4,7 @@
  * plugins/06-proteksi.js
  * Unified .on <fitur> / .off <fitur> command untuk semua fitur grup.
  * Fitur group-level: antispam, antitagsw, autosticker, antisticker,
- *   viewonce, detect, welcome, autolevelup, autoacc, document,
+ *   viewonce, detect, welcome, autoacc, document,
  *   antibot, antilink, antilinkv2, antitoxic, antidelete
  * Fitur global (per-bot): nyimak, autoread — dikelola di whatsappEngine.js
  */
@@ -39,15 +39,23 @@ const allSettings = loadSettings();
 const DEFAULTS = {
   antibot: false, antilink: false, antilinkv2: false, antitoxic: false, antidelete: false,
   antispam: false, antitagsw: false, autosticker: false, antisticker: false,
-  viewonce: false, autolevelup: false,
+  viewonce: false,
 };
+// Catatan: autolevelup SENGAJA nggak ada di sini — di kode ini dia nggak dipakai
+// sama sekali, dan di kode ini kunci yang ada cuma yang di-ON-kan, jadi absen =
+// ON. Dipaksa ON di rung 1 supaya maksud "fitur wajib" kebaca walau key-nya
+// masih nyangkut di proteksi-settings.json grup lama.
+const WAJIB_ON = { autolevelup: true };
 
 function getSetting(groupJid) {
-  if (!allSettings[groupJid]) allSettings[groupJid] = { ...DEFAULTS };
+  if (!allSettings[groupJid]) allSettings[groupJid] = { ...DEFAULTS, ...WAJIB_ON };
   // Migrate: tambahkan key baru kalau belum ada
   for (const [k, v] of Object.entries(DEFAULTS)) {
     if (allSettings[groupJid][k] === undefined) allSettings[groupJid][k] = v;
   }
+  // Fitur wajib nggak bisa dimatikan — paksa ON terus, walau file setting masih
+  // nyimpen `false` dari grup yang dulu pernah di-off.
+  Object.assign(allSettings[groupJid], WAJIB_ON);
   return allSettings[groupJid];
 }
 
@@ -55,9 +63,6 @@ function updateSetting(groupJid, key, value) {
   getSetting(groupJid)[key] = value;
   saveSettings(allSettings);
 }
-
-// ─── Export getSetting untuk engine ──────────────────────────────────────────
-module.exports.getSetting = getSetting;
 
 // ─── Deteksi helpers ──────────────────────────────────────────────────────────
 const LINK_REGEX      = /https?:\/\/[^\s]+|www\.[^\s]+/i;
@@ -115,6 +120,23 @@ const spamStore = new Map();
 const SPAM_THRESHOLD = 5;  // pesan
 const SPAM_WINDOW    = 3000; // ms
 
+// ─── Fakemsg (.on fakemsg) ────────────────────────────────────────────────────
+// Config-nya SENGAJA nempel di sini, bukan di config/mess.js — cuma fitur ini
+// yang pakai, jadi nggak ada gunanya diangkat ke file config.
+// Cara kerja: owner react pesan orang pakai emoji di bawah → bubble pesan itu
+// DIEDIT jadi teks promosi (trik temp-message: kirim bubble kosong dulu, baru
+// edit pakai id pesan target), lalu bubble kosong + reaksi + stanza-nya dibersihin.
+const fakemsgEmoji = '😁';
+const fakemsgPesan =
+`Mau jadi bot? Langsung aja ke https://yapari.web.id 🔥
+
+Jadibot & akses API dalam satu tempat!
+
+Satu API untuk AI, downloader, maker, search, dan berbagai kebutuhan developer lainnya.
+
+🌐 Website: yapari.web.id
+🧪 Labs: labs.yapari.id`;
+
 // ─── Daftar fitur + metadata untuk .on/.off ───────────────────────────────────
 // scope: 'group' = per-grup, 'global' = per-bot (dikelola engine)
 const FITUR_INFO = {
@@ -128,27 +150,37 @@ const FITUR_INFO = {
   antitagsw:   { emoji: '📢', label: 'Antitagsw',   desc: 'Hapus pesan forward dari status WA',           scope: 'group' },
   autosticker: { emoji: '🎭', label: 'Autosticker',  desc: 'Auto convert gambar/video ke stiker',          scope: 'group' },
   antisticker: { emoji: '🚷', label: 'Antisticker',  desc: 'Hapus stiker dari member biasa',               scope: 'group' },
-  viewonce:    { emoji: '👁️', label: 'Viewonce',     desc: 'Kirim ulang media viewonce',                   scope: 'group' },
-  autolevelup: { emoji: '⬆️', label: 'Autolevelup',  desc: 'Notifikasi level naik RPG di grup',            scope: 'group' },
+  viewonce:    { emoji: '👁️', label: 'Viewonce',     desc: 'Kirim ulang media sekali lihat biar bisa dibuka lagi', scope: 'group' },
+  // autolevelup nggak ada di sini — fitur wajib, nggak bisa di-off. Lihat WAJIB_ON.
   // DB scope — disimpan di group_settings (detect, autoacc, document)
   detect:      { emoji: '🔔', label: 'Detect',      desc: 'Notifikasi perubahan grup (nama, icon, dll)',   scope: 'db' },
   autoacc:     { emoji: '✅', label: 'Autoacc',     desc: 'Auto approve join request grup',               scope: 'db' },
   document:    { emoji: '📄', label: 'Document',    desc: 'Kirim ulang dokumen sebagai file biasa',        scope: 'db' },
+  // welcome/bye: saklar disimpan di kolom sendiri (welcome_on/bye_on), teksnya
+  // nggak kesentuh — jadi off/on bolak-balik nggak ngehapus teks custom.
+  welcome:     { emoji: '👋', label: 'Welcome',     desc: 'Sambutan otomatis saat member masuk grup',      scope: 'db', col: 'welcome_on' },
+  left:        { emoji: '🚪', label: 'Left',        desc: 'Ucapan otomatis saat member keluar grup',       scope: 'db', col: 'bye_on' },
+  bye:         { emoji: '🚪', label: 'Left',        desc: 'Ucapan otomatis saat member keluar grup',       scope: 'db', col: 'bye_on' },
   // Global scope — dikelola engine, toggle via .on/.off diteruskan ke engine
   nyimak:      { emoji: '🤫', label: 'Nyimak',      desc: 'Bot diam total, tidak balas command',           scope: 'global' },
   autoread:    { emoji: '👀', label: 'Autoread',    desc: 'Centang biru semua pesan otomatis',            scope: 'global' },
   didyoumean:  { emoji: '💡', label: 'Didyoumean',  desc: 'Saran command saat user typo (.meni → .menu)', scope: 'global' },
+  fakemsg:     { emoji: '😁', label: 'Fakemsg',     desc: 'Owner react pesan pakai 😁 → pesan itu berubah jadi promosi', scope: 'global' },
+  // Fitur wajib ON — cuma buat kenal nama & kasih pesan yang ngerti, TIDAK
+  // ditawarkan di daftar toggle dan TIDAK punya saklar (lihat WAJIB_ON).
+  autolevelup: { emoji: '⬆️', label: 'Autolevelup', desc: 'Fitur wajib — selalu aktif, nggak bisa di-off',  scope: 'wajib' },
 };
 
 // ─── Helper: get DB group setting ─────────────────────────────────────────────
 async function getDbGroupSetting(botId, groupJid) {
+  const kosong = { detect: 0, autoacc: 0, document: 0, welcome_on: 1, bye_on: 1 };
   try {
     const [rows] = await pool.execute(
-      'SELECT detect, autoacc, document FROM group_settings WHERE bot_id = ? AND group_jid = ? LIMIT 1',
+      'SELECT detect, autoacc, document, welcome_on, bye_on FROM group_settings WHERE bot_id = ? AND group_jid = ? LIMIT 1',
       [botId, groupJid]
     );
-    return rows[0] || { detect: 0, autoacc: 0, document: 0 };
-  } catch { return { detect: 0, autoacc: 0, document: 0 }; }
+    return rows[0] || kosong;
+  } catch { return kosong; }
 }
 
 async function setDbGroupSetting(botId, groupJid, col, val) {
@@ -163,6 +195,26 @@ async function setDbGroupSetting(botId, groupJid, col, val) {
 module.exports = async function proteksiHandler(ctx) {
   const { isGroup, jid, sender, body, isCmd, command, args, reply, client, botData, pushName, msg } = ctx;
 
+  // ── Fakemsg — owner react pakai emoji fakemsg → pesan itu jadi promosi ─────
+  const reaksiFake = msg?.message?.reactionMessage;
+  if (ctx.isOwner && reaksiFake?.text === fakemsgEmoji
+      && getBotGlobalSetting(botData.id, 'fakemsg')) {
+    const target = reaksiFake.key;
+    try {
+      const temp = await client.message.send(jid, { text: '', contextInfo: { isGroupStatus: true } }, { quoted: msg });
+      await client.message.send(jid, { text: fakemsgPesan, edit: { id: temp.key.id } }, { messageId: target.id });
+      await Promise.allSettled([
+        client.message.send(jid, { delete: { remoteJid: jid, id: temp.key.id, fromMe: true } }),
+        client.message.send(jid, { delete: { ...target, remoteJid: jid } }),
+        client.message.send(jid, { delete: { ...msg.key, remoteJid: jid } }),
+      ]);
+    } catch (e) {
+      console.error('[fakemsg]', e?.message || e);
+      await reply('❌ Fakemsg gagal, coba lagi ya.').catch(() => {});
+    }
+    return true;
+  }
+
   if (!isGroup) return false;
 
   const p   = botData.prefix ?? '.';
@@ -171,8 +223,8 @@ module.exports = async function proteksiHandler(ctx) {
   // ── Auto-listener: fitur yang jalan tiap pesan ───────────────────────────
   const skipCmds = new Set([
     'on','off','antibot','antilink','antilinkv2','antitoxic','antidelete',
-    'antispam','antitagsw','autosticker','antisticker','viewonce','autolevelup',
-    'detect','welcome','autoacc','document','nyimak','autoread','proteksi','fitur','didyoumean',
+    'antispam','antitagsw','autosticker','antisticker','viewonce',
+    'detect','welcome','left','bye','autoacc','document','nyimak','autoread','proteksi','didyoumean',
   ]);
 
   if (isGroup && (!isCmd || !skipCmds.has(command))) {
@@ -214,9 +266,8 @@ module.exports = async function proteksiHandler(ctx) {
     // ── Autosticker — auto convert gambar/video ke stiker ───────────────────
     if (cfg.autosticker && (msgType === 'imageMessage' || msgType === 'videoMessage')) {
       try {
-        // zapo-js: downloadMediaMessage(source, opts) -> Buffer langsung
-        const { downloadMediaMessage } = require('zapo-js');
-        const buffer = await downloadMediaMessage(msg);
+        // Adapter: client.message.downloadBytes(msg) -> Buffer langsung
+        const buffer = await client.message.downloadBytes(msg);
         await client.message.send(jid, {
           type: 'sticker',
           media: buffer,
@@ -240,11 +291,10 @@ module.exports = async function proteksiHandler(ctx) {
       const voMsg  = voType ? msg?.message?.[voType] : null;
       if (voMsg?.viewOnce) {
         try {
-          // zapo-js: source boleh { message } -> Buffer langsung
-          const { downloadMediaMessage } = require('zapo-js');
+          // Adapter: source boleh { message } -> Buffer langsung
           const fixed = { ...msg.message };
           fixed[voType] = { ...voMsg, viewOnce: false };
-          const buffer = await downloadMediaMessage({ message: fixed });
+          const buffer = await client.message.downloadBytes({ message: fixed });
           await client.message.send(jid, {
             type: voType === 'videoMessage' ? 'video' : 'image',
             media: buffer,
@@ -264,8 +314,7 @@ module.exports = async function proteksiHandler(ctx) {
           [botData.id, jid]
         );
         if (rows[0]?.document) {
-          const { downloadMediaMessage } = require('zapo-js');
-          const buffer  = await downloadMediaMessage(msg);
+          const buffer  = await client.message.downloadBytes(msg);
           const docMsg  = msg.message.documentMessage;
           await client.message.send(jid, {
             type: 'document',
@@ -347,42 +396,18 @@ module.exports = async function proteksiHandler(ctx) {
 
     // Tanpa argumen → tampilkan status semua fitur
     if (!fitur) {
-      const dbCfg = await getDbGroupSetting(botData.id, jid);
-      // Global state dari engine
-      const nyimak   = getBotGlobalSetting(botData.id, 'nyimak');
-      const autoread = getBotGlobalSetting(botData.id, 'autoread');
-
-      const st = (v) => v ? '✅' : '❌';
       await reply(
         `⚙️ *Status Fitur — ${jid.split('@')[0]}*\n\n` +
-        `*── Proteksi ──*\n` +
-        `🤖 antibot     : ${st(cfg.antibot)}\n` +
-        `🔗 antilink    : ${st(cfg.antilink)}\n` +
-        `🔗 antilinkv2  : ${st(cfg.antilinkv2)}\n` +
-        `🤬 antitoxic   : ${st(cfg.antitoxic)}\n` +
-        `🗑️ antidelete  : ${st(cfg.antidelete)}\n` +
-        `🚫 antispam    : ${st(cfg.antispam)}\n` +
-        `📢 antitagsw   : ${st(cfg.antitagsw)}\n` +
-        `🚷 antisticker : ${st(cfg.antisticker)}\n\n` +
-        `*── Otomatis ──*\n` +
-        `🎭 autosticker : ${st(cfg.autosticker)}\n` +
-        `👁️ viewonce    : ${st(cfg.viewonce)}\n` +
-        `⬆️ autolevelup : ${st(cfg.autolevelup)}\n` +
-        `🔔 detect      : ${st(dbCfg.detect)}\n` +
-        `✅ autoacc     : ${st(dbCfg.autoacc)}\n` +
-        `📄 document    : ${st(dbCfg.document)}\n\n` +
-        `*── Global (bot) ──*\n` +
-        `🤫 nyimak      : ${st(nyimak)}\n` +
-        `👀 autoread    : ${st(autoread)}\n` +
-        `💡 didyoumean  : ${st(getBotGlobalSetting(botData.id, 'didyoumean'))}\n\n` +
-        `_Ketik \`${p}on <fitur>\` atau \`${p}off <fitur>\` untuk toggle._`
+        await proteksi.statusFitur(botData.id, jid) +
+        `\n_Ketik \`${p}on <fitur>\` atau \`${p}off <fitur>\` untuk toggle._`
       );
       return true;
     }
 
     // Validasi fitur
     if (!FITUR_INFO[fitur]) {
-      const list = Object.keys(FITUR_INFO).join(', ');
+      // Fitur wajib nggak ditawarin di daftar — dia emang nggak bisa di-toggle.
+      const list = Object.keys(FITUR_INFO).filter(k => FITUR_INFO[k].scope !== 'wajib').join(', ');
       await reply(`❌ Fitur *${fitur}* tidak dikenal.\n\nFitur tersedia:\n${list}`);
       return true;
     }
@@ -390,6 +415,12 @@ module.exports = async function proteksiHandler(ctx) {
     const info  = FITUR_INFO[fitur];
     const emoji = info.emoji;
     const label = info.label;
+
+    // Fitur wajib — nggak punya saklar. Dikasih tau, bukan dijualin.
+    if (info.scope === 'wajib') {
+      await reply(`${emoji} *${label}* itu fitur *wajib* — selalu aktif dan nggak bisa di-off.`);
+      return true;
+    }
 
     // Cek permission: fitur global hanya owner bot
     if (info.scope === 'global') {
@@ -420,10 +451,25 @@ module.exports = async function proteksiHandler(ctx) {
       return true;
     }
 
-    // DB scope (detect, autoacc, document, welcome)
+    // DB scope (detect, autoacc, document, welcome, left)
     if (info.scope === 'db') {
-      await setDbGroupSetting(botData.id, jid, fitur, enable);
-      await reply(`${emoji} *${label}* ${enable ? '✅ Diaktifkan' : '❌ Dinonaktifkan'}\n_${info.desc}_`);
+      const dbNow = await getDbGroupSetting(botData.id, jid);
+      const current = dbNow[info.col || fitur];
+      if (enable && current) {
+        await reply(`${emoji} *${label}* sudah *aktif* sejak tadi. Gunakan \`${p}off ${fitur}\` untuk mematikan.`);
+        return true;
+      }
+      if (!enable && !current) {
+        await reply(`${emoji} *${label}* sudah *mati* sejak tadi. Gunakan \`${p}on ${fitur}\` untuk mengaktifkan.`);
+        return true;
+      }
+      await setDbGroupSetting(botData.id, jid, info.col || fitur, enable);
+      // Saklar OFF di atas teks: teks custom-nya tetap tersimpan, cuma didiemin.
+      const jejak = (fitur === 'welcome' || fitur === 'left')
+        ? (enable ? '\n_Sambutan pakai teks yang tersimpan (kalau belum pernah diatur: teks default)._'
+                  : '\n_Teks custom tetap tersimpan — tinggal `.on` lagi kalau mau dipakai._')
+        : '';
+      await reply(`${emoji} *${label}* ${enable ? '✅ Diaktifkan' : '❌ Dinonaktifkan'}\n_${info.desc}_${jejak}`);
       return true;
     }
 
@@ -451,13 +497,6 @@ module.exports = async function proteksiHandler(ctx) {
       return true;
     }
 
-    // ── .fitur — alias .on tanpa argumen ─────────────────────────────────────
-    case 'fitur': {
-      // Delegate ke .on tanpa argumen
-      const fakeCtx = { ...ctx, command: 'on', args: [] };
-      return module.exports(fakeCtx);
-    }
-
     // ── legacy individual toggle — tetap support untuk backward compat ────────
     case 'antibot':
     case 'antilink':
@@ -468,8 +507,7 @@ module.exports = async function proteksiHandler(ctx) {
     case 'antitagsw':
     case 'autosticker':
     case 'antisticker':
-    case 'viewonce':
-    case 'autolevelup': {
+    case 'viewonce': {
       if (!ctx.isAdmin && !ctx.isOwner) {
         await reply(`❌ Hanya admin atau owner yang bisa mengubah fitur ini.`);
         return true;
@@ -497,3 +535,75 @@ module.exports = async function proteksiHandler(ctx) {
 
 // Toggle proteksi — tidak kena limit (admin/owner yang pakai)
 module.exports.limitedCmds = new Set([]);
+
+// Diekspor SETELAH `module.exports = handler` — kalau ditaruh di atas, dua baris
+// ini kehapus dan yang baca `.getSetting` / `.FITUR_INFO` dapet undefined.
+module.exports.getSetting = getSetting;   // dibaca engine & tes
+module.exports.fakemsgEmoji = fakemsgEmoji; // gate reaksi di engine
+module.exports.FITUR_INFO = FITUR_INFO;   // daftar fitur + desc buat `.on`/`.off`
+
+// Blok status semua fitur — dipakai `.on` polos DAN `.groupinfo`, biar dua
+// tempat itu nggak bisa beda isi.
+module.exports.statusFitur = async function statusFitur(botId, jid) {
+  const dbCfg    = await getDbGroupSetting(botId, jid);
+  const cfg      = getSetting(jid);
+  const nyimak   = getBotGlobalSetting(botId, 'nyimak');
+  const autoread = getBotGlobalSetting(botId, 'autoread');
+  const st    = (v) => v ? '✅' : '❌';
+  const baris = (k, on) => {
+    const i = FITUR_INFO[k];
+    return `${i.emoji} ${i.label.padEnd(11)}: ${st(on)} — ${i.desc}\n`;
+  };
+  return (
+    `*── Teks ──*\n` +
+    `👋 Welcome   : ${dbCfg.welcome_msg ? `"${dbCfg.welcome_msg}"` : '_belum diatur_'}\n` +
+    `🚪 Leave     : ${dbCfg.bye_msg ? `"${dbCfg.bye_msg}"` : '_belum diatur_'}\n` +
+    `\n*── Proteksi ──*\n` +
+    baris('antibot',     cfg.antibot) +
+    baris('antilink',    cfg.antilink) +
+    baris('antilinkv2',  cfg.antilinkv2) +
+    baris('antitoxic',   cfg.antitoxic) +
+    baris('antidelete',  cfg.antidelete) +
+    baris('antispam',    cfg.antispam) +
+    baris('antitagsw',   cfg.antitagsw) +
+    baris('antisticker', cfg.antisticker) +
+    `\n*── Otomatis ──*\n` +
+    baris('autosticker', cfg.autosticker) +
+    baris('viewonce',    cfg.viewonce) +
+    baris('detect',      dbCfg.detect) +
+    baris('autoacc',     dbCfg.autoacc) +
+    baris('document',    dbCfg.document) +
+    baris('welcome',     dbCfg.welcome_on) +
+    baris('left',        dbCfg.bye_on) +
+    `\n*── Global (bot) ──*\n` +
+    baris('nyimak',      nyimak) +
+    baris('autoread',    autoread) +
+    baris('didyoumean',  getBotGlobalSetting(botId, 'didyoumean')) +
+    baris('fakemsg',     getBotGlobalSetting(botId, 'fakemsg'))
+  );
+};
+
+// Baris teks + status fitur buat `.groupinfo` (dipakai bareng blok di atas).
+// Status grup: utama / sewa / biasa — sumbernya sama kayak `.listgroup`
+// (botData.main_groups + tabel bot_sewa), biar nggak bisa beda jawaban.
+module.exports.statusGrup = async function statusGrup(botId, jid, mainGroupsRaw) {
+  const mainGroups = new Set(
+    String(mainGroupsRaw || '').split(/[,\n]/).map(s => s.trim()).filter(Boolean)
+  );
+  if (mainGroups.has(jid)) return '🏠 utama';
+  try {
+    const [rows] = await pool.execute(
+      'SELECT expired_at FROM bot_sewa WHERE bot_id = ? AND group_jid = ? LIMIT 1',
+      [botId, jid]
+    );
+    const exp = rows[0]?.expired_at;
+    if (exp != null) {
+      const sisa = Number(exp) - Date.now();
+      if (sisa <= 0) return '⛔ sewa expired';
+      const d = Math.floor(sisa / 86400000);
+      const h = Math.floor((sisa % 86400000) / 3600000);
+      return `💰 sewa (sisa ${d > 0 ? d + 'h ' : ''}${h}j)`;
+    }
+  } catch { /* bot_sewa nggak ada / DB error → anggap biasa */ }
+  return '👥 biasa';
+};

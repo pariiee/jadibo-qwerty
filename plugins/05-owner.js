@@ -9,16 +9,22 @@
  * Owner-only commands require the sender to be the bot owner number.
  */
 
+const { rapikanError } = require('../engine/pesanError');
 const path = require('path');
 const fs   = require('fs');
+const os   = require('os');
+const { execFileSync } = require('child_process');
+const axios = require('axios');
 const { pool } = require('../config/database');
 const mess = require('../config/mess');
 const { addStickerExif } = require('../engine/sticker');
 const { markPendingSewa } = require('../engine/pendingSewa');
 const { uploadInfo } = require('../engine/api');
 const { genThumbnail } = require('../engine/thumbnail');
+const { participantPhones } = require('../engine/jid');
 const { proto } = require('zapo-js');
 const { getRankByLevel } = require('./03-fun-rpg');
+const { ALL_COMMANDS, CATS, CAT_KEYS, catLabel } = require('./01-info');
 
 // In-memory stores
 const blockedUsers  = new Map(); // botId -> Set<jid>
@@ -413,7 +419,7 @@ module.exports = async function ownerHandler(ctx) {
         fs.copyFileSync(dbPath, backupPath);
         await reply(`✅ Backup berhasil: ${path.basename(backupPath)}`);
       } catch (e) {
-        await reply(`Gagal backup: ${e.message}`);
+        await reply(`Gagal backup: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -448,7 +454,7 @@ module.exports = async function ownerHandler(ctx) {
 
     // ─── WARN SYSTEM ─────────────────────────────────────────────────────
     case 'warn': {
-      if (!isGroup) { await reply('Hanya untuk grup'); return true; }
+      if (!isGroup) { await reply(mess.OnlyGroup); return true; }
       const mentioned = ctx.msg.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
       if (!mentioned[0]) { await reply(`Penggunaan: ${p}warn @target <alasan>`); return true; }
       const target  = mentioned[0];
@@ -483,7 +489,7 @@ module.exports = async function ownerHandler(ctx) {
     }
 
     case 'unwarn': {
-      if (!isGroup) { await reply('Hanya untuk grup'); return true; }
+      if (!isGroup) { await reply(mess.OnlyGroup); return true; }
       const mentioned = ctx.msg.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
       if (!mentioned[0]) { await reply(`Penggunaan: ${p}unwarn @target`); return true; }
       const target  = mentioned[0];
@@ -503,7 +509,7 @@ module.exports = async function ownerHandler(ctx) {
     }
 
     case 'delwarn': {
-      if (!isGroup) { await reply('Hanya untuk grup'); return true; }
+      if (!isGroup) { await reply(mess.OnlyGroup); return true; }
       const mentioned = ctx.msg.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
       if (!mentioned[0]) { await reply(`Penggunaan: ${p}delwarn @target`); return true; }
       const target = mentioned[0];
@@ -523,7 +529,7 @@ module.exports = async function ownerHandler(ctx) {
     }
 
     case 'resetwarn': {
-      if (!isGroup) { await reply('Hanya untuk grup'); return true; }
+      if (!isGroup) { await reply(mess.OnlyGroup); return true; }
       // Reset semua warn di grup ini
       const keysToDelete = [...warnData.keys()].filter(k => k.startsWith(`${botId}:${jid}:`));
       keysToDelete.forEach(k => warnData.delete(k));
@@ -538,7 +544,7 @@ module.exports = async function ownerHandler(ctx) {
     }
 
     case 'setwarnlimit': {
-      if (!isGroup) { await reply('Hanya untuk grup'); return true; }
+      if (!isGroup) { await reply(mess.OnlyGroup); return true; }
       const limit = parseInt(args[0], 10);
       if (!limit || limit < 1 || limit > 10) {
         await reply(`Penggunaan: ${p}setwarnlimit <1-10>`);
@@ -562,7 +568,7 @@ module.exports = async function ownerHandler(ctx) {
 
     // ── listwarn ──────────────────────────────────────────────────────────────
     case 'listwarn': {
-      if (!isGroup) { await reply('Hanya untuk grup'); return true; }
+      if (!isGroup) { await reply(mess.OnlyGroup); return true; }
 
       // Kumpulkan dari in-memory dulu
       const prefix  = `${botId}:${jid}:`;
@@ -634,7 +640,7 @@ module.exports = async function ownerHandler(ctx) {
           `✅ *Premium aktif!*\n@${target.split('@')[0]} (${nama})\nExpired: ${expStr}`,
           { mentions: [target] }
         );
-      } catch (e) { await reply(`Gagal: ${e.message}`); }
+      } catch (e) { await reply(`Gagal: ${rapikanError(e)}`); }
       return true;
     }
 
@@ -666,7 +672,7 @@ module.exports = async function ownerHandler(ctx) {
           `✅ Premium @${target.split('@')[0]} (${nama}) dicabut`,
           { mentions: [target] }
         );
-      } catch (e) { await reply(`Gagal: ${e.message}`); }
+      } catch (e) { await reply(`Gagal: ${rapikanError(e)}`); }
       return true;
     }
 
@@ -690,7 +696,7 @@ module.exports = async function ownerHandler(ctx) {
           `⭐ *Daftar Member Premium*\n\n${list}\n\nTotal: ${rows.length}`,
           { mentions: mentions }
         );
-      } catch (e) { await reply(`Gagal: ${e.message}`); }
+      } catch (e) { await reply(`Gagal: ${rapikanError(e)}`); }
       return true;
     }
 
@@ -744,7 +750,7 @@ module.exports = async function ownerHandler(ctx) {
             `_Waktu sewa akan mulai dihitung saat bot pertama kali menerima pesan dari grup tersebut._`
           );
         } catch (e) {
-          await reply(`❌ Gagal simpan sewa: ${e.message}`);
+          await reply(`❌ Gagal simpan sewa: ${rapikanError(e)}`);
         }
         return true;
       }
@@ -822,7 +828,7 @@ module.exports = async function ownerHandler(ctx) {
             `📅 Expired: ${expDate.toLocaleString('id-ID')}`
           );
         } catch (e) {
-          await reply(`❌ Gagal join grup: ${e.message}\n\nPastikan link valid dan bot belum ada di grup.`);
+          await reply(`❌ Gagal join grup: ${rapikanError(e)}\n\nPastikan link valid dan bot belum ada di grup.`);
         }
         return true;
       }
@@ -874,7 +880,7 @@ module.exports = async function ownerHandler(ctx) {
           `⏳ Durasi: ${durStr}\n` +
           `📅 Expired: ${expDate.toLocaleString('id-ID')}`
         );
-      } catch (e) { await reply(`Gagal: ${e.message}`); }
+      } catch (e) { await reply(`Gagal: ${rapikanError(e)}`); }
       return true;
     }
 
@@ -925,7 +931,7 @@ module.exports = async function ownerHandler(ctx) {
             await client.group.leaveGroup([targetJid]);
           } catch { /* non-critical */ }
         }
-      } catch (e) { await reply(`Gagal: ${e.message}`); }
+      } catch (e) { await reply(`Gagal: ${rapikanError(e)}`); }
       return true;
     }
 
@@ -933,7 +939,7 @@ module.exports = async function ownerHandler(ctx) {
     // Set ulang expired date (override, bukan extend)
     case 'setsewa': {
       if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }
-      if (!isGroup) { await reply('❌ Command ini hanya untuk grup'); return true; }
+      if (!isGroup) { await reply(mess.OnlyGroup); return true; }
 
       const durStr = args[0];
       if (!durStr) {
@@ -961,13 +967,13 @@ module.exports = async function ownerHandler(ctx) {
         await reply(
           `✅ *Sewa di-reset!*\n\n📅 Expired baru: ${expDate.toLocaleString('id-ID')}`
         );
-      } catch (e) { await reply(`Gagal: ${e.message}`); }
+      } catch (e) { await reply(`Gagal: ${rapikanError(e)}`); }
       return true;
     }
 
     // ── ceksewa ──────────────────────────────────────────────────────────
     case 'ceksewa': {
-      if (!isGroup) { await reply('❌ Command ini hanya untuk grup'); return true; }
+      if (!isGroup) { await reply(mess.OnlyGroup); return true; }
       try {
         const [[row]] = await pool.execute(
           'SELECT group_name, expired_at FROM bot_sewa WHERE bot_id = ? AND group_jid = ?',
@@ -990,7 +996,7 @@ module.exports = async function ownerHandler(ctx) {
           `📅 Expired: ${expDate.toLocaleString('id-ID')}\n` +
           `⏳ Sisa: ${sisaStr}`
         );
-      } catch (e) { await reply(`Gagal: ${e.message}`); }
+      } catch (e) { await reply(`Gagal: ${rapikanError(e)}`); }
       return true;
     }
 
@@ -1019,7 +1025,7 @@ module.exports = async function ownerHandler(ctx) {
           return `${i + 1}. ${status} *${r.group_name || r.group_jid.split('@')[0]}*\n   Sisa: ${sisa}`;
         }).join('\n');
         await reply(`📋 *Daftar Sewa Bot*\n\nTotal: ${rows.length}\n\n${list}\n\n_Ketik ${p}delsewa <nomor> untuk hapus sewa_`);
-      } catch (e) { await reply(`Gagal: ${e.message}`); }
+      } catch (e) { await reply(`Gagal: ${rapikanError(e)}`); }
       return true;
     }
 
@@ -1032,7 +1038,6 @@ module.exports = async function ownerHandler(ctx) {
         return true;
       }
       try {
-        const axios = require('axios');
         await react(mess.reactLoading);
 
         const res = await axios.get(fetchUrl, {
@@ -1105,238 +1110,310 @@ module.exports = async function ownerHandler(ctx) {
         }
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal fetch: ${e.message}`);
+        await reply(`❌ Gagal fetch: ${rapikanError(e)}`);
       }
       return true;
     }
 
-    // ── test — ButtonV2 proto (location header + legacy buttons) ────────
-    // Kode dari Pak, dijalankan apa adanya — TAPI customNodes/additionalAttributes
-    // dibuang: zapo sudah men-generate <biz> yang identik sendiri (diverifikasi
-    // buildButtonAddonNode('interactive') == node manual), jadi menambahkannya
-    // lagi = <biz> DOBEL -> server tolak (479).
-    case 'test': {
-      if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }
-      try {
-        await react(mess.reactLoading);
-        await sock.message.send(jid, {
-          buttonsMessage: {
-            buttons: [
-              {
-                buttonId: "btnv2_1",
-                buttonText: {
-                  displayText: "Tombol 1"
-                },
-                type: 1
-              },
-              {
-                buttonId: "btnv2_2",
-                buttonText: {
-                  displayText: "Tombol 2"
-                },
-                type: 1
-              }
-            ],
-            locationMessage: {
-              degreesLatitude: -6.2,
-              degreesLongitude: 106.816666,
-              name: "Moszy AI MD • Button V2",
-              address: "Testing custom thumbnail di location header",
-              jpegThumbnail: Buffer.from('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', 'base64')
-            },
-            contentText: "Testing ButtonV2 — location header + legacy buttons",
-            footerText: "Moszy Button V2 Test",
-            headerType: 6
-          }
-        });
-        // customNodes + additionalAttributes DIBUANG: zapo auto-generate <biz> identik
-        await react(mess.reactSuccess);
-      } catch (e) {
-        await react(mess.reactError);
-        await reply(`❌ Gagal: ${e.message}`);
-      }
-      return true;
-    }
-
-    // ── test2 — coba: thumbnail GEDE (bukan 72px) di location header ──────
-    // `genThumbnail` bawaan ngecilin ke 72x72; di sini ukurannya dari arg supaya
-    // kelihatan WA mau nampilin sebesar apa. Pakai: .test2 300
-    // Ukuran di-cache per proses — ganti angka = resize ulang, sama = pakai cache.
+    // ── test2 — teks "sekali lihat" (view once) lewat proto mentah ─────────
+    // `viewOnceMessage` nggak bisa lewat sendMessage; key-nya udah masuk
+    // RAW_PROTO_KEYS di engine/baileys/client.js → otomatis jalur relayMessage.
     case 'test2': {
       if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }
       try {
         await react(mess.reactLoading);
-        const size = Math.min(Math.max(parseInt(args[0], 10) || 300, 72), 640);
-        const src  = botData.banner_url || process.env.BANNER_DEFAULT;
-        let thumb  = null;
-        if (src) {
-          const fs   = require('fs');
-          const path = require('path');
-          const file = path.resolve(src);
-          if (fs.existsSync(file)) {
-            const sharp = require('sharp');
-            thumb = await sharp(fs.readFileSync(file))
-              .resize(size, size, { fit: 'inside' })
-              .jpeg({ quality: 60 })
-              .toBuffer();
-          }
-        }
-        await reply(
-          `🧪 *TEST2* — thumbnail ${size}px\n` +
-          `sumber : ${src || '(kosong)'}\n` +
-          `bytes  : ${thumb ? thumb.length : 0}\n\n` +
-          `Cek: gambarnya sebesar apa di bubble tombol ini?`
-        );
         await sock.message.send(jid, {
-          buttonsMessage: {
-            buttons: [
-              { buttonId: 'test2_a', buttonText: { displayText: 'Tombol 1' }, type: 1 },
-              { buttonId: 'test2_b', buttonText: { displayText: 'Tombol 2' }, type: 1 },
-            ],
-            locationMessage: {
-              degreesLatitude:  -6.2,
-              degreesLongitude: 106.816666,
-              name:    `Thumbnail ${size}px`,
-              address: 'Header location — cek besar gambarnya',
-              ...(thumb ? { jpegThumbnail: thumb } : {}),
+          viewOnceMessage: {
+            message: {
+              extendedTextMessage: {
+                text: 'Welcome to Gboard clipboard, any text you copy will be saved here.',
+                viewOnce: true,
+              },
             },
-            contentText: 'Bandingkan dengan `.btntest` (thumbnail 72px).',
-            footerText:  botData.footer_text || 'Powered by YaaParBot',
-            headerType:  6, // LOCATION
           },
-        });
+        }, { quoted: ctx.msg });
         await react(mess.reactSuccess);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal: ${e.message}`);
+        await reply(`❌ Gagal: ${rapikanError(e)}`);
       }
       return true;
     }
 
-    // ── test3 — Button V2: location header (thumb 300px) + 1 tombol dropdown ─
-    // Salinan kepunyaan Pak: jimp diganti sharp (sudah terpasang, gak usah nambah
-    // dependensi), tombol " MENU" type NATIVE_FLOW pakai nativeFlowInfo
-    // single_select berisi 3 baris (All Menu / Script / Donate).
-    case 'test3': {
+    // ── test5 — kartu geser (carousel) ───────────────────────────────────────
+    // Bentuk proto: `interactiveMessage.carouselMessage.cards[]` — tiap kartu =
+    // InteractiveMessage penuh (header + body + footer + nativeFlowMessage),
+    // jadi BUKAN bentuk flat `{image, title, body, buttons}` ala helper bot lain.
+    // Media kartu TIDAK auto-upload (resolveMediaPayload cuma lihat media di root
+    // pesan) → upload sendiri lewat `client.message.prepareMedia`, lalu taruh di
+    // `header.imageMessage`/`header.videoMessage` + `hasMediaAttachment: true`.
+    // Node `<biz><interactive>` wajib; `buttonNodes()` di adapter sekarang
+    // ngenalin `carouselMessage` (tanpa itu WA drop bubble-nya diem-diem: reaksi
+    // ✅ jalan, nol error, nol output).
+    // Pakai: `.test5 [gambar] [video]` — default gambar = banner, default video =
+    // klip 3 detik hasil ffmpeg dari gambar itu (biar sekali tes, dua kartu).
+    case 'test5': {
       if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }
       try {
         await react(mess.reactLoading);
-        const src = botData.banner_url || process.env.BANNER_DEFAULT;
-        let thumb = null;
-        if (src) {
-          const fs   = require('fs');
-          const path = require('path');
-          const file = path.resolve(src);
-          if (fs.existsSync(file)) {
-            thumb = await require('sharp')(fs.readFileSync(file))
-              .resize(300, 300)
-              .jpeg({ quality: 80 })
-              .toBuffer();
+
+        const ambil = async (src) => /^https?:\/\//i.test(src)
+          ? Buffer.from((await axios.get(src, { responseType: 'arraybuffer', timeout: 60000 })).data)
+          : fs.readFileSync(path.resolve(src));
+
+        const unggah = async (buf, type, mimetype) =>
+          (await client.message.prepareMedia(buf, { type, mimetype }))[`${type}Message`];
+
+        const gambarSrc = args[0] || botData.banner_url || process.env.BANNER_DEFAULT;
+        const gambarBuf = await ambil(gambarSrc);
+
+        // Video default: dipin dari gambar + ffmpeg. Kalau ffmpeg nggak ada,
+        // kartu video di-skip — kartu gambar tetap terkirim.
+        let videoBuf = null;
+        try {
+          if (args[1]) {
+            videoBuf = await ambil(args[1]);
+          } else {
+            const masuk = path.join(os.tmpdir(), `test5_in_${Date.now()}.jpg`);
+            const keluar = path.join(os.tmpdir(), `test5_out_${Date.now()}.mp4`);
+            fs.writeFileSync(masuk, gambarBuf);
+            execFileSync('ffmpeg', ['-y', '-loop', '1', '-i', masuk, '-t', '3',
+              '-pix_fmt', 'yuv420p', '-vf', 'scale=720:-2', keluar], { stdio: 'ignore' });
+            videoBuf = fs.readFileSync(keluar);
+            fs.rmSync(masuk, { force: true });
+            fs.rmSync(keluar, { force: true });
           }
+        } catch (e) {
+          console.error('[test5] klip video gagal:', e.message);
         }
+
+        // Tombol = PERSIS contoh Pak (quick_reply + cta_url).
+        const tombol = [
+          { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: 'Display Button', id: 'ID' }) },
+          { name: 'cta_url', buttonParamsJson: JSON.stringify({ display_text: 'Display Button', url: 'https://www.example.com' }) },
+        ];
+
+        const kartu = (media, judul, isi, kaki) => ({
+          header: { title: judul, hasMediaAttachment: true, ...media },
+          body: { text: isi },
+          footer: { text: kaki },
+          nativeFlowMessage: { buttons: tombol, messageParamsJson: '{}' },
+        });
+
+        const cards = [kartu({ imageMessage: await unggah(gambarBuf, 'image', 'image/jpeg') },
+          'Title Cards', 'Body Cards', 'Footer Cards')];
+
+        if (videoBuf) {
+          cards.push(kartu({ videoMessage: await unggah(videoBuf, 'video', 'video/mp4') },
+            'Title Cards', 'Body Cards', 'Footer Cards'));
+        }
+
         await sock.message.send(jid, {
-          buttonsMessage: {
-            locationMessage: {
-              degreesLatitude:  0,
-              degreesLongitude: 0,
-              name:    botData.bot_name || 'YaaParBot',
-              address: 'LevviCode',
-              ...(thumb ? { jpegThumbnail: thumb } : {}),
-            },
-            contentText:
-              `乂 *BOT INFORMATION*\n\n` +
-              `*Name* : ${botData.bot_name || 'YaaParBot'}\n` +
-              `*Type* : CJS - Plugin\n` +
-              `*Dev*  : ${botData.owner_name || '-'}\n` +
-              `*Uptime* : ${Math.floor(process.uptime() / 60)} Minute\n\n` +
-              `乂 *USER INFORMATION*\n\n` +
-              `*Name* : ${ctx.pushName || '-'}\n` +
-              `*Number* : +${String(sender).split('@')[0].split(':')[0]}\n` +
-              `*Status* : ${await isOwner(ctx) ? 'Owner' : ctx.isPremium ? 'Premium' : 'Free'}`,
-            footerText: botData.footer_text || 'Powered by YaaParBot',
-            buttons: [
-              {
-                buttonId:   'test3_menu',
-                buttonText: { displayText: ' MENU' },
-                type:       2, // NATIVE_FLOW
-                nativeFlowInfo: {
-                  name: 'single_select',
-                  paramsJson: JSON.stringify({
-                    title: 'Pilih Menu',
-                    sections: [{
-                      title: 'Main Menu',
-                      highlight_label: 'LevviCode',
-                      rows: [
-                        { header: '', title: 'All Menu', description: 'Semua Fitur',      id: '.menu',    highlight_label: 'POPULAR' },
-                        { header: '', title: 'Script',   description: 'Informasi Script', id: '.script',  highlight_label: 'INFO'    },
-                        { header: '', title: 'Donate',   description: 'Support Developer', id: '.donate', highlight_label: 'SUPPORT' },
-                      ],
-                    }],
-                  }),
-                },
-              },
-              { buttonId: 'test3_owner', buttonText: { displayText: ' OWNER' }, type: 1 },
-            ],
-            headerType: 6, // LOCATION
+          interactiveMessage: {
+            header: { title: 'Title Message', subtitle: 'Subtitle Message', hasMediaAttachment: false },
+            body: { text: 'Body Message' },
+            footer: { text: 'Footer Message' },
+            carouselMessage: { cards, messageVersion: 1 },
           },
         });
+
         await react(mess.reactSuccess);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal: ${e.message}`);
+        await reply(`❌ Gagal: ${rapikanError(e)}`);
       }
       return true;
     }
 
-    // ── test4 — banner dari assets/banner.jpg ────────────────────────────────
-    // Kesimpulan probe jpegThumbnail non-location (diuji Pak 2026-09-13):
-    // header interactiveMessage & buttonsMessage headerType IMAGE dua-duanya
-    // NGGAK nge-render gambarnya. `jpegThumbnail` itu frame preview (notifikasi /
-    // tombol download), BUKAN media yang ditampilkan. Yang render cuma:
-    //   • image message beneran (upload)            → mode default di bawah
-    //   • ContextInfo.externalAdReply (kartu link)  → di-drop di interactiveMessage
-    //   .test4    → 1 bubble: preview gambar + tombol (nggak bisa diklik/dibuka)
-    // Tombol dikirim sebagai bubble ke-2 (interactiveMessage quick_reply) — image
-    // dan extendedTextMessage nggak punya field tombol, jadi preview + tombol
-    // memang nggak bisa satu bubble.
     case 'test4': {
       if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }
       try {
         await react(mess.reactLoading);
-        const src  = path.resolve('assets/banner.jpg'); // Pak: ambil dari assets/banner.jpg
-        const raw  = fs.readFileSync(src);
-        const kb   = Math.round(raw.length / 1024);
 
-        await client.message.send(jid, {
-          type: 'text',
-          text: `📋 *Menu ${botData.bot_name || 'Bot'}*\n\n`
-              + `Preview banner di atas — tap nggak bisa kebuka, cuma tampilan.\n\n`
-              + `https://yapari.web.id/`,
-          linkPreview: {
-            matchedText: 'https://yapari.web.id/',
-            previewType: proto.Message.ExtendedTextMessage.PreviewType.IMAGE,
-            title:       `assets/banner.jpg — ${kb}KB`,
-            description: 'Preview banner YaaParBot',
-            thumbnail:   { bytes: raw, contentLength: raw.length }, // inline, 56KB < 64KB
-          },
-        });
+        const banner = fs.readFileSync(
+          path.resolve(botData.banner_url || process.env.BANNER_DEFAULT),
+        );
+        const thumb = await genThumbnail(banner, 'image/jpeg', 300) || banner;
 
-        await client.message.send(jid, {
-          interactiveMessage: {
-            body:   { text: 'Pilih menu di bawah ini 👇' },
-            footer: { text: botData.footer_text || 'Powered by YaaParBot' },
-            nativeFlowMessage: {
-              buttons: [
-                { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: '📋 All Menu', id: 'btn_all'   }) },
-                { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: '👑 Owner',    id: 'btn_owner' }) },
-              ],
+        const pnJid = String(sender).split(':')[0].split('@')[0];
+        const botNm = botData.bot_name || 'YaaParBot';
+
+        const body = [
+          '╭─── • *「 MENU BOT 」*',
+          `│ ◦ User : *${ctx.pushName || pnJid}*`,
+          `│ ◦ Total Fitur : *${ALL_COMMANDS.length}*`,
+          `│ ◦ Kategori : *${Object.keys(CATS).length}*`,
+          '╰───────────────────•',
+          '',
+          'Pilih kategori lewat tombol di bawah 👇',
+        ].join('\n');
+
+        // SATU bubble `buttonsMessage`: tombol dirender WA **sebaris kanan-kiri**,
+        // dan `single_select` boleh nempel di sini lewat `nativeFlowInfo`
+        // (`proto.Message.ButtonsMessage.Button.nativeFlowInfo`, field 4 —
+        // ada di WAProto, cuma Baileys nggak punya API-nya).
+        // Jadi 📂 = dropdown beneran + Owner = tombol biasa, dua-duanya sebaris.
+        // ✅ TERBUKTI di HP Pak — `type: 1` + `nativeFlowInfo` cukup; `type: 2` dibuang.
+        await sock.message.send(jid, {
+          buttonsMessage: {
+            headerType: 6,
+            locationMessage: {
+              degreesLatitude: 0,
+              degreesLongitude: 0,
+              name: botNm,
+              address: 'Api? yapari.web.id | Jadibot? labs.yapari.web.id',
+              jpegThumbnail: thumb,
             },
+            contentText: body,
+            footerText: botData.footer_text || 'Powered by YaaParBot',
+            buttons: [
+              {
+                buttonId: 'btn_cat',
+                buttonText: { displayText: '📂' },
+                type: 1,
+                nativeFlowInfo: {
+                  name: 'single_select',
+                  paramsJson: JSON.stringify({
+                    title: '📂',
+                    sections: [{
+                      title: 'Kategori',
+                      highlight_label: 'YaaPar Menu',
+                      rows: CAT_KEYS.map(k => [k, CATS[k]]).map(([k, v]) => ({
+                        header: '',
+                        title: catLabel(k),
+                        description: `${v.length} Command`,
+                        id: `.menu ${k}`,
+                      })),
+                    }],
+                  }),
+                },
+              },
+              {
+                buttonId: 'btn_owner',
+                buttonText: { displayText: '👤 Owner' },
+                type: 1,
+              },
+            ],
           },
         });
         await react(mess.reactSuccess);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal: ${e.message}`);
+        await reply(`❌ Gagal: ${rapikanError(e)}`);
+      }
+      return true;
+    }
+
+    // ── test3 — salinan `.test2` + tombol sebaris (quick_reply semua) ───────
+    // Pak minta: `[📂] [Owner]` **kanan-kiri**, bukan atas-bawah. `single_select`
+    // nggak bisa sebaris (tombolnya WA selalu penuh sendiri), jadi tombol 📂 di
+    // sini `quick_reply` id `cmd:.menu` → diklik tetap buka daftar kategori
+    // sebagai teks. Klik row `.menu <cat>` ditangani `handleRowId` di 07-button.
+    case 'test3': {
+      if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }
+      try {
+        await react(mess.reactLoading);
+
+        const banner = fs.readFileSync(
+          path.resolve(botData.banner_url || process.env.BANNER_DEFAULT),
+        );
+        const thumb = await genThumbnail(banner, 'image/jpeg', 300) || banner;
+
+        const pnJid = String(sender).split(':')[0].split('@')[0];
+        const nama  = ctx.pushName || pnJid;
+        const role  = mess.roleLabel[ctx.role] || mess.roleLabel.user;
+        const botNm = botData.bot_name || 'YaaParBot';
+        const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
+        const pad = (n) => String(n).padStart(2, '0');
+        const hari = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'][now.getDay()];
+        const tgl  = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}`;
+        const jam  = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+
+        const head = [
+          '╭── *[ 🧾 SELAMAT SIANG ]* ──',
+          `│ 🗓️ Hari : ${hari}`,
+          `│ 📅 Tanggal : ${tgl}`,
+          `│ ⏰ Waktu : ${jam} WIB`,
+          '╰────────────────────────',
+          '',
+          `Hi *${nama}*,`,
+          `_"My name is ${botNm} and I'm here to help you. Feel free to choose a menu or type a command you need."_`,
+          '',
+          '╭── *[ 📌 INFO USER & BOT ]* ──',
+          `│ 🤖 Nama Bot : ${botNm}`,
+          `│ 👤 Nama User : ${nama}`,
+          `│ 👑 Role : ${role}`,
+          `│ ⚡ Limit : 20/20`,
+          `│ 📦 Total Fitur : ${ALL_COMMANDS.length}`,
+          `│ 🔓 Mode : Public`,
+          '╰────────────────────────',
+        ].join('\n');
+
+        const tail = [
+          '╭── *[ 📂 MENU CATEGORY ]* ──',
+          ...CAT_KEYS.map(k => [k, CATS[k]]).map(([k, v]) => `│ ◦ ${catLabel(k)} (${v.length} Fitur)`),
+          '╰────────────────────────',
+          '',
+          '📌 *Catatan:* ',
+          '• Ketuk 📂 untuk daftar kategori.',
+          '• Ketik .menu <kategori> untuk melihat isinya.',
+          '• Semua command: .menu all',
+        ].join('\n');
+
+        const body = head +
+          '\u200e'.repeat(Math.max(0, 1024 - head.length - tail.length - 1)) +
+          '\n' + tail;
+
+        await sock.message.send(jid, {
+          // Sama seperti `.test4` — `buttonsMessage` + `nativeFlowInfo.single_select`,
+          // tombol dirender sebaris. ✅ Terbukti di HP Pak pakai `.test4`
+          // (`type: 1` + `nativeFlowInfo`): sebaris DAN tombolnya kepencet.
+          // `.test3` beda teks/footer saja, disimpan buat pembanding.
+          buttonsMessage: {
+            buttons: [
+              {
+                buttonId: 'btn_cat',
+                buttonText: { displayText: '📂' },
+                type: 1,
+                nativeFlowInfo: {
+                  name: 'single_select',
+                  paramsJson: JSON.stringify({
+                    title: '📂',
+                    sections: [{
+                      title: 'Kategori',
+                      highlight_label: 'YaaPar Menu',
+                      rows: CAT_KEYS.map(k => [k, CATS[k]]).map(([k, v]) => ({
+                        header: '',
+                        title: catLabel(k),
+                        description: `${v.length} Command`,
+                        id: `.menu ${k}`,
+                      })),
+                    }],
+                  }),
+                },
+              },
+              {
+                buttonId: 'btn_owner',
+                buttonText: { displayText: 'Owner' },
+                type: 1,
+              },
+            ],
+            locationMessage: {
+              degreesLatitude: 0,
+              degreesLongitude: 0,
+              name: botNm,
+              address: 'Api? yapari.web.id | Jadibot? labs.yapari.web.id',
+              jpegThumbnail: thumb,
+            },
+            contentText: body,
+            footerText: botData.footer_text || 'Powered by YaaParBot',
+            headerType: 6,
+          },
+        });
+        await react(mess.reactSuccess);
+      } catch (e) {
+        await react(mess.reactError);
+        await reply(`❌ Gagal: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -1392,7 +1469,7 @@ module.exports = async function ownerHandler(ctx) {
 
           await reply(`✅ *QRIS berhasil diupload & disimpan!*\n\n🔗 URL: ${url}\n⏳ Expired: ${expires || 'Permanen'}\n\nKetik ${p}pay untuk test.`);
         } catch (e) {
-          await reply(`❌ Gagal upload QRIS: ${e.message}`);
+          await reply(`❌ Gagal upload QRIS: ${rapikanError(e)}`);
         }
         return true;
       }
@@ -1404,7 +1481,7 @@ module.exports = async function ownerHandler(ctx) {
           await pool.execute('UPDATE bots SET qris_url = ? WHERE id = ?', [url, botId]);
           botData.qris_url = url;
           await reply(`✅ QRIS berhasil disimpan!\n\n🔗 URL: ${url}\n\nKetik ${p}pay untuk test.`);
-        } catch (e) { await reply(`Gagal: ${e.message}`); }
+        } catch (e) { await reply(`Gagal: ${rapikanError(e)}`); }
         return true;
       }
 
@@ -1499,7 +1576,7 @@ module.exports = async function ownerHandler(ctx) {
 
       const mention = target.split('@')[0];
       await ctx.client.message.send(ctx.jid,
-        `💰 *ADD MONEY*\n\n@${mention} mendapat *+${Number(jumlah).toLocaleString('id-ID')} koin*\nTotal koin: *${newMoney.toLocaleString('id-ID')}*`,
+        `💰 *ADD MONEY*\n\n@${mention} mendapat *+${Number(jumlah).toLocaleString('id-ID')}*\nTotal: *${newMoney.toLocaleString('id-ID')}*`,
         { mentions: [target] }
       );
       return true;
@@ -1587,8 +1664,22 @@ module.exports = async function ownerHandler(ctx) {
       const botId    = ctx.botData.id;
       const defLimit = parseInt(process.env.DEFAULT_LIMIT || '20', 10);
 
-      // Opsional: reset user tertentu atau semua
+      // Siapa yang direset:
+      //  - disebut (@user)   -> cuma dia
+      //  - owner di chat grup -> cuma member grup itu (bukan 59 user sebot)
+      //  - owner di chat pribadi -> semua user bot ini
       const mentioned = getMentionedFromCtx(ctx);
+      const grup       = ctx.isGroup;
+      let anggota = [], gagalBaca = false;
+      if (!mentioned.length && grup) {
+        try {
+          const meta = await ctx.client.group.queryGroupMetadata(ctx.jid);
+          anggota = participantPhones(meta?.participants);
+        } catch (e) {
+          gagalBaca = true;
+          console.error(`[Bot ${botId}] resetlimit: gagal baca member grup:`, e.message);
+        }
+      }
       if (mentioned.length > 0) {
         // Reset limit user tertentu
         const results = [];
@@ -1603,8 +1694,23 @@ module.exports = async function ownerHandler(ctx) {
           `✅ *RESET LIMIT*\n\nLimit direset ke *${defLimit}* untuk:\n${results.join('\n')}`,
           { mentions: mentioned }
         );
+      } else if (grup && anggota.length) {
+        // Reset member grup ini aja
+        const ph  = anggota.map(() => '?').join(',');
+        const [res] = await pool.execute(
+          `UPDATE rpg_members SET lim = ? WHERE bot_id = ? AND jid IN (${ph})`,
+          [defLimit, botId, ...anggota]
+        );
+        await reply(`✅ *RESET LIMIT*\n\nLimit member grup ini direset ke *${defLimit}*!\nTotal: *${res.affectedRows} user*`);
+      } else if (gagalBaca) {
+        await reply('⚠️ Nggak bisa baca daftar member grup ini, limit nggak direset.');
+      } else if (grup && !anggota.length) {
+        // Metadata kebaca tapi nggak ada nomor yang bisa dipetakan: grup mode LID
+        // dan anggotanya belum pernah kirim pesan sejak bot nyala. Jujur bilang,
+        // jangan diam-diam reset semua user se-bot.
+        await reply('⚠️ Nggak ada member grup ini yang bisa dipetakan ke nomor, limit nggak direset.');
       } else {
-        // Reset semua user di bot ini
+        // Chat pribadi -> semua user bot ini
         const [res] = await pool.execute(
           'UPDATE rpg_members SET lim = ? WHERE bot_id = ?',
           [defLimit, botId]
@@ -1863,8 +1969,8 @@ module.exports = async function ownerHandler(ctx) {
       }
       const defLim = parseInt(process.env.DEFAULT_LIMIT || '20', 10);
       await pool.execute(
-        `UPDATE rpg_members SET level=1, xp=0, money=0, bank_money=0, healt=100,
-         sword=0, armor=0, job=NULL, jobexp=0, lim=?, hewan_json=NULL
+        `UPDATE rpg_members SET level=1, xp=0, money=0, bank_money=0, healt=100, energi=100,
+         last_energi=NULL, job=NULL, jobexp=0, lim=?, hewan_json=NULL
          WHERE bot_id = ? AND jid = ?`,
         [defLim, botId, target]
       );
@@ -1909,13 +2015,14 @@ module.exports = async function ownerHandler(ctx) {
         }
         await reply(`✅ Berhasil keluar dari *${sukses}/${groups.length} grup*.`);
       } catch (e) {
-        await reply(`❌ Gagal leaveall: ${e.message}`);
+        await reply(`❌ Gagal leaveall: ${rapikanError(e)}`);
       }
       return true;
     }
 
     // ── listgroup ─────────────────────────────────────────────────────────────
-    case 'listgroup': {
+    case 'listgroup':
+    case 'listgc': {
       if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }
       try {
         const groups = await ctx.client.group.queryAllGroups().catch(() => null);
@@ -1964,7 +2071,49 @@ module.exports = async function ownerHandler(ctx) {
           await reply(header + lines.slice(i, i + CHUNK).join('\n'));
         }
       } catch (e) {
-        await reply(`❌ Gagal ambil list grup: ${e.message}`);
+        await reply(`❌ Gagal ambil list grup: ${rapikanError(e)}`);
+      }
+      return true;
+    }
+
+    // ── gcutama ───────────────────────────────────────────────────────────────
+    // Alternatif kolom "Grup Utama" di bot-detail: jalanin di grupnya, ID grup
+    // langsung keisi ke kolom main_groups (kebaca di botdetail/konfigurasi) dan
+    // langsung kepake tanpa restart (objek botData-nya sama dengan yang dipakai
+    // gate di engine).
+    case 'gcutama': {
+      if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }
+      if (!ctx.isGroup) { await reply(mess.OnlyGroup); return true; }
+
+      const list = (botData.main_groups || '').split(/[,\n]/).map(s => s.trim()).filter(Boolean);
+      const off  = ['off', 'hapus', 'del', 'remove', 'unset'].includes((args[0] || '').toLowerCase());
+      const next = off ? list.filter(g => g !== jid) : [...new Set([...list, jid])];
+
+      if (next.length === list.length) {
+        await reply(off
+          ? `ℹ️ Grup ini memang bukan grup utama.`
+          : `ℹ️ Grup ini sudah jadi grup utama.`);
+        return true;
+      }
+
+      const val = next.join(',') || null;
+      await pool.execute('UPDATE bots SET main_groups = ? WHERE id = ?', [val, botId]);
+      botData.main_groups = val; // objek yang sama dengan gate grup di engine
+
+      let nama = jid.split('@')[0];
+      try {
+        const meta = await ctx.client.group.queryGroupMetadata(jid);
+        if (meta?.subject) nama = meta.subject;
+      } catch {}
+
+      if (off) {
+        await reply(`✅ *${nama}* dicabut dari grup utama.`);
+        await reply(next.length
+          ? `🏠 Sisa grup utama (${next.length}):\n${next.map(g => `• ${g}`).join('\n')}`
+          : `⚠️ Daftar grup utama sekarang *kosong* = mode bebas, bot balas di SEMUA grup.`);
+      } else {
+        await reply(`✅ *${nama}* sekarang jadi grup utama.`);
+        await reply(`🏠 ID tersimpan: \`${jid}\`\nTotal grup utama: *${next.length}*\n\n⚠️ Bot bakal keluar dari grup lain yang bukan utama/sewa.`);
       }
       return true;
     }
@@ -2106,7 +2255,7 @@ module.exports = async function ownerHandler(ctx) {
           `📅 Expired baru: *${expDate.toLocaleString('id-ID')}*\n` +
           `📎 ${sisaLama}`
         );
-      } catch (e) { await reply(`❌ Gagal perpanjang sewa: ${e.message}`); }
+      } catch (e) { await reply(`❌ Gagal perpanjang sewa: ${rapikanError(e)}`); }
       return true;
     }
 
@@ -2150,7 +2299,7 @@ module.exports = async function ownerHandler(ctx) {
         if (e.code === 'ER_DUP_ENTRY') {
           await reply(`❌ Key *${triggerKey}* sudah ada. Gunakan ${p}uprespon untuk update.`);
         } else {
-          await reply(`❌ Gagal: ${e.message}`);
+          await reply(`❌ Gagal: ${rapikanError(e)}`);
         }
       }
       return true;
@@ -2183,7 +2332,7 @@ module.exports = async function ownerHandler(ctx) {
         } else {
           await reply(`✅ *Auto Respon Diupdate!*\n\n🔑 Key: *${triggerKey}*\n💬 Respon baru: ${response}`);
         }
-      } catch (e) { await reply(`❌ Gagal: ${e.message}`); }
+      } catch (e) { await reply(`❌ Gagal: ${rapikanError(e)}`); }
       return true;
     }
 
@@ -2207,7 +2356,7 @@ module.exports = async function ownerHandler(ctx) {
         } else {
           await reply(`✅ Auto respon *${triggerKey}* berhasil dihapus.`);
         }
-      } catch (e) { await reply(`❌ Gagal: ${e.message}`); }
+      } catch (e) { await reply(`❌ Gagal: ${rapikanError(e)}`); }
       return true;
     }
 
@@ -2228,7 +2377,7 @@ module.exports = async function ownerHandler(ctx) {
           const header = i === 0 ? `📋 *LIST AUTO RESPON*\nTotal: *${rows.length}*\n\n` : `📋 *(lanjutan)*\n\n`;
           await reply(header + lines.slice(i, i + CHUNK).join('\n'));
         }
-      } catch (e) { await reply(`❌ Gagal: ${e.message}`); }
+      } catch (e) { await reply(`❌ Gagal: ${rapikanError(e)}`); }
       return true;
     }
 
@@ -2272,7 +2421,7 @@ module.exports = async function ownerHandler(ctx) {
         if (e.code === 'ER_DUP_ENTRY') {
           await reply(`❌ Key *${listKey}* sudah ada. Gunakan ${p}updatelist untuk update.`);
         } else {
-          await reply(`❌ Gagal: ${e.message}`);
+          await reply(`❌ Gagal: ${rapikanError(e)}`);
         }
       }
       return true;
@@ -2305,7 +2454,7 @@ module.exports = async function ownerHandler(ctx) {
         } else {
           await reply(`✅ *List Diupdate!*\n\n🔑 Key: *${listKey}*\n📝 Deskripsi baru:\n${listDesc}`);
         }
-      } catch (e) { await reply(`❌ Gagal: ${e.message}`); }
+      } catch (e) { await reply(`❌ Gagal: ${rapikanError(e)}`); }
       return true;
     }
 
@@ -2332,7 +2481,7 @@ module.exports = async function ownerHandler(ctx) {
         let msg = '';
         if (target === 'all') {
           await pool.execute(
-            'UPDATE rpg_members SET level=1, xp=0, money=0, bank_money=0, healt=100, sword=0, armor=0, job=NULL, jobexp=0, lim=? WHERE bot_id=? AND registered=1',
+            'UPDATE rpg_members SET level=1, xp=0, money=0, bank_money=0, healt=100, energi=100, last_energi=NULL, job=NULL, jobexp=0, lim=?, hewan_json=NULL WHERE bot_id=? AND registered=1',
             [defLim, botId]
           );
           msg = '✅ *RESET ALL* — semua stat RPG user direset ke default!';
@@ -2349,7 +2498,7 @@ module.exports = async function ownerHandler(ctx) {
           await reply(`❌ Target tidak dikenal: *${target}*`); return true;
         }
         await reply(msg);
-      } catch (e) { await reply(`❌ Gagal reset: ${e.message}`); }
+      } catch (e) { await reply(`❌ Gagal reset: ${rapikanError(e)}`); }
       return true;
     }
 
@@ -2365,7 +2514,7 @@ module.exports = async function ownerHandler(ctx) {
       try {
         await ctx.client.profile.setStatus(bio);
         await reply(`✅ Bio bot berhasil diubah:\n_${bio}_`);
-      } catch (e) { await reply(`❌ Gagal ubah bio: ${e.message}`); }
+      } catch (e) { await reply(`❌ Gagal ubah bio: ${rapikanError(e)}`); }
       return true;
     }
 
@@ -2389,7 +2538,59 @@ module.exports = async function ownerHandler(ctx) {
         );
         await ctx.client.profile.setProfilePicture(buffer);
         await reply('✅ Foto profil bot berhasil diubah!');
-      } catch (e) { await reply(`❌ Gagal ubah foto profil: ${e.message}`); }
+      } catch (e) { await reply(`❌ Gagal ubah foto profil: ${rapikanError(e)}`); }
+      return true;
+    }
+
+    // ─── RESTART BOT INI SENDIRI (owner + dev) ──────────────────────────
+    case 'restart': {
+      if (!ctx.isOwner && !ctx.isDev) {
+        await reply(mess.ownerOnly);
+        return true;
+      }
+
+      // Balas DULU: proses restart ngebunuh koneksi WA bot ini, kalau balasan
+      // dikirim setelahnya nggak akan pernah nyampe.
+      await reply(`🔁 Bot *${botData.bot_name || botId}* lagi di-restart...\nsabar ~10 detik ya, nanti bot nyambung sendiri.`);
+      await react('🔁').catch(() => {});
+
+      // Jalan di background — handler pesan jangan ditahan nunggu handshake WA.
+      const { restartWhatsAppBotInBackground } = require('../engine/whatsappEngine');
+      restartWhatsAppBotInBackground(botId).catch(async (e) => {
+        console.error(`[Bot ${botId}] restart dari command gagal:`, e.message);
+        try {
+          const { logBot } = require('../engine/whatsappEngine');
+          await logBot?.(botId, 'error', `Restart gagal: ${e.message}`);
+        } catch { /* log doang, jangan ikut meledak */ }
+        // Kalau gagal, hidupin balik botnya biar user nggak ditinggal mati.
+        try {
+          const [rows] = await pool.execute('SELECT * FROM bots WHERE id = ?', [botId]);
+          const { startWhatsAppBot } = require('../engine/whatsappEngine');
+          if (rows[0]) await startWhatsAppBot(rows[0], false);
+        } catch { /* udah mentok, cukup di log */ }
+      });
+      return true;
+    }
+
+    // ─── Debug: varian node pesan ber-label AI ──────────────────────────
+    // Hasil tes di grup nyata: DI GRUP LABEL AI NGGAK MUNCUL apa pun node-nya
+    // (1 bot+biz / 2 biz aja / 3 tanpa node = ketiganya polos). Di chat
+    // pribadi cuma varian 1 (bot+biz) yang nongol. Jadi label AI = fitur
+    // chat pribadi; di grup nggak ada yang perlu dikejar. Command ini
+    // ditinggal biar gampang ngecek ulang kalau WA berubah.
+    case 'testai': {
+      if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }
+      const cl = require('../engine/zapo/client');
+      const variants = [
+        ['1) bot+biz', cl.AI_NODES],
+        ['2) biz aja', cl.BIZ_NODE ?? [{ attrs: {}, tag: 'biz' }]],
+        ['3) tanpa node', []],
+      ];
+      for (const [label, nodes] of variants) {
+        await sock.message.sendAi(jid, `${label} — label AI muncul?`, { nodes });
+        await new Promise((r) => setTimeout(r, 800));
+      }
+      await reply('Udah gw kirim 3 varian di chat ini 👆 mana yang ada label AI-nya?');
       return true;
     }
 

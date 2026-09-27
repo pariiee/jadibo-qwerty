@@ -2,13 +2,15 @@
 
 /**
  * plugins/04-tools.js
- * Commands: sticker, poll, readmore, base64, kalkulator, pick
+ * Commands: sticker, poll, readmore, base64, kalkulator, pick, removebg
  */
 
+const { rapikanError } = require('../engine/pesanError');
 const mess           = require('../config/mess');
-const { genThumbnail } = require('../engine/thumbnail');
-const { addStickerExif } = require('../engine/sticker');
-const { uploadInfo }  = require('../engine/api');
+const { genThumbnail, jpegkan } = require('../engine/thumbnail');
+const { addStickerExif, videoKeStickerWebp } = require('../engine/sticker');
+const { uploadInfo, upload, apiGet, url: apiUrl, auth: apiAuth } = require('../engine/api');
+const { normalVideo } = require('../engine/normalVideo');
 
 // ─── Helper: mime type → ekstensi file ───────────────────────────────────────
 function mimeToExt(mime) {
@@ -22,6 +24,22 @@ function mimeToExt(mime) {
     'image/vnd.mozilla.apng': 'apng',
   };
   return map[mime] || 'bin';
+}
+
+// ─── Helper: nama file aman buat diupload ────────────────────────────────────
+// `content.fileName` dari proto WA bisa ter-encode URL (mis.
+// "soal_0020_nasib%20buruk.png") atau ada karakter aneh. Dinormalisasi biar
+// nama yang dikirim ke host upload bersih (huruf/angka/titik/dash/underscore),
+// dan ekstensinya selalu disamain sama mime asli.
+function namaFileAman(nama, mime, fallbackExt) {
+  const ext  = fallbackExt || mimeToExt(mime);
+  let bersih = '';
+  try { bersih = decodeURIComponent(String(nama || '')); } catch { bersih = String(nama || ''); }
+  bersih = bersih.split(/[\\/]/).pop()                 // buang path
+                 .replace(/[^A-Za-z0-9._-]/g, '_')     // sisain karakter aman
+                 .replace(/^_+|_+$/g, '');
+  const base = bersih.replace(/\.[A-Za-z0-9]{1,5}$/, '').slice(0, 60);
+  return `${base || `file_${Date.now()}`}.${ext}`;
 }
 
 // In-memory session store: `${botId}:${sender}` -> conversationId
@@ -54,8 +72,157 @@ async function extractMedia(ctx, allowed = ['imageMessage', 'videoMessage', 'sti
   return { msgType: sourceType, buffer, mime, isDirect, isQuoted };
 }
 
+// ─── Helper: pilih N video terbaik dari hasil pencarian TikTok ───────────────
+// Skor = berapa banyak kata kunci (>2 huruf) yang muncul di judul; seri →
+// durasi terpendek; masih seri → peringkat API yang lebih atas.
+// ponytail: heuristik kata-per-kata; upgrade ke fuzzy/embedding kalau hasil
+// teratas sering melenceng. Endpoint tidak mengirim playCount, jadi popularitas
+// belum bisa dipakai sebagai patokan.
+const keyWords = (q) => String(q || '').toLowerCase().split(/\s+/).filter(w => w.length > 2);
+const keyMatch = (title, q) => {
+  const w = keyWords(q);
+  return w.length > 0 && String(title || '').toLowerCase().includes(w[0]);
+};
+
+function pickTopVideos(list, q, n = 3) {
+  const words = keyWords(q);
+  const scored = list.map((v, i) => {
+    const title = String(v.title || '').toLowerCase();
+    const hit   = words.filter(w => title.includes(w)).length;
+    return { v, matcher: words.length ? hit / words.length : 0.5, dur: parseInt(v.duration, 10) || 999, i };
+  });
+  scored.sort((a, b) => b.matcher - a.matcher || a.dur - b.dur || a.i - b.i);
+  return scored.slice(0, n).map(s => s.v);
+}
+
+// Jalanin yt-dlp. missing=true kalau binary nggak ada (mis. di Windows lokal).
+// Dipakai bareng oleh `.play` dan `.ttsearch`.
+function runYtDlp(argv, timeoutMs = 180000) {
+  const { spawn } = require('child_process');
+  return new Promise(resolve => {
+    let out = '', err = '', done = false, ch;
+    try { ch = spawn('yt-dlp', argv); } catch (e) { return resolve({ ok: false, out: '', err: String(e.message), missing: true }); }
+    const timer = setTimeout(() => { try { ch.kill('SIGKILL'); } catch {} finish({ ok: false, out, err: err + ' [timeout]' }); }, timeoutMs);
+    const finish = r => { if (!done) { done = true; clearTimeout(timer); resolve(r); } };
+    ch.stdout.on('data', d => { out += d; });
+    ch.stderr.on('data', d => { err += d; });
+    ch.on('error', e => finish({ ok: false, out, err: String(e.message), missing: e.code === 'ENOENT' }));
+    ch.on('close', code => finish({ ok: code === 0, out, err }));
+  });
+}
+
 module.exports = async function toolsHandler(ctx) {
   if (!ctx.isCmd) return false;
+
+  // ─── Helper: cari + unduh audio lagu (yt-dlp local → ffmpeg mp3) ───────────
+  // Dipakai bareng `.play`, `.spotify` (tombol), dan `.spotifydl` (fallback
+  // waktu spotidown.app mati). Balikin { ok, buf, mime, title, artist, dur }
+  // atau { ok:false, alasan } — pemanggil yang ngurus pesan ke user.
+  async function ambilAudioLagu(kueri) {
+    const fs = require('fs');
+    const os = require('os');
+    const path = require('path');
+    const { spawn } = require('child_process');
+
+    const norm = s => String(s || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+
+    // 1) Cari kandidat + saring kompilasi/full album/live loop
+    let pick = null;
+    const srch = await runYtDlp(['--flat-playlist', '--no-warnings', '-J', `ytsearch10:${kueri}`], 90000);
+    if (srch.ok) {
+      let list = [];
+      try { list = JSON.parse(srch.out)?.entries || []; } catch {}
+      const tokens = norm(kueri).split(' ').filter(t => t.length > 1);
+      const scored = list
+        .filter(e => e && e.id && !e.is_live && Number.isFinite(e.duration))
+        .filter(e => e.duration >= 30 && e.duration <= 600)
+        .map(e => {
+          const t = norm(e.title);
+          const hit = tokens.filter(tk => t.includes(tk)).length;
+          return { ...e, _ratio: tokens.length ? hit / tokens.length : 0 };
+        })
+        .sort((a, b) => (b._ratio - a._ratio) || (a.duration - b.duration));
+      pick = scored[0]
+          || list.find(e => e && e.id && Number.isFinite(e.duration) && e.duration <= 3600)
+          || null;
+    }
+    if (!pick) {
+      // yt-dlp nggak ada (mis. lokal Windows) → jalur API lama (yt-search + ytmp3)
+      const axios = require('axios');
+      const search = require('yt-search');
+      const look = await search(kueri);
+      const conv = (look.videos || []).filter(v => v.seconds >= 30 && v.seconds <= 600)[0] || look.videos?.[0];
+      if (!conv) return { ok: false, alasan: 'Lagu tidak ditemukan' };
+      const mp3 = await axios.get(`${process.env.BASE_API}api/download/ytmp3`, {
+        params: { url: conv.url }, headers: { 'X-API-Key': process.env.KEY_API }, timeout: 60000,
+      });
+      const d = mp3.data?.results;
+      if (!d?.audio?.url) return { ok: false, alasan: 'Tidak ada audio dari konverter' };
+      const chosen = (Array.isArray(d.audios) ? d.audios.find(a => a.format === 'm4a') : null) || d.audio;
+      const res = await axios.get(chosen.url, { responseType: 'arraybuffer', timeout: 120000 });
+      return {
+        ok: true, buf: Buffer.from(res.data), mime: chosen.format === 'm4a' ? 'audio/mp4' : 'audio/mpeg',
+        title: d.title || conv.title, artist: d.channel || conv.author?.name, dur: d.duration_str || conv.timestamp,
+      };
+    }
+
+    try {
+      // 2) Unduh audio lokal (URL-nya terikat IP server ini)
+      const tmpl = path.join(os.tmpdir(), `play_${Date.now()}.%(ext)s`);
+      const dl = await runYtDlp(['-f', 'bestaudio[ext=m4a]/bestaudio', '--no-playlist', '--no-warnings',
+                                 '--no-simulate', '--print', 'after_move:filepath',
+                                 '-o', tmpl, pick.id], 240000);
+      const filePath = (dl.out || '').trim().split('\n').pop().trim();
+      if (!dl.ok || !filePath || !fs.existsSync(filePath)) throw new Error('Gagal mengunduh audio');
+      const rawBuf = fs.readFileSync(filePath);
+      try { fs.unlinkSync(filePath); } catch {}
+
+      // 3) Convert ke MP3 biar pasti playable di WA
+      const tmpIn  = path.join(os.tmpdir(), `play_in_${Date.now()}`);
+      const tmpOut = path.join(os.tmpdir(), `play_out_${Date.now()}.mp3`);
+      fs.writeFileSync(tmpIn, rawBuf);
+      let finalBuf = rawBuf, ffOk = false;
+      try {
+        await new Promise((resolve, reject) => {
+          const ff = spawn('ffmpeg', ['-y', '-i', tmpIn, '-vn', '-codec:a', 'libmp3lame', '-b:a', '128k', tmpOut]);
+          ff.on('error', reject);
+          ff.on('close', code => code !== 0 ? reject(new Error(`ffmpeg exit ${code}`)) : resolve());
+        });
+        finalBuf = fs.readFileSync(tmpOut);
+        ffOk = true;
+      } catch { /* kirim apa adanya */ }
+      try { fs.unlinkSync(tmpIn); } catch {}
+      try { fs.unlinkSync(tmpOut); } catch {}
+
+      const fmtDur = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+      return {
+        ok: true, buf: finalBuf, mime: ffOk ? 'audio/mpeg' : 'audio/mp4',
+        title: pick.title, artist: pick.uploader, dur: pick.duration_string || (pick.duration ? fmtDur(pick.duration) : ''),
+      };
+    } catch (eYt) {
+      // yt-dlp lokal gagal (diblokir/rate-limit/format berubah) → jalur API lama,
+      // jangan langsung nyerah: yt-search cari, /api/download/ytmp3 konversi.
+      const axios  = require('axios');
+      const search = require('yt-search');
+      const look   = await search(kueri);
+      const conv   = (look.videos || []).filter(v => v.seconds >= 30 && v.seconds <= 600)[0] || look.videos?.[0];
+      if (!conv) return { ok: false, alasan: 'Lagu tidak ditemukan' };
+      const mp3 = await axios.get(`${process.env.BASE_API}api/download/ytmp3`, {
+        params: { url: conv.url }, headers: { 'X-API-Key': process.env.KEY_API }, timeout: 90000,
+      });
+      const d = mp3.data?.results;
+      const audios = Array.isArray(d?.audios) ? d.audios : [];
+      const chosen = audios.find(a => (a.bitrate || '').includes('128')) || d?.audio;
+      if (!chosen?.url) return { ok: false, alasan: 'Tidak ada audio dari konverter' };
+      const res = await axios.get(chosen.url, { responseType: 'arraybuffer', timeout: 120000 });
+      return {
+        ok: true, buf: Buffer.from(res.data),
+        mime: chosen.ext === 'm4a' || chosen.ext === 'mp4' ? 'audio/mp4' : 'audio/mpeg',
+        title: conv.title, artist: conv.author?.name || conv.channel, dur: conv.timestamp,
+      };
+    }
+  }
+
 
   const { command, args, reply, react, sock, client, jid, sender, msg, botData, isGroup } = ctx;
   const p = botData.prefix;
@@ -83,7 +250,6 @@ module.exports = async function toolsHandler(ctx) {
         const sharp     = require('sharp');
         const fs        = require('fs');
         const path      = require('path');
-        const { spawn } = require('child_process');
         const os        = require('os');
 
         let buffer, mime;
@@ -115,35 +281,14 @@ module.exports = async function toolsHandler(ctx) {
           const tmpOut = path.join(tmpDir, `sticker_out_${Date.now()}.webp`);
           fs.writeFileSync(tmpIn, buffer);
 
-          // Coba quality 70 dulu, kalau masih > 400KB turunkan ke 50
-          let quality = 70;
-          let webpBuffer;
-          for (let attempt = 0; attempt < 2; attempt++) {
-            const fps   = attempt === 0 ? 12 : 8;
-            const scale = attempt === 0
-              ? `scale='min(512,iw)':'min(512,ih)':force_original_aspect_ratio=decrease`
-              : `scale='min(256,iw)':'min(256,ih)':force_original_aspect_ratio=decrease`;
-            await new Promise((resolve, reject) => {
-              const ff = spawn('ffmpeg', [
-                '-y', '-i', tmpIn,
-                '-vcodec', 'libwebp',
-                '-vf', `${scale},fps=${fps}`,
-                '-loop', '0', '-ss', '00:00:00', '-t', '00:00:05',
-                '-preset', 'default', '-an', '-quality', String(quality), tmpOut
-              ]);
-              ff.on('error', reject);
-              ff.on('close', code => code !== 0 ? reject(new Error(`ffmpeg exit code ${code}`)) : resolve());
-            });
-            webpBuffer = fs.readFileSync(tmpOut);
-            if (webpBuffer.length <= 400 * 1024) break;
-            quality = 40; // retry dengan quality lebih rendah
-          }
+          // Durasi 10 detik; resolusi/fps/quality turun otomatis kalau kegedean.
+          const { buf: webpBuffer } = await videoKeStickerWebp(tmpIn, tmpOut);
 
           try { fs.unlinkSync(tmpIn); } catch {}
           try { fs.unlinkSync(tmpOut); } catch {}
 
           if (!webpBuffer || webpBuffer.length > 500 * 1024) {
-            await reply(`❌ Sticker terlalu besar (${Math.round(webpBuffer.length/1024)}KB). Coba GIF yang lebih pendek.`);
+            await reply(`❌ Sticker terlalu besar (${Math.round(webpBuffer.length/1024)}KB, batas WA 500KB). Coba videonya lebih pendek.`);
             return true;
           }
 
@@ -158,7 +303,7 @@ module.exports = async function toolsHandler(ctx) {
           await client.message.send(jid, { type: 'sticker', media: finalBuf, mimetype: 'image/webp' });
         }
       } catch (e) {
-        await reply(`Gagal membuat sticker: ${e.message}`);
+        await reply(`Gagal membuat sticker: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -257,7 +402,7 @@ module.exports = async function toolsHandler(ctx) {
         });
       } catch (e) {
         console.error('[WM] Error:', e.message);
-        await reply(`Gagal mengubah watermark: ${e.message}`);
+        await reply(`Gagal mengubah watermark: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -348,7 +493,7 @@ module.exports = async function toolsHandler(ctx) {
         await react(mess.reactSuccess);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal convert ke voice note: ${e.message}`);
+        await reply(`❌ Gagal convert ke voice note: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -391,7 +536,7 @@ module.exports = async function toolsHandler(ctx) {
         await react(mess.reactSuccess);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal kirim sebagai dokumen: ${e.message}`);
+        await reply(`❌ Gagal kirim sebagai dokumen: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -406,7 +551,11 @@ module.exports = async function toolsHandler(ctx) {
       return true;
     }
 
-    // ── base64 ────────────────────────────────────────────────────────────
+    // ── base64 / encode ───────────────────────────────────────────────────
+    // `.base64` ada di limitedCmds + ALL_COMMANDS, tapi handler-nya cuma
+    // `case 'encode'`. Akibatnya `.base64` MOTONG limit lalu bot DIAM —
+    // limit kebuang tanpa balasan. Dua-duanya diarahkan ke blok yang sama.
+    case 'base64':
     case 'encode': {
       const text = args.join(' ');
       if (!text) { await reply(`Penggunaan: ${p}encode <teks>`); return true; }
@@ -473,25 +622,14 @@ module.exports = async function toolsHandler(ctx) {
           timeout: 30000,
         });
         const buffer = Buffer.from(res.data);
-        const { spawn } = require('child_process');
+        // Sumbernya MP4 4,5 detik → di-loop biar genap 10 detik.
         const os   = require('os');
         const path = require('path');
         const fs   = require('fs');
-        const tmpIn  = path.join(os.tmpdir(), `bratvid_in_${Date.now()}.webp`);
+        const tmpIn  = path.join(os.tmpdir(), `bratvid_in_${Date.now()}.mp4`);
         const tmpOut = path.join(os.tmpdir(), `bratvid_out_${Date.now()}.webp`);
         fs.writeFileSync(tmpIn, buffer);
-        await new Promise((resolve, reject) => {
-          const ff = spawn('ffmpeg', [
-            '-y', '-i', tmpIn,
-            '-vcodec', 'libwebp',
-            '-vf', `scale='min(512,iw)':'min(512,ih)':force_original_aspect_ratio=decrease,fps=12`,
-            '-loop', '0', '-ss', '00:00:00', '-t', '00:00:05',
-            '-preset', 'default', '-an', '-quality', '70', tmpOut,
-          ]);
-          ff.on('error', reject);
-          ff.on('close', code => code !== 0 ? reject(new Error(`ffmpeg exit ${code}`)) : resolve());
-        });
-        const webpBuffer = fs.readFileSync(tmpOut);
+        const { buf: webpBuffer } = await videoKeStickerWebp(tmpIn, tmpOut, { loop: true });
         try { fs.unlinkSync(tmpIn); } catch {}
         try { fs.unlinkSync(tmpOut); } catch {}
         const stickerBuffer = await addStickerExif(webpBuffer, process.env.STICKER_PACK_NAME, process.env.STICKER_AUTHOR);
@@ -522,26 +660,18 @@ module.exports = async function toolsHandler(ctx) {
           timeout: 30000,
         });
         const buffer = Buffer.from(res.data);
-        // Konversi animated webp via ffmpeg supaya kompatibel WhatsApp mobile
-        const { spawn } = require('child_process');
+        // Sumbernya GIF 0,8 detik isi 20 warna (BE: FRAME_COUNT 20 × 40ms).
+        // Diregang 12,5× + diinterpolasi jadi 60 frame/10 detik: warnanya jalan
+        // sekali dari merah → kuning → hijau → biru → ungu (nggak ngulang kayak
+        // loop) TAPI tetep ganti ~6×/detik (tanpa interpolasi cuma 2×/detik,
+        // keliatan diam).
         const os   = require('os');
         const path = require('path');
         const fs   = require('fs');
-        const tmpIn  = path.join(os.tmpdir(), `attp_in_${Date.now()}.webp`);
+        const tmpIn  = path.join(os.tmpdir(), `attp_in_${Date.now()}.gif`);
         const tmpOut = path.join(os.tmpdir(), `attp_out_${Date.now()}.webp`);
         fs.writeFileSync(tmpIn, buffer);
-        await new Promise((resolve, reject) => {
-          const ff = spawn('ffmpeg', [
-            '-y', '-i', tmpIn,
-            '-vcodec', 'libwebp',
-            '-vf', `scale='min(512,iw)':'min(512,ih)':force_original_aspect_ratio=decrease,fps=12`,
-            '-loop', '0', '-ss', '00:00:00', '-t', '00:00:05',
-            '-preset', 'default', '-an', '-quality', '70', tmpOut,
-          ]);
-          ff.on('error', reject);
-          ff.on('close', code => code !== 0 ? reject(new Error(`ffmpeg exit ${code}`)) : resolve());
-        });
-        const webpBuffer = fs.readFileSync(tmpOut);
+        const { buf: webpBuffer } = await videoKeStickerWebp(tmpIn, tmpOut, { regang: 12.5, fps: 6, halus: true });
         try { fs.unlinkSync(tmpIn); } catch {}
         try { fs.unlinkSync(tmpOut); } catch {}
         const stickerBuffer = await addStickerExif(webpBuffer, process.env.STICKER_PACK_NAME, process.env.STICKER_AUTHOR);
@@ -1772,6 +1902,39 @@ module.exports = async function toolsHandler(ctx) {
       return true;
     }
 
+    // ── removebg — Hapus background gambar (Pixelcut, lewat API YaPari) ────
+    case 'removebg':
+    case 'rbg': {
+      const media = await extractMedia(ctx, ['imageMessage']);
+      if (!media) {
+        await reply(`Reply gambar dengan ${p}removebg, atau kirim gambar dengan caption ${p}removebg`);
+        return true;
+      }
+      try {
+        await react(mess.reactLoading);
+        // Buffer WA → URL publik dulu; endpoint-nya yang ngunduh (mode `url`).
+        const imgUrl = await upload(media.buffer, namaFileAman(null, media.mime), media.mime);
+        const axios  = require('axios');
+        const res    = await axios.get(apiUrl('api/tools/removebg'), {
+          params: { url: imgUrl }, headers: apiAuth(),
+          responseType: 'arraybuffer', timeout: 60000,
+        });
+        const hasil = Buffer.from(res.data);
+        if (!hasil.subarray(0, 4).equals(Buffer.from([0x89, 0x50, 0x4E, 0x47]))) {
+          throw new Error('Balasan API bukan gambar PNG');
+        }
+        // Image message + mimetype image/png: baileys ngunggah byte APA ADANYA
+        // (nggak re-encode), jadi alpha tetep utuh.
+        await client.message.send(jid, {
+          type: 'image',
+          media: hasil,
+          mimetype: 'image/png',
+        });
+        await react(mess.reactSuccess);
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${rapikanError(e)}`); }
+      return true;
+    }
+
     // ── qrcode — Buat QR Code ─────────────────────────────────────────────
     case 'qrcode':
     case 'qr': {
@@ -1890,8 +2053,10 @@ module.exports = async function toolsHandler(ctx) {
     case 'ssweb':
     case 'ss':
     case 'screenshot': {
-      const ssUrl = args[0];
-      if (!ssUrl) { await reply(`Penggunaan: ${p}ssweb <url>\nContoh: ${p}ssweb https://google.com`); return true; }
+      const ssRaw = args.join(' ').trim();
+      if (!ssRaw) { await reply(`Penggunaan: ${p}ssweb <url>\nContoh: ${p}ssweb https://google.com`); return true; }
+      // URL telanjang ("luminara.com") → tambah https:// biar API nggak balikin 400
+      const ssUrl = /^https?:\/\//i.test(ssRaw) ? ssRaw : `https://${ssRaw}`;
       try {
         await react(mess.reactLoading);
         const axios = require('axios');
@@ -1899,11 +2064,11 @@ module.exports = async function toolsHandler(ctx) {
           params: { url: ssUrl }, headers: { 'X-API-Key': process.env.KEY_API }, timeout: 20000,
         });
         const imgUrl = data?.results?.screenshot_url;
-        if (!imgUrl) throw new Error('Gagal screenshot');
+        if (!imgUrl) throw new Error(data?.message || 'Gagal screenshot');
         const res = await axios.get(imgUrl, { responseType: 'arraybuffer', timeout: 30000 });
         await client.message.send(jid, { type: 'image', media: Buffer.from(res.data), mimetype: 'image/jpeg', caption: `🌐 *Screenshot*\n${ssUrl}` });
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${rapikanError(e)}`); }
       return true;
     }
 
@@ -1925,6 +2090,96 @@ module.exports = async function toolsHandler(ctx) {
         await reply(text.trim());
         await react(mess.reactSuccess);
       } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      return true;
+    }
+
+    // ── harga — Harga saham / crypto / forex / logam mulia ────────────────
+    // SATU command buat semua kelas aset. Yang nentuin jenisnya endpoint
+    // `api/tools/harga-saham`, bukan nama command — simbolnya udah jelas
+    // sendiri (.JK saham IDX, -USD crypto, =X forex, ^ indeks, XAU logam).
+    // Command terpisah per kelas aset = nol manfaat, cuma nambah entri menu.
+    case 'market':
+    case 'saham':
+    case 'crypto':
+    case 'koin':
+    case 'forex':
+    case 'kurs':
+    case 'emas':
+    case 'gold':
+    case 'xau':
+    case 'silver': {
+      const IKON = { EQUITY: '📈', CRYPTOCURRENCY: '🪙', CURRENCY: '💱', INDEX: '📉', LOGAM_MULIA: '🥇' };
+      const ikon = (j) => IKON[j] || '📊';
+      // `perubahan_persen` dari API udah string ("-1.19%") — panah ngikut tandanya.
+      const panah = (pc) => (pc == null ? '' : ` ${String(pc).startsWith('-') ? '🔴' : '🟢'} ${String(pc).replace('-', '')}`);
+      const simbol = args.join(' ').trim().toUpperCase();
+      try {
+        await react(mess.reactLoading);
+
+        // Tanpa simbol = SEMUA kelas aset sekaligus. Endpoint-nya yang default ke
+        // `mode=ringkasan` kalau `symbol` kosong — bot nggak nyimpen daftar apa-apa.
+        if (!simbol) {
+          const { data } = await apiGet('api/tools/harga-saham', { timeout: 30000 });
+          const d = data?.results;
+          if (!d) throw new Error('Data harga nggak tersedia');
+          const grup = [
+            ['🥇 Logam Mulia', d.logam_mulia],
+            ['📉 Indeks',      d.indeks],
+            ['💱 Forex',       d.forex],
+            ['🪙 Crypto',      d.crypto],
+            ['📈 Saham',       d.saham],
+          ].map(([judul, items]) => [judul, (items || []).filter(Boolean)]);
+          if (!grup.some(([, items]) => items.length)) throw new Error('Lagi nggak bisa ambil harga, coba lagi bentar ya');
+
+          // Zona waktu WAJIB dipatok: VPS B jalan UTC, jadi tanpa ini jam 05:00 WIB
+          // tanggalnya masih ketulis kemarin (24 Sept UTC).
+          let teks = `📊 *Harga Terkini*\n_${new Date().toLocaleDateString('id-ID', { dateStyle: 'long', timeZone: 'Asia/Jakarta' })}_\n`;
+          for (const [judul, items] of grup) {
+            if (!items.length) continue;
+            teks += `\n*${judul}*\n`;
+            for (const it of items) teks += `${it.symbol.replace(/=X$|\.JK$/, '')} — ${it.harga_format}${panah(it.perubahan_persen)}\n`;
+          }
+          // Yang gagal jangan disembunyiin, tapi juga jangan bikin pesan penuh.
+          const gagal = (d.gagal || []).map((x) => x.symbol.replace(/=X$|\.JK$/, ''));
+          if (gagal.length) teks += `\n_${gagal.join(', ')} lagi nggak kebaca._`;
+          teks += `\n\nKetik ${p}market <simbol> buat detail — mis. ${p}market BBCA.JK`;
+          await reply(teks.trim());
+          await react(mess.reactSuccess);
+          return true;
+        }
+
+        const ambil = (s) => apiGet('api/tools/harga-saham', { params: { symbol: s }, timeout: 20000 });
+        let res;
+        try {
+          res = await ambil(simbol);
+        } catch (e) {
+          // `bbca` → BBCA.JK: orang IDX nggak pernah ngetik `.JK`, tapi `AAPL`
+          // polos harus tetep AAPL. Jadi coba apa adanya DULU, tempel `.JK`
+          // cuma kalau ditolak (400 = simbol nggak ada) — bukan nembak `.JK`
+          // di awal, yang bikin saham US nggak pernah ketemu.
+          if (e.response?.status === 400 && /^[A-Z]{2,5}$/.test(simbol)) res = await ambil(`${simbol}.JK`);
+          else throw e;
+        }
+        const d = res.data?.results;
+        if (!d) throw new Error(`Simbol ${simbol} nggak ketemu`);
+
+        let text = `${ikon(d.jenis)} *${d.nama || d.symbol}*\n`;
+        text += `🔖 ${d.symbol}${d.bursa ? ` · ${d.bursa}` : ''}\n\n`;
+        text += `💰 *${d.harga_format || d.harga}*\n`;
+        if (d.perubahan_persen != null) text += `${panah(d.perubahan_persen).trim()} dari penutupan sebelumnya\n`;
+        if (d.harga_idr) text += `🇮🇩 *Rp${d.harga_idr.toLocaleString('id-ID')}* (per troy ounce)\n`;
+        const waktu = d.waktu || d.updated_at;
+        if (waktu) {
+          text += `\n🕐 ${new Date(waktu).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })} ${d.zona_waktu || ''}`.trimEnd();
+        }
+        await reply(text.trim());
+        await react(mess.reactSuccess);
+      } catch (e) {
+        await react(mess.reactError);
+        // Pesan 400 dari API udah kalimat manusia ("Simbol 'X' tidak ditemukan…")
+        // — pakai itu, jangan ditimpa "Request failed with status code 400".
+        await reply(`${mess.error}\n${e.response?.data?.message || e.message}`);
+      }
       return true;
     }
 
@@ -2306,68 +2561,22 @@ module.exports = async function toolsHandler(ctx) {
       return true;
     }
 
-    // ── play — Putar lagu: yt-search → ytmp3 → kirim audio ───────────────
+    // ── play — Putar lagu: yt-dlp lokal (URL terikat IP server sendiri) ──
+    // Akar fix ETIMEDOUT: URL googlevideo IP-locked ke pembuatnya. Kalau URL dibuat
+    // di VPS A, VPS B nggak bisa download (ditolak instan). yt-dlp lokal → URL pakai IP sendiri.
     case 'play': {
       const qPlay = args.join(' ').trim();
       if (!qPlay) { await reply(`Penggunaan: ${p}play <judul lagu>\nContoh: ${p}play dalinda`); return true; }
       try {
         await react(mess.reactLoading);
-        const axios = require('axios');
-        const search = require('yt-search');
-        // 1) Cari di YouTube langsung (yt-search, bukan endpoint yts)
-        const look = await search(qPlay);
-        const convert = look.videos?.[0];
-        if (!convert) throw new Error('Lagu tidak ditemukan');
-        if (convert.seconds >= 3600) throw new Error('Video lebih dari 1 jam — coba lagu lain');
-
-        // 2) Konversi ke MP3 via ytmp3
-        const mp3 = await axios.get(`${process.env.BASE_API}api/download/ytmp3`, {
-          params: { url: convert.url }, headers: { 'X-API-Key': process.env.KEY_API }, timeout: 60000,
-        });
-        const mp3Data = mp3.data?.results;
-        if (!mp3Data?.audio?.url) throw new Error('Tidak ada audio dari konverter');
-        // Pilih m4a (itag 140) kalau ada — lebih compatible buat WA daripada webm/opus
-        const m4a = Array.isArray(mp3Data.audios) ? mp3Data.audios.find(a => a.format === 'm4a') : null;
-        const chosen = m4a || mp3Data.audio;
-        const fmt = (chosen.format || '').toLowerCase();
-        const mimeAudio = fmt === 'm4a' ? 'audio/mp4'
-                        : fmt === 'webm' ? 'audio/webm; codecs=opus'
-                        : 'audio/mpeg';
-
-        // 3) Download audio, convert ke MP3 (ffmpeg) biar pasti playable di WA, lalu kirim
-        const audioRes = await axios.get(chosen.url, { responseType: 'arraybuffer', timeout: 120000 });
-        const fs = require('fs');
-        const os = require('os');
-        const path = require('path');
-        const { spawn } = require('child_process');
-        const tmpIn  = path.join(os.tmpdir(), `play_in_${Date.now()}.${fmt === 'webm' ? 'webm' : 'm4a'}`);
-        const tmpOut = path.join(os.tmpdir(), `play_out_${Date.now()}.mp3`);
-        fs.writeFileSync(tmpIn, Buffer.from(audioRes.data));
-        try {
-          await new Promise((resolve, reject) => {
-            const ff = spawn('ffmpeg', ['-y', '-i', tmpIn, '-vn', '-codec:a', 'libmp3lame', '-b:a', '128k', tmpOut]);
-            ff.on('error', reject);
-            ff.on('close', code => code !== 0 ? reject(new Error(`ffmpeg exit ${code}`)) : resolve());
-          });
-        } catch (ffErr) {
-          // Fallback: kalau ffmpeg nggak ada, kirim file asli (m4a/webm)
-          try { fs.unlinkSync(tmpIn); } catch {}
-          await react(mess.reactSuccess);
-          await client.message.send(jid, { type: 'audio', media: Buffer.from(audioRes.data), mimetype: mimeAudio });
-          const durFb = mp3Data.duration_str || convert.timestamp;
-          await reply(`🎵🎵 *${mp3Data.title || convert.title || 'Lagu'}*${durFb ? ` [${durFb}]` : ''}\n🎵🎵 ${mp3Data.channel || convert.author?.name || '-'}${ffErr.code === 'ENOENT' ? '\n_⚠️ ffmpeg tidak ada — audio mungkin tidak playable_' : ''}`);
-          return true;
-        }
-        const mp3Buf = fs.readFileSync(tmpOut);
-        try { fs.unlinkSync(tmpIn); } catch {}
-        try { fs.unlinkSync(tmpOut); } catch {}
+        const lagu = await ambilAudioLagu(qPlay);
+        if (!lagu.ok) throw new Error(lagu.alasan);
         await react(mess.reactSuccess);
-        await client.message.send(jid, { type: 'audio', media: mp3Buf, mimetype: 'audio/mpeg' });
-        const dur = mp3Data.duration_str || convert.timestamp;
-        await reply(`🎵 *${mp3Data.title || convert.title || 'Lagu'}*${dur ? ` [${dur}]` : ''}\n👤 ${mp3Data.channel || convert.author?.name || '-'}`);
+        await client.message.send(jid, { type: 'audio', media: lagu.buf, mimetype: lagu.mime });
+        await reply(`🎵 *${lagu.title || qPlay}*${lagu.dur ? ` [${lagu.dur}]` : ''}\n👤 ${lagu.artist || '-'}`);
       } catch (e) {
         await react(mess.reactError);
-        const msgErr = e?.response?.data?.message || e?.message || '';
+        const msgErr = rapikanError(e);
         await reply(`❌ Gagal memutar lagu.\n${msgErr ? `_${msgErr}_` : 'Coba lagi nanti atau periksa link.'}`);
       }
       return true;
@@ -2493,10 +2702,12 @@ module.exports = async function toolsHandler(ctx) {
       return true;
     }
 
-    // ── pinterest — Search Pinterest ──────────────────────────────────────
-    case 'pinterest': {
+    // ── pinterest / pin — Cari gambar Pinterest
+    // SEARCH pakai nama polos (.pin/.pinterest); DOWNLOAD pakai akhiran dl (.pindl).
+    case 'pinterest':
+    case 'pin': {
       const qPin = args.join(' ').trim();
-      if (!qPin) { await reply(`Penggunaan: ${p}pinterest <query>\nContoh: ${p}pinterest anime`); return true; }
+      if (!qPin) { await reply(`Penggunaan: ${p}pin <query>\nContoh: ${p}pin anime`); return true; }
       try {
         await react(mess.reactLoading);
         const axios = require('axios');
@@ -2636,34 +2847,55 @@ module.exports = async function toolsHandler(ctx) {
       return true;
     }
 
-    // ── spotify — Search Lagu di Spotify ──────────────────────────────────
+    // ── spotify — Cari lagu di Spotify (nama polos) ──────────────────────
+    // SEARCH = nama polos (.spotify). DOWNLOAD dari LINK = akhiran dl (.spotifydl).
+    // Field dari BE: name / artist / album / duration / tid (bukan judul/artis).
     case 'spotify': {
       const qSpot = args.join(' ').trim();
       if (!qSpot) { await reply(`Penggunaan: ${p}spotify <judul lagu>\nContoh: ${p}spotify alan walker faded`); return true; }
       try {
         await react(mess.reactLoading);
         const axios = require('axios');
-        const res = await axios.get(`${process.env.BASE_API}api/search/spotify`, {
-          params: { query: qSpot }, headers: { 'X-API-Key': process.env.KEY_API }, timeout: 15000,
-        });
-        const d = res.data?.results;
-        if (!d) throw new Error('Lagu tidak ditemukan');
-        const list = Array.isArray(d) ? d : [d];
+        // BE-nya suka 500 sekali (scrape gagal) → coba 2x sebelum nyerah
+        let list = [], errTerakhir = null;
+        for (let coba = 0; coba < 2 && !list.length; coba++) {
+          try {
+            const res = await axios.get(`${process.env.BASE_API}api/search/spotify`, {
+              params: { query: qSpot }, headers: { 'X-API-Key': process.env.KEY_API }, timeout: 25000,
+            });
+            const d = res.data?.results;
+            list = Array.isArray(d) ? d : (d?.tracks || []);
+          } catch (e) { errTerakhir = e; }
+        }
+        if (!list.length) throw new Error(errTerakhir?.response?.data?.message || 'Lagu tidak ditemukan');
         let text = `🎵 *Hasil Spotify: ${qSpot}*\n\n`;
         list.slice(0, 5).forEach((s, i) => {
-          text += `*${i+1}. ${s.judul || s.title || s.name || '-'}*\n`;
-          if (s.artis || s.artist) text += `👤 ${s.artis || s.artist}\n`;
-          if (s.album)             text += `💿 ${s.album}\n`;
-          if (s.durasi || s.duration) text += `⏱️ ${s.durasi || s.duration}\n`;
-          if (s.url || s.link)     text += `🔗 ${s.url || s.link}\n`;
+          const nm = s.name || s.judul || s.title || '-';
+          const ar = s.artist || s.artis || '';
+          text += `*${i + 1}. ${nm}*\n`;
+          if (ar)  text += `👤 ${ar}\n`;
+          if (s.album)   text += `💿 ${s.album}\n`;
+          if (s.duration || s.durasi) text += `⏱️ ${s.duration || s.durasi}\n`;
+          const tid = s.tid || (s.url || s.link || '').split('/track/')[1];
+          if (tid) text += `🔗 https://open.spotify.com/track/${tid}\n`;
+          else if (s.url || s.link) text += `🔗 ${s.url || s.link}\n`;
           text += '\n';
         });
-        await reply(text.trim());
+        text += `_Download lagu lain: ${p}spotifydl <link>_`;
+        await reply(text);
+
+        // Rekomendasi #1 langsung dikirim jadi audio (artis+judul dari Spotify)
+        const top  = list[0];
+        const lagu = await ambilAudioLagu(`${top.name || qSpot} ${(top.artist || '').split(',')[0]}`.trim());
+        if (!lagu.ok) { await react(mess.reactError); await reply(`❌ Gagal ambil audionya.\n_${lagu.alasan || 'Coba lagi nanti.'}_`); return true; }
+        await client.message.send(jid, { type: 'audio', media: lagu.buf, mimetype: lagu.mime });
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) {
+        await react(mess.reactError);
+        await reply(`❌ Gagal cari di Spotify.\n_${rapikanError(e) || 'Coba lagi nanti.'}_`);
+      }
       return true;
     }
-
     // ── spotifylyrics — Lirik dari Spotify ────────────────────────────────
     case 'spotifylyrics':
     case 'slyrics': {
@@ -2745,8 +2977,7 @@ module.exports = async function toolsHandler(ctx) {
     }
 
     // ── searchcode — Cari Kode di GitHub ──────────────────────────────────
-    case 'searchcode':
-    case 'caricode': {
+    case 'searchcode': {
       const scArgs = args.join(' ').trim();
       if (!scArgs) { await reply(`Penggunaan: ${p}searchcode <query> [repo]\nContoh: ${p}searchcode hello world`); return true; }
       try {
@@ -3010,33 +3241,6 @@ module.exports = async function toolsHandler(ctx) {
       return true;
     }
 
-    // ── artinama ──────────────────────────────────────────────────────────
-    case 'artinama': {
-      const nama = args.join(' ').trim();
-      if (!nama) { await reply(`Penggunaan: ${p}artinama <nama>\nContoh: ${p}artinama Budi`); return true; }
-      try {
-        await react(mess.reactLoading);
-        const axios = require('axios');
-        const { data } = await axios.get(`${process.env.BASE_API}api/search/arti-nama`, {
-          params: { nama },
-          headers: { 'X-API-Key': process.env.KEY_API },
-          timeout: 15000,
-        });
-        if (!data?.success || !data?.results) {
-          await react(mess.reactError);
-          await reply(mess.error);
-          return true;
-        }
-        const { nama: namaHasil, arti } = data.results;
-        await react(mess.reactSuccess);
-        await reply(`📖 *Arti Nama: ${namaHasil}*\n\n${arti}`);
-      } catch (e) {
-        await react(mess.reactError);
-        await reply(`${mess.error}\n${e.message}`);
-      }
-      return true;
-    }
-
     // ── kalkulator ────────────────────────────────────────────────────────
     case 'kalkulator': {
       const expr = args.join(' ').replace(/[^0-9+\-*/().\s]/g, '');
@@ -3093,7 +3297,7 @@ module.exports = async function toolsHandler(ctx) {
           }
           buffer   = Buffer.from(await client.message.downloadBytes({ [msgType]: fixed }));
           mime     = content.mimetype || 'application/octet-stream';
-          filename = content.fileName || `file_${Date.now()}.${mimeToExt(mime)}`;
+          filename = namaFileAman(content.fileName, mime);
         } else {
           const content = quoted[quotedType];
           const fixed   = Object.assign({}, content);
@@ -3102,7 +3306,7 @@ module.exports = async function toolsHandler(ctx) {
           }
           buffer   = Buffer.from(await client.message.downloadBytes({ [quotedType]: fixed }));
           mime     = content.mimetype || 'application/octet-stream';
-          filename = content.fileName || `file_${Date.now()}.${mimeToExt(mime)}`;
+          filename = namaFileAman(content.fileName, mime);
         }
 
         // Cek ukuran file max 5MB
@@ -3180,7 +3384,7 @@ module.exports = async function toolsHandler(ctx) {
           }
           buffer   = Buffer.from(await client.message.downloadBytes({ [msgType]: fixed }));
           mime     = content.mimetype || 'application/octet-stream';
-          filename = content.fileName || `file_${Date.now()}.${mimeToExt(mime)}`;
+          filename = namaFileAman(content.fileName, mime);
         } else {
           const content = quoted[quotedType];
           const fixed   = Object.assign({}, content);
@@ -3189,12 +3393,14 @@ module.exports = async function toolsHandler(ctx) {
           }
           buffer   = Buffer.from(await client.message.downloadBytes({ [quotedType]: fixed }));
           mime     = content.mimetype || 'application/octet-stream';
-          filename = content.fileName || `file_${Date.now()}.${mimeToExt(mime)}`;
+          filename = namaFileAman(content.fileName, mime);
         }
 
-        // Cek ukuran file max 5MB
-        if (buffer.length > 5 * 1024 * 1024) {
-          await reply('Ukuran media tidak boleh melebihi 5MB');
+        // Cek ukuran file. nginx VPS A = client_max_body_size 100m, PHP post_max_size = 100M.
+        // Cap bot 64MB biar aman di bawah keduanya.
+        const MAX_TOURL2_MB = 64;
+        if (buffer.length > MAX_TOURL2_MB * 1024 * 1024) {
+          await reply(`Ukuran media tidak boleh melebihi ${MAX_TOURL2_MB}MB (file ini ${(buffer.length / 1024 / 1024).toFixed(1)}MB)`);
           return true;
         }
 
@@ -3265,7 +3471,7 @@ module.exports = async function toolsHandler(ctx) {
           caption:  `💳 *Pembayaran via QRIS*\n\nScan QR di atas untuk melakukan pembayaran.\n\n${botData.footer_text || ''}`.trim(),
         });
       } catch (e) {
-        await reply(`❌ Gagal mengirim gambar QRIS: ${e.message}`);
+        await reply(`❌ Gagal mengirim gambar QRIS: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -3273,8 +3479,7 @@ module.exports = async function toolsHandler(ctx) {
     // ── rvo / readviewonce ────────────────────────────────────────────────────
     case 'rvo':
     case 'readviewonce':
-    case 'readvo':
-    case 'liat': {
+    case 'readvo': {
       // Harus reply ke pesan view once
       const quoted = ctx.msg?.message?.extendedTextMessage?.contextInfo?.quotedMessage;
       if (!quoted) {
@@ -3368,7 +3573,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(`🤖 *ChatGPT*\n\n${clean}`);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal: ${e.message}`);
+        await reply(`❌ Gagal: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -3467,7 +3672,7 @@ module.exports = async function toolsHandler(ctx) {
         }
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal download: ${e.message}`);
+        await reply(`❌ Gagal download: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -3502,10 +3707,15 @@ module.exports = async function toolsHandler(ctx) {
 
         await new Promise((resolve, reject) => {
           const ff = spawn('ffmpeg', [
-            '-y', '-i', tmpIn,
+            '-y',
+            // Sumbernya MP4 4 detik → di-loop biar genap 10 detik. `-t` di depan
+            // `-i` WAJIB: tanpa itu palettegen nunggu EOF yang nggak pernah
+            // datang (input di-loop terus) dan perintahnya nggantung.
+            '-stream_loop', '-1', '-t', '10',
+            '-i', tmpIn,
             '-vcodec', 'libwebp',
             '-vf', "scale='min(512,iw)':'min(512,ih)':force_original_aspect_ratio=decrease,fps=15,pad=512:512:-1:-1:color=white@0.0,split[a][b];[a]palettegen=reserve_transparent=on:transparency_color=ffffff[p];[b][p]paletteuse",
-            '-loop', '0', '-ss', '00:00:00', '-t', '00:00:06',
+            '-loop', '0', '-ss', '00:00:00', '-t', '00:00:10',
             '-preset', 'default', '-an', tmpOut
           ]);
           ff.on('error', reject);
@@ -3521,7 +3731,7 @@ module.exports = async function toolsHandler(ctx) {
         await client.message.send(jid, { type: 'sticker', media: finalBuf, mimetype: 'image/webp' });
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal: ${e.message}`);
+        await reply(`❌ Gagal: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -3585,7 +3795,7 @@ module.exports = async function toolsHandler(ctx) {
         }
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal: ${e.message}`);
+        await reply(`❌ Gagal: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -3639,7 +3849,7 @@ module.exports = async function toolsHandler(ctx) {
         videoBuf[0] = null;
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal download: ${e.message}`);
+        await reply(`❌ Gagal download: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -3693,7 +3903,7 @@ module.exports = async function toolsHandler(ctx) {
         videoBuf[0] = null;
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal download: ${e.message}`);
+        await reply(`❌ Gagal download: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -3749,7 +3959,7 @@ module.exports = async function toolsHandler(ctx) {
         videoBuf[0] = null;
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal download: ${e.message}`);
+        await reply(`❌ Gagal download: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -3787,7 +3997,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(`🧠 *DeepAI*\n\n${text}`);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal: ${e.message}`);
+        await reply(`❌ Gagal: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -3826,7 +4036,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(`🤖 *AI*\n\n${text}`);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal: ${e.message}`);
+        await reply(`❌ Gagal: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -3909,7 +4119,7 @@ module.exports = async function toolsHandler(ctx) {
       } catch (e) {
         await react(mess.reactError);
         console.error(`[bilibili debug] status: ${e.response?.status} url: ${e.config?.url?.slice(0,80)} msg: ${e.message}`);
-        await reply(`❌ Gagal download: ${e.message}`);
+        await reply(`❌ Gagal download: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -3947,7 +4157,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(`✨ *Gemini*\n\n${text}`);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal: ${e.message}`);
+        await reply(`❌ Gagal: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -3998,7 +4208,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(`🎵 *AI Lyrics Generator*\n\n${lyrics}`);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal generate lirik: ${e.message}`);
+        await reply(`❌ Gagal generate lirik: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -4076,7 +4286,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(`🔍 *AI Image Reader*\n\n${answer}`);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal membaca gambar: ${e.message}`);
+        await reply(`❌ Gagal membaca gambar: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -4117,7 +4327,7 @@ module.exports = async function toolsHandler(ctx) {
         }
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal download MediaFire: ${e.message}`);
+        await reply(`❌ Gagal download MediaFire: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -4150,7 +4360,7 @@ module.exports = async function toolsHandler(ctx) {
         }
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal download Likee: ${e.message}`);
+        await reply(`❌ Gagal download Likee: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -4184,7 +4394,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(txt.trim());
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal search ModDroid: ${e.message}`);
+        await reply(`❌ Gagal search ModDroid: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -4222,80 +4432,127 @@ module.exports = async function toolsHandler(ctx) {
         });
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal download Facebook: ${e.message}`);
+        await reply(`❌ Gagal download Facebook: ${rapikanError(e)}`);
       }
       return true;
     }
 
-    // ── tgsticker — Telegram Sticker Downloader ──────────────────────────────
+    // ── tgsticker — Telegram Sticker Downloader (dikirim sebagai SATU pack) ──
     case 'tgsticker':
-    case 'telesticker': {
+    case 'telesticker':
+    case 'stele': {
       const url = args[0];
       if (!url) {
-        await reply(`Masukkan link sticker pack Telegram.\nContoh: *${p}tgsticker https://t.me/addstickers/...*`);
+        await reply(`Masukkan link sticker pack Telegram.\nContoh: *${p}telesticker https://t.me/addstickers/...*`);
         return true;
       }
       try {
-        const axios = require('axios');
+        const axios  = require('axios');
+        const { buatPaketSticker, bagiSticker } = require('../engine/stickerPack');
         await react(mess.reactLoading);
-        const { data } = await axios.get(`${process.env.BASE_API}api/download/telegram-sticker`, {
+        const { data } = await axios.get(`${process.env.BASE_API}api/download/telesticker`, {
           params: { url },
           headers: { 'X-API-Key': process.env.KEY_API },
           timeout: 30000,
         });
-        const stickers = data?.results?.stickers;
+        const hasil = data?.results || {};
+        const stickers = hasil.stickers;
         if (!stickers || !stickers.length) throw new Error('Tidak ada sticker dari API');
-        await react(mess.reactSuccess);
-        await reply(`🎭 *Telegram Sticker Pack*\nTotal: ${stickers.length} sticker\nMengirim 5 sticker pertama...`);
-        for (const s of stickers.slice(0, 5)) {
+        // Telegram juga punya pack animasi (.tgs) & video (.webm) — cuma .webp yang bisa dikirim apa adanya
+        const webp = stickers.filter(s => !s.format || s.format === 'webp');
+        if (!webp.length) throw new Error('Pack ini cuma sticker animasi/video, belum didukung');
+
+        const pilih = webp;
+        const isi = [];
+        for (const s of pilih) {
           const sUrl = s.url || s.file_url || s;
           if (!sUrl) continue;
-          try {
-            const res = await axios.get(sUrl, { responseType: 'arraybuffer', timeout: 30000 });
-            const buf = Buffer.from(res.data);
-            const ct  = res.headers['content-type'] || 'image/webp';
-            await client.message.send(jid, { type: 'sticker', media: buf, mimetype: ct });
-          } catch {}
+          const res = await axios.get(sUrl, { responseType: 'arraybuffer', timeout: 30000 });
+          isi.push({ isi: Buffer.from(res.data), emoji: s.emoji || '' });
         }
+        if (isi.length < 3) throw new Error(`Pack ini cuma punya ${isi.length} sticker, minimal 3`);
+
+        // WA batas 60 sticker PER pack, bukan per total -> 130 sticker = 3 kartu (60/60/10).
+        const nama = hasil.title || 'Sticker Pack';
+        const bagian = bagiSticker(isi);
+        const jumlahPack = bagian.length;
+        const paket = [];
+        for (const b of bagian) {
+          paket.push(await buatPaketSticker(b, {
+            nama: jumlahPack > 1 ? `${nama} (${paket.length + 1}/${jumlahPack})` : nama,
+          }));
+        }
+        // Zip pack + thumbnail di-enkripsi & diupload di adapter (harus satu media key).
+        for (const p of paket) await client.message.send(jid, { paketSticker: p }, { quoted: msg });
+        await react(mess.reactSuccess);
+        await reply(`📦 *Sticker Pack Telegram*\nNama: ${nama}\nIsi: ${isi.length} sticker`
+          + (jumlahPack > 1 ? ` -> *${jumlahPack} pack* (${paket.map(p => p.sticker.length).join('/')})` : '')
+          + `\nUkuran: ${Math.round(paket.reduce((a, p) => a + p.zip.length, 0) / 1024)} KB\n\nTekan *Tambah* di tiap kartu buat nyimpen pack-nya ke WhatsApp.`);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal download Telegram Sticker: ${e.message}`);
+        await reply(`❌ Gagal download Telegram Sticker: ${rapikanError(e)}`);
       }
       return true;
     }
 
-    // ── spotify — Spotify Downloader ─────────────────────────────────────────
-    case 'spotify':
+    // ── spotifydl — Download lagu dari LINK Spotify
+    // Coba spotidown.app dulu; kalau sumber itu mati (reCAPTCHA / session token),
+    // otomatis jatuh ke jalur YouTube (artis + judul dari halaman Spotify).
     case 'spotifydl': {
       const url = args[0];
       if (!url) {
-        await reply(`Masukkan link Spotify.\nContoh: *${p}spotify https://open.spotify.com/track/...*`);
+        await reply(`Masukkan link Spotify.\nContoh: *${p}spotifydl https://open.spotify.com/track/...*`);
         return true;
       }
+      const axios = require('axios');
+      const kirimAudio = async (buf, mime, judul, artis) => {
+        await client.message.send(jid, { type: 'audio', media: buf, mimetype: mime || 'audio/mpeg' });
+        await reply(`🎵 *${judul || 'Spotify'}*${artis ? `\n👤 ${artis}` : ''}`);
+      };
+      const kueriDariLink = async () => {
+        // oEmbed resmi Spotify → judul + artis tanpa API key
+        const oe = await axios.get('https://open.spotify.com/oembed', {
+          params: { url }, timeout: 15000,
+        });
+        const t = String(oe.data?.title || '');
+        const parts = t.split(' - ').map(s => s.trim()).filter(Boolean);
+        return {
+          judul : parts.length > 1 ? parts.slice(1).join(' - ') : t,
+          artis : parts.length > 1 ? parts[0] : '',
+        };
+      };
       try {
-        const axios = require('axios');
         await react(mess.reactLoading);
-        const { data } = await axios.get(`${process.env.BASE_API}api/download/spotify`, {
-          params: { url },
-          headers: { 'X-API-Key': process.env.KEY_API },
-          timeout: 60000,
-        });
-        const downloads = data?.results?.downloads;
-        if (!downloads || !downloads.length) throw new Error('Tidak ada hasil dari API');
-        const dl = downloads[0];
-        const dlUrl = dl.url || dl.download_url;
-        if (!dlUrl) throw new Error('URL download tidak ditemukan');
-        const res = await axios.get(dlUrl, { responseType: 'arraybuffer', timeout: 60000 });
+        let terkirim = false;
+        try {
+          const { data } = await axios.get(`${process.env.BASE_API}api/download/spotify`, {
+            params: { url },
+            headers: { 'X-API-Key': process.env.KEY_API },
+            timeout: 60000,
+          });
+          const downloads = data?.results?.downloads;
+          if (!downloads || !downloads.length) throw new Error('Tidak ada hasil dari API');
+          const dl = downloads[0];
+          const dlUrl = dl.url || dl.download_url;
+          if (!dlUrl) throw new Error('URL download tidak ditemukan');
+          const res = await axios.get(dlUrl, { responseType: 'arraybuffer', timeout: 60000 });
+          await kirimAudio(Buffer.from(res.data), 'audio/mpeg',
+                           data?.results?.title, data?.results?.artist);
+          terkirim = true;
+        } catch (eApi) {
+          // Sumber spotidown sedang mati → pakai jalur YouTube
+          const { judul, artis } = await kueriDariLink();
+          if (!judul) throw eApi;
+          const lagu = await ambilAudioLagu(`${judul} ${artis}`.trim());
+          if (!lagu.ok) throw eApi;
+          await kirimAudio(lagu.buf, lagu.mime, lagu.title || judul, lagu.artist || artis);
+          terkirim = true;
+        }
+        if (!terkirim) throw new Error('Tidak ada audio yang bisa dikirim');
         await react(mess.reactSuccess);
-        const title = data?.results?.title || 'Spotify';
-        const artist = data?.results?.artist || '';
-        await client.message.send(jid, {
-          type: 'audio', media: Buffer.from(res.data), mimetype: 'audio/mpeg',
-        });
-        await reply(`🎵 *${title}*${artist ? `\n👤 ${artist}` : ''}`);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal download Spotify: ${e.message}`);
+        await reply(`❌ Gagal download Spotify: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -4328,7 +4585,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(`🎵 *${title}*${artist ? `\n👤 ${artist}` : ''}`);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal download SoundCloud: ${e.message}`);
+        await reply(`❌ Gagal download SoundCloud: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -4362,7 +4619,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(txt.trim());
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal search Sfile.mobi: ${e.message}`);
+        await reply(`❌ Gagal search Sfile.mobi: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -4388,7 +4645,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(`📦 *Sfile.co*\n\nLink download:\n${dlUrl}`);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal download Sfile.co: ${e.message}`);
+        await reply(`❌ Gagal download Sfile.co: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -4422,7 +4679,7 @@ module.exports = async function toolsHandler(ctx) {
         }
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal download RedNote: ${e.message}`);
+        await reply(`❌ Gagal download RedNote: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -4458,7 +4715,7 @@ module.exports = async function toolsHandler(ctx) {
         });
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal download Reddit: ${e.message}`);
+        await reply(`❌ Gagal download Reddit: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -4487,15 +4744,22 @@ module.exports = async function toolsHandler(ctx) {
         const v = videos.sort((a, b) => (b.bitrate || 0) - (a.bitrate || 0))[0];
         const dlUrl = v.url || v.download_url;
         const res = await axios.get(dlUrl, { responseType: 'arraybuffer', timeout: 90000 });
-        const thumb = await genThumbnail(Buffer.from(res.data), 'video/mp4');
+        const buf = Buffer.from(res.data);
+
+        // ponytail: video X sering datang tanpa track audio (klip hasil cut, durasi pas
+        // 1 detik). WA nolak file kayak gitu walau isinya sehat — muncul "video tidak
+        // dapat diputar". Remux passthrough + audio senyap = 0 re-encode, 0 turun kualitas.
+        const bersih = await normalVideo(buf);
+
+        const thumb = await genThumbnail(bersih, 'video/mp4');
         await client.message.send(jid, {
-          type: 'video', media: Buffer.from(res.data), mimetype: 'video/mp4',
+          type: 'video', media: bersih, mimetype: 'video/mp4',
           caption: `🐦 *Twitter/X*`,
           ...(thumb ? { jpegThumbnail: thumb } : {}),
         });
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal download Twitter: ${e.message}`);
+        await reply(`❌ Gagal download Twitter: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -4513,12 +4777,21 @@ module.exports = async function toolsHandler(ctx) {
       try {
         const axios = require('axios');
         await react(mess.reactLoading);
+        // Player API TikTok sering menggantung ~31 dtk lalu upstream balas 503.
+        // Bot WA timeout 30 dtk → user cuma lihat "timeout". Lewat 9 dtk kita
+        // lekas pindah ke sumber cadangan (snaptik.app, terukur ~0,6 dtk).
+        // Angkanya dulu 20000 padahal komentar ini nulis 9 dtk — link mati jadi
+        // bikin member nunggu 14 dtk (terukur di log) sebelum dikasih error.
         const { data } = await axios.get(`${process.env.BASE_API}api/download/tiktok`, {
           params: { url },
           headers: { 'X-API-Key': process.env.KEY_API },
-          timeout: 30000,
+          timeout: 8000,
         });
         const res     = data?.results || {};
+        // BE udah ngasih alasan yang manusiawi ("linknya udah nggak ada", "ini post
+        // foto, bukan video"). Dulu alasan itu dibuang dan diganti kalimat generik,
+        // jadi member nggak pernah tahu kenapa gagalnya.
+        const alasanBe = data?.message || '';
         const title   = res.title  || '';
         const author  = res.author?.nickname || '';
         const caption = `🎵 *TikTok*${title ? `\n${title}` : ''}${author ? `\n👤 ${author}` : ''}`;
@@ -4530,8 +4803,7 @@ module.exports = async function toolsHandler(ctx) {
           for (let i = 0; i < Math.min(images.length, 10); i++) {
             const imgUrl = images[i];
             const imgRes = await axios.get(imgUrl, { responseType: 'arraybuffer', timeout: 60000 });
-            const ct     = imgRes.headers['content-type'] || 'image/jpeg';
-            const buf    = Buffer.from(imgRes.data);
+            const { buf, ct } = await jpegkan(Buffer.from(imgRes.data), imgRes.headers['content-type']);
             const thumb  = await genThumbnail(buf, ct);
             await client.message.send(jid, {
               type: 'image', media: buf, mimetype: ct,
@@ -4544,7 +4816,7 @@ module.exports = async function toolsHandler(ctx) {
 
         // ── Video biasa ───────────────────────────────────────────────────────
         const dlUrl = res.video?.no_watermark;
-        if (!dlUrl) throw new Error('Media tidak ditemukan di response API');
+        if (!dlUrl) throw new Error(alasanBe || 'Media tidak ditemukan di response API');
         const vidRes = await axios.get(dlUrl, { responseType: 'arraybuffer', timeout: 90000 });
         await react(mess.reactSuccess);
         const vbuf  = Buffer.from(vidRes.data);
@@ -4556,18 +4828,104 @@ module.exports = async function toolsHandler(ctx) {
         });
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal download TikTok: ${e.message}`);
+        await reply(`❌ Gagal download TikTok: ${rapikanError(e)}`);
+      }
+      return true;
+    }
+
+    // ── ttsearch — Cari Video TikTok ────────────────────────────────────────
+    case 'ttsearch': {
+      // Region opsional di paling belakang: `.ttsearch mcqueen edit indo id`
+      const REGIONS = ['ID','MY','SG','US','GB','JP','KR','TH','VN','PH','IN','BR','MX','TR','SA','AU','CA','DE','FR','IT','ES','NL','RU','CN','TW','HK'];
+      let argsTt  = args.slice();
+      let argRegion = null;
+      const lastTt = String(argsTt[argsTt.length - 1] || '').toLowerCase();
+      if (argsTt.length > 1 && REGIONS.includes(lastTt.toUpperCase()) && lastTt.length === 2) {
+        argRegion = lastTt.toUpperCase();
+        argsTt = argsTt.slice(0, -1);
+      }
+      const qTt = argsTt.join(' ').trim();
+      if (!qTt) {
+        await reply(`Penggunaan: *${p}ttsearch* <kata kunci> [region]\n`
+          + `Contoh: *${p}ttsearch McQueen kece*\n`
+          + `Contoh: *${p}ttsearch mcqueen edit indo id* → video dari Indonesia\n\n`
+          + `_Kode region: ID MY SG US GB JP KR TH VN PH IN BR MX TR SA AU CA DE FR IT ES NL RU CN TW HK_\n`
+          + `_Tanpa kode region = hasil global (umumnya video luar)._`);
+        return true;
+      }
+      try {
+        const axios = require('axios');
+        await react(mess.reactLoading);
+        const { data } = await axios.get(`${process.env.BASE_API}api/search/tiktok-search`, {
+          params: { q: qTt, ...(argRegion ? { region: argRegion } : {}) },
+          headers: { 'X-API-Key': process.env.KEY_API },
+          timeout: 45000,
+        });
+        const list = Array.isArray(data?.results) ? data.results : [];
+        if (!list.length) throw new Error('Tidak ada video yang cocok');
+
+        // Hasil API udah urut relevansi, jadi kalau nggak ada satu pun judul
+        // yang cocok dengan kata kunci, jangan diacak — pakai peringkat API apa
+        // adanya. Kecocokan judul cuma dipakai kalau memang ada yang nyambung.
+        const scored  = pickTopVideos(list, qTt, list.length);
+        const matched = scored.some(v => keyMatch(v.title, qTt));
+        const top     = (matched ? scored : list).slice(0, 3);
+
+        await react(mess.reactSuccess);
+        const fs   = require('fs');
+        const os   = require('os');
+        const path = require('path');
+
+        // CDN hasil search bawaan watermark TikTok. Ambil file asli (watermark-free)
+        // lewat yt-dlp pakai link TikTok-nya. Kalau yt-dlp nggak ada/gagal → fallback
+        // file CDN, lebih baik ada video daripada tidak.
+        const ambilVideo = async v => {
+          const link = v.tiktok_url;
+          if (link) {
+            const tmpl = path.join(os.tmpdir(), `tts_${Date.now()}_${Math.random().toString(36).slice(2, 6)}.%(ext)s`);
+            const dl = await runYtDlp(['-f', 'b[format_id!=download]', '-S', 'vcodec:h264',
+                                                   '--no-playlist', '--no-warnings',
+                                                   '--no-simulate', '--print', 'after_move:filepath', '-o', tmpl, link], 180000);
+            const lines = dl.out.split('\n').map(s => s.trim()).filter(Boolean);
+            const real  = lines.reverse().find(l => /\.(mp4|webm|mkv)$/i.test(l));
+            if (real && fs.existsSync(real)) {
+              const buf = fs.readFileSync(real);
+              try { fs.unlinkSync(real); } catch {}
+              return buf;
+            }
+          }
+          const r = await axios.get(v.play_url, { responseType: 'arraybuffer', timeout: 90000 });
+          return Buffer.from(r.data);
+        };
+
+        for (let n = 0; n < top.length; n++) {
+          const v = top[n];
+          const cap = `🎵 *TikTok Search* ${n + 1}/${top.length}${argRegion ? ` · 🌏 ${argRegion}` : ''}\n📝 ${String(v.title || '-').slice(0, 220)}\n👤 ${v.author || '-'}${v.duration ? ` · ⏱️ ${v.duration}` : ''}`;
+          try {
+            const vbuf  = await ambilVideo(v);
+            const thumb = await genThumbnail(vbuf, 'video/mp4');
+            await client.message.send(jid, {
+              type: 'video', media: vbuf, mimetype: 'video/mp4',
+              caption: cap,
+              ...(thumb ? { jpegThumbnail: thumb } : {}),
+            });
+          } catch {
+            // video gagal diunduh → jangan hilangkan hasilnya, kirim link aslinya
+            await reply(`${cap}\n🔗 ${v.tiktok_url || v.play_url}`);
+          }
+        }
+      } catch (e) {
+        await react(mess.reactError);
+        await reply(`❌ Gagal cari video TikTok: ${rapikanError(e)}`);
       }
       return true;
     }
 
     // ── pinterest — Pinterest Downloader ────────────────────────────────────
-    case 'pinterest':
-    case 'pindl':
-    case 'pin': {
+    case 'pindl': {
       const url = args[0];
       if (!url) {
-        await reply(`Masukkan link Pinterest.\nContoh: *${p}pinterest https://pinterest.com/pin/...*`);
+        await reply(`Masukkan link Pinterest.\nContoh: *${p}pindl https://pinterest.com/pin/...*`);
         return true;
       }
       try {
@@ -4585,13 +4943,13 @@ module.exports = async function toolsHandler(ctx) {
           const imgUrl = img.url || img.download_url || img;
           if (!imgUrl) continue;
           const res = await axios.get(imgUrl, { responseType: 'arraybuffer', timeout: 30000 });
-          const ct  = res.headers['content-type'] || 'image/jpeg';
-          const thumb = await genThumbnail(Buffer.from(res.data), ct);
-          await client.message.send(jid, { type: 'image', media: Buffer.from(res.data), mimetype: ct, caption: `📌 *Pinterest*`, ...(thumb ? { jpegThumbnail: thumb } : {}) });
+          const { buf, ct } = await jpegkan(Buffer.from(res.data), res.headers['content-type']);
+          const thumb = await genThumbnail(buf, ct);
+          await client.message.send(jid, { type: 'image', media: buf, mimetype: ct, caption: `📌 *Pinterest*`, ...(thumb ? { jpegThumbnail: thumb } : {}) });
         }
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal download Pinterest: ${e.message}`);
+        await reply(`❌ Gagal download Pinterest: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -4624,13 +4982,14 @@ module.exports = async function toolsHandler(ctx) {
             const thumb = await genThumbnail(Buffer.from(res.data), ct);
             await client.message.send(jid, { type: 'video', media: Buffer.from(res.data), mimetype: ct, caption: `🧵 *Threads*`, ...(thumb ? { jpegThumbnail: thumb } : {}) });
           } else {
-            const thumb = await genThumbnail(Buffer.from(res.data), ct);
-            await client.message.send(jid, { type: 'image', media: Buffer.from(res.data), mimetype: ct, caption: `🧵 *Threads*`, ...(thumb ? { jpegThumbnail: thumb } : {}) });
+            const { buf, ct } = await jpegkan(Buffer.from(res.data), ct);
+            const thumb = await genThumbnail(buf, ct);
+            await client.message.send(jid, { type: 'image', media: buf, mimetype: ct, caption: `🧵 *Threads*`, ...(thumb ? { jpegThumbnail: thumb } : {}) });
           }
         }
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal download Threads: ${e.message}`);
+        await reply(`❌ Gagal download Threads: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -4666,8 +5025,14 @@ module.exports = async function toolsHandler(ctx) {
         } else {
           const videos = data?.results?.videos;
           if (!videos || !videos.length) throw new Error('Tidak ada video dari API');
-          // Prefer 360p/480p agar tidak terlalu besar
-          const v = videos.find(x => x.quality && (x.quality.includes('360') || x.quality.includes('480'))) || videos[0];
+          // Format video-only (DASH) nggak bisa ditempel di sini tanpa ffmpeg —
+          // dan yang dipilih `videos[0]` dulu malah HLS (isinya manifest .m3u8,
+          // bukan video). Wajib yang `has_audio`: satu file video+suara.
+          const ringan = q => q && (q.includes('360') || q.includes('480'));
+          const v = videos.find(x => x.has_audio && ringan(x.quality))
+                 || videos.find(x => x.has_audio)
+                 || videos.find(x => ringan(x.quality))
+                 || videos[0];
           const dlUrl = v.url || v.download_url;
           const res = await axios.get(dlUrl, { responseType: 'arraybuffer', timeout: 120000 });
           await react(mess.reactSuccess);
@@ -4680,7 +5045,7 @@ module.exports = async function toolsHandler(ctx) {
         }
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal download YouTube: ${e.message}`);
+        await reply(`❌ Gagal download YouTube: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -4707,7 +5072,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(`📂 *Google Drive*\n\nLink download:\n${dlUrl}`);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal download Google Drive: ${e.message}`);
+        await reply(`❌ Gagal download Google Drive: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -4761,30 +5126,56 @@ module.exports = async function toolsHandler(ctx) {
         items = items.filter(it => it.url);
         if (!items.length) throw new Error('Tidak ada media dari API');
         await react(mess.reactSuccess);
-        let n = 0;
+        // CDN Instagram (scontent) kadang nolak connect sesaat (ETIMEDOUT), dan VPS ini
+        // nggak punya rute IPv6 (ENETUNREACH) -> kunci IPv4 + ulang sekali.
+        const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+        const unduh = async (url) => {
+          let last;
+          for (let i = 0; i < 2; i++) {
+            try {
+              return await axios.get(url, {
+                responseType: 'arraybuffer', timeout: 60000, family: 4,
+                headers: { 'User-Agent': UA },
+              });
+            } catch (e) { last = e; await new Promise(r => setTimeout(r, 1000)); }
+          }
+          throw new Error(String(last?.response?.status || last?.code || last?.message || 'unknown').slice(0, 140));
+        };
+        let n = 0, terkirim = 0;
+        const gagal = [];
         const total = items.length;
         for (const it of items) {
           n++;
           let res;
-          try { res = await axios.get(it.url, { responseType: 'arraybuffer', timeout: 60000 }); }
-          catch { continue; }
+          try { res = await unduh(it.url); }
+          catch (e) { gagal.push(`#${n} unduh ${e.message}`); continue; }
           const ct  = res.headers['content-type'] || (it.isVideo ? 'video/mp4' : 'image/jpeg');
           const isVid = ct.startsWith('video/') || it.isVideo;
           const thumb = await genThumbnail(Buffer.from(res.data), isVid ? 'video/mp4' : ct);
           const cap = n === 1
             ? `\u{1F4F7} *Instagram*` + (metaTxt ? `\n\n${metaTxt}` : '') + (total > 1 ? `\n${'\u{1F4F7}'} 1 / ${total}` : '') + (caption ? `\n\n${caption}` : '')
             : `\u{1F4F7} ${n} / ${total}`;
-          await client.message.send(jid, {
-            type: isVid ? 'video' : 'image',
-            media: Buffer.from(res.data),
-            mimetype: isVid ? (ct.startsWith('video/') ? ct : 'video/mp4') : ct,
-            caption: cap,
-            ...(thumb ? { jpegThumbnail: thumb } : {}),
-          });
+          try {
+            await client.message.send(jid, {
+              type: isVid ? 'video' : 'image',
+              media: Buffer.from(res.data),
+              mimetype: isVid ? (ct.startsWith('video/') ? ct : 'video/mp4') : ct,
+              caption: cap,
+              ...(thumb ? { jpegThumbnail: thumb } : {}),
+            });
+            terkirim++;
+          } catch (e) { gagal.push(`#${n} kirim ${e.message}`); }
+        }
+        // Jangan pernah "centang tapi sepi": kalau SEMUA media gagal, user harus tau
+        // alasannya. Dulu `catch { continue; }` bikin media ilang tanpa jejak sama sekali.
+        console.log(`[ig] ${terkirim}/${total} terkirim${gagal.length ? ' — ' + gagal.join('; ') : ''}`);
+        if (!terkirim) {
+          const uniq = [...new Set(gagal.map(g => g.replace(/^#\d+ /, '')))];
+          await reply(`❌ Gagal Instagram (${total} media):\n${uniq.join('\n')}`);
         }
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal download Instagram: ${e.message}`);
+        await reply(`❌ Gagal download Instagram: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -4880,8 +5271,8 @@ module.exports = async function toolsHandler(ctx) {
         const imgUrl = d.body_url || d.head_url || d.skin_render_url;
         if (imgUrl) {
           const res = await axios.get(imgUrl, { responseType: 'arraybuffer', timeout: 15000 });
-          const ct = res.headers['content-type'] || 'image/png';
-          await client.message.send(jid, { type: 'image', media: Buffer.from(res.data), mimetype: ct, caption: text.trim() });
+          const { buf, ct } = await jpegkan(Buffer.from(res.data), res.headers['content-type']);
+          await client.message.send(jid, { type: 'image', media: buf, mimetype: ct, caption: text.trim() });
         } else {
           await reply(text.trim());
         }
@@ -5099,7 +5490,7 @@ module.exports = async function toolsHandler(ctx) {
         });
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal download Kuaishou: ${e.message}`);
+        await reply(`❌ Gagal download Kuaishou: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -5122,7 +5513,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(`🏝️ *Kata Bijak Aceh*\n\n_"${r?.kata}"_\n\n📖 ${r?.arti}`);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal ambil kata Aceh: ${e.message}`);
+        await reply(`❌ Gagal ambil kata Aceh: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -5141,7 +5532,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(`⛰️ *Kata Bijak Batak*\n\n_"${r}"_`);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal ambil kata Batak: ${e.message}`);
+        await reply(`❌ Gagal ambil kata Batak: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -5160,7 +5551,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(`💡 *Kata Bijak*\n\n_"${r?.kata}"_${r?.penulis ? `\n\n— ${r.penulis}` : ''}`);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal ambil kata bijak: ${e.message}`);
+        await reply(`❌ Gagal ambil kata bijak: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -5180,7 +5571,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(`🇨🇳 *Peribahasa China*\n\n${r?.china}\n_${r?.latin}_\n\n📖 ${r?.arti}`);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal ambil kata China: ${e.message}`);
+        await reply(`❌ Gagal ambil kata China: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -5199,7 +5590,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(`🎯 *Dare / Tantangan*\n\n${r}`);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal ambil dare: ${e.message}`);
+        await reply(`❌ Gagal ambil dare: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -5218,7 +5609,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(`🧠 *Fakta Unik*\n\n${r}`);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal ambil fakta: ${e.message}`);
+        await reply(`❌ Gagal ambil fakta: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -5237,7 +5628,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(`✍️ *Fiersa Besari*\n\n_"${r}"_`);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal ambil quote Fiersa: ${e.message}`);
+        await reply(`❌ Gagal ambil quote Fiersa: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -5257,7 +5648,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(`🏔️ *Pepatah Jawa*${r?.jenis ? ` _(${r.jenis})_` : ''}\n\n_"${r?.kata}"_\n\n📖 ${r?.arti}`);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal ambil kata Jawa: ${e.message}`);
+        await reply(`❌ Gagal ambil kata Jawa: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -5279,7 +5670,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(txt);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal ambil kata bucin: ${e.message}`);
+        await reply(`❌ Gagal ambil kata bucin: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -5298,7 +5689,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(`🌅 *Kata Sore*\n\n_"${r}"_`);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal ambil kata sore: ${e.message}`);
+        await reply(`❌ Gagal ambil kata sore: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -5318,7 +5709,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(`🏡 *Kata Minangkabau*\n\n_"${r?.kata}"_\n\n📖 ${r?.arti}`);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal ambil kata Minang: ${e.message}`);
+        await reply(`❌ Gagal ambil kata Minang: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -5337,7 +5728,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(`🔥 *Motivasi*\n\n_"${r}"_`);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal ambil motivasi: ${e.message}`);
+        await reply(`❌ Gagal ambil motivasi: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -5356,7 +5747,7 @@ module.exports = async function toolsHandler(ctx) {
         await reply(`😅 *Kata Ngeles*\n\n_"${r?.kata || r}"_`);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`❌ Gagal ambil kata ngeles: ${e.message}`);
+        await reply(`❌ Gagal ambil kata ngeles: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -5366,10 +5757,15 @@ module.exports = async function toolsHandler(ctx) {
   }
 };
 
+// Diekspor biar tesnya pakai logika yang sama, bukan salinan yang bisa melenceng.
+module.exports.pickTopVideos = pickTopVideos;
+module.exports.keyMatch      = keyMatch;
+
 // Command yang kena limit untuk user biasa
 module.exports.limitedCmds = new Set([
-  'sticker','s','wm','poll','readmore','base64','kalkulator',
-  'pick','tourl','upload','pay','rvo','readviewonce','readvo','liat',
+  'sticker','s','wm','poll','readmore','base64','kalkulator','removebg','rbg',
+  'market','saham','crypto','koin','forex','kurs','emas','gold','xau','silver',
+  'pick','tourl','upload','pay','rvo','readviewonce','readvo',
   'tovn','2vo','todoc',
   'tanyaimg','ailyrics','buatlirik','chatgpt','gpt','resetgpt','gemini','resetgemini','toghibli','ghibli','ai','deepai','resetdeepai',
   // downloader commands
@@ -5377,8 +5773,8 @@ module.exports.limitedCmds = new Set([
   'likee','likeedl',
   'moddroid','moddroiddl',
   'facebook','fbdl','fb',
-  'tgsticker','telesticker',
-  'spotify','spotifydl',
+  'tgsticker','telesticker','stele',
+  'spotifydl',
   'soundcloud','scdl',
   'sfilemobi','sfile',
   'sfileco',
@@ -5386,10 +5782,13 @@ module.exports.limitedCmds = new Set([
   'reddit','redditdl',
   'twitter','twit','xdl',
   'tiktok','tiktokdl','ttdl','tt',
-  'pinterest','pindl','pin',
+  'pindl',
   'threads','threadsdl',
   'youtube','ytdl','yt',
   'gdrive','gdrivedl',
   'instagram','igdl','ig',
   'kuaishou','kwai','kuaishoudl',
+  // RPG: tambang, craft, kejahatan
+  'tambang','kebon','tebang','bahan','craft',
+  'skill','penjara','bebaskan','copet','rampok',
 ]);

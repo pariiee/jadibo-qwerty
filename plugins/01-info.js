@@ -5,10 +5,27 @@
  * Commands: !ping, !menu, !info, !owner, !uptime, !profil, !carifitur, !totalfitur
  */
 
+const { rapikanError } = require('../engine/pesanError');
+const mess = require('../config/mess');
 const os = require('os');
 const { proto } = require('zapo-js');
+const { genThumbnail } = require('../engine/thumbnail');
 
 const START_TIME = Date.now();
+
+// Umur BOT (bukan umur proses Node). Ini yang dibaca .uptime/.info:
+// command .restart cuma mutus koneksi satu bot, jadi process.uptime() dan
+// START_TIME (nempel di proses) nggak pernah kek-reset — semua bot dalam satu
+// proses bakal nunjukin angka yang sama.
+// `.runtime` SENGAJA nggak pakai ini — dia baca umur PROSES (process.uptime()).
+// ponytail: fallback ke START_TIME kalau bot belum pernah connect (mis. lagi
+// pairing) — angkanya memang umur proses, tapi itu yang paling dekat.
+function botUptimeMs(ctx) {
+  try {
+    const at = require('../engine/whatsappEngine').getBotConnectedAt(ctx?.botData?.id);
+    return at ? Date.now() - at : Date.now() - START_TIME;
+  } catch { return Date.now() - START_TIME; }
+}
 
 // ── Helper: baca banner (dipakai kalau MENU_BANNER diaktifkan) ───────────────
 // Percobaan 7dbcd27 (header.imageMessage + jpegThumbnail) upload-nya SUKSES di
@@ -55,37 +72,46 @@ function formatUptime(ms) {
 
 const ALL_COMMANDS = [...new Set([
   // Info
-  'ping','menu','info','owner','uptime','profile','me','carifitur','totalfitur','limit','uptname','memory','runtime','react',
+  'ping','menu','info','owner','uptime','profile','me','carifitur','totalfitur','limit','uptname','memory','runtime',
   // Grup
-  'tagall','tagadmin','tagme','hidetag','ht','kick','kickall','promote','demote',
-  'open','close','mute','unmute','slowmode','setname','setdesc','linkgroup','upswgc',
+  'tagall','tagadmin','tagme','hidetag','h','kickall','promote','demote',
+  'open','close','mute','unmute','listmute','setname','setdesc','link','swgc','upswgc',
   'grupopen','grupclose','linkgc','setnamegc',
-  'groupinfo','grouplist','leavegc','listadmin','getpp','getppgc','ppgc','ppgroup','ppgrup','totag',
+  'groupinfo','infogc','leavegc','listadmin','getpp','pp','getppgc','ppgc','ppgroup','totag',
   'delete','cekasalmember','absen','mulaiabsen','cekabsen','hapusabsen',
   'afk','listafk','antidelete','topchat',
-  'setwelcome','setbye','delwelcome','delbye','setdetect','deldetect',
+  // Sat-set — nama command aslinya tetap `.set*`, cuma kategorinya dikumpul
+  'setwelcome','setleft','setbye','setopen','setclose','setname','setnamegc','setdesc',
+  'setbio','setpp','setppgc','setqris','setsewa','setlimitgc','gcutama','setwarnlimit',
+  'delwelcome','delbye',
   // Proteksi & Toggle
-  'on','off','fitur','proteksi',
+  'on','off','proteksi',
   'antibot','antilink','antilinkv2','antitoxic','antidelete',
   'antispam','antitagsw','autosticker','antisticker','viewonce',
-  'autolevelup','detect','autoacc','document','nyimak','autoread',
+  // autolevelup nggak didaftarin — fitur wajib, nggak bisa di-on/off-in, cuma
+  // dikasih tau statusnya di `.on` (nggak ikut dihitung sebagai toggle).
+  'detect','autoacc','document','nyimak','autoread','didyoumean','fakemsg',
   // Fun & Game
-  'profile','me','jodoh','suitpvp','rpg','claim','store','beli','inventory','pakai','topkoin',
+  'profile','me','jodoh','suitpvp','rpg','claim','store','beli','inventory','pakai','repair','topkoin',
   'unreg','kerja','transfer','tf','coinflip','cf','tictactoe','ttt',
-  'leaderboard','lb','bank','atm','mancing',
+  'leaderboard','lb','bank','atm','money','mancing',
   'berburu','hunt','bertarung','fight','dungeon',
   'lamarkerja','job','gajian','gacha','slot',
   'hourly','weekly','dailymisi','adventure','koboy','airdrop','maling',
+  // Tambang & craft & kejahatan
+  'tambang','kebon','tebang','bahan','craft',
+  'skill','penjara','bebaskan','copet','rampok',
   // Giveaway
   'mulaigiveaway','ikut','rollgiveaway','cekgiveaway','cekmenang','hapusgiveaway',
   // Media & Tools
   'sticker','s','wm','poll','readmore','encode','decode','kalkulator','pick','tourl','tourl2','upload2','upload','pay','tomp4','topng','tovn','2vo','todoc','artinama','attp','brat','bratvid','fakech','fakecall','fakecallip','fakedana','fakeovo','fakegcios','fakepptele','igqc','igstoryimg','iqc','ttqc','dafont','dafontdl','lirik','genius','gsmarena','spek','jarak','kbbi','kodepos',
   'bandinghp','comparehp','wilayah','cariwilayah','imei','cekimei','gempa',
   'cuaca','weather','accuweather','prakiraan',
+  'market','saham','crypto','koin','forex','kurs','emas','gold','xau','silver',
   'checkwa','cekwa',
   'translate','terjemah','tr',
   'qrcode','qr','decodeqr','readqr',
-  'ocr','upscale','hd','enhance',
+  'ocr','upscale','hd','enhance','removebg','rbg',
   'ssweb','ss','screenshot',
   'fancytext','fancy',
   'nik','nikinfo',
@@ -95,7 +121,7 @@ const ALL_COMMANDS = [...new Set([
   'bypass','bypasssfl','bpsfl',
   'drakor','duolingo','npm','resep','steam','play',
   'lk21','lk21trending','lk21search','filmsearch',
-  'mcpedl','berita','pinterest','tokopedia','toped',
+  'mcpedl','berita','pinterest','pin','tokopedia','toped',
   // Stalker
   'stalktiktok','stalktt','tiktokstalk',
   'roblox','stalkroblox','cekroblox',
@@ -106,16 +132,16 @@ const ALL_COMMANDS = [...new Set([
   'discord','stalkdiscord',
   'chess','stalkchess',
   'nimegami','nimegamis','animesearch','shinigami',
-  'spotify','spotifylyrics','slyrics','tiktokphoto','ttkphoto','searchcode','caricode',
-  'rvo','readviewonce','readvo','liat',
+  'spotify','spotifylyrics','slyrics','tiktokphoto','ttkphoto','ttsearch','searchcode',
+  'rvo','readviewonce','readvo','crm','crm2',
   // Downloader
   'aio',
   'mediafire','mfdl',
   'likee','likeedl',
   'moddroid','moddroiddl',
   'facebook','fbdl','fb',
-  'tgsticker','telesticker',
-  'spotify','spotifydl',
+  'tgsticker','telesticker','stele',
+  'spotifydl',
   'soundcloud','scdl',
   'sfilemobi','sfile',
   'sfileco',
@@ -123,7 +149,7 @@ const ALL_COMMANDS = [...new Set([
   'reddit','redditdl',
   'twitter','twit','xdl',
   'tiktok','tiktokdl','ttdl','tt',
-  'pinterest','pindl','pin',
+  'pindl',
   'threads','threadsdl',
   'youtube','ytdl','yt',
   'gdrive','gdrivedl',
@@ -144,7 +170,14 @@ const ALL_COMMANDS = [...new Set([
   'motivasi','katamotivasi',
   'ngeles','alasan',
   // Game Asah Otak
-  'asahotak','toka','hint','nyerah',
+  'asahotak','clue','nyerah',
+  // ── tebakbendera / tebakanime / tebakchara / tebakgambar — nggak didaftarin ──
+  // Semua game populer itu LAMA: handler-nya `case 'tebakbendera'` di 00-game.js
+  // udah ada dari awal, tapi namanya nggak pernah masuk ALL_COMMANDS/CATS → jadi
+  // INVISIBLE (nggak ketemu `.carifitur`, nggak keluar di `.menu game`), padahal
+  // command-nya jalan. Angka ini ditulis APA ADANYA dari `case` yang ada biar
+  // nggak ada lagi yang kelewat; nambah game baru = nambah `case` + tambah di sini.
+  'tebakbendera','tebakchara','tebakgambar','tebakanime',
   // Owner
   'ban','unban','block','unblock','broadcast','bcgc','bcgcht','on','off',
   'backup','restore','clearsession','cleartmp','listblacklist','listblock',
@@ -153,35 +186,62 @@ const ALL_COMMANDS = [...new Set([
   'addxp','addmoney','addlimit','addhp','resetlimit','listuser',
   'addlevel','dellevel','delmoney','delxp','dellimit',
   'cekprofil','resetprofil','listrank',
-  'leaveall','listgroup','setlimitgc',
+  'leaveall','listgroup','listgc','setlimitgc','gcutama',
   'addpremgrup','delpremgrup',
-  'add','promoteme',
+  'add','addai','kick',
   'addrespon','uprespon','delrespon','listrespon',
   'addlist','updatelist',
-  'reset','setbio','setpp',
+  'reset','restart','setbio','setpp',
   // Warn
   'warn','unwarn','delwarn','resetwarn','setwarnlimit','listwarn',
   // Group admin
-  'banmember','unbanmember','clearchat','setppgc','sider','listtotalpesan',
-  'setopen','setclose',
+  'banmember','unbanmember','setppgc','sider','listtotalpesan',
+  'setopen','setclose','catatan',
 ])];
 
 // ── Menu kategori — menu <kategori> / menu all ──────────────────────────────
 const RM = String.fromCharCode(8206).repeat(4001); // readmore: konten bawah terlipat "Read more"
 
 const CATS = {
-  info:   ['ping','menu','info','owner','uptime','profile','me','carifitur','totalfitur','limit','uptname','memory','runtime','react'],
-  grup:   ['tagall','tagadmin','tagme','hidetag','ht','kick','kickall','promote','demote','open','close','mute','unmute','slowmode','setname','setdesc','linkgroup','upswgc','grupopen','grupclose','linkgc','setnamegc','groupinfo','grouplist','leavegc','listadmin','getpp','getppgc','ppgc','ppgroup','ppgrup','totag','delete','cekasalmember','absen','mulaiabsen','cekabsen','hapusabsen','afk','listafk','topchat','antidelete','setwelcome','setbye','delwelcome','delbye','setdetect','deldetect','mulaigiveaway','ikut','rollgiveaway','cekgiveaway','cekmenang','hapusgiveaway'],
-  proteksi: ['on','off','fitur','proteksi','antibot','antilink','antilinkv2','antitoxic','antispam','antitagsw','autosticker','antisticker','viewonce','autolevelup','detect','autoacc','document','nyimak','autoread'],
-  rpg:    ['unreg','profile','me','claim','hourly','weekly','dailymisi','kerja','mancing','berburu','hunt','bertarung','fight','dungeon','adventure','koboy','airdrop','maling','lamarkerja','job','gajian','transfer','tf','bank','atm','topkoin','lb','leaderboard','store','beli','inventory','pakai','gacha','slot','jodoh','suitpvp','coinflip','cf','tictactoe','ttt'],
-  maker:  ['sticker','s','wm','brat','bratvid','attp','fakech','fakecall','fakecallip','fakedana','fakeovo','fakegcios','fakepptele','rvo','readviewonce','readvo','liat','swgc','upswgc'],
-  tools:  ['poll','readmore','encode','decode','kalkulator','pick','tourl','tourl2','upload2','upload','pay','tomp4','topng','tovn','2vo','todoc','artinama','igqc','igstoryimg','iqc','ttqc','dafont','dafontdl','lirik','genius','gsmarena','spek','jarak','kbbi','kodepos','bandinghp','comparehp','wilayah','cariwilayah','imei','cekimei','gempa','cuaca','weather','accuweather','prakiraan','checkwa','cekwa','translate','terjemah','tr','qrcode','qr','decodeqr','readqr','ocr','upscale','hd','enhance','ssweb','ss','screenshot','fancytext','fancy','nik','nikinfo','iplookup','ipcek','reverseip','httpheaders','headers','nationalday','hariini','shalat','jadwalshalat','kalendershalat','kshalat','konversitanggal','tanggal','bypass','bypasssfl','bpsfl','drakor','duolingo','npm','resep','steam','play','lk21','lk21trending','lk21search','filmsearch','mcpedl','berita','pinterest','tokopedia','toped','stalktiktok','stalktt','tiktokstalk','roblox','stalkroblox','cekroblox','minecraft','mc','stalkmc','stalkgithub','ghstalk','genshin','stalkgenshin','freefire','ff','stalkff','discord','stalkdiscord','chess','stalkchess','nimegami','nimegamis','animesearch','shinigami','spotify','spotifylyrics','slyrics','tiktokphoto','ttkphoto','searchcode','caricode'],
-  downloader: ['aio','mediafire','mfdl','likee','likeedl','moddroid','moddroiddl','facebook','fbdl','fb','tgsticker','telesticker','spotify','spotifydl','soundcloud','scdl','sfilemobi','sfile','sfileco','rednote','xiaohongshu','xhs','reddit','redditdl','twitter','twit','xdl','tiktok','tiktokdl','ttdl','tt','pinterest','pindl','pin','threads','threadsdl','youtube','ytdl','yt','gdrive','gdrivedl','instagram','igdl','ig','kuaishou','kwai','kuaishoudl'],
+  info:   ['ping','menu','info','owner','uptime','profile','me','carifitur','totalfitur','limit','uptname','memory','runtime'],
+  // Command admin grup (`.add`/`.kick`/`.banmember`/…) numpuk di sini biar cukup
+  // satu menu buat urusan grup. MURNI TAMPILAN: gate `isAdmin()` di handler
+  // 02-group.js nggak diubah — yang bukan admin tetap ditolak.
+  // Kategori `admin` & `proteksi` DIHAPUS dari CATS; alias `.menu admin` /
+  // `.menu proteksi` tetap diarahkan ke sini (lihat CAT_ALIAS).
+  //
+  // SEMUA saklar on/off (antibot, antilink, welcome, left, nyimak, …) NGGAK
+  // didaftarin di sini — Pak: "di ringkas aja di `.on <option>`". Command-nya
+  // tetap jalan (handler di 06-proteksi.js) dan tetap ketemu `.carifitur`,
+  // cuma nggak dipajang di menu. Daftar lengkap + status: `.on` tanpa argumen.
+  grup:   ['absen','add','addai','afk','banmember','catatan','cekabsen','cekasalmember','cekgiveaway','cekmenang','close','delbye','delete','delwelcome','demote','getpp','getppgc','groupinfo','infogc','grupclose','grupopen','hapusabsen','hapusgiveaway','hidetag','h','ikut','kick','kickall','leavegc','linkgc','link','listadmin','listafk','listmute','listtotalpesan','mulaiabsen','mulaigiveaway','mute','off <option>','on <option>','open','pp','ppgc','ppgroup','promote','proteksi','rollgiveaway','sider','swgc','tagadmin','tagall','tagme','topchat','totag','unbanmember','unmute','upswgc'],
+  // Sat-set: SEMUA command `.set*` dikumpul di sini — satu tempat buat nyetel
+  // teks welcome/left, nama & deskripsi grup, bio, pp, sewa, limit, warn limit, QRIS.
+  // Murni pindah: `setwelcome`/`setleft`/`setbye` juga sudah TIDAK ada lagi di `grup`
+  // — jangan diduplikat, nanti kelihatan dobel di `.menu all`.
+  // (`.set*` nggak boleh ada di kategori lain; dites di test/menu-buttons.js.)
+  satset: ['setbio','setbye','setclose','setdesc','setleft','setlimitgc','setname','setnamegc','setopen','setpp','setppgc','setqris','setsewa','setwarnlimit','setwelcome'],
+  rpg:    ['unreg','profile','me','claim','hourly','weekly','dailymisi','kerja','mancing','berburu','hunt','bertarung','fight','dungeon','adventure','koboy','airdrop','maling','lamarkerja','job','gajian','transfer','tf','bank','atm','money','topkoin','lb','leaderboard','store','beli','inventory','pakai','repair','gacha','slot','jodoh','suitpvp','coinflip','cf','tictactoe','ttt','tambang','kebon','tebang','bahan','craft','skill','penjara','bebaskan','copet','rampok'],
+  maker:  ['sticker','s','wm','brat','bratvid','attp','fakech','fakecall','fakecallip','fakedana','fakeovo','fakegcios','fakepptele','rvo','readviewonce','readvo'],
+  tools:  ['poll','readmore','encode','decode','kalkulator','pick','tourl','tourl2','upload2','upload','pay','tomp4','topng','tovn','2vo','todoc','artinama','igqc','igstoryimg','iqc','ttqc','dafont','dafontdl','lirik','genius','gsmarena','spek','jarak','kbbi','kodepos','bandinghp','comparehp','wilayah','cariwilayah','imei','cekimei','gempa','cuaca','weather','accuweather','prakiraan','market','saham','crypto','koin','forex','kurs','emas','gold','xau','silver','checkwa','cekwa','translate','terjemah','tr','qrcode','qr','decodeqr','readqr','ocr','upscale','hd','enhance','removebg','rbg','ssweb','ss','screenshot','fancytext','fancy','nik','nikinfo','iplookup','ipcek','reverseip','httpheaders','headers','nationalday','hariini','shalat','jadwalshalat','kalendershalat','kshalat','konversitanggal','tanggal','bypass','bypasssfl','bpsfl','drakor','duolingo','npm','resep','steam','play','lk21','lk21trending','lk21search','filmsearch','mcpedl','berita','pinterest','pin','tokopedia','toped','stalktiktok','stalktt','tiktokstalk','roblox','stalkroblox','cekroblox','minecraft','mc','stalkmc','stalkgithub','ghstalk','genshin','stalkgenshin','freefire','ff','stalkff','discord','stalkdiscord','chess','stalkchess','nimegami','nimegamis','animesearch','shinigami','spotify','spotifylyrics','slyrics','tiktokphoto','ttkphoto','ttsearch','searchcode'],
+  downloader: ['aio','mediafire','mfdl','likee','likeedl','moddroid','moddroiddl','facebook','fbdl','fb','tgsticker','telesticker','stele','spotifydl','soundcloud','scdl','sfilemobi','sfile','sfileco','rednote','xiaohongshu','xhs','reddit','redditdl','twitter','twit','xdl','tiktok','tiktokdl','ttdl','tt','pindl','threads','threadsdl','youtube','ytdl','yt','gdrive','gdrivedl','instagram','igdl','ig','kuaishou','kwai','kuaishoudl'],
   random: ['aceh','kataaceh','batak','katabatak','bijak','china','katachina','dare','tantangan','fakta','faktaunik','fiersa','fiersabesari','jawa','pepatahjawa','katajawa','katabucin','bucin','katasore','sore','minangkabau','minang','kataminang','motivasi','katamotivasi','ngeles','alasan'],
-  game:   ['asahotak','toka','hint','nyerah'],
-  owner:  ['ban','unban','block','unblock','broadcast','bcgc','bcgcht','backup','restore','clearsession','cleartmp','listblacklist','listblock','addprem','delprem','listprem','addsewa','delsewa','setsewa','ceksewa','listsewa','tambahsewa','addxp','addmoney','addlimit','addhp','resetlimit','listuser','addlevel','dellevel','delmoney','delxp','dellimit','cekprofil','resetprofil','listrank','leaveall','listgroup','setlimitgc','addpremgrup','delpremgrup','addrespon','uprespon','delrespon','listrespon','addlist','updatelist','reset','setbio','setpp','warn','unwarn','delwarn','resetwarn','setwarnlimit','listwarn'],
-  admin:  ['add','promoteme','banmember','unbanmember','clearchat','setppgc','sider','listtotalpesan','setopen','setclose'],
+  game:   ['asahotak','clue','nyerah','tebakbendera','tebakchara','tebakgambar','tebakanime'],
+  // Fitur global (per-bot, bukan per-grup): `nyimak`/`autoread`/`didyoumean`
+  // saklarnya di config/globalSettings.js dan gate-nya OWNER BOT — jadi
+  // nongkrongnya di sini, bukan di `grup`. `.on <nama>` tetap dijalanin dari
+  // dalam grup, cuma izinnya owner.
+  owner:  ['ban','unban','block','unblock','broadcast','bcgc','bcgcht','backup','restore','clearsession','cleartmp','listblacklist','listblock','addprem','delprem','listprem','addsewa','delsewa','ceksewa','listsewa','tambahsewa','addxp','addmoney','addlimit','addhp','resetlimit','listuser','addlevel','dellevel','delmoney','delxp','dellimit','cekprofil','resetprofil','listrank','leaveall','listgroup','listgc','crm','crm2','addpremgrup','delpremgrup','addrespon','uprespon','delrespon','listrespon','addlist','updatelist','reset','restart','warn','unwarn','delwarn','resetwarn','listwarn'],
 };
+
+// Label yang DITAMPILIN. Key kategori nggak boleh ada spasi (dipakai `.menu <key>`
+// + id tombol), tapi Pak minta kategorinya bernama "sat set" → dipisah di sini.
+const CAT_LABEL = { satset: 'SAT SET' };
+const catLabel = (k) => CAT_LABEL[k] || String(k).toUpperCase();
+
+// Urutan kategori a-z — dipakai teks `.menu`, sub-judul `.menu all`, dan dropdown.
+// Pak: "category belum urut yah? dari a sampe z?"
+const CAT_KEYS = Object.keys(CATS).sort();
 
 const CAT_ALIAS = {
   all: 'all', semua: 'all',
@@ -192,14 +252,30 @@ const CAT_ALIAS = {
   rpg: 'rpg', game: 'game', games: 'game', asahotak: 'game',
   random: 'random', kata: 'random',
   info: 'info', menu: 'info',
-  grup: 'grup', group: 'grup', admin: 'admin', groupadmin: 'admin',
-  proteksi: 'proteksi', protek: 'proteksi', toggle: 'proteksi',
+  // `admin` & `proteksi` nggak punya kategori sendiri lagi — dua-duanya
+  // diarahkan ke `grup` biar `.menu admin` / `.menu proteksi` lama tetap jalan.
+  grup: 'grup', group: 'grup', admin: 'grup', groupadmin: 'grup',
+  proteksi: 'grup', protek: 'grup', toggle: 'grup',
+  satset: 'satset', set: 'satset', 'sat-set': 'satset', setelan: 'satset', setting: 'satset',
 };
+
+// Balik: command → kategori. Dipakai `.carifitur` biar kelihatan "gitunya"
+// (Pak: "output carifitur tuh lebih detail di category apa").
+const CMD_CATS = (() => {
+  const m = {};
+  for (const cat of Object.keys(CATS)) for (const c of CATS[cat]) (m[c] = m[c] || []).push(cat);
+  return m;
+})();
 
 module.exports = async function infoHandler(ctx) {
   if (!ctx.isCmd) return false;
   const { command, args, reply, react, botData, client, sock, jid, sender, isGroup, msg } = ctx;
   const p = botData.prefix;
+  // Fitur yang boleh tampil di menu. `ctx.fitur` = potongan paket dari worker
+  // (null = admin, semua boleh). Kalau penandanya belum sampai (engine/worker
+  // belum restart), tampilkan semua — jangan kosongkan menu karena itu.
+  const bolehPakai = ctx.fitur ?? botData.fitur;
+  const bolehTampil = Array.isArray(bolehPakai) ? new Set(bolehPakai) : null;
 
   switch (command) {
     // ── memory — RAM usage bot ──────────────────────────────────────────────
@@ -217,9 +293,12 @@ module.exports = async function infoHandler(ctx) {
       return true;
     }
 
-    // ── runtime — uptime proses bot ─────────────────────────────────────────
+    // ── runtime — umur PROSES Node (semua bot + web) ────────────────────────
+    // Beda dari .uptime (umur KONEKSI bot ini, iterest saat .restart).
+    // ponytail: satu proses; kalau nanti ada worker terpisah, sumbernya harus
+    // dipisah juga.
     case 'runtime': {
-      await reply(`⏱️ *Runtime Bot*\n\n${formatUptime(Date.now() - START_TIME)}`);
+      await reply(`⏱️ *Runtime Aplikasi*\n${formatUptime(process.uptime() * 1000)}\n_semua proses Node — bot & web_`);
       return true;
     }
 
@@ -232,41 +311,36 @@ module.exports = async function infoHandler(ctx) {
     }
 
     case 'menu': {
-      const role = ctx.isOwner ? 'Owner'
-        : ctx.isPremium ? 'Premium'
-        : ctx.isAdmin ? 'Admin' : 'Free';
+      const role = mess.roleLabel[ctx.role] || mess.roleLabel.user;
 
-      const catKey = (args[0] || '').toLowerCase();
-      const showCat = CAT_ALIAS[catKey] || (CATS[catKey] ? catKey : null);
+      // Menu HARUS mengikuti paket pemilik bot — tanpa potongan ini user paket
+      // kecil melihat 400 fitur lalu ditolak satu-satu saat dipakai.
+      const pakaiCat = (k) => (bolehTampil ? (CATS[k] || []).filter(c => bolehTampil.has(c)) : [...(CATS[k] || [])]);
+      const catKeysTampil = bolehTampil ? CAT_KEYS.filter(k => pakaiCat(k).length) : CAT_KEYS;
 
-      const title = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+      const catKey = (args.join(' ') || '').toLowerCase().trim();
+      // Kategori yang seluruh isinya di luar paket diperlakukan seperti tidak
+      // ada — jangan kirim sub-menu kosong.
+      const showCat = CAT_ALIAS[catKey] || (pakaiCat(catKey).length ? catKey : null);
 
       // ── Menu per-kategori: .menu <kategori> / .menu all ──────────────────
-      if (showCat) {
-        // "all" → gabung semua kategori, satu command per baris (rata kiri, no kolom — 
-        // biar gampang dibaca & ga kepotong)
-        if (showCat === 'all') {
-          const blocks = Object.entries(CATS).map(([k, cmds]) => {
-            return `╭┈〔 ${title(k)} Menu 〕\n` +
-              cmds.map(c => `┊ ◈ ${p}${c}`).join('\n') +
-              `\n╰┈┈┈┈┈┈┈┈`;
-          });
-          await reply(`╭┈〔 𝙈𝙀𝙉𝙐 𝘼𝙇𝙇 〕\n┊ ◈ Semua command (${ALL_COMMANDS.length} fitur)\n╰┈┈┈┈┈┈┈┈\n\n${blocks.join('\n\n')}\n\n> _${botData.footer_text || 'Powered by YaaParBot'}_`);
-          return true;
-        }
-
-        // Kategori tunggal → dua kolom
-        const cmds = CATS[showCat];
-        const cols = [];
-        for (let i = 0; i < cmds.length; i += 2) cols.push(cmds.slice(i, i + 2));
-        const txt =
-          `╭┈〔 ${title(showCat)} Menu 〕\n` +
-          cols.map(col => `┊ ${col.map((c, j) => `${j === 0 ? '◈' : '·'} ${p}${c}`.padEnd(20)).join('│ ')}`).join('\n') +
-          `\n╰┈┈┈┈┈┈┈┈\n\n` +
-          `📝 *${botData.description || process.env.DESC_DEFAULT || ''}*\n\n` +
-          `> _${botData.footer_text || 'Powered by YaaParBot'}_`;
-        await reply(txt);
-        return true;
+      // Bentuknya = bentuk menu utama (header lokasi + banner + tombol),
+      // bedanya cuma isi `body` dan tombol kategori yang aktif (penanda ◈).
+      // `.menu <kategori>` = satu command per baris, urut a-z.
+      // `.menu all` = semua kategori, tiap kategori dikasih sub-judul.
+      // (Kolom `contentText` nggak dipotong WA kayak caption gambar — dump 408
+      //  command ~5.700 char terkirim utuh, sudah kelihatan di HP Pak.)
+      let subBody = null;   // null = menu utama
+      const subHeader = (t) => `╭── *[ ${t} ]* ──`;
+      const subLines = (k) => pakaiCat(k).sort().map(c => `│ ◦ ${p}${c}`);
+      if (showCat === 'all') {
+        subBody = subHeader('MENU ALL') + '\n' +
+          catKeysTampil.map(k => [`│ 〔 ${catLabel(k)} 〕`, ...subLines(k)].join('\n')).join('\n│\n') +
+          '\n╰────────────────────────';
+      } else if (showCat) {
+        subBody = subHeader(`MENU ${catLabel(showCat)}`) + '\n' +
+          subLines(showCat).join('\n') +
+          '\n╰────────────────────────';
       }
 
       // ── Menu utama: sapaan + info user + kategori ────────────────────────
@@ -301,29 +375,47 @@ module.exports = async function infoHandler(ctx) {
         : jamWib < 15 ? 'SELAMAT SIANG'
         : jamWib < 18 ? 'SELAMAT SORE' : 'SELAMAT MALAM';
 
-      const catList = `│  ${Object.keys(CATS).join(' / ')}`;
+      // Teks menu = gaya `.test3` (box `╭── *[ … ]* ──` + kategori per baris).
+      // Satu builder di sini; `.test3` di 05-owner.js cuma alias ke case ini.
+      const catList = catKeysTampil
+        .map(k => `│ ◦ ${catLabel(k)} (${pakaiCat(k).length} Fitur)`)
+        .join('\n');
 
-      const head =
-        `╭ • *🧾  ${sapaan}* • ─\n` +
-        `│  🗓️ Hari : ${HARI[wp('weekday')] || wp('weekday')}\n` +
-        `│  📅 Tanggal : ${wp('day')}/${wp('month')}/${wp('year')}\n` +
-        `│  ⏰ Waktu : ${wp('hour')}:${wp('minute')}:${wp('second')} WIB\n\n` +
-        `Hi ${namaUser}\n` +
-        `"my name is ${botData.bot_name} and I'm here to help you. Feel free to choose a menu or type a command you need."\n\n` +
-        `⪻───≪〔 INFO  〕≫───⪼\n` +
-        `Nama Bot : ${botData.bot_name}\n` +
-        `* Nama user    : ${namaUser}\n` +
-        `* role    : ${role}\n` +
-        `* Limit    : ${limitTxt}\n\n`;
+      // Sapaan + info user/bot dipakai SEMUA teks menu (utama & sub-menu)
+      // — Pak: "setiap teks menu tetep ada INFO USER DAN BOT".
+      const headSapa =
+        `╭── *[ 🧾 ${sapaan} ]* ──\n` +
+        `│ 🗓️ Hari : ${HARI[wp('weekday')] || wp('weekday')}\n` +
+        `│ 📅 Tanggal : ${wp('day')}/${wp('month')}/${wp('year')}\n` +
+        `│ ⏰ Waktu : ${wp('hour')}:${wp('minute')}:${wp('second')} WIB\n` +
+        `╰────────────────────────\n\n` +
+        `Hi *${namaUser}*,\n` +
+        `_"${botData.description || process.env.DESC_DEFAULT || `My name is ${botData.bot_name} and I'm here to help you. Feel free to choose a menu or type a command you need.`}"_\n\n`;
+
+      const headInfo =
+        `╭── *[ 📌 INFO USER & BOT ]* ──\n` +
+        `│ 🤖 Nama Bot : ${botData.bot_name}\n` +
+        `│ 👤 Nama User : ${namaUser}\n` +
+        `│ 👑 Role : ${role}\n` +
+        `│ ⚡ Limit : ${limitTxt}\n` +
+        `│ 📦 Total Fitur : ${ALL_COMMANDS.length}\n` +
+        `│ 🔓 Mode : Public\n` +
+        `╰────────────────────────\n`;
+
+      const head = headSapa + headInfo;
 
       const tail =
-        `${catList}\n\n` +
-        `📌 *Note:* ketik *${p}menu <kategori>* untuk lihat isinya.\n` +
-        `Contoh: *${p}menu downloader* — semua command: *${p}menu all*\n\n` +
-        `*_${botData.footer_text || 'Powered by YaaParBot'}_*`;
+        `╭── *[ 📋 MENU CATEGORY ]* ──\n` +
+        `${catList}\n` +
+        `╰────────────────────────\n\n` +
+        `📌 *Catatan:* \n` +
+        `• Ketuk tombol *Menu* untuk daftar kategori.\n` +
+        `• Ketik *${p}menu <kategori>* untuk melihat isinya.\n` +
+        `• Semua command: *${p}menu all*`;
 
       // Pesan TEKS: filler readmore 4001 char (`RM`) — lipatan "Baca selengkapnya"
       // jatuh persis di bawah baris `Limit`; sisa menu ke bawah cuma kesembunyi.
+      // ponytail: cuma dipakai jalur gagal (`reply(caption)`) + audio caption.
       const caption = head + `${RM}\n` + tail;
 
       // Caption gambar dibatasi WA 1024 char → filler 4001 nggak muat. Sisa jatah
@@ -333,59 +425,75 @@ module.exports = async function infoHandler(ctx) {
         '\u200e'.repeat(Math.max(0, 1024 - head.length - tail.length - 1)) +
         '\n' + tail;
 
-      // ── Kirim menu dalam SATU bubble ─────────────────────────────────────
-      // Bubble = gambar banner (kalau ada) dengan caption = isi menu.
-      // Tombol dropdown `nativeFlowMessage.single_select` DIBUANG atas
-      // permintaan Pak; kategori tetap bisa dibuka lewat `.menu <kategori>`.
-      // ponytail: kalau tombol mau balik lagi, `07-button.js` masih punya
-      // handleRowId untuk id `menu_cat:<kategori>`.
-      let bannerPesan = null;
-      if (process.env.MENU_BANNER === '1') {
-        try {
-          bannerPesan = await _menuBannerHeader(botData);
-        } catch (e) {
-          // Jangan diam — kalau banner gagal, menu tetap terkirim sebagai teks.
-          console.error('[menu] banner gagal:', e.message);
-        }
+      // ── Kirim menu dalam SATU bubble `buttonsMessage` (pola `.test3`) ────
+      // Header lokasi (0,0) = wadah thumbnail banner, jadi gambar + teks +
+      // tombol nempel di satu bubble tanpa upload media (thumbnail ikut inline
+      // di proto). MENU = `nativeFlowInfo.single_select` 11 kategori, owner =
+      // tombol biasa — WA render dua-duanya sebaris. Terbukti di HP Pak.
+      // Tombol panah-lama (`07-button.js` id `menu_cat:<kategori>`) tetap ada
+      // sebagai fallback kalau WA balikin id tombol, bukan row id.
+      let thumb = null;
+      try {
+        const bannerPesan = await _menuBannerHeader(botData);
+        if (bannerPesan) thumb = await genThumbnail(bannerPesan.buf, 'image/jpeg', 300);
+      } catch (e) {
+        // Jangan diam — tanpa banner menu tetap terkirim, cuma tanpa thumbnail.
+        console.error('[menu] banner gagal:', e.message);
       }
-      // DEBUG sementara: bikin kelihatan di `pm2 logs` apakah jalur banner jalan.
-      console.log(`[menu] MENU_BANNER=${process.env.MENU_BANNER || '(off)'} banner_url=${botData.banner_url || '(kosong)'} ` +
-                  `BANNER_DEFAULT=${process.env.BANNER_DEFAULT || '(kosong)'} → gambar=${bannerPesan ? `${bannerPesan.buf.length}B (caption = menu)` : '(tidak ada)'}`);
+      console.log(`[menu] banner_url=${botData.banner_url || '(kosong)'} → thumbnail=${thumb ? `${thumb.length}B` : '(tidak ada)'}`);
+
+      // Dropdown kategori dipakai DUA-DUANYA (menu utama & sub-menu) — sub-menu
+      // cuma nggak bawa tombol Owner (Pak: "buttom owner hanya di .menu aja").
+      const btnMenu = {
+        buttonId: 'btn_cat',
+        buttonText: { displayText: 'Menu' },
+        type: 1,
+        nativeFlowInfo: {
+          name: 'single_select',
+          paramsJson: JSON.stringify({
+            title: 'Menu Category',
+            sections: [{
+              title: 'INI SEMUA MENU CATEGORY BOT GWEH',
+              highlight_label: 'recommended',
+              rows: [
+                { header: '', title: 'ALL', description: `Semua Menu (${ALL_COMMANDS.length} fitur)`, id: '.menu all' },
+                ...CAT_KEYS.map(k => ({
+                  header: '',
+                  title: catLabel(k),
+                  description: `Menu ${k}`,
+                  id: `.menu ${k}`,
+                })),
+              ],
+            }],
+          }),
+        },
+      };
+      const btnOwner = { buttonId: 'btn_owner', buttonText: { displayText: 'Owner' }, type: 1 };
 
       try {
-        if (bannerPesan) {
-          // Caption WA dibatasi 1024 char — filler readmore di atas sudah
-          // dipangkas otomatis di `captionImg` supaya totalnya pas.
-          await client.message.send(jid, {
-            type: 'image', media: bannerPesan.buf, mimetype: 'image/jpeg',
-            caption: captionImg,
-          });
-        } else {
-          await client.message.send(jid, { type: 'text', text: caption });
-        }
+        await client.message.send(jid, {
+          buttonsMessage: {
+            headerType: 6,
+            locationMessage: {
+              degreesLatitude: 0,
+              degreesLongitude: 0,
+              name: botData.bot_name || 'YaaParBot',
+              // Alamat di header lokasi = link API + jadibot (samain pola .env).
+              // ponytail: literal, nggak ada config per-bot buat ini — angkat ke env kalau Pak mau tiap bot beda.
+              address: 'Jadibot? labs.yapari.web.id',
+              ...(thumb ? { jpegThumbnail: thumb } : {}),
+            },
+            // Semua teks menu = sapaan+deskripsi (sub-menu aja) + INFO USER & BOT + isi.
+            contentText: subBody ? headInfo + subBody : captionImg,
+            // Footer SELALU ikut — Pak: "tetep ada footer yah setiap menunya atau pesan".
+            footerText: botData.footer_text || 'Powered by YaaParBot',   // footer SELALU ikut (Pak)
+            buttons: subBody ? [btnMenu] : [btnMenu, btnOwner],
+          },
+        });
       } catch (e) {
         console.error('[menu] gagal kirim:', e.message);
         await reply(caption); // jangan hilang menunya
       }
-
-      // ── Tombol [menu] [owner] — bubble terpisah ──────────────────────────
-      // Tombol WA tidak bisa menempel di gambar: zapo-js tidak upload header
-      // gambar pada buttonsMessage (lihat encode/media-payload.js) — payload-nya
-      // round-trip aman, tapi WA nggak render. Jadi tombol dikirim bubble sendiri.
-      try {
-        await client.message.send(jid, {
-          buttonsMessage: {
-            contentText: 'Pilih menu di bawah ini 👇',
-            footerText:  botData.footer_text || 'Powered by YaaParBot',
-            headerType:  proto.Message.ButtonsMessage.HeaderType.TEXT,
-            text:        `📋 *Menu ${botData.bot_name}*`,
-            buttons: [
-              { buttonId: 'btn_all',   buttonText: { displayText: '📋 All Menu' }, type: proto.Message.ButtonsMessage.Button.Type.RESPONSE },
-              { buttonId: 'btn_owner', buttonText: { displayText: '👑 Owner'    }, type: proto.Message.ButtonsMessage.Button.Type.RESPONSE },
-            ],
-          },
-        });
-      } catch { /* tombol opsional — menu tetap terkirim */ }
 
       // ── Audio default (opsional) — voice note bareng menu ────────────────
       // Terima apa saja: .mp3/.m4a/.wav/.ogg atau URL. Yang bukan ogg/opus
@@ -444,12 +552,13 @@ module.exports = async function infoHandler(ctx) {
       const total= Math.round(mem.heapTotal / 1024 / 1024);
       await reply(
         `╭━━━ *INFO BOT* ━━━╮\n` +
-        `│ Nama   : ${botData.bot_name}\n` +
-        `│ Prefix : ${p}\n` +
-        `│ Uptime : ${formatUptime(Date.now() - START_TIME)}\n` +
-        `│ RAM    : ${used}/${total} MB\n` +
-        `│ Node   : ${process.version}\n` +
-        `│ OS     : ${os.type()} ${os.release()}\n` +
+        `│ Nama    : ${botData.bot_name}\n` +
+        `│ Prefix  : ${p}\n` +
+        `│ Uptime  : ${formatUptime(botUptimeMs(ctx))} *_(umur bot ini)_*\n` +
+        `│ Runtime : ${formatUptime(process.uptime() * 1000)} *_(umur aplikasi)_*\n` +
+        `│ RAM     : ${used}/${total} MB\n` +
+        `│ Node    : ${process.version}\n` +
+        `│ OS      : ${os.type()} ${os.release()}\n` +
         `╰━━━━━━━━━━━━━━━━━╯`
       );
       return true;
@@ -479,42 +588,29 @@ module.exports = async function infoHandler(ctx) {
     }
 
     case 'uptime': {
-      await reply(`⏰ *Uptime Bot*\n${formatUptime(Date.now() - START_TIME)}`);
-      return true;
-    }
-
-    // ── react — kasih emoji reaction ke pesan yang di-reply ─────────────────
-    case 'react': {
-      const emoji = args[0]?.trim();
-      if (!emoji) { await reply(`Penggunaan: ${p}react <emoji>\nContoh: ${p}react 🔥`); return true; }
-      const quotedKey = msg.message?.extendedTextMessage?.contextInfo;
-      if (!quotedKey?.stanzaId) { await reply(`Reply pesan yang ingin di-react, lalu ketik ${p}react <emoji>`); return true; }
-      try {
-        await client.message.send(jid, {
-          type: 'reaction',
-          target: {
-            id:          quotedKey.stanzaId,
-            remoteJid:   jid,
-            fromMe:      false,
-            participant: quotedKey.participant,
-          },
-          emoji,
-        });
-      } catch (e) {
-        await reply(`❌ Gagal react: ${e.message}`);
-      }
+      await reply(`⏰ *Uptime Bot*\n${formatUptime(botUptimeMs(ctx))}\n_sejak bot ini terhubung ke WA_`);
       return true;
     }
 
     case 'carifitur': {
-      const q = args.join(' ').toLowerCase();
-      if (!q) { await reply(`Penggunaan: ${p}carifitur <nama command>`); return true; }
-      const found = [...new Set(ALL_COMMANDS.filter(c => c.includes(q)))];
+      const q = args.join(' ').toLowerCase().replace(/^[.\/#!$]/, '').trim();
+      if (!q) { await reply(`Penggunaan: ${p}carifitur <kata kunci>\nContoh: ${p}carifitur play`); return true; }
+      const pool = [...new Set([...ALL_COMMANDS, ...Object.keys(CMD_CATS)])];
+      const found = [...new Set(pool.filter(c => c.includes(q)))].sort();
       if (found.length === 0) {
         await reply(`❌ Tidak ada fitur yang cocok dengan *${q}*`);
-      } else {
-        await reply(`🔍 *Hasil Pencarian: "${q}"*\n\n` + found.map(c => `${p}${c}`).join('\n'));
+        return true;
       }
+      // Dikelompokkan per kategori (urut a-z) biar kelihatan fiturnya masuk "gitunya" mana.
+      const byCat = {};
+      for (const c of found) for (const cat of (CMD_CATS[c] || ['lainnya'])) (byCat[cat] = byCat[cat] || []).push(c);
+      let text = `🔍 *Cari Fitur: "${q}"*\n` +
+        `📊 Ditemukan *${found.length}* command di *${Object.keys(byCat).length}* kategori\n`;
+      for (const cat of Object.keys(byCat).sort()) {
+        text += `\n📂 *${cat.toUpperCase()}* (${byCat[cat].length})\n`;
+        text += byCat[cat].sort().map(c => `▢ ${p}${c}`).join('\n') + '\n';
+      }
+      await reply(text.trimEnd());
       return true;
     }
 
@@ -531,20 +627,24 @@ module.exports = async function infoHandler(ctx) {
           [botData.id, sender]
         );
         if (!rows[0]) { await reply(`❌ Kamu belum punya profil RPG.\nKetik *${p}uptname <nama>* untuk mulai (profil dibuat otomatis).`); return true; }
-        const { name, lim, premium } = rows[0];
-        const isPrem = premium === 1;
+        const { name, lim } = rows[0];
         const defLimit = parseInt(process.env.DEFAULT_LIMIT || '20', 10);
 
+        // Status ikut urutan role engine (dev > owner > premium > user),
+        // BUKAN cuma kolom `premium` di DB — dulu makanya owner+dev pun
+        // kelihatan 'User biasa'.
+        const label    = mess.roleLabel[ctx.role] || mess.roleLabel.user;
+        const skipLim  = ctx.role !== 'user';   // dev/owner/premium/admin: limit nggak kepotong
         const txt =
           `💎 *CEK LIMIT*\n\n` +
           `👤 Nama   : ${name || sender.split('@')[0]}\n` +
-          `💎 Limit  : *${lim}* tersisa\n` +
-          `⭐ Status : ${isPrem ? '*Premium* (skip limit)' : 'User biasa'}\n` +
+          `💎 Limit  : ${skipLim ? '♾️' : `*${lim}* tersisa`}\n` +
+          `⭐ Status : ${skipLim ? `*${label}*` : label}\n` +
           `🔄 Reset  : Setiap hari jam *00:00 WIB* → ${defLimit} limit`;
 
         await reply(txt);
       } catch (e) {
-        await reply(`Gagal cek limit: ${e.message}`);
+        await reply(`Gagal cek limit: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -554,10 +654,21 @@ module.exports = async function infoHandler(ctx) {
   }
 };
 
-// Command yang kena limit untuk user biasa
+// Command yang kena limit untuk user biasa.
+// CATATAN: 'limit' SENGAJA nggak ada di sini — cek limit itu perintah info,
+// kalau ikut kepotong user bisa kehabisan limit cuma gara-gara ngecek sisa.
 module.exports.limitedCmds = new Set([
-  'limit','react',
+  // KOSONG atas permintaan Pak: `.react` dicabut, dan perintah info
+  // (`limit`, `uptime`, ...) emang nggak boleh kena potong. Isi lagi
+  // kalau ada fitur berat yang mau dibatasi harian.
 ]);
 
 // Dipakai self-check (tanpa ini helper-nya cuma bisa dites lewat handler penuh).
 module.exports._menuBannerHeader = _menuBannerHeader;
+module.exports.ALL_COMMANDS      = ALL_COMMANDS;
+module.exports.CATS              = CATS;
+module.exports.CMD_CATS          = CMD_CATS;
+module.exports.catLabel          = catLabel;
+module.exports.CAT_LABEL         = CAT_LABEL;
+module.exports.CAT_KEYS          = CAT_KEYS;
+module.exports.CAT_ALIAS         = CAT_ALIAS;

@@ -116,10 +116,9 @@ function toolSearchCode(pattern) {
 module.exports = async function jarvisHandler(ctx) {
   const { command, args, reply, react, botData, sender, jid, msg } = ctx;
 
-  // Hanya developer — nomor lain diabaikan senyap (fitur rahasia)
-  const devNum    = String(process.env.DEVELOPER_NUMBER || '').replace(/\D/g, '');
-  const senderNum = String(sender || '').split('@')[0].split(':')[0];
-  if (!devNum || senderNum !== devNum) return false;
+  // Hanya developer — nomor lain diabaikan senyap (fitur rahasia).
+  // Peran udah dihitung engine (ctx.isDev) — jangan baca env sendiri lagi.
+  if (!ctx.isDev) return false;
 
   // Bisa dipanggil dengan prefix (.jarvis x) MAUPUN tanpa prefix (jarvis x)
   const body = String(ctx.body || '').trim();
@@ -180,7 +179,7 @@ module.exports = async function jarvisHandler(ctx) {
   ];
 
   const sys =
-    `Kamu "Jarvis", AI agent pribadi Pak di dalam bot WhatsApp YaaParBot — platform multi-bot WA+Telegram (Node.js, zapo-js, MySQL).\n` +
+    `Kamu "Jarvis", AI agent pribadi Pak di dalam bot WhatsApp YaaParBot — platform multi-bot WA+Telegram (Node.js, Baileys, MySQL).\n` +
     `Working dir: ${ROOT}\n` +
     `Struktur: plugins/*.js (handler command, urut abjad), engine/*.js (engine), config/*.js.\n` +
     `Pakai tools untuk memeriksa kode asli — JANGAN mengarang isi file atau daftar command.\n` +

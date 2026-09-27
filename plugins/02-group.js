@@ -3,26 +3,188 @@
 /**
  * plugins/02-group.js
  * Commands: tagall, tagadmin, tagme, hidetag, kick, kickall, promote, demote,
- *           open, close, mute, unmute, slowmode, setname, setdesc, linkgroup,
- *           groupinfo, idgc, grouplist, leavegc, listadmin, getpp, getppgc, totag,
+ *           open, close, mute (bisukan bot), unmute, listmute,
+ *           setname, setdesc, link,
+ *           groupinfo, idgc, leavegc, listadmin, pp/getpp, getppgc, totag,
  *           delete, cekasalmember, absen, mulaiabsen, cekabsen, hapusabsen,
  *           afk, listafk, topchat
  */
 
+const { rapikanError } = require('../engine/pesanError');
+const { getMuteGrup, setMuteGrup, daftarMuteGrup } = require('../config/globalSettings');
 const mess             = require('../config/mess');
+const proteksi         = require('./06-proteksi');
+const { lidToPnAsync, bare, toPn, mentionsForChat } = require('../engine/jid');
 const { genThumbnail } = require('../engine/thumbnail');
+const { catatan } = require('../engine/template');
+
+// Ambil gambar PP dari url WA (CDN-nya suka balikin HTML kalau link expired).
+// Return Buffer kalau beneran gambar, null kalau enggak — biar caller bisa bilang
+// "PP nggak ada" daripada ngirim sampah/PP default palsu.
+async function fetchImageBuffer(url) {
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
+    if (!res.ok) return null;
+    const type = res.headers.get('content-type') || '';
+    if (type && !type.startsWith('image/')) return null;
+    const buf = Buffer.from(await res.arrayBuffer());
+    return buf.length ? buf : null;
+  } catch { return null; }
+}
 
 // In-memory stores (replace with DB for persistence across restarts)
 const absenStore      = new Map(); // groupJid -> { title, members: Set<jid> }
 const afkStore        = new Map(); // jid -> { reason, since }
 const topchatStore    = new Map(); // groupJid -> Map<jid, count>
 const msgStore        = new Map(); // remoteJid|id -> event (untuk antidelete)
+const fs              = require('fs');
+const path            = require('path');
 
-const fs   = require('fs');
-const path = require('path');
+// Pesan yang BOT kirim sendiri nggak pernah lewat jalur pesan masuk (engine
+// skip `fromMe` di line ~477), jadi store-nya cuma keisi pesan orang lain —
+// padahal yang paling sering dihapus justru balasan bot. Sambung ke adapter.
+try {
+  const { onMessageSent } = require('../engine/zapo/client');
+  if (typeof onMessageSent === 'function') {
+    onMessageSent((wam) => {
+      const jid = wam?.key?.remoteJid;
+      if (jid && jid.endsWith('@g.us')) antideleteRemember(jid, wam.key.id, wam.message, true);
+    });
+  }
+} catch { /* adapter lain (mis. zapo lama) nggak punya hook ini */ }
 
 // Baca antidelete status dari proteksi-settings.json (shared dengan 06-proteksi.js)
 const PROTEKSI_FILE = path.join(__dirname, '..', 'sessions', 'proteksi-settings.json');
+
+// Anti-delete gampang kelihatan "rusak" padahal cuma kehabisan bahan: store-nya
+// RAM, dan tiap bot restart (deploy/preview/crash) isinya hilang. Yang dihapus
+// user belum tentu pesan yang barusan masuk — teks terakhir di grup bisa udah
+// ketimbun command. Jadi simpan juga ke disk, tapi cuma kalau antidelete nyala
+// di grup mana pun: grup yang nggak pakai fitur nggak bayar apa-apa.
+const STORE_FILE  = path.join(__dirname, '..', 'data', 'antidelete-store.json');
+const STORE_MAX   = 800;                         // per grup, yang lama dibuang
+const STORE_TTL   = 2 * 24 * 60 * 60 * 1000;     // 2 hari
+const STORE_SKIP  = new Set(['senderKeyDistributionMessage', 'messageContextInfo', 'protocolMessage', 'reactionMessage']);
+
+// Grup mana pakai antidelete — di-cache, dibaca ulang kalau file setting berubah.
+let _adActive = null, _adMtime = 0;
+function antideleteActiveCache() {
+  try {
+    const mt = fs.statSync(PROTEKSI_FILE).mtimeMs;
+    if (_adActive === null || mt !== _adMtime) {
+      const data = JSON.parse(fs.readFileSync(PROTEKSI_FILE, 'utf8'));
+      _adActive = new Set(Object.keys(data).filter((j) => data[j]?.antidelete === true));
+      _adMtime = mt;
+    }
+  } catch { _adActive = new Set(); }
+  return _adActive;
+}
+
+let _dirty = false;
+// fromMe=true = pesan yang BOT sendiri kirim. Ini yang paling sering dihapus
+// orang (justru balasan bot), tapi nggak pernah lewat jalur pesan masuk — jadi
+// tanpa penanda ini store-nya kosong melompong terus.
+function antideleteRemember(remoteJid, id, message, fromMe = false) {
+  if (!id || !message) return;
+  if (!antideleteActiveCache().size) return;
+  const type = Object.keys(message)[0] || '';
+  if (STORE_SKIP.has(type)) return;
+  msgStore.set(remoteJid + '|' + id, { remoteJid, id, message, at: Date.now(), fromMe });
+  _dirty = true;
+  antideleteFlush();
+}
+
+function antideleteFlush() {
+  if (!_dirty) return;
+  _dirty = false;
+  try {
+    const now = Date.now();
+    const perGroup = new Map();
+    for (const [k, v] of msgStore) {
+      if (now - v.at > STORE_TTL) { msgStore.delete(k); continue; }
+      const g = perGroup.get(v.remoteJid) || [];
+      g.push(v);
+      perGroup.set(v.remoteJid, g);
+    }
+    const out = [];
+    for (const g of perGroup.values()) {
+      g.sort((a, b) => a.at - b.at);
+      out.push(...g.slice(-STORE_MAX));
+    }
+    fs.writeFileSync(STORE_FILE, JSON.stringify(out));
+  } catch { /* store nggak boleh bikin pesan gagal diproses */ }
+}
+
+function antideleteLoad() {
+  try {
+    const now = Date.now();
+    for (const v of JSON.parse(fs.readFileSync(STORE_FILE, 'utf8'))) {
+      if (!v?.id || !v?.message || now - v.at > STORE_TTL) continue;
+      msgStore.set(v.remoteJid + '|' + v.id, { ...v, message: reviveBuffers(v.message) });
+    }
+  } catch { /* nggak ada / rusak = mulai dari kosong */ }
+}
+antideleteLoad();
+
+// ── Topchat: statistik pesan per member ───────────────────────────────────────
+// Dulu RAM doang: tiap restart (deploy/crash — di VPS udah 185x) angkanya balik
+// ke nol, jadi `.listtotalpesan` kelihatan "sedikit" padahal grupnya rame.
+// Disimpan ke disk, tulis-nya di-debounce biar nggak nge-fsync tiap pesan.
+const TOPCHAT_FILE    = path.join(__dirname, '..', 'data', 'topchat-store.json');
+const TOPCHAT_SAVE_MS = 5000;
+let _tcDirty = false, _tcTimer = null;
+
+function topchatSave() {
+  _tcDirty = false;
+  try {
+    const out = {};
+    for (const [g, m] of topchatStore) out[g] = Object.fromEntries(m);
+    fs.writeFileSync(TOPCHAT_FILE, JSON.stringify(out));
+  } catch { /* statistik nggak boleh bikin pesan gagal diproses */ }
+}
+
+function topchatLoad() {
+  try {
+    const data = JSON.parse(fs.readFileSync(TOPCHAT_FILE, 'utf8'));
+    for (const [g, m] of Object.entries(data)) {
+      topchatStore.set(g, new Map(Object.entries(m).map(([j, c]) => [j, Number(c) || 0])));
+    }
+  } catch { /* belum ada / rusak = mulai dari nol */ }
+}
+
+// Hitung 1 pesan buat statistik. Dipanggil untuk SEMUA pesan grup — command juga
+// pesan, dan di grup tester aktivitasnya justru command: dulu semuanya nggak
+// kehitung, itu sebab kedua angka `.listtotalpesan` kelihatan sedikit.
+function topchatCount(grupJid, senderJid) {
+  if (!grupJid || !senderJid) return;
+  if (!topchatStore.has(grupJid)) topchatStore.set(grupJid, new Map());
+  const tc = topchatStore.get(grupJid);
+  tc.set(senderJid, (tc.get(senderJid) || 0) + 1);
+  _tcDirty = true;
+  if (!_tcTimer) {
+    _tcTimer = setTimeout(() => { _tcTimer = null; if (_tcDirty) topchatSave(); }, TOPCHAT_SAVE_MS);
+    if (_tcTimer.unref) _tcTimer.unref();
+  }
+}
+topchatLoad();
+
+// JSON nggak kenal Buffer: mediaKey/fileSha256 balik jadi {type:'Buffer',data:[…]}
+// dan downloadMediaMessage nolak itu. Balikin ke Buffer sebelum dipakai.
+function reviveBuffers(obj) {
+  if (Buffer.isBuffer(obj)) return obj;
+  if (Array.isArray(obj)) return obj.map(reviveBuffers);
+  if (obj && typeof obj === 'object') {
+    if (obj.type === 'Buffer' && Array.isArray(obj.data)) return Buffer.from(obj.data);
+    const out = {};
+    for (const k of Object.keys(obj)) out[k] = reviveBuffers(obj[k]);
+    return out;
+  }
+  return obj;
+}
+
+// Meta AI. JID-nya `@bot`, bukan nomor — jangan di-strip jadi angka.
+const JID_META_AI = '867051314767696@bot';
+
 function isAntideleteActive(groupJid) {
   try {
     if (!fs.existsSync(PROTEKSI_FILE)) return false;
@@ -41,20 +203,55 @@ module.exports = async function groupHandler(ctx) {
       if (msgType === 'protocolMessage' && rawMsg.message.protocolMessage?.type === 0) {
         const deletedKey = rawMsg.message.protocolMessage.key;
         const storeKey   = `${deletedKey.remoteJid}|${deletedKey.id}`;
-        console.log(`[Antidelete] delete event jid=${ctx.jid} active=${isAntideleteActive(ctx.jid)} storeKey=${storeKey} stored=${msgStore.has(storeKey)} msgStoreSize=${msgStore.size}`);
+        // Kalau yang hapus bot/owner/dev, jangan digubris: mereka memang berhak
+        // hapus, dan dulu ini bikin bot ngomel tiap kali membereskan chat sendiri.
+        const resolveDeleter = ctx.client.contact?.resolveLid;
+        const deleterRaw     = rawMsg.key?.participant || rawMsg.key?.participantPn || rawMsg.key?.remoteJid || '';
+        let deleterNum = String(deleterRaw).split('@')[0].split(':')[0];
+        try { if (resolveDeleter) deleterNum = String(await resolveDeleter(deleterRaw)).split('@')[0].split(':')[0]; } catch { /* pakai yang mentah */ }
+
+        const ownerNum = String(ctx.botData?.owner_number || process.env.OWNER_NUMBER || '').replace(/\D/g, '');
+
+        // fromMe = bot sendiri yang hapus -> skip. Ini yang bikin "ga ada reaksi"
+        // pas owner/dev beres-beres chat pakai nomor bot.
+        if (rawMsg.key?.fromMe === true) return false;
+        // Developer: peran global dari ctx (ctx.isDev), bukan `ctx.sender` —
+        // di sini yang dihakimi `deleterNum` (peserta yang hapus), dan biasanya
+        // itu = pengirim balasan otomatis bot, jadi ctx.isDev TIDAK kepakai.
+        if (deleterNum && ctx.isDev) return false;
+        if (deleterNum && ownerNum && deleterNum === ownerNum) return false;
+
+        // Admin grup (termasuk owner/dev kalau admin di grup itu) memang berhak
+        // hapus — nggak perlu diomelin. Dicek per-nomor karena ctx.isAdmin dihitung
+        // dari sender pesan, dan di sini sender-nya bukan yang menghapus.
+        try {
+          const meta = await ctx.client.group.queryGroupMetadata(ctx.jid).catch(() => null);
+          const p = meta?.participants?.find((x) =>
+            x.jid?.split('@')[0].split(':')[0] === deleterNum ||
+            x.lid?.split('@')[0].split(':')[0] === deleterNum ||
+            (x.phoneNumber && x.phoneNumber.replace(/\D/g, '').endsWith(deleterNum)));
+          if (p?.isAdmin || p?.isSuperAdmin) return false;
+        } catch { /* metadata gagal -> lanjut saja */ }
+
         if (isAntideleteActive(ctx.jid)) {
           const stored     = msgStore.get(storeKey);
-          console.log(`[Antidelete] stored keys: ${stored ? JSON.stringify(Object.keys(stored)) : 'null'}, storedMsg keys: ${stored?.message ? JSON.stringify(Object.keys(stored.message)) : 'null'}, deletedKey: ${JSON.stringify(deletedKey)}`);
           if (stored) {
             const storedType    = Object.keys(stored.message)[0];
             const storedContent = stored.message[storedType];
-            // Resolve siapa yang hapus pesan (participant di delete event, fallback ke stored sender)
             const deleterJid = rawMsg.key?.participant || rawMsg.key?.remoteJid || '';
             const deleterPhone = deleterJid.split('@')[0];
             try {
               const headerText = `🛡️ *Anti-Delete*\n@${deleterPhone} ngapain di hapus bang 😹`;
+              // Satu pesan berkutip: isi aslinya jadi kutipan, header jadi balasannya.
+              // Jadinya jelas "ini lho pesan yang dihapus" — dulu cuma teks mentah.
+              const bodyOf = () => {
+                if (storedType === 'conversation') return String(storedContent || '');
+                if (storedType === 'extendedTextMessage') return storedContent?.text || '';
+                return storedContent?.caption || '';
+              };
+              const cap = (extra = '') => (bodyOf() ? `${headerText}\n\n> ${bodyOf()}${extra}` : `${headerText}${extra}`);
+
               if (storedType === 'stickerMessage') {
-                // Stiker: kirim stikernya dulu, lalu teks mention terpisah
                 const fixed = Object.assign({}, storedContent);
                 for (const f of ['mediaKey','fileSha256','fileEncSha256']) {
                   if (typeof fixed[f] === 'string') fixed[f] = Buffer.from(fixed[f], 'base64');
@@ -63,37 +260,68 @@ module.exports = async function groupHandler(ctx) {
                 await ctx.client.message.send(ctx.jid, {
                   type: 'sticker', media: buffer, mimetype: storedContent.mimetype || 'image/webp',
                 });
-                await ctx.client.message.send(ctx.jid, {
-                  type: 'text',
-                  text: headerText,
-                  mentions: [deleterJid],
-                });
-              } else if (['imageMessage','videoMessage','audioMessage'].includes(storedType)) {
+                await ctx.client.message.send(ctx.jid, { type: 'text', text: cap(), mentions: [deleterJid] });
+              } else if (['imageMessage','videoMessage','audioMessage','documentMessage'].includes(storedType)) {
                 const uploadType = storedType === 'imageMessage' ? 'image'
                   : storedType === 'videoMessage' ? 'video'
+                  : storedType === 'documentMessage' ? 'document'
                   : (storedContent.ptt ? 'ptt' : 'audio');
+                const mime = storedContent.mimetype || 'application/octet-stream';
+                // Bentuknya dipertahankan: foto sekali-lihat dikirim sekali-lihat
+                // lagi, video note (ptv) tetap video note. (`bodyOf`/`cap` baca
+                // `storedContent` langsung, jadi caption TIDAK boleh dihapus.)
+                // Catatan: "foto live" (motion photo) = foto + video pendamping,
+                // dikirim WA sebagai 2 pesan terpisah — bukan `ptv`.
                 const fixed = Object.assign({}, storedContent);
                 for (const f of ['mediaKey','fileSha256','fileEncSha256']) {
                   if (typeof fixed[f] === 'string') fixed[f] = Buffer.from(fixed[f], 'base64');
                 }
-                const buffer = await ctx.client.message.downloadBytes({ [storedType]: fixed });
-                const mime   = storedContent.mimetype || 'application/octet-stream';
-                // Caption: hanya tampilkan caption asli kalau ada
-                const extraCaption = storedContent.caption ? `\n\n${storedContent.caption}` : '';
+                const isViewOnce = storedContent.viewOnce === true;
+                const isPtv = storedContent.ptv === true;
+
+                let buffer;
+                try {
+                  buffer = await ctx.client.message.downloadBytes({ [storedType]: fixed });
+                } catch (dlErr) {
+                  console.log(`[Antidelete] media gagal diunduh: ${dlErr.message}`);
+                  await ctx.client.message.send(ctx.jid, {
+                    type: 'text', text: cap('\n\n⚠️ Medianya udah nggak bisa diunduh'),
+                    mentions: [deleterJid],
+                  }).catch(() => {});
+                  return false;
+                }
                 await ctx.client.message.send(ctx.jid, {
                   type: uploadType, media: buffer, mimetype: mime,
-                  caption: `${headerText}${extraCaption}`,
+                  ...(uploadType === 'document' && { fileName: storedContent.fileName || 'file' }),
+                  ...(isPtv && { ptv: true }),            // video note (bulat)
+                  ...(isViewOnce && { viewOnce: true }),  // sekali lihat
+                  caption: isViewOnce ? undefined : cap(),
                   mentions: [deleterJid],
                 });
+                // view-once nggak bisa bawa caption: kirim isinya sebagai pesan
+                // kedua biar captionnya nggak hilang.
+                if (isViewOnce && bodyOf()) {
+                  await ctx.client.message.send(ctx.jid, {
+                    type: 'text', text: cap(), mentions: [deleterJid],
+                  }).catch(() => {});
+                }
               } else {
-                const text = storedContent?.text || storedContent?.caption || storedContent || '';
                 await ctx.client.message.send(ctx.jid, {
-                  type: 'text',
-                  text: `${headerText}\n\n${text}`,
-                  mentions: [deleterJid],
+                  type: 'text', text: cap(), mentions: [deleterJid],
                 });
               }
-            } catch (e) { console.log(`[Antidelete] gagal kirim ulang: ${e.message}`) }
+            } catch (e) {
+              // Dulu cuma console.log: user nggak dapat apa-apa dan keliatannya
+              // "bot nggak respon". Minimal kasih tahu pesannya kehapus tapi gagal dikirim ulang.
+              console.log(`[Antidelete] gagal kirim ulang: ${e.message}`);
+              try {
+                await ctx.client.message.send(ctx.jid, {
+                  type: 'text',
+                  text: `🛡️ *Anti-Delete*\n@${deleterPhone} hapus pesan, tapi gagal dikirim ulang (${e.message})`,
+                  mentions: [deleterJid],
+                });
+              } catch { /* dua-duanya gagal */ }
+            }
           }
         }
         return false;
@@ -101,13 +329,7 @@ module.exports = async function groupHandler(ctx) {
 
       // ── Store pesan untuk antidelete ─────────────────────────────────────────
       if (rawMsg?.key && rawMsg?.message && msgType !== 'protocolMessage') {
-        const storeKey = `${rawMsg.key.remoteJid}|${rawMsg.key.id}`;
-        msgStore.set(storeKey, rawMsg);
-        // Batasi ukuran store agar tidak bocor memory
-        if (msgStore.size > 5000) {
-          const firstKey = msgStore.keys().next().value;
-          msgStore.delete(firstKey);
-        }
+        antideleteRemember(rawMsg.key.remoteJid, rawMsg.key.id, rawMsg.message, rawMsg.key.fromMe === true);
       }
 
       // ── AFK check ─────────────────────────────────────────────────────────────
@@ -119,19 +341,26 @@ module.exports = async function groupHandler(ctx) {
           const dur = Math.floor((Date.now() - since) / 1000);
           await ctx.reply(`Selamat datang kembali *${ctx.pushName}*!\nKamu telah AFK selama ${dur} detik.\nAlasan: ${reason || '-'}`);
         }
-        // Topchat tracking
-        if (!topchatStore.has(ctx.jid)) topchatStore.set(ctx.jid, new Map());
-        const tc = topchatStore.get(ctx.jid);
-        tc.set(ctx.sender, (tc.get(ctx.sender) || 0) + 1);
       }
+
+      // Statistik pesan: SEMUA pesan grup, command ikut. Kuncinya nomor polos
+      // (`bare`) — satu orang cuma boleh punya satu baris. Kalau disimpan apa
+      // adanya, `ctx.isCmd` yang di-resolve lewat metadata bikin satu nomor
+      // terpecah jadi `628xx:12@s.whatsapp.net` dan `628xx@s.whatsapp.net`.
+      topchatCount(ctx.jid, bare(ctx.sender));
     }
     return false;
   }
 
+  // Command juga pesan. Blok di atas cuma jalan buat pesan non-command (guard
+  // `!ctx.isCmd` di baris atas), jadi tanpa baris ini member yang cuma main
+  // command nggak pernah kehitung — di grup tester justru itu aktivitas utama.
+  if (ctx.isGroup) topchatCount(ctx.jid, bare(ctx.sender));
+
   const { command, args, reply, react, sock, client, jid, sender, botData } = ctx;
   const p = botData.prefix;
 
-  // Helper: get group metadata via zapo-js
+  // Helper: get group metadata via client adapter
   async function getMeta() {
     try { return await client.group.queryGroupMetadata(jid); } catch { return null; }
   }
@@ -249,7 +478,7 @@ module.exports = async function groupHandler(ctx) {
 
     // ── hidetag ──────────────────────────────────────────────────────────────
     case 'hidetag':
-    case 'ht': {
+    case 'h': {
       if (!await isBotAdmin()) { await reply(mess.BotAdmin); return true; }
       if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
       const meta = await getMeta();
@@ -313,7 +542,6 @@ module.exports = async function groupHandler(ctx) {
       return true;
     }
 
-    // ── linkgroup ─────────────────────────────────────────────────────────────
     // ── upswgc ───────────────────────────────────────────────────────────────
     // ── kick ─────────────────────────────────────────────────────────────────
     case 'kick': {
@@ -325,37 +553,53 @@ module.exports = async function groupHandler(ctx) {
         const results = await client.group.removeParticipants(jid, mentioned);
         const failed = (Array.isArray(results) ? results : []).filter(r => r && r.status !== 'ok');
         if (failed.length > 0) {
-          const reasons = failed.map(r => `${r.jid?.split('@')[0] || '?'} (${r.code || 'error'})`).join(', ');
+          // Tampilkan NOMOR, bukan LID — di grup LID, jid peserta bentuknya '...@lid'
+          // dan angka itu nggak ada artinya buat manusia.
+          const reasons = (await Promise.all(failed.map(async (r) => {
+            const shown = (await lidToPnAsync(client, r.jid)).split('@')[0] || '?';
+            return `${shown} (kode ${r.code || 'error'})`;
+          }))).join(', ');
           await reply(`⚠️ Sebagian gagal dikick: ${reasons}`);
         } else {
           await reply(`✅ Berhasil kick ${mentioned.length} member`);
         }
       } catch (e) {
-        await reply(`❌ Gagal kick: ${e.message}`);
+        await reply(`❌ Gagal kick: ${rapikanError(e)}`);
       }
       return true;
     }
 
-    // ── add (tambah member via nomor) ────────────────────────────────────────
-    case 'add': {
+    // ── add (tambah member via nomor) / addai (tambahin bot AI) ──────────────
+    case 'add':
+    // `.addai` = tambahin bot AI ke grup. Baileys mau JID-nya, bukan nomor:
+    // `.addai` polos -> Meta AI, `.addai <kode>` -> dari tabel AI_JID,
+    // `.addai 628xx@bot` -> JID mentah. Gate `isAdmin()` tetap; `isBotAdmin()`
+    // tetap (bot harus admin biar WA nggak nolak diem-diem).
+    case 'addai': {
       if (!await isBotAdmin()) { await reply(mess.BotAdmin); return true; }
       if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
+      const isAi   = command === 'addai';
       const numArg = args[0];
-      if (!numArg) {
-        await reply(`Penggunaan: ${p}add <nomor>\n\nContoh: ${p}add 6281234567890`);
-        return true;
+      let target;
+      if (!isAi) {
+        if (!numArg) {
+          await reply(`Penggunaan: ${p}add <nomor>\n\nContoh: ${p}add 6281234567890`);
+          return true;
+        }
+        // Normalisasi nomor: hapus +, spasi, dash
+        target = { jid: `${numArg.replace(/[^0-9]/g, '')}@s.whatsapp.net`, nama: numArg.replace(/[^0-9]/g, '') };
+      } else {
+        target = { jid: JID_META_AI, nama: 'Meta AI' };
       }
-      // Normalisasi nomor: hapus +, spasi, dash
-      const normalized = numArg.replace(/[^0-9]/g, '');
-      const targetJid  = `${normalized}@s.whatsapp.net`;
+      const { jid: targetJid, nama } = target;
       try {
         const results = await client.group.addParticipants(jid, [targetJid]);
-        // zapo-js return array hasil per-jid: { jid, status: 'ok'|'error', code }
+        // client adapter return array hasil per-jid: { jid, status: 'ok'|'error', code }
         const res = (Array.isArray(results) ? results : [])[0];
         if (!res) {
-          await reply(`⚠️ Tidak ada respon dari WhatsApp saat menambahkan *${normalized}*. Pastikan bot admin grup.`);
+          await reply(`⚠️ Tidak ada respon dari WhatsApp saat menambahkan *${nama}*. Pastikan bot admin grup.`);
         } else if (res.status === 'ok') {
-          await reply(`✅ Berhasil menambahkan *${normalized}* ke grup!`);
+          await reply(`✅ Sukses add *${nama}* ke grup!`);
         } else {
           const reason = {
             403: 'nomor ini belum pernah chat bot / privasi nomor, coba minta dia chat bot dulu',
@@ -364,31 +608,10 @@ module.exports = async function groupHandler(ctx) {
             409: 'sudah menjadi member grup',
             429: 'kecepatan ditahan WhatsApp, coba beberapa menit lagi',
           }[res.code] || `kode error ${res.code}`;
-          await reply(`❌ Gagal menambahkan *${normalized}*\nAlasan: ${reason}`);
+          await reply(`❌ Gagal menambahkan *${nama}*\nAlasan: ${reason}`);
         }
       } catch (e) {
-        await reply(`❌ Gagal menambahkan *${normalized}*\nAlasan: ${e.message}`);
-      }
-      return true;
-    }
-
-    // ── promoteme (hanya ADMIN yang bisa promote member lain — bukan diri sendiri) ──
-    case 'promoteme': {
-      if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
-      const target = (ctx.msg.message?.extendedTextMessage?.contextInfo?.mentionedJid || [])[0]
-        || ctx.msg.message?.extendedTextMessage?.contextInfo?.participant
-        || null;
-      if (!target) { await reply(`Penggunaan: ${p}promoteme @mention atau reply pesan member`); return true; }
-      if (target === sender) { await reply('Kamu nggak bisa promote diri sendiri.'); return true; }
-      try {
-        await client.group.promoteParticipants(jid, [target]);
-        await client.message.send(jid, {
-          type: 'text',
-          text: `👑 @${target.split('@')[0]} telah dipromote menjadi admin!`,
-          mentions: [target],
-        });
-      } catch (e) {
-        await reply(`❌ Gagal promote: ${e.message}`);
+        await reply(`❌ Gagal menambahkan *${nama}*\nAlasan: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -415,7 +638,7 @@ module.exports = async function groupHandler(ctx) {
           await reply(`✅ ${members.length} member berhasil dikick`);
         }
       } catch (e) {
-        await reply(`❌ Gagal kickall: ${e.message}`);
+        await reply(`❌ Gagal kickall: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -453,45 +676,82 @@ module.exports = async function groupHandler(ctx) {
     case 'grupclose':
       return module.exports({ ...ctx, command: 'close' });
     case 'linkgc':
-      return module.exports({ ...ctx, command: 'linkgroup' });
+      return module.exports({ ...ctx, command: 'link' });
     case 'setnamegc':
       return module.exports({ ...ctx, command: 'setname' });
 
-    // ── open / close ─────────────────────────────────────────────────────────
+    // ── open / close — kalau grupnya UDAH di posisi yang diminta, jangan
+    // kirim tag-nya lagi (percuma + WA ngirim notif "grup dibuka/ditutup" ke
+    // semua member). Cukup tengok `meta.announce` (Baileys: `!!<announcement>`
+    // = announce ON = grup TUTUP).
     case 'open': {
       if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
       if (!await isBotAdmin()) { await reply(mess.BotAdmin); return true; }
-      await client.group.setSetting(jid, 'announcement', false);
-      await reply('🔓 Grup dibuka — semua member bisa kirim pesan');
+      const sudahBuka = (await getMeta())?.announce === false;
+      await client.group.setSetting(jid, 'open');
+      await reply(sudahBuka
+        ? '🔓 *Lah, grupnya udah kebuka dari tadi.*\n\nNgapain jir? Mau ngobrol tinggal ketik aja, nggak usah izin 🗿'
+        : '🔓 *Grup dibuka!*\n\nUdah, pada bisa ngomong sekarang. Ramein dikit jangan pada ngumpet 🗿');
       return true;
     }
     case 'close': {
       if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
       if (!await isBotAdmin()) { await reply(mess.BotAdmin); return true; }
-      await client.group.setSetting(jid, 'announcement', true);
-      await reply('🔒 Grup ditutup — hanya admin yang bisa kirim pesan');
+      const sudahTutup = (await getMeta())?.announce === true;
+      await client.group.setSetting(jid, 'close');
+      await reply(sudahTutup
+        ? '🔒 *Grupnya udah ketutup, bang.*\n\nMau ngekunci dua kali? Sabar, jangan drama 🗿'
+        : '🔒 *Grup ditutup!*\n\nSekarang cuma admin yang bisa ngomong. Yang lain sini mah pada sunyi 🗿');
       return true;
     }
 
-    // ── mute / unmute ─────────────────────────────────────────────────────────
+    // ── mute / unmute — bisukan BOT di grup ini ──────────────────────────────
+    // Ini BUKAN setting grup WhatsApp. Grup tetap normal: semua member (termasuk
+    // admin) tetap bisa ngobrol. Yang diem botnya — nggak ngebalas command
+    // maupun obrolan di grup ini. Buat ngunci grup pakai `.close`/`.open`.
+    //
+    // Dulu case ini nyetel setting grup WA lewat adapter dan di adapter itu
+    // jatuh ke tag `announcement` — SAMA PERSIS kayak `.close`. Jadi
+    // `.mute` diam-diam nge-lock grup: admin masih kelihatan tombol kirim, tapi
+    // WA nolak di server dan pesannya gagal (tanda merah). Itu bukan mute.
     case 'mute': {
       if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
-      if (!await isBotAdmin()) { await reply(mess.BotAdmin); return true; }
-      await client.group.setSetting(jid, 'announcement', true);
-      await reply('🔇 Grup di-mute');
+      if (getMuteGrup(botData.id, jid)) {
+        await reply('🔇 *Bot udah dibisukan di grup ini bang.* Nggak usah dipencet lagi 🗿');
+        return true;
+      }
+      setMuteGrup(botData.id, jid, true);
+      await reply(
+        '🔇 *Bot dibisukan di grup ini.*\n\n' +
+        'Bot berhenti ngebalas di sini — grup tetap normal, semua orang tetap bisa ngobrol.\n' +
+        `Nyalain lagi: *${p}unmute*`
+      );
       return true;
     }
     case 'unmute': {
       if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
-      if (!await isBotAdmin()) { await reply(mess.BotAdmin); return true; }
-      await client.group.setSetting(jid, 'announcement', false);
-      await reply('🔊 Grup di-unmute');
+      if (!getMuteGrup(botData.id, jid)) {
+        await reply('🔊 *Bot nggak lagi dibisukan di grup ini kok, bang.* 🗿');
+        return true;
+      }
+      setMuteGrup(botData.id, jid, false);
+      await reply('🔊 *Bot aktif lagi di grup ini!*\n\nSilakan pakai command, yang lain jangan diem aja 🗿');
       return true;
     }
-
-    // ── slowmode ──────────────────────────────────────────────────────────────
-    case 'slowmode': {
-      await reply('⏱️ Slowmode diaktifkan (fitur tergantung dukungan WhatsApp API)');
+    case 'listmute': {
+      if (!ctx.isOwner) { await reply(mess.ownerOnly); return true; }
+      const grupMute = daftarMuteGrup(botData.id);
+      if (!grupMute.length) { await reply('✅ Nggak ada grup yang dibisukan.'); return true; }
+      // Nama grup diambil dari metadata — bot masih "kenal" grup walau lagi
+      // dibisukan, karena guard mute cuma nahan dispatch plugin, bukan koneksi.
+      const nama = await Promise.all(grupMute.map(async (g) => {
+        try {
+          const meta = await client.group.queryGroupMetadata(g);
+          return meta?.subject || null;
+        } catch { return null; }
+      }));
+      const baris = grupMute.map((g, i) => `${i + 1}. ${nama[i] || '(nama nggak kebaca)'}\n   ${g}`).join('\n');
+      await reply(`🔇 *Grup yang dibisukan*\n\n${baris}\n\nTotal: *${grupMute.length}*`);
       return true;
     }
 
@@ -519,8 +779,8 @@ module.exports = async function groupHandler(ctx) {
       return true;
     }
 
-    // ── linkgroup ─────────────────────────────────────────────────────────────
-    case 'linkgroup': {
+    // ── link ──────────────────────────────────────────────────────────────────
+    case 'link': {
       if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
       if (!await isBotAdmin()) { await reply(mess.BotAdmin); return true; }
       const inviteCode = await client.group.queryInviteCode(jid);
@@ -528,20 +788,42 @@ module.exports = async function groupHandler(ctx) {
       return true;
     }
 
-    // ── groupinfo ─────────────────────────────────────────────────────────────
-    case 'groupinfo': {
+    // ── groupinfo / infogc ────────────────────────────────────────────────────
+    case 'groupinfo':
+    case 'infogc': {
       const meta = await getMeta();
       if (!meta) { await reply('Gagal mengambil data grup'); return true; }
       const admins  = meta.participants.filter(p => p.isAdmin).length;
       const members = meta.participants.length;
-      await reply(
+      const status  = await proteksi.statusGrup(botData.id, jid, botData.main_groups);
+      const hdr =
         `📊 *Info Grup*\n\n` +
         `Nama    : ${meta.subject}\n` +
         `JID     : ${jid}\n` +
+        `Status  : ${status}\n` +
         `Member  : ${members}\n` +
         `Admin   : ${admins}\n` +
-        `Dibuat  : ${new Date(meta.creation * 1000).toLocaleDateString('id-ID')}`
-      );
+        `Dibuat  : ${new Date(meta.creation * 1000).toLocaleDateString('id-ID')}\n\n` +
+        `📝 *Deskripsi*\n${meta.desc || '_belum ada deskripsi_'}\n\n` +
+        await proteksi.statusFitur(botData.id, jid);
+
+      // PP grup dikirim sebagai gambar, caption-nya info + status di atas.
+      // Gagal ambil PP = kirim teks aja, jangan bikin command-nya mati.
+      const ppUrl = await client.profile.getProfilePicture(jid, 'image').catch(() => null);
+      const buf   = ppUrl ? await fetchImageBuffer(ppUrl) : null;
+
+      if (buf) {
+        const thumb = await genThumbnail(buf, 'image/jpeg');
+        await client.message.send(jid, {
+          type: 'image',
+          media: buf,
+          mimetype: 'image/jpeg',
+          caption: hdr,
+          ...(thumb ? { jpegThumbnail: thumb } : {}),
+        });
+      } else {
+        await reply(hdr);
+      }
       return true;
     }
 
@@ -561,25 +843,6 @@ module.exports = async function groupHandler(ctx) {
         `Admin  : ${admins}\n` +
         `Link   : ${link}`
       );
-      return true;
-    }
-
-    // ── grouplist ─────────────────────────────────────────────────────────────
-    case 'grouplist': {
-      try {
-        const groups = await client.group.queryAllGroups();
-        const metas  = await Promise.all(
-          groups.map(g => client.group.queryGroupMetadata(g.jid).catch(() => null))
-        );
-        const list = groups.map((g, i) => {
-          const size = metas[i]?.participants?.length ?? g.size ?? '?';
-          return `${i + 1}. ${g.subject}\n   👥 ${size} member`;
-        }).join('\n\n');
-        await reply(`📋 *Daftar Grup Bot (${groups.length}):*\n\n${list || 'Tidak ada grup'}`);
-      } catch (e) {
-        console.error('[grouplist] Error:', e.message);
-        await reply('Gagal mengambil daftar grup');
-      }
       return true;
     }
 
@@ -607,56 +870,73 @@ module.exports = async function groupHandler(ctx) {
       return true;
     }
 
-    // ── getpp ─────────────────────────────────────────────────────────────────
-    case 'getpp': {
-      // Coba semua path untuk mentionedJid
-      const msgContent = ctx.msg.message;
-      const mentioned =
-        msgContent?.extendedTextMessage?.contextInfo?.mentionedJid ||
-        msgContent?.imageMessage?.contextInfo?.mentionedJid ||
-        msgContent?.conversation?.contextInfo?.mentionedJid ||
-        [];
-      console.log('[getpp] mentioned:', JSON.stringify(mentioned));
-      if (!mentioned.length) {
-        await reply(`Penggunaan: ${p}getpp @mention`);
+    // ── pp / getpp ─────────────────────────────────────────────────────────────
+    case 'getpp':
+    case 'pp': {
+      // Sumber target, urutan: mention > reply > (fallback) diri sendiri.
+      // Reply dibaca dari contextInfo message itu sendiri + SEMUA jenis pesan
+      // (dulu cuma `extendedTextMessage`/`imageMessage`/`conversation`, jadi
+      // reply ke video/stiker/dokumen dianggap "nggak ada target").
+      const ci = ctx.msg?.message?.extendedTextMessage?.contextInfo
+              || ctx.msg?.message?.imageMessage?.contextInfo
+              || ctx.msg?.message?.videoMessage?.contextInfo
+              || ctx.msg?.message?.documentMessage?.contextInfo
+              || ctx.msg?.message?.audioMessage?.contextInfo
+              || ctx.msg?.message?.stickerMessage?.contextInfo
+              || ctx.msg?.message?.contactMessage?.contextInfo
+              || {};
+      const mentioned = ctx.mentioned?.length ? ctx.mentioned : (ci.mentionedJid || []);
+
+      // Target WAJIB eksplisit: tag atau reply. `.pp` polos nggak nampilin PP
+      // siapa pun (termasuk pengirim) — kasih instruksi aja.
+      // Command ini grup-only karena 02-group early-return buat chat pribadi,
+      // jadi `sender` selalu ada dan cabang `!target` di bawah praktis mati.
+      // Target WAJIB eksplisit: tag, reply, atau nomor HP (`.pp 628xxx`).
+      // Nomor dicoba setelah tag/reply — tag menang kalau dua-duanya ada.
+      const nomorArg = args.find(a => /^\+?\d{8,15}$/.test(a.replace(/[\s-]/g, '')));
+      let target = mentioned[0] || ci.participant
+        || (nomorArg ? nomorArg.replace(/[\s-]/g, '').replace(/^\+/, '') + '@s.whatsapp.net' : null);
+      if (!target) {
+        await reply(`📸 *Foto profil*\n\nTag orangnya, reply pesannya, atau tulis nomornya.\nContoh: \`${p}pp @user\` / \`${p}pp 6285876902820\``);
         return true;
       }
-      let target = mentioned[0];
-      let phoneNum = target.split('@')[0];
+      // Nomor HP mentah: jangan di-resolve LID (toLid nolak nomor non-member)
+      // dan jangan dipaksa cari di metadata grup — langsung pakai JID-nya.
+      const dariNomor = !mentioned[0] && !ci.participant && /^[^@]+@s\.whatsapp\.net$/.test(target);
+      // Jalur reply: `ci.participant` masih LID mentah — engine cuma resolve
+      // `ctx.mentioned`, bukan participant pesan yang di-quote. Akibatnya teks
+      // `@628...` nggak match `mentionedJid` (isinya `...@lid`) → WA nampilin
+      // angka polos, bukan mention. Samakan bentuknya kayak jalur @tag.
+      if (!dariNomor) target = await lidToPnAsync(client, target);
+      let phoneNum = String(target).split('@')[0];
 
       // Resolve LID ke phone JID lewat metadata grup
       const meta = await getMeta();
       const participant = meta?.participants?.find(p =>
         p.jid === target || p.lid === target
       );
-      if (participant?.phoneNumber) {
-        phoneNum = String(participant.phoneNumber).split('@')[0];
-        target = phoneNum + '@s.whatsapp.net';
+      if (!dariNomor && participant?.phoneNumber) {
+        // `phoneNumber` bisa ada tapi null → `String(null)` = "null" (JID sampah).
+        phoneNum = String(participant.phoneNumber).replace(/\D/g, '');
       } else if (target.endsWith('@lid') && participant?.jid && !participant.jid.endsWith('@lid')) {
-        target = participant.jid;
-        phoneNum = target.split('@')[0];
+        phoneNum = String(participant.jid).split('@')[0];
       }
 
-      const DEFAULT_PP = 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png';
-      let ppUrl = DEFAULT_PP;
+      // Adapter balikin string url (bukan {url}) — lihat normalizeProfilePicture.
+      let ppUrl = null;
       try {
-        const pp = await client.profile.getProfilePicture(target, 'image');
-        if (pp?.url) ppUrl = pp.url;
-      } catch {
-        try {
-          const pp = await client.profile.getProfilePicture(phoneNum + '@s.whatsapp.net', 'image');
-          if (pp?.url) ppUrl = pp.url;
-        } catch { /* pakai default */ }
+        ppUrl = await client.profile.getProfilePicture(target, 'image');
+      } catch { /* coba nomor */ }
+      if (!ppUrl) {
+        try { ppUrl = await client.profile.getProfilePicture(phoneNum + '@s.whatsapp.net', 'image'); } catch { /* kosong */ }
       }
 
-      let imgBuffer = null;
-      try {
-        const res = await fetch(ppUrl);
-        const arrBuf = await res.arrayBuffer();
-        imgBuffer = Buffer.from(arrBuf);
-      } catch { /* fallback teks */ }
+      const imgBuffer = ppUrl ? await fetchImageBuffer(ppUrl) : null;
 
-      const mentionTag = mentioned[0].split('@')[0]; // pakai LID number untuk mention tag
+      // `.split('@')` di sini yang dulu bikin "Cannot read properties of
+      // undefined" waktu `.pp` tanpa tag — `mentioned` bisa kosong karena
+      // target datang dari reply, jadi jangan baca `mentioned[0]`.
+      const tagNum = phoneNum || String(target).split('@')[0];
 
       if (imgBuffer) {
         const thumb = await genThumbnail(imgBuffer, 'image/jpeg');
@@ -664,12 +944,13 @@ module.exports = async function groupHandler(ctx) {
           type: 'image',
           media: imgBuffer,
           mimetype: 'image/jpeg',
-          caption: `📸 Foto profil @${mentioned[0].split('@')[0]}`,
-          mentions: [mentioned[0]],
+          // Non-member: mention-nya nggak bakal ke-render, jadi tulis nomor polos.
+          caption: dariNomor ? `📸 Foto profil ${tagNum}` : `📸 Foto profil @${tagNum}`,
+          ...(dariNomor ? {} : { mentions: [target] }),
           ...(thumb ? { jpegThumbnail: thumb } : {}),
         });
       } else {
-        await reply('❌ Foto profil tidak ditemukan atau private');
+        await reply(`❌ @${tagNum} nggak pasang foto profil (atau diprivasi).`);
       }
       return true;
     }
@@ -677,20 +958,9 @@ module.exports = async function groupHandler(ctx) {
     // ── getppgc ───────────────────────────────────────────────────────────────
     case 'getppgc':
     case 'ppgc':
-    case 'ppgroup':
-    case 'ppgrup': {
-      const DEFAULT_PP_GC = 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png';
-      let ppGcUrl = DEFAULT_PP_GC;
-      try {
-        const pp = await client.profile.getProfilePicture(jid, 'image');
-        if (pp?.url) ppGcUrl = pp.url;
-      } catch { /* pakai default */ }
-
-      let gcImgBuffer = null;
-      try {
-        const res = await fetch(ppGcUrl);
-        gcImgBuffer = Buffer.from(await res.arrayBuffer());
-      } catch { /* fallback teks */ }
+    case 'ppgroup': {
+      const ppGcUrl = await client.profile.getProfilePicture(jid, 'image');
+      const gcImgBuffer = ppGcUrl ? await fetchImageBuffer(ppGcUrl) : null;
 
       if (gcImgBuffer) {
         const thumb = await genThumbnail(gcImgBuffer, 'image/jpeg');
@@ -873,7 +1143,7 @@ module.exports = async function groupHandler(ctx) {
       const counts  = {};
 
       for (const p of members) {
-        // zapo-js return JID sebagai @lid, gunakan phoneNumber field langsung
+        // engine return JID sebagai @lid, gunakan phoneNumber field langsung
         const rawJid = p.jid || p.lid || '';
         const isPhone = rawJid.endsWith('@s.whatsapp.net') || rawJid.endsWith('@c.us');
         const num = isPhone
@@ -974,63 +1244,59 @@ module.exports = async function groupHandler(ctx) {
       const tc = topchatStore.get(jid);
       if (!tc || tc.size === 0) { await reply('Belum ada data chat'); return true; }
       const sorted = [...tc.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10);
-      const list   = sorted.map(([ jid, count ], i) => `${i + 1}. @${jid.split('@')[0]} — ${count} pesan`).join('\n');
-      const mentions = sorted.map(([j]) => j);
-      await client.message.send(jid, { text: `🏆 *Top Chat*\n\n${list}`, mentions: mentions });
+      const list   = sorted.map(([ num, count ], i) => `${i + 1}. @${num} — ${count} pesan`).join('\n');
+      // mentionsForChat nyertain bentuk LID-nya — di grup LID, tag cuma nyantol
+      // kalau `mentionedJid` bawa LID, bukan cuma nomor polos.
+      await client.message.send(jid, {
+        type: 'text',
+        text: `🏆 *Top Chat*\n\n${list}`,
+        mentions: mentionsForChat(jid, sorted.map(([num]) => toPn(num))),
+      });
       return true;
     }
 
     // ── setwelcome ────────────────────────────────────────────────────────────
-    case 'setwelcome': {
-      if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
-      const { pool: dbPool } = require('../config/database');
-      const teks = args.join(' ').trim();
-      if (!teks) {
-        await reply(
-          `⚠️ *Teks welcome belum dimasukkan!*\n\n` +
-          `*Cara Penggunaan:*\n${p}setwelcome <teks>\n\n` +
-          `*Contoh:*\n${p}setwelcome Halo @user, selamat datang di @subject!\n\n` +
-          `┌─ *VARIABEL TERSEDIA*\n` +
-          `▢ *@user* : Tag member baru\n` +
-          `▢ *@subject* : Nama grup\n` +
-          `▢ *@desc* : Deskripsi grup\n` +
-          `└──────────────`
-        );
-        return true;
-      }
-      await dbPool.execute(
-        `INSERT INTO group_settings (bot_id, group_jid, welcome_msg)
-         VALUES (?, ?, ?)
-         ON DUPLICATE KEY UPDATE welcome_msg = VALUES(welcome_msg)`,
-        [botData.id, jid, teks]
-      );
-      await reply(`✅ *Pesan Welcome Berhasil Diatur!*\n\nPesan ini akan otomatis dikirim ketika ada anggota baru yang bergabung ke dalam grup.`);
-      return true;
-    }
-
-    // ── setbye ────────────────────────────────────────────────────────────────
+    case 'setwelcome':
+    case 'setleft':
     case 'setbye': {
       if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
       const { pool: dbPool } = require('../config/database');
+      const isWelcome = command === 'setwelcome';
+      // welcome/left = sepasang: kolom teks + kolom saklarnya.
+      const [colMsg, colOn] = isWelcome
+        ? ['welcome_msg', 'welcome_on']
+        : ['bye_msg',     'bye_on'];
+      const judul = isWelcome ? 'Welcome' : 'Bye';
       const teks = args.join(' ').trim();
       if (!teks) {
         await reply(
-          `⚠️ *Teks bye belum dimasukkan!*\n\n` +
-          `*Cara Penggunaan:*\n${p}setbye <teks>\n\n` +
-          `*Contoh:*\n${p}setbye Selamat tinggal @user, semoga sukses!\n\n` +
+          `⚠️ *Teks ${judul.toLowerCase()} belum dimasukkan!*\n\n` +
+          `*Cara Penggunaan:*\n${p}${command} <teks>\n\n` +
+          `*Contoh:*\n${p}${command} ${isWelcome ? 'Halo @user, selamat datang di @namegc!' : 'Selamat tinggal @user, semoga sukses!'}\n\n` +
           `┌─ *VARIABEL TERSEDIA*\n` +
-          `▢ *@user* : Tag member yang keluar\n` +
-          `└──────────────`
+          `▢ *@user* : Tag ${isWelcome ? 'member baru' : 'member yang keluar'}\n` +
+          `▢ *@namegc* : Nama grup\n` +
+          `▢ *@desc* : Deskripsi grup\n` +
+          `▢ *@jam* *@menit* *@detik* *@hari* *@tanggal* *@bulan* *@tahun* *@namabulan*\n` +
+          `▢ *@tagdiri* *@tagreply* *@pesanan*\n` +
+          `└──────────────\n\n_Daftar lengkap: ${p}catatan_\n_Matikan: ${p}off ${isWelcome ? 'welcome' : 'left'}_`
         );
         return true;
       }
+      // Sekalian nyalain — admin yang barusan nulis pesannya nggak mungkin niat matiin.
       await dbPool.execute(
-        `INSERT INTO group_settings (bot_id, group_jid, bye_msg)
-         VALUES (?, ?, ?)
-         ON DUPLICATE KEY UPDATE bye_msg = VALUES(bye_msg)`,
+        `INSERT INTO group_settings (bot_id, group_jid, ${colMsg}, ${colOn})
+         VALUES (?, ?, ?, 1)
+         ON DUPLICATE KEY UPDATE ${colMsg} = VALUES(${colMsg}), ${colOn} = 1`,
         [botData.id, jid, teks]
       );
-      await reply(`✅ *Pesan Bye Berhasil Diatur!*\n\nPesan ini akan otomatis dikirim ketika ada anggota yang keluar dari grup.`);
+      await reply(
+        `✅ *Pesan ${judul} Berhasil Diatur!*\n\n` +
+        (isWelcome
+          ? 'Pesan ini akan otomatis dikirim ketika ada anggota baru yang bergabung ke dalam grup.'
+          : 'Pesan ini akan otomatis dikirim ketika ada anggota yang keluar dari grup.') +
+        `\n\n_Matikan: ${p}off ${isWelcome ? 'welcome' : 'left'}_`
+      );
       return true;
     }
 
@@ -1038,11 +1304,13 @@ module.exports = async function groupHandler(ctx) {
     case 'delwelcome': {
       if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
       const { pool: dbPool } = require('../config/database');
+      // Saklarnya sekalian dimatiin: kalau cuma di-NULL, engine jatuh balik ke
+      // teks default .env dan sambutan tetep kekirim — padahal niatnya berhenti.
       await dbPool.execute(
-        'UPDATE group_settings SET welcome_msg = NULL WHERE bot_id = ? AND group_jid = ?',
+        'UPDATE group_settings SET welcome_msg = NULL, welcome_on = 0 WHERE bot_id = ? AND group_jid = ?',
         [botData.id, jid]
       );
-      await reply('✅ Pesan welcome berhasil dihapus.');
+      await reply(`✅ Pesan welcome dihapus & sambutan dimatikan.\n\n_Nyalain lagi: ${p}on welcome_`);
       return true;
     }
 
@@ -1051,40 +1319,10 @@ module.exports = async function groupHandler(ctx) {
       if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
       const { pool: dbPool } = require('../config/database');
       await dbPool.execute(
-        'UPDATE group_settings SET bye_msg = NULL WHERE bot_id = ? AND group_jid = ?',
+        'UPDATE group_settings SET bye_msg = NULL, bye_on = 0 WHERE bot_id = ? AND group_jid = ?',
         [botData.id, jid]
       );
-      await reply('✅ Pesan bye berhasil dihapus.');
-      return true;
-    }
-
-    // ── setdetect ─────────────────────────────────────────────────────────────
-    case 'setdetect': {
-      if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
-      if (!await isBotAdmin()) { await reply(mess.BotAdmin); return true; }
-      const { pool: dbPool } = require('../config/database');
-      await dbPool.execute(
-        `INSERT INTO group_settings (bot_id, group_jid, detect)
-         VALUES (?, ?, 1)
-         ON DUPLICATE KEY UPDATE detect = 1`,
-        [botData.id, jid]
-      );
-      await reply('✅ *Group Detect aktif!*\nBot akan mengirim notifikasi perubahan grup (ganti nama, icon, deskripsi, promote/demote admin, dll).');
-      return true;
-    }
-
-    // ── deldetect ─────────────────────────────────────────────────────────────
-    case 'deldetect': {
-      if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
-      if (!await isBotAdmin()) { await reply(mess.BotAdmin); return true; }
-      const { pool: dbPool } = require('../config/database');
-      await dbPool.execute(
-        `INSERT INTO group_settings (bot_id, group_jid, detect)
-         VALUES (?, ?, 0)
-         ON DUPLICATE KEY UPDATE detect = 0`,
-        [botData.id, jid]
-      );
-      await reply('✅ *Group Detect dinonaktifkan.*\nBot tidak akan lagi mengirim notifikasi perubahan grup.');
+      await reply(`✅ Pesan bye dihapus & ucapan keluar dimatikan.\n\n_Nyalain lagi: ${p}on left_`);
       return true;
     }
 
@@ -1154,21 +1392,11 @@ module.exports = async function groupHandler(ctx) {
       return true;
     }
 
-    // ── clearchat ─────────────────────────────────────────────────────────────
-    // Kirim 1000 pesan kosong untuk "membersihkan" chat (WA tidak support hapus semua pesan)
-    case 'clearchat': {
-      if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
-      await reply('🧹 Membersihkan chat...');
-      const blanks = Array(300).fill('‎'); // zero-width space
-      for (const b of blanks) {
-        try { await client.message.send(jid, b); } catch {}
-      }
-      await reply('✅ Chat telah dibersihkan!');
-      return true;
-    }
-
     // ── setppgc ───────────────────────────────────────────────────────────────
     // Ganti foto profil grup (reply gambar)
+    // Client signature: setProfilePicture(jid, buffer) — arg-nya JANGAN dibalik,
+    // kalau kebalik Baileys nge-`in`-in string jid dan error
+    // "Cannot use 'in' operator to search for 'stream' in <jid>".
     case 'setppgc': {
       if (!await isBotAdmin()) { await reply(mess.BotAdmin); return true; }
       if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
@@ -1183,9 +1411,9 @@ module.exports = async function groupHandler(ctx) {
         const buffer = await client.message.downloadBytes(
           quotedMsg ? { imageMessage: imgMsg } : ctx.msg.message
         );
-        await client.profile.setProfilePicture(buffer, jid);
+        await client.profile.setProfilePicture(jid, buffer);
         await reply('✅ Foto profil grup berhasil diubah!');
-      } catch (e) { await reply(`❌ Gagal ubah foto grup: ${e.message}`); }
+      } catch (e) { await reply(`❌ Gagal ubah foto grup: ${rapikanError(e)}`); }
       return true;
     }
 
@@ -1196,22 +1424,27 @@ module.exports = async function groupHandler(ctx) {
       if (!meta) { await reply('Gagal ambil data grup.'); return true; }
 
       if (!tc || tc.size === 0) {
-        await reply('Belum ada data chat di sesi ini. Tunggu beberapa saat lagi.');
+        await reply('Belum ada data chat sejak bot nyala. Tunggu beberapa saat lagi.');
         return true;
       }
 
-      // Member yang ada di grup tapi tidak ada di topchat = pasif
-      const aktif  = new Set(tc.keys());
-      const semua  = meta.participants.map(p => p.jid || p.lid).filter(Boolean);
-      const pasif  = semua.filter(m => !aktif.has(m));
+      // Member yang ada di grup tapi tidak ada di topchat = pasif.
+      // Wajib LID -> nomor dulu: `bare()` cuma motong '@…', jadi buat peserta
+      // ber-LID hasilnya angka LID (123…) — nggak akan pernah sama dengan kunci
+      // topchat yang nomor asli (628…), dan semua orang kelihatan pasif.
+      const peserta = meta.participants.map(p => p.lid || p.jid).filter(Boolean);
+      const nomor   = await Promise.all(peserta.map(l => lidToPnAsync(sock, l)));
+      const aktif   = new Set(tc.keys());
+      const semua   = [...new Set(nomor.map(bare).filter(Boolean))];
+      const pasif   = semua.filter(m => !aktif.has(m));
 
       if (pasif.length === 0) {
-        await reply('✅ Semua member aktif dalam sesi ini!');
+        await reply('✅ Semua member aktif sejak bot nyala!');
         return true;
       }
 
       const CHUNK = 20;
-      const lines = pasif.map((m, i) => `${i + 1}. @${m.split('@')[0]}`);
+      const lines = pasif.map((m, i) => `${i + 1}. @${m}`);
       for (let i = 0; i < lines.length; i += CHUNK) {
         const header = i === 0
           ? `😴 *MEMBER PASIF*\nTotal: *${pasif.length}/${semua.length} member*\n\n`
@@ -1219,7 +1452,8 @@ module.exports = async function groupHandler(ctx) {
         await client.message.send(jid, {
           type: 'text',
           text: header + lines.slice(i, i + CHUNK).join('\n'),
-          mentions: pasif.slice(i, i + CHUNK),
+          // mentionsForChat nyertain bentuk LID-nya; nomor polos doang nggak nyantol di grup LID.
+          mentions: mentionsForChat(jid, pasif.slice(i, i + CHUNK).map(toPn)),
         });
       }
       return true;
@@ -1229,90 +1463,134 @@ module.exports = async function groupHandler(ctx) {
     case 'listtotalpesan': {
       const tc = topchatStore.get(jid);
       if (!tc || tc.size === 0) {
-        await reply('Belum ada data statistik pesan di sesi ini.');
+        await reply('Belum ada data statistik pesan sejak bot nyala.');
         return true;
       }
       const sorted = [...tc.entries()].sort((a, b) => b[1] - a[1]);
       const CHUNK  = 25;
-      const lines  = sorted.map(([ m, count ], i) => `${i + 1}. @${m.split('@')[0]} — ${count} pesan`);
+      const total  = sorted.reduce((s, [, c]) => s + c, 0);
+      const lines  = sorted.map(([ num, count ], i) => `${i + 1}. @${num} — ${count} pesan`);
       for (let i = 0; i < lines.length; i += CHUNK) {
         const header = i === 0
-          ? `📊 *STATISTIK PESAN GRUP*\nTotal member aktif: *${sorted.length}*\n\n`
+          ? `📊 *STATISTIK PESAN GRUP*\nAngka ini dihitung SEJAK BOT NYALA (bukan dari awal grup).\n\n`
+            + `👥 Member ikut kehitung: *${sorted.length}*\n💬 Total pesan: *${total}*\n\n`
           : `📊 *(lanjutan)*\n\n`;
+        const potong = sorted.slice(i, i + CHUNK);
         await client.message.send(jid, {
           type: 'text',
           text: header + lines.slice(i, i + CHUNK).join('\n'),
-          mentions: sorted.slice(i, i + CHUNK).map(([m]) => m),
+          mentions: mentionsForChat(jid, potong.map(([num]) => toPn(num))),
         });
       }
       return true;
     }
 
     // ── setopen / setclose ────────────────────────────────────────────────────
-    // Jadwal buka-tutup otomatis per grup. Format jam: HH.MM
-    case 'setopen': {
+    // Jadwal buka-tutup otomatis per grup (cron di server.js), plus teks
+    // pengumuman yang dikirim ke grup saat jadwalnya jalan.
+    // Format: `.setopen 07.00 <teks>` — teks opsional (default dari .env).
+    case 'setopen':
+    case 'setclose': {
       if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
-      const jam = normalizeJam(args[0]);
-      if (!jam) {
-        await reply(`Penggunaan: ${p}setopen <jam>\n\nContoh: ${p}setopen 07.00\nFormat jam: HH.MM (00.00 - 23.59)`);
+      const isOpen = command === 'setopen';
+
+      // Arg pertama jam (HH.MM) = set jadwalnya; sisa argumen = teks pengumuman.
+      // Tanpa jam = argumennya murni teks pengumuman:
+      //   .setclose Selamat tinggal @user dari @namegc
+      const jam  = normalizeJam(args[0]);
+      const teks = (jam ? args.slice(1) : args).join(' ').trim();
+
+      if (!jam && !teks) {
+        await reply(
+          `⚠️ *Teks ${isOpen ? 'BUKA' : 'TUTUP'} grup belum diisi!*\n\n` +
+          `*Cara Penggunaan:*\n` +
+          `${p}${command} <teks>            → teks pengumuman\n` +
+          `${p}${command} <jam> <teks>      → teks + jadwal otomatis\n\n` +
+          `*Contoh:*\n` +
+          `${p}${command} ${isOpen ? 'Selamat pagi @namegc, grup sudah dibuka!' : 'Selamat tinggal @user dari @namegc'} \n` +
+          `${p}${command} ${isOpen ? '07.00' : '22.00'} ${isOpen ? 'Grup dibuka jam @jam WIB' : 'Grup ditutup jam @jam WIB'}\n\n` +
+          `_Tanpa teks = pakai default dari .env (${isOpen ? 'DEFAULT_SETOPEN' : 'DEFAULT_SETCLOSE'})_\n\n` +
+          catatan(command)
+        );
         return true;
       }
+
+      const kolomJam  = isOpen ? 'open_time' : 'close_time';
+      const kolomTeks = isOpen ? 'open_msg' : 'close_msg';
+
       const { pool: dbPool } = require('../config/database');
-      await dbPool.execute(
-        `INSERT INTO group_settings (bot_id, group_jid, open_time)
-         VALUES (?, ?, ?)
-         ON DUPLICATE KEY UPDATE open_time = VALUES(open_time)`,
-        [botData.id, jid, jam]
-      ).catch(async () => {
-        // Kolom belum ada, buat dulu
-        await dbPool.execute('ALTER TABLE group_settings ADD COLUMN IF NOT EXISTS open_time VARCHAR(10) DEFAULT NULL');
-        await dbPool.execute('ALTER TABLE group_settings ADD COLUMN IF NOT EXISTS close_time VARCHAR(10) DEFAULT NULL');
-        await dbPool.execute(
-          `INSERT INTO group_settings (bot_id, group_jid, open_time)
-           VALUES (?, ?, ?)
-           ON DUPLICATE KEY UPDATE open_time = VALUES(open_time)`,
-          [botData.id, jid, jam]
-        );
-      });
-      await reply(`✅ Jadwal *buka* grup diset ke jam *${jam}* WIB.\nGrup akan otomatis dibuka setiap hari pada jam tersebut.`);
+      // COALESCE: cuma ganti teks = jadwal lama jangan kehapus (dan sebaliknya).
+      const simpan = () => dbPool.execute(
+        `INSERT INTO group_settings (bot_id, group_jid, ${kolomJam}, ${kolomTeks})
+         VALUES (?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE ${kolomJam} = COALESCE(VALUES(${kolomJam}), ${kolomJam}),
+                                 ${kolomTeks} = VALUES(${kolomTeks})`,
+        [botData.id, jid, jam, teks || null]
+      );
+      try { await simpan(); }
+      catch {
+        // DB lama belum punya kolomnya — bikin dulu, terus ulang.
+        for (const ddl of [
+          'ALTER TABLE group_settings ADD COLUMN open_time VARCHAR(10) NULL',
+          'ALTER TABLE group_settings ADD COLUMN close_time VARCHAR(10) NULL',
+          'ALTER TABLE group_settings ADD COLUMN open_msg TEXT NULL',
+          'ALTER TABLE group_settings ADD COLUMN close_msg TEXT NULL',
+        ]) await dbPool.execute(ddl).catch(() => {});
+        await simpan();
+      }
+
+      await reply(
+        `✅ *${isOpen ? 'BUKA' : 'TUTUP'} grup disimpan!*\n` +
+        (jam ? `⏰ Jadwal otomatis: *${jam}* WIB setiap hari.\n` : '') +
+        (teks ? `📝 Teks pengumuman:\n${teks}` : `📝 Teks: default .env (${isOpen ? 'DEFAULT_SETOPEN' : 'DEFAULT_SETCLOSE'})`)
+      );
       return true;
     }
 
-    case 'setclose': {
-      if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
-      const jam = normalizeJam(args[0]);
-      if (!jam) {
-        await reply(`Penggunaan: ${p}setclose <jam>\n\nContoh: ${p}setclose 22.00\nFormat jam: HH.MM (00.00 - 23.59)`);
-        return true;
-      }
-      const { pool: dbPool } = require('../config/database');
-      await dbPool.execute(
-        `INSERT INTO group_settings (bot_id, group_jid, close_time)
-         VALUES (?, ?, ?)
-         ON DUPLICATE KEY UPDATE close_time = VALUES(close_time)`,
-        [botData.id, jid, jam]
-      ).catch(async () => {
-        await dbPool.execute('ALTER TABLE group_settings ADD COLUMN IF NOT EXISTS open_time VARCHAR(10) DEFAULT NULL');
-        await dbPool.execute('ALTER TABLE group_settings ADD COLUMN IF NOT EXISTS close_time VARCHAR(10) DEFAULT NULL');
-        await dbPool.execute(
-          `INSERT INTO group_settings (bot_id, group_jid, close_time)
-           VALUES (?, ?, ?)
-           ON DUPLICATE KEY UPDATE close_time = VALUES(close_time)`,
-          [botData.id, jid, jam]
-        );
-      });
-      await reply(`✅ Jadwal *tutup* grup diset ke jam *${jam}* WIB.\nGrup akan otomatis ditutup setiap hari pada jam tersebut.`);
+    // ── catatan — daftar variable template ────────────────────────────────────
+    // `.catatan <topik>` buat lihat variable yang didukung di satu topik.
+    case 'catatan': {
+      const topik = (args[0] || command.slice('catatan'.length) || '')
+        .toLowerCase().replace(/^\./, '');
+      const label = { setwelcome: 'setwelcome', setbye: 'setbye', setleft: 'setbye',
+        setproses: 'setproses', setdone: 'setdone', setlist: 'setlist',
+        setopen: 'setopen', setopen2: 'setopen', setclose: 'setclose',
+        '': 'template' }[topik] || (topik || null);
+      await reply(
+        `📖 *DAFTAR VARIABLE TEMPLATE*\n\n` +
+        `Pakai \`@nama\` di teks ${p}setopen / ${p}setclose / ${p}setwelcome / ${p}setbye / ${p}setproses / ${p}setdone / ${p}setlist.\n` +
+        `Placeholder yang nggak dikenal dibiarkan apa adanya.\n\n` +
+        catatan(label)
+      );
       return true;
     }
 
     // ── swgc (kirim status/story ke grup) ────────────────────────────────────
     case 'swgc':
     case 'upswgc': {
-      if (!await isBotAdmin()) { await reply(mess.BotAdmin); return true; }
+      // Sengaja TANPA gate `isBotAdmin()`: status grup nggak butuh bot jadi
+      // admin (cuma butuh ikut jadi anggota). Referensi juga mencabutnya, dan
+      // buat target grup lain lewat `idgc|caption` gate itu malah salah grup.
+      const teks = args.join(' ').trim();
 
-      const caption = args.join(' ').trim();
+      // Owner boleh nembak ke grup lain: `.swgc <idgc>@g.us|caption`
+      // (persis `refrensi-botz/plugins/owner-upswtag.js`).
+      let targetGc = jid;
+      let caption = teks;
+      if (ctx.isOwner) {
+        const [idgc, ...sisa] = teks.split('|');
+        if (sisa.length && idgc.trim().endsWith('@g.us')) {
+          targetGc = idgc.trim();
+          caption = sisa.join('|').trim();
+        }
+      }
 
-      // Ambil media dari quoted message atau pesan saat ini
+      // Ambil media dari quoted message atau pesan saat ini.
+      // PENTING: `.swgc test` di grup HARUS tetap jadi teks status — jalur teks
+      // referensi juga gitu. Dulu `hasMedia` ikut ngitung `quotedMessage` yang
+      // cuma cursor/mention (SELALU ada di reply), jadi `.swgc test` nyasar ke
+      // jalur media, `downloadBytes` gagal, dan hasilnya video KOSONG yang
+      // diterima WA tanpa error.
       const quotedMsg = ctx.msg?.message?.extendedTextMessage?.contextInfo?.quotedMessage;
       const imgMsg    = quotedMsg?.imageMessage  || ctx.msg?.message?.imageMessage;
       const vidMsg    = quotedMsg?.videoMessage  || ctx.msg?.message?.videoMessage;
@@ -1322,85 +1600,58 @@ module.exports = async function groupHandler(ctx) {
         let content;
 
         if (imgMsg) {
-          const buffer   = await client.message.downloadBytes(quotedMsg ? { imageMessage: imgMsg } : ctx.msg.message);
-          const uploaded = await client.message.upload(buffer, { type: 'image', mimetype: imgMsg.mimetype || 'image/jpeg' });
-          content = {
-            imageMessage: {
-              url:               uploaded.url,
-              mimetype:          imgMsg.mimetype || 'image/jpeg',
-              caption:           caption || '',
-              fileSha256:        uploaded.fileSha256,
-              fileLength:        uploaded.fileLength,
-              height:            uploaded.height  || 512,
-              width:             uploaded.width   || 512,
-              mediaKey:          uploaded.mediaKey,
-              fileEncSha256:     uploaded.fileEncSha256,
-              directPath:        uploaded.directPath,
-              mediaKeyTimestamp: uploaded.mediaKeyTimestamp,
-              jpegThumbnail:     uploaded.jpegThumbnail || undefined,
-            },
-          };
+          const buffer = await client.message.downloadBytes({ imageMessage: imgMsg });
+          const { imageMessage } = await client.message.prepareMedia(buffer, { type: 'image', mimetype: imgMsg.mimetype || 'image/jpeg' });
+          content = { imageMessage: { ...imageMessage, ...(caption && { caption }) } };
         } else if (vidMsg) {
-          const buffer   = await client.message.downloadBytes(quotedMsg ? { videoMessage: vidMsg } : ctx.msg.message);
-          const uploaded = await client.message.upload(buffer, { type: 'video', mimetype: vidMsg.mimetype || 'video/mp4' });
+          const buffer = await client.message.downloadBytes({ videoMessage: vidMsg });
+          const { videoMessage } = await client.message.prepareMedia(buffer, { type: 'video', mimetype: vidMsg.mimetype || 'video/mp4' });
           content = {
             videoMessage: {
-              url:               uploaded.url,
-              mimetype:          vidMsg.mimetype || 'video/mp4',
-              caption:           caption || '',
-              fileSha256:        uploaded.fileSha256,
-              fileLength:        uploaded.fileLength,
-              height:            uploaded.height  || 512,
-              width:             uploaded.width   || 512,
-              mediaKey:          uploaded.mediaKey,
-              fileEncSha256:     uploaded.fileEncSha256,
-              directPath:        uploaded.directPath,
-              mediaKeyTimestamp: uploaded.mediaKeyTimestamp,
-              jpegThumbnail:     uploaded.jpegThumbnail || undefined,
-              seconds:           uploaded.seconds || 1,
+              ...videoMessage,
+              seconds: videoMessage.seconds || vidMsg.seconds || 1,
+              ...(caption && { caption }),
             },
           };
         } else if (audMsg) {
-          const buffer   = await client.message.downloadBytes(quotedMsg ? { audioMessage: audMsg } : ctx.msg.message);
-          const uploaded = await client.message.upload(buffer, { type: 'audio', mimetype: audMsg.mimetype || 'audio/mp4' });
+          const buffer = await client.message.downloadBytes({ audioMessage: audMsg });
+          const { audioMessage } = await client.message.prepareMedia(buffer, { type: 'audio', mimetype: audMsg.mimetype || 'audio/mp4' });
           content = {
             audioMessage: {
-              url:               uploaded.url,
-              mimetype:          audMsg.mimetype || 'audio/mp4',
-              fileSha256:        uploaded.fileSha256,
-              fileLength:        uploaded.fileLength,
-              mediaKey:          uploaded.mediaKey,
-              fileEncSha256:     uploaded.fileEncSha256,
-              directPath:        uploaded.directPath,
-              mediaKeyTimestamp: uploaded.mediaKeyTimestamp,
-              seconds:           uploaded.seconds || 1,
-              ptt:               false,
+              ...audioMessage,
+              seconds: audioMessage.seconds || audMsg.seconds || 1,
+              ptt: false,
+              ...(caption && { caption }),
             },
           };
         } else if (caption) {
-          content = { extendedTextMessage: { text: caption } };
+          content = { text: caption };
         } else {
           await reply(
             `Cara penggunaan:\n` +
             `• *${p}swgc* <teks> — kirim teks sebagai status grup\n` +
-            `• Reply foto/video/audio lalu ketik *${p}swgc* [caption]`
+            `• Reply foto/video/audio lalu ketik *${p}swgc* [caption]` +
+            (ctx.isOwner ? `\n• *${p}swgc* <idgc>@g.us|caption — kirim ke grup lain` : '')
           );
           return true;
         }
 
-        // Kirim sebagai groupStatusMessageV2
-        // WA sering balas error 400 meski status berhasil terkirim — tangkap & abaikan
+        // Kirim sebagai status grup. relayStatusGrup() polos: envelope
+        // groupStatusMessageV2 + messageSecret, relayMessage `{ messageId }`
+        // doang — tanpa `quoted` (WA nolak status grup yg bawa quoted).
         try {
-          await client.message.send(jid, { groupStatusMessageV2: { message: content } });
+          await client.message.relayStatusGrup(targetGc, content);
         } catch (e) {
           if (!e.message?.includes('400') && !e.message?.includes('negative publish ack')) {
             throw e; // lempar ulang kalau bukan error 400 WA
           }
-          // error 400 = WA policy, status tetap terkirim, abaikan
+          // WA nolak di level policy. Jangan ditelan diem-diem — kalau nggak
+          // dicatat, gejalanya cuma "emoji centang tapi status nggak jadi".
+          console.error(`[swgc] WA nolak status grup: ${e.message}`);
         }
         await react('✅');
       } catch (e) {
-        await reply(`❌ Gagal kirim status grup: ${e.message}`);
+        await reply(`❌ Gagal kirim status grup: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -1413,12 +1664,12 @@ module.exports = async function groupHandler(ctx) {
 
 // Command yang kena limit untuk user biasa
 module.exports.limitedCmds = new Set([
-  'tagall','tagadmin','tagme','hidetag','ht',
-  'kick','kickall','promote','demote','add','promoteme',
-  'open','close','mute','unmute','slowmode','setname','setdesc',
+  'tagall','tagadmin','tagme','hidetag','h',
+  'kick','kickall','promote','demote','add','addai',
+  'open','close','mute','unmute','setname','setdesc',
   'grupopen','grupclose','linkgc','setnamegc',
-  'linkgroup','groupinfo','idgc','grouplist','leavegc','listadmin',
-  'getpp','totag','delete','cekasalmember',
+  'link','groupinfo','idgc','leavegc','listadmin',
+  'getpp','pp','totag','delete','cekasalmember',
   'mulaiabsen','absen','cekabsen','hapusabsen',
   'afk','listafk','topchat','swgc','upswgc',
 ]);

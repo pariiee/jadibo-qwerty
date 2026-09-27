@@ -7,8 +7,11 @@
  *           rpg, daily, store, beli, inventory, pakai, topkoin
  */
 
+const { rapikanError } = require('../engine/pesanError');
 const crypto = require('crypto');
 const { pool } = require('../config/database');
+const mess = require('../config/mess');
+const { isJlidUser } = require('../engine/jid');
 
 // ─── In-memory stores ────────────────────────────────────────────────────────
 const tembakStore    = new Map(); // sender -> target jid
@@ -42,12 +45,317 @@ const IKAN_WEIGHTS = { Kecil: 40, Sedang: 30, Besar: 15, Langka: 5, Sampah: 10 }
 const SUIT_WIN_MAP  = { batu: 'gunting', gunting: 'kertas', kertas: 'batu' };
 
 const STORE_ITEMS = [
-  { id: 1, name: 'Pedang Kayu',  price: 200,  type: 'weapon', effect: '+5 ATK' },
-  { id: 2, name: 'Tameng Besi',  price: 350,  type: 'armor',  effect: '+10 DEF' },
-  { id: 3, name: 'Ramuan Health', price: 150,  type: 'potion', effect: '+50 Health' },
-  { id: 4, name: 'Buku Sihir',   price: 500,  type: 'magic',  effect: '+20 MP' },
-  { id: 5, name: 'Kunci Emas',   price: 1000, type: 'special',effect: 'Buka kotak misteri' },
+  { id: 1,  name: 'Pedang Kayu',   price: 200,   type: 'weapon', lv: 1, effect: '+5 ATK' },
+  { id: 2,  name: 'Tameng Besi',   price: 350,   type: 'armor',  lv: 1, effect: '+4 DEF' },
+  { id: 3,  name: 'Ramuan Health', price: 150,   type: 'potion', effect: '+50 Health' },
+  { id: 4,  name: 'Buku Sihir',    price: 500,   type: 'magic',  effect: '+20 MP' },
+  { id: 5,  name: 'Kunci Emas',    price: 1000,  type: 'special',effect: 'Buka kotak misteri' },
+  { id: 6,  name: 'Pedang Besi',   price: 2500,  type: 'weapon', lv: 2, effect: '+10 ATK' },
+  { id: 7,  name: 'Tameng Baja',   price: 3000,  type: 'armor',  lv: 2, effect: '+8 DEF' },
+  { id: 8,  name: 'Pedang Baja',   price: 12000, type: 'weapon', lv: 3, effect: '+15 ATK' },
+  { id: 9,  name: 'Tameng Titan',  price: 15000, type: 'armor',  lv: 3, effect: '+12 DEF' },
+  { id: 10, name: 'Pedang Naga',   price: 60000, type: 'weapon', lv: 4, effect: '+20 ATK' },
+  { id: 11, name: 'Tameng Naga',   price: 75000, type: 'armor',  lv: 4, effect: '+16 DEF' },
 ];
+
+// ─── Bahan mentah, craft, skill, penjara ─────────────────────────────────────
+// Semua state baru (bahan, cooldown, skill, penjara) nempel di hewan_json yang
+// UDAH ADA — jadi nol kolom DB baru. Kuncinya di bawah ini.
+const KEY_BAHAN = 'bahan';   // { Batu: 3, Besi: 1, ... }
+const KEY_CD    = 'cd';      // { tambang: <epoch ms boleh lagi>, copet: ..., ... }
+const KEY_SKILL = 'skill';   // { atk, def, spd, hp }
+const KEY_JAIL  = 'jail';    // <epoch ms bebas>, 0/kosong = bebas
+
+/** Pilih acak berbobot dari list item yang punya `.w`. */
+function pilihBobot(list) {
+  const total = list.reduce((a, b) => a + (Number(b.w) || 0), 0);
+  let r = Math.random() * total;
+  for (const it of list) { r -= Number(it.w) || 0; if (r <= 0) return it; }
+  return list[0];
+}
+
+// 3 spot grind bahan. Bedanya cuma tabelnya.
+const SPOT_BAHAN = {
+  tambang: { nama: '⛏️ Tambang', biaya: 20, xp: 8,
+    isi: [ { n: 'Batu',    w: 45, min: 1, max: 5 },
+           { n: 'Besi',    w: 30, min: 1, max: 3 },
+           { n: 'Emas',    w: 18, min: 1, max: 2 },
+           { n: 'Berlian', w: 7,  min: 1, max: 1 } ] },
+  kebon:   { nama: '🌾 Kebon',   biaya: 15, xp: 6,
+    isi: [ { n: 'Padi',   w: 40, min: 2, max: 6 },
+           { n: 'Jagung', w: 35, min: 1, max: 5 },
+           { n: 'Cabai',  w: 20, min: 1, max: 3 },
+           { n: 'Tebu',   w: 5,  min: 1, max: 2 } ] },
+  tebang:  { nama: '🪓 Tebang',  biaya: 15, xp: 6,
+    isi: [ { n: 'Kayu',   w: 50, min: 2, max: 7 },
+           { n: 'Bambu',  w: 35, min: 1, max: 5 },
+           { n: 'Rotan',  w: 15, min: 1, max: 3 } ] },
+};
+const SPOT_COOLDOWN = 15 * 60 * 1000;
+
+// Kejahatan: hadiah gede, tapi ada peluang gagal → hukuman (menit) di penjara.
+const KEJAHATAN = {
+  copet:  { nama: '🥷 *C O P E T*',  biaya: 10, min: 50,   max: 400,  gagal: 0.45, hukuman: 5,  cooldown: 20 * 60 * 1000 },
+  maling: { nama: '🕵️ *M A L I N G*', biaya: 20, min: 200,  max: 1500, gagal: 0.50, hukuman: 10, cooldown: 45 * 60 * 1000 },
+  rampok: { nama: '🔫 *R A M P O K*', biaya: 35, min: 800,  max: 5000, gagal: 0.55, hukuman: 20, cooldown: 2 * 60 * 60 * 1000 },
+};
+
+// Command yang diblokir waktu lagi di penjara (yang ngasih duit/bahan).
+// Sisanya (profil, inventory, money, beli, repair, bebaskan) tetap jalan.
+const CMD_RISIKO = new Set([
+  'kerja', 'gajian', 'mancing', 'berburu', 'dungeon', 'adventure',
+  'tambang', 'kebon', 'tebang', 'copet', 'maling', 'rampok',
+  'bertarung', 'transfer', 'gacha', 'slot', 'coinflip', 'taruhan',
+]);
+
+// Resep craft: id = nomor item di STORE_ITEMS, bahan = { nama: jumlah }.
+// Urut dari murah ke mahal biar `.craft` enak dibaca.
+const RESEP = [
+  { id: 1,  bahan: { Kayu: 3 } },
+  { id: 3,  bahan: { Cabai: 2, Padi: 1 } },
+  { id: 2,  bahan: { Besi: 2, Kayu: 2 } },
+  { id: 6,  bahan: { Besi: 4, Batu: 3, Kayu: 2 } },
+  { id: 7,  bahan: { Besi: 5, Batu: 4 } },
+  { id: 4,  bahan: { Tebu: 3, Padi: 2 } },
+  { id: 8,  bahan: { Besi: 8, Emas: 3, Rotan: 2 } },
+  { id: 9,  bahan: { Besi: 10, Batu: 8, Bambu: 3 } },
+  { id: 5,  bahan: { Emas: 5, Berlian: 1 } },
+  { id: 10, bahan: { Berlian: 3, Emas: 10, Rotan: 5 } },
+  { id: 11, bahan: { Berlian: 4, Emas: 12, Bambu: 5 } },
+];
+
+// Skill: 4 stat, beli pakai Money. Harga naik tiap level.
+const SKILL_NAMA = { atk: '⚔️ Attack', def: '🛡️ Defense', spd: '💨 Speed', hp: '❤️ Health' };
+const SKILL_MAKS = 50;
+const biayaSkill = (lv) => 200 * (Number(lv) + 1);
+
+// STORE_ITEMS nggak punya field emoji — ambil dari tipe-nya.
+const EMOJI_ITEM = { weapon: '🗡️', armor: '🛡️', potion: '🧪', magic: '📕', special: '🔑' };
+const emojiItem  = (it) => EMOJI_ITEM[(it || {}).type] || '📦';
+
+// ─── Energi ──────────────────────────────────────────────────────────────────
+// Energi = ongkos aktivitas grind. Regen otomatis, jadi nggak butuh `.tidur`.
+const ENERGI_MAKS       = 100;
+const ENERGI_REGEN_MENIT = 2;   // 1 poin / 2 menit
+
+// ponytail: regen cuma jalan saat ada command. Kalau nanti butuh energi "live",
+// panggil energiSekarang() juga di `.profil`/`.rpg` (udah aman, cuma baca).
+/** Nilai energi terkini (udah dihitung regen-nya) — TANPA nulis DB. */
+function energiSekarang(member) {
+  const menit = Math.max(0, (Date.now() - toEpochMs(member.last_energi)) / 60000);
+  const naik  = Math.floor(menit / ENERGI_REGEN_MENIT);
+  // Belum pernah ada jam regen (user lama) → anggap full, jangan hukum user lama.
+  if (!member.last_energi) return ENERGI_MAKS;
+  return Math.min(ENERGI_MAKS, (Number(member.energi) || 0) + naik);
+}
+
+/**
+ * Gerbang energi: regen dulu, cek cukup, baru tulis DB sekali.
+ * Return { ok, energi } — kalau ok:false, DB nggak disentuh.
+ */
+async function pakaiEnergi(botId, jid, member, biaya) {
+  const energi = energiSekarang(member);
+  if (energi < biaya) return { ok: false, energi, biaya };
+  await updateMember(botId, jid, {
+    energi: energi - biaya,
+    last_energi: new Date().toISOString().slice(0, 19).replace('T', ' '),
+    // ponytail: read-modify-write, bukan `energi = energi - ?`. Dua command
+    // barengan bisa bikin 1 poin hilang — nggak masalah buat RPG chat.
+  });
+  return { ok: true, energi: energi - biaya, biaya };
+}
+
+/** Pesan seragam kalau energi kurang. */
+function pesanEnergiKurang(energi, biaya) {
+  const kurang = biaya - energi;
+  const menit  = Math.ceil(kurang * ENERGI_REGEN_MENIT);
+  return (
+    `😴 *Energi kamu cuma ${energi}/${ENERGI_MAKS}* — butuh *${biaya}*.\n\n` +
+    `Istirahat *${menit} menit* biar pulih ${kurang} poin.`
+  );
+}
+
+/** Bar energi buat profil. */
+function barEnergi(energi) {
+  const isi = Math.round((energi / ENERGI_MAKS) * 10);
+  return `${'█'.repeat(isi)}${'░'.repeat(10 - isi)} ${energi}/${ENERGI_MAKS}`;
+}
+
+// ─── Gear ────────────────────────────────────────────────────────────────────
+const DUR_MAKS   = 100;
+const BIAYA_REPAIR = 0.10;   // 10% harga item
+
+/** Harga item store dengan type & lv tertentu — buat hitung biaya repair. */
+function hargaGear(type, lv) {
+  const item = STORE_ITEMS.find(i => i.type === type && i.lv === Number(lv));
+  return item ? item.price : 0;
+}
+
+/** Biaya repair gear di level tertentu. 0 = nggak ada gear / level nggak dikenal. */
+function biayaRepair(type, lv) {
+  return Math.ceil(hargaGear(type, lv) * BIAYA_REPAIR);
+}
+
+/**
+ * Baca argumen `.atm` / `.bank` jadi satu aksi. Pure — nggak nyentuh DB.
+ *   []                    → { aksi: 'info' }
+ *   ['100']               → { aksi: 'setor', jumlah: 100 }      (angka polos)
+ *   ['all'] / ['semua']   → { aksi: 'setor', semua: true }
+ *   ['simpan','100']      → { aksi: 'setor', jumlah: 100 }
+ *   ['pull','100']        → { aksi: 'tarik', jumlah: 100 }
+ *   ['pull','all']        → { aksi: 'tarik', semua: true }
+ *   ngawur                → { aksi: 'bantuan' }
+ */
+function bacaAtm(args) {
+  const a = (args[0] || '').toLowerCase();
+  const b = (args[1] || '').toLowerCase();
+  const semuaKata = w => w === 'all' || w === 'semua';
+
+  if (!a || a === 'info' || a === 'saldo') return { aksi: 'info' };
+  if (a === 'pull' || a === 'tarik' || a === 'ambil') {
+    return semuaKata(b) ? { aksi: 'tarik', semua: true }
+                        : { aksi: 'tarik', jumlah: parseInt(b, 10) };
+  }
+  // angka polos = setor. `.atm 100`
+  if (/^\d+$/.test(a)) return { aksi: 'setor', jumlah: parseInt(a, 10) };
+  if (semuaKata(a)) return { aksi: 'setor', semua: true };
+  if (a === 'simpan' || a === 'setor' || a === 'taro') {
+    return semuaKata(b) ? { aksi: 'setor', semua: true }
+                        : { aksi: 'setor', jumlah: parseInt(b, 10) };
+  }
+  return { aksi: 'bantuan' };
+}
+
+// ─── Gear terpasang ──────────────────────────────────────────────────────────
+// Level + durability disimpan di hewan_json.gear, bukan kolom baru.
+// ponytail: kalau nanti gear perlu query lintas-user (mis. "siapa paling banyak
+// pedang naga"), pindah ke tabel `rpg_gear` (bot_id, jid, slot, lv, dur).
+
+/** Level gear terpasang. 0 = belum punya. */
+function gearLevel(member, slot) {
+  const g = bacaGear(member)[slot];
+  return g ? (Number(g.lv) || 0) : 0;
+}
+
+/** Durability gear terpasang. */
+function gearDur(member, slot) {
+  const g = bacaGear(member)[slot];
+  return g ? (Number(g.dur) || 0) : 0;
+}
+
+/** Gear cuma nambah ATK/DEF kalau ada level DAN durability-nya belum habis. */
+function gearAktif(member, slot) {
+  return gearLevel(member, slot) > 0 && gearDur(member, slot) > 0;
+}
+
+/** Pasang/naikkan gear — mutasi objek `data` (hasil bacaJson). */
+function pasangGear(data, slot, lv, dur) {
+  const d = Math.min(DUR_MAKS, Math.max(0, Number(dur) || 0));
+  data[KEY_GEAR] = { ...(data[KEY_GEAR] || {}), [slot]: { lv: Number(lv) || 0, dur: d } };
+}
+
+/** Kurangi durability gear. Return dur baru (0 kalau udah habis/nggak ada gear). */
+function kurangiDur(data, slot, kurang) {
+  const g = (data[KEY_GEAR] || {})[slot];
+  if (!g) return 0;
+  const dur = Math.max(0, (Number(g.dur) || 0) - kurang);
+  pasangGear(data, slot, g.lv, dur);
+  return dur;
+}
+
+/** Teks gear buat profil/inventory. */
+function statGear(member, slot) {
+  const lv = gearLevel(member, slot);
+  if (lv < 1) return 'Belum punya';
+  const dur = gearDur(member, slot);
+  return dur > 0 ? `Lv.${lv} (dur ${dur}%)` : `Lv.${lv} — 💥 RUSAK`;
+}
+
+/** Baris gear yang baru berubah, buat ditempel ke pesan hasil pertarungan. */
+function barisDur(data, slot, ikon, label) {
+  const g = (data[KEY_GEAR] || {})[slot];
+  if (!g) return '';
+  return (Number(g.dur) || 0) > 0
+    ? `\n${ikon} ${label} Lv.${g.lv} — dur *${g.dur}%*`
+    : `\n💥 *${label} Lv.${g.lv} RUSAK!* Perbaiki: \`.repair\``;
+}
+
+// ─── Inventory item (disimpan di hewan_json, schema sengaja ga diubah) ───────
+// ponytail: 1 kolom JSON, bukan tabel `inventory` baru. Pisah ke tabel kalau
+// item udah perlu query lintas-user (mis. leaderboard pemilik item).
+const KEY_ITEM = 'item';
+const KEY_GEAR = 'gear';
+
+/** Parse hewan_json → objek. Rusak/kosong → {}. */
+function bacaJson(member) {
+  try {
+    const raw = member.hewan_json;
+    if (!raw) return {};
+    const obj = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    return (obj && typeof obj === 'object' && !Array.isArray(obj))
+      ? JSON.parse(JSON.stringify(obj))
+      : {};
+  } catch { return {}; }
+}
+
+/** Map item (id → jumlah) dari hewan_json. */
+function bacaItem(member) {
+  const inv = bacaJson(member)[KEY_ITEM];
+  return (inv && typeof inv === 'object' && !Array.isArray(inv)) ? inv : {};
+}
+
+/** Map gear terpasang (weapon/armor → {lv, dur}) dari hewan_json. */
+function bacaGear(member) {
+  const g = bacaJson(member)[KEY_GEAR];
+  return (g && typeof g === 'object' && !Array.isArray(g)) ? g : {};
+}
+
+/** Map bahan mentah (nama → jumlah) dari hewan_json. */
+function bacaBahan(member) {
+  const b = bacaJson(member)[KEY_BAHAN];
+  return (b && typeof b === 'object' && !Array.isArray(b)) ? b : {};
+}
+
+/** Skill (atk/def/spd/hp) dari hewan_json — selalu 4 kunci, default 0. */
+function bacaSkill(member) {
+  const s = bacaJson(member)[KEY_SKILL];
+  const out = { atk: 0, def: 0, spd: 0, hp: 0 };
+  if (s && typeof s === 'object') {
+    for (const k of Object.keys(out)) out[k] = Math.max(0, Math.min(SKILL_MAKS, Number(s[k]) || 0));
+  }
+  return out;
+}
+
+// ─── Penjara & cooldown (dua-duanya di hewan_json, nol kolom DB baru) ────────
+
+/** Sisa waktu di penjara dalam ms. 0 = bebas. */
+function sisaPenjara(member) {
+  const bebas = Number(bacaJson(member)[KEY_JAIL]) || 0;
+  return Math.max(0, bebas - Date.now());
+}
+
+function pesanPenjara(ms, p) {
+  const m = Math.floor(ms / 60000);
+  const d = Math.floor((ms % 60000) / 1000);
+  return `🚔 *Kamu sedang di penjara!*\n\nBebas dalam *${m}m ${d}d*.\n\n` +
+    `Mau keluar sekarang? Bayar tebusan: *${p}bebaskan*`;
+}
+
+/** Sisa cooldown command baru (disimpan di hewan_json.cd). */
+function sisaCdJson(member, nama) {
+  const cd = bacaJson(member)[KEY_CD] || {};
+  return Math.max(0, (Number(cd[nama]) || 0) - Date.now());
+}
+
+/** Set cooldown command di objek `data` (hasil bacaJson) — mutasi. */
+function setCdJson(data, nama, ms) {
+  data[KEY_CD] = { ...(data[KEY_CD] || {}), [nama]: Date.now() + ms };
+}
+
+/** Level gear yang beneran dipakai di pertarungan: ada lv DAN durability > 0. */
+function gearDipakai(member, slot) {
+  return gearAktif(member, slot) ? gearLevel(member, slot) : 0;
+}
 
 // ─── XP threshold per level ───────────────────────────────────────────────────
 function xpForLevel(level) {
@@ -104,6 +412,7 @@ function cdRemain(lastRaw, cooldownMs) {
 
 /** Ambil atau buat row RPG member di DB */
 async function getOrCreateMember(botId, jid, name) {
+  if (!isJlidUser(jid)) return undefined;   // grup/newsletter/LID: nggak punya baris RPG
   const serial = crypto.createHash('md5').update(`${botId}:${jid}`).digest('hex');
   await pool.execute(
     `INSERT INTO rpg_members (bot_id, jid, name, serial)
@@ -169,18 +478,59 @@ async function applyXpGain(botId, jid, amount, extraFields = {}) {
   return { member: { ...m, xp, level }, newLevel: level, leveledUp: level > startLevel, levelsGained: level - startLevel };
 }
 
+// ─── Helper: satu handler buat 3 spot bahan (tambang/kebon/tebang) ───────────
+// Bedanya cuma tabel SPOT_BAHAN — jadi nggak perlu 3 case yang isinya kembar.
+async function galiBahan(ctx, kunci) {
+  const { reply, botData, sender, pushName } = ctx;
+  const p      = botData.prefix;
+  const spot   = SPOT_BAHAN[kunci];
+  const botId  = botData.id;
+  const member = await getOrCreateMember(botId, sender, pushName);
+
+  const sisaCd = sisaCdJson(member, kunci);
+  if (sisaCd > 0) {
+    const m = Math.floor(sisaCd / 60000);
+    const d = Math.floor((sisaCd % 60000) / 1000);
+    await reply(`${spot.nama} masih sepi. Balik lagi dalam *${m}m ${d}d*.`);
+    return true;
+  }
+
+  const cukup = await pakaiEnergi(botId, sender, member, spot.biaya);
+  if (!cukup.ok) { await reply(pesanEnergiKurang(cukup.energi, spot.biaya)); return true; }
+
+  // 1–3 kali roll dari tabel berbobot
+  const dapat = {};
+  const roll  = Math.floor(Math.random() * 3) + 1;
+  for (let i = 0; i < roll; i++) {
+    const b = pilihBobot(spot.isi);
+    const n = Math.floor(Math.random() * (b.max - b.min + 1)) + b.min;
+    dapat[b.n] = (dapat[b.n] || 0) + n;
+  }
+
+  const data  = bacaJson(member);
+  const bahan = bacaBahan(member);
+  for (const [n, j] of Object.entries(dapat)) bahan[n] = (bahan[n] || 0) + j;
+  data[KEY_BAHAN] = bahan;
+  setCdJson(data, kunci, SPOT_COOLDOWN);
+
+  const xpGet = spot.xp + (member.premium ? 2 : 0);
+  const { xp, level } = calcXpLevel(member.xp, member.level || 1, xpGet);
+  await updateMember(botId, sender, { xp, level, hewan_json: JSON.stringify(data) });
+
+  let txt = `${spot.nama} — *HASIL*\n\n` +
+    Object.entries(dapat).map(([n, j]) => `• ${n} ×${j}`).join('\n') +
+    `\n\n✨ XP: *+${xpGet}*`;
+  if (level > (member.level || 1)) txt += `\n\n🎉 *LEVEL UP!* Level *${level}* (${getRankByLevel(level)})`;
+  txt += `\n⚡ Energi sisa: *${cukup.energi}*`;
+  await reply(txt);
+  return true;
+}
+
 // ─── Helper: weighted random ikan ────────────────────────────────────────────
 function pickIkan() {
-  const total = Object.values(IKAN_WEIGHTS).reduce((a, b) => a + b, 0);
-  let rand = Math.random() * total;
-  for (const [tier, weight] of Object.entries(IKAN_WEIGHTS)) {
-    rand -= weight;
-    if (rand <= 0) {
-      const pool = IKAN_TABLE.filter(i => i.tier === tier);
-      return pool[Math.floor(Math.random() * pool.length)];
-    }
-  }
-  return IKAN_TABLE[0];
+  const tier = pilihBobot(Object.entries(IKAN_WEIGHTS).map(([t, w]) => ({ t, w }))).t;
+  const pool = IKAN_TABLE.filter(i => i.tier === tier);
+  return pool[Math.floor(Math.random() * pool.length)];
 }
 function renderTTTBoard(board) {
   const nums = ['1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣'];
@@ -244,7 +594,14 @@ module.exports = async function funRpgHandler(ctx) {
               { nama: 'Skeleton', hp: 60,  reward: { min: 250,  max: 600  }, xp: 12 },
             ];
             const monster  = MONSTER_LIST[Math.floor(Math.random() * MONSTER_LIST.length)];
-            const menang   = Math.random() >= 0.35; // 65% chance menang
+            // Skill atk tim nambah peluang menang — biar `.skill` kerasa di dungeon.
+            // ponytail: monster nyerang 1×, jadi buff-nya ⅓ pasukan (def diabaikan,
+            // dungeon lama juga nggak pakai def). Naikin kalau sekalian rombak dungeon.
+            let skTim = 0;
+            for (const pJid of [...new Set(players)]) {
+              try { skTim += bacaSkill(await getOrCreateMember(botId, pJid, resolveMentionNum(pJid))).atk; } catch {}
+            }
+            const menang   = Math.random() < Math.min(0.9, 0.5 + (skTim / 3) / 500);
             const rewardKoin = menang
               ? Math.floor(Math.random() * (monster.reward.max - monster.reward.min + 1)) + monster.reward.min
               : 0;
@@ -267,7 +624,7 @@ module.exports = async function funRpgHandler(ctx) {
             dungeonRooms.delete(room.id);
 
             const resultTxt = menang
-              ? `🏆 *MENANG!* Berhasil mengalahkan *${monster.nama}*!\n\n💰 Reward : *+${formatNum(rewardKoin)} koin* per player\n✨ XP     : *+${rewardXp} XP* per player`
+              ? `🏆 *MENANG!* Berhasil mengalahkan *${monster.nama}*!\n\n💰 Reward : *+${formatNum(rewardKoin)}* per player\n✨ XP     : *+${rewardXp} XP* per player`
               : `💀 *KALAH!* *${monster.nama}* terlalu kuat!\n\n✨ XP     : *+${rewardXp} XP* (hiburan) per player`;
 
             await client.message.send(jid,
@@ -402,8 +759,8 @@ module.exports = async function funRpgHandler(ctx) {
             `🤠 *KOBOY — TEMBAKAN TEPAT!*\n\n` +
             `🎯 Kamu menembak ke *${bodyLower}* — BENAR!\n` +
             `${penjahat.emoji} *${penjahat.nama}* berhasil ditangkap!\n\n` +
-            `💰 Reward: *+${formatNum(penjahat.reward)} koin*\n` +
-            `Total koin: *${formatNum(newMoney)}*\n\n` +
+            `💰 Reward: *+${formatNum(penjahat.reward)}*\n` +
+            `Total: *${formatNum(newMoney)}*\n\n` +
             `_Koboy kembali patroli dalam 3 jam_`
           );
         } else {
@@ -439,8 +796,8 @@ module.exports = async function funRpgHandler(ctx) {
           await reply(
             `📦 *AIRDROP — TEPAT!*\n\n` +
             `🎯 Angka rahasia: *${angka}* — kamu benar!\n\n` +
-            `💰 Reward: *+${formatNum(koinGet)} koin*\n` +
-            `Total koin: *${formatNum(newMoney)}*\n\n` +
+            `💰 Reward: *+${formatNum(koinGet)}*\n` +
+            `Total: *${formatNum(newMoney)}*\n\n` +
             `_Airdrop berikutnya dalam 2 jam_`
           );
         } else {
@@ -454,8 +811,8 @@ module.exports = async function funRpgHandler(ctx) {
             `📦 *AIRDROP — SALAH!*\n\n` +
             `Kamu tebak *${angkaInput}*, angka rahasia: *${angka}*\n` +
             `${hint}\n\n` +
-            `💰 Hiburan: *+${formatNum(koinGet)} koin*\n` +
-            `Total koin: *${formatNum(newMoney)}*\n\n` +
+            `💰 Hiburan: *+${formatNum(koinGet)}*\n` +
+            `Total: *${formatNum(newMoney)}*\n\n` +
             `_Airdrop berikutnya dalam 2 jam_`
           );
         }
@@ -466,11 +823,21 @@ module.exports = async function funRpgHandler(ctx) {
 
   if (!isCmd) return false;
 
+  // Satu gerbang penjara: cuma command yang ngasih duit/bahan yang diblokir.
+  // Lihat saldo, tas, toko, dan `.bebaskan` tetap jalan — biar bisa nebus diri.
+  if (CMD_RISIKO.has(command)) {
+    try {
+      const mJail = await getOrCreateMember(botData.id, sender, pushName);
+      const sisa  = sisaPenjara(mJail);
+      if (sisa > 0) { await reply(pesanPenjara(sisa, p)); return true; }
+    } catch { /* DB lagi rewel → biarin handler-nya yang ngeluh */ }
+  }
+
   switch (command) {
 
     // ── jodoh ──────────────────────────────────────────────────────────────
     case 'jodoh': {
-      if (!isGroup) { await reply('Command ini hanya untuk grup'); return true; }
+      if (!isGroup) { await reply(mess.OnlyGroup); return true; }
       try {
         const meta    = await client.group.queryGroupMetadata(jid);
         const others  = meta.participants.filter(m => {
@@ -486,7 +853,7 @@ module.exports = async function funRpgHandler(ctx) {
           `💕 *Jodoh Hari Ini*\n\n@${resolveMentionNum(sender)} ❤️ @${resolveMentionNum(partnerJid)}\n\nKompatibilitas: *${compat}%*\n\n${emoji}`,
           { mentions: [sender, partnerJid] }
         );
-      } catch (e) { await reply(`Gagal mencari jodoh: ${e.message}`); }
+      } catch (e) { await reply(`Gagal mencari jodoh: ${rapikanError(e)}`); }
       return true;
     }
 
@@ -555,7 +922,7 @@ module.exports = async function funRpgHandler(ctx) {
     // ─────────────────────────────────────────────────────────────────────
 
     case 'mulaigiveaway': {
-      if (!isGroup) { await reply('Hanya untuk grup'); return true; }
+      if (!isGroup) { await reply(mess.OnlyGroup); return true; }
       if (giveawayStore.has(jid)) { await reply('Sudah ada giveaway aktif'); return true; }
       const [prize, ...titleParts] = args;
       const title = titleParts.join(' ') || 'Hadiah Spesial';
@@ -644,10 +1011,14 @@ module.exports = async function funRpgHandler(ctx) {
           m = await getOrCreateMember(botData.id, target, pushName);
         } else {
           m = await findMember(botData.id, target);
-          if (!m) {
-            await reply(`User @${resolveMentionNum(target)} belum terdaftar.\n_Orangnya belum pernah chat bot — suruh dia ketik command apa aja dulu._`);
-            return true;
-          }
+        }
+        // Satu guard buat dua jalur: LID yang belum ke-petakan ke nomor juga
+        // balik `undefined` dari getOrCreateMember.
+        if (!m) {
+          await reply(isSelf
+            ? 'Profil lu belum kebaca nih — coba ketik command lain dulu, terus ulang *.me*.'
+            : `User @${resolveMentionNum(target)} belum terdaftar.\n_Orangnya belum pernah chat bot — suruh dia ketik command apa aja dulu._`);
+          return true;
         }
         // Auto-repair: kalau XP numpuk > threshold (bug lama gacha), langsung
         // level-up & sisakan XP yang bener
@@ -688,6 +1059,18 @@ module.exports = async function funRpgHandler(ctx) {
           `┃💰 • Money: ${formatNum(m.money)}\n` +
           `┃💎 • Limit: ${m.lim}\n` +
           `└──────────────\n\n` +
+          `┌─⊷ STAT & GEAR\n` +
+          `┃❤️ • Health: ${Number(m.healt) || 0}/100\n` +
+          `┃⚡ • Energi: ${barEnergi(energiSekarang(m))}\n` +
+          `┃🗡️ • Sword: ${statGear(m, 'weapon')}\n` +
+          `┃🛡️ • Armor: ${statGear(m, 'armor')}\n` +
+          `┃🏦 • Bank: ${formatNum(m.bank_money || 0)}\n` +
+          `┃💼 • Kerja: ${m.job ? `${m.job} (${Number(m.jobexp) || 0}%)` : 'Belum melamar'}\n` +
+          (() => { const s = bacaSkill(m); return (s.atk + s.def + s.hp) > 0
+            ? `┃⚡ • Skill: atk ${s.atk} · def ${s.def} · hp ${s.hp}\n` : ''; })() +
+          (sisaPenjara(m) > 0
+            ? `┃⛓️ • Penjara: ${Math.ceil(sisaPenjara(m) / 60000)} menit lagi\n` : '') +
+          `└──────────────\n\n` +
           `┌─⊷ STATUS\n` +
           `┃📌 • Registered: ${m.registered ? 'Yes' : 'No'}\n` +
           `┃⭐ • Premium: ${m.premium ? 'Yes' : 'No'}\n` +
@@ -701,7 +1084,7 @@ module.exports = async function funRpgHandler(ctx) {
           await client.message.send(jid, txt, { mentions: [target] });
         }
       } catch (e) {
-        await reply(`Gagal load profil: ${e.message}`);
+        await reply(`Gagal load profil: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -719,10 +1102,17 @@ module.exports = async function funRpgHandler(ctx) {
           `Nama   : ${pushName}\n` +
           `Level  : ${m.level} (${rank})\n` +
           `XP     : ${formatNum(m.xp)}/${formatNum(xpForLevel(Number(m.level)))}\n` +
-          `Koin   : ${formatNum(m.money)} 🪙\n` +
-          `Limit  : ${m.lim}`
+          `Money  : ${formatNum(m.money)} 🪙\n` +
+          `Limit  : ${m.lim}\n` +
+          `─── STAT ───\n` +
+          `❤️ Health : ${Number(m.healt) || 0}/100\n` +
+          `⚡ Energi : ${barEnergi(energiSekarang(m))}\n` +
+          `🗡️ Sword  : ${statGear(m, 'weapon')}\n` +
+          `🛡️ Armor  : ${statGear(m, 'armor')}\n` +
+          `🏦 Bank   : ${formatNum(m.bank_money || 0)}\n` +
+          `💼 Kerja  : ${m.job ? `${m.job} (${Number(m.jobexp) || 0}%)` : 'Belum melamar'}`
         );
-      } catch (e) { await reply(`Gagal: ${e.message}`); }
+      } catch (e) { await reply(`Gagal: ${rapikanError(e)}`); }
       return true;
     }
 
@@ -752,53 +1142,207 @@ module.exports = async function funRpgHandler(ctx) {
         const premTag  = isPrem ? '\n⭐ *Bonus Premium aktif!*' : '';
         await reply(
           `🎁 *Daily Claim*${premTag}\n\n` +
-          `+${base} koin base\n` +
-          `+${bonus} koin bonus\n` +
+          `+${base} base\n` +
+          `+${bonus} bonus\n` +
           (isPrem ? `+50 limit\n` : '') +
-          `\nTotal koin: ${formatNum(newMoney)} 🪙\nLimit: ${newLim}`
+          `\nTotal: ${formatNum(newMoney)} 🪙\nLimit: ${newLim}`
         );
-      } catch (e) { await reply(`Gagal: ${e.message}`); }
+      } catch (e) { await reply(`Gagal: ${rapikanError(e)}`); }
       return true;
     }
 
     case 'store': {
       const list = STORE_ITEMS.map(item =>
-        `${item.id}. *${item.name}* — ${formatNum(item.price)} 🪙\n   ${item.effect}`
+        `${item.id}. *${item.name}* — ${formatNum(item.price)} 🪙\n   ${item.effect}${item.lv ? ` _(gear Lv.${item.lv})_` : ''}`
       ).join('\n');
-      await reply(`🏪 *Toko RPG*\n\n${list}\n\nBeli dengan: ${p}beli <nomor>`);
+      await reply(
+        `🏪 *Toko RPG*\n\n${list}\n\n` +
+        `Beli  : ${p}beli <nomor>\n` +
+        `Pakai : ${p}pakai <nomor>  _(potion)_\n` +
+        `Gear rusak diperbaiki dengan ${p}repair`
+      );
       return true;
     }
 
     case 'beli': {
       try {
-        const id   = parseInt(args[0], 10);
+        const id = parseInt((args[0] || '').trim(), 10);
         const item = STORE_ITEMS.find(i => i.id === id);
-        if (!item) { await reply(`Item tidak ditemukan. Ketik ${p}store untuk daftar`); return true; }
-        const m = await getOrCreateMember(botData.id, sender, pushName);
-        if (Number(m.money) < item.price) {
-          await reply(`❌ Koin tidak cukup! Kamu punya ${formatNum(m.money)} 🪙, butuh ${formatNum(item.price)} 🪙`);
+        if (!item) { await reply(`❌ Item nomor *${args[0] || '-'}* tidak ada di toko.\n\nLiat daftar: ${p}store`); return true; }
+
+        const member = await getOrCreateMember(botData.id, sender, pushName);
+        if ((Number(member.money) || 0) < item.price) {
+          await reply(`❌ Money tidak cukup!\n\nHarga: *${formatNum(item.price)}*\nMoney kamu: *${formatNum(member.money || 0)}*`);
           return true;
         }
-        await updateMember(botData.id, sender, { money: Number(m.money) - item.price });
-        await reply(`✅ Berhasil membeli *${item.name}*!\nSisa koin: ${formatNum(Number(m.money) - item.price)} 🪙`);
-      } catch (e) { await reply(`Gagal: ${e.message}`); }
+
+        const data = bacaJson(member);
+        const inv  = bacaItem(member);
+        inv[String(item.id)] = (Number(inv[String(item.id)]) || 0) + 1;
+
+        const fields = { money: (Number(member.money) || 0) - item.price };
+        let info = '';
+
+        // Gear: langsung dipakai kalau lebih bagus ATAU gear lama udah rusak.
+        // ponytail: gear lama tetap dihitung walau dur 0 — kalau nggak, beli
+        // Lv.1 pas rusak bikin "turun pangkat" dari Lv.3.
+        if (item.type === 'weapon' || item.type === 'armor') {
+          const slot   = item.type;
+          const lvLama = gearLevel(member, slot);
+          const rusak  = lvLama >= 1 && !gearAktif(member, slot);
+          if (item.lv > lvLama || rusak) {
+            pasangGear(data, slot, item.lv, DUR_MAKS);
+            info = `\n\n🗡️ *${item.name} langsung dipakai* (Lv.${item.lv}, dur ${DUR_MAKS}%).`;
+          } else {
+            info = `\n\n📦 Disimpan di inventory — gear Lv.${item.lv} nggak lebih bagus dari Lv.${lvLama} yang kamu pakai.`;
+          }
+        } else if (item.type === 'potion') {
+          info = `\n\n🧪 Pakai dengan: ${p}pakai ${item.id}`;
+        }
+
+        data[KEY_ITEM] = inv;
+        fields.hewan_json = JSON.stringify(data);
+        await updateMember(botData.id, sender, fields);
+
+        await reply(
+          `✅ *${item.name}* dibeli!\n\n` +
+          `💸 Bayar : *${formatNum(item.price)}* 🪙\n` +
+          `💰 Money : *${formatNum(fields.money)}*` + info
+        );
+      } catch (e) { await reply(`Gagal beli: ${rapikanError(e)}`); }
       return true;
     }
 
     case 'inventory': {
-      await reply(`🎒 Inventori belum tersedia di versi ini.`);
+      try {
+        const m    = await getOrCreateMember(botData.id, sender, pushName);
+        if (!m) { await reply('Tas lu belum kebaca nih — coba ulang sebentar lagi.'); return true; }
+        const inv  = bacaItem(m);
+        const rows = Object.entries(inv)
+          .map(([id, n]) => {
+            const item = STORE_ITEMS.find(i => String(i.id) === String(id));
+            return { nama: item ? item.name : `Item #${id}`, n: Number(n) || 0, id };
+          })
+          .filter(r => r.n > 0)
+          .sort((a, b) => a.nama.localeCompare(b.nama));
+
+        const daftar = rows.length
+          ? rows.map(r => `• *${r.nama}* ×${r.n}`).join('\n')
+          : '_Kosong. Belanja dulu di ' + p + 'store_';
+
+        await reply(
+          `🎒 *Inventory*\n\n${daftar}\n\n` +
+          `🗡️ Sword : ${statGear(m, 'weapon')}\n` +
+          `🛡️ Armor : ${statGear(m, 'armor')}\n` +
+          `⚡ Energi : ${barEnergi(energiSekarang(m))}`
+        );
+      } catch (e) { await reply(`Gagal: ${rapikanError(e)}`); }
       return true;
     }
 
     case 'pakai': {
-      await reply(`⚔️ Penggunaan item belum tersedia di versi ini.`);
+      try {
+        const id = parseInt((args[0] || '').trim(), 10);
+        const item = STORE_ITEMS.find(i => i.id === id);
+        if (!item || item.type === 'magic' || item.type === 'special') {
+          await reply(`❓ ${item ? `*${item.name}* belum bisa dipakai` : `Item nomor *${args[0] || '-'}* nggak ada`}.\n\nLiat daftar: ${p}store`);
+          return true;
+        }
+
+        const m   = await getOrCreateMember(botData.id, sender, pushName);
+        const inv = bacaItem(m);
+        const punya = Number(inv[String(item.id)]) || 0;
+        if (punya < 1) { await reply(`❌ Kamu nggak punya *${item.name}*.\n\nBeli dulu: ${p}beli ${item.id}`); return true; }
+
+        const data = bacaJson(m);
+        const fields = {};
+        let txt;
+
+        if (item.type === 'weapon' || item.type === 'armor') {
+          const slot   = item.type;
+          const lvLama = gearLevel(m, slot);
+          if (item.lv <= lvLama) {
+            await reply(`❌ ${slot === 'weapon' ? 'Pedang' : 'Armor'} kamu udah *Lv.${lvLama}* — lebih bagus dari *${item.name}* (Lv.${item.lv}).`);
+            return true;
+          }
+          pasangGear(data, slot, item.lv, DUR_MAKS);
+          txt = `🗡️ *${item.name}* dipasang — Lv.${item.lv}, dur *${DUR_MAKS}%*`;
+        } else {
+          const hpBaru = Math.min(100, (Number(m.healt) || 0) + 50);
+          fields.healt = hpBaru;
+          txt = `🧪 *${item.name}* diminum!\n❤️ Health: *${hpBaru}/100*`;
+        }
+
+        inv[String(item.id)] = punya - 1;
+        if (inv[String(item.id)] < 1) delete inv[String(item.id)];
+        data[KEY_ITEM] = inv;
+        fields.hewan_json = JSON.stringify(data);
+        await updateMember(botData.id, sender, fields);
+
+        await reply(`${txt}\n🎒 Sisa : *${punya - 1}*`);
+      } catch (e) { await reply(`Gagal: ${rapikanError(e)}`); }
+      return true;
+    }
+
+    case 'repair': {
+      try {
+        const m = await getOrCreateMember(botData.id, sender, pushName);
+        const data = bacaJson(m);
+
+        const perlu = ['weapon', 'armor'].filter(slot => {
+          const lv = gearLevel(m, slot);
+          return lv > 0 && gearDur(m, slot) < DUR_MAKS;
+        });
+
+        if (!perlu.length) {
+          const punya = ['weapon', 'armor'].filter(slot => gearLevel(m, slot) > 0);
+          await reply(punya.length
+            ? `✅ Gear kamu masih utuh semua — nggak ada yang perlu diperbaiki.`
+            : `❌ Kamu belum punya gear.\n\nBeli dulu di ${p}store`);
+          return true;
+        }
+
+        const rincian = perlu.map(slot => {
+          const lv  = gearLevel(m, slot);
+          const dur = gearDur(m, slot);
+          return { slot, lv, dur, biaya: biayaRepair(slot, lv) };
+        });
+        const total = rincian.reduce((s, r) => s + r.biaya, 0);
+
+        if ((Number(m.money) || 0) < total) {
+          const list = rincian.map(r => `• ${r.slot === 'weapon' ? '🗡️ Sword' : '🛡️ Armor'} Lv.${r.lv} (dur ${r.dur}%) — *${formatNum(r.biaya)}* 🪙`).join('\n');
+          await reply(
+            `❌ Money kamu nggak cukup buat benerin semua gear.\n\n${list}\n\n` +
+            `Total butuh: *${formatNum(total)}* 🪙\nMoney kamu: *${formatNum(m.money || 0)}*`
+          );
+          return true;
+        }
+
+        const list = rincian.map(r => {
+          const nama = r.slot === 'weapon' ? '🗡️ Sword' : '🛡️ Armor';
+          pasangGear(data, r.slot, r.lv, DUR_MAKS);
+          return `• ${nama} Lv.${r.lv} → dur *${DUR_MAKS}%* (_-${formatNum(r.biaya)}_ 🪙)`;
+        }).join('\n');
+
+        data[KEY_ITEM] = bacaItem(m);
+        await updateMember(botData.id, sender, {
+          money: (Number(m.money) || 0) - total,
+          hewan_json: JSON.stringify(data),
+        });
+
+        await reply(
+          `🔧 *Gear diperbaiki!*\n\n${list}\n\n` +
+          `💸 Total : *${formatNum(total)}* 🪙\n` +
+          `💰 Money : *${formatNum((Number(m.money) || 0) - total)}*`
+        );
+      } catch (e) { await reply(`Gagal repair: ${rapikanError(e)}`); }
       return true;
     }
 
     case 'topkoin': {
       // Khusus premium
       if (!ctx.isPremium) {
-        await reply(`⭐ Command ini khusus untuk member *Premium*!\n\nHubungi owner untuk upgrade premium.`);
+        await reply(mess.onlyPremium);
         return true;
       }
       try {
@@ -809,15 +1353,15 @@ module.exports = async function funRpgHandler(ctx) {
         if (rows.length === 0) { await reply('Belum ada data RPG'); return true; }
         const list     = rows.map((r, i) => `${i + 1}. @${resolveMentionNum(r.jid)} — ${formatNum(r.money)} 🪙`).join('\n');
         const mentions = rows.map(r => r.jid);
-        await client.message.send(jid, `🏆 *Top Koin*\n\n${list}`, { mentions: mentions });
-      } catch (e) { await reply(`Gagal: ${e.message}`); }
+        await client.message.send(jid, `🏆 *Top Money*\n\n${list}`, { mentions: mentions });
+      } catch (e) { await reply(`Gagal: ${rapikanError(e)}`); }
       return true;
     }
 
     // ── suitpvp ───────────────────────────────────────────────────────────────
     case 'suitpvp':
     case 'suit': {
-      if (!isGroup) { await reply('Command ini hanya untuk grup'); return true; }
+      if (!isGroup) { await reply(mess.OnlyGroup); return true; }
 
       const SUIT_TIMEOUT = 90000;
       const SUIT_WIN_REWARD = 500;
@@ -895,6 +1439,9 @@ module.exports = async function funRpgHandler(ctx) {
         return true;
       }
 
+      const cukupEnergi = await pakaiEnergi(botId, sender, member, 20);
+      if (!cukupEnergi.ok) { await reply(pesanEnergiKurang(cukupEnergi.energi, 20)); return true; }
+
       // 12 hewan, random 0-9 masing-masing
       const HEWAN = ['🐂','🐅','🐘','🐐','🐼','🐊','🐃','🐮','🐒','🐗','🐖','🐓'];
       const NAMA  = ['banteng','harimau','gajah','kambing','panda','buaya','kerbau','sapi','monyet','babi_hutan','babi','ayam'];
@@ -905,9 +1452,11 @@ module.exports = async function funRpgHandler(ctx) {
       const totalKoin = hasil.reduce((acc, jml, i) => acc + jml * HARGA[i], 0);
 
       // Update hewan_json di DB (merge dengan existing)
-      let hewanData = {};
-      try { hewanData = member.hewan_json ? JSON.parse(JSON.stringify(member.hewan_json)) : {}; } catch {}
-      NAMA.forEach((n, i) => { hewanData[n] = (hewanData[n] || 0) + hasil[i]; });
+      // ponytail: ditulis sebagai kolom terpisah, JANGAN JSON.stringify(map hasil
+      // `member.hewan_json` — nilainya bisa string kalau driver balikin JSON mentah,
+      // dan JSON.stringify(string) = string ber-quote dobel = data rusak.
+      const hewanData = bacaJson(member);
+      NAMA.forEach((n, i) => { hewanData[n] = (Number(hewanData[n]) || 0) + hasil[i]; });
       const newMoney = (Number(member.money) || 0) + totalKoin;
 
       await updateMember(botId, sender, {
@@ -930,7 +1479,7 @@ module.exports = async function funRpgHandler(ctx) {
           const baris5 = `${HEWAN[4]} = [ ${hasil[4]} ]         ${HEWAN[10]} = [ ${hasil[10]} ]`;
           const baris6 = `${HEWAN[5]} = [ ${hasil[5]} ]         ${HEWAN[11]} = [ ${hasil[11]} ]`;
           await client.message.send(jid,
-            `• *Hasil Berburu*\n\n*${baris1}*\n*${baris2}*\n*${baris3}*\n*${baris4}*\n*${baris5}*\n*${baris6}*\n\n💰 Nilai: *+${formatNum(totalKoin)} koin*\nTotal koin: *${formatNum(newMoney)}*`
+            `• *Hasil Berburu*\n\n*${baris1}*\n*${baris2}*\n*${baris3}*\n*${baris4}*\n*${baris5}*\n*${baris6}*\n\n💰 Nilai: *+${formatNum(totalKoin)}*\nTotal: *${formatNum(newMoney)}*\n⚡ Energi sisa: *${cukupEnergi.energi}*`
           );
         } catch {}
       }, 6000);
@@ -960,7 +1509,7 @@ module.exports = async function funRpgHandler(ctx) {
       // Bet random 10.000 – 500.000 koin
       const bet = Math.floor(Math.random() * 490001) + 10000;
       if ((Number(member.money) || 0) < bet) {
-        await reply(`❌ Koin tidak cukup untuk bertarung!\nDibutuhkan: *${formatNum(bet)} koin*\nKoinmu: *${formatNum(member.money || 0)} koin*`);
+        await reply(`❌ Money tidak cukup untuk bertarung!\nDibutuhkan: *${formatNum(bet)}*\nMoney kamu: *${formatNum(member.money || 0)}*`);
         return true;
       }
 
@@ -991,7 +1540,9 @@ module.exports = async function funRpgHandler(ctx) {
 
       setTimeout(async () => {
         try {
-          const menang  = Math.random() >= 0.5;
+          // Skill atk nambah peluang menang — biar naikin skill kerasa.
+          const skA = bacaSkill(member).atk, skB = bacaSkill(oppRow).atk;
+          const menang  = Math.random() < (skA + 10) / (skA + skB + 20);
           const alasan  = menang
             ? ALASAN_MENANG[Math.floor(Math.random() * ALASAN_MENANG.length)]
             : ALASAN_KALAH[Math.floor(Math.random() * ALASAN_KALAH.length)];
@@ -1013,8 +1564,8 @@ module.exports = async function funRpgHandler(ctx) {
           let txt = `⚔️ *HASIL BERTARUNG*\n\n`;
           txt += `@${senderMention} vs @${opponentMention}\n\n`;
           txt += menang
-            ? `🏆 *@${senderMention} MENANG!*\n${alasan}\n\n+${formatNum(bet)} koin\nKoin kamu: *${formatNum(winnerMoney)}*`
-            : `💀 *@${senderMention} KALAH!*\n${alasan}\n\n-${formatNum(bet)} koin\nKoin kamu: *${formatNum(loserMoney)}*`;
+            ? `🏆 *@${senderMention} MENANG!*\n${alasan}\n\n+${formatNum(bet)}\nKoin kamu: *${formatNum(winnerMoney)}*`
+            : `💀 *@${senderMention} KALAH!*\n${alasan}\n\n-${formatNum(bet)}\nKoin kamu: *${formatNum(loserMoney)}*`;
 
           await client.message.send(jid, txt, { mentions: [sender, opponent] });
         } catch {}
@@ -1069,7 +1620,7 @@ module.exports = async function funRpgHandler(ctx) {
             `🎉 *Selamat, lamaran kerja kamu diterima!*\n\n` +
             `💼 Pekerjaan: *${kapital}*\n` +
             `⭐ Level min : ${jobData.minLevel}\n` +
-            `💰 Gaji     : ${formatNum(jobData.gaji.min)}–${formatNum(jobData.gaji.max)} koin/hari\n\n` +
+            `💰 Gaji     : ${formatNum(jobData.gaji.min)}–${formatNum(jobData.gaji.max)}/hari\n\n` +
             `Ketik ${p}job untuk melihat detail pekerjaan.\nKetik ${p}gajian untuk ambil gaji harian.`
           );
         } catch {}
@@ -1147,9 +1698,10 @@ module.exports = async function funRpgHandler(ctx) {
         `💼 *GAJIAN*\n\n` +
         `👤 ${member.name || pushName}\n` +
         `💼 Pekerjaan : *${kapital}*\n` +
-        `💰 Gaji      : *+${formatNum(gaji)} koin*\n` +
+        `💰 Gaji      : *+${formatNum(gaji)}*\n` +
         `📊 Job EXP   : *${jobexp}%* / 500%\n\n` +
-        `Total koin: *${formatNum(newMoney)}*`
+        `Total: *${formatNum(newMoney)}*\n` +
+        `⚡ Energi sisa: *${energiSekarang(member)}*`
       );
       return true;
     }
@@ -1161,21 +1713,31 @@ module.exports = async function funRpgHandler(ctx) {
       const member = await getOrCreateMember(botId, sender, pushName);
       const roomName = args.join(' ').trim() || null;
 
-      // Cek syarat: sword >= 1, armor >= 1, healt >= 90
-      const sword = Number(member.sword) || 0;
-      const armor = Number(member.armor) || 0;
+      // Cek syarat: gear Lv >= 1 & durability masih ada, healt >= 90
+      // ponytail: pakai gearDipakai(), BUKAN gearLevel() — gear rusak (dur 0)
+      // levelnya masih > 0, jadi gate-nya bocor kalau pakai level doang.
+      const sword = gearDipakai(member, 'weapon');
+      const armor = gearDipakai(member, 'armor');
       const healt = Number(member.healt) || 100;
 
       if (sword < 1) {
-        await reply(`⚔️ Kamu butuh *pedang* untuk masuk dungeon!\n\nBeli dulu di ${p}store`);
+        await reply(
+          gearLevel(member, 'weapon') >= 1
+            ? `💥 *Pedangmu rusak!* Perbaiki dulu: ${p}repair`
+            : `⚔️ Kamu butuh *pedang* untuk masuk dungeon!\n\nBeli dulu di ${p}store`
+        );
         return true;
       }
       if (armor < 1) {
-        await reply(`🛡️ Kamu butuh *armor* untuk masuk dungeon!\n\nBeli dulu di ${p}store`);
+        await reply(
+          gearLevel(member, 'armor') >= 1
+            ? `💥 *Armormu rusak!* Perbaiki dulu: ${p}repair`
+            : `🛡️ Kamu butuh *armor* untuk masuk dungeon!\n\nBeli dulu di ${p}store`
+        );
         return true;
       }
       if (healt < 90) {
-        await reply(`❤️ Health kamu terlalu rendah (*${healt}/100*)!\n\nTambah Health dulu lewat ${p}store`);
+        await reply(`❤️ Health kamu terlalu rendah (*${healt}/100*)!\n\nMinum *Ramuan Health* (${p}beli 3 → ${p}pakai 3)`);
         return true;
       }
 
@@ -1193,6 +1755,10 @@ module.exports = async function funRpgHandler(ctx) {
         [r.p1, r.p2, r.p3, r.p4].includes(sender)
       );
       if (alreadyIn) { await reply('Kamu masih di dalam Dungeon!'); return true; }
+
+      // Energi dipotong TERAKHIR, setelah semua syarat lolos
+      const cukupEnergi = await pakaiEnergi(botId, sender, member, 30);
+      if (!cukupEnergi.ok) { await reply(pesanEnergiKurang(cukupEnergi.energi, 30)); return true; }
 
       // Cari room WAITING yang cocok
       const existingRoom = [...dungeonRooms.values()].find(r =>
@@ -1258,7 +1824,7 @@ module.exports = async function funRpgHandler(ctx) {
           const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
           txt += `${medal} *${r.name || 'Unknown'}*\n   Level ${r.level} — ${formatNum(r.xp)} XP\n`;
         });
-        txt += `\nKetik ${p}lb untuk top koin`;
+        txt += `\nKetik ${p}lb untuk top Money`;
         await reply(txt);
       } else {
         const [rows] = await pool.execute(
@@ -1266,11 +1832,11 @@ module.exports = async function funRpgHandler(ctx) {
           [botId]
         );
         if (!rows.length) { await reply('Belum ada data RPG.'); return true; }
-        let txt = `💰 *TOP KOIN*\n\n`;
+        let txt = `💰 *TOP MONEY*\n\n`;
         rows.forEach((r, i) => {
           const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
           const total = (Number(r.money) || 0) + (Number(r.bank_money) || 0);
-          txt += `${medal} *${r.name || 'Unknown'}*\n   ${formatNum(total)} koin\n`;
+          txt += `${medal} *${r.name || 'Unknown'}*\n   ${formatNum(total)}\n`;
         });
         txt += `\nKetik ${p}lb level untuk top level`;
         await reply(txt);
@@ -1278,81 +1844,346 @@ module.exports = async function funRpgHandler(ctx) {
       return true;
     }
 
+    // ── tambang / kebon / tebang — cari bahan mentah ──────────────────────────
+    case 'tambang': case 'kebon': case 'tebang': {
+      return galiBahan({ reply, botData, sender, pushName }, command);
+    }
+
+    // ── bahan — lihat kantong bahan ───────────────────────────────────────────
+    case 'bahan': {
+      const member = await getOrCreateMember(botData.id, sender, pushName);
+      const bahan  = bacaBahan(member);
+      const pakai  = [];
+      for (const r of RESEP) {
+        const it = STORE_ITEMS.find(i => i.id === r.id);
+        if (it) pakai.push(`> ${emojiItem(it)} *${it.name}* ← ${Object.entries(r.bahan).map(([n, j]) => `${n} ${bahan[n] || 0}/${j}`).join(', ')}`);
+      }
+      const isi = Object.entries(bahan).filter(([, j]) => j > 0);
+      await reply(
+        `乂 *🧺 B A H A N* 乂\n\n` +
+        (isi.length ? isi.map(([n, j]) => `  ◦ *${n}* : ${formatNum(j)}`).join('\n')
+                    : '  ◦ _(kosong — coba .tambang / .kebon / .tebang)_') +
+        `\n\n乂 *🔨 R E S E P* 乂\n\n` + pakai.join('\n') +
+        `\n\n> *${p}craft <nama>* untuk bikin`
+      );
+      return true;
+    }
+
+    // ── craft — ubah bahan jadi item ──────────────────────────────────────────
+    case 'craft': {
+      const nama = args.join(' ').trim().toLowerCase();
+      const member = await getOrCreateMember(botData.id, sender, pushName);
+
+      if (!nama) {
+        await reply(
+          `乂 *🔨 C R A F T* 乂\n\n` +
+          RESEP.map(r => {
+            const it = STORE_ITEMS.find(i => i.id === r.id);
+            return it ? `> ${emojiItem(it)} *${it.name}* ← ${Object.entries(r.bahan).map(([n, j]) => `${n} ${j}`).join(', ')}` : null;
+          }).filter(Boolean).join('\n') +
+          `\n\nContoh: *${p}craft Pedang Kayu*`
+        );
+        return true;
+      }
+
+      const resep = RESEP.find(r => {
+        const it = STORE_ITEMS.find(i => i.id === r.id);
+        return it && it.name.toLowerCase() === nama;
+      });
+      if (!resep) {
+        await reply(`❌ Resep *${args.join(' ')}* nggak ada. Lihat daftarnya: *${p}craft*`);
+        return true;
+      }
+
+      const item  = STORE_ITEMS.find(i => i.id === resep.id);
+      const bahan = bacaBahan(member);
+      const kurang = Object.entries(resep.bahan).filter(([n, j]) => (bahan[n] || 0) < j);
+      if (kurang.length) {
+        await reply(
+          `❌ Bahan buat *${item.name}* masih kurang:\n\n` +
+          kurang.map(([n, j]) => `• *${n}* : ${bahan[n] || 0}/${j}`).join('\n') +
+          `\n\nLihat bahanmu: *${p}bahan*`
+        );
+        return true;
+      }
+
+      for (const [n, j] of Object.entries(resep.bahan)) bahan[n] -= j;
+      const data = bacaJson(member);
+      const inv  = bacaItem(member);
+      data[KEY_BAHAN] = bahan;
+      inv[String(item.id)] = (Number(inv[String(item.id)]) || 0) + 1;
+      data[KEY_ITEM] = inv;
+
+      // Gear bikinan sendiri cuma kepasang kalau lebih bagus / yang lama rusak —
+      // sama aturannya kayak `.beli`, biar nggak "turun pangkat".
+      let info;
+      if (item.type === 'weapon' || item.type === 'armor') {
+        const lvLama = gearLevel(member, item.type);
+        if (item.lv > lvLama || (lvLama >= 1 && !gearAktif(member, item.type))) {
+          pasangGear(data, item.type, item.lv, DUR_MAKS);
+          info = `\n\n🗡️ Gear otomatis kepasang — Lv.${item.lv}, dur *${DUR_MAKS}%*.`;
+        } else {
+          info = `\n\n📦 Masuk tas — gear Lv.${item.lv} nggak lebih bagus dari Lv.${lvLama} yang kepasang.`;
+        }
+      } else {
+        info = item.type === 'potion' ? `\n\n🧪 Pakai dengan: *${p}pakai ${item.id}*` : `\n\nCek tas: *${p}inventory*`;
+      }
+      await updateMember(botData.id, sender, { hewan_json: JSON.stringify(data) });
+
+      await reply(
+        `🔨 *C R A F T  S U K S E S*\n\n` +
+        `${emojiItem(item)} *${item.name}* ×1\n\n` +
+        `Bahan terpakai:\n` + Object.entries(resep.bahan).map(([n, j]) => `• ${n} −${j}  _(sisa ${bahan[n]})_`).join('\n') +
+        info
+      );
+      return true;
+    }
+
+    // ── skill — stat yang dibeli pakai Money ─────────────────────────────────
+    case 'skill': {
+      const botId  = botData.id;
+      const member = await getOrCreateMember(botId, sender, pushName);
+      const skill  = bacaSkill(member);
+      const sub    = (args[0] || '').toLowerCase();
+      const map    = { atk: 'atk', attack: 'atk', serang: 'atk',
+                       def: 'def', defense: 'def', pertahanan: 'def',
+                       spd: 'spd', speed: 'spd', kecepatan: 'spd',
+                       hp: 'hp', health: 'hp', darah: 'hp' };
+      const kunci  = map[sub];
+
+      const daftar = () => Object.entries(SKILL_NAMA).map(([k, lbl]) =>
+        `  ◦ ${lbl} : *${skill[k]}*  →  naik: *${formatNum(biayaSkill(skill[k]))}*`
+      ).join('\n');
+
+      if (!kunci) {
+        await reply(
+          `乂 *⚔️ S K I L L* 乂\n\n${daftar()}\n\n` +
+          `  ◦ 👛 Kantong : *${formatNum(Number(member.money) || 0)}*\n` +
+          `  ◦ 📊 Total   : *${formatNum((Number(member.money) || 0) + (Number(member.bank_money) || 0))}*\n\n` +
+          `> *${p}skill <atk|def|spd|hp>* untuk naikin 1 level\n` +
+          `> Maks level: *${SKILL_MAKS}*`
+        );
+        return true;
+      }
+
+      if (skill[kunci] >= SKILL_MAKS) { await reply(`❌ ${SKILL_NAMA[kunci]} sudah mentok *${SKILL_MAKS}*.`); return true; }
+      const harga = biayaSkill(skill[kunci]);
+      if ((Number(member.money) || 0) < harga) {
+        await reply(`❌ Money tidak cukup! Butuh *${formatNum(harga)}*, kamu punya *${formatNum(Number(member.money) || 0)}*.`);
+        return true;
+      }
+
+      skill[kunci] += 1;
+      const data = bacaJson(member);
+      data[KEY_SKILL] = skill;
+      await updateMember(botId, sender, { money: (Number(member.money) || 0) - harga, hewan_json: JSON.stringify(data) });
+
+      await reply(
+        `⚔️ *S K I L L  N A I K*\n\n` +
+        `${SKILL_NAMA[kunci]} → *${skill[kunci]}* (dari ${skill[kunci] - 1})\n` +
+        `💸 Biaya: *${formatNum(harga)}*\n` +
+        `👛 Kantong: *${formatNum((Number(member.money) || 0) - harga)}*`
+      );
+      return true;
+    }
+
+    // ── penjara — status sel, atau (khusus Polisi) kurung orang ──────────────
+    case 'penjara': {
+      const botId  = botData.id;
+      const member = await getOrCreateMember(botId, sender, pushName);
+      const target = getMentioned(ctx)[0];
+
+      if (!target) {
+        const sisa = sisaPenjara(member);
+        if (!sisa) { await reply(`🚔 *P E N J A R A*\n\n_sel kosong — kamu warga taat hukum._`); return true; }
+        await reply(pesanPenjara(sisa, p));
+        return true;
+      }
+
+      if (member.job !== 'polisi') {
+        await reply(`🚫 Cuma *Polisi* yang boleh ngurung orang.\n\nKerja sebagai polisi: *${p}lamarkerja*`);
+        return true;
+      }
+      if (target === sender) { await reply('❌ Nggak bisa nangkep diri sendiri.'); return true; }
+
+      const korban = await getOrCreateMember(botId, target, resolveMentionNum(target));
+      const kd     = bacaJson(korban);
+      kd[KEY_JAIL] = Date.now() + 10 * 60000;
+      await updateMember(botId, target, { hewan_json: JSON.stringify(kd) });
+      await reply(
+        `🚔 *D I T A N G K A P!*\n\n` +
+        `@${resolveMentionNum(target)} dikurung *10 menit* oleh Polisi *${pushName}*.\n\n` +
+        `> Tebus: *${p}bebaskan*`
+      );
+      return true;
+    }
+
+    // ── bebaskan — bayar tebusan biar keluar sel ─────────────────────────────
+    case 'bebaskan': {
+      const botId  = botData.id;
+      const member = await getOrCreateMember(botId, sender, pushName);
+      const sisa   = sisaPenjara(member);
+      if (!sisa) { await reply(`✅ Kamu nggak sedang di penjara.`); return true; }
+
+      const biaya = 200 * Math.max(1, Math.ceil(sisa / 60000));
+      if ((Number(member.money) || 0) < biaya) {
+        await reply(`❌ Tebusan *${formatNum(biaya)}* — Money kamu cuma *${formatNum(Number(member.money) || 0)}*.\n\nTunggu aja *${Math.ceil(sisa / 60000)} menit* atau minta tolong teman.`);
+        return true;
+      }
+      const data = bacaJson(member);
+      delete data[KEY_JAIL];
+      await updateMember(botId, sender, { money: (Number(member.money) || 0) - biaya, hewan_json: JSON.stringify(data) });
+      await reply(`🔓 *B E B A S!*\n\nKamu bayar tebusan *${formatNum(biaya)}* dan keluar dari sel.`);
+      return true;
+    }
+
+    // ── copet / maling / rampok — kejahatan + risiko masuk penjara ───────────
+    case 'copet': case 'maling': case 'rampok': {
+      const botId   = botData.id;
+      const member  = await getOrCreateMember(botId, sender, pushName);
+      const co      = KEJAHATAN[command];
+
+      const sisaJail = sisaPenjara(member);
+      if (sisaJail) { await reply(pesanPenjara(sisaJail, p)); return true; }
+
+      const sisaCd = sisaCdJson(member, command);
+      if (sisaCd > 0) {
+        const m = Math.floor(sisaCd / 60000), d = Math.floor((sisaCd % 60000) / 1000);
+        await reply(`${co.nama} masih panas. Sembunyi dulu *${m}m ${d}d*.`);
+        return true;
+      }
+
+      const cukup = await pakaiEnergi(botId, sender, member, co.biaya);
+      if (!cukup.ok) { await reply(pesanEnergiKurang(cukup.energi, co.biaya)); return true; }
+
+      const data  = bacaJson(member);
+      const skill = bacaSkill(member);
+      setCdJson(data, command, co.cooldown);
+
+      if (Math.random() < co.gagal) {
+        // Gagal — hadiahnya masuk sel. Gerbang `CMD_RISIKO` yang nahan sisanya.
+        data[KEY_JAIL] = Date.now() + co.hukuman * 60000;
+        await updateMember(botId, sender, { hewan_json: JSON.stringify(data) });
+        await reply(
+          `🚨 *T E R T A N G K A P!*\n\n` +
+          `Aksimu kepergok polisi. Kamu dibui *${co.hukuman} menit*.\n\n` +
+          `> Tebus: *${p}bebaskan*`
+        );
+        return true;
+      }
+
+      const hasil = Math.floor(co.min + Math.random() * (co.max - co.min));
+      const bonus = 1 + Math.floor(skill.atk / 20);
+      const uang  = hasil * bonus;
+      await updateMember(botId, sender, { money: (Number(member.money) || 0) + uang, hewan_json: JSON.stringify(data) });
+
+      await reply(
+        `${co.nama} — *BERHASIL*\n\n` +
+        `💰 Dapat: *${formatNum(uang)}*\n` +
+        `👛 Kantong: *${formatNum((Number(member.money) || 0) + uang)}*` +
+        (bonus > 1 ? `\n\n> ⚔️ Attack *${skill.atk}* → bonus ×${bonus}` : '') +
+        `\n\n_⚠️ Gagal = masuk penjara_`
+      );
+      return true;
+    }
+
+    // ── money / dompet / saldo ────────────────────────────────────────────────
+    case 'money': {
+      // Nampilin duit: di kantong + di bank. Transaksinya di `.atm`.
+      const member = await getOrCreateMember(botData.id, sender, pushName);
+      const dompet = Number(member.money) || 0;
+      const bank   = Number(member.bank_money) || 0;
+      await reply(
+        `乂 *💰 M O N E Y* 乂\n\n` +
+        `  ◦ *👛 Kantong* : ${formatNum(dompet)}\n` +
+        `  ◦ *🏦 Bank*    : ${formatNum(bank)}\n` +
+        `  ◦ *📊 Total*   : ${formatNum(dompet + bank)}\n\n` +
+        `> *${p}atm <jumlah>* untuk nabung\n` +
+        `> *${p}atm pull <jumlah>* untuk tarik\n` +
+        `> *${p}atm all* / *${p}atm pull all* — semua sekaligus`
+      );
+      return true;
+    }
+
     // ── bank / atm ────────────────────────────────────────────────────────────
     case 'bank':
     case 'atm': {
       const botId  = botData.id;
-      const sub    = (args[0] || '').toLowerCase();
+      const { aksi, jumlah: minta, semua } = bacaAtm(args);
       const member = await getOrCreateMember(botId, sender, pushName);
       const dompet = Number(member.money) || 0;
       const bank   = Number(member.bank_money) || 0;
 
-      if (!sub || sub === 'info' || sub === 'saldo') {
+      // `.atm` polos = nanya, bukan nampilin saldo (lihat saldo: `.money`)
+      if (aksi === 'info') {
         await reply(
-          `🏦 *BANK*\n\n` +
-          `👤 ${member.name || pushName}\n\n` +
-          `💵 Dompet : *${formatNum(dompet)} koin*\n` +
-          `🏦 Bank   : *${formatNum(bank)} koin*\n` +
-          `📊 Total  : *${formatNum(dompet + bank)} koin*\n\n` +
-          `${p}bank simpan <jumlah>\n` +
-          `${p}bank tarik <jumlah>`
+          `🏦 *ATM — mau ngapain?*\n\n` +
+          `📥 *Setor* — taruh Money kantong ke bank\n` +
+          `   ${p}atm 100 — setor 100\n` +
+          `   ${p}atm all — setor SEMUA Money di kantong\n\n` +
+          `📤 *Tarik* — ambil Money dari bank\n` +
+          `   ${p}atm pull 100 — tarik 100\n` +
+          `   ${p}atm pull all — tarik SEMUA dari bank\n\n` +
+          `💡 Lihat saldo: *${p}money*\n` +
+          `_Kantong: *${formatNum(dompet)}* | Bank: *${formatNum(bank)}*_`
         );
         return true;
       }
 
-      if (sub === 'simpan' || sub === 'setor') {
-        const jumlah = parseInt(args[1], 10);
-        if (!jumlah || isNaN(jumlah) || jumlah <= 0) {
-          await reply(`Penggunaan: ${p}bank simpan <jumlah>`);
+      if (aksi === 'setor') {
+        const n = semua ? dompet : minta;
+        if (!n || isNaN(n) || n <= 0) {
+          await reply(semua
+            ? `❌ Kantong kamu kosong, nggak ada yang bisa disetor.`
+            : `Penggunaan: ${p}atm <jumlah>\natau: ${p}atm all — setor semua Money di kantong`);
           return true;
         }
-        if (jumlah < 10) { await reply('❌ Minimal simpan 10 koin!'); return true; }
-        if (dompet < jumlah) {
-          await reply(`❌ Koin di dompet tidak cukup!\n\nDompet: *${formatNum(dompet)}*`);
+        if (!semua && n < 10) { await reply('❌ Minimal simpan 10 Money!'); return true; }
+        if (dompet < n) {
+          await reply(`❌ Money di kantong nggak cukup!\n\nKantong: *${formatNum(dompet)}*`);
           return true;
         }
-        await updateMember(botId, sender, {
-          money:        dompet - jumlah,
-          bank_money: bank + jumlah,
-        });
+        await updateMember(botId, sender, { money: dompet - n, bank_money: bank + n });
         await reply(
-          `🏦 *SETOR BANK*\n\n` +
-          `✅ *${formatNum(jumlah)} koin* berhasil disimpan!\n\n` +
-          `💵 Dompet : *${formatNum(dompet - jumlah)} koin*\n` +
-          `🏦 Bank   : *${formatNum(bank + jumlah)} koin*`
+          `🏦 *SETOR BANK*${semua ? ' (SEMUA)' : ''}\n\n` +
+          `✅ *${formatNum(n)} Money* masuk bank!\n\n` +
+          `👛 Kantong : *${formatNum(dompet - n)}*\n` +
+          `🏦 Bank    : *${formatNum(bank + n)}*`
         );
         return true;
       }
 
-      if (sub === 'tarik' || sub === 'ambil') {
-        const jumlah = parseInt(args[1], 10);
-        if (!jumlah || isNaN(jumlah) || jumlah <= 0) {
-          await reply(`Penggunaan: ${p}bank tarik <jumlah>`);
+      if (aksi === 'tarik') {
+        const n = semua ? bank : minta;
+        if (!n || isNaN(n) || n <= 0) {
+          await reply(semua
+            ? `❌ Bank kamu kosong, nggak ada yang bisa ditarik.`
+            : `Penggunaan: ${p}atm pull <jumlah>\natau: ${p}atm pull all`);
           return true;
         }
-        if (jumlah < 10) { await reply('❌ Minimal tarik 10 koin!'); return true; }
-        if (bank < jumlah) {
-          await reply(`❌ Saldo bank tidak cukup!\n\nBank: *${formatNum(bank)}*`);
+        if (!semua && n < 10) { await reply('❌ Minimal tarik 10 Money!'); return true; }
+        if (bank < n) {
+          await reply(`❌ Saldo bank nggak cukup!\n\nBank: *${formatNum(bank)}*`);
           return true;
         }
-        await updateMember(botId, sender, {
-          money:        dompet + jumlah,
-          bank_money: bank - jumlah,
-        });
+        await updateMember(botId, sender, { money: dompet + n, bank_money: bank - n });
         await reply(
-          `🏦 *TARIK BANK*\n\n` +
-          `✅ *${formatNum(jumlah)} koin* berhasil ditarik!\n\n` +
-          `💵 Dompet : *${formatNum(dompet + jumlah)} koin*\n` +
-          `🏦 Bank   : *${formatNum(bank - jumlah)} koin*`
+          `🏦 *TARIK BANK*${semua ? ' (SEMUA)' : ''}\n\n` +
+          `✅ *${formatNum(n)} Money* ditarik ke kantong!\n\n` +
+          `👛 Kantong : *${formatNum(dompet + n)}*\n` +
+          `🏦 Bank    : *${formatNum(bank - n)}*`
         );
         return true;
       }
 
       await reply(
-        `🏦 *BANK — Perintah*\n\n` +
-        `${p}bank info — lihat saldo\n` +
-        `${p}bank simpan <jumlah> — setor ke bank\n` +
-        `${p}bank tarik <jumlah> — ambil dari bank`
+        `🏦 *ATM — Perintah*\n\n` +
+        `${p}atm <jumlah> — setor ke bank (contoh: ${p}atm 100)\n` +
+        `${p}atm all — setor SEMUA uang di kantong\n` +
+        `${p}atm pull <jumlah> — tarik dari bank (contoh: ${p}atm pull 100)\n` +
+        `${p}atm pull all — tarik semua dari bank\n` +
+        `${p}bank simpan/tarik <jumlah> — sama aja\n\n` +
+        `💡 Lihat saldo: *${p}money*`
       );
       return true;
     }
@@ -1372,6 +2203,9 @@ module.exports = async function funRpgHandler(ctx) {
         await reply(`🎣 Joran masih basah!\n\nCoba lagi dalam *${mnt}m ${dtk}d*`);
         return true;
       }
+
+      const cukupEnergi = await pakaiEnergi(botId, sender, member, 15);
+      if (!cukupEnergi.ok) { await reply(pesanEnergiKurang(cukupEnergi.energi, 15)); return true; }
 
       // Animasi mancing (single message langsung)
       const ikan   = pickIkan();
@@ -1401,13 +2235,13 @@ module.exports = async function funRpgHandler(ctx) {
         txt += `\n😅 Wah, dapat sampah! Lebih beruntung next time~`;
       } else {
         txt +=
-          `💰 Nilai: *+${formatNum(reward)} koin*\n` +
+          `💰 Nilai: *+${formatNum(reward)}*\n` +
           `✨ XP   : *+${xpGet} XP*`;
         if (newLevel > (member.level || 1)) {
           txt += `\n\n🎉 *LEVEL UP!* Naik ke level *${newLevel}* (${getRankByLevel(newLevel)})`;
         }
         if (ctx.isPremium) txt += `\n⭐ Bonus XP premium diterapkan!`;
-        txt += `\n\nTotal koin: *${formatNum(newMoney)}*`;
+        txt += `\n\nTotal: *${formatNum(newMoney)}*\n⚡ Energi sisa: *${cukupEnergi.energi}*`;
       }
 
       await reply(txt);
@@ -1495,7 +2329,7 @@ module.exports = async function funRpgHandler(ctx) {
         `UPDATE rpg_members SET
           name = NULL, registered = 0,
           level = 0, xp = 0, money = 0, lim = 0, healt = 0,
-          koin = 0, bank = 0, job = 'Pengangguran',
+          job = 'Pengangguran',
           last_daily = NULL, last_kerja = 0, last_hourly = 0, last_weekly = 0,
           last_dailymisi = 0, last_adventure = 0, last_koboy = 0,
           last_airdrop = 0, last_maling = 0
@@ -1528,6 +2362,10 @@ module.exports = async function funRpgHandler(ctx) {
         return true;
       }
 
+      // Energi dipotong setelah cooldown lolos
+      const cukupEnergi = await pakaiEnergi(botId, sender, member, 25);
+      if (!cukupEnergi.ok) { await reply(pesanEnergiKurang(cukupEnergi.energi, 25)); return true; }
+
       const JOBS = [
         { nama: 'Petani',    min: 80,  max: 200, xp: 5  },
         { nama: 'Nelayan',   min: 100, max: 250, xp: 7  },
@@ -1542,7 +2380,7 @@ module.exports = async function funRpgHandler(ctx) {
 
       // Hitung level up
       const { xp: newXp, level: newLevel } = calcXpLevel(member.xp, member.level || 1, xpGet);
-      const newMoney = (member.money || 0) + reward;
+      const newMoney = (Number(member.money) || 0) + reward;
 
       await updateMember(botId, sender, {
         money:      newMoney,
@@ -1553,13 +2391,13 @@ module.exports = async function funRpgHandler(ctx) {
 
       let txt =
         `💼 *KERJA — ${job.nama}*\n\n` +
-        `💰 Dapat: *+${formatNum(reward)} koin*\n` +
+        `💰 Dapat: *+${formatNum(reward)}*\n` +
         `✨ XP   : *+${xpGet} XP*`;
       if (newLevel > (member.level || 1)) {
         txt += `\n\n🎉 *LEVEL UP!* Kamu naik ke level *${newLevel}* (${getRankByLevel(newLevel)})`;
       }
       if (ctx.isPremium) txt += `\n⭐ Bonus XP premium sudah diterapkan!`;
-      txt += `\n\nTotal koin: *${formatNum(newMoney)}*`;
+      txt += `\n\nTotal: *${formatNum(newMoney)}*\n⚡ Energi sisa: *${cukupEnergi.energi}*`;
       await reply(txt);
       return true;
     }
@@ -1579,11 +2417,11 @@ module.exports = async function funRpgHandler(ctx) {
       }
       if (target === sender) { await reply('❌ Tidak bisa transfer ke diri sendiri!'); return true; }
       if (nominal <= 0 || isNaN(nominal)) { await reply('❌ Jumlah tidak valid!'); return true; }
-      if (nominal < 10) { await reply('❌ Minimal transfer 10 koin!'); return true; }
+      if (nominal < 10) { await reply('❌ Minimal transfer 10 Money!'); return true; }
 
       const pengirim  = await getOrCreateMember(botId, sender, pushName);
       if ((pengirim.money || 0) < nominal) {
-        await reply(`❌ Koin tidak cukup!\n\nKoinmu: *${formatNum(pengirim.money || 0)}*\nDibutuhkan: *${formatNum(nominal)}*`);
+        await reply(`❌ Money tidak cukup!\n\nMoney kamu: *${formatNum(pengirim.money || 0)}*\nDibutuhkan: *${formatNum(nominal)}*`);
         return true;
       }
 
@@ -1611,10 +2449,10 @@ module.exports = async function funRpgHandler(ctx) {
         `💸 *TRANSFER BERHASIL*\n\n` +
         `Dari  : @${resolveMentionNum(sender)}\n` +
         `Ke    : @${resolveMentionNum(target)}\n` +
-        `Jumlah: *${formatNum(nominal)} koin*\n` +
-        `Pajak : *${formatNum(tax)} koin* (2%)\n` +
-        `Diterima: *${formatNum(diterima)} koin*\n\n` +
-        `Sisa koinmu: *${formatNum((pengirim.money || 0) - nominal)}*`,
+        `Jumlah: *${formatNum(nominal)}*\n` +
+        `Pajak : *${formatNum(tax)}* (2%)\n` +
+        `Diterima: *${formatNum(diterima)}*\n\n` +
+        `Sisa Money kamu: *${formatNum((pengirim.money || 0) - nominal)}*`,
         { mentions: [sender, target] }
       );
       return true;
@@ -1636,12 +2474,12 @@ module.exports = async function funRpgHandler(ctx) {
         );
         return true;
       }
-      if (nominal < 10) { await reply('❌ Minimal taruhan 10 koin!'); return true; }
-      if (nominal > 50000) { await reply('❌ Maksimal taruhan 50.000 koin!'); return true; }
+      if (nominal < 10) { await reply('❌ Minimal taruhan 10 Money!'); return true; }
+      if (nominal > 50000) { await reply('❌ Maksimal taruhan 50.000 Money!'); return true; }
 
       const member = await getOrCreateMember(botId, sender, pushName);
       if ((member.money || 0) < nominal) {
-        await reply(`❌ Koin tidak cukup!\n\nKoinmu: *${formatNum(member.money || 0)}*`);
+        await reply(`❌ Money tidak cukup!\n\nMoney kamu: *${formatNum(member.money || 0)}*`);
         return true;
       }
 
@@ -1659,9 +2497,9 @@ module.exports = async function funRpgHandler(ctx) {
         `Pilihanmu : *${isHeads ? 'Heads (Angka)' : 'Tails (Gambar)'}*\n` +
         `Hasil     : *${result === 'heads' ? '🔵 Heads (Angka)' : '🟡 Tails (Gambar)'}*\n\n` +
         (menang
-          ? `🎉 *MENANG!* +${formatNum(nominal)} koin`
-          : `😢 *KALAH!* -${formatNum(nominal)} koin`) +
-        `\n\nSisa koin: *${formatNum(newMoney)}*`
+          ? `🎉 *MENANG!* +${formatNum(nominal)}`
+          : `😢 *KALAH!* -${formatNum(nominal)}`) +
+        `\n\nSisa Money: *${formatNum(newMoney)}*`
       );
       return true;
     }
@@ -1722,7 +2560,7 @@ module.exports = async function funRpgHandler(ctx) {
       ];
 
       if ((member.money || 0) < GACHA_COST) {
-        await reply(`❌ Koin tidak cukup!\nBiaya gacha: *${formatNum(GACHA_COST)} koin*\nKoin kamu: *${formatNum(member.money || 0)} koin*`);
+        await reply(`❌ Money tidak cukup!\nBiaya gacha: *${formatNum(GACHA_COST)}*\nKoin kamu: *${formatNum(member.money || 0)}*`);
         return true;
       }
 
@@ -1742,15 +2580,15 @@ module.exports = async function funRpgHandler(ctx) {
       const rarityEmoji = { Common: '⚪', Uncommon: '🟢', Rare: '🔵', Epic: '🟣', Legendary: '🟡' };
       await reply(
         `🎰 *GACHA*\n\n` +
-        `Biaya: -${formatNum(GACHA_COST)} koin\n\n` +
+        `Biaya: -${formatNum(GACHA_COST)}\n\n` +
         `╔══════════════╗\n` +
         `║  ${hasil.emoji} ${hasil.nama.padEnd(12)}\n` +
         `║  ${rarityEmoji[hasil.rarity] || '⚪'} ${hasil.rarity}\n` +
         `╚══════════════╝\n\n` +
-        `💰 Dapat: +${formatNum(koinDapat)} koin\n` +
+        `💰 Dapat: +${formatNum(koinDapat)}\n` +
         `⭐ XP: +${hasil.xp}\n` +
         (res.leveledUp ? `\n🎉 *LEVEL UP!* Naik ke level *${res.newLevel}* (${getRankByLevel(res.newLevel)})` : '') +
-        `\n\nSisa koin: *${formatNum(newMoney)}*`
+        `\n\nSisa Money: *${formatNum(newMoney)}*`
       );
       return true;
     }
@@ -1766,7 +2604,7 @@ module.exports = async function funRpgHandler(ctx) {
       const SLOT_WEIGHTS = [30, 25, 20, 12, 5, 5, 3];
 
       if ((member.money || 0) < SLOT_COST) {
-        await reply(`❌ Koin tidak cukup!\nBiaya slot: *${formatNum(SLOT_COST)} koin*\nKoin kamu: *${formatNum(member.money || 0)} koin*`);
+        await reply(`❌ Money tidak cukup!\nBiaya slot: *${formatNum(SLOT_COST)}*\nKoin kamu: *${formatNum(member.money || 0)}*`);
         return true;
       }
 
@@ -1811,9 +2649,9 @@ module.exports = async function funRpgHandler(ctx) {
         `║ ${a}  ${b}  ${c} ║\n` +
         `╚═══════════╝\n\n` +
         `${resultText}\n` +
-        `Bayar: -${formatNum(SLOT_COST)} koin\n` +
-        `Dapat: +${formatNum(menang)} koin\n\n` +
-        `Sisa koin: *${formatNum(newMoney)}*\n\n` +
+        `Bayar: -${formatNum(SLOT_COST)}\n` +
+        `Dapat: +${formatNum(menang)}\n\n` +
+        `Sisa Money: *${formatNum(newMoney)}*\n\n` +
         `_Jackpot 💎x50 🍀x30 ⭐x20 🔔x15_`
       );
       return true;
@@ -1850,11 +2688,11 @@ module.exports = async function funRpgHandler(ctx) {
 
       let txt =
         `⏰ *HOURLY CLAIM*\n\n` +
-        `💰 Koin : *+${formatNum(koinGet)}*\n` +
+        `💰 Money : *+${formatNum(koinGet)}*\n` +
         `✨ XP   : *+${xpGet}*`;
       if (newLevel > (member.level || 1)) txt += `\n\n🎉 *LEVEL UP!* → Level *${newLevel}* (${getRankByLevel(newLevel)})`;
       if (ctx.isPremium) txt += `\n⭐ Bonus XP premium!`;
-      txt += `\n\nTotal koin: *${formatNum(newMoney)}*\nKlaim lagi dalam *1 jam*`;
+      txt += `\n\nTotal: *${formatNum(newMoney)}*\nKlaim lagi dalam *1 jam*`;
       await reply(txt);
       return true;
     }
@@ -1894,12 +2732,12 @@ module.exports = async function funRpgHandler(ctx) {
 
       let txt =
         `📅 *WEEKLY CLAIM*\n\n` +
-        `💰 Koin  : *+${formatNum(koinGet)}*\n` +
+        `💰 Money : *+${formatNum(koinGet)}*\n` +
         `✨ XP    : *+${xpGet}*\n` +
         `🔋 Limit : *+${limGet}*`;
       if (newLevel > (member.level || 1)) txt += `\n\n🎉 *LEVEL UP!* → Level *${newLevel}* (${getRankByLevel(newLevel)})`;
       if (ctx.isPremium) txt += `\n⭐ Bonus XP premium!`;
-      txt += `\n\nTotal koin: *${formatNum(newMoney)}*\nKlaim lagi dalam *7 hari*`;
+      txt += `\n\nTotal: *${formatNum(newMoney)}*\nKlaim lagi dalam *7 hari*`;
       await reply(txt);
       return true;
     }
@@ -1940,7 +2778,7 @@ module.exports = async function funRpgHandler(ctx) {
       let bonusKoin = 0;
       if (bonusRoll < 0.15) {
         bonusKoin = Math.floor(koinGet * 0.5);
-        bonusTxt  = `\n🍀 *BONUS LUCKY!* +${formatNum(bonusKoin)} koin ekstra!`;
+        bonusTxt  = `\n🍀 *BONUS LUCKY!* +${formatNum(bonusKoin)} ekstra!`;
       }
 
       const { xp: newXp, level: newLevel } = calcXpLevel(member.xp, member.level || 1, xpGet);
@@ -1956,12 +2794,12 @@ module.exports = async function funRpgHandler(ctx) {
       let txt =
         `📋 *MISI HARIAN*\n\n` +
         `${misi.emoji} Misi: *${misi.nama}*\n\n` +
-        `💰 Reward : *+${formatNum(koinGet)} koin*\n` +
+        `💰 Reward : *+${formatNum(koinGet)}*\n` +
         `✨ XP     : *+${xpGet}*` +
         bonusTxt;
       if (newLevel > (member.level || 1)) txt += `\n\n🎉 *LEVEL UP!* → Level *${newLevel}* (${getRankByLevel(newLevel)})`;
       if (ctx.isPremium) txt += `\n⭐ Bonus XP premium!`;
-      txt += `\n\nTotal koin: *${formatNum(newMoney)}*\nMisi baru tersedia dalam *24 jam*`;
+      txt += `\n\nTotal: *${formatNum(newMoney)}*\nMisi baru tersedia dalam *24 jam*`;
       await reply(txt);
       return true;
     }
@@ -1982,10 +2820,28 @@ module.exports = async function funRpgHandler(ctx) {
         return true;
       }
 
-      // Cek equipment — sword & armor dari inventory (hewan_json kita pakai untuk inventory sederhana)
-      const sword = Number(member.sword) || 0;
-      const armor = Number(member.armor) || 0;
+      // Cek equipment — level gear ada di hewan_json.gear, durability menentukan
+      // apakah bonusnya masih berlaku
+      const sword = gearDipakai(member, 'weapon');
+      const armor = gearDipakai(member, 'armor');
       const level = member.level || 1;
+      const data  = bacaJson(member);
+
+      if (sword < 1 || armor < 1) {
+        await reply(
+          `⚔️ *Kamu belum siap bertualang!*\n\n` +
+          `Butuh pedang *dan* tameng yang masih bisa dipakai (durability > 0).\n\n` +
+          `🗡️ Sword: ${statGear(member, 'weapon')}\n` +
+          `🛡️ Armor: ${statGear(member, 'armor')}\n\n` +
+          `Beli di: ${p}store  •  benerin: ${p}repair`
+        );
+        return true;
+      }
+
+      // Energi dipotong TERAKHIR, setelah semua syarat lolos — biar pemain
+      // nggak kehilangan energi buat aktivitas yang tetep ditolak.
+      const cukupEnergi = await pakaiEnergi(botId, sender, member, 40);
+      if (!cukupEnergi.ok) { await reply(pesanEnergiKurang(cukupEnergi.energi, 40)); return true; }
 
       // Monster berdasarkan level
       const MONSTERS = [
@@ -2002,9 +2858,10 @@ module.exports = async function funRpgHandler(ctx) {
       const monster  = eligible[Math.floor(Math.random() * eligible.length)];
 
       // Hitung ATK & DEF player
-      const playerAtk = 10 + (level * 3) + (sword * 5);
-      const playerDef = 5  + (level * 2) + (armor * 4);
-      const playerHp  = Number(member.healt) || (50 + level * 10);
+      const sk = bacaSkill(member);
+      const playerAtk = 10 + (level * 3) + (sword * 5) + sk.atk;
+      const playerDef = 5  + (level * 2) + (armor * 4) + sk.def;
+      const playerHp  = (Number(member.healt) || (50 + level * 10)) + (sk.hp * 5);
 
       // Simulasi pertarungan (max 10 ronde)
       let pHp = playerHp;
@@ -2033,11 +2890,16 @@ module.exports = async function funRpgHandler(ctx) {
         const newMoney = (Number(member.money) || 0) + koinGet;
         const newHp    = Math.max(10, Math.floor(pHp)); // HP sisa
 
+        // Gear aus dipakai: -3 durability (menang), -5 kalau kalah
+        kurangiDur(data, 'weapon', 3);
+        kurangiDur(data, 'armor',  3);
+
         await updateMember(botId, sender, {
           money:         newMoney,
           xp:            newXp,
           level:         newLevel,
           healt:         newHp,
+          hewan_json:    JSON.stringify(data),
           last_adventure: now2,
         });
 
@@ -2047,18 +2909,23 @@ module.exports = async function funRpgHandler(ctx) {
           `🗡️ Sword: Lv.${sword} | 🛡️ Armor: Lv.${armor}\n\n` +
           log.join('\n') + (log.length ? '\n...\n' : '') +
           `\n✅ *${monster.nama} dikalahkan dalam ${ronde} ronde!*\n\n` +
-          `💰 Reward : *+${formatNum(koinGet)} koin*\n` +
+          `💰 Reward : *+${formatNum(koinGet)}*\n` +
           `✨ XP     : *+${xpGet}*\n` +
-          `❤️ Health sisa: *${newHp}*`;
+          `❤️ Health sisa: *${newHp}*` +
+          barisDur(data, 'weapon', '🗡️', 'Sword') +
+          barisDur(data, 'armor',  '🛡️', 'Armor');
         if (newLevel > level) txt += `\n\n🎉 *LEVEL UP!* → Level *${newLevel}* (${getRankByLevel(newLevel)})`;
         if (ctx.isPremium) txt += `\n⭐ Bonus XP premium!`;
-        txt += `\n\nTotal koin: *${formatNum(newMoney)}*\nAdventure lagi dalam *2 jam*`;
+        txt += `\n\nTotal: *${formatNum(newMoney)}*\n⚡ Energi sisa: *${cukupEnergi.energi}*\nAdventure lagi dalam *2 jam*`;
         await reply(txt);
       } else {
-        // Kalah — HP turun drastis, tidak dapat reward
+        // Kalah — HP turun drastis, tidak dapat reward, gear lebih aus
         const newHp = Math.max(5, Math.floor(playerHp * 0.2));
+        kurangiDur(data, 'weapon', 5);
+        kurangiDur(data, 'armor',  5);
         await updateMember(botId, sender, {
           healt:          newHp,
+          hewan_json:     JSON.stringify(data),
           last_adventure: now2,
         });
         await reply(
@@ -2067,8 +2934,10 @@ module.exports = async function funRpgHandler(ctx) {
           `🗡️ Sword: Lv.${sword} | 🛡️ Armor: Lv.${armor}\n\n` +
           log.join('\n') + (log.length ? '\n...\n' : '') +
           `\n💀 Kamu tidak mampu mengalahkan *${monster.nama}*!\n\n` +
-          `❤️ Health tersisa: *${newHp}* (kamu melarikan diri)\n\n` +
-          `_Upgrade sword & armor di ${p}store, atau naikkan level dulu!_\n` +
+          `❤️ Health tersisa: *${newHp}* (kamu melarikan diri)` +
+          barisDur(data, 'weapon', '🗡️', 'Sword') +
+          barisDur(data, 'armor',  '🛡️', 'Armor') +
+          `\n\n_Upgrade sword & armor di ${p}store, atau naikkan level dulu!_\n` +
           `Adventure lagi dalam *2 jam*`
         );
       }
@@ -2116,7 +2985,7 @@ module.exports = async function funRpgHandler(ctx) {
         `👀 Dia ada di mana...?\n\n` +
         `Ketik *kiri* atau *kanan* untuk menembak!\n` +
         `⏳ Kamu punya waktu *60 detik*\n\n` +
-        `🏆 Reward: *${formatNum(penjahat.reward)} koin*`
+        `🏆 Reward: *${formatNum(penjahat.reward)}*`
       );
       return true;
     }
@@ -2195,9 +3064,9 @@ module.exports = async function funRpgHandler(ctx) {
         await reply(
           `🥷 *MALING — BERHASIL!*\n\n` +
           `🏠 Lokasi: *${lokasi.nama}*\n\n` +
-          `💰 Curi: *+${formatNum(koinGet)} koin*\n\n` +
+          `💰 Curi: *+${formatNum(koinGet)}*\n\n` +
           `Selamat! Tapi hati-hati, polisi bisa datang kapan saja...\n` +
-          `Total koin: *${formatNum(newMoney)}*\n\n` +
+          `Total: *${formatNum(newMoney)}*\n\n` +
           `_Cooldown 7 hari — biarkan suasana mereda_`
         );
       } else {
@@ -2213,9 +3082,9 @@ module.exports = async function funRpgHandler(ctx) {
         await reply(
           `🥷 *MALING — KETANGKEP!*\n\n` +
           `🚔 Polisi berhasil menangkapmu!\n\n` +
-          `💸 Denda: *-${formatNum(denda)} koin* (10%)\n\n` +
+          `💸 Denda: *-${formatNum(denda)}* (10%)\n\n` +
           `Kamu dibebaskan setelah bayar denda...\n` +
-          `Total koin: *${formatNum(newMoney)}*\n\n` +
+          `Total: *${formatNum(newMoney)}*\n\n` +
           `_Cooldown 7 hari — jangan coba-coba lagi dulu!_`
         );
       }
@@ -2230,6 +3099,17 @@ module.exports = async function funRpgHandler(ctx) {
 // Rank dari level — satu sumber kebenaran (dipakai juga 05-owner .cekprofil)
 module.exports.getRankByLevel = getRankByLevel;
 
+// Helper murni buat unit test (test/rpg-energi.js). Jangan dipakai dari plugin lain.
+module.exports._uji = {
+  energiSekarang, pesanEnergiKurang, barEnergi, biayaRepair, statGear, barisDur,
+  gearDipakai, gearLevel, gearDur, gearAktif, pasangGear, kurangiDur, bacaAtm, formatNum,
+  bacaJson, bacaItem, KEY_ITEM, KEY_GEAR,
+  bacaBahan, bacaSkill, sisaPenjara, sisaCdJson, pilihBobot, biayaSkill, emojiItem,
+  KEY_BAHAN, KEY_SKILL, KEY_JAIL, KEY_CD, RESEP, KEJAHATAN, SPOT_BAHAN,
+  SKILL_MAKS, SKILL_NAMA, CMD_RISIKO,
+  ENERGI_MAKS, ENERGI_REGEN_MENIT, DUR_MAKS, STORE_ITEMS,
+};
+
 // Command yang kena limit untuk user biasa
 module.exports.limitedCmds = new Set([
   'jodoh','tembak','terima','tolak','confess','kapan',
@@ -2237,8 +3117,10 @@ module.exports.limitedCmds = new Set([
   'profil','rpg','daily','claim','store','beli','inventory','pakai','topkoin',
   'suitpvp','suit','berburu','hunt','bertarung','fight',
   'lamarkerja','job','gajian','dungeon',
-  'leaderboard','lb','bank','atm','mancing',
+  'leaderboard','lb','bank','atm','money','mancing',
   'kerja','transfer','tf','coinflip','cf','tictactoe','ttt',
   'gacha','slot','hourly','weekly','dailymisi',
-  'adventure','koboy','airdrop','maling',
+  'adventure','koboy','airdrop','maling','repair',
+  'tambang','kebon','tebang','bahan','craft','skill',
+  'penjara','bebaskan','copet','rampok',
 ]);

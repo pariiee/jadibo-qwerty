@@ -3,10 +3,11 @@
 /**
  * plugins/07-button.js
  * Command:  .button, .btn, .menu2, .list
- * Fitur:   Kirim interactive buttons / list menu via zapo-js raw proto
+ * Fitur:   Kirim interactive buttons / list menu via raw proto (relayMessage)
  *          + tangkap klik button/list response & proses sebagai command
  */
 
+const { rapikanError } = require('../engine/pesanError');
 const { proto } = require('zapo-js');
 
 // ── Handler ────────────────────────────────────────────────────────────────────
@@ -43,23 +44,27 @@ module.exports = async function buttonHandler(ctx) {
         await reply(
           '🤖 *YaaParBot v1.0.0*\n\n' +
           'Multi-bot WhatsApp + Telegram gateway.\n' +
-          'Dibangun dengan zapo-js & node-telegram-bot-api.'
+          'Dibangun dengan Baileys & node-telegram-bot-api.'
         );
         return true;
       case 'btn_owner':
         // Reuse handler .owner — kirim kartu kontak, bukan teks doang
         return await require('./01-info')({ ...ctx, isCmd: true, command: 'owner', args: [] });
 
-      // ── .test3 — tombol dropdown " MENU" (nativeFlow single_select) ──────────
-      case 'test3_menu':
-        return await require('./01-info')({ ...ctx, isCmd: true, command: 'menu', args: [] });
-      case 'test3_owner':
-        return await require('./01-info')({ ...ctx, isCmd: true, command: 'owner', args: [] });
+      // ── .test — echo id tombol apa adanya, buat mastiin klik-nya nyampe ────
+      // (`btn_all` dari interactiveMessage masuk lewat salah satu dari dua
+      //  bentuk respons, jadi di sini nggak perlu ditebak.)
+      case 'btn_test':
+        await reply(`✅ Klik tombol nyampe! id = *${btnId}*`);
+        return true;
 
       // ── Default — echo buttonId ───────────────────────────────────────────────
       default:
         // Button didyoumean (dym:*) bukan urusan plugin ini — biarkan plugin 08 handle
         if (btnId.startsWith('dym:')) return false;
+        // Sisanya (btn_cat, btn_owner, .menu …) ditangani handleRowId — satu
+        // tempat, jadi nggak ada switch kembar yang bisa lupa diubah.
+        if (await handleRowId(btnId)) return true;
         await reply(`✅ Tombol *"${btnId}"* ditekan!\n\nBalas dengan command biasa atau ketik \`.button\` untuk tombol lagi.`);
         return true;
     }
@@ -70,15 +75,28 @@ module.exports = async function buttonHandler(ctx) {
   //     Tambah baris baru cukup di sini; dulu ada 2 switch kembar yang harus
   //     diubah dua kali, dan lupa satu bikin baris jatuh ke default.
   // ═══════════════════════════════════════════════════════════════════════════════
-  const handleRowId = async (rowId) => {
+  // Function declaration (bukan `const` arrow) supaya bisa dipanggil dari switch
+  // `btnId` di atas — arrow `const` kena TDZ kalau dipanggil sebelum barisnya.
+  async function handleRowId(rowId) {
     if (!rowId) return false;
     // Baris dropdown `.menu` → re-dispatch `.menu <kategori>` (handler yang sama)
     const cat = /^menu_cat:(\w+)$/.exec(rowId);
     if (cat) return await require('./01-info')({ ...ctx, isCmd: true, command: 'menu', args: [cat[1]] });
+    // Baris native-flow vellzy-style: id langsung ".menu <kategori>"
+    const dotmenu = /^\.menu(?:\s+(\w+))?$/.exec(rowId);
+    if (dotmenu) return await require('./01-info')({ ...ctx, isCmd: true, command: 'menu', args: dotmenu[1] ? [dotmenu[1]] : [] });
+    // Umur bot (bukan umur proses) — sama kayak .uptime di plugins/01-info.js
+    if (rowId === '.ping')  {
+      const { getBotConnectedAt } = require('../engine/whatsappEngine');
+      const at = getBotConnectedAt(ctx?.botData?.id);
+      const secs = Math.floor(((at ? Date.now() - at : 0) || process.uptime() * 1000) / 1000);
+      await reply(`🏓 Pong! ${secs}s`);
+      return true;
+    }
+    if (rowId === '.owner') { return await require('./01-info')({ ...ctx, isCmd: true, command: 'owner', args: [] }); }
 
     switch (rowId) {
       case 'lst_ping': await reply('🏓 Pong!'); return true;
-      // Baris dropdown .test3 pakai id command langsung ('.menu' dsb)
       case '.menu':    return await require('./01-info')({ ...ctx, isCmd: true, command: 'menu', args: [] });
       case 'lst_menu': await reply('📋 Ketik `.menu` untuk daftar command.'); return true;
       case 'lst_info':
@@ -88,11 +106,19 @@ module.exports = async function buttonHandler(ctx) {
         return await require('./01-info')({ ...ctx, isCmd: true, command: 'menu', args: [] });
       case 'btn_owner':
         return await require('./01-info')({ ...ctx, isCmd: true, command: 'owner', args: [] });
+      case 'btn_cat':
+        // Fallback id tombol 📂 kalau WA balikin id tombolnya, bukan row id.
+        // Umumnya lewat atas: `nativeFlowInfo` → `interactiveResponseMessage` →
+        // row id `.menu <cat>` (regex di `handleRowId`).
+        return await require('./07-button-helpers').sendCategoryDropdown(ctx);
+      case 'btn_test':
+        await reply(`✅ Klik tombol nyampe! id = *${rowId}*`);
+        return true;
       default:
         await reply(`✅ Opsi *"${rowId}"* dipilih.`);
         return true;
     }
-  };
+  }
 
   if (message?.interactiveResponseMessage) {
     let rowId = '';
@@ -144,49 +170,8 @@ module.exports = async function buttonHandler(ctx) {
           },
         });
       } catch (e) {
-        await reply(`❌ Gagal kirim buttons: ${e.message}`);
+        await reply(`❌ Gagal kirim buttons: ${rapikanError(e)}`);
       }
-      return true;
-    }
-
-    // ── .btntest — 3 bentuk output WA, buat nunjuk yang paling pas ─────────────
-    //  A buttonsMessage legacy (tombol asli, WA render jadi baris full-width)
-    //  B interactiveMessage quick_reply (native-flow, kotak di dalam bubble + ikon)
-    //  C teks biasa `[ 📋 Menu ] [ 👑 Owner ]` (sebaris, TIDAK bisa diklik)
-    // Catatan: templateMessage TIDAK dipakai — zapo-js tidak menyisipkan node
-    // <biz> untuk kind itu (resolveButtonAddonKindFrom), jadi bakal mental.
-    case 'btntest': {
-      const variants = [
-        ['A — tombol legacy (buttonsMessage)', { buttonsMessage: {
-          contentText: 'Pilih menu:',
-          footerText:  'YaaParBot',
-          headerType:  proto.Message.ButtonsMessage.HeaderType.EMPTY,
-          buttons: [
-            { buttonId: 'btn_menu',  buttonText: { displayText: '📋 Menu'  }, type: proto.Message.ButtonsMessage.Button.Type.RESPONSE },
-            { buttonId: 'btn_owner', buttonText: { displayText: '👑 Owner' }, type: proto.Message.ButtonsMessage.Button.Type.RESPONSE },
-          ],
-        } }],
-        ['B — tombol native-flow (interactiveMessage)', { interactiveMessage: {
-          body:   { text: 'Pilih menu:' },
-          footer: { text: 'YaaParBot' },
-          nativeFlowMessage: {
-            buttons: [
-              { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: '📋 Menu',  id: 'btn_menu'  }) },
-              { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: '👑 Owner', id: 'btn_owner' }) },
-            ],
-            messageParamsJson: '{}',
-          },
-        } }],
-      ];
-      for (const [label, payload] of variants) {
-        await reply(`▶️ *${label}*`);
-        await client.message.send(jid, payload);
-        await new Promise(r => setTimeout(r, 2500));
-      }
-      // C — teks mentah, sebaris, persis gaya [menu] [owner]
-      await reply('▶️ *C — teks biasa (nggak bisa diklik)*');
-      await reply('[ 📋 Menu ]   [ 👑 Owner ]');
-      await reply('☝️ Balas *A*, *B*, atau *C* — mana yang bentuknya kayak yang lu mau.');
       return true;
     }
 
@@ -231,7 +216,7 @@ module.exports = async function buttonHandler(ctx) {
           },
         });
       } catch (e) {
-        await reply(`❌ Gagal kirim interactive: ${e.message}`);
+        await reply(`❌ Gagal kirim interactive: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -299,7 +284,7 @@ module.exports = async function buttonHandler(ctx) {
 
         await reply(out);
       } catch (e) {
-        await reply(`❌ Gagal cek bisnis: ${e.message}`);
+        await reply(`❌ Gagal cek bisnis: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -405,7 +390,7 @@ module.exports = async function buttonHandler(ctx) {
           await sendList(sendTo);
         } catch (e) {
           console.error('[list] error asli:', e.message, e.code || '');
-          await reply(`❌ Gagal kirim list menu: ${e.message}`);
+          await reply(`❌ Gagal kirim list menu: ${rapikanError(e)}`);
         }
       }
       return true;
