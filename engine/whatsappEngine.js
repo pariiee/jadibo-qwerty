@@ -304,6 +304,9 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
     saveCreds: authFull.saveCreds,
     logger,
     pairingMode: !!usePairingCode,
+    // Cache pesan keluar disimpan di sebelah session.db → retry receipt yang
+    // dateng SETELAH bot restart masih ketemu walau memori udah kosong.
+    authDbPath: dbPath,
   });
   // Ditutup saat stop — biar file SQLite nggak ke-lock (EPERM di Windows).
   client.__closeAuth = authFull.close;
@@ -513,6 +516,19 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
 
     // Skip pesan tanpa isi
     if (!message) return;
+
+    // ── Penjaga pesan basi ────────────────────────────────────────────────────
+    // WA nge-flood ULANG pesan lama begitu HP member balik online. Tanpa guard
+    // ini bot ngerjain `.tt` dari 2 jam lalu, dan balasannya nyampe ke obrolan
+    // yang udah ditinggal — kebaca sebagai "bot diem" (keluhan: "delay nya 2 jam
+    // lebih", "harus spam dulu baru direspon"). 2 menit: longgar buat pesan yang
+    // telat kirim, keburu buang backlog. Event grup dilewatkan biar nggak
+    // ngubah perilaku detector grup. Setel BATAS_PESAN_BASI_MS buat override.
+    const batasBasiMs = Number(process.env.BATAS_PESAN_BASI_MS) || 120000;
+    if (event.umurMs > batasBasiMs && !event.messageStubType) {
+      console.log(`[Bot ${botId}] ⏳ Lewati pesan basi ${Math.round(event.umurMs / 1000)}s dari ${key?.remoteJid}`);
+      return;
+    }
 
     const msgType = Object.keys(message)[0];
     const isDeleteEvent = msgType === 'protocolMessage' && message.protocolMessage?.type === 0;

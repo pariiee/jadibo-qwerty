@@ -193,10 +193,96 @@ function perbaikiBufferMedia(message) {
 //  NGGAK PERNAH di-assign di v7 rc14 -> satu-satunya jalan ya getMessage ini.)
 // Key cuma pakai message id: id-nya kita yg bikin & unik, jadi nggak kena
 // masalah LID vs nomor (remoteJid di receipt bisa beda bentuk dari yg kita pakai).
-// ponytail: Map + TTL, bukan store di disk — cukup, retry datang dalam detik.
-const SENT_TTL_MS = 10 * 60 * 1000;
-const SENT_MAX = 300;
+// ponytail: satu file JSON ditulis ulang (debounce 1 dtk), bukan DB — cukup
+// buat puluhan ribu pesan; pindah ke SQLite kalau file-nya lewat beberapa MB.
+const SENT_TTL_MS = 30 * 60 * 1000;
+const SENT_MAX = 2000;
 const sentMessages = new Map(); // messageId -> { message, at }
+
+// PERSIST ke disk. Log produksi: 170 retry receipt masuk, 170-nya "nggak ada di
+// cache" — 0 berhasil dikirim ulang, jadi tiap balasan yg gagal decrypt penerima
+// hilang PERMANEN ("Menunggu pesan ini" di HP member) dan member ngeliatnya
+// sebagai "bot diem". Penyebabnya: cache cuma di memori, sementara bot ini
+// restart puluhan kali sehari — device penerima yg baru online minta retry
+// SETELAH bot balik, dan cache-nya udah kosong.
+const sentStore = { file: null, muat: false, tulis: null };
+
+/** Arahin cache ke folder sesi bot. Dipanggil createClient (lihat authDbPath). */
+function setSentStoreDir(dir) {
+  sentStore.file = path.join(dir, 'sent-cache.json');
+  sentStore.muat = false;
+  if (sentStore.tulis) clearTimeout(sentStore.tulis);
+  sentStore.tulis = null;
+}
+
+function lookupSent(key) {
+  const rec = key?.id && sentMessages.get(key.id);
+  if (!rec) return undefined;
+  if (Date.now() - rec.at > SENT_TTL_MS) { sentMessages.delete(key.id); return undefined; }
+  return rec.message;
+}
+
+/**
+ * Nyalain cache pesan keluar dari disk. Dipanggil pas socket mau connect —
+ * BUKAN dari rememberSent(), karena dipanggil dari sana artinya tiap kali nulis
+ * cache kita baca file-nya dulu (dan kirim pertama selalu disangka "kosong").
+ */
+function muatSentStore() {
+  if (sentStore.muat || !sentStore.file) return;
+  sentStore.muat = true;
+  try {
+    const isi = JSON.parse(fs.readFileSync(sentStore.file, 'utf8'));
+    const now = Date.now();
+    for (const [id, rec] of Object.entries(isi || {})) {
+      const at = Number(rec?.at) || 0;
+      if (!at || now - at > SENT_TTL_MS) continue;
+      sentMessages.set(id, { message: keProtoPesan(rec.message), at });
+    }
+    console.log(`[sent-cache] ${sentMessages.size} pesan keluar dimuat dari disk`);
+  } catch (e) {
+    if (e?.code !== 'ENOENT') console.log(`[sent-cache] gagal muat: ${e.message}`);
+  }
+}
+
+// Round-trip proto<->JSON. `proto.Message` nolak objek biasa, jadi kalau konversi
+// gagal pakai nilai aslinya — cache tetap jalan walau bentuknya udah plain object.
+function keProtoPesan(m) {
+  try { return proto.Message.fromObject(m); } catch { return m; }
+}
+function keJsonPesan(m) {
+  try { return proto.Message.toObject(m); } catch { return m; }
+}
+
+/** Tulis ke disk. Dijadwalkan (1 dtk) biar nggak nge-block tiap kirim. */
+function simpanSentStore() {
+  if (!sentStore.file || sentStore.tulis) return;
+  sentStore.tulis = setTimeout(tulisSentStore, 1000);
+  sentStore.tulis.unref?.();
+}
+
+function tulisSentStore() {
+  if (sentStore.tulis) { clearTimeout(sentStore.tulis); sentStore.tulis = null; }
+  if (!sentStore.file) return;
+  // Belum pernah dibaca dari disk = memori masih kosong. Kalau tetap ditulis,
+  // file cache kehapus isinya (proses mati sebelum sempat connect).
+  if (!sentStore.muat) return;
+  try {
+    const out = {};
+    for (const [id, rec] of sentMessages) out[id] = { message: keJsonPesan(rec.message), at: rec.at };
+    fs.writeFileSync(sentStore.file, JSON.stringify(out), 'utf8');
+  } catch { /* disk penuh / folder kehapus: cache di memori tetap jalan */ }
+}
+
+/** Buang cache dari memori (buat test restart). */
+function lupakanSentStore() {
+  sentMessages.clear();
+  sentStore.muat = false;
+}
+
+// Flush pas proses mati: tanpa ini, balasan yg dikirim barusan (persis yang
+// paling sering ditanya ulang) ilang bareng timer yg belum sempat jalan.
+// Setelah 'exit' cuma nulis sinkron yg jalan, dan tulisSentStore() memang sinkron.
+process.on('exit', () => { try { tulisSentStore(); } catch {} });
 // Hook buat plugin yg mau ikut nyimpen pesan keluar (antidelete di 02-group.js).
 const sentHooks = new Set();
 const onMessageSent = (fn) => { sentHooks.add(fn); return () => sentHooks.delete(fn); };
@@ -208,6 +294,7 @@ function rememberSent(wam) {
   for (const [k, v] of sentMessages) if (now - v.at > SENT_TTL_MS) sentMessages.delete(k);
   while (sentMessages.size >= SENT_MAX) sentMessages.delete(sentMessages.keys().next().value);
   sentMessages.set(id, { message: wam.message, at: now });
+  simpanSentStore();
   // Pesan yang kita kirim juga bahan antidelete: justru balasan bot yang
   // paling sering dihapus orang, dan itu nggak pernah lewat jalur pesan masuk.
   for (const fn of sentHooks) { try { fn(wam); } catch (e) { logger?.error?.(`sentHook: ${e.message}`); } }
@@ -449,9 +536,25 @@ function asArray(v) {
  * @param {boolean} o.pairingMode kalau true, jangan emit 'auth_qr' (biar UI nggak
  *                                nampilin QR padahal user mau pairing code)
  */
-function createClient({ auth, saveCreds, logger, pairingMode = false }) {
+/**
+ * Umur pesan dari `messageTimestamp` WA. Nilainya kadang DETIK, kadang ms —
+ * detik apa ms dibedain dari besarnya (1e12 ms = tahun 2001; detik sekarang
+ * ~1.7e9, ms ~1.7e12). Dipakai buang pesan basi di prosesPesan().
+ */
+function normalisasiPesan(m) {
+  const t = Number(m?.messageTimestamp);
+  const tsMs = t ? (t < 1e12 ? t * 1000 : t) : 0;
+  return { timestamp: tsMs, umurMs: tsMs ? Date.now() - tsMs : 0 };
+}
+
+function createClient({ auth, saveCreds, logger, pairingMode = false, authDbPath = null }) {
   const ev = new EventEmitter();
   ev.setMaxListeners(50);
+
+  // Cache pesan keluar ikut folder sesi bot: 1 penanda, nggak perlu opsi baru
+  // di tiap call-site. Dipanggil sebelum socket dibikin biar retry yang dateng
+  // sedetik setelah connect udah ketemu.
+  if (authDbPath) setSentStoreDir(path.dirname(authDbPath));
 
   let sock = null;
   let meJid = null;
@@ -670,6 +773,9 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
 
   // ── Event masuk: WAMessage Baileys -> bentuk yg dibaca engine ──────────────
   function normalizeIncoming(m) {
+    // messageTimestamp: detik (WA) atau ms -> engine pakai `umurMs` buat buang
+    // pesan basi (WA nge-flood ulang pesan lama pas HP member balik online).
+    const { timestamp, umurMs } = normalisasiPesan(m);
     return {
       key: m.key,
       message: unwrapMessage(m.message),
@@ -677,6 +783,8 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
       pushName: m.pushName,
       messageStubType: m.messageStubType,
       messageStubParameters: m.messageStubParameters,
+      timestamp,
+      umurMs,
       msg: m,
       raw: m,
     };
@@ -688,6 +796,7 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
       qrCount = 0; // socket baru -> QR pertama balik ke ttl 60s
       pairingCode = null; // kode lama mati bareng socket lama; boleh minta lagi
       pendingPhone = null;
+      muatSentStore(); // cache balasan lama balik SEBELUM pesan pertama masuk
       try {
         sock = makeWASocket({
           auth: {
@@ -706,7 +815,9 @@ function createClient({ auth, saveCreds, logger, pairingMode = false }) {
           // yang harus dikirim ulang — "kirim ulang" = WA-nya nyangkut di penerima.
           getMessage: async (key) => {
             const found = lookupSent(key);
-            console.log(found ? `[retry] kirim ulang ${key?.id}` : `[retry] ${key?.id} nggak ada di cache`);
+            console.log(found
+              ? `[retry] kirim ulang ${key?.id}`
+              : `[retry] ${key?.id} nggak ada di cache (${sentMessages.size} dipegang)`);
             return found;
           },
         });
@@ -991,7 +1102,8 @@ module.exports = {
   groupStatusContent, // status grup (.swgc) — buat test
   normalizeParticipantResults, withTimeout, asArray,
   aiContent, AI_NODES, BIZ_NODE, aiNodesFor,  // pesan berlabel AI (buat test)
-  rememberSent, lookupSent, // buat test retry receipt
+  normalisasiPesan, rememberSent, lookupSent, // buat test retry receipt + pesan basi
+  setSentStoreDir, muatSentStore, tulisSentStore, lupakanSentStore, // buat test cache retry
   onMessageSent,             // buat antidelete (plugins/02-group.js)
   unwrapMessage,             // view-once -> media biasa (dipakai banyak plugin)
   perbaikiBufferMedia,       // base64 -> Buffer di proto media (buat tes)

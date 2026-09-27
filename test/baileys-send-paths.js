@@ -101,9 +101,9 @@ const mkOpts = () => ({
     // pesan tanpa isi / tanpa id jangan bikin map kotor
     rememberSent({ key: { id: 'MSG2' } });
     assert.strictEqual(lookupSent({ id: 'MSG2' }), undefined);
-    // batas 300: yg paling tua kebuang, yg terbaru tetep ada
-    for (let i = 0; i < 350; i++) rememberSent({ key: { id: 'B' + i }, message: { conversation: 'x' } });
-    assert.strictEqual(lookupSent({ id: 'B349' }) !== undefined, true);
+    // batas cache: yg paling tua kebuang, yg terbaru tetep ada
+    for (let i = 0; i < 2050; i++) rememberSent({ key: { id: 'B' + i }, message: { conversation: 'x' } });
+    assert.strictEqual(lookupSent({ id: 'B2049' }) !== undefined, true);
     assert.strictEqual(lookupSent({ id: 'B0' }), undefined);
   });
 
