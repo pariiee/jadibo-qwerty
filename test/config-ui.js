@@ -42,6 +42,15 @@ function cekStats() {
   }
   if (!/function getBotStats/.test(baca('controllers/botController.js'))) { console.log('[FAIL] getBotStats hilang'); gagal++; }
   if (!/function exportConfig/.test(baca('controllers/botController.js'))) { console.log('[FAIL] exportConfig hilang'); gagal++; }
+
+  // exportConfig TIDAK boleh pakai hasil assertOwnership sebagai isi export:
+  // fungsi itu cuma nge-SELECT id+user_id, jadi file-nya keluar {id:1} doang
+  // (kejadian nyata di produksi — token ikut jadi null). Wajib SELECT * ulang.
+  const exp = baca('controllers/botController.js').slice(baca('controllers/botController.js').indexOf('async function exportConfig'));
+  if (!/SELECT \* FROM bots WHERE id = \?/.test(exp)) {
+    console.log('[FAIL] exportConfig nggak ambil baris utuh (SELECT *); isi export bakal cuma {id}');
+    gagal++;
+  }
   if (!/bots\/:id\/config/.test(baca('server.js'))) { console.log('[FAIL] rute /api/bots/:id/config hilang'); gagal++; }
   if (!/bots\/:id\/stats/.test(baca('server.js'))) { console.log('[FAIL] rute /api/bots/:id/stats hilang'); gagal++; }
 }

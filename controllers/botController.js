@@ -573,8 +573,12 @@ async function getBotStats(req, res) {
 // di-share, dan import nggak akan pernah nimpa token asli.
 async function exportConfig(req, res) {
   try {
-    const bot = await assertOwnership(req, res, req.params.id);
-    if (!bot) return;
+    // assertOwnership cuma nge-SELECT id+user_id (buat cek hak akses). Untuk
+    // export butuh baris UTUH — kalau nggak, file-nya cuma isi {id:1}.
+    const own = await assertOwnership(req, res, req.params.id);
+    if (!own) return;
+    const [[bot]] = await pool.execute('SELECT * FROM bots WHERE id = ?', [own.id]);
+    if (!bot) return sendError(res, 404, 'Bot tidak ditemukan');
 
     // Buang yang bukan config — biar file-nya bersih waktu di-import balik.
     const { id, user_id, is_running, status, sqlite_db_path, created_at, updated_at, ...cfg } = publicBot(bot);
