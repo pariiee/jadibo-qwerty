@@ -44,3 +44,6 @@ _engine_cache.json
 data/active-groups-*.json
 data/*.json
 data/audio-cache-*.ogg
+
+# ── Sample bot_logs buat uji parser statistik (nama/nomor member) ──
+.bot_logs_sample.txt
