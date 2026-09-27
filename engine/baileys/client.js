@@ -238,9 +238,13 @@ function muatSentStore() {
       if (!at || now - at > SENT_TTL_MS) continue;
       sentMessages.set(id, { message: keProtoPesan(rec.message), at });
     }
-    console.log(`[sent-cache] ${sentMessages.size} pesan keluar dimuat dari disk`);
+    console.log(`[sent-cache] ${sentMessages.size} pesan keluar dimuat dari ${sentStore.file}`);
   } catch (e) {
-    if (e?.code !== 'ENOENT') console.log(`[sent-cache] gagal muat: ${e.message}`);
+    // ENOENT = jalan pertama, bukan error — tapi TETEP dicetak biar keliatan
+    // di log produksi (verifikasi cuma bisa dari log, bukan exit code).
+    console.log(e?.code === 'ENOENT'
+      ? `[sent-cache] belum ada file, mulai kosong: ${sentStore.file}`
+      : `[sent-cache] gagal muat: ${e.message}`);
   }
 }
 
