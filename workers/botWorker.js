@@ -37,6 +37,11 @@ const KUNCI = process.env.INTERNAL_KEY;
 // logout. Jadi baris itu disaring dari SEMUA jalur start di sini.
 const PLATFORM_PANEL_LAIN = process.env.ENGINE_LAIN_PLATFORM || 'zapo';
 
+// Alamat jalur perintah panel sebelah (mis. http://127.0.0.1:3002/internal/op).
+// Kosong = panel ini berdiri sendiri: bot platform lain ya ditolak (lihat
+// botDariDb), bukan diteruskan.
+const URL_PANEL_LAIN = process.env.PANEL_LAIN_OP_URL || '';
+
 // ─── Event → web ─────────────────────────────────────────────────────────────
 // Satu jalur: body mentah dikirim ke web, web yang nge-fan-out ke WebSocket.
 // Kalau web lagi restart, event ditahan di buffer (max 500) lalu dikirim pas
@@ -123,7 +128,49 @@ async function botDariDb(botId) {
   return bot;
 }
 
+// Bot yang dijalankan panel lain: engine-nya cuma ada di proses panel itu, jadi
+// perintahnya diteruskan ke sana — bukan dikerjakan di sini (dulu justru itu
+// bugnya: bot zapo dinyalain engine Baileys). Balikan panel sebelah diteruskan
+// apa adanya supaya pesan errornya yang kebaca user, bukan pesan umum.
+async function teruskanKePanelLain({ op, botId, args }) {
+  if (!URL_PANEL_LAIN) {
+    const e = new Error(`Bot ini dijalankan panel ${PLATFORM_PANEL_LAIN} — panelnya belum diatur di server ini.`);
+    e.status = 503;
+    throw e;
+  }
+  let res;
+  try {
+    res = await fetch(URL_PANEL_LAIN, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-internal-key': KUNCI },
+      body: JSON.stringify({ op, botId, args }),
+      // Sama dengan engineBus: start/restart WA nunggu QR dipindai.
+      signal: AbortSignal.timeout(90000),
+    });
+  } catch (e) {
+    console.error(`[Worker] teruskan ${op} bot=${botId} gagal:`, e.message);
+    const err = new Error('Panel bot ini lagi nggak bisa dihubungi. Coba lagi sebentar.');
+    err.status = 503;
+    throw err;
+  }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || data.ok === false) {
+    const err = new Error(data.message || 'Perintah ditolak panel bot ini.');
+    err.status = res.status || 400;
+    throw err;
+  }
+  return { message: data.message || 'Perintah diteruskan ke panel bot ini.' };
+}
+
 async function jalankan({ op, botId, args }) {
+  // Gerbang paling depan: bot milik panel lain jangan pernah dikerjakan di
+  // proses ini, apa pun op-nya.
+  if (URL_PANEL_LAIN) {
+    const [p] = await pool.execute('SELECT platform FROM bots WHERE id = ?', [botId]);
+    if (p.length && p[0].platform === PLATFORM_PANEL_LAIN) {
+      return await teruskanKePanelLain({ op, botId, args });
+    }
+  }
   switch (op) {
     case 'start': {
       if (activeBots.has(botId)) { const e = new Error('Bot sudah berjalan'); e.status = 400; throw e; }

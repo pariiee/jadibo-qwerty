@@ -90,5 +90,33 @@ ok('pesan error nyebut nama panel tujuan', () => {
     'pesan error nggak nyebut panel yang benar');
 });
 
+// ─── 6. Jalur teruskan ke panel sebelah ──────────────────────────────────────
+ok('alamat panel sebelah dari env PANEL_LAIN_OP_URL', () => {
+  assert.ok(/process\.env\.PANEL_LAIN_OP_URL/.test(SRC), 'alamat panel sebelah di-hardcode');
+});
+
+ok('perintah diteruskan pakai x-internal-key (bukan tanpa kunci)', () => {
+  assert.ok(/'x-internal-key': KUNCI/.test(SRC), 'terusan nggak bawa kunci internal');
+});
+
+ok('gerbang teruskan ada SEBELUM switch op (jangan dikerjakan sendiri dulu)', () => {
+  const iGerbang = SRC.search(/PLATFORM_PANEL_LAIN\)\s*\{\s*return await teruskanKePanelLain/);
+  const iSwitch = SRC.indexOf('async function jalankan({ op, botId, args })');
+  const iSwitchOp = SRC.indexOf('switch (op) {', iSwitch);
+  assert.ok(iGerbang > 0, 'gerbang teruskan nggak ketemu');
+  assert.ok(iSwitchOp > 0, 'switch op nggak ketemu');
+  assert.ok(iGerbang < iSwitchOp, 'gerbang teruskan ada SETELAH switch — bot bisa dikerjakan di sini');
+});
+
+ok('panel sebelah nggak bisa dihubungi → pesan manusia, bukan errno', () => {
+  assert.ok(/Panel bot ini lagi nggak bisa dihubungi/.test(SRC), 'pesan gagal-hubung nggak manusiawi');
+  assert.ok(!/ECONNREFUSED|fetch failed/.test(SRC), 'pesan bocorin detail teknis');
+});
+
+ok('URL_PANEL_LAIN kosong → nolak, bukan dijalankan diam-diam', () => {
+  assert.ok(/if \(!URL_PANEL_LAIN\)[\s\S]{0,200}status = 503/.test(SRC),
+    'tanpa alamat panel, bot platform lain malah nggak ditolak jelas');
+});
+
 console.log('\n' + (gagal ? `✗ ${gagal} GAGAL` : `✓ semua lolos (${total}/${total})`));
 process.exit(gagal ? 1 : 0);
