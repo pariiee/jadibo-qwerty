@@ -86,13 +86,16 @@ const PROTO_KEYS = [
 const isRawProto = (c) => !!c && typeof c === 'object' && !Buffer.isBuffer(c) && PROTO_KEYS.some((k) => c[k] !== undefined);
 
 /**
- * Zapо ngebuang `mentions` dari OPSI secara diam-diam (sama kayak Baileys v7):
+ * Zapo ngebuang `mentions` dari OPSI secara diam-diam (sama kayak Baileys v7):
  * harus nempel di kontennya. Call-site tinggal kirim `{ text, mentions }`.
  */
 function attachMentions(content, mentions) {
   if (!mentions?.length || !content) return content;
   return { ...content, mentions: mentions.map(angkaJid) };
 }
+
+/** Opsi kirim yang artinya "operasi di pesan TERKIRIM", bukan isi pesan baru. */
+const OPERASI_TERKIRIM = ['edit', 'delete', 'react', 'messageId', 'editKey'];
 
 /**
  * Plugin kirim content dalam bahasa Baileys (`{ text }`, `{ image, caption }`,
@@ -106,16 +109,29 @@ function attachMentions(content, mentions) {
 function toZapoContent(c) {
   if (c == null) return c;
   if (typeof c === 'string') return c;
+  // `{ type: ... }` = bahasa zapo sendiri (media, text, revoke, reaction, pin,
+  // poll, ...). Plugin zapo udah nulis persis bentuk ini; diteruskan apa adanya
+  // supaya JANGAN ditambah cabang tiap kali zapo nambah jenis pesan baru.
+  if (typeof c.type === 'string') return c;
+  // Proto.IMessage mentah (mis. tombol nativeFlow) — zapo nerima apa adanya,
+  // jadi NOL additionalNodes, nol hack relayMessage.
   if (isRawProto(c)) return c;
 
-  if (typeof c.text === 'string') return { text: c.text };
-  if (c.image)    return { image: c.image, ...(c.caption != null ? { caption: c.caption } : {}) };
-  if (c.video)    return { video: c.video, ...(c.caption != null ? { caption: c.caption } : {}), ...(c.gifPlayback ? { gifPlayback: true } : {}) };
-  if (c.audio)    return { audio: c.audio, ...(c.ptt ? { ptt: true } : {}), ...(c.mimetype ? { mimetype: c.mimetype } : {}) };
-  if (c.sticker)  return { sticker: c.sticker };
-  if (c.document) return { document: c.document, ...(c.fileName ? { fileName: c.fileName } : {}), ...(c.mimetype ? { mimetype: c.mimetype } : {}) };
-  if (c.react)    return { react: c.react };
-  if (c.delete)   return { delete: c.delete };
+  // Sisanya bahasa Baileys lama (`{ text }`, `{ image, caption }`, `{ react }`,
+  // `{ delete }`) — dipakai plugin yang belum dipindah ke bahasa zapo.
+  // `contextInfo` & `mentions` ikut dibawa: zapo naruh keduanya di KONTEN,
+  // bukan di opsi (kalau kelewat, quote/mention/trik fakemsg hilang diam-diam).
+  const meta = { ...(c.contextInfo ? { contextInfo: c.contextInfo } : {}), ...(c.mentions ? { mentions: c.mentions } : {}) };
+  const bikin = (x) => ({ ...x, ...meta });
+
+  if (typeof c.text === 'string') return bikin({ type: 'text', text: c.text });
+  if (c.image)    return bikin({ type: 'image', media: c.image, ...(c.caption != null ? { caption: c.caption } : {}) });
+  if (c.video)    return bikin({ type: 'video', media: c.video, ...(c.caption != null ? { caption: c.caption } : {}), ...(c.gifPlayback ? { gifPlayback: true } : {}) });
+  if (c.audio)    return bikin({ type: c.ptt ? 'ptt' : 'audio', media: c.audio, ...(c.mimetype ? { mimetype: c.mimetype } : {}) });
+  if (c.sticker)  return bikin({ type: 'sticker', media: c.sticker });
+  if (c.document) return bikin({ type: 'document', media: c.document, ...(c.fileName ? { fileName: c.fileName } : {}), ...(c.mimetype ? { mimetype: c.mimetype } : {}) });
+  if (c.react)    return { type: 'reaction', target: c.react.key || c.react, value: c.react.text ?? c.react.value };
+  if (c.delete)   return { type: 'revoke', target: c.delete };
   // Sisa: lempar apa adanya biar zapo yang ngeluh (jangan nelen error diam-diam)
   return c;
 }
@@ -258,9 +274,18 @@ function createClient({ client, botJid = null, logger = console } = {}) {
      */
     async send(jid, content, opts = {}) {
       const t0 = Date.now();
-      const withMentions = attachMentions(content, opts?.mentions?.length ? opts.mentions : content?.mentions);
+      // `mentions` boleh datang dari konten (`send(jid, { text, mentions })`) atau
+      // dari opsi — zapo cuma baca yang di OPSI, jadi satukan dulu.
+      const daftarMention = opts?.mentions?.length ? opts.mentions : content?.mentions;
+      const withMentions = attachMentions(content, daftarMention);
       const body = toZapoContent(withMentions);
-      const res = await need('client.message.send', client.message?.send)(bareJid(jid), body, toZapoOptions(opts, ambilQuote));
+      const o = { ...toZapoOptions({ ...opts, mentions: daftarMention }, ambilQuote) };
+      // `edit` gaya Baileys cuma FLAG ("ini edit") — targetnya ditentukan oleh
+      // `messageId` (Baileys kirim stanza ber-id sama + attr edit=1). zapo minta
+      // targetnya eksplisit di `editKey`, jadi ambil dari situ.
+      if (content?.edit) o.editKey = { id: opts.messageId || content.edit?.id || content.edit?.key?.id };
+      if (opts.messageId) o.id = opts.messageId;
+      const res = await need('client.message.send', client.message?.send)(bareJid(jid), body, Object.keys(o).length ? o : undefined);
       const wam = {
         key: {
           id: res?.id || res?.key?.id,

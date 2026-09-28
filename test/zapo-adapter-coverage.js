@@ -72,17 +72,23 @@ assert.deepStrictEqual(asJids('a@s.whatsapp.net'), ['a@s.whatsapp.net'], 'asJids
 assert.strictEqual(isRawProto({ text: 'hai' }), false, 'teks biasa bukan proto');
 assert.strictEqual(isRawProto({ interactiveMessage: {} }), true, 'interactiveMessage = proto mentah');
 assert.strictEqual(isRawProto({ imageMessage: { url: 'x' } }), true, 'imageMessage = proto mentah');
-assert.deepStrictEqual(toZapoContent({ text: 'hai' }), { text: 'hai' }, 'teks lewat');
+// Bahasa Baileys lama DITERJEMAHIN ke bahasa zapo (`type` + `media`) — zapo
+// nggak ngenalin `{ text }` / `{ image }` polos; content-nya jadi kosong 0 byte.
+assert.deepStrictEqual(toZapoContent({ text: 'hai' }), { type: 'text', text: 'hai' }, 'teks -> type:text');
 assert.deepStrictEqual(
   toZapoContent({ image: 'buf', caption: 'cap' }),
-  { image: 'buf', caption: 'cap' },
-  'gambar+caption lewat',
+  { type: 'image', media: 'buf', caption: 'cap' },
+  'gambar+caption -> type:image',
 );
 assert.deepStrictEqual(
   toZapoContent({ document: 'buf', fileName: 'a.pdf', mimetype: 'application/pdf' }),
-  { document: 'buf', fileName: 'a.pdf', mimetype: 'application/pdf' },
-  'dokumen lewat',
+  { type: 'document', media: 'buf', fileName: 'a.pdf', mimetype: 'application/pdf' },
+  'dokumen -> type:document',
 );
+// Bahasa zapo yang sudah benar DITERUSKAN UTUH — dulu `type`/`media`/`target`
+// dibuang di sini, bikin SEMUA command kirim pesan jadi 0 byte.
+const zapoAsli = { type: 'revoke', target: { id: 'A', remoteJid: 'g@g.us', fromMe: true } };
+assert.strictEqual(toZapoContent(zapoAsli), zapoAsli, 'bahasa zapo TIDAK diubah');
 const protoMentah = { interactiveMessage: { body: { text: 'x' } } };
 assert.strictEqual(toZapoContent(protoMentah), protoMentah, 'proto mentah TIDAK diubah (nativeFlow aman)');
 assert.strictEqual(normalisasiPesan({ messageTimestamp: 1700000000 }).timestamp, 1700000000000, 'detik -> ms');
