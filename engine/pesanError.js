@@ -70,6 +70,28 @@ function rapikanError(err) {
   // Kalimat yang udah manusia → biarin apa adanya.
   if (!bauTeknis(mentah)) return mentah;
 
+  // URUTAN PENTING: kode HTTP mentah dicek DULU. Kalau tidak, `Request failed with
+  // status code 429` (kena limit) dan `…408` (server ngadat) ketangkep aturan
+  // umum `status code 4\d\d` di bawah dan member dikasih "link-nya nggak valid" —
+  // padahal LINKNYA SAH. Terukur 2026-09-28: satu perintah `.tt` gagal dijawab
+  // "linknya nggak valid" tiga kali padahal linknya jalan. Status itu yang paling
+  // jujur soal siapa yang salah: 400/404 = link, 401/403 = kunci/akses,
+  // 408/429/5xx = server sumber yang rewel, bukan link member.
+  const httpStatus = /status code\s*(\d{3})|HTTP (\d{3})/i.exec(mentah);
+  if (httpStatus) {
+    const kode = Number(httpStatus[1] || httpStatus[2]);
+    const perKode = {
+      400: 'link-nya nggak valid atau udah nggak bisa diakses',
+      401: 'izin akses ke server sumbernya ditolak',
+      403: 'server sumbernya nolak akses ke link ini',
+      404: 'link-nya nggak valid atau udah nggak bisa diakses',
+      408: 'server sumbernya kelewat lama balesnya',
+      413: 'file-nya kebesaran',
+      429: 'lagi kena limit dari server sumbernya',
+    };
+    return perKode[kode] || (kode >= 500 ? 'server sumbernya lagi error' : 'lagi ada gangguan di server sumbernya');
+  }
+
   for (const [pola, pesan] of RULES) if (pola.test(mentah)) return pesan;
 
   // Teknis tapi nggak ketemu aturannya → jangan bocorin raw error ke user.
