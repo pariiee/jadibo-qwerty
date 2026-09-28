@@ -229,6 +229,17 @@ const broadcastFn = (data) => {
 setWsBroadcastWa(broadcastFn);
 setWsBroadcastTg(broadcastFn);
 
+// Jalur lintas panel: user Start bot zapo dari panel labs, dan log/QR-nya
+// dibalikin ke sana. Dipasang di sini (setelah broadcastFn siap, sebelum
+// server.listen) supaya event yang keluar pas auto-start di bawah tetap
+// kejangkau. Nggak ada yang dibuka ke jaringan: cuma nambah 1 rute yang
+// nolak dari luar loopback.
+const bridge = require('./engine/bridge');
+const broadcastGabungan = bridge.pasangRelay(broadcastFn);
+setWsBroadcastWa(broadcastGabungan);
+setWsBroadcastTg(broadcastGabungan);
+app.post('/internal/op', bridge.route);
+
 // ─── Periodic Stats Broadcast ─────────────────────────────────────────────────
 cron.schedule('*/10 * * * * *', async () => {
   try {
