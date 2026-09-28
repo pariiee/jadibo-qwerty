@@ -4778,14 +4778,21 @@ module.exports = async function toolsHandler(ctx) {
         const axios = require('axios');
         await react(mess.reactLoading);
         // Player API TikTok sering menggantung ~31 dtk lalu upstream balas 503.
-        // Bot WA timeout 30 dtk → user cuma lihat "timeout". Lewat 9 dtk kita
+        // Bot WA timeout 30 dtk → user cuma lihat "timeout". Lewat batas ini kita
         // lekas pindah ke sumber cadangan (snaptik.app, terukur ~0,6 dtk).
-        // Angkanya dulu 20000 padahal komentar ini nulis 9 dtk — link mati jadi
-        // bikin member nunggu 14 dtk (terukur di log) sebelum dikasih error.
+        //
+        // Batas 8000 ini DULU lebih pendek dari batas BE sendiri (TIMEOUT 9000 di
+        // api/download/tiktok.js) — jadi tiap BE lambat sedikit, BOT yang nyerah
+        // duluan padahal BE masih lanjut dan sering berhasil. Terukur (2026-09-28):
+        // foto normal 1,7–2,2 dtk, tapi jalur utama bisa nyangkut ke 9 dtk sebelum
+        // pindah ke cadangan → link yang SAH kebaca "gagal" di member.
+        // Sekarang: beri BE kesempatan menyelesaikan 9 dtk-nya, sisakan jeda buat
+        // kirim media (video diunduh di bawah dengan timeout 90 dtk sendiri).
+        // ponytail: satu angka sinkron dgn TIMEOUT BE — kalau BE diubah, samakan.
         const { data } = await axios.get(`${process.env.BASE_API}api/download/tiktok`, {
           params: { url },
           headers: { 'X-API-Key': process.env.KEY_API },
-          timeout: 8000,
+          timeout: 13000,
         });
         const res     = data?.results || {};
         // BE udah ngasih alasan yang manusiawi ("linknya udah nggak ada", "ini post
