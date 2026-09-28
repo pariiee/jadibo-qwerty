@@ -1722,7 +1722,7 @@ module.exports = async function ownerHandler(ctx) {
 
     // ── listuser ──────────────────────────────────────────────────────────────
     case 'listuser': {
-      if (!ctx.isOwner) { await reply(mess.onlyOwner); return true; }
+      if (!ctx.isOwner) { await reply(mess.ownerOnly); return true; }
 
       const [rows] = await pool.execute(
         'SELECT name, jid, premium, premium_expired FROM rpg_members WHERE bot_id = ? AND registered = 1 ORDER BY name ASC',

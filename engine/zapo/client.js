@@ -212,10 +212,29 @@ function createClient({ client, botJid = null, logger = console } = {}) {
 
   const ambilQuote = (jid, id) => quoteCache.get(`${jid}:${id}`) || null;
 
-  /** Jaring pengaman: method zapo wajib ada, kalau nggak -> error jelas (bukan "undefined is not a function") */
+  /**
+   * Jaring pengaman + pengikat `this` untuk method zapo.
+   *
+   * `path` bentuknya `client.<ns>.<method>`; `fn` = method yang mau dipanggil.
+   * Wajib ada, kalau nggak -> error jelas (bukan "undefined is not a function").
+   *
+   * `this` diikat ke objek zapo-nya sendiri (`client.message`, `client.group`,
+   * ...) — BUKAN ke `client`. Zapo 1.8.2 nulis method-nya sebagai prototype
+   * method yang baca field milik instance-nya (`this.messageDispatch`,
+   * `this.download`). Kalau fungsinya dilepas dari objeknya, `this` jadi
+   * `client` -> `client.messageDispatch` = undefined -> SEMUA command yang
+   * kirim pesan mati ("Cannot read properties of undefined"). Di 1.9.0 ini
+   * ketutup karena method-nya jadi arrow, tapi 1.8.2 tidak — dan kita pin
+   * 1.8.2, jadi ikatannya jangan dilepas.
+   */
   const need = (path, fn) => {
     if (typeof fn !== 'function') throw new Error(`zapo-js tidak punya \`${path}\` — versi paket berubah?`);
-    return fn;
+    const segs = path.split('.');
+    segs.pop();                              // buang nama method-nya
+    if (segs[0] === 'client') segs.shift();  // buang akar `client` — sisanya jalur di dalam client
+    let base = client;
+    for (const seg of segs) base = base?.[seg];
+    return (...args) => fn.apply(base, args);
   };
 
   // ── Normalisasi hasil aksi grup ─────────────────────────────────────────────

@@ -86,7 +86,7 @@ try {
 const SESSIONS_DIR = path.resolve(process.env.SESSIONS_DIR || './sessions');
 
 // Global per-bot settings (nyimak, autoread) — dikelola di config/globalSettings.js
-const { getBotGlobalSetting, setBotGlobalSetting } = require('../config/globalSettings');
+const { getBotGlobalSetting, setBotGlobalSetting, getMuteGrup } = require('../config/globalSettings');
 
 // ─── Owner & Developer greeting cooldown store ───────────────────────────────
 // key: `${botId}:${groupJid}` → timestamp last greeting
@@ -94,10 +94,35 @@ const ownerGreetCooldown = new Map();
 const devGreetCooldown   = new Map(); // key: groupJid → timestamp
 // Logika LID↔PN dipusatkan di engine/jid.js supaya cache-nya SATU (dulu tiap
 // file punya Map sendiri → user bisa tampil beda jid di log yang beda).
-const { cacheLidFromMeta, lidToPn: resolveLid, lidToPnAsync: resolveLidAsync } = require('./jid');
+const { cacheLidFromMeta, bare, lidToPn: resolveLid, lidToPnAsync: resolveLidAsync } = require('./jid');
 // Adapter kontrak `client.*` (sama persis dengan engine/baileys/client.js) —
 // plugins dari `main` nggak perlu diubah, semua beda Baileys vs zapo di file itu.
 const { createClient: buatAdapter } = require('./zapo/client');
+
+// ─── Nomor developer — peran TERTINGGI di bot ini ─────────────────────────────
+// Dev bukan pemilik bot, tapi yang ngoprek kodenya, jadi dia ADA DI ATAS owner.
+// Satu daftar dipakai bareng (dulu tiap tempat nyalin logika env-nya sendiri):
+// engine dev-greeting, plugins/09-jarvis.js, plugins/10-crm.js,
+// plugins/02-group.js (antidelete). Terima DEVELOPER_NUMBER maupun versi jamak
+// (dipisah koma) biar nggak ada nama env yang diabaikan tanpa sengaja.
+const DEV_NUMBERS = new Set(
+  String(process.env.DEV_NUMBERS || process.env.DEVELOPER_NUMBERS || process.env.DEVELOPER_NUMBER || '')
+    .split(',').map((n) => n.replace(/\D/g, '')).filter(Boolean)
+);
+
+const BEBAS_SAAT_MUTE = new Set(['unmute', 'listmute']);
+
+/**
+ * Nomor polos pengirim, '' kalau nggak masuk akal.
+ * `ctx.sender` udah di-resolve LID→PN, jadi tinggal `bare`.
+ * Pembanding nomor (owner/dev) WAJIB lewat sini: tanpa gerbang ini, nomor yang
+ * kosong bisa `'' === ''` dan semua orang jadi owner.
+ */
+const nomorPengirim = (jid) => {
+  const n = bare(jid);
+  return /^\d{6,}$/.test(n) ? n : '';
+};
+
 
 // ─── WS broadcast helper ──────────────────────────────────────────────────────
 let _wsBroadcast = () => {};
@@ -215,6 +240,9 @@ function buildContext(client, event, botData) {
     command,
     args,
     mentioned,
+    // Potongan paket fitur dari worker — `.menu` pakai ini biar user paket kecil
+    // nggak lihat 400 fitur lalu ditolak satu-satu saat dipakai.
+    fitur: botData?.fitur,
     activeGroups: activeGroupsPerBot.get(botData.id) || new Map(),
     pushName: pushName || 'User',
     // Helper: reply with text — pakai interactiveMessage supaya ada verified badge
@@ -549,6 +577,12 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
     // Resolve mentionedJids di ctx juga setelah cache ter-populate
     if (ctx.mentioned) ctx.mentioned = ctx.mentioned.map(m => resolveLid(m));
 
+    // Nomor asli pengirim. Di grup LID, `ctx.sender` bisa masih `...@lid` —
+    // query DB & bandingin ke *_number WAJIB pakai nomor, kalau nggak
+    // isPremium/isOwner/isDev meleset (dev/owner kelihatan kayak user biasa).
+    // Satu sumber dipakai bareng biar nggak ada yang lupa resolve.
+    const senderNum = nomorPengirim(ctx.sender);
+
     // Inject isPremium — query DB, cek juga premium_expired
     ctx.isPremium = false;
     try {
@@ -567,8 +601,7 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
     ctx.isAdmin = false;
     try {
       const ownerNum = botData.owner_number?.replace(/\D/g, '');
-      const senderNum = ctx.sender.split('@')[0].split(':')[0];
-      if (ownerNum && senderNum === ownerNum) ctx.isOwner = true;
+      if (senderNum && senderNum === ownerNum) ctx.isOwner = true;
       if (ctx.isGroup) {
         const meta = await client.group.queryGroupMetadata(jid).catch(() => null);
         if (meta?.participants) {
@@ -580,6 +613,25 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
         }
       }
     } catch { /* fallback false */ }
+
+    // ── Inject isDev — DEVELOPER_NUMBER (boleh >1, dipisah koma) ─────────────
+    // Dev itu peran TERTINGGI: bukan pemilik bot, tapi yang ngoprek kodenya.
+    // Dihitung di sini juga (bukan cuma di greeting) biar role & gate bisa pakai.
+    ctx.isDev = Boolean(senderNum) && DEV_NUMBERS.has(senderNum);
+
+    // ── Role — urutan dari yang paling sakti ─────────────────────────────────
+    // dev > owner > premium > user.
+    // Dev di ATAS owner: owner itu pemilik bot, dev yang ngoprek kodenya.
+    // Dihitung SEKALI di sini, jadi semua tampilan & gate baca sumber yang sama
+    // (dulu `.limit` cuma lihat kolom `premium` di DB, jadi owner+dev pun
+    // kelihatan 'User biasa').
+    // Admin grup SENGAJA nggak jadi role: itu hak di dalam satu grup
+    // (ctx.isAdmin, dipakai buat gate fitur grup), bukan tingkat pengguna.
+    // Dipakai `.menu`, `.limit`, `.bot`, `.crm`, `.listuser`.
+    ctx.role = ctx.isDev     ? 'dev'
+      : ctx.isOwner          ? 'owner'
+      : ctx.isPremium        ? 'premium'
+      : 'user';
 
     // ── Owner greeting ────────────────────────────────────────────────────────
     // Kalau sender adalah owner bot dan pesan di grup, kirim sambutan
@@ -738,6 +790,16 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
     if (getBotGlobalSetting(botId, 'nyimak') && ctx.isCmd) {
       // log tetap jalan, tapi tidak diproses plugin
       console.log(`[Bot ${botId}] 🤫 nyimak: ${logLine}`);
+      return;
+    }
+
+    // ── Grup dibisukan (`.mute`) — bot diam total di grup itu ──────────────────
+    // Dicek SEBELUM dispatch plugin, jadi kena semua pesan (command maupun
+    // obrolan) termasuk antispam/welcome yang jalan sendiri. `.unmute` dan
+    // `.listmute` dikecualikan — kalau nggak, nggak ada jalan keluar buat
+    // ngebalikin dan bot cuma bisa di-unmute lewat restart.
+    if (ctx.jid && !BEBAS_SAAT_MUTE.has(ctx.command) && getMuteGrup(botId, ctx.jid)) {
+      console.log(`[Bot ${botId}] 🔇 grup dibisukan, dilewati: ${logLine}`);
       return;
     }
 
@@ -1014,4 +1076,8 @@ module.exports = {
   startWhatsAppBot, stopWhatsAppBot,
   restartWhatsAppBot, restartWhatsAppBotInBackground, getBotConnectedAt, botNyangkut,
   setWsBroadcast, getBotGlobalSetting, setBotGlobalSetting,
+  // Dipakai `.restart` (plugins/05-owner.js) buat nulis alasan gagal ke bot_logs.
+  // Di Baileys fungsi ini nggak pernah diekspor → pemanggilnya `logBot?.()`
+  // jadi diam-diam nggak nulis apa-apa. Diekspor di sini biar log-nya beneran ada.
+  logBot,
 };

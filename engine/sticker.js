@@ -45,4 +45,65 @@ async function addStickerExif(webpBuffer, packname, author) {
   }
 }
 
-module.exports = { addStickerExif };
+// ─── Video/GIF → WebP sticker animasi ───────────────────────────────────────
+// Canvas WAJIB persis 512×512 — 500×500 atau 320×320 ditolak WhatsApp dan
+// stickernya di-flatten jadi gambar DIAM (frame pertama doang, keliatan
+// "stuck 1 warna"). Batas lain: file ≤500KB, durasi ≤10 detik, durasi tiap
+// frame ≥8ms. Jadi durasi dipatok 10 detik dan yang diturunkan bertahap cuma
+// fps + quality — canvas JANGAN dikecilin — sampai masuk 400KB (sisain ruang
+// buat EXIF & overhead kirim).
+// ponytail: 4 tangga udah nutup video 10 detik pada umumnya; tambah tangga
+// kalau nanti masih ada yang kejegal.
+const UKURAN_STICKER = 512;
+// Semua jalur sticker lewat filter ini: px JANGAN pernah dikecilin, cuma scale+pad.
+const SKALA_512 = `scale=${UKURAN_STICKER}:${UKURAN_STICKER}:force_original_aspect_ratio=decrease,pad=${UKURAN_STICKER}:${UKURAN_STICKER}:(ow-iw)/2:(oh-ih)/2:color=0x00000000`;
+const TANGGA_STICKER = [
+  { fps: 12, q: 70 },
+  { fps: 10, q: 60 },
+  { fps: 8,  q: 50 },
+  { fps: 6,  q: 40 },
+];
+const MAX_DETIK_STICKER = 10;
+const TARGET_STICKER_KB = 400;
+
+// Dipakai .s/.sticker (video & GIF), .wm, .attp, .bratvid. Return buffer WebP (belum EXIF).
+// loop=true buat sumber yang lebih pendek dari 10 detik (bratvid 4,5s): diputer
+// ulang sampai penuh 10 detik — kalau nggak, stickernya cuma sepanjang sumbernya.
+// regang=<pengali> buat sumber yang gerakannya cuma muter warna (attp: GIF 0,8s,
+// 20 warna): diregang jadi 10 detik biar warnanya sekali jalan, bukan ngulang.
+// `halus` WAJIB bareng regang — tanpa interpolasi, 20 warna itu cuma ganti 2×/detik
+// (keliatan diam, user bilang "ga gerak"); dengan minterpolate=blend, frame-nya
+// disisipi warna campuran → ganti ~6×/detik, secepat versi loop yang dulu.
+async function videoKeStickerWebp(inPath, outPath, { detik = MAX_DETIK_STICKER, tangga = TANGGA_STICKER, loop = false, regang = 0, fps = 0, halus = false } = {}) {
+  const { spawn } = require('child_process');
+  const fs = require('fs');
+  const durasi = `00:00:${String(detik).padStart(2, '0')}`;
+  const skala = SKALA_512;
+  let terakhir = null;
+  let terpilih = null;
+
+  for (const t of tangga) {
+    const rate = fps || t.fps;
+    const vf = `${regang ? `setpts=${regang}*PTS,` : ''}${skala},`
+             + `${halus ? `minterpolate=fps=${rate}:mi_mode=blend,` : ''}fps=${rate}`;
+    await new Promise((resolve, reject) => {
+      const ff = spawn('ffmpeg', [
+        '-y',
+        ...(loop ? ['-stream_loop', '-1'] : []),
+        '-i', inPath,
+        '-vcodec', 'libwebp',
+        '-vf', vf,
+        '-loop', '0', '-ss', '00:00:00', '-t', durasi,
+        '-preset', 'default', '-an', '-quality', String(t.q), outPath,
+      ]);
+      ff.on('error', reject);
+      ff.on('close', code => code !== 0 ? reject(new Error(`ffmpeg exit code ${code}`)) : resolve());
+    });
+    terakhir = fs.readFileSync(outPath);
+    if (terakhir.length <= TARGET_STICKER_KB * 1024) { terpilih = { ...t, fps: rate, buf: terakhir }; break; }
+  }
+
+  return { buf: terpilih ? terpilih.buf : terakhir, tangga: terpilih || null };
+}
+
+module.exports = { addStickerExif, videoKeStickerWebp, TANGGA_STICKER, UKURAN_STICKER, MAX_DETIK_STICKER };

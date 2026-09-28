@@ -4,7 +4,7 @@
  * engine/jid.js
  * Pusat urusan JID WhatsApp: LID <-> nomor telepon (PN), angka polos, cek tipe.
  *
- * Konvensi zapo:
+ * Konvensi JID:
  *   LID = `...@lid`            -> id internal WhatsApp (bukan nomor)
  *   PN  = `...@s.whatsapp.net` -> nomor telepon asli
  *
@@ -22,6 +22,7 @@ const bare = (jid) => String(jid || '').split('@')[0].split(':')[0];
 
 const isLid = (jid) => String(jid || '').endsWith('@lid');
 const isPn  = (jid) => String(jid || '').endsWith('@s.whatsapp.net');
+const isJlidUser = (jid) => isPn(jid) && /\d{6,}/.test(String(jid).split('@')[0].split(':')[0]);
 
 /** '62812-3456' -> '628123456@s.whatsapp.net' */
 const toPn  = (num) => `${String(num || '').replace(/\D/g, '')}@s.whatsapp.net`;
@@ -44,6 +45,62 @@ function cacheLidFromMeta(participants) {
   }
 }
 
+/**
+ * Baileys v7 kirim peserta grup sebagai OBJEK (`{ id, lid, phoneNumber }`), bukan
+ * string. Dulu objek ini diteruskan apa adanya ke engine, jadi `@user` di
+ * welcome/bye tampil `@[object Object]` dan cek `.banmember` nggak pernah kena.
+ * Satu tempat normalisasi — semua pemakai event ikut sehat.
+ * Sambil jalan, isi peta LID<->PN dari data yang udah nempel di objeknya.
+ */
+/**
+ * Peserta grup -> daftar nomor (PN). Dipakai buat nyocokin sama tabel yang
+ * kuncinya nomor (mis. rpg_members). LID dipetakan lewat cache; yang belum
+ * ke-petakan dibuang, bukan ditebak.
+ */
+function participantPhones(participants) {
+  const out = [];
+  // participantJids() sekalian ngisi cache LID<->PN dari `phoneNumber` metadata.
+  for (const jid of participantJids(participants)) {
+    const s  = String(jid);
+    const pn = s.endsWith('@s.whatsapp.net') ? s : lidToPn(s);
+    if (isPn(pn)) out.push(pn);
+  }
+  return [...new Set(out)];
+}
+
+function participantJids(participants) {
+  const objs = (participants || []).map((p) => {
+    if (typeof p === 'string') return { id: p, jid: p };
+    if (!p || typeof p !== 'object') return { id: '', jid: '' };
+    // `cacheLidFromMeta` baca field `.jid` dan wajib bentuk LID.
+    return { ...p, jid: isLid(p.lid) ? p.lid : (isLid(p.id) ? p.id : p.id || p.lid) };
+  });
+  cacheLidFromMeta(objs);
+  // `id` = bentuk yang dipakai grup (LID kalau grupnya mode LID) — itu yang
+  // harus di-mention, bukan nomornya.
+  return objs.map((p) => String(p.id || p.jid || '')).filter(Boolean);
+}
+
+/**
+ * Isi cache dari key pesan masuk. INI SUMBER UTAMANYA, bukan metadata grup.
+ * Baileys v7 naruh PN-nya langsung di key (`participantAlt` / `remoteJidAlt`) dan
+ * nyimpen mapping-nya sendiri ke session.db sebelum emit `messages.upsert`
+ * (lib/Socket/messages-recv.js ~1277). Jadi pesan PERTAMA setelah restart udah
+ * kebaca — nggak nunggu metadata grup, nggak ada network call.
+ */
+function cacheLidFromKey(key) {
+  if (!key) return;
+  for (const [a, b] of [[key.participantAlt, key.participant], [key.remoteJidAlt, key.remoteJid]]) {
+    if (!a || !b || isLid(a) === isLid(b)) continue;
+    const lid = isLid(a) ? String(a) : String(b);
+    const pn  = isLid(a) ? String(b) : String(a);
+    if (!isPn(pn)) continue;
+    const norm = toPn(bare(pn)); // buang suffix device (`628xx:0@...`)
+    lidToPhoneCache.set(lid, norm);
+    phoneToLidCache.set(bare(norm), lid);
+  }
+}
+
 // ─── LID -> nomor telepon ─────────────────────────────────────────────────────
 
 /** Sync: pakai cache saja. Tidak ketemu -> balikin jid apa adanya. */
@@ -52,21 +109,20 @@ function lidToPn(jid) {
   return lidToPhoneCache.get(String(jid)) || jid;
 }
 
-/** Async: cache dulu, lalu contact store (session.db). */
+/** Async: cache dulu, lalu peta LID<->PN punya Baileys sendiri (persist di session.db). */
 async function lidToPnAsync(client, jid) {
   if (!isLid(jid)) return jid;
   const cached = lidToPn(jid);
   if (cached !== jid) return cached;
   try {
-    const rec = await client?.stores?.contacts?.getByJid?.(String(jid));
-    if (rec?.phoneNumber) {
-      const pn = String(rec.phoneNumber);
+    const raw = await client?.lid?.getPn?.(String(jid));
+    if (raw && isPn(raw)) {
+      const pn = toPn(bare(raw)); // `628xx:0@s.whatsapp.net` -> `628xx@s.whatsapp.net`
       lidToPhoneCache.set(String(jid), pn);
-      const phone = bare(pn);
-      if (phone) phoneToLidCache.set(phone, String(jid));
+      phoneToLidCache.set(bare(pn), String(jid));
       return pn;
     }
-  } catch { /* store tidak ada -> biarkan LID */ }
+  } catch { /* nggak ada -> biarkan LID */ }
   return jid;
 }
 
@@ -80,26 +136,54 @@ function pnToLid(jid) {
   return phoneToLidCache.get(key) || jid;
 }
 
-/** Async: cache dulu, lalu contact store (kolom `lid`, fallback `jid` kalau LID). */
+/** Async: cache dulu, lalu peta LID<->PN punya Baileys sendiri (persist di session.db). */
 async function pnToLidAsync(client, jid) {
   if (!jid) return jid;
   const cached = pnToLid(jid);
   if (cached !== jid) return cached;
   try {
-    const rec = await client?.stores?.contacts?.getByPhoneNumber?.(bare(jid));
-    const lid = rec?.lid || (isLid(rec?.jid) ? rec.jid : null);
-    if (lid) {
+    const lid = await client?.lid?.getLid?.(toPn(bare(jid)));
+    if (lid && isLid(lid)) {
       phoneToLidCache.set(bare(jid), String(lid));
-      lidToPhoneCache.set(String(lid), isPn(jid) ? String(jid) : toPn(jid));
+      lidToPhoneCache.set(String(lid), toPn(bare(jid)));
       return String(lid);
     }
-  } catch { /* store tidak ada -> biarkan apa adanya */ }
+  } catch { /* nggak ada -> biarkan apa adanya */ }
   return jid;
 }
 
+// ─── mentionedJid buat grup ───────────────────────────────────────────────────
+
+/**
+ * Di grup yang di-address pakai LID, peserta dikenali sebagai `...@lid` —
+ * tag biru cuma nempel kalau `mentionedJid` ikut nyertain bentuk LID-nya.
+ * Teksnya tetap `@<nomor>` (WA yang nampilin nomornya). Non-grup: apa adanya.
+ */
+function mentionsForChat(chatJid, list) {
+  if (!Array.isArray(list) || !list.length) return list;
+  if (!String(chatJid || '').endsWith('@g.us')) return list;
+  const out = [...list];
+  for (const jid of list) {
+    const lid = pnToLid(jid);
+    if (lid !== jid && !out.includes(lid)) out.push(lid);
+  }
+  return out;
+}
+
+/**
+ * Ada JID bentuk LID yang belum ke-map ke nomor? Engine pakai ini buat mutusin
+ * perlu baca metadata grup atau nggak. Peta normalnya udah keisi dari key pesan
+ * (cacheLidFromKey), jadi metadata cuma jaring pengaman terakhir.
+ */
+function needsLidResolve({ sender, quotedSender, mentioned } = {}) {
+  return [sender, quotedSender, ...(mentioned || [])].some((j) => isLid(j));
+}
+
 module.exports = {
-  bare, isLid, isPn, toPn, toLid,
-  cacheLidFromMeta,
+  bare, isLid, isPn, isJlidUser, toPn, toLid,
+  needsLidResolve,
+  participantJids, participantPhones, cacheLidFromMeta, cacheLidFromKey,
   lidToPn, lidToPnAsync,
   pnToLid, pnToLidAsync,
+  mentionsForChat,
 };

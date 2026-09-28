@@ -31,12 +31,34 @@ const mess = {
   GrupAdmin:    process.env.MSG_ONLY_ADMIN     || 'Fitur ini khusus untuk Admin grup!',
   BotAdmin:     process.env.MSG_BOT_MUST_ADMIN || 'Jadikan bot sebagai Admin grup terlebih dahulu!',
   ownerOnly:    process.env.MSG_ONLY_OWNER     || 'Fitur ini khusus untuk Owner bot!',
+  devOnly:      process.env.MSG_ONLY_DEV       || 'Fitur ini khusus untuk Owner & Developer bot!',
   limitExceeded:process.env.MSG_LIMIT_EXCEEDED || 'Limit penggunaan kamu sudah habis!',
   onlyPremium:  process.env.MSG_ONLY_PREMIUM   || 'Fitur ini khusus untuk Member Premium!',
   onlySewa:     process.env.MSG_ONLY_SEWA      || 'Grup ini belum menyewa bot!',
 
+  // Label peran, urut dari yang paling sakti. Kuncinya = `ctx.role`
+  // (dihitung di engine/whatsappEngine.js). Dipakai `.menu`, `.limit`, `.bot`.
+  // Cuma 4: admin grup bukan role, itu hak per grup (ctx.isAdmin).
+  roleLabel: {
+    dev:     'Developer',
+    owner:   'Owner',
+    premium: 'Unreal',
+    user:    'Basic',
+  },
+
   // QRIS
   qrisDefault:  process.env.QRIS_DEFAULT        || '',
+
+  // ── Teks default jadwal buka/tutup grup (dipakai kalau .setopen/.setclose
+  //    diset tanpa teks pengumuman) ─────────────────────────────────────────
+  openDefault:  process.env.DEFAULT_SETOPEN  || '',
+  closeDefault: process.env.DEFAULT_SETCLOSE || '',
+
+  // ── Teks template welcome/bye (dipakai kalau .setwelcome/.setbye belum diset)
+  //    Placeholder: @user @namegc @desc @jam
+  //    @menit @detik @hari @tanggal @bulan @tahun @namabulan
+  welcomeDefault: process.env.DEFAULT_WELCOME || '',
+  byeDefault:     process.env.DEFAULT_SETBYE  || '',
 };
 
 module.exports = mess;
