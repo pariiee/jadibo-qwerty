@@ -141,6 +141,18 @@ function ringkasPesan(message) {
   return { [jenis]: sisa };
 }
 
+// Teks yang bisa dikutip dari sebuah rekaman. Bentuk lokal zapo
+// (`{type:'video', caption}`) bikin `storedContent` = string `'video'`, jadi
+// `.caption` di atasnya = undefined — captionnya hilang tanpa ini.
+function isiRekaman(stored) {
+  const jenis = Object.keys(stored.message)[0];
+  const isi   = stored.message[jenis];
+  if (jenis === 'type') return String(stored.message.caption || stored.message.text || '');
+  if (jenis === 'conversation') return String(isi || '');
+  if (jenis === 'extendedTextMessage') return isi?.text || '';
+  return isi?.caption || '';
+}
+
 function antideleteFlush() {
   if (!_dirty) return;
   _dirty = false;
@@ -285,20 +297,34 @@ module.exports = async function groupHandler(ctx) {
           if (stored) {
             const storedType    = Object.keys(stored.message)[0];
             const storedContent = stored.message[storedType];
+            // Dua bentuk rekaman:
+            //  - proto WA   : `{videoMessage: {mediaKey, directPath, …}}` (pesan orang lain)
+            //  - lokal zapo : `{type:'video', caption, …}` (hook pesan-TERKIRIM, bot sendiri)
+            // Bentuk lokal nggak punya mediaKey/url/directPath, jadi unduh ulang
+            // nggak mungkin — cuma caption/teksnya yang bisa dibawa. Kalau
+            // `storedContent` dibaca sebagai objek (`.caption`), captionnya
+            // hilang karena isinya string ('video'/'text').
+            const lokal = storedType === 'type';
             const deleterJid = rawMsg.key?.participant || rawMsg.key?.remoteJid || '';
             const deleterPhone = deleterJid.split('@')[0];
             try {
               const headerText = `🛡️ *Anti-Delete*\n@${deleterPhone} ngapain di hapus bang 😹`;
               // Satu pesan berkutip: isi aslinya jadi kutipan, header jadi balasannya.
               // Jadinya jelas "ini lho pesan yang dihapus" — dulu cuma teks mentah.
-              const bodyOf = () => {
-                if (storedType === 'conversation') return String(storedContent || '');
-                if (storedType === 'extendedTextMessage') return storedContent?.text || '';
-                return storedContent?.caption || '';
-              };
+              const bodyOf = () => isiRekaman(stored);
               const cap = (extra = '') => (bodyOf() ? `${headerText}\n\n> ${bodyOf()}${extra}` : `${headerText}${extra}`);
 
-              if (storedType === 'stickerMessage') {
+              if (lokal && ['video', 'image', 'audio', 'ptt', 'document', 'sticker'].includes(stored.message.type)) {
+                // Media yang BOT sendiri kirim. Hook pesan-terkirim cuma ngasih
+                // konten lokal (satu langkah sebelum upload), jadi nggak ada
+                // mediaKey buat unduh ulang. Bilang apa adanya daripada diam-diam
+                // cuma nampilin header.
+                await ctx.client.message.send(ctx.jid, {
+                  type: 'text',
+                  text: cap('\n\n_(media — cuma teksnya yang bisa ditampilkan)_'),
+                  mentions: [deleterJid],
+                });
+              } else if (storedType === 'stickerMessage') {
                 const fixed = Object.assign({}, storedContent);
                 for (const f of ['mediaKey','fileSha256','fileEncSha256']) {
                   if (typeof fixed[f] === 'string') fixed[f] = Buffer.from(fixed[f], 'base64');
@@ -1717,6 +1743,7 @@ module.exports = async function groupHandler(ctx) {
 
 // Command yang kena limit untuk user biasa
 module.exports.ringkasPesan = ringkasPesan;   // dipakai test/antidelete-strip.js
+module.exports.isiRekaman   = isiRekaman;     // idem
 module.exports.limitedCmds = new Set([
   'tagall','tagadmin','tagme','hidetag','h',
   'kick','kickall','promote','demote','add','addai',

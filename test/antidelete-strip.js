@@ -13,7 +13,7 @@
  */
 const assert = require('assert');
 process.env.SESSIONS_DIR = process.env.SESSIONS_DIR || './sessions';
-const { ringkasPesan } = require('../plugins/02-group');
+const { ringkasPesan, isiRekaman } = require('../plugins/02-group');
 
 const MB = 1024 * 1024;
 const meta = (extra = {}) => ({
@@ -122,5 +122,24 @@ const jLewat = ringkasPesan({
 });
 assert.strictEqual(jLewat, null, 'ukurannya kebaca walau bentuk JSON');
 console.log('   ✓ 21 MB bentuk JSON -> di-skip (ukurannya kebaca)');
+
+// ── 8. Teks yang bisa dikutip (dua bentuk) ───────────────────────────────────
+// Bug lama: bentuk lokal bikin `storedContent` = string 'video', jadi
+// `storedContent.caption` = undefined -> caption bot hilang, cuma header.
+console.log('\n── 8. isiRekaman (teks yang dikutip) ──');
+const KASUS = [
+  [{ message: { type: 'video', caption: '📷 Instagram', mimetype: 'video/mp4' } }, '📷 Instagram', 'lokal: caption video'],
+  [{ message: { type: 'text', text: 'halo semua' } }, 'halo semua', 'lokal: teks bot'],
+  [{ message: { type: 'video', mimetype: 'video/mp4' } }, '', 'lokal: video tanpa caption'],
+  [{ message: { conversation: 'pesan biasa' } }, 'pesan biasa', 'proto: conversation'],
+  [{ message: { extendedTextMessage: { text: 'teks panjang' } } }, 'teks panjang', 'proto: extendedText'],
+  [{ message: { videoMessage: { caption: 'cap video', mediaKey: Buffer.alloc(32) } } }, 'cap video', 'proto: caption video'],
+  [{ message: { imageMessage: { mediaKey: Buffer.alloc(32) } } }, '', 'proto: gambar tanpa caption'],
+];
+for (const [stored, harap, label] of KASUS) {
+  const dapat = isiRekaman(stored);
+  assert.strictEqual(dapat, harap, `${label}: harusnya ${JSON.stringify(harap)}, dapat ${JSON.stringify(dapat)}`);
+  console.log(`   ✓ ${label} -> ${JSON.stringify(dapat)}`);
+}
 
 console.log('\n=== ANTIDELETE: CUMA METADATA YANG DISIMPEN ===');
