@@ -89,9 +89,37 @@ function antideleteRemember(remoteJid, id, message, fromMe = false) {
   if (!antideleteActiveCache().size) return;
   const type = Object.keys(message)[0] || '';
   if (STORE_SKIP.has(type)) return;
-  msgStore.set(remoteJid + '|' + id, { remoteJid, id, message, at: Date.now(), fromMe });
+  const ringkas = ringkasPesan(message);
+  if (!ringkas) return;                            // media kegedean, skip
+  msgStore.set(remoteJid + '|' + id, { remoteJid, id, message: ringkas, at: Date.now(), fromMe });
   _dirty = true;
   antideleteFlush();
+}
+
+// Siapkan pesan buat disimpen. Balikin `null` = jangan disimpen sama sekali.
+//
+// 1. BUANG isi BERAT, simpan METADATA-nya saja. Kirim ulang nggak butuh buffer:
+//    handler antidelete cuma pakai mediaKey/fileSha256/fileEncSha256 lalu unduh
+//    ULANG lewat `client.message.downloadBytes`. Tapi di jalur zapo pesan yang
+//    masuk kadang udah bawa buffer hasil unduhan di `.media` — dan `JSON.stringify`
+//    bikin Buffer jadi array angka (~4x lipat). Video 16 MB -> 73 MB di disk,
+//    nginep 2 hari, nggak pernah dibaca. 5 pesan kayak gitu = 118 MB.
+//    Setelah dibuang, ukurannya nggak lagi ikut ukuran video (~200 byte).
+// 2. LEWATKAN media di atas STORE_MAX_MEDIA: ngunduh ulang + kirim ulang video
+//    segitu lama & gampang gagal, jadi nggak worth disimpen.
+const STORE_MAX_MEDIA = 20 * 1024 * 1024;        // 20 MB, ikut ukuran video asli
+
+function ringkasPesan(message) {
+  const jenis = Object.keys(message)[0];        // 'video' | 'image' | 'conversation' | ...
+  const isi   = message[jenis];
+  if (!isi || typeof isi !== 'object') return message;
+
+  const ukuran = isi.fileLength || (Buffer.isBuffer(isi.media) ? isi.media.length : 0);
+  if (ukuran > STORE_MAX_MEDIA) return null;
+
+  if (!('media' in isi || 'jpegThumbnail' in isi)) return message;
+  const { media, jpegThumbnail, ...sisa } = isi;
+  return { [jenis]: sisa };
 }
 
 function antideleteFlush() {
@@ -310,6 +338,12 @@ module.exports = async function groupHandler(ctx) {
                   type: 'text', text: cap(), mentions: [deleterJid],
                 });
               }
+              // Sudah dikirim ulang = rekamannya nggak ada gunanya lagi. Tanpa
+              // ini semua pesan grup nginep sampai STORE_TTL (2 hari) padahal
+              // yang dihapus cuma sedikit — itu yang bikin file store membengkak.
+              msgStore.delete(storeKey);
+              _dirty = true;
+              antideleteFlush();
             } catch (e) {
               // Dulu cuma console.log: user nggak dapat apa-apa dan keliatannya
               // "bot nggak respon". Minimal kasih tahu pesannya kehapus tapi gagal dikirim ulang.
@@ -1663,6 +1697,7 @@ module.exports = async function groupHandler(ctx) {
 };
 
 // Command yang kena limit untuk user biasa
+module.exports.ringkasPesan = ringkasPesan;   // dipakai test/antidelete-strip.js
 module.exports.limitedCmds = new Set([
   'tagall','tagadmin','tagme','hidetag','h',
   'kick','kickall','promote','demote','add','addai',
