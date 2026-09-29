@@ -9,7 +9,7 @@
  *   2. thumbnail JPEG 252×252                       → `thumbnail*`
  * Keduanya WAJIB dienkripsi pakai SATU media key yang sama (proto cuma punya
  * satu field `mediaKey`), cuma beda info HKDF-nya. Uploadnya di adapter
- * (`engine/baileys/client.js` → `kirimStickerPack`).
+ * (`engine/zapo/client.js` → `kirimStickerPack`).
  *
  * Nama file di dalam ZIP = `<base64 sha256 isi> .webp`, cover = `<packId>.webp`
  * dan WAJIB entry pertama — WA baca itu buat gambar tray pack.

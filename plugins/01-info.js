@@ -28,12 +28,10 @@ function botUptimeMs(ctx) {
 }
 
 // ── Helper: nama + versi engine WhatsApp yang BENERAN dipakai ────────────────
-// Dua adapter hidup di repo ini: `baileys` (branch main) & `zapo-js` (branch
-// zapo-deploy). Versinya dibaca dari package.json paket yang terpasang — bukan
-// string hardcode — biar ikut sendiri kalau di-upgrade. Kandidatnya dua karena
-// file ini di-cherry-pick ke dua branch; yang nggak terpasang langsung di-skip.
+// Versinya dibaca dari package.json paket yang terpasang — bukan string
+// hardcode — biar ikut sendiri kalau di-upgrade.
 function infoEngine() {
-  for (const [paket, label] of [['baileys', 'Baileys'], ['zapo-js', 'zapo-js']]) {
+  for (const [paket, label] of [['zapo-js', 'zapo-js']]) {
     try { return `${label} v${require(paket + '/package.json').version}`; } catch { /* coba berikutnya */ }
   }
   return 'tidak terinstall';

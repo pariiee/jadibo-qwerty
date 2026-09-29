@@ -95,8 +95,8 @@ const devGreetCooldown   = new Map(); // key: groupJid → timestamp
 // Logika LID↔PN dipusatkan di engine/jid.js supaya cache-nya SATU (dulu tiap
 // file punya Map sendiri → user bisa tampil beda jid di log yang beda).
 const { cacheLidFromMeta, bare, lidToPn: resolveLid, lidToPnAsync: resolveLidAsync } = require('./jid');
-// Adapter kontrak `client.*` (sama persis dengan engine/baileys/client.js) —
-// plugins dari `main` nggak perlu diubah, semua beda Baileys vs zapo di file itu.
+// Adapter kontrak `client.*` — plugins dari `main` nggak perlu diubah,
+// semua beda antar-library mati di file itu.
 const { createClient: buatAdapter } = require('./zapo/client');
 
 // ─── Nomor developer — peran TERTINGGI di bot ini ─────────────────────────────

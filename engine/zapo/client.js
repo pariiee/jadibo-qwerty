@@ -4,9 +4,9 @@
  * engine/zapo/client.js
  * Adapter zapo-js -> kontrak `client.*` yang dipakai plugins.
  *
- * Kontrak ini SAMA PERSIS dengan engine/baileys/client.js. SEMUA beda
- * Baileys vs zapo mati di file ini; plugins nggak pernah tau engine apa yang
- * jalan. Konsekuensinya: plugin dari `main` bisa dipakai APA ADANYA di zapo.
+ * Kontrak ini SAMA PERSIS dengan kontrak `client.*` yang dipakai plugins.
+ * SEMUA beda antar-library mati di file ini; plugins nggak pernah tau engine apa
+ * yang jalan. Konsekuensinya: plugin dari `main` bisa dipakai APA ADANYA.
  *
  * Method yang dipakai plugins (hasil scan plugins main+zapo):
  *   message.send x245, message.downloadBytes x51, group.queryGroupMetadata x12,
@@ -38,7 +38,7 @@ const asJids = (v) => (Array.isArray(v) ? v : [v]).filter(Boolean).map(bareJid);
 
 // ─── Hook pesan terkirim (dipakai 02-group.js buat antidelete) ────────────────
 // Plugin nggak pernah liat pesan yang DIKIRIM bot lewat jalur pesan masuk, jadi
-// adapter nyediain hook ini. Kontrak sama dengan engine/baileys/client.js:
+// adapter nyediain hook ini. Kontraknya:
 //   onMessageSent(fn) -> fn(wam) ; balikin fungsi unsubscribe.
 const sentHooks = new Set();
 function onMessageSent(fn) {
@@ -411,10 +411,9 @@ function createClient({ client, botJid = null, logger = console } = {}) {
     },
 
     /**
-     * Status grup (`.swgc`) — di Baileys jalur relayMessage + proto
-     * groupStatusMessageV2; di zapo coordinator `status` resmi. Nama & posisi
-     * method mengikuti engine/baileys/client.js (`message.relayStatusGrup`)
-     * supaya plugin dari `main` nggak perlu diubah.
+     * Status grup (`.swgc`) — di zapo coordinator `status` resmi. Nama & posisi
+     * method sengaja BEDA dari API asli (`message.relayStatusGrup`) supaya
+     * plugins/02-group.js nggak perlu diubah.
      */
     async relayStatusGrup(jid, content, opts = {}) {
       const recipients = (opts.recipients?.length ? opts.recipients : (Array.isArray(jid) ? jid : [jid])).map(bareJid);
@@ -745,11 +744,11 @@ function createClient({ client, botJid = null, logger = console } = {}) {
 
 module.exports = {
   createClient,
-  // Dipakai plugins (kontrak sama dengan engine/baileys/client.js)
+  // Dipakai plugins (kontrak `client.*`)
   onMessageSent,
-  // Node `<bot>`/`<biz>` Baileys. Di zapo label AI datang dari
-  // `messageContextInfo.supportPayload`, jadi ini cuma biar `require` di
-  // plugins/05-owner.js (command debug `.testai`) nggak meledak.
+  // Node `<bot>`/`<biz>` — dipakai Baileys buat nandain jalur bot. Di zapo label
+  // AI datang dari `messageContextInfo.supportPayload`, jadi ini cuma biar
+  // `require` di plugins/05-owner.js (command debug `.testai`) nggak meledak.
   AI_NODES: [{ attrs: { biz_bot: '1' }, tag: 'bot' }, { attrs: {}, tag: 'biz' }],
   BIZ_NODE: [{ attrs: {}, tag: 'biz' }],
   // Utility yang dipakai engine & tes (jangan dihapus — kontrak internal)

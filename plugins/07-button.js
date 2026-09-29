@@ -44,7 +44,7 @@ module.exports = async function buttonHandler(ctx) {
         await reply(
           '🤖 *YaaParBot v1.0.0*\n\n' +
           'Multi-bot WhatsApp + Telegram gateway.\n' +
-          'Dibangun dengan Baileys & node-telegram-bot-api.'
+          'Dibangun dengan zapo-js & node-telegram-bot-api.'
         );
         return true;
       case 'btn_owner':
