@@ -85,4 +85,42 @@ const BAIL = { imageMessage: { mediaKey: Buffer.alloc(32), mimetype: 'image/jpeg
 assert.strictEqual(ringkasPesan(BAIL), BAIL);
 console.log('   ✓ nggak disentuh');
 
+// ── 6. Bentuk 1: hasil normalisasi zapo (hook pesan-terkirim) ────────────────
+// INI yang bikin file 134 MB: 72 rekaman, 36,9 MB buffer, semuanya fromMe.
+console.log('\n── 6. bentuk normalisasi zapo `{type, media}` ──');
+const NORM = {
+  type: 'video', media: Buffer.alloc(16 * MB), mimetype: 'video/mp4',
+  caption: '📷 Instagram', jpegThumbnail: Buffer.alloc(1231),
+};
+const nHasil = ringkasPesan(NORM);
+assert.ok(nHasil, 'video 16 MB harus tetap disimpen');
+assert.strictEqual(JSON.stringify(nHasil).length, JSON.stringify({
+  type: 'video', mimetype: 'video/mp4', caption: '📷 Instagram',
+}).length);
+assert.ok(!('media' in nHasil) && !('jpegThumbnail' in nHasil));
+assert.strictEqual(nHasil.caption, '📷 Instagram');
+assert.strictEqual(nHasil.mimetype, 'video/mp4');
+console.log('   ✓ 16 MB -> ' + JSON.stringify(nHasil).length + ' byte, caption+mimetype utuh');
+
+const nLewat = ringkasPesan({ ...NORM, media: Buffer.alloc(21 * MB) });
+assert.strictEqual(nLewat, null, 'di atas 20 MB harus di-skip');
+console.log('   ✓ 21 MB -> di-skip');
+
+// Bentuk yang ADA DI FILE: `media` sudah jadi {type:'Buffer',data:[…]}
+console.log('\n── 7. bentuk JSON (dari file, buat migrasi) ──');
+const JSOND = {
+  type: 'video', mimetype: 'video/mp4', caption: 'x',
+  media: { type: 'Buffer', data: new Array(16 * MB).fill(0) },
+};
+const jHasil = ringkasPesan(JSOND);
+assert.ok(jHasil && !('media' in jHasil), 'media bentuk JSON harus ikut dibuang');
+console.log('   ✓ {type:Buffer,data:[…]} ikut dibuang');
+
+const jLewat = ringkasPesan({
+  type: 'video', mimetype: 'video/mp4',
+  media: { type: 'Buffer', data: new Array(21 * MB).fill(0) },
+});
+assert.strictEqual(jLewat, null, 'ukurannya kebaca walau bentuk JSON');
+console.log('   ✓ 21 MB bentuk JSON -> di-skip (ukurannya kebaca)');
+
 console.log('\n=== ANTIDELETE: CUMA METADATA YANG DISIMPEN ===');

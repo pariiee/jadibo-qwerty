@@ -109,12 +109,31 @@ function antideleteRemember(remoteJid, id, message, fromMe = false) {
 //    segitu lama & gampang gagal, jadi nggak worth disimpen.
 const STORE_MAX_MEDIA = 20 * 1024 * 1024;        // 20 MB, ikut ukuran video asli
 
+// Ukuran media apa pun: Buffer asli, atau `{type:'Buffer',data:[…]}` hasil
+// JSON.parse (bentuk yang ada di FILE, dipakai jalur migrasi).
+function ukuranMedia(v) {
+  if (Buffer.isBuffer(v)) return v.length;
+  if (v && v.type === 'Buffer' && Array.isArray(v.data)) return v.data.length;
+  return 0;
+}
+
 function ringkasPesan(message) {
-  const jenis = Object.keys(message)[0];        // 'video' | 'image' | 'conversation' | ...
+  // ── Bentuk 1: hasil normalisasi zapo — `{type:'video', media:Buffer, …}` ──
+  // Ini yang dikirim hook pesan-terkirim (bot sendiri), dan INI biang 134 MB:
+  // 72 rekaman, 36,9 MB buffer. Nggak ada mediaKey/url/directPath di bentuk ini,
+  // jadi memang nggak bisa dikirim ulang — yang disimpen cuma caption-nya.
+  if (typeof message.type === 'string' && 'media' in message) {
+    if ((message.fileLength || ukuranMedia(message.media)) > STORE_MAX_MEDIA) return null;
+    const { media, jpegThumbnail, ...sisa } = message;
+    return sisa;
+  }
+
+  // ── Bentuk 2: proto WA — `{videoMessage: {mediaKey, directPath, …}}` ──────
+  const jenis = Object.keys(message)[0];
   const isi   = message[jenis];
   if (!isi || typeof isi !== 'object') return message;
 
-  const ukuran = isi.fileLength || (Buffer.isBuffer(isi.media) ? isi.media.length : 0);
+  const ukuran = isi.fileLength || ukuranMedia(isi.media);
   if (ukuran > STORE_MAX_MEDIA) return null;
 
   if (!('media' in isi || 'jpegThumbnail' in isi)) return message;
