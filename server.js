@@ -6,6 +6,23 @@
  */
 
 require('dotenv').config();
+
+// Guard boot: JWT_SECRET kosong = token siapa pun bisa ditandatangani sendiri.
+// Lebih baik gagal start daripada jalan dengan pintu kebuka.
+if (!process.env.JWT_SECRET) {
+  console.error('[Boot] JWT_SECRET kosong di .env — server dihentikan.');
+  process.exit(1);
+}
+// Kunci jalur internal web ↔ worker. Kalau kosong dan jatuh ke JWT_SECRET,
+// bocornya satu kunci = bocor sesi user sekalian. Dipisah, dan wajib.
+if (!process.env.INTERNAL_KEY) {
+  console.error('[Boot] INTERNAL_KEY kosong di .env — server dihentikan.');
+  process.exit(1);
+}
+
+require('./config/net'); // paksa IPv4 (lihat komentarnya) — worker juga pakai
+
+const fs           = require('fs');
 const express      = require('express');
 const http         = require('http');
 const WebSocket    = require('ws');
@@ -20,6 +37,9 @@ const cron         = require('node-cron');
 const { testConnection, seedDefaults, getStats, pool } = require('./config/database');
 const auth = require('./controllers/authController');
 const bot  = require('./controllers/botController');
+const billing = require('./controllers/billingController');
+const pricingStore = require('./config/pricingStore');
+const beban        = require('./config/beban');
 const { setWsBroadcast: setWsBroadcastWa, startWhatsAppBot } = require('./engine/whatsappEngine');
 const { setWsBroadcast: setWsBroadcastTg, startTelegramBot } = require('./engine/telegramEngine');
 
@@ -63,11 +83,22 @@ app.use(cors({
 }));
 
 app.use(cookieParser());
+
+// Webhook QRISku HARUS dapat badan mentah: tanda tangan dihitung dari byte asli.
+// Jadi rute ini dipasang SEBELUM express.json — kalau tidak, JSON sudah diparse
+// dan byte aslinya hilang, verifikasi tidak akan pernah cocok.
+app.post(
+  '/api/payment/webhook',
+  express.raw({ type: '*/*', limit: '256kb' }),
+  billing.webhook
+);
+
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Static files
-app.use(express.static(path.join(__dirname, 'public')));
+// Static files — index:false supaya '/' tidak disajikan mentah oleh static
+// (halaman harus lewat renderer include di bawah, biar partial ikut dirangkai)
+app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 
 // ─── Rate Limiter ─────────────────────────────────────────────────────────────
 const authLimiter = rateLimit({
@@ -111,20 +142,77 @@ app.post('/api/bots/:id/stop',          apiLimiter, auth.requireAuth, bot.stopBo
 app.post('/api/bots/:id/restart',       apiLimiter, auth.requireAuth, bot.restartBot);
 app.post('/api/bots/:id/clear-session', apiLimiter, auth.requireAuth, bot.clearSession);
 app.get('/api/bots/:id/logs',           apiLimiter, auth.requireAuth, bot.getBotLogs);
+app.get('/api/bots/:id/stats',         apiLimiter, auth.requireAuth, bot.getBotStats);
+app.get('/api/bots/:id/config',        apiLimiter, auth.requireAuth, bot.exportConfig);
 app.post('/api/bots/:id/resolve-invite', apiLimiter, auth.requireAuth, bot.resolveInvite);
+
+// ─── Langganan & Pembayaran ──────────────────────────────────────────────────
+app.get('/api/plans',                apiLimiter, billing.daftarPaket);
+app.post('/api/billing/checkout',    apiLimiter, auth.requireAuth, billing.checkout);
+app.post('/api/billing/trial',       apiLimiter, auth.requireAuth, billing.klaimTrialSendiri);
+app.get('/api/billing/orders',       apiLimiter, auth.requireAuth, billing.daftarOrder);
+// "Cek status" manual — bukan polling. Dijatah 20 detik per transaksi di
+// config/qrisku.js supaya akun QRISku tidak kena ban.
+app.post('/api/billing/orders/:orderId/check', apiLimiter, auth.requireAuth, billing.cekOrder);
 
 // ─── Admin Routes (king only) ─────────────────────────────────────────────────
 app.get('/api/admin/users',          auth.requireAuth, auth.requireKing, auth.listUsers);
 app.patch('/api/admin/users/:id',    auth.requireAuth, auth.requireKing, auth.updateUser);
 app.delete('/api/admin/users/:id',   auth.requireAuth, auth.requireKing, auth.deleteUser);
 
-// ─── SPA Fallback ─────────────────────────────────────────────────────────────
-app.get('/dashboard', (_, res) =>
-  res.sendFile(path.join(__dirname, 'public', 'dashboard.html')));
-app.get('/bot/:id', (_, res) =>
-  res.sendFile(path.join(__dirname, 'public', 'bot-detail.html')));
-app.get('*', (_, res) =>
-  res.sendFile(path.join(__dirname, 'public', 'index.html')));
+app.get('/api/admin/billing/orders',                  auth.requireAuth, auth.requireKing, billing.adminOrders);
+app.post('/api/admin/billing/orders/:orderId/confirm', auth.requireAuth, auth.requireKing, billing.adminKonfirmasi);
+app.post('/api/admin/billing/orders/:orderId/reject',  auth.requireAuth, auth.requireKing, billing.adminTolak);
+app.get('/api/admin/billing/settings',                auth.requireAuth, auth.requireKing, billing.adminSettings);
+app.put('/api/admin/billing/plans',                   auth.requireAuth, auth.requireKing, billing.adminSetPlans);
+app.put('/api/admin/billing/settings',                auth.requireAuth, auth.requireKing, billing.adminSetSettings);
+
+// ─── Halaman HTML ─────────────────────────────────────────────────────────────
+// Halaman berisi <!-- @include head.html --> dll; partial di public/partials/
+// dirangkai di sini, jadi halaman baru cukup <link> + include, tanpa duplikat.
+const PUBLIC_HTML = path.join(__dirname, 'public');
+const INCLUDE_RE  = /<!--\s*@include\s+([\w.\/-]+)\s*-->/g;
+// Versi aset = mtime file. Dipakai di halaman() supaya URL aset berubah tiap
+// file diubah; tanpa ini browser + Cloudflare menyajikan CSS/JS lama sampai 4 jam.
+const mtimeAset = (p) => {
+  try { return Math.round(fs.statSync(path.join(PUBLIC_HTML, p)).mtimeMs); }
+  catch { return 0; }
+};
+
+const halaman = (nama, kode = 200) => (_, res) => {
+  try {
+    const html = fs.readFileSync(path.join(PUBLIC_HTML, nama), 'utf8')
+      .replace(INCLUDE_RE, (_, f) =>
+        fs.readFileSync(path.join(PUBLIC_HTML, 'partials', f), 'utf8'))
+      .replace(/(\/(?:assets|js)\/[\w.-]+\.(?:css|js))"/g,
+        (m, p) => `${p}?v=${mtimeAset(p)}"`);
+    res.status(kode).type('html').send(html);
+  } catch (e) {
+    console.error('[Page]', nama, e.message);
+    res.status(500).type('html').send('<h1>500</h1>');
+  }
+};
+app.get('/dashboard', halaman('dashboard.html'));
+app.get('/bot/:id',   halaman('bot-detail.html'));
+// Setup bot dipisah dari /bot/:id — di sana sekarang statistik. Halaman ini
+// yang megang form konfigurasi + import/export, dan punya pemilih bot sendiri
+// (dropdown) biar user multi-slot nggak perlu bolak-balik ke dashboard.
+app.get('/config/:id', halaman('config.html'));
+app.get('/pricing',    halaman('pricing.html'));
+// Tautan lama: bot sempat ngasih pesan "buka halaman Langganan", dan orang
+// mungkin sudah bookmark /langganan. Tanpa ini, /langganan jatuh ke catch-all
+// dan diam-diam nampilin landing page — bingung, bukan 404 yang jelas.
+app.get('/langganan', (_, res) => res.redirect(301, '/pricing'));
+app.get('/admin',     halaman('admin.html'));
+// /login & /register = SATU file, pane dipilih dari pathname (js/auth-page.js).
+app.get('/login',     halaman('login.html'));
+app.get('/register',  halaman('login.html'));
+// `/` WAJIB eksplisit: tanpa ini dia dilayani catch-all, dan begitu catch-all
+// berubah jadi 404, landing page ikut jadi 404.
+app.get('/',          halaman('index.html'));
+// Sisa rute = 404 beneran. Dulu catch-all-nya menyajikan landing page dengan
+// status 200, jadi URL salah ketik kelihatan "berhasil" — user cuma bingung.
+app.get('*',          halaman('404.html', 404));
 
 // ─── WebSocket Hub ────────────────────────────────────────────────────────────
 // Map: botId -> Set<WebSocket>

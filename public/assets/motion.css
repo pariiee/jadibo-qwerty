@@ -1,0 +1,226 @@
+/* ══════════════════════════════════════════════════════════════════
+   motion.css — gerak & "hidup"-nya halaman
+   Dimuat PALING BELAKANG (lihat partials/head.html).
+
+   Kenapa file ini ada padahal theme.css & page.css sudah punya animasi:
+
+   1. Semua efek di sini nol JS. `animation-timeline: scroll()/view()`
+      mengikat animasi ke posisi scroll langsung di compositor — nggak
+      ada event listener, nggak ada jank di HP. Browser yang belum
+      dukung cuma kehilangan animasinya, tampilannya tetap utuh
+      (makanya semuanya dibungkus @supports).
+
+   2. Reveal kartu di §5 menggerakkan `translate`+`scale`, BUKAN
+      `transform`. `transform` dipakai hover di page.css
+      (`translateY(-4px)`); kalau reveal ikut menulis `transform`,
+      `animation` menang di cascade dan hover-nya mati.
+
+   Aturan main: tiap efek WAJIB punya jalan keluar untuk
+   `prefers-reduced-motion: reduce` (blok terakhir).
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── 1. Keyframes ─────────────────────────────────────────────────── */
+@keyframes m-navdrop { from{ opacity:0; transform:translateY(-14px) } }
+@keyframes m-nav     { from{ background-color:transparent; border-bottom-color:transparent; box-shadow:none }
+                       to  { background-color:var(--barBg); box-shadow:0 12px 32px -24px rgba(16,24,40,.55) } }
+@keyframes m-baca    { from{ transform:scaleX(0) } to{ transform:scaleX(1) } }
+@keyframes m-grad    { 0%,100%{ background-position:0% 50% } 50%{ background-position:100% 50% } }
+@keyframes m-shine   { from{ transform:translateX(-130%) skewX(-18deg) } to{ transform:translateX(230%) skewX(-18deg) } }
+@keyframes m-fade    { from{ opacity:0 } }
+/* reveal kartu. translate+scale (properti sendiri), jadi `transform`
+   tetap bebas untuk hover. Jarak 26px sengaja lebih jauh dari versi
+   pertama (18px) — 18px nggak kebaca sebagai gerakan. */
+@keyframes m-pop     { from{ opacity:0; translate:0 26px; scale:.945 } }
+/* label kecil & judul seksi: masuk dari kiri sedikit, biar ada arah */
+@keyframes m-lbl     { from{ opacity:0; translate:-10px 0 } }
+@keyframes m-masuk   { from{ opacity:0; translate:0 18px } }
+/* rail platform: -50% = tepat 1 set item (isinya 2 set kembar,
+   lihat index.html #platforms). Jangan diubah tanpa ubah HTML-nya. */
+@keyframes m-rel     { to{ transform:translateX(-50%) } }
+
+/* ── 2. Navbar ────────────────────────────────────────────────────── */
+/* turun pelan saat halaman pertama dibuka */
+nav{animation:m-navdrop .5s cubic-bezier(.22,1,.36,1) both}
+/* tautan muncul berurutan (di HP tautannya memang disembunyikan page.css) */
+.nav-links a{animation:m-fade .5s ease-out both}
+.nav-links a:nth-child(1){animation-delay:.08s}
+.nav-links a:nth-child(2){animation-delay:.13s}
+.nav-links a:nth-child(3){animation-delay:.18s}
+.nav-links a:nth-child(4){animation-delay:.23s}
+.nav-links a:nth-child(5){animation-delay:.28s}
+/* transparan di paling atas → jadi kaca + garis + bayangan begitu
+   halaman digeser 90px. Semua di compositor, nol scroll listener. */
+@media (prefers-reduced-motion:no-preference){
+  @supports (animation-timeline:scroll()){
+    nav{animation:m-navdrop .5s cubic-bezier(.22,1,.36,1) both,m-nav linear both;
+        animation-timeline:auto,scroll(root block);
+        animation-range:normal,0 90px}
+  }
+}
+/* tautan yang lagi dibaca (dipasang index.js) */
+.nav-links a.active{color:var(--txt)}
+/* garis bawah jalan dari TENGAH keluar (dulu dari kiri: left:0;right:100%) */
+.nav-links a::after{content:'';position:absolute;left:50%;right:50%;bottom:-5px;height:2px;border-radius:2px;
+  background:var(--acc);transition:left .24s cubic-bezier(.22,1,.36,1),right .24s cubic-bezier(.22,1,.36,1)}
+.nav-links a:hover::after,.nav-links a.active::after{left:0;right:0}
+/* anchor jangan nyempil di bawah navbar yang menempel */
+html{scroll-behavior:smooth;scroll-padding-top:76px}
+
+/* ── 2b. Rail platform (marquee ala helipod) ──────────────────────── */
+/* helipod bikin halaman kerasa "hidup" di HP dari sabuk item yang jalan
+   terus (translateX 30–70s) — bukan dari animasi hero-nya.
+
+   Rail di sini isinya platform yang BENAR-BENAR didukung bot (diambil
+   dari plugins/, bukan karangan). Satu baris penuh, tinggi ~44px, tepi
+   kanan-kiri dilembutkan pakai mask supaya itemnya "muncul dari kabut",
+   bukan kepotong tajam.
+
+   Syarat HTML: #platforms > .plat-rail > 2 set item kembar (.plat-set).
+   Kalau #platforms belum ada di halaman, seluruh blok ini tidak
+   berefek apa-apa (aman untuk halaman lain). */
+#platforms{position:relative;overflow:hidden;
+  margin:clamp(22px,4vw,38px) auto 0;max-width:1180px;padding:0 0 2px;
+  mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent);
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent)}
+#platforms .plat-rail{display:flex;width:max-content;gap:0}
+#platforms .plat-set{display:flex;gap:10px;padding-right:10px}
+#platforms .plat-set>*{flex:0 0 auto}
+@media (prefers-reduced-motion:no-preference){
+  #platforms .plat-rail{animation:m-rel 46s linear infinite}
+  #platforms:hover .plat-rail{animation-play-state:paused}
+}
+/* di HP rail tetap jalan, tapi lebih lambat — jempol orang sambil
+   scroll nggak perlu dikasih kecepatan desktop */
+@media (prefers-reduced-motion:no-preference) and (max-width:768px){
+  #platforms .plat-rail{animation-duration:62s}
+  #platforms{margin-inline:0}
+}
+
+/* ── 2c. Kapsul kaca tiap seksi ───────────────────────────────────── */
+/* Panel putihnya BUKAN animasi — dia cuma dipakai sebagai panggung saat
+   scroll (lihat §5). Tanpa panel, kartu yang naik-turun cuma kelihatan
+   seperti "teks melayang di atas putih", nggak kebaca sebagai gerakan.
+
+   .wrap dipakai di semua halaman, jadi bahasanya dibatasi body.page-index. */
+@supports not (backdrop-filter: blur(1px)){
+  body.page-index #stats,body.page-index #howto,body.page-index #harga,
+  body.page-index #testimoni,body.page-index #faq{background:var(--card)}
+}
+body.page-index #stats,body.page-index #howto,body.page-index #harga,
+body.page-index #testimoni,body.page-index #faq{
+  margin:0 0 clamp(16px,3vw,32px);
+  padding:clamp(30px,5.4vw,62px) 0;
+  background-image:linear-gradient(180deg,rgba(255,255,255,.5),rgba(255,255,255,.26));
+  border:1px solid rgba(255,255,255,.6); border-radius:clamp(20px,3.4vw,32px);
+  backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+  box-shadow:0 20px 48px -34px rgba(16,24,40,.5);
+}
+/* panel gelap: ambang kacanya pakai putih transparan, bukan item gelap */
+html.dark body.page-index #stats,html.dark body.page-index #howto,html.dark body.page-index #harga,
+html.dark body.page-index #testimoni,html.dark body.page-index #faq{
+  background-image:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.022));
+  border-color:rgba(255,255,255,.09);
+}
+/* jarak tepi HP (page.css bikin .wrap selebar layar di mobile) */
+@media(max-width:768px){
+  body.page-index #stats,body.page-index #howto,body.page-index #harga,
+  body.page-index #testimoni,body.page-index #faq{margin-inline:10px}
+}
+/* first/last-child punya margin sendiri; bahasan kita lebih khusus jadi
+   rule reset-nya kalah — tempel ulang biar benar-benar dempet. */
+body.page-index #stats{margin-top:0}
+body.page-index #faq{margin-bottom:0}
+
+/* ── 3. Batang progres baca (div#baca di index.html) ──────────────── */
+#baca{display:none}
+@media (prefers-reduced-motion:no-preference){
+  @supports (animation-timeline:scroll()){
+    #baca{display:block;position:fixed;left:0;top:0;height:2px;width:100%;z-index:45;
+      pointer-events:none;transform-origin:0 50%;transform:scaleX(0);
+      background:linear-gradient(90deg,var(--acc),var(--acc2));
+      animation:m-baca linear both;animation-timeline:scroll(root block)}
+  }
+}
+
+/* ── 4. Judul hero: gradient yang bergerak ────────────────────────── */
+/* HANYA background-image/size/position yang diubah. Jangan pernah
+   pakai shorthand `background:` di sini — itu menghapus
+   `background-clip:text` dari glass.css dan judulnya jadi kotak
+   gradient (bug "kaya disensor"). */
+/* Warna ujung SENGAJA --txt dua kali (awal & akhir) supaya rata-rata
+   warna teks tetap sama seperti sebelum dianimasikan — yang bergerak cuma
+   sorotan hijaunya. Kalau ujungnya beda, judulnya ikut berubah gelap/terang
+   saat animasi jalan dan kelihatan seperti "keblur" lagi. */
+@media (prefers-reduced-motion:no-preference){
+  .hero h1 .grad{
+    background-image:linear-gradient(120deg,var(--txt),var(--accTxt),var(--txt));
+    background-size:220% 100%;background-position:0% 50%;
+    animation:m-grad 14s ease-in-out infinite}
+}
+
+/* ── 5. Reveal saat di-scroll (native scroll timeline, nol JS) ────── */
+/* Tiap seksi punya "momen masuk" berurutan: label kecil dulu, judulnya
+   nyusul, baru kartu-kartunya. Itu yang bikin scroll terasa ada iramanya
+   (yang bikin "nggak krasa" di versi pertama: SEMUA elemen pakai satu
+   efek yang sama, jadi nggak ada yang menonjol). */
+@media (prefers-reduced-motion:no-preference){
+  @supports (animation-timeline:view()){
+    body.page-index .sec-label{
+      animation:m-lbl .6s linear both;animation-timeline:view();animation-range:entry 2% entry 26%}
+    body.page-index h2{
+      animation:m-masuk .7s linear both;animation-timeline:view();animation-range:entry 5% entry 32%}
+    body.page-index .stat,body.page-index .card,body.page-index .step,
+    body.page-index .price-card,body.page-index .tst,body.page-index .faq-item{
+      animation:m-pop linear both;animation-timeline:view();animation-range:entry 2% entry 38%}
+    /* baris bertingkat: baris ke-2 & ke-3 nyusul */
+    body.page-index .feat>.card:nth-child(2),body.page-index .stats>.stat:nth-child(2),
+    body.page-index .steps>.step:nth-child(2),body.page-index .price-grid>*:nth-child(2),
+    body.page-index .tst-grid>*:nth-child(2){animation-delay:90ms}
+    body.page-index .feat>.card:nth-child(3),body.page-index .stats>.stat:nth-child(3),
+    body.page-index .steps>.step:nth-child(3),body.page-index .price-grid>*:nth-child(3),
+    body.page-index .tst-grid>*:nth-child(3){animation-delay:180ms}
+    body.page-index .feat>.card:nth-child(4){animation-delay:270ms}
+    body.page-index .feat>.card:nth-child(5){animation-delay:360ms}
+    body.page-index .feat>.card:nth-child(6){animation-delay:450ms}
+  }
+}
+/* Jaring pengaman: kalau browser NGGAK dukung view-timeline, transisi
+   hover kartu tetap harus ada (dulu hover-nya ikut mati di sana). */
+body.page-index .stat,body.page-index .card,body.page-index .step,
+body.page-index .tst,body.page-index .faq-item,body.page-index .price-card{
+  transition:transform .22s cubic-bezier(.22,1,.36,1),box-shadow .22s ease,border-color .22s ease}
+
+/* ── 6. Sentuhan jari: umpan balik di semua yang bisa dipencet ────── */
+.icon{transition:transform .25s cubic-bezier(.34,1.56,.64,1)}
+.card:hover .icon,.price-card:hover .icon{transform:scale(1.08) rotate(-4deg)}
+
+/* tombol utama: sedikit naik + kilau lewat sekali saat disorot */
+.btn-dark{position:relative;overflow:hidden}
+.btn-dark:hover{transform:translateY(-1px) scale(1.015)}
+.btn-dark:active{transform:translateY(0) scale(.985)}
+.btn-dark::after{content:'';position:absolute;top:0;bottom:0;left:0;width:45%;pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.32),transparent);
+  transform:translateX(-130%) skewX(-18deg)}
+.btn-dark:hover::after{animation:m-shine .75s cubic-bezier(.4,0,.2,1)}
+
+/* angka statistik & baris kepercayaan: naik dikit saat disorot */
+.stat b,.hero-trust div b{transition:transform .2s ease}
+.stat:hover b,.hero-trust div:hover b{transform:translateY(-2px)}
+.tst:hover,.step:hover{box-shadow:var(--glow)}
+
+/* ── 7. Hormat ke yang minta gerakan minimal ──────────────────────── */
+/* Di sini bukan cuma `animation:none` — elemen yang disembunyikan lewat
+   animasi (navbar, rail) harus dipaksa terlihat lagi, kalau tidak dia
+   hilang. Rail-nya dipaksa `translate:none` + melipat, bukan nowrap,
+   biar item ke-3 dst. nggak keluar layar. */
+@media (prefers-reduced-motion:reduce){
+  nav{animation:none!important;opacity:1!important;transform:none!important}
+  .nav-links a{animation:none!important}
+  #platforms{animation:none!important;mask-image:none;-webkit-mask-image:none;overflow:visible}
+  /* Set kembar itu cuma buat mulusnya loop — kalau rail-nya diam, dia
+     jadi duplikat yang bikin barisnya kepanjangan. Buang. */
+  #platforms .plat-set[aria-hidden="true"]{display:none}
+  #platforms .plat-rail,#platforms .plat-set{animation:none!important;transform:none!important;
+    flex-wrap:wrap;width:auto;justify-content:center}
+  .btn-dark::after{display:none}
+}

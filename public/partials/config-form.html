@@ -1,0 +1,73 @@
+<div class="panel form" id="cfg-panel">
+  <h2>Konfigurasi</h2>
+  <form id="cfg-form">
+    <div class="field">
+      <label for="cfg-name">Nama Bot <span class="req">*</span></label>
+      <input class="inp" id="cfg-name" type="text" required />
+    </div>
+    <div class="field" id="w-owner">
+      <label for="cfg-owner">Nomor Owner</label>
+      <input class="inp" id="cfg-owner" type="text" placeholder="628xxxxxxxxxx" />
+      <div class="hint">Nomor pemilik bot — akses command owner-only</div>
+    </div>
+    <div class="field" id="w-ownername">
+      <label for="cfg-ownername">Nama Owner</label>
+      <input class="inp" id="cfg-ownername" type="text" placeholder="Nama kontak owner" />
+      <div class="hint">Tampil sebagai nama di vCard .owner</div>
+    </div>
+    <div class="field" id="w-botnum">
+      <label for="cfg-botnum">Nomor Bot WA</label>
+      <input class="inp" id="cfg-botnum" type="text" placeholder="628xxxxxxxxxx" />
+      <div class="hint">Nomor WA yang akan di-pair ke bot ini</div>
+    </div>
+    <div class="field tg-field" id="w-token">
+      <label for="cfg-token">Token Telegram</label>
+      <div style="position:relative">
+        <input class="inp" id="cfg-token" type="password" style="padding-right:64px" autocomplete="off" />
+        <button type="button" data-act="toggleToken" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;font-size:11px;font-weight:600" id="token-toggle">Lihat</button>
+      </div>
+      <div class="hint" id="token-hint"></div>
+    </div>
+    <div class="field" id="w-channel">
+      <label for="cfg-channel">Channel ID (Broadcast)</label>
+      <input class="inp" id="cfg-channel" type="text" placeholder="120363xxxxxxxxxx@newsletter" />
+      <div class="hint">JID channel WA untuk .bc — kosongkan jika tidak ada</div>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label for="cfg-prefix">Prefix</label>
+        <input class="inp" id="cfg-prefix" type="text" maxlength="3" />
+      </div>
+      <div class="field">
+        <label for="cfg-footer">Footer</label>
+        <input class="inp" id="cfg-footer" type="text" />
+      </div>
+    </div>
+    <div class="field">
+      <label for="cfg-desc">Deskripsi</label>
+      <textarea class="inp" id="cfg-desc" rows="2"></textarea>
+    </div>
+    <div class="field">
+      <label for="cfg-banner">Banner URL (link gambar menu)</label>
+      <input class="inp" id="cfg-banner" type="text" placeholder="https://..." />
+      <div class="hint">Gambar banner yang tampil saat user kirim .menu — kosongkan jika tidak ada</div>
+    </div>
+    <div class="field">
+      <label for="cfg-qris">QRIS URL (link gambar)</label>
+      <input class="inp" id="cfg-qris" type="text" placeholder="https://..." />
+      <div class="hint">Link gambar QRIS untuk command .pay — kosongkan jika tidak ada</div>
+    </div>
+    <div class="field" id="w-maingroups">
+      <label for="cfg-maingroups">Grup Utama</label>
+      <textarea class="inp" id="cfg-maingroups" rows="3" style="font-family:Consolas,Menlo,monospace" placeholder="120363xxxxxxxxxx@g.us"></textarea>
+      <div class="hint">Masukan id grup / <code>.gcutama</code> untuk meng set gc utama anda. Satu per baris. Bot hanya respon di grup ini + grup sewa aktif. Kosongkan = respon semua grup.</div>
+    </div>
+    <div class="field">
+      <label for="cfg-daily">Limit Harian</label>
+      <input class="inp" id="cfg-daily" type="number" min="1" max="9999" placeholder="20" />
+      <div class="hint">Jumlah limit yang diberikan ke user setiap reset harian jam 00:00 WIB</div>
+    </div>
+    <div class="err" id="cfg-err"></div>
+    <button class="btn btn-dark save" type="submit">Simpan Perubahan</button>
+  </form>
+</div>

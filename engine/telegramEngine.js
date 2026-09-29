@@ -204,4 +204,24 @@ async function startTelegramBot(botData) {
   }
 }
 
-module.exports = { startTelegramBot, setWsBroadcast };
+// ─── Stop Telegram Bot ────────────────────────────────────────────────────────
+// Instansnya nyimpen destroy() sendiri (lihat activeBots.set di atas) — jadi
+// berhentiin = panggil destroy() lalu buang dari Map. destroy() sekaligus
+// nulis status='disconnected' + is_running=0 ke DB, biar nggak ke-auto-start
+// lagi pas boot. Kalau botnya memang nggak jalan, jangan lempar: pemanggilnya
+// (deleteBot/clearSession) justru sedang membersihkan.
+async function stopTelegramBot(botId) {
+  const inst = activeBots.get(botId);
+  if (!inst) return { ok: true, skipped: true };
+
+  try {
+    await inst.destroy?.();
+  } catch (e) {
+    await logBot(botId, 'error', `Gagal stop bot Telegram: ${e.message}`);
+  }
+  activeBots.delete(botId);
+  broadcast(botId, 'status', { status: 'disconnected' });
+  return { ok: true };
+}
+
+module.exports = { startTelegramBot, stopTelegramBot, setWsBroadcast };

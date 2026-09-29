@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Masuk — YaaParBot</title>
+<!-- @include head.html -->
+</head>
+<body class="page-auth" data-mode="login">
+
+<!-- Sama persis dengan modal di index.html, biar satu gaya dan satu endpoint.
+     Halaman baru lain tinggal copy file ini ganti data-mode. -->
+<div class="auth-wrap">
+  <div class="modal" id="auth-login">
+    <h3>Masuk</h3>
+    <p class="m-sub">Lanjutkan ke dashboard kamu</p>
+    <form id="login-form">
+      <div class="field">
+        <label for="login-username">Username</label>
+        <input class="inp" id="login-username" type="text" placeholder="Username" autocomplete="username" required />
+      </div>
+      <div class="field">
+        <label for="login-password">Password</label>
+        <input class="inp" id="login-password" type="password" placeholder="Password" autocomplete="current-password" required />
+      </div>
+      <div class="err" id="login-error"></div>
+      <button class="btn btn-dark" type="submit">Masuk</button>
+    </form>
+    <p class="switch-line">Belum punya akun? <a href="/register">Daftar</a></p>
+  </div>
+
+  <div class="modal" id="auth-register" style="display:none">
+    <h3>Daftar</h3>
+    <p class="m-sub">Buat akun baru</p>
+    <form id="register-form">
+      <div class="field">
+        <label for="reg-username">Username</label>
+        <input class="inp" id="reg-username" type="text" placeholder="Username" autocomplete="username" required />
+      </div>
+      <div class="field">
+        <label for="reg-password">Password</label>
+        <input class="inp" id="reg-password" type="password" placeholder="Min. 6 karakter" autocomplete="new-password" required />
+      </div>
+      <div class="err" id="reg-error"></div>
+      <button class="btn btn-dark" type="submit">Buat Akun</button>
+    </form>
+    <p class="switch-line">Sudah punya akun? <a href="/login">Masuk</a></p>
+  </div>
+</div>
+
+<script src="/js/auth-page.js"></script>
+</body>
+</html>

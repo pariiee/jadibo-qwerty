@@ -3,11 +3,13 @@
 const bcrypt    = require('bcryptjs');
 const jwt       = require('jsonwebtoken');
 const { pool, incrementStat, decrementStat } = require('../config/database');
-const { ADMIN_ROLE } = require('../config/roles');
+const { ADMIN_ROLE, roleOf, slotsOf, paketOf } = require('../config/plan');
+const pricingStore = require('../config/pricingStore');
 
-const JWT_SECRET  = process.env.JWT_SECRET  || 'changeme';
+// Tanpa fallback: kalau .env bolong, server nolak boot (guard di server.js).
+// Fallback literal bikin token siapa pun bisa dipalsukan tanpa jejak.
+const JWT_SECRET  = process.env.JWT_SECRET;
 const JWT_EXPIRES = process.env.JWT_EXPIRES_IN || '7d';
-const MAX_SLOTS   = parseInt(process.env.MAX_SLOTS_PER_USER || '2', 10);
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -39,19 +41,41 @@ function requireAuth(req, res, next) {
   }
 }
 
-// ─── Middleware: only king ────────────────────────────────────────────────────
+// ─── Middleware: izin admin tertinggi (role internal `kawula`) ──────────────
+// Satu tempat untuk cek izin admin. Kalau nama role berubah, cukup ubah
+// ADMIN_ROLE di config/plan.js — jangan sebar string 'kawula' di file lain.
+//
+// Role dibaca dari DB, BUKAN dari `req.user.role`. Token nyimpen role pas login;
+// kalau role diubah setelah itu, token lama tetap bilang yang lama — admin yang
+// sah ditolak 403 ("balik ke dashboard") sampai dia login ulang. Sekalian nutup
+// lubang `is_active`: akun yang dinonaktifkan tetap bisa nembus kalau cuma
+// percaya token.
+async function requireKing(req, res, next) {
+  try {
+    const [rows] = await pool.execute(
+      'SELECT role, is_active FROM users WHERE id = ?',
+      [req.user?.id]
+    );
+    const u = rows[0];
+    if (!u || !u.is_active || u.role !== ADMIN_ROLE)
+      return sendError(res, 403, 'Akses ditolak — akun ini bukan administrator');
 
-function requireKing(req, res, next) {
-  if (req.user?.role !== ADMIN_ROLE) {
-    return sendError(res, 403, 'Akses ditolak: hanya King yang bisa melakukan ini');
+    req.user.role = u.role;
+    next();
+  } catch (err) {
+    console.error('[Auth] requireKing error:', err);
+    return sendError(res, 403, 'Akses ditolak');
   }
-  next();
 }
 
 // ─── POST /api/auth/register ──────────────────────────────────────────────────
 
 async function register(req, res) {
   try {
+    // Registrasi publik default TUTUP. Buka dengan ALLOW_REGISTER=1 di .env.
+    if (process.env.ALLOW_REGISTER !== '1')
+      return sendError(res, 403, 'Registrasi ditutup. Hubungi admin.');
+
     const { username, password } = req.body;
 
     if (!username || !password)
@@ -81,11 +105,18 @@ async function register(req, res) {
 
     await incrementStat('total_users');
 
+    // Trial TIDAK auto-aktif — user harus buka /pricing dan klik klaim sendiri
+    // (POST /api/billing/trial). Auto-di sini bikin akun baru langsung nyala
+    // tanpa diminta dan bikin tombol klaimnya jadi mubazir.
+
     const token = signToken({ id: result.insertId, username, role: 'user' });
 
     res.cookie('token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      // req.protocol (bukan NODE_ENV): produksi diakses via HTTPS tunnel DAN
+      // HTTP :3000. Cookie Secure di jalur HTTP dibuang browser -> login sukses
+      // tapi /dashboard selalu 401 dan balik ke '/'.
+      secure: req.protocol === 'https',
       sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
@@ -132,7 +163,10 @@ async function login(req, res) {
 
     res.cookie('token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      // req.protocol (bukan NODE_ENV): produksi diakses via HTTPS tunnel DAN
+      // HTTP :3000. Cookie Secure di jalur HTTP dibuang browser -> login sukses
+      // tapi /dashboard selalu 401 dan balik ke '/'.
+      secure: req.protocol === 'https',
       sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
@@ -161,10 +195,16 @@ function logout(req, res) {
 async function me(req, res) {
   try {
     const [rows] = await pool.execute(
-      'SELECT id, username, role, created_at FROM users WHERE id = ?',
+      'SELECT id, username, role, plan, plan_expired_at, plan_slots, trial_used_at, created_at FROM users WHERE id = ?',
       [req.user.id]
     );
     if (rows.length === 0) return sendError(res, 404, 'User tidak ditemukan');
+
+    // JANGAN klaim trial di sini. Dulu iya ("akun baru langsung dapat"), tapi
+    // efeknya SETIAP halaman yang manggil /api/auth/me ngeklaim trial tanpa
+    // user minta — role langsung Unreal, langganan lompat 5 hari, dan tombol
+    // "Klaim Trial" di /pricing jadi mubazir. Sekarang cuma POST
+    // /api/billing/trial (klaimTrialSendiri) yang boleh nyalain.
 
     // slot usage
     const [bots] = await pool.execute(
@@ -172,12 +212,38 @@ async function me(req, res) {
       [req.user.id]
     );
 
+    const u = rows[0];
+    const admin = u.role === ADMIN_ROLE;
+    const paketId = admin ? 'ultra' : (roleOf(u) === 'premium' ? u.plan : 'user');
+    const plan = pricingStore.getPlan(paketId);
+
     return res.json({
       ok: true,
       user: {
-        ...rows[0],
+        id: u.id,
+        username: u.username,
+        // role EFEKTIF: langganan lewat = otomatis turun, tanpa cron.
+        role: roleOf(u),
+        // Label untuk tampilan. Dashboard TIDAK boleh menulis nama role mentah,
+        // biar nama internal admin tidak muncul di UI.
+        role_label: u.role === ADMIN_ROLE ? 'Administrator'
+                  : roleOf(u) === 'premium' ? 'Unreal' : 'Basic',
+        is_admin: admin,
+        plan_id: plan.id,
+        plan_name: plan.name,
+        plan_expired_at: u.plan_expired_at,
+        plan_aktif: !!u.plan_expired_at && new Date(u.plan_expired_at) > new Date(),
+        trial_used: !!u.trial_used_at,
+        trial_hari: pricingStore.all().trial_days,
+        trial_used_at: u.trial_used_at,
         slots_used: bots[0].count,
-        slots_max: req.user.role === ADMIN_ROLE ? 999 : MAX_SLOTS,
+        slots_max: slotsOf(u, pricingStore.plans()),
+        // Kartu dashboard mau "slot yang dibeli", dan itu BUKAN `slotsOf()` —
+        // yang itu jatah OPERASIONAL (admin 999, plus kolom `plan_slots` yang
+        // menang atas paket). Urutannya: jatah paket dulu, baru override admin.
+        slots_beli: (paketOf(u.plan, pricingStore.plans())?.slots ?? Number(u.plan_slots)) || 0,
+        daily_limit: plan.daily_limit,
+        created_at: u.created_at,
       },
     });
   } catch (err) {
@@ -186,36 +252,72 @@ async function me(req, res) {
   }
 }
 
-// ─── GET /api/admin/users  (king only) ───────────────────────────────────────
+// ─── GET /api/admin/users  (admin tertinggi saja) ────────────────────────────
 
 async function listUsers(req, res) {
   try {
     const [users] = await pool.execute(
-      `SELECT u.id, u.username, u.role, u.is_active, u.created_at,
+      `SELECT u.id, u.username, u.role, u.plan, u.plan_expired_at, u.plan_slots,
+              u.trial_used_at, u.is_active, u.created_at,
               COUNT(b.id) AS bot_count
        FROM users u
        LEFT JOIN bots b ON b.user_id = u.id
        GROUP BY u.id
        ORDER BY u.created_at DESC`
     );
-    return res.json({ ok: true, users });
+    // Role efektif + langganan dihitung di sini, bukan di klien: aturan
+    // "langganan lewat = turun jadi user" cuma boleh hidup di config/plan.js.
+    const paket = pricingStore.plans();
+    return res.json({
+      ok: true,
+      users: users.map((u) => ({
+        ...u,
+        role_efektif: roleOf(u),
+        plan_name: pricingStore.getPlan(u.plan).name,
+        langganan_aktif: !!u.plan_expired_at && new Date(u.plan_expired_at) > new Date(),
+        slots_max: slotsOf(u, paket),
+        bot_count: Number(u.bot_count),
+      })),
+    });
   } catch (err) {
     console.error('[Auth] listUsers error:', err);
     return sendError(res, 500, 'Terjadi kesalahan server');
   }
 }
 
-// ─── PATCH /api/admin/users/:id  (king only) ─────────────────────────────────
+// ─── PATCH /api/admin/users/:id  (admin tertinggi saja) ──────────────────────
 
 async function updateUser(req, res) {
   try {
     const { id } = req.params;
-    const { is_active, role, password } = req.body;
+    const { is_active, role, password, plan, plan_expired_at, plan_slots } = req.body;
     const sets = [];
     const vals = [];
 
-    if (is_active !== undefined) { sets.push('is_active = ?'); vals.push(is_active ? 1 : 0); }
-    if (role && ['user', 'premium', ADMIN_ROLE].includes(role)) { sets.push('role = ?'); vals.push(role); }
+    // Kolom `role` cuma kenal dua nilai: user biasa atau admin tertinggi.
+    // 'premium' BUKAN role tersimpan — dia turunan langganan yang aktif, jadi
+    // memberikannya lewat kolom role akan langsung hilang saat roleOf() jalan.
+    if (role && ['user', ADMIN_ROLE].includes(role)) {
+      // Jangan sampai admin mengunci dirinya sendiri keluar dari dashboard.
+      if (Number(id) === Number(req.user.id) && role !== ADMIN_ROLE)
+        return sendError(res, 400, 'Tidak bisa menurunkan akun sendiri');
+      sets.push('role = ?'); vals.push(role);
+    }
+    if (is_active !== undefined) {
+      if (Number(id) === Number(req.user.id) && !is_active)
+        return sendError(res, 400, 'Tidak bisa menonaktifkan akun sendiri');
+      sets.push('is_active = ?'); vals.push(is_active ? 1 : 0);
+    }
+    // Langganan: admin bisa kasih/ubah paket & masa aktif langsung dari dashboard.
+    if (plan && pricingStore.getPlan(plan).id === plan) {
+      sets.push('plan = ?'); vals.push(plan);
+      sets.push('plan_slots = ?'); vals.push(pricingStore.getPlan(plan).slots);
+    }
+    if (plan_slots !== undefined) { sets.push('plan_slots = ?'); vals.push(parseInt(plan_slots, 10) || 0); }
+    if (plan_expired_at !== undefined) {
+      sets.push('plan_expired_at = ?');
+      vals.push(plan_expired_at ? new Date(plan_expired_at) : null);
+    }
     if (password) {
       const hashed = await bcrypt.hash(password, 12);
       sets.push('password = ?');
@@ -234,7 +336,7 @@ async function updateUser(req, res) {
   }
 }
 
-// ─── DELETE /api/admin/users/:id  (king only) ────────────────────────────────
+// ─── DELETE /api/admin/users/:id  (admin tertinggi saja) ─────────────────────
 
 async function deleteUser(req, res) {
   try {
