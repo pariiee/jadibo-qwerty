@@ -403,6 +403,32 @@ cron.schedule('0 17 * * *', async () => {
   }
 }, { timezone: 'Asia/Jakarta' });
 
+// ─── Cron Pangkas Log — harian 03:00 WIB ──────────────────────────────────────
+// `bot_logs` tumbuh ~1 MB/hari (1.187 baris/1,1 MB dalam 1 hari) dan TIDAK
+// pernah dibersihkan. Yang ditampilkan cuma 100 baris terakhir (getBotLogs,
+// maks 500) — jadi sisanya cuma berat. Simpan 500 terakhir per bot.
+cron.schedule('0 3 * * *', async () => {
+  try {
+    const [bots] = await pool.execute('SELECT id FROM bots');
+    let total = 0;
+    for (const b of bots) {
+      // Subquery dibungkus tabel turunan: MySQL nolak DELETE yang menunjuk
+      // tabelnya sendiri (error 1093) kalau tidak dibungkus.
+      const [res] = await pool.execute(
+        `DELETE FROM bot_logs WHERE bot_id = ?
+           AND id NOT IN (SELECT id FROM (
+                 SELECT id FROM bot_logs WHERE bot_id = ? ORDER BY id DESC LIMIT 500
+               ) t)`,
+        [b.id, b.id]
+      );
+      total += res.affectedRows;
+    }
+    if (total) console.log(`[Cron] Pangkas bot_logs: ${total} baris dibuang (sisakan 500/bot)`);
+  } catch (e) {
+    console.error('[Cron] Pangkas log error:', e.message);
+  }
+}, { timezone: 'Asia/Jakarta' });
+
 // ─── Cron Jadwal Buka/Tutup Grup Otomatis — setiap menit ─────────────────────
 cron.schedule('* * * * *', async () => {
   try {
