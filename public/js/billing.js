@@ -34,11 +34,13 @@
   };
 
   let semuaOrder = [];
+  let aku = null;   // dari /api/auth/me — buat tahu trial masih bisa diklaim
 
   function gambar() {
     const st = document.getElementById('filter-status').value;
     const baris = semuaOrder.filter((o) => !st || o.status === st);
     const tbody = document.querySelector('#tbl-order tbody');
+    const kosong = document.getElementById('order-kosong');
 
     if (!baris.length) {
       tbody.innerHTML = '<tr><td colspan="7" class="kosong">' +
@@ -61,6 +63,20 @@
       }).join('');
     }
 
+    // Kartu jalan keluar cuma muncul kalau memang belum ada pesanan SAMA SEKALI —
+    // kalau cuma kena filter, tabel kosongnya sudah ada pesannya sendiri.
+    const belumPernah = semuaOrder.length === 0;
+    kosong.style.display = belumPernah ? 'flex' : 'none';
+    // Tabel kosong + kartu kosong sekaligus = dua pesan yang sama. Yang bicara
+    // kartunya, tabelnya disembunyikan.
+    document.querySelector('.tbl-wrap').style.display = belumPernah ? 'none' : '';
+    if (belumPernah && aku) {
+      document.getElementById('btn-trial').style.display = aku.trial_used ? 'none' : 'inline-flex';
+      document.getElementById('kosong-teks').textContent = aku.trial_used
+        ? 'Kamu sudah pernah pakai trial. Pilih paket buat mengaktifkan bot lagi.'
+        : 'Kamu belum pernah berlangganan. Coba trial ' + (aku.trial_hari || 5) + ' hari dulu — gratis.';
+    }
+
     // Catatan di bawah tabel.
     const pending = semuaOrder.filter((o) => o.status === 'pending');
     const catatan = document.getElementById('order-note');
@@ -73,10 +89,11 @@
   }
 
   async function muatOrder() {
-    const d = await api('/api/billing/orders');
+    const [d, me] = await Promise.all([api('/api/billing/orders'), api('/api/auth/me')]);
     if (!d?.ok) { document.querySelector('#tbl-order tbody').innerHTML =
       '<tr><td colspan="7" class="kosong">Gagal memuat riwayat.</td></tr>'; return; }
     semuaOrder = d.orders || [];
+    if (me?.ok) aku = me.user;
     gambar();
   }
 
@@ -92,6 +109,18 @@
     muatOrder();
   }
 
+  // Trial: POST /api/billing/trial sudah ada (dipakai /pricing) — di sini cuma
+  // dipanggil dari tempat user bingung, bukan dibuat endpoint baru.
+  async function klaimTrial() {
+    const btn = document.getElementById('btn-trial');
+    btn.disabled = true;
+    const d = await api('/api/billing/trial', { method: 'POST' });
+    btn.disabled = false;
+    if (!d?.ok) { showToast(d?.message || 'Gagal klaim trial', 'error'); return; }
+    showToast(d.message || 'Trial aktif!', 'success');
+    muatOrder();
+  }
+
   const sapaan = document.getElementById('greeting');
   if (sapaan) sapaan.textContent = 'Riwayat Pembayaran';
   window.openAddBot = () => { location.href = '/dashboard'; };
@@ -99,5 +128,6 @@
   document.getElementById('filter-status').onchange = gambar;
   window.muatOrder = muatOrder;
   window.cekOrder = cekOrder;
+  window.klaimTrial = klaimTrial;
   muatOrder();
 })();

@@ -42,6 +42,18 @@
         </table>
       </div>
 
+      <!-- Jalan keluar buat yang belum pernah pesan: tanpa ini user gratis cuma
+           lihat tabel kosong lalu mentok. Trial-nya sudah lama ada di /pricing;
+           di sini cuma dipindah ke tempat dia bingung. -->
+      <div class="cmd-kosong" id="order-kosong" style="display:none">
+        <b>Belum ada pesanan</b>
+        <span id="kosong-teks">Kamu belum pernah berlangganan. Paket mulai dari Basic.</span>
+        <div class="kosong-aksi">
+          <button class="btn btn-dark" id="btn-trial" data-act="klaimTrial" style="display:none">Klaim Trial 5 Hari</button>
+          <a class="btn btn-outline" href="/pricing">Lihat Paket</a>
+        </div>
+      </div>
+
       <p class="m-sub" id="order-note" style="margin-top:14px"></p>
     </div>
   </main>

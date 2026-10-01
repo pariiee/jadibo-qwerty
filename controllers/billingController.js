@@ -64,6 +64,22 @@ async function terapkanPaket(userId, planId, days) {
     'UPDATE users SET plan = ?, plan_expired_at = ? WHERE id = ?',
     [plan.id, akhir, userId]
   );
+
+  // Kabari pemiliknya lewat WA — SATU titik, jadi jalur webhook, "Cek Status",
+  // dan konfirmasi admin semuanya dapat kabar.
+  //
+  // SENGAJA TIDAK di-await: ini dipanggil dari webhook QRIS, dan webhook yang
+  // lambat dibalas = QRISku mengirim ulang = paket dobel. Notifikasi itu bonus,
+  // pembayaran yang utama.
+  const tgl = akhir.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+  require('../engine/notify')
+    .kirimKeOwner(userId,
+      `✅ *Pembayaran diterima!*\n\n` +
+      `Paket *${plan.name}* sudah aktif sampai *${tgl}*.\n` +
+      `Limit harian bot kamu sekarang ${plan.daily_limit} pesan.\n\n` +
+      `_Cek di halaman Riwayat: /billing_`)
+    .catch(() => { /* nggak ada bot online — bukan alasan bikin checkout gagal */ });
+
   return { plan: plan.id, sampai: akhir, kuota };
 }
 
