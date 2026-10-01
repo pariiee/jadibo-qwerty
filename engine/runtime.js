@@ -1,15 +1,11 @@
 'use strict';
 
 /**
- * engine/runtime.js — state bot yang hidup DI PROSES WORKER.
+ * engine/runtime.js — state bot yang hidup di proses yang menjalankan engine.
  *
- * Dulu Map ini tinggal di controllers/botController.js, artinya web dan bot
- * berbagi satu proses. Sekarang worker yang punya, dan web ngelihat cerminnya
- * lewat config/engineBus.js.
- *
- * Satu modul buat tiga Map (bukan tempel di engine masing-masing) supaya
- * arah impornya satu: worker → runtime, plugin → runtime. Nggak ada
- * engine ↔ plugin yang saling require.
+ * Map ini sempat tinggal di controllers/botController.js (dulu web dan bot satu
+ * proses). Sekarang di sini supaya arah impornya satu: engine → runtime, plugin →
+ * runtime. Nggak ada engine ↔ plugin yang saling require.
  */
 const activeBots = new Map();            // botId -> client WA/Telegram
 const activeGroupsPerBot = new Map();    // botId -> Map<jid, nama>

@@ -120,6 +120,12 @@ async function batasKuota(botId, botData) {
 
 /**
  * Pesan ini masih boleh diproses? Sekalian menambah received_count kalau boleh.
+ *
+ * SATU UPDATE atomik — bukan baca-lalu-tulis. `affectedRows 0` = kuota habis.
+ * Kalau hitungannya dibaca dulu dari `botData` lalu ditulis belakangan, dua
+ * pesan yang datang bersamaan sama-sama lolos di angka terakhir, dan angka di
+ * memori bisa meleset dari barisnya begitu prosesnya restart.
+ *
  * Tidak pernah melempar: bot yang mati gara-gara gagal cek paket jauh lebih
  * buruk daripada bot yang kelebihan satu pesan.
  */
@@ -129,17 +135,11 @@ async function kuotaHabis(botId, botData) {
     if (batas === 0) return false;   // tanpa batas
     if (batas < 0) return true;      // paket habis
 
-    // Sumber kebenaran hitungan tetap kolomnya: angka di memori bisa meleset
-    // kalau prosesnya restart, dan yang dihitung itu pesan lintas sesi.
-    const sudah = Number(botData.received_count) || 0;
-    if (sudah >= batas) return true;
-
-    // Dinaikkan DI SINI, satu tempat, tepat sebelum pesannya diproses. Tidak
-    // di-await: pesan tidak boleh nunggu DB cuma buat nambah satu angka.
-    botData.received_count = sudah + 1;
-    pool.execute('UPDATE bots SET received_count = received_count + 1 WHERE id = ?', [botId])
-      .catch(() => {});
-    return false;
+    const [res] = await pool.execute(
+      'UPDATE bots SET received_count = received_count + 1 WHERE id = ? AND received_count < ?',
+      [botId, batas]
+    );
+    return res.affectedRows === 0;
   } catch {
     return false;
   }

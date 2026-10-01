@@ -27,6 +27,10 @@ const kemarin = new Date(Date.now() - 86400000);
 let pemilik = null;      // baris yang dikembalikan JOIN bots->users
 let poolError = false;
 const ditulis = [];
+// Simulasi baris `bots` — mock MENERAPKAN syarat WHERE-nya, bukan cuma
+// membalas angka. Kalau mock-nya selalu bilang "berhasil", tesnya lolos
+// walau query-nya salah.
+let barisBot = { received_count: 0 };
 
 function palsukan(modul, ekspor) {
   const j = require.resolve(path.join(__dirname, '..', modul));
@@ -35,10 +39,16 @@ function palsukan(modul, ekspor) {
 
 palsukan('config/database.js', {
   pool: {
-    execute: async (sql) => {
+    execute: async (sql, params = []) => {
       if (poolError) throw new Error('DB mati');
       if (/FROM bots b JOIN users u/i.test(sql)) return [pemilik ? [pemilik] : []];
       ditulis.push(sql.replace(/\s+/g, ' ').trim());
+      // UPDATE bots SET received_count = received_count + 1 WHERE id = ? AND received_count < ?
+      if (/received_count = received_count \+ 1/i.test(sql)) {
+        const batas = params[1];
+        if (barisBot.received_count < batas) { barisBot.received_count += 1; return [{ affectedRows: 1 }]; }
+        return [{ affectedRows: 0 }];
+      }
       return [{ affectedRows: 1 }];
     },
   },
@@ -64,18 +74,25 @@ const { CATS } = require('../plugins/01-info');
   pemilik = { id: 3, role: 'user', plan: 'basic', plan_expired_at: besok };
   gate.segarkan(null);
   let b = bot();
+  barisBot.received_count = 0;
   cek('basic aktif -> belum habis', (await gate.kuotaHabis(4, b)) === false);
-  cek('hitungan naik di memori', b.received_count === 1, String(b.received_count));
-  cek('hitungan ditulis ke DB', ditulis.some((q) => /received_count = received_count \+ 1/i.test(q)));
+  cek('hitungan naik DI BARISNYA, bukan di memori', barisBot.received_count === 1, String(barisBot.received_count));
+  cek('hitungan ditulis lewat satu UPDATE atomik',
+    ditulis.some((q) => /received_count = received_count \+ 1.*received_count < \?/i.test(q)),
+    ditulis.filter((q) => /received_count/i.test(q)).join(' | '));
   cek('batas dibaca dari PAKET (10.000), bukan kolom bot (0)',
     (await gate.batasKuota(4, b)) === 10000, String(await gate.batasKuota(4, b)));
 
   // ── 3. Kuota habis ─────────────────────────────────────────────────────────
-  b = bot();
-  b.received_count = 10000;
+  // Mock menerapkan syarat `received_count < batas`, jadi yang diuji benar-benar
+  // perilaku query-nya — bukan sekadar "fungsi balikin nilai yang diharapkan".
+  barisBot.received_count = 10000;
   cek('sudah 10.000 -> habis', (await gate.kuotaHabis(4, b)) === true);
-  b.received_count = 9999;
+  cek('hitungan TIDAK naik waktu ditolak', barisBot.received_count === 10000, String(barisBot.received_count));
+  barisBot.received_count = 9999;
   cek('baru 9.999 -> masih boleh', (await gate.kuotaHabis(4, b)) === false);
+  cek('yang ke-10.000 kepakai', barisBot.received_count === 10000, String(barisBot.received_count));
+  cek('yang ke-10.001 ditolak', (await gate.kuotaHabis(4, b)) === true);
 
   // kolom bot boleh MENURUNKAN jatah, tidak menaikkan
   b = bot(); b.receive_limit = 500;
