@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Command Manager — yaparbots</title>
+<!-- @include head.html -->
+</head>
+<body class="page-command">
+<div class="app">
+
+  <!-- @include sidebar.html -->
+
+  <main>
+    <!-- @include topbar.html -->
+
+    <div class="content">
+      <div class="cmd-head">
+        <h2>Command Manager</h2>
+        <p class="m-sub">Semua command yang tersedia di bot kamu. Daftarnya dibaca langsung dari
+          bot, jadi ikut berubah begitu ada command baru — nggak ada yang perlu diatur di sini.</p>
+      </div>
+
+      <div class="cmd-bar">
+        <input class="inp" id="cmd-cari" type="search" placeholder="Cari command…" autocomplete="off" />
+        <select class="inp" id="cmd-kategori">
+          <option value="">Semua Kategori</option>
+        </select>
+        <label class="cmd-cek" for="cmd-limit">
+          <input type="checkbox" id="cmd-limit" />
+          Kena limit harian
+        </label>
+        <button class="btn btn-outline" data-act="muatCommand">Muat Ulang</button>
+      </div>
+
+      <div class="cmd-info" id="cmd-hitung">Memuat…</div>
+
+      <div class="cmd-list" id="cmd-daftar"></div>
+
+      <div class="cmd-kosong" id="cmd-kosong" style="display:none">
+        <b>Tidak ada command yang cocok</b>
+        <span>Coba kata kunci lain atau pilih “Semua Kategori”.</span>
+      </div>
+
+      <div class="cmd-pager" id="cmd-pager" style="display:none">
+        <button class="btn btn-outline btn-sm" data-act="cmdHal(-1)">‹ Prev</button>
+        <span id="cmd-hal">Hal 1/1</span>
+        <button class="btn btn-outline btn-sm" data-act="cmdHal(1)">Next ›</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="/js/command.js" defer></script>
+</body>
+</html>

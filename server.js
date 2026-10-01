@@ -37,6 +37,7 @@ const cron         = require('node-cron');
 const { testConnection, seedDefaults, getStats, pool } = require('./config/database');
 const auth = require('./controllers/authController');
 const bot  = require('./controllers/botController');
+const command = require('./controllers/commandController');
 const billing = require('./controllers/billingController');
 const pricingStore = require('./config/pricingStore');
 const beban        = require('./config/beban');
@@ -148,6 +149,9 @@ app.post('/api/bots/:id/resolve-invite', apiLimiter, auth.requireAuth, bot.resol
 
 // ─── Langganan & Pembayaran ──────────────────────────────────────────────────
 app.get('/api/plans',                apiLimiter, billing.daftarPaket);
+// Daftar command bot (halaman /command). Login dulu — daftar fitur itu bagian
+// dari produk, bukan info publik.
+app.get('/api/command',              apiLimiter, auth.requireAuth, command.daftarCommand);
 app.post('/api/billing/checkout',    apiLimiter, auth.requireAuth, billing.checkout);
 app.post('/api/billing/trial',       apiLimiter, auth.requireAuth, billing.klaimTrialSendiri);
 app.get('/api/billing/orders',       apiLimiter, auth.requireAuth, billing.daftarOrder);
@@ -198,6 +202,7 @@ app.get('/bot/:id',   halaman('bot-detail.html'));
 // yang megang form konfigurasi + import/export, dan punya pemilih bot sendiri
 // (dropdown) biar user multi-slot nggak perlu bolak-balik ke dashboard.
 app.get('/config/:id', halaman('config.html'));
+app.get('/command',    halaman('command.html'));
 app.get('/pricing',    halaman('pricing.html'));
 // Tautan lama: bot sempat ngasih pesan "buka halaman Langganan", dan orang
 // mungkin sudah bookmark /langganan. Tanpa ini, /langganan jatuh ke catch-all
