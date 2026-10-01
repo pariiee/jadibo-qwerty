@@ -36,6 +36,7 @@
     const u = me.user;
 
     document.getElementById('pf-user').textContent = u.username;
+    document.getElementById('hp-nomor').value = u.phone || '';
     document.getElementById('pf-sejak').textContent = 'Daftar ' + tanggal(u.created_at);
     document.getElementById('pf-role').textContent = u.role_label || '—';
     document.getElementById('pf-paket').textContent = u.plan_name + ' · limit ' + u.daily_limit + '/hari';
@@ -82,10 +83,30 @@
     showToast(d.message || 'Password diganti', 'success');
   }
 
+  async function simpanPhone(e) {
+    e.preventDefault();
+    const err = document.getElementById('hp-error');
+    const ok = document.getElementById('hp-ok');
+    err.textContent = ''; ok.textContent = '';
+
+    const nomor = document.getElementById('hp-nomor').value.trim();
+    const d = await api('/api/auth/phone', {
+      method: 'POST', body: JSON.stringify({ phone: nomor }),
+    });
+    if (!d?.ok) { err.textContent = d?.message || 'Gagal menyimpan nomor.'; return; }
+
+    // Server yang menormalkan (08xx -> 628xx) — tampilkan balik hasilnya biar
+    // user lihat bentuk yang benar-benar dipakai buat kirim notif.
+    if (d.phone) document.getElementById('hp-nomor').value = d.phone;
+    ok.textContent = d.message || 'Nomor disimpan.';
+    showToast(d.message || 'Nomor HP disimpan', 'success');
+  }
+
   const sapaan = document.getElementById('greeting');
   if (sapaan) sapaan.textContent = 'Profil Saya';
   window.openAddBot = () => { location.href = '/dashboard'; };
 
   document.getElementById('pw-form').addEventListener('submit', simpanPassword);
+  document.getElementById('hp-form').addEventListener('submit', simpanPhone);
   muatProfil();
 })();

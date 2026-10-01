@@ -155,6 +155,8 @@ app.get('/api/command',              apiLimiter, auth.requireAuth, command.dafta
 // Ganti password sendiri. authLimiter (bukan apiLimiter): endpoint ini nerima
 // password lama, jadi harus dibatasi kayak login — jangan dikasih kuota 120/menit.
 app.post('/api/auth/password',         authLimiter, auth.requireAuth, auth.gantiPassword);
+// Nomor HP — jalur notif kedua. authLimiter karena endpoint ini nulis ke akun.
+app.post('/api/auth/phone',            authLimiter, auth.requireAuth, auth.simpanPhone);
 app.post('/api/billing/checkout',    apiLimiter, auth.requireAuth, billing.checkout);
 app.post('/api/billing/trial',       apiLimiter, auth.requireAuth, billing.klaimTrialSendiri);
 app.get('/api/billing/orders',       apiLimiter, auth.requireAuth, billing.daftarOrder);
@@ -419,7 +421,25 @@ cron.schedule('0 17 * * *', async () => {
     const [sc, sp] = mine('id', 'AND');
     const [bots] = await pool.execute(`SELECT id, daily_limit FROM bots WHERE is_running = 1${sc}`, sp);
     for (const bot of bots) {
-      const lim = bot.daily_limit || parseInt(process.env.DEFAULT_LIMIT || '20', 10);
+      // Kuota harian dibaca dari paket yang SEDANG berlaku, bukan
+      // `bots.daily_limit` yang dibekukan waktu checkout — kalau tidak, trial
+      // 5 hari yang sudah lewat tetap dapat limit 20 pesan selamanya, dan masa
+      // aktif yang dijual jadi tidak ada artinya. `kuotaBot()` sudah menangani
+      // ketiganya: admin tanpa batas, paket habis = 0, dan kolom bot cuma boleh
+      // menurunkan jatah paket.
+      //
+      // SENGAJA BUKAN `receive_limit`: itu kuota pesan SEUMUR PAKET (direset
+      // hanya saat beli lagi), sedangkan `lim` di sini reset tiap hari.
+      let lim;
+      try {
+        const plan = require('./config/plan');
+        const pricingStore = require('./config/pricingStore');
+        const pemilik = await require('./engine/gatePaket').pemilikBot(bot.id);
+        lim = plan.kuotaBot(pemilik, bot, pricingStore.plans());
+      } catch {
+        lim = bot.daily_limit || parseInt(process.env.DEFAULT_LIMIT || '20', 10);
+      }
+
       const [res] = await pool.execute(
         'UPDATE rpg_members SET lim = ? WHERE bot_id = ? AND registered = 1',
         [lim, bot.id]

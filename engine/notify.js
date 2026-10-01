@@ -29,26 +29,52 @@ async function kirimKeOwner(userId, teks) {
       ORDER BY id`,
     [userId]
   );
-  if (!rows.length) return false;
-
-  // Lazy: hindari urutan load yang rewel antara controller & engine.
-  const { activeBots } = require('../controllers/botController');
 
   for (const b of rows) {
-    const client = activeBots.get(b.id) || activeBots.get(String(b.id));
-    if (!client) continue;
-
     const nomor = String(b.owner_number).split(',')[0].replace(/\D/g, '');
     if (!nomor) continue;
+    if (await kirimLewatBot(b.id, nomor, teks)) return true;
+  }
 
-    try {
-      await client.message.send(nomor + '@s.whatsapp.net', { text: teks });
-      return true;
-    } catch {
-      // Bot ada di Map tapi socket-nya sudah mati — coba bot berikutnya.
+  // JALUR KEDUA — nomor HP user sendiri. Nomor bot bisa sedang putus tepat
+  // waktu user bayar, dan itu justru momen dia paling butuh kabar. Nomor HP
+  // dikirim dari bot mana pun yang sedang online, jadi tidak bergantung bot
+  // milik user itu sendiri.
+  const hp = await nomorHpUser(userId);
+  if (hp) {
+    for (const b of rows) {
+      if (await kirimLewatBot(b.id, hp, teks)) return true;
+    }
+    // User belum punya bot sama sekali — pakai bot online mana pun.
+    const { activeBots } = require('../controllers/botController');
+    for (const id of activeBots.keys()) {
+      if (await kirimLewatBot(id, hp, teks)) return true;
     }
   }
   return false;
 }
 
-module.exports = { kirimKeOwner };
+/** Kirim satu pesan lewat bot tertentu. false = bot itu tidak bisa dipakai. */
+async function kirimLewatBot(botId, nomor, teks) {
+  const { activeBots } = require('../controllers/botController');
+  const client = activeBots.get(botId) || activeBots.get(String(botId));
+  if (!client) return false;
+  try {
+    await client.message.send(nomor + '@s.whatsapp.net', { text: teks });
+    return true;
+  } catch {
+    return false; // socket sudah mati — coba bot berikutnya
+  }
+}
+
+/** Nomor HP user (buat jalur kedua). '' kalau belum diisi. */
+async function nomorHpUser(userId) {
+  try {
+    const [r] = await pool.execute('SELECT phone FROM users WHERE id = ? LIMIT 1', [userId]);
+    return String(r[0]?.phone || '').replace(/\D/g, '');
+  } catch {
+    return ''; // kolomnya belum ada (DB lama) — notif WA tetap jalan
+  }
+}
+
+module.exports = { kirimKeOwner, nomorHpUser };

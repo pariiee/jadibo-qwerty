@@ -141,6 +141,6 @@ function roleOf(user) {
 }
 
 module.exports = {
-  ADMIN_ROLE, TRIAL, DEFAULT_PLANS, SLOT_DEFAULT, LIMIT_DEFAULT, KATEGORI_URUT,
+  ADMIN_ROLE, TRIAL, DEFAULT_PLANS, SLOT_DEFAULT, LIMIT_DEFAULT, KATEGORI_URUT, SELALU_TERBUKA,
   aktif, roleOf, slotsOf, paketOf, kuotaBot, fiturBot, ownerMax, receiveLimit,
 };

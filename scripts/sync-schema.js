@@ -18,6 +18,7 @@ const TABLES = {
   // ketinggalan, lalu /api/auth/me dan billing mati dengan ER_BAD_FIELD_ERROR.
   users: [
     ['token_version',   "INT NOT NULL DEFAULT 0"],
+    ['phone',           "VARCHAR(20) DEFAULT NULL"],
     ['plan',            "VARCHAR(32) NOT NULL DEFAULT 'user'"],
     ['plan_expired_at', "DATETIME DEFAULT NULL"],
     ['plan_slots',      "INT NOT NULL DEFAULT 2"],

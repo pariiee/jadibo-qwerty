@@ -871,6 +871,32 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
       }
     }
 
+    // ── Batas paket — kuota pesan & jatah fitur ──────────────────────────────
+    // Sebelum ini `receive_limit` dan `max_fitur` cuma angka hias: ditulis saat
+    // checkout, nol pengecekan di jalur pesan. Ditaruh SESUDAH gerbang registrasi
+    // (biar member otomatis sudah ada) dan SEBELUM potong limit RPG — kalau
+    // ditaruh sesudah, pesan yang seharusnya ditolak kepalang motong `lim` user.
+    //
+    // Owner & admin selalu lolos: kuota habis = mereka terkunci dari botnya
+    // sendiri, dan satu-satunya jalan keluar cuma panel web.
+    const gate = require('./gatePaket');
+    if (!ctx.isOwner && !ctx.isDev) {
+      if (await gate.kuotaHabis(botId, botData)) {
+        console.log(`[Bot ${botId}] 🚫 kuota pesan habis (${botData.receive_limit}) — dilewati: ${logLine}`);
+        return;
+      }
+    }
+    if (ctx.isCmd && !ctx.isOwner && !ctx.isDev && ctx.command
+        && !(await gate.fiturDibolehkan(botId, ctx.command, false))) {
+      await client.message.send(ctx.jid,
+        `🔒 *Fitur ini belum termasuk paket kamu.*\n\n` +
+        `Perintah *${ctx.command}* di luar jatah paket. Upgrade di halaman Pricing ` +
+        `atau ketik *${botData.prefix || '.'}menu* buat lihat yang tersedia.`
+      ).catch(() => {});
+      console.log(`[Bot ${botId}] 🔒 fitur di luar paket: ${ctx.command}`);
+      return;
+    }
+
     // ── Cek & potong limit per command ───────────────────────────────────────
     // Owner dan premium skip sepenuhnya — user biasa kena limit kalau command
     // ada di PLUGIN_LIMITED_CMDS (dikumpulkan dari tiap plugin saat boot)

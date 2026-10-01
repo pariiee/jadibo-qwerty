@@ -214,7 +214,7 @@ function logout(req, res) {
 async function me(req, res) {
   try {
     const [rows] = await pool.execute(
-      'SELECT id, username, role, plan, plan_expired_at, plan_slots, trial_used_at, created_at FROM users WHERE id = ?',
+      'SELECT id, username, role, plan, plan_expired_at, plan_slots, trial_used_at, phone, created_at FROM users WHERE id = ?',
       [req.user.id]
     );
     if (rows.length === 0) return sendError(res, 404, 'User tidak ditemukan');
@@ -250,6 +250,7 @@ async function me(req, res) {
         is_admin: admin,
         plan_id: plan.id,
         plan_name: plan.name,
+        phone: u.phone || '',
         plan_expired_at: u.plan_expired_at,
         plan_aktif: !!u.plan_expired_at && new Date(u.plan_expired_at) > new Date(),
         trial_used: !!u.trial_used_at,
@@ -419,8 +420,40 @@ async function gantiPassword(req, res) {
   }
 }
 
+/**
+ * POST /api/auth/phone — simpan nomor HP (jalur notif kedua).
+ *
+ * Notif WA cuma lewat nomor bot. Kalau botnya putus tepat waktu user bayar,
+ * notifnya nggak masuk — justru di momen dia paling butuh. Nomor HP dikirim
+ * dari bot mana pun yang sedang online, jadi nggak bergantung bot user sendiri.
+ */
+async function simpanPhone(req, res) {
+  try {
+    const nomor = String(req.body?.phone || '').replace(/\D/g, '');
+    if (!nomor) {
+      await pool.execute('UPDATE users SET phone = NULL WHERE id = ?', [req.user.id]);
+      return res.json({ ok: true, message: 'Nomor HP dihapus.' });
+    }
+
+    // Terima 08xx / +628xx / 628xx — disimpan sebagai 628xx biar konsisten
+    // dengan `owner_number`, jadi konversi ke JID nggak perlu mikir lagi.
+    const normal = nomor.startsWith('0') ? '62' + nomor.slice(1)
+      : nomor.startsWith('62') ? nomor
+      : '62' + nomor;
+    if (normal.length < 10 || normal.length > 15) {
+      return sendError(res, 400, 'Nomor HP tidak valid. Contoh: 08123456789');
+    }
+
+    await pool.execute('UPDATE users SET phone = ? WHERE id = ?', [normal, req.user.id]);
+    return res.json({ ok: true, message: 'Nomor HP disimpan.', phone: normal });
+  } catch (err) {
+    console.error('[Auth] simpanPhone error:', err);
+    return sendError(res, 500, 'Terjadi kesalahan server');
+  }
+}
+
 module.exports = {
-  register, login, logout, me, gantiPassword,
+  register, login, logout, me, gantiPassword, simpanPhone,
   listUsers, updateUser, deleteUser,
   requireAuth, requireKing,
 };

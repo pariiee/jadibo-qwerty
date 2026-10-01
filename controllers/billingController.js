@@ -65,6 +65,11 @@ async function terapkanPaket(userId, planId, days) {
     [plan.id, akhir, userId]
   );
 
+  // Paket baru = jatah fitur & kuota baru. Cache di gatePaket cuma 60 detik,
+  // tapi segarkan() memangkasnya jadi nol — user nggak perlu nunggu semenit
+  // buat fitur yang barusan dia bayar.
+  require('../engine/gatePaket').segarkan(null);
+
   // Kabari pemiliknya lewat WA — SATU titik, jadi jalur webhook, "Cek Status",
   // dan konfirmasi admin semuanya dapat kabar.
   //
