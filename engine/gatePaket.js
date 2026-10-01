@@ -146,22 +146,62 @@ async function kuotaHabis(botId, botData) {
 }
 
 /**
+ * Jatah fitur buat bot ini, dalam bentuk array (buat menu) atau `null` = semua.
+ * Dipakai engine buat mengisi `ctx.fitur`, supaya yang DITAMPILKAN di `.menu`
+ * sama dengan yang DIIZINKAN gate. Kalau dua tempat ini beda, user melihat
+ * daftar fitur lalu ditolak satu-satu.
+ */
+async function jatahBot(botId) {
+  try {
+    const pemilik = await pemilikBot(botId);
+    if (!pemilik || pemilik.role === ADMIN_ROLE) return null;
+    const jatah = jatahFitur(paketPemilik(pemilik) ? pemilik.plan : 'user');
+    return jatah ? [...jatah] : null;
+  } catch {
+    return null; // gagal baca = tampilkan semua, jangan kosongkan menu
+  }
+}
+
+/**
  * Command ini termasuk paket pemilik bot? `namaPemilik` diisi kalau pengirimnya
  * memang pemilik/admin — mereka selalu lolos. Gagal baca = izinkan.
  */
 async function fiturDibolehkan(botId, command, namaPemilik) {
   try {
     if (namaPemilik) return true;
-    const pemilik = await pemilikBot(botId);
-    if (!pemilik || pemilik.role === ADMIN_ROLE) return true;
-
-    // Paket habis → jatah 'user' (cuma SELALU_TERBUKA). Sengaja tidak nol total:
-    // user yang masa aktifnya lewat tetap bisa nanya kenapa botnya diam.
-    const jatah = jatahFitur(paketPemilik(pemilik) ? pemilik.plan : 'user');
-    return jatah ? jatah.has(command) : true;
+    const jatah = await jatahBot(botId);
+    return jatah ? jatah.includes(command) : true;
   } catch {
     return true;
   }
 }
 
-module.exports = { pemilikBot, segarkan, jatahFitur, batasKuota, kuotaHabis, fiturDibolehkan, TTL_MS };
+/**
+ * Bot yang harus DIMATIKAN karena paket pemiliknya sudah habis.
+ *
+ * Dipakai cron tiap menit. Sengaja di sini, bukan ditulis inline di `server.js`:
+ * syaratnya (jangan sentuh admin, jangan sentuh yang belum pernah langganan)
+ * gampang salah dan nggak ada yang ngunci kalau bentuknya SQL mentah di dalam
+ * cron. Tanpa ini, paket lewat cuma nge-drop fitur ke jatah Gratis sementara
+ * botnya tetap nyambung ke WhatsApp — bayar atau tidak, nomornya tetap online.
+ *
+ * `plan_expired_at IS NOT NULL` itu penting: akun yang BELUM PERNAH langganan
+ * kolomnya NULL, dan tanpa syarat itu botnya ikut dimatikan.
+ */
+async function botKedaluwarsa() {
+  const [rows] = await pool.execute(
+    `SELECT b.id, b.platform, u.username, u.plan_expired_at
+       FROM bots b JOIN users u ON u.id = b.user_id
+      WHERE b.is_running = 1
+        AND u.role <> ?
+        AND u.plan_expired_at IS NOT NULL
+        AND u.plan_expired_at < NOW()`,
+    [ADMIN_ROLE]
+  );
+  return rows;
+}
+
+module.exports = {
+  pemilikBot, segarkan, jatahFitur, jatahBot, batasKuota, kuotaHabis,
+  fiturDibolehkan, botKedaluwarsa, TTL_MS,
+};

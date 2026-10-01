@@ -41,8 +41,8 @@ palsukan('config/database.js', {
   pool: {
     execute: async (sql, params = []) => {
       if (poolError) throw new Error('DB mati');
-      if (/FROM bots b JOIN users u/i.test(sql)) return [pemilik ? [pemilik] : []];
       ditulis.push(sql.replace(/\s+/g, ' ').trim());
+      if (/FROM bots b JOIN users u/i.test(sql)) return [pemilik ? [pemilik] : []];
       // UPDATE bots SET received_count = received_count + 1 WHERE id = ? AND received_count < ?
       if (/received_count = received_count \+ 1/i.test(sql)) {
         const batas = params[1];
@@ -148,17 +148,50 @@ const { CATS } = require('../plugins/01-info');
   gate.segarkan(null);
   cek('Basic aktif -> fitur rpg terakhir DITOLAK', (await gate.fiturDibolehkan(4, CATS.rpg[CATS.rpg.length - 1], false)) === false);
 
-  // ── 6. DB error -> jangan blokir ───────────────────────────────────────────
+  // ── 6. MENU == GATE ────────────────────────────────────────────────────────
+  // Inilah yang dulu bocor: `.menu` menampilkan SEMUA command (423) sementara
+  // engine cuma mengizinkan 100. `ctx.fitur` di engine mengambil daftarnya dari
+  // `jatahBot()`, jadi dua daftar itu WAJIB identik — bukan cuma mirip.
+  for (const plan of ['user', 'basic', 'premium', 'ultra', 'trial']) {
+    pemilik = { id: 3, role: 'user', plan, plan_expired_at: besok };
+    gate.segarkan(null);
+    const menu = new Set((await gate.jatahBot(4)) ?? []);
+    const semua = [...new Set(semuaUrut)];
+    const beda = [];
+    for (const c of semua) {
+      const diizinkan = await gate.fiturDibolehkan(4, c, false);
+      if (diizinkan !== menu.has(c)) beda.push(`${c}(menu=${menu.has(c)},gate=${diizinkan})`);
+    }
+    cek(`menu == gate untuk paket ${plan} (${menu.size} fitur)`, beda.length === 0,
+      beda.slice(0, 3).join(' ') + (beda.length > 3 ? ` +${beda.length - 3} lagi` : ''));
+  }
+  cek('menu Gratis = 5, bukan 423', (await (async () => {
+    pemilik = { id: 3, role: 'user', plan: 'user', plan_expired_at: null };
+    gate.segarkan(null);
+    return (await gate.jatahBot(4))?.length;
+  })()) === 5);
+
+  // ── 7. DB error -> jangan blokir ───────────────────────────────────────────
   poolError = true;
   gate.segarkan(null);
   cek('DB error -> kuota jangan ngeblok', (await gate.kuotaHabis(4, bot())) === false);
   cek('DB error -> fitur jangan ngeblok', (await gate.fiturDibolehkan(4, sisaBasic[0], false)) === true);
+  cek('DB error -> menu jangan dikosongkan', (await gate.jatahBot(4)) === null);
 
-  // ── 7. Pemilik bot selalu lolos ────────────────────────────────────────────
+  // ── 8. Pemilik bot selalu lolos ────────────────────────────────────────────
   poolError = false;
   pemilik = { id: 3, role: 'user', plan: 'user', plan_expired_at: null };
   gate.segarkan(null);
   cek('pemilik lolos walau paketnya Gratis', (await gate.fiturDibolehkan(4, sisaBasic[0], true)) === true);
+
+  // ── 9. Bot yang harus DIMATIKAN (paket habis) ──────────────────────────────
+  // Syaratnya diperiksa dari SQL-nya, karena pool palsu nggak menerapkan WHERE.
+  await gate.botKedaluwarsa().catch(() => {});
+  const q = ditulis.find((s) => /plan_expired_at < NOW/i.test(s)) || '';
+  cek('botKedaluwarsa: cuma yang paketnya lewat', /plan_expired_at < NOW/i.test(q));
+  cek('botKedaluwarsa: jangan sentuh yang belum pernah langganan', /plan_expired_at IS NOT NULL/i.test(q));
+  cek('botKedaluwarsa: jangan sentuh admin', /role <> \?/i.test(q));
+  cek('botKedaluwarsa: cuma yang sedang jalan', /is_running = 1/i.test(q));
 
   console.log(gagal ? `\n=== GAGAL: ${gagal} masalah ===` : '\n=== SEMUA CEK LULUS ===');
   process.exit(gagal ? 1 : 0);

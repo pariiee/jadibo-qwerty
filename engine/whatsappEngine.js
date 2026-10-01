@@ -642,6 +642,18 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
       : ctx.isPremium        ? 'premium'
       : 'user';
 
+    // ── Fitur yang boleh DITAMPILKAN di menu ─────────────────────────────────
+    // Harus sama dengan yang diizinkan gate di bawah. Dulu `ctx.fitur` tidak
+    // pernah disuntik dan `botData.fitur` tidak pernah ditulis, jadi `.menu`
+    // selalu menampilkan SEMUA command sementara engine menolaknya satu-satu —
+    // user lihat 423 fitur lalu ditolak. `null` = semua boleh (admin/pemilik).
+    ctx.fitur = null;
+    if (!ctx.isOwner && !ctx.isDev) {
+      try {
+        ctx.fitur = await require('./gatePaket').jatahBot(botId);
+      } catch { /* gagal baca paket -> tampilkan semua, jangan kosongkan menu */ }
+    }
+
     // ── Owner greeting ────────────────────────────────────────────────────────
     // Kalau sender adalah owner bot dan pesan di grup, kirim sambutan
     // Cooldown: 1 hari per grup (biar tidak spam setiap chat)

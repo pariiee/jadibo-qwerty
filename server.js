@@ -479,6 +479,25 @@ cron.schedule('0 3 * * *', async () => {
 
 // ─── Cron Jadwal Buka/Tutup Grup Otomatis — setiap menit ─────────────────────
 cron.schedule('* * * * *', async () => {
+  // ── Bot yang paketnya habis: matikan ──────────────────────────────────────
+  // Sebelum ini paket lewat cuma nge-drop fitur ke jatah Gratis sementara
+  // botnya tetap nyambung ke WhatsApp — bayar atau tidak, nomornya tetap
+  // online. Ini yang bikin langganan nggak ada artinya.
+  //
+  // Pakai cron yang SUDAH ada (tiap menit) — jangan bikin jadwal baru.
+  try {
+    for (const bot of await require('./engine/gatePaket').botKedaluwarsa()) {
+      try {
+        await require('./config/engineBus').stopIfRunning(bot.id);
+        console.log(`[Cron] Bot ${bot.id} (${bot.username}) dimatikan — paket habis ${bot.plan_expired_at}`);
+      } catch (e) {
+        console.error(`[Cron] Gagal matikan bot ${bot.id}:`, e.message);
+      }
+    }
+  } catch (e) {
+    console.error('[Cron] Cek paket habis error:', e.message);
+  }
+
   try {
     // Ambil semua group_settings yang punya open_time atau close_time
     const [rows] = await pool.execute(
