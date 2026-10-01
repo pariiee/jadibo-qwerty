@@ -32,6 +32,11 @@ const TABLES = {
     ['main_groups',    "TEXT DEFAULT NULL"],
     ['daily_limit',    "INT NOT NULL DEFAULT 20"],
     ['is_running',     "TINYINT(1) NOT NULL DEFAULT 0"],
+    // Dua kolom kuota pesan — dipakai engine/gatePaket.js (penegakan) dan
+    // engine/kuota.js (peringatan). Sempat HILANG dari schema padahal sudah ada
+    // dan terpakai di produksi: instalasi baru akan mati di jalur uangnya.
+    ['receive_limit',  "INT NOT NULL DEFAULT 0"],
+    ['received_count', "INT NOT NULL DEFAULT 0"],
   ],
   rpg_members: [
     // tambahan RPG yang dipakai kode

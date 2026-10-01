@@ -882,7 +882,12 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
     // sendiri, dan satu-satunya jalan keluar cuma panel web.
     if (!ctx.isOwner && !ctx.isDev) {
       const gate = require('./gatePaket');
-      if (await gate.kuotaHabis(botId, botData)) {
+      const habis = await gate.kuotaHabis(botId, botData);
+      // Kabari pemiliknya SEBELUM pesannya ditolak — kalau tidak, satu-satunya
+      // tanda kuotanya habis adalah bot yang diam. Tidak di-await: peringatan
+      // itu bonus, pesannya yang utama.
+      require('./kuota').peringatanKuota(botId, botData).catch(() => {});
+      if (habis) {
         console.log(`[Bot ${botId}] 🚫 kuota pesan habis — dilewati: ${logLine}`);
         return;
       }

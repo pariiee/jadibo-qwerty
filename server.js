@@ -149,6 +149,8 @@ app.post('/api/bots/:id/resolve-invite', apiLimiter, auth.requireAuth, bot.resol
 
 // ─── Langganan & Pembayaran ──────────────────────────────────────────────────
 app.get('/api/plans',                apiLimiter, billing.daftarPaket);
+// Sisa kuota pesan per bot — dipakai halaman /kuota.
+app.get('/api/kuota',                apiLimiter, auth.requireAuth, billing.kuota);
 // Daftar command bot (halaman /command). Login dulu — daftar fitur itu bagian
 // dari produk, bukan info publik.
 app.get('/api/command',              apiLimiter, auth.requireAuth, command.daftarCommand);
@@ -210,6 +212,7 @@ app.get('/config/:id', halaman('config.html'));
 app.get('/command',    halaman('command.html'));
 // Riwayat pembayaran & profil: dua-duanya halaman USER (bukan admin).
 app.get('/billing',    halaman('billing.html'));
+app.get('/kuota',      halaman('kuota.html'));
 app.get('/profil',     halaman('profil.html'));
 app.get('/pricing',    halaman('pricing.html'));
 // Tautan lama: bot sempat ngasih pesan "buka halaman Langganan", dan orang

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kuota Pesan — yaparbots</title>
+<!-- @include head.html -->
+</head>
+<body class="page-kuota">
+<div class="app">
+
+  <!-- @include sidebar.html -->
+
+  <main>
+    <!-- @include topbar.html -->
+
+    <div class="content">
+      <div class="cmd-head">
+        <h2>Kuota Pesan</h2>
+        <p class="m-sub">Sisa jatah pesan tiap bot kamu. Kalau habis, bot berhenti membalas sampai paket ditambah.</p>
+      </div>
+
+      <div id="kuota-kosong" class="card" style="display:none">
+        <p class="m-sub" style="margin:0 0 12px">Kamu belum punya bot. Bikin bot dulu supaya kuotanya bisa dipantau.</p>
+        <a class="btn" href="/dashboard">Ke Dashboard</a>
+      </div>
+
+      <div id="kuota-daftar"></div>
+
+      <div class="card" style="margin-top:16px">
+        <div class="kuota-legenda">
+          <strong>Bagaimana hitungannya</strong>
+          <ul class="m-sub" style="margin:8px 0 0;padding-left:18px">
+            <li><b>Sisa paket</b> — jatah pesan seumur paket. Habis = beli paket baru, tidak reset sendiri.</li>
+            <li><b>Per hari</b> — jatah harian yang direset otomatis tiap <b>00:00 WIB</b>.</li>
+            <li>Pemilik bot (kamu) <b>tidak ikut dihitung</b> kuota, jadi kamu selalu bisa memakai bot sendiri.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="/js/head.js"></script>
+<script src="/js/kuota.js"></script>
+</body>
+</html>

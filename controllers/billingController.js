@@ -457,8 +457,35 @@ async function adminSetSettings(req, res) {
   }
 }
 
+/**
+ * GET /api/kuota — sisa kuota pesan per bot milik user yang login.
+ *
+ * Kenapa ada: begitu kuota habis, bot berhenti membalas dan (kalau paketnya
+ * lewat masa aktif) dimatikan cron. Tanpa halaman ini user nggak punya cara
+ * tahu sisa kuotanya sebelum botnya diam. Angka-angkanya dari engine/kuota.js
+ * supaya aturan batasnya cuma ada di SATU tempat, bukan disalin ke controller.
+ */
+async function kuota(req, res) {
+  try {
+    const [bots] = await pool.execute(
+      'SELECT id, bot_name, status, is_running FROM bots WHERE user_id = ? ORDER BY id',
+      [req.user.id]
+    );
+    const { sisaKuota } = require('../engine/kuota');
+    const hasil = [];
+    for (const b of bots) {
+      const s = await sisaKuota(b.id);
+      if (s) hasil.push({ id: b.id, nama: b.bot_name, status: b.status, jalan: !!b.is_running, ...s });
+    }
+    return res.json({ ok: true, bots: hasil });
+  } catch (err) {
+    console.error('[Billing] kuota error:', err.message);
+    return sendError(res, 500, 'Terjadi kesalahan server');
+  }
+}
+
 module.exports = {
-  daftarPaket, checkout, daftarOrder, cekOrder, webhook,
+  daftarPaket, checkout, daftarOrder, cekOrder, webhook, kuota,
   adminOrders, adminKonfirmasi, adminTolak, adminSettings, adminSetPlans, adminSetSettings,
   klaimTrial, klaimTrialSendiri, terapkanPaket, tandaiLunas,
 };

@@ -585,3 +585,18 @@ body.page-billing .kosong-aksi{display:flex;gap:10px;flex-wrap:wrap;justify-cont
 @media(max-width:560px){
   body.page-billing .adm-bar .inp{max-width:none;width:100%}
 }
+
+/* ── Halaman Kuota (/kuota) ───────────────────────────────────────────────── */
+.kuota-card{padding:20px}
+.kuota-card:hover{transform:none}
+.kuota-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:16px}
+.kuota-head h4{margin:0 0 4px}
+.kuota-angka{display:flex;align-items:baseline;gap:9px}
+.kuota-angka b{font-size:26px;font-weight:800;font-variant-numeric:tabular-nums}
+.kuota-angka span{font-size:12px;color:var(--muted)}
+.kuota-bar{height:7px;border-radius:999px;background:var(--surf3);overflow:hidden;margin-top:12px}
+.kuota-bar i{display:block;height:100%;border-radius:999px;transition:width .3s ease}
+.kuota-harian{font-size:12px;color:var(--muted);border-top:1px solid var(--border);margin-top:16px;padding-top:12px}
+.kuota-harian b{color:var(--txt)}
+#kuota-daftar{display:grid;gap:14px}
+.kuota-legenda ul li{margin-bottom:5px}

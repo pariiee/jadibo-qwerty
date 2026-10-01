@@ -40,6 +40,10 @@ CREATE TABLE IF NOT EXISTS bots (
   banner_url     TEXT DEFAULT NULL,
   main_groups    TEXT DEFAULT NULL,
   daily_limit    INT NOT NULL DEFAULT 20,
+  -- Kuota pesan: receive_limit = jatah seumur paket, received_count = terpakai.
+  -- Ditegakkan engine/gatePaket.js; peringatannya dari engine/kuota.js.
+  receive_limit  INT NOT NULL DEFAULT 0,
+  received_count INT NOT NULL DEFAULT 0,
   sqlite_db_path VARCHAR(500) DEFAULT NULL,
   is_running     TINYINT(1) NOT NULL DEFAULT 0,
   status         ENUM('connected', 'disconnected', 'connecting', 'qr_pending') NOT NULL DEFAULT 'disconnected',
