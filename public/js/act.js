@@ -40,3 +40,27 @@ window.showToast = function (msg, tipe) {
   clearTimeout(window._toastTimer);
   window._toastTimer = setTimeout(() => t.classList.remove('on'), 2500);
 };
+
+// Isi kartu paket — SATU tempat untuk landing `/` dan halaman bayar `/pricing`.
+// Dulu dua-duanya menulis daftarnya sendiri, jadi isinya beda walau paketnya
+// sama: landing bilang "Jumlah Fitur : 100", /pricing bilang "100 fitur" +
+// "30 pesan / hari". Sekarang satu sumber, satu urutan, satu ejaan.
+//
+// `fitur` = jumlah command yang tersedia. Paket TIDAK membatasi fitur (semua
+// paket dapat semua command), jadi angkanya sama untuk tiap paket — dikirim
+// pemanggil karena cuma dia yang tahu total dari /api/command.
+window.daftarPaket = function (p, fitur) {
+  const angka = (n) => Number(n || 0).toLocaleString('id-ID');
+  return {
+    // Yang dijual cuma ini. `max_fitur` di data paket sengaja TIDAK dipakai:
+    // itu angka pajangan yang tidak ditegakkan di jalur pesan mana pun.
+    baris: [
+      'Online 24 jam',
+      fitur + ' fitur',
+      p.owner_max + ' Owner Bot',
+      angka(p.receive_limit) + ' Received Limit',
+      'Masa aktif ' + p.days + ' hari',
+    ],
+    extra: 'Customize Bot',
+  };
+};

@@ -56,24 +56,20 @@
   // ── Harga ───────────────────────────────────────────────────────
   // Diambil dari /api/plans, bukan ditulis ulang di HTML — kalau admin ubah
   // harga di /admin, landing ikut berubah (nggak ada angka yang bisa basi).
+  // Isi kartunya dari `daftarPaket()` (act.js) — sama persis dengan /pricing.
   fetch('/api/plans').then(r => r.json()).then(d => {
     if (!d?.ok) return;
     const rupiah = n => 'Rp' + Number(n || 0).toLocaleString('id-ID');
     const grid = document.getElementById('price-grid');
     d.plans.forEach(p => {
+      const k = daftarPaket(p, d.fitur || 0);
       const el = document.createElement('div');
       el.className = 'price-card';
       el.innerHTML =
         '<div class="pc-nama">' + p.name + '</div>' +
         '<div class="pc-harga">' + rupiah(p.price) + '<small> / ' + p.days + ' hari</small></div>' +
-        '<ul class="pc-li">' +
-          '<li>Jumlah Fitur : ' + (p.max_fitur || 0) + '</li>' +
-          '<li>Owner Number : ' + (p.owner_max || 0) + '</li>' +
-          '<li>Received Limit : ' + (p.receive_limit || 0).toLocaleString('id-ID') + '</li>' +
-          '<li>Masa Aktif : ' + (p.days || 0) + ' Hari</li>' +
-          '<li>' + (p.slots || 0) + ' slot bot</li>' +
-        '</ul>' +
-        '<p class="pc-extra">Customize Bot</p>' +
+        '<ul class="pc-li">' + k.baris.map(t => '<li>' + t + '</li>').join('') + '</ul>' +
+        '<p class="pc-extra">' + k.extra + '</p>' +
         '<a class="btn btn-dark" href="/register">Pilih Paket</a>';
       grid.appendChild(el);
     });

@@ -141,7 +141,21 @@ async function daftarPaket(req, res) {
     trial: { days: s.trial_days || TRIAL.days, slots: TRIAL.slots },
     pay_mode: s.pay_mode,
     qris_static_url: s.qris_static_url || null,
+    // Jumlah command yang tersedia — buat kartu paket. Ikut di sini karena
+    // landing `/` belum login dan nggak boleh nyentuh `/api/command`.
+    // Paket TIDAK membatasi fitur, jadi angkanya sama untuk tiap paket.
+    fitur: jumlahCommand(),
   });
+}
+
+/** Total command yang beredar. Gagal baca = 0, jangan bikin endpointnya mati. */
+function jumlahCommand() {
+  try {
+    const { ALL_COMMANDS } = require('../plugins/01-info');
+    return ALL_COMMANDS ? ALL_COMMANDS.length : 0;
+  } catch {
+    return 0;
+  }
 }
 
 // ─── POST /api/billing/checkout ───────────────────────────────────────────────

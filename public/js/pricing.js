@@ -63,22 +63,21 @@
     const d = await api('/api/plans');
     if (!d?.ok) return;
     paket = d.plans;
+    const jumlahFitur = d.fitur || 0;
     const grid = document.getElementById('plan-grid');
     grid.innerHTML = '';
     paket.forEach((p) => {
+      // Isi kartu dari `daftarPaket()` (act.js) — SATU sumber dengan landing `/`.
+      // Dulu dua halaman menulis daftarnya sendiri dan isinya jadi beda.
+      const k = daftarPaket(p, jumlahFitur);
       const el = document.createElement('div');
       el.className = 'plan-card' + (p.id === me.plan_id ? ' aktif' : '');
       el.innerHTML =
         '<div class="pc-head"><span class="pc-name">' + p.name + '</span>' +
         (p.id === me.plan_id ? '<span class="pc-tag">Paket kamu</span>' : '') + '</div>' +
         '<div class="pc-price">' + rupiah(p.price) + '<small> / ' + p.days + ' hari</small></div>' +
-        '<ul class="pc-list"><li>' + (p.slots || 0) + ' slot bot</li>' +
-          '<li>' + (p.days || 0) + ' hari masa aktif</li>' +
-          '<li>' + p.daily_limit + ' pesan / hari</li>' +
-          '<li>' + (p.max_fitur || 0) + ' fitur</li>' +
-          '<li>' + (p.owner_max || 0) + ' owner number</li>' +
-          '<li>' + (p.receive_limit || 0).toLocaleString('id-ID') + ' total pesan</li></ul>' +
-        '<div class="muted small">Customize bot: ubah prefix, footer, dan deskripsi di detail bot.</div>' +
+        '<ul class="pc-list">' + k.baris.map((t) => '<li>' + t + '</li>').join('') + '</ul>' +
+        '<div class="muted small">' + k.extra + '</div>' +
         '<button class="btn btn-dark" data-act="bukaBayar(\'' + p.id + '\')">Pilih Paket</button>';
       grid.appendChild(el);
     });
