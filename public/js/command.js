@@ -22,11 +22,10 @@
   function saring() {
     const q = document.getElementById('cmd-cari').value.trim().toLowerCase();
     const kat = document.getElementById('cmd-kategori').value;
-    const limit = document.getElementById('cmd-limit').checked;
     hasil = semua.filter((c) =>
       (!kat || c.kategori === kat) &&
-      (!limit || c.limit) &&
-      (!q || c.nama.includes(q) || c.label.toLowerCase().includes(q))
+      (!q || c.nama.includes(q) || c.label.toLowerCase().includes(q) ||
+        c.alias.some((a) => a.includes(q)))
     );
     hal = 1;
     gambar();
@@ -38,17 +37,27 @@
     if (hal > halaman) hal = halaman;
     const potong = hasil.slice((hal - 1) * PER_HAL, hal * PER_HAL);
 
+    // Klik baris = buka detail (deskripsi + alias). <details> bawaan browser,
+    // jadi nol JavaScript buat buka/tutupnya.
     list.innerHTML = potong.map((c) => `
-      <div class="cmd-row">
-        <div class="cmd-kiri">
-          <code class="cmd-nama">${esc(c.prefix)}</code>
-          <span class="cmd-kat">${esc(c.label)}</span>
+      <details class="cmd-row">
+        <summary>
+          <div class="cmd-kiri">
+            <code class="cmd-nama">${esc(c.prefix)}</code>
+            <span class="cmd-kat">${esc(c.label)}</span>
+          </div>
+          <span class="cmd-panah" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+        </summary>
+        <div class="cmd-isi">
+          <p class="cmd-desk">${esc(c.deskripsi || 'Belum ada keterangan untuk command ini.')}</p>
+          ${c.alias.length ? `<div class="cmd-alias">
+            <span class="cmd-alias-lbl">Alias</span>
+            ${c.alias.map((a) => `<code class="cmd-alias-item">.${esc(a)}</code>`).join('')}
+          </div>` : ''}
         </div>
-        <div class="cmd-tanda">
-          ${c.limit ? '<span class="cmd-tag tag-limit">Limit</span>' : ''}
-          ${c.bebas ? '<span class="cmd-tag tag-bebas">Wajib</span>' : ''}
-        </div>
-      </div>`).join('');
+      </details>`).join('');
 
     document.getElementById('cmd-kosong').style.display = hasil.length ? 'none' : 'block';
     document.getElementById('cmd-hitung').textContent =
@@ -81,7 +90,6 @@
 
   document.getElementById('cmd-cari').oninput = saring;
   document.getElementById('cmd-kategori').onchange = saring;
-  document.getElementById('cmd-limit').onchange = saring;
 
   // Topbar-nya partial bersama: tombolnya "Tambah Bot" (buka modal yang cuma
   // ada di /dashboard) dan judulnya "Dashboard". Di sini keduanya disesuaikan
