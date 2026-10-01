@@ -20,12 +20,13 @@ const cek = (nama, syarat, info = '') => {
   else { gagal++; console.log(`❌ ${nama}${info ? ' — ' + info : ''}`); }
 };
 
-const botPalsu = { aktif: [] };
+const botPalsu = { aktif: [], hp: '' };
 const terkirim = [];
 
 const poolPalsu = {
   execute: async (sql, params) => {
     if (/FROM bots/i.test(sql)) return [botPalsu.aktif];
+    if (/SELECT phone FROM users/i.test(sql)) return [[{ phone: botPalsu.hp }]];
     return [[]];
   },
 };
@@ -36,8 +37,12 @@ function palsukan(modul, ekspor) {
 }
 
 palsukan('config/database.js', { pool: poolPalsu });
-palsukan('controllers/botController.js', {
+// notify.js ambil state dari engine/runtime.js (pemilik aslinya). Mock yang
+// nempelin controllers/botController masih 'jalan' tapi nggak kepakai lagi —
+// persis pola yang bikin tes palsu hijau padahal kodenya sudah pindah.
+palsukan('engine/runtime.js', {
   activeBots: {
+    keys: () => botPalsu.aktif.filter((x) => !x.__mati).map((x) => x.id),
     get: (id) => {
       const b = botPalsu.aktif.find((x) => x.id === id);
       if (!b) return undefined;
@@ -46,6 +51,8 @@ palsukan('controllers/botController.js', {
       };
     },
   },
+  activeGroupsPerBot: new Map(), activeChannelsPerBot: new Map(),
+  getClient: () => undefined,
 });
 
 const { kirimKeOwner } = require('../engine/notify');
@@ -86,9 +93,35 @@ const { kirimKeOwner } = require('../engine/notify');
   cek('bot mati -> lanjut ke bot berikutnya', ok === true && terkirim[0]?.jid === '628999999999@s.whatsapp.net',
     JSON.stringify(terkirim));
 
-  // 6. nggak ada nomor owner
+  // 6. nggak ada nomor owner DAN nggak ada nomor HP
   botPalsu.aktif = [{ id: 8, owner_number: null }];
-  cek('owner_number kosong -> false', (await kirimKeOwner(1, 'x')) === false);
+  botPalsu.hp = '';
+  cek('nggak ada nomor sama sekali -> false', (await kirimKeOwner(1, 'x')) === false);
+
+  // ── Jalur kedua: nomor HP user ─────────────────────────────────────────────
+  // Nomor bot bisa sedang putus tepat waktu user bayar — itu justru momen dia
+  // paling butuh kabar.
+  // Bot lain milik user itu yang masih online -> dipakai, tapi TETAP ke nomor
+  // HP user sendiri. Bot milik ORANG LAIN sengaja tidak dipakai: penerimanya
+  // bakal dapat pesan dari nomor asing.
+  botPalsu.aktif = [
+    { id: 8, owner_number: '628111111111', __mati: true },
+    { id: 9, owner_number: null },
+  ];
+  botPalsu.hp = '628999888777';
+  terkirim.length = 0;
+  cek('bot lain milik user yg online -> dipakai', (await kirimKeOwner(1, 'x')) === true);
+  cek('tetap ke nomor HP user', terkirim[0]?.jid === '628999888777@s.whatsapp.net', terkirim[0]?.jid);
+
+  // Semua bot user mati -> nggak ada yang bisa kirim, balik false (jujur).
+  botPalsu.aktif = [{ id: 8, owner_number: '628111111111', __mati: true }];
+  terkirim.length = 0;
+  cek('semua bot user mati -> false (bukan pura-pura terkirim)', (await kirimKeOwner(1, 'x')) === false);
+
+  // Nomor HP kosong lagi -> balik ke perilaku lama
+  botPalsu.hp = '';
+  botPalsu.aktif = [{ id: 8, owner_number: null }];
+  cek('HP kosong & bot tanpa owner -> false', (await kirimKeOwner(1, 'x')) === false);
 
   // 7. argumen kosong
   cek('userId/teks kosong -> false', (await kirimKeOwner(0, '')) === false);

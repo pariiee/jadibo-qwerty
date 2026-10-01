@@ -184,7 +184,30 @@ const { CATS } = require('../plugins/01-info');
   gate.segarkan(null);
   cek('pemilik lolos walau paketnya Gratis', (await gate.fiturDibolehkan(4, sisaBasic[0], true)) === true);
 
-  // ── 9. Bot yang harus DIMATIKAN (paket habis) ──────────────────────────────
+  // ── 9. Kuota HARIAN (cron reset jam 00:00) ─────────────────────────────────
+  // Ini yang bikin masa aktif ngefek: kalau cron-nya pakai `bots.daily_limit`
+  // yang beku, trial 5 hari yang sudah lewat tetap dapat limit 20 selamanya.
+  const bd0 = { id: 4, daily_limit: 0 };
+  const bd = { id: 4, daily_limit: 20 };
+  pemilik = { id: 3, role: 'user', plan: 'basic', plan_expired_at: besok };
+  gate.segarkan(null);
+  cek('harian paket aktif -> dari paket (Basic 30), bukan kolom beku',
+    (await gate.kuotaHarian(bd0)) === 30,
+    String(await gate.kuotaHarian(bd0)));
+  cek('harian: kolom bot menurunkan jatah paket (20 < 30)',
+    (await gate.kuotaHarian({ id: 4, daily_limit: 20 })) === 20);
+  cek('harian: kolom bot TIDAK bisa menaikkan (9999 -> tetap 30)',
+    (await gate.kuotaHarian({ id: 4, daily_limit: 9999 })) === 30);
+
+  pemilik = { id: 3, role: 'user', plan: 'basic', plan_expired_at: kemarin };
+  gate.segarkan(null);
+  cek('harian paket habis -> 0 (bot berhenti melayani)', (await gate.kuotaHarian(bd)) === 0);
+
+  pemilik = { id: 1, role: 'kawula', plan: 'user', plan_expired_at: null };
+  gate.segarkan(null);
+  cek('harian admin -> tanpa batas (99999)', (await gate.kuotaHarian(bd)) === 99999);
+
+  // ── 10. Bot yang harus DIMATIKAN (paket habis) ─────────────────────────────
   // Syaratnya diperiksa dari SQL-nya, karena pool palsu nggak menerapkan WHERE.
   await gate.botKedaluwarsa().catch(() => {});
   const q = ditulis.find((s) => /plan_expired_at < NOW/i.test(s)) || '';

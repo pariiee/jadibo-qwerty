@@ -420,6 +420,7 @@ cron.schedule('0 17 * * *', async () => {
     // Reset per-bot sesuai daily_limit masing-masing
     const [sc, sp] = mine('id', 'AND');
     const [bots] = await pool.execute(`SELECT id, daily_limit FROM bots WHERE is_running = 1${sc}`, sp);
+    const gate = require('./engine/gatePaket');
     for (const bot of bots) {
       // Kuota harian dibaca dari paket yang SEDANG berlaku, bukan
       // `bots.daily_limit` yang dibekukan waktu checkout — kalau tidak, trial
@@ -430,15 +431,7 @@ cron.schedule('0 17 * * *', async () => {
       //
       // SENGAJA BUKAN `receive_limit`: itu kuota pesan SEUMUR PAKET (direset
       // hanya saat beli lagi), sedangkan `lim` di sini reset tiap hari.
-      let lim;
-      try {
-        const plan = require('./config/plan');
-        const pricingStore = require('./config/pricingStore');
-        const pemilik = await require('./engine/gatePaket').pemilikBot(bot.id);
-        lim = plan.kuotaBot(pemilik, bot, pricingStore.plans());
-      } catch {
-        lim = bot.daily_limit || parseInt(process.env.DEFAULT_LIMIT || '20', 10);
-      }
+      const lim = await gate.kuotaHarian(bot);
 
       const [res] = await pool.execute(
         'UPDATE rpg_members SET lim = ? WHERE bot_id = ? AND registered = 1',

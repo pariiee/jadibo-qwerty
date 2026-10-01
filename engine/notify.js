@@ -37,18 +37,15 @@ async function kirimKeOwner(userId, teks) {
   }
 
   // JALUR KEDUA — nomor HP user sendiri. Nomor bot bisa sedang putus tepat
-  // waktu user bayar, dan itu justru momen dia paling butuh kabar. Nomor HP
-  // dikirim dari bot mana pun yang sedang online, jadi tidak bergantung bot
-  // milik user itu sendiri.
+  // waktu user bayar, dan itu justru momen dia paling butuh kabar.
+  //
+  // Tetap lewat bot MILIK USER, cuma sasarannya nomor HP-nya. Sengaja TIDAK
+  // memakai bot online milik orang lain: penerimanya bakal dapat pesan dari
+  // nomor yang nggak dia kenal, dan itu kelihatan seperti spam.
   const hp = await nomorHpUser(userId);
   if (hp) {
     for (const b of rows) {
       if (await kirimLewatBot(b.id, hp, teks)) return true;
-    }
-    // User belum punya bot sama sekali — pakai bot online mana pun.
-    const { activeBots } = require('../controllers/botController');
-    for (const id of activeBots.keys()) {
-      if (await kirimLewatBot(id, hp, teks)) return true;
     }
   }
   return false;
@@ -56,7 +53,9 @@ async function kirimKeOwner(userId, teks) {
 
 /** Kirim satu pesan lewat bot tertentu. false = bot itu tidak bisa dipakai. */
 async function kirimLewatBot(botId, nomor, teks) {
-  const { activeBots } = require('../controllers/botController');
+  // engine/runtime.js pemilik aslinya; botController cuma re-export Map yang
+  // sama, tapi arah impornya jadi engine -> controller kalau lewat sana.
+  const { activeBots } = require('./runtime');
   const client = activeBots.get(botId) || activeBots.get(String(botId));
   if (!client) return false;
   try {

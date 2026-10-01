@@ -22,7 +22,10 @@
  */
 const { pool } = require('../config/database');
 const pricingStore = require('../config/pricingStore');
-const { ADMIN_ROLE, TRIAL, DEFAULT_PLANS, KATEGORI_URUT, SELALU_TERBUKA, aktif } = require('../config/plan');
+const {
+  ADMIN_ROLE, TRIAL, DEFAULT_PLANS, KATEGORI_URUT, SELALU_TERBUKA, LIMIT_DEFAULT,
+  aktif, kuotaBot,
+} = require('../config/plan');
 
 // ponytail: cache global 60 detik — pakai per-bot + invalidasi kalau paketnya
 // berubah lebih sering dari itu (belum perlu: paket cuma diubah admin/admin
@@ -121,6 +124,12 @@ async function batasKuota(botId, botData) {
 /**
  * Pesan ini masih boleh diproses? Sekalian menambah received_count kalau boleh.
  *
+ * Batasnya dibaca dari paket pemilik yang SEDANG berlaku, bukan dari kolom
+ * `bots.receive_limit` yang dibekukan waktu checkout. Kolom itu cuma boleh
+ * MENURUNKAN jatah, tidak menaikkan — sama seperti `kuotaBot()`. Kalau kolomnya
+ * yang jadi sumber kebenaran, paket yang sudah habis tetap dapat kuota penuh
+ * selamanya, dan masa aktif yang dijual jadi tidak ada artinya.
+ *
  * SATU UPDATE atomik — bukan baca-lalu-tulis. `affectedRows 0` = kuota habis.
  * Kalau hitungannya dibaca dulu dari `botData` lalu ditulis belakangan, dua
  * pesan yang datang bersamaan sama-sama lolos di angka terakhir, dan angka di
@@ -177,6 +186,22 @@ async function fiturDibolehkan(botId, command, namaPemilik) {
 }
 
 /**
+ * Kuota harian efektif buat bot ini (`rpg_members.lim`, reset tiap hari).
+ * Paket habis → 0 (bot berhenti melayani), admin → 99999, sisanya dari paket.
+ *
+ * Dipakai cron reset harian. Kalau cron-nya pakai `bots.daily_limit` yang beku,
+ * trial 5 hari yang sudah lewat tetap dapat limit 20 pesan selamanya.
+ */
+async function kuotaHarian(botData) {
+  try {
+    const pemilik = await pemilikBot(botData.id);
+    return kuotaBot(pemilik, botData, pricingStore.plans());
+  } catch {
+    return Number(botData.daily_limit) || LIMIT_DEFAULT;
+  }
+}
+
+/**
  * Bot yang harus DIMATIKAN karena paket pemiliknya sudah habis.
  *
  * Dipakai cron tiap menit. Sengaja di sini, bukan ditulis inline di `server.js`:
@@ -203,5 +228,5 @@ async function botKedaluwarsa() {
 
 module.exports = {
   pemilikBot, segarkan, jatahFitur, jatahBot, batasKuota, kuotaHabis,
-  fiturDibolehkan, botKedaluwarsa, TTL_MS,
+  fiturDibolehkan, kuotaHarian, botKedaluwarsa, TTL_MS,
 };
