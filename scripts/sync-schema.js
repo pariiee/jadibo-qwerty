@@ -17,6 +17,7 @@ const TABLES = {
   // Kolom langganan. Dulu cuma ada di DB produksi — DB lokal / instalasi baru
   // ketinggalan, lalu /api/auth/me dan billing mati dengan ER_BAD_FIELD_ERROR.
   users: [
+    ['token_version',   "INT NOT NULL DEFAULT 0"],
     ['plan',            "VARCHAR(32) NOT NULL DEFAULT 'user'"],
     ['plan_expired_at', "DATETIME DEFAULT NULL"],
     ['plan_slots',      "INT NOT NULL DEFAULT 2"],

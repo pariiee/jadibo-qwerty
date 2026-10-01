@@ -23,7 +23,8 @@ function sendError(res, status, message) {
 
 // ─── Middleware: verify JWT from cookie or Authorization header ───────────────
 
-function requireAuth(req, res, next) {
+async function requireAuth(req, res, next) {
+  let decoded;
   try {
     const token =
       req.cookies?.token ||
@@ -33,12 +34,30 @@ function requireAuth(req, res, next) {
 
     if (!token) return sendError(res, 401, 'Tidak terautentikasi');
 
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded; // { id, username, role }
-    next();
+    decoded = jwt.verify(token, JWT_SECRET);
   } catch {
     return sendError(res, 401, 'Token tidak valid atau sudah kadaluarsa');
   }
+
+  // Sesi itu stateless: tanpa cek ini, ganti password TIDAK memutus sesi mana
+  // pun — orang yang sudah login di perangkat lain masih masuk sampai tokennya
+  // kedaluwarsa (7 hari). `token_version` di token harus sama dengan di DB;
+  // ganti password menaikkannya, jadi semua token lama langsung mati.
+  //
+  // Satu query PK per request ber-auth. Duit & keamanan bukan tempat ngirit.
+  try {
+    const [rows] = await pool.execute('SELECT token_version FROM users WHERE id = ?', [decoded.id]);
+    if (!rows.length) return sendError(res, 401, 'User tidak ditemukan');
+    if (Number(rows[0].token_version || 0) !== Number(decoded.tv || 0)) {
+      return sendError(res, 401, 'Sesi sudah tidak berlaku, silakan masuk lagi');
+    }
+  } catch (err) {
+    console.error('[Auth] cek token_version error:', err);
+    return sendError(res, 500, 'Terjadi kesalahan server');
+  }
+
+  req.user = decoded; // { id, username, role, tv }
+  next();
 }
 
 // ─── Middleware: izin admin tertinggi (role internal `kawula`) ──────────────
@@ -109,7 +128,7 @@ async function register(req, res) {
     // (POST /api/billing/trial). Auto-di sini bikin akun baru langsung nyala
     // tanpa diminta dan bikin tombol klaimnya jadi mubazir.
 
-    const token = signToken({ id: result.insertId, username, role: 'user' });
+    const token = signToken({ id: result.insertId, username, role: 'user', tv: 0 });
 
     res.cookie('token', token, {
       httpOnly: true,
@@ -143,7 +162,7 @@ async function login(req, res) {
       return sendError(res, 400, 'Username dan password wajib diisi');
 
     const [rows] = await pool.execute(
-      'SELECT id, username, password, role, is_active FROM users WHERE username = ?',
+      'SELECT id, username, password, role, is_active, token_version FROM users WHERE username = ?',
       [username]
     );
 
@@ -159,7 +178,7 @@ async function login(req, res) {
     if (!match)
       return sendError(res, 401, 'Username atau password salah');
 
-    const token = signToken({ id: user.id, username: user.username, role: user.role });
+    const token = signToken({ id: user.id, username: user.username, role: user.role, tv: Number(user.token_version || 0) });
 
     res.cookie('token', token, {
       httpOnly: true,
@@ -371,11 +390,29 @@ async function gantiPassword(req, res) {
     if (!await bcrypt.compare(lama, rows[0].password))
       return sendError(res, 401, 'Password lama salah');
 
+    // `token_version + 1` sekaligus jadi penanda: SEMUA token lama (termasuk
+    // yang dipakai perangkat lain) langsung ditolak requireAuth.
     await pool.execute(
-      'UPDATE users SET password = ? WHERE id = ?',
+      'UPDATE users SET password = ?, token_version = token_version + 1 WHERE id = ?',
       [await bcrypt.hash(baru, 12), req.user.id]
     );
-    return res.json({ ok: true, message: 'Password diganti. Pakai yang baru lain kali kamu masuk.' });
+
+    // Perangkat yang barusan ganti password jangan ikut ke-logout — dia sudah
+    // membuktikan tahu password lamanya. Set cookie baru dengan tv terbaru.
+    const [tvRows] = await pool.execute('SELECT token_version FROM users WHERE id = ?', [req.user.id]);
+    const tv = Number(tvRows[0]?.token_version || 0);
+    const token = signToken({ id: req.user.id, username: req.user.username, role: req.user.role, tv });
+    res.cookie('token', token, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 7 * 86400000,
+    });
+
+    return res.json({
+      ok: true,
+      message: 'Password diganti. Perangkat lain harus masuk ulang dengan password baru.',
+    });
   } catch (err) {
     console.error('[Auth] gantiPassword error:', err);
     return sendError(res, 500, 'Terjadi kesalahan server');

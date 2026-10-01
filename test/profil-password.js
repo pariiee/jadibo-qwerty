@@ -25,6 +25,9 @@ const ditulis = [];
 const poolPalsu = {
   execute: async (sql, params) => {
     if (/SELECT password FROM users/i.test(sql)) return [[{ password: HASH_LAMA }]];
+    // ganti password sekarang juga menaikkan token_version (buat memutus sesi
+    // lain) dan menyetel ulang cookie -> butuh dua query tambahan ini.
+    if (/SELECT token_version FROM users/i.test(sql)) return [[{ token_version: 1 }]];
     if (/UPDATE users SET password/i.test(sql)) { ditulis.push(params); return [{ affectedRows: 1 }]; }
     return [[]];
   },
@@ -47,6 +50,7 @@ async function panggil(body, userId = 7) {
   const res = {
     status(k) { this._k = k; return this; },
     json(d) { keluar = { status: this._k || 200, body: d }; return this; },
+    cookie() { return this; },   // cookie token baru diset ulang setelah ganti password
   };
   await auth.gantiPassword({ body, user: { id: userId } }, res);
   return keluar;

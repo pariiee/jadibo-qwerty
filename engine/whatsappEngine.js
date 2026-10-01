@@ -11,6 +11,7 @@ const fs   = require('fs');
 require('dotenv').config();
 
 const { pool, incrementStat, decrementStat } = require('../config/database');
+const { jadwalkanNotifMati } = require('./watchdog');
 const { activeBots, activeGroupsPerBot, activeChannelsPerBot } = require('../controllers/botController');
 const { isPendingSewa } = require('./pendingSewa');
 
@@ -348,6 +349,7 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
       await logBot(botId, 'info', 'Bot terhubung ke WhatsApp');
       botConnectedAt.set(botId, Date.now());
       await pool.execute("UPDATE bots SET status = 'connected', is_running = 1 WHERE id = ?", [botId]);
+      require('./watchdog').batalkanNotifMati(botId); // nyambung lagi -> kabar matinya dibatalkan
       await incrementStat('total_bots_online');
       broadcast(botId, 'status', { status: 'connected' });
 
@@ -425,6 +427,13 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
       await logBot(botId, 'warn', `Koneksi terputus: ${reason}`);
       await pool.execute("UPDATE bots SET status = 'disconnected', is_running = 0 WHERE id = ?", [botId]);
       broadcast(botId, 'status', { status: 'disconnected', reason });
+
+      // Kabari pemiliknya. Ini kabar penting: tanpa ini, satu-satunya cara tahu
+      // botnya mati adalah pelanggan yang mengeluh.
+      //
+      // SENGAJA TIDAK di-await dan cuma kalau koneksinya SEMBUH sendiri — kalau
+      // tiap reconnect gagal ikut ngirim, nomornya kebanjiran pesan.
+      if (!stoppingBots.has(botId)) jadwalkanNotifMati(botId).catch(() => {});
 
       if (activeBots.has(botId)) {
         activeBots.delete(botId);

@@ -255,6 +255,23 @@ wss.on('connection', (ws, req) => {
           return;
         }
 
+        // Sesi yang sudah diputus ganti password TIDAK boleh tetap nyambung ke
+        // WebSocket — kalau nggak dicek di sini, lubangnya cuma pindah dari
+        // HTTP ke WS.
+        try {
+          const { pool } = require('./config/database');
+          const [tvRows] = await pool.execute('SELECT token_version FROM users WHERE id = ?', [decoded.id]);
+          if (!tvRows.length || Number(tvRows[0].token_version || 0) !== Number(decoded.tv || 0)) {
+            ws.send(JSON.stringify({ type: 'error', message: 'Sesi sudah tidak berlaku' }));
+            ws.close();
+            return;
+          }
+        } catch {
+          ws.send(JSON.stringify({ type: 'error', message: 'Unauthorized' }));
+          ws.close();
+          return;
+        }
+
         const botIdNum = parseInt(data.botId, 10);
         if (!Number.isInteger(botIdNum) || botIdNum <= 0) {
           ws.send(JSON.stringify({ type: 'error', message: 'Invalid bot id' }));
