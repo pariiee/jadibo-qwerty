@@ -152,6 +152,9 @@ app.get('/api/plans',                apiLimiter, billing.daftarPaket);
 // Daftar command bot (halaman /command). Login dulu — daftar fitur itu bagian
 // dari produk, bukan info publik.
 app.get('/api/command',              apiLimiter, auth.requireAuth, command.daftarCommand);
+// Ganti password sendiri. authLimiter (bukan apiLimiter): endpoint ini nerima
+// password lama, jadi harus dibatasi kayak login — jangan dikasih kuota 120/menit.
+app.post('/api/auth/password',         authLimiter, auth.requireAuth, auth.gantiPassword);
 app.post('/api/billing/checkout',    apiLimiter, auth.requireAuth, billing.checkout);
 app.post('/api/billing/trial',       apiLimiter, auth.requireAuth, billing.klaimTrialSendiri);
 app.get('/api/billing/orders',       apiLimiter, auth.requireAuth, billing.daftarOrder);
@@ -203,6 +206,9 @@ app.get('/bot/:id',   halaman('bot-detail.html'));
 // (dropdown) biar user multi-slot nggak perlu bolak-balik ke dashboard.
 app.get('/config/:id', halaman('config.html'));
 app.get('/command',    halaman('command.html'));
+// Riwayat pembayaran & profil: dua-duanya halaman USER (bukan admin).
+app.get('/billing',    halaman('billing.html'));
+app.get('/profil',     halaman('profil.html'));
 app.get('/pricing',    halaman('pricing.html'));
 // Tautan lama: bot sempat ngasih pesan "buka halaman Langganan", dan orang
 // mungkin sudah bookmark /langganan. Tanpa ini, /langganan jatuh ke catch-all

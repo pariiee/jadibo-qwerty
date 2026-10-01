@@ -21,7 +21,9 @@ const ctrls = {
   billing: require('../controllers/billingController'),
 };
 const barisRute = src.split('\n').filter((l) => /app\.(get|post|put|patch|delete)\(/.test(l));
-const re = /\b(bot|auth|billing)\.([A-Za-z_$][\w$]*)/g;
+// Harus '(' sesudahnya: `billing.daftarOrder(` itu handler, `billing.html` itu
+// nama file halaman — tanpa `(?=\()` keduanya ikut kebaca sebagai handler.
+const re = /\b(bot|auth|billing)\.([A-Za-z_$][\w$]*)(?=\s*\()/g;
 const hilang = new Set();
 for (const l of barisRute) {
   for (const m of l.matchAll(re)) {

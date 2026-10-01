@@ -236,3 +236,27 @@ INSERT IGNORE INTO stats (stat_key, stat_value) VALUES
   ('total_bots_online', 0),
   ('total_users',       0),
   ('total_messages',    0);
+
+-- Pesanan langganan. Dipakai billingController (checkout / cekOrder / webhook).
+-- Bentuknya disamakan dengan yang sudah jalan di produksi.
+CREATE TABLE IF NOT EXISTS orders (
+  id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  order_id     VARCHAR(64) NOT NULL,
+  user_id      INT UNSIGNED NOT NULL,
+  plan         VARCHAR(32) NOT NULL,
+  amount       INT UNSIGNED NOT NULL,
+  method       VARCHAR(32) NOT NULL DEFAULT 'qris',
+  status       VARCHAR(16) NOT NULL DEFAULT 'pending',
+  gateway_ref  VARCHAR(120) DEFAULT NULL,
+  qr_payload   TEXT DEFAULT NULL,
+  qr_image     TEXT DEFAULT NULL,
+  proof_url    TEXT DEFAULT NULL,
+  note         VARCHAR(255) DEFAULT NULL,
+  expired_at   DATETIME DEFAULT NULL,
+  paid_at      DATETIME DEFAULT NULL,
+  created_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY order_id (order_id),
+  INDEX idx_user (user_id),
+  INDEX idx_status (status)
+);

@@ -14,6 +14,14 @@ const { pool } = require('../config/database');
 
 const TABLES = {
   // nama tabel -> kolom [nama, definisi]
+  // Kolom langganan. Dulu cuma ada di DB produksi — DB lokal / instalasi baru
+  // ketinggalan, lalu /api/auth/me dan billing mati dengan ER_BAD_FIELD_ERROR.
+  users: [
+    ['plan',            "VARCHAR(32) NOT NULL DEFAULT 'user'"],
+    ['plan_expired_at', "DATETIME DEFAULT NULL"],
+    ['plan_slots',      "INT NOT NULL DEFAULT 2"],
+    ['trial_used_at',   "DATETIME DEFAULT NULL"],
+  ],
   bots: [
     ['owner_name',     "VARCHAR(100) DEFAULT NULL"],
     ['channel_id',     "VARCHAR(100) DEFAULT NULL"],
@@ -52,6 +60,28 @@ const TABLES = {
 };
 
 const CREATE_TABLES = [
+  // orders — lihat schema.sql. Sama persis dengan yang jalan di produksi.
+  `CREATE TABLE IF NOT EXISTS orders (
+    id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    order_id     VARCHAR(64) NOT NULL,
+    user_id      INT UNSIGNED NOT NULL,
+    plan         VARCHAR(32) NOT NULL,
+    amount       INT UNSIGNED NOT NULL,
+    method       VARCHAR(32) NOT NULL DEFAULT 'qris',
+    status       VARCHAR(16) NOT NULL DEFAULT 'pending',
+    gateway_ref  VARCHAR(120) DEFAULT NULL,
+    qr_payload   TEXT DEFAULT NULL,
+    qr_image     TEXT DEFAULT NULL,
+    proof_url    TEXT DEFAULT NULL,
+    note         VARCHAR(255) DEFAULT NULL,
+    expired_at   DATETIME DEFAULT NULL,
+    paid_at      DATETIME DEFAULT NULL,
+    created_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY order_id (order_id),
+    INDEX idx_user (user_id),
+    INDEX idx_status (status)
+  )`,
   // bot_sewa
   `CREATE TABLE IF NOT EXISTS bot_sewa (
     id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,

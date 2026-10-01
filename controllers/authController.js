@@ -354,8 +354,36 @@ async function deleteUser(req, res) {
   }
 }
 
+// ─── POST /api/auth/password  (user ganti password sendiri) ──────────────────
+// Wajib sebut password LAMA. Sesi itu stateless (JWT), jadi siapa pun yang
+// pegang cookie bisa ganti password kalau nggak dicek — dan pemiliknya
+// terkunci di luar akunnya sendiri.
+async function gantiPassword(req, res) {
+  try {
+    const lama = String(req.body?.lama || '');
+    const baru = String(req.body?.baru || '');
+    if (!lama || !baru)   return sendError(res, 400, 'Password lama dan baru wajib diisi');
+    if (baru.length < 6)  return sendError(res, 400, 'Password baru minimal 6 karakter');
+    if (baru === lama)    return sendError(res, 400, 'Password baru sama dengan yang lama');
+
+    const [rows] = await pool.execute('SELECT password FROM users WHERE id = ?', [req.user.id]);
+    if (rows.length === 0) return sendError(res, 404, 'User tidak ditemukan');
+    if (!await bcrypt.compare(lama, rows[0].password))
+      return sendError(res, 401, 'Password lama salah');
+
+    await pool.execute(
+      'UPDATE users SET password = ? WHERE id = ?',
+      [await bcrypt.hash(baru, 12), req.user.id]
+    );
+    return res.json({ ok: true, message: 'Password diganti. Pakai yang baru lain kali kamu masuk.' });
+  } catch (err) {
+    console.error('[Auth] gantiPassword error:', err);
+    return sendError(res, 500, 'Terjadi kesalahan server');
+  }
+}
+
 module.exports = {
-  register, login, logout, me,
+  register, login, logout, me, gantiPassword,
   listUsers, updateUser, deleteUser,
   requireAuth, requireKing,
 };

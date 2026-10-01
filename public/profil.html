@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Profil Saya — yaparbots</title>
+<!-- @include head.html -->
+</head>
+<body class="page-profil">
+<div class="app">
+
+  <!-- @include sidebar.html -->
+
+  <main>
+    <!-- @include topbar.html -->
+
+    <div class="content">
+      <div class="cmd-head">
+        <h2>Profil Saya</h2>
+        <p class="m-sub">Ringkasan akun kamu, plus ganti password.</p>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="lbl">Username</div>
+          <div class="val" id="pf-user">—</div>
+          <div class="sub" id="pf-sejak"></div>
+        </div>
+        <div class="stat">
+          <div class="lbl">Role</div>
+          <div class="val" id="pf-role">—</div>
+          <div class="sub" id="pf-paket"></div>
+        </div>
+        <div class="stat">
+          <div class="lbl">Masa Aktif</div>
+          <div class="val" id="pf-exp">—</div>
+          <div class="sub" id="pf-exp-sub"></div>
+        </div>
+        <div class="stat">
+          <div class="lbl">Bot Kamu</div>
+          <div class="val" id="pf-bot">0</div>
+          <div class="sub" id="pf-bot-sub"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Ganti Password</h3>
+        <p class="m-sub">Masukkan password lama dulu — supaya orang lain yang kebetulan
+          masih login di perangkatmu nggak bisa mengunci kamu dari akun sendiri.</p>
+        <form id="pw-form">
+          <div class="field">
+            <label for="pw-lama">Password Lama</label>
+            <input class="inp" id="pw-lama" type="password" autocomplete="current-password" required />
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label for="pw-baru">Password Baru</label>
+              <input class="inp" id="pw-baru" type="password" placeholder="Min. 6 karakter" autocomplete="new-password" required />
+            </div>
+            <div class="field">
+              <label for="pw-ulang">Ulangi Password Baru</label>
+              <input class="inp" id="pw-ulang" type="password" autocomplete="new-password" required />
+            </div>
+          </div>
+          <div class="err" id="pw-error"></div>
+          <button class="btn btn-dark submit" type="submit">Simpan Password Baru</button>
+        </form>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="/js/profil.js" defer></script>
+</body>
+</html>

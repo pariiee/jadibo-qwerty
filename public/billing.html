@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Riwayat Pembayaran — yaparbots</title>
+<!-- @include head.html -->
+</head>
+<body class="page-billing">
+<div class="app">
+
+  <!-- @include sidebar.html -->
+
+  <main>
+    <!-- @include topbar.html -->
+
+    <div class="content">
+      <div class="cmd-head">
+        <h2>Riwayat Pembayaran</h2>
+        <p class="m-sub">Semua pesanan paket kamu. Yang masih menunggu bisa dicek statusnya kapan saja.</p>
+      </div>
+
+      <div class="adm-bar">
+        <select class="inp" id="filter-status" data-act="muatOrder">
+          <option value="">Semua status</option>
+          <option value="pending">Menunggu</option>
+          <option value="paid">Lunas</option>
+          <option value="rejected">Ditolak</option>
+        </select>
+        <button class="btn btn-outline" data-act="muatOrder">Muat Ulang</button>
+      </div>
+
+      <div class="tbl-wrap">
+        <table class="tbl" id="tbl-order">
+          <thead>
+            <tr>
+              <th>Kode</th><th>Paket</th><th style="text-align:right">Jumlah</th>
+              <th>Cara</th><th>Status</th><th>Waktu</th><th></th>
+            </tr>
+          </thead>
+          <tbody><tr><td colspan="7" class="kosong">Memuat…</td></tr></tbody>
+        </table>
+      </div>
+
+      <p class="m-sub" id="order-note" style="margin-top:14px"></p>
+    </div>
+  </main>
+</div>
+
+<script src="/js/billing.js" defer></script>
+</body>
+</html>
