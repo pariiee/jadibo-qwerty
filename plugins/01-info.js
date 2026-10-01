@@ -281,11 +281,6 @@ module.exports = async function infoHandler(ctx) {
   if (!ctx.isCmd) return false;
   const { command, args, reply, react, botData, client, sock, jid, sender, isGroup, msg } = ctx;
   const p = botData.prefix;
-  // Fitur yang boleh tampil di menu. `ctx.fitur` = potongan paket dari worker
-  // (null = admin, semua boleh). Kalau penandanya belum sampai (engine/worker
-  // belum restart), tampilkan semua — jangan kosongkan menu karena itu.
-  const bolehPakai = ctx.fitur ?? botData.fitur;
-  const bolehTampil = Array.isArray(bolehPakai) ? new Set(bolehPakai) : null;
 
   switch (command) {
     // ── memory — RAM usage bot ──────────────────────────────────────────────
@@ -323,14 +318,13 @@ module.exports = async function infoHandler(ctx) {
     case 'menu': {
       const role = mess.roleLabel[ctx.role] || mess.roleLabel.user;
 
-      // Menu HARUS mengikuti paket pemilik bot — tanpa potongan ini user paket
-      // kecil melihat 400 fitur lalu ditolak satu-satu saat dipakai.
-      const pakaiCat = (k) => (bolehTampil ? (CATS[k] || []).filter(c => bolehTampil.has(c)) : [...(CATS[k] || [])]);
-      const catKeysTampil = bolehTampil ? CAT_KEYS.filter(k => pakaiCat(k).length) : CAT_KEYS;
+      // Menu menampilkan SEMUA command, untuk paket apa pun. Paket tidak
+      // membatasi fitur — yang dibatasi cuma kuota pesan, masa aktif, dan
+      // jumlah owner number.
+      const pakaiCat = (k) => [...(CATS[k] || [])];
+      const catKeysTampil = CAT_KEYS;
 
       const catKey = (args.join(' ') || '').toLowerCase().trim();
-      // Kategori yang seluruh isinya di luar paket diperlakukan seperti tidak
-      // ada — jangan kirim sub-menu kosong.
       const showCat = CAT_ALIAS[catKey] || (pakaiCat(catKey).length ? catKey : null);
 
       // ── Menu per-kategori: .menu <kategori> / .menu all ──────────────────

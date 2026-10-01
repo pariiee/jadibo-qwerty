@@ -3,18 +3,14 @@
 /**
  * engine/gatePaket.js — penegakan batas paket di jalur pesan masuk.
  *
- * Sebelumnya `receive_limit` dan `max_fitur` cuma jadi ANGKA HIAS: ditulis
- * waktu checkout, dibaca buat ditampilin di /admin, dan tidak pernah
- * dibandingkan dengan apa pun di jalur pesan. Akibatnya `/pricing` menjual
- * Basic 10.000 / Premium 50.000 / Ultra 100.000 pesan yang tidak bisa dibedakan
- * sama sekali oleh bot.
+ * Paket TIDAK membatasi fitur. Semua command terbuka untuk semua paket. Yang
+ * membedakan paket cuma tiga: KUOTA PESAN (`receive_limit` + `daily_limit`),
+ * MASA AKTIF (`plan_expired_at`), dan JUMLAH OWNER NUMBER (`owner_max`).
  *
- * Dua penegakan, sengaja di SATU tempat (engine/whatsappEngine.js, tepat sesudah
- * gerbang registrasi) supaya hitungannya tidak meleset antara dua proses:
- *
- *   1. KUOTA PESAN  — tiap pesan yang bot ini TERIMA menambah received_count;
- *                     kalau sudah lewat receive_limit, pesannya diabaikan.
- *   2. JATAH FITUR  — command di luar jatah paket pemilik (`max_fitur`) ditolak.
+ * Sebelum ini `receive_limit` cuma ANGKA HIAS: ditulis waktu checkout, dibaca
+ * buat ditampilin di /admin, dan tidak pernah dibandingkan dengan apa pun di
+ * jalur pesan. Akibatnya `/pricing` menjual Basic 10.000 / Premium 50.000 /
+ * Ultra 100.000 pesan yang tidak bisa dibedakan sama sekali oleh bot.
  *
  * Cache: paket pemilik di-cache 60 detik. Kalau tidak, tiap pesan jadi dua
  * query tambahan (pemilik + `settings`) — jalur terpanas di seluruh sistem.
@@ -22,17 +18,13 @@
  */
 const { pool } = require('../config/database');
 const pricingStore = require('../config/pricingStore');
-const {
-  ADMIN_ROLE, TRIAL, DEFAULT_PLANS, KATEGORI_URUT, SELALU_TERBUKA, LIMIT_DEFAULT,
-  aktif, kuotaBot,
-} = require('../config/plan');
+const { ADMIN_ROLE, TRIAL, DEFAULT_PLANS, LIMIT_DEFAULT, aktif, kuotaBot } = require('../config/plan');
 
 // ponytail: cache global 60 detik — pakai per-bot + invalidasi kalau paketnya
-// berubah lebih sering dari itu (belum perlu: paket cuma diubah admin/admin
-// checkout, bukan operasi per-pesan).
+// berubah lebih sering dari itu (belum perlu: paket cuma diubah admin/checkout,
+// bukan operasi per-pesan).
 const TTL_MS = 60 * 1000;
-const cachePemilik = new Map();   // botId -> { nilai, sampai }
-const cacheFitur = new Map();     // `${botId}:${plan}` -> Set nama command
+const cachePemilik = new Map(); // botId -> { nilai, sampai }
 
 /** Paket pemilik bot ini (dari cache kalau masih segar). */
 async function pemilikBot(botId) {
@@ -55,11 +47,10 @@ async function pemilikBot(botId) {
   return nilai;
 }
 
-/** Buang cache bot ini — dipanggil setelah checkout / paket diubah. */
+/** Buang cache (tanpa botId = semua). Dipanggil setelah checkout. */
 function segarkan(botId) {
-  if (botId == null) { cachePemilik.clear(); cacheFitur.clear(); return; }
-  cachePemilik.delete(botId);
-  for (const k of cacheFitur.keys()) if (k.startsWith(botId + ':')) cacheFitur.delete(k);
+  if (botId == null) cachePemilik.clear();
+  else cachePemilik.delete(botId);
 }
 
 /**
@@ -69,32 +60,6 @@ function segarkan(botId) {
 function paketPemilik(pemilik) {
   if (!pemilik || !aktif(pemilik)) return null;
   return [...(pricingStore.plans() || DEFAULT_PLANS), TRIAL].find((p) => p.id === pemilik.plan) || null;
-}
-
-/**
- * Jatah fitur satu paket. `null` = semua fitur (admin / gagal baca daftar).
- * SELALU_TERBUKA (menu, ping, limit, me, owner) tidak pernah dikunci — paket
- * habis tanpa itu cuma bikin bot bisu tanpa sebab yang kelihatan.
- */
-function jatahFitur(planId) {
-  const kunci = planId || 'user';
-  if (cacheFitur.has(kunci)) return cacheFitur.get(kunci);
-
-  let cats;
-  try { cats = require('../plugins/01-info').CATS; } catch { return null; }
-
-  const paket = [...(pricingStore.plans() || DEFAULT_PLANS), TRIAL].find((p) => p.id === kunci);
-  const jml = Number(paket?.max_fitur) || 0;
-
-  const out = new Set(SELALU_TERBUKA);
-  for (const k of KATEGORI_URUT) {
-    for (const c of cats[k] || []) {
-      if (out.size >= jml && !out.has(c)) { cacheFitur.set(kunci, out); return out; }
-      out.add(c);
-    }
-  }
-  cacheFitur.set(kunci, out);
-  return out;
 }
 
 /**
@@ -113,7 +78,7 @@ async function batasKuota(botId, botData) {
   if (pemilik.role === ADMIN_ROLE) return 0; // admin tanpa batas
   if (!aktif(pemilik)) return -1;            // paket habis → berhenti melayani
 
-  const paket = [...(pricingStore.plans() || DEFAULT_PLANS), TRIAL].find((p) => p.id === pemilik.plan);
+  const paket = paketPemilik(pemilik);
   const jatah = Number(paket?.receive_limit) || 0;
   if (jatah <= 0) return 0;
 
@@ -155,37 +120,6 @@ async function kuotaHabis(botId, botData) {
 }
 
 /**
- * Jatah fitur buat bot ini, dalam bentuk array (buat menu) atau `null` = semua.
- * Dipakai engine buat mengisi `ctx.fitur`, supaya yang DITAMPILKAN di `.menu`
- * sama dengan yang DIIZINKAN gate. Kalau dua tempat ini beda, user melihat
- * daftar fitur lalu ditolak satu-satu.
- */
-async function jatahBot(botId) {
-  try {
-    const pemilik = await pemilikBot(botId);
-    if (!pemilik || pemilik.role === ADMIN_ROLE) return null;
-    const jatah = jatahFitur(paketPemilik(pemilik) ? pemilik.plan : 'user');
-    return jatah ? [...jatah] : null;
-  } catch {
-    return null; // gagal baca = tampilkan semua, jangan kosongkan menu
-  }
-}
-
-/**
- * Command ini termasuk paket pemilik bot? `namaPemilik` diisi kalau pengirimnya
- * memang pemilik/admin — mereka selalu lolos. Gagal baca = izinkan.
- */
-async function fiturDibolehkan(botId, command, namaPemilik) {
-  try {
-    if (namaPemilik) return true;
-    const jatah = await jatahBot(botId);
-    return jatah ? jatah.includes(command) : true;
-  } catch {
-    return true;
-  }
-}
-
-/**
  * Kuota harian efektif buat bot ini (`rpg_members.lim`, reset tiap hari).
  * Paket habis → 0 (bot berhenti melayani), admin → 99999, sisanya dari paket.
  *
@@ -207,8 +141,8 @@ async function kuotaHarian(botData) {
  * Dipakai cron tiap menit. Sengaja di sini, bukan ditulis inline di `server.js`:
  * syaratnya (jangan sentuh admin, jangan sentuh yang belum pernah langganan)
  * gampang salah dan nggak ada yang ngunci kalau bentuknya SQL mentah di dalam
- * cron. Tanpa ini, paket lewat cuma nge-drop fitur ke jatah Gratis sementara
- * botnya tetap nyambung ke WhatsApp — bayar atau tidak, nomornya tetap online.
+ * cron. Tanpa ini, paket lewat cuma bikin pesan ditolak sementara botnya tetap
+ * nyambung ke WhatsApp — bayar atau tidak, nomornya tetap online.
  *
  * `plan_expired_at IS NOT NULL` itu penting: akun yang BELUM PERNAH langganan
  * kolomnya NULL, dan tanpa syarat itu botnya ikut dimatikan.
@@ -227,6 +161,5 @@ async function botKedaluwarsa() {
 }
 
 module.exports = {
-  pemilikBot, segarkan, jatahFitur, jatahBot, batasKuota, kuotaHabis,
-  fiturDibolehkan, kuotaHarian, botKedaluwarsa, TTL_MS,
+  pemilikBot, segarkan, batasKuota, kuotaHabis, kuotaHarian, botKedaluwarsa, TTL_MS,
 };

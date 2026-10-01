@@ -642,18 +642,6 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
       : ctx.isPremium        ? 'premium'
       : 'user';
 
-    // ── Fitur yang boleh DITAMPILKAN di menu ─────────────────────────────────
-    // Harus sama dengan yang diizinkan gate di bawah. Dulu `ctx.fitur` tidak
-    // pernah disuntik dan `botData.fitur` tidak pernah ditulis, jadi `.menu`
-    // selalu menampilkan SEMUA command sementara engine menolaknya satu-satu —
-    // user lihat 423 fitur lalu ditolak. `null` = semua boleh (admin/pemilik).
-    ctx.fitur = null;
-    if (!ctx.isOwner && !ctx.isDev) {
-      try {
-        ctx.fitur = await require('./gatePaket').jatahBot(botId);
-      } catch { /* gagal baca paket -> tampilkan semua, jangan kosongkan menu */ }
-    }
-
     // ── Owner greeting ────────────────────────────────────────────────────────
     // Kalau sender adalah owner bot dan pesan di grup, kirim sambutan
     // Cooldown: 1 hari per grup (biar tidak spam setiap chat)
@@ -883,30 +871,21 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
       }
     }
 
-    // ── Batas paket — kuota pesan & jatah fitur ──────────────────────────────
-    // Sebelum ini `receive_limit` dan `max_fitur` cuma angka hias: ditulis saat
-    // checkout, nol pengecekan di jalur pesan. Ditaruh SESUDAH gerbang registrasi
-    // (biar member otomatis sudah ada) dan SEBELUM potong limit RPG — kalau
-    // ditaruh sesudah, pesan yang seharusnya ditolak kepalang motong `lim` user.
+    // ── Kuota pesan paket ────────────────────────────────────────────────────
+    // Paket TIDAK membatasi fitur — semua command terbuka untuk semua paket.
+    // Yang dijual cuma KUOTA PESAN, MASA AKTIF, dan JUMLAH OWNER NUMBER.
+    // Ditaruh SESUDAH gerbang registrasi (biar member otomatis sudah ada) dan
+    // SEBELUM potong limit RPG: kalau ditaruh sesudah, pesan yang seharusnya
+    // ditolak kepalang motong `lim` user.
     //
     // Owner & admin selalu lolos: kuota habis = mereka terkunci dari botnya
     // sendiri, dan satu-satunya jalan keluar cuma panel web.
-    const gate = require('./gatePaket');
     if (!ctx.isOwner && !ctx.isDev) {
+      const gate = require('./gatePaket');
       if (await gate.kuotaHabis(botId, botData)) {
-        console.log(`[Bot ${botId}] 🚫 kuota pesan habis (${botData.receive_limit}) — dilewati: ${logLine}`);
+        console.log(`[Bot ${botId}] 🚫 kuota pesan habis — dilewati: ${logLine}`);
         return;
       }
-    }
-    if (ctx.isCmd && !ctx.isOwner && !ctx.isDev && ctx.command
-        && !(await gate.fiturDibolehkan(botId, ctx.command, false))) {
-      await client.message.send(ctx.jid,
-        `🔒 *Fitur ini belum termasuk paket kamu.*\n\n` +
-        `Perintah *${ctx.command}* di luar jatah paket. Upgrade di halaman Pricing ` +
-        `atau ketik *${botData.prefix || '.'}menu* buat lihat yang tersedia.`
-      ).catch(() => {});
-      console.log(`[Bot ${botId}] 🔒 fitur di luar paket: ${ctx.command}`);
-      return;
     }
 
     // ── Cek & potong limit per command ───────────────────────────────────────

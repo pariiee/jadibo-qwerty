@@ -13,8 +13,11 @@
  * berbayar — karena itu `slotsOf` mengembalikan 0 kalau langganan tidak aktif.
  *
  * Yang membedakan paket BUKAN jumlah slot: semua paket berbayar dapat 1 slot
- * bot. Yang dijual adalah MASA AKTIF (`days`) dan KUOTA PESAN per bot
- * (`daily_limit`). Bayar lebih mahal = bot hidup lebih lama, kuota lebih besar.
+ * bot. Yang dijual adalah MASA AKTIF (`days`), KUOTA PESAN (`daily_limit` +
+ * `receive_limit`), dan JUMLAH OWNER NUMBER (`owner_max`). Bayar lebih mahal =
+ * bot hidup lebih lama, kuota lebih besar, owner number lebih banyak.
+ *
+ * FITUR/COMMAND TIDAK DIJUAL — semua command terbuka untuk semua paket.
  *
  * Harga & benefit tiap paket tinggal di pricingStore (bisa diubah admin).
  */
@@ -38,20 +41,6 @@ const DEFAULT_PLANS = [
   { id: 'premium', name: 'Premium', price: 50000, slots: 1, days: 30,  daily_limit: 50,  max_fitur: 250, owner_max: 3,      receive_limit: 50000 },
   { id: 'ultra',   name: 'Ultra',   price: 85000, slots: 1, days: 30,  daily_limit: 100, max_fitur: 400, owner_max: 5,      receive_limit: 100000 },
 ];
-
-// Fitur dikelompokkan per kategori (plugins/01-info.js → CATS). Paket membuka
-// kategori dari awal sampai `max_fitur` terkumpul. Potongannya dihitung saat
-// dipakai, bukan disimpan di sini, supaya nambah/ubah command tidak perlu
-// nyentuh angka di file ini. `kawula` dapat semua.
-// Urutan kategori dari yang paling murah ke paling mahal — paket kecil dapat
-// potongan dari depan. WAJIB memuat semua key CATS; kalau ada yang ketinggalan,
-// fiturnya tidak pernah masuk paket mana pun.
-const KATEGORI_URUT = ['info', 'grup', 'satset', 'random', 'game', 'tools', 'maker', 'downloader', 'rpg', 'owner'];
-
-// Perintah inti yang TIDAK dijual — selalu terbuka, termasuk akun gratis dan
-// langganan habis, supaya user tahu botnya kenapa. Nama harus persis sama
-// dengan command di CATS.
-const SELALU_TERBUKA = new Set(['menu', 'ping', 'limit', 'me', 'owner']);
 
 // Dipakai kalau paket dari tabel `settings` tidak ketemu (mis. id paket lama).
 const SLOT_DEFAULT = { user: 0, basic: 1, premium: 1, ultra: 1, trial: 1 };
@@ -97,26 +86,6 @@ function kuotaBot(pemilik, bot, plans) {
   return sendiri > 0 ? Math.min(sendiri, langit) : langit;
 }
 
-/** Fitur (command) yang boleh dipakai bot ini, urut sesuai KATEGORI_URUT. */
-function fiturBot(pemilik, plans) {
-  if (pemilik && pemilik.role === ADMIN_ROLE) return null; // null = semua
-  const cats = require('../plugins/01-info').CATS; // lazy: 01-info butuh ctx runtime
-  // Perintah inti (menu, kelola bot sendiri, status) TIDAK dijual — selalu
-  // terbuka, termasuk akun gratis dan langganan habis. Kalau ikut dikunci, user
-  // yang masa aktifnya lewat cuma dapat bot bisu tanpa tahu sebabnya.
-  const out = [...SELALU_TERBUKA];
-  if (!pemilik || !aktif(pemilik)) return out;
-  const jatah = Number(paketOf(pemilik.plan, plans)?.max_fitur) || 0;
-  for (const k of KATEGORI_URUT) {
-    for (const c of cats[k] || []) {
-      if (out.includes(c)) continue;
-      if (out.length >= jatah) return out;
-      out.push(c);
-    }
-  }
-  return out;
-}
-
 /** Batas jumlah nomor owner (owner number) yang boleh dipakai user. */
 function ownerMax(pemilik, plans) {
   if (pemilik && pemilik.role === ADMIN_ROLE) return 999;
@@ -141,6 +110,6 @@ function roleOf(user) {
 }
 
 module.exports = {
-  ADMIN_ROLE, TRIAL, DEFAULT_PLANS, SLOT_DEFAULT, LIMIT_DEFAULT, KATEGORI_URUT, SELALU_TERBUKA,
-  aktif, roleOf, slotsOf, paketOf, kuotaBot, fiturBot, ownerMax, receiveLimit,
+  ADMIN_ROLE, TRIAL, DEFAULT_PLANS, SLOT_DEFAULT, LIMIT_DEFAULT,
+  aktif, roleOf, slotsOf, paketOf, kuotaBot, ownerMax, receiveLimit,
 };

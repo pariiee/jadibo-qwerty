@@ -1,15 +1,19 @@
 'use strict';
 /**
  * test/gate-paket.js
- * Penegakan batas paket = jalur UANG: kalau salah, pelanggan Ultra dapat
- * layanan Basic, atau user gratis dapat semua fitur. Yang diuji:
+ * Batas paket = jalur UANG. Yang dijual cuma KUOTA PESAN, MASA AKTIF, dan
+ * JUMLAH OWNER NUMBER. FITUR TIDAK DIJUAL — semua command terbuka untuk semua
+ * paket, jadi tidak ada satu pun cek "command X ditolak di paket Y" di sini.
+ * Kalau suatu saat muncul lagi, itu regresi.
  *
- *   1. admin        -> tanpa batas, semua fitur
- *   2. paket aktif  -> kuota dari PAKET (bukan kolom beku), hitungan naik
- *   3. kuota habis  -> pesan ditolak
- *   4. paket habis  -> bot berhenti melayani + fitur turun ke jatah 'user'
- *   5. jatah fitur  -> Basic dapat 100, Ultra dapat 400, Gratis cuma inti
- *   6. DB error     -> JANGAN blokir apa pun (bot bisu lebih buruk)
+ * Yang diuji:
+ *   1. admin          -> tanpa batas
+ *   2. paket aktif    -> kuota dari PAKET (bukan kolom beku), hitungan naik
+ *   3. kuota habis    -> pesan ditolak, hitungan tidak naik
+ *   4. paket habis    -> pesan ditolak (-1)
+ *   5. DB error       -> JANGAN blokir apa pun (bot bisu lebih buruk)
+ *   6. kuota harian   -> paket yang berlaku, bukan `bots.daily_limit` beku
+ *   7. botKedaluwarsa -> syarat cron auto-stop
  *
  * Pool & pricingStore dipalsukan: tes ini nggak nyentuh DB.
  */
@@ -59,16 +63,22 @@ const { DEFAULT_PLANS } = require('../config/plan');
 palsukan('config/pricingStore.js', { plans: () => DEFAULT_PLANS, getPlan: (id) => DEFAULT_PLANS.find((p) => p.id === id) });
 
 const gate = require('../engine/gatePaket');
-const { CATS } = require('../plugins/01-info');
 
 (async () => {
   const bot = () => ({ id: 4, receive_limit: 0, received_count: 0 });
+
+  // ── 0. Paket TIDAK membatasi fitur ─────────────────────────────────────────
+  // Gerbang fitur pernah ada di sini dan sudah dicabut: paket cuma menjual
+  // kuota pesan, masa aktif, dan jumlah owner number.
+  cek('fitur tidak dibatasi paket: fiturDibolehkan() sudah tidak ada', gate.fiturDibolehkan === undefined);
+  cek('fitur tidak dibatasi paket: jatahFitur() sudah tidak ada', gate.jatahFitur === undefined);
+  cek('fitur tidak dibatasi paket: jatahBot() sudah tidak ada', gate.jatahBot === undefined);
 
   // ── 1. Admin tanpa batas ────────────────────────────────────────────────────
   pemilik = { id: 1, role: 'kawula', plan: 'user', plan_expired_at: null };
   gate.segarkan(null);
   cek('admin -> kuota tanpa batas', (await gate.kuotaHabis(4, bot())) === false);
-  cek('admin -> semua fitur boleh', (await gate.fiturDibolehkan(4, 'apapun', false)) === true);
+  cek('admin -> batasKuota 0 (tanpa batas)', (await gate.batasKuota(4, bot())) === 0);
 
   // ── 2. Paket aktif: kuota dari paket, bukan kolom beku ──────────────────────
   pemilik = { id: 3, role: 'user', plan: 'basic', plan_expired_at: besok };
@@ -105,97 +115,23 @@ const { CATS } = require('../plugins/01-info');
   gate.segarkan(null);
   cek('paket habis -> -1 (berhenti melayani)', (await gate.batasKuota(4, bot())) === -1);
   cek('paket habis -> pesan ditolak', (await gate.kuotaHabis(4, bot())) === true);
-  cek('paket habis -> fitur turun ke jatah user', (await gate.fiturDibolehkan(4, CATS.owner[CATS.owner.length - 1], false)) === false);
-  cek('paket habis -> perintah inti TETAP boleh', (await gate.fiturDibolehkan(4, 'menu', false)) === true);
 
-  // ── 5. Jatah fitur per paket ───────────────────────────────────────────────
-  // Kategori terakhir = 'owner' (sampai 428 command, jatah Ultra cuma 400).
-  // Jadi patokan "paling ujung" harus diambil dari irisan yang MEMANG dibuka,
-  // bukan `owner[terakhir]` — itu di luar jatah bahkan buat Ultra.
-  const irisanBasic = [...gate.jatahFitur('basic')];
-  const palingUjungBasic = irisanBasic[irisanBasic.length - 1];
-  const irisanUltra = [...gate.jatahFitur('ultra')];
-  const palingUjungUltra = irisanUltra[irisanUltra.length - 1];
-  // Perintah pertama yang di luar jatah Basic, urut KATEGORI_URUT — batasnya.
-  const semuaUrut = require('../config/plan').KATEGORI_URUT.flatMap((k) => CATS[k] || []);
-  const sisaBasic = [...new Set(semuaUrut)].filter((c) => !gate.jatahFitur('basic').has(c));
-  const sisaUltra = Object.values(CATS).flat().filter((c) => !gate.jatahFitur('ultra').has(c));
-
-  cek('Gratis -> cuma perintah inti (5)', gate.jatahFitur('user').size === 5, String(gate.jatahFitur('user').size));
-  cek('Basic -> 100 fitur', gate.jatahFitur('basic').size === 100, String(gate.jatahFitur('basic').size));
-  cek('Premium -> 250 fitur', gate.jatahFitur('premium').size === 250, String(gate.jatahFitur('premium').size));
-  cek('Ultra -> 400 fitur', gate.jatahFitur('ultra').size === 400, String(gate.jatahFitur('ultra').size));
-  cek('Ultra lebih luas dari Basic', gate.jatahFitur('ultra').size > gate.jatahFitur('basic').size);
-  cek('Basic adalah subset Ultra', irisanBasic.every((c) => gate.jatahFitur('ultra').has(c)));
-  cek('perintah tepat sesudah batas Basic DITOLAK',
-    (await gate.fiturDibolehkan(4, sisaBasic[0], false)) === false, sisaBasic[0]);
-  cek('Ultra dapat fitur paling ujung jatahnya', gate.jatahFitur('ultra').has(palingUjungUltra), palingUjungUltra);
-  cek('Ultra belum dapat sisanya (21 command)', sisaUltra.length === 21, String(sisaUltra.length));
-  cek('sisa itu kategori owner (paling akhir)', sisaUltra.every((c) => CATS.owner.includes(c)));
-  cek('Trial dapat 100 fitur', gate.jatahFitur('trial').size === 100, String(gate.jatahFitur('trial').size));
-  cek('paket tak dikenal -> jatah Gratis', gate.jatahFitur('entah').size === 5);
-  cek('setiap paket dapat perintah inti', ['user', 'basic', 'premium', 'ultra', 'trial']
-    .every((p) => ['menu', 'ping', 'limit', 'me', 'owner'].every((c) => gate.jatahFitur(p).has(c))));
-
-  // paket aktif -> fitur sesuai paket, bukan jatah 'user'
-  pemilik = { id: 3, role: 'user', plan: 'ultra', plan_expired_at: besok };
-  gate.segarkan(null);
-  cek('Ultra aktif -> dapat fitur paling ujung jatahnya', (await gate.fiturDibolehkan(4, palingUjungUltra, false)) === true);
-  cek('Ultra aktif -> belum dapat sisa kategori owner', (await gate.fiturDibolehkan(4, sisaUltra[0], false)) === false);
-
-  // Basic aktif -> fitur di luar jatah Basic ditolak
-  pemilik = { id: 3, role: 'user', plan: 'basic', plan_expired_at: besok };
-  gate.segarkan(null);
-  cek('Basic aktif -> fitur rpg terakhir DITOLAK', (await gate.fiturDibolehkan(4, CATS.rpg[CATS.rpg.length - 1], false)) === false);
-
-  // ── 6. MENU == GATE ────────────────────────────────────────────────────────
-  // Inilah yang dulu bocor: `.menu` menampilkan SEMUA command (423) sementara
-  // engine cuma mengizinkan 100. `ctx.fitur` di engine mengambil daftarnya dari
-  // `jatahBot()`, jadi dua daftar itu WAJIB identik — bukan cuma mirip.
-  for (const plan of ['user', 'basic', 'premium', 'ultra', 'trial']) {
-    pemilik = { id: 3, role: 'user', plan, plan_expired_at: besok };
-    gate.segarkan(null);
-    const menu = new Set((await gate.jatahBot(4)) ?? []);
-    const semua = [...new Set(semuaUrut)];
-    const beda = [];
-    for (const c of semua) {
-      const diizinkan = await gate.fiturDibolehkan(4, c, false);
-      if (diizinkan !== menu.has(c)) beda.push(`${c}(menu=${menu.has(c)},gate=${diizinkan})`);
-    }
-    cek(`menu == gate untuk paket ${plan} (${menu.size} fitur)`, beda.length === 0,
-      beda.slice(0, 3).join(' ') + (beda.length > 3 ? ` +${beda.length - 3} lagi` : ''));
-  }
-  cek('menu Gratis = 5, bukan 423', (await (async () => {
-    pemilik = { id: 3, role: 'user', plan: 'user', plan_expired_at: null };
-    gate.segarkan(null);
-    return (await gate.jatahBot(4))?.length;
-  })()) === 5);
-
-  // ── 7. DB error -> jangan blokir ───────────────────────────────────────────
+  // ── 5. DB error -> jangan blokir ───────────────────────────────────────────
   poolError = true;
   gate.segarkan(null);
   cek('DB error -> kuota jangan ngeblok', (await gate.kuotaHabis(4, bot())) === false);
-  cek('DB error -> fitur jangan ngeblok', (await gate.fiturDibolehkan(4, sisaBasic[0], false)) === true);
-  cek('DB error -> menu jangan dikosongkan', (await gate.jatahBot(4)) === null);
 
-  // ── 8. Pemilik bot selalu lolos ────────────────────────────────────────────
-  poolError = false;
-  pemilik = { id: 3, role: 'user', plan: 'user', plan_expired_at: null };
-  gate.segarkan(null);
-  cek('pemilik lolos walau paketnya Gratis', (await gate.fiturDibolehkan(4, sisaBasic[0], true)) === true);
-
-  // ── 9. Kuota HARIAN (cron reset jam 00:00) ─────────────────────────────────
+  // ── 6. Kuota HARIAN (cron reset jam 00:00) ─────────────────────────────────
   // Ini yang bikin masa aktif ngefek: kalau cron-nya pakai `bots.daily_limit`
   // yang beku, trial 5 hari yang sudah lewat tetap dapat limit 20 selamanya.
+  poolError = false;
   const bd0 = { id: 4, daily_limit: 0 };
   const bd = { id: 4, daily_limit: 20 };
   pemilik = { id: 3, role: 'user', plan: 'basic', plan_expired_at: besok };
   gate.segarkan(null);
   cek('harian paket aktif -> dari paket (Basic 30), bukan kolom beku',
-    (await gate.kuotaHarian(bd0)) === 30,
-    String(await gate.kuotaHarian(bd0)));
-  cek('harian: kolom bot menurunkan jatah paket (20 < 30)',
-    (await gate.kuotaHarian({ id: 4, daily_limit: 20 })) === 20);
+    (await gate.kuotaHarian(bd0)) === 30, String(await gate.kuotaHarian(bd0)));
+  cek('harian: kolom bot menurunkan jatah paket (20 < 30)', (await gate.kuotaHarian(bd)) === 20);
   cek('harian: kolom bot TIDAK bisa menaikkan (9999 -> tetap 30)',
     (await gate.kuotaHarian({ id: 4, daily_limit: 9999 })) === 30);
 
@@ -207,7 +143,7 @@ const { CATS } = require('../plugins/01-info');
   gate.segarkan(null);
   cek('harian admin -> tanpa batas (99999)', (await gate.kuotaHarian(bd)) === 99999);
 
-  // ── 10. Bot yang harus DIMATIKAN (paket habis) ─────────────────────────────
+  // ── 7. Bot yang harus DIMATIKAN (paket habis) ──────────────────────────────
   // Syaratnya diperiksa dari SQL-nya, karena pool palsu nggak menerapkan WHERE.
   await gate.botKedaluwarsa().catch(() => {});
   const q = ditulis.find((s) => /plan_expired_at < NOW/i.test(s)) || '';
