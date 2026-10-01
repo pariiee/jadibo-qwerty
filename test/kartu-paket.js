@@ -9,7 +9,7 @@
  * Yang diuji (fungsi murni, jalan di Node tanpa DOM):
  *   1. barisnya PERSIS format yang diminta Pak, urutannya juga
  *   2. angka besar pakai titik ribuan (10.000, bukan 10000)
- *   3. `max_fitur` TIDAK dipakai — itu angka pajangan
+ *   3. `max_fitur` sudah dibuang — kartu tetap benar tanpa kolom itu
  *   4. dua halaman benar-benar memanggil fungsi ini (bukan nulis sendiri lagi)
  */
 const fs = require('fs');
@@ -31,7 +31,7 @@ const daftarPaket = global.window.daftarPaket;
 cek('daftarPaket() ada di act.js', typeof daftarPaket === 'function');
 
 // ── 1 & 2. Format + urutan ─────────────────────────────────────────────────
-const basic = { id: 'basic', name: 'Basic', price: 25000, days: 30, owner_max: 1, receive_limit: 10000, max_fitur: 100 };
+const basic = { id: 'basic', name: 'Basic', price: 25000, days: 30, owner_max: 1, receive_limit: 10000 };
 const k = daftarPaket(basic, 440);
 
 cek('urutan baris persis seperti yang diminta', JSON.stringify(k.baris) === JSON.stringify([
@@ -44,10 +44,18 @@ cek('urutan baris persis seperti yang diminta', JSON.stringify(k.baris) === JSON
 cek('angka ribuan pakai titik', k.baris[3] === '10.000 Received Limit');
 cek('"Customize Bot" tetap ada', k.extra === 'Customize Bot');
 
-// ── 3. max_fitur tidak dipakai ─────────────────────────────────────────────
-const pajangan = { ...basic, max_fitur: 99999 };
-cek('max_fitur diabaikan (bukan angka pajangan)',
-  JSON.stringify(daftarPaket(pajangan, 440).baris) === JSON.stringify(k.baris));
+// ── 3. max_fitur sudah dibuang ─────────────────────────────────────────────
+// Kolomnya dulu tersimpan di `settings` produksi (100/250/400) tapi nol
+// penegakan. Kalau ada yang menempelkan balik ke objek paket, kartunya JANGAN
+// berubah — dan kalau muncul di DEFAULT_PLANS, tes di bawah yang gagal.
+cek('kartu tidak berubah walau ada max_fitur nyasar',
+  JSON.stringify(daftarPaket({ ...basic, max_fitur: 99999 }, 440).baris) === JSON.stringify(k.baris));
+cek('max_fitur sudah tidak ada di DEFAULT_PLANS',
+  require('../config/plan').DEFAULT_PLANS.every((x) => x.max_fitur === undefined));
+cek('max_fitur sudah tidak ada di TRIAL',
+  require('../config/plan').TRIAL.max_fitur === undefined);
+cek('admin tidak lagi punya field max_fitur',
+  !/max_fitur/.test(require('fs').readFileSync(require('path').join(__dirname, '..', 'public', 'js', 'admin.js'), 'utf8')));
 cek('tidak ada "slot bot" lagi di kartu',
   !k.baris.some((b) => /slot bot/i.test(b)));
 cek('jumlah fitur datang dari argumen, bukan dari paket',

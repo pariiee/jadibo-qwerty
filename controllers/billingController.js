@@ -411,7 +411,6 @@ async function adminSetPlans(req, res) {
       slots: Math.max(0, parseInt(p.slots, 10) || 0),
       days: Math.max(0, parseInt(p.days, 10) || 0),
       daily_limit: Math.max(1, parseInt(p.daily_limit, 10) || 20),
-      max_fitur: Math.max(0, parseInt(p.max_fitur, 10) || 0),
       owner_max: Math.max(0, parseInt(p.owner_max, 10) || 0),
       receive_limit: Math.max(0, parseInt(p.receive_limit, 10) || 0),
     }));

@@ -52,8 +52,8 @@ window.showToast = function (msg, tipe) {
 window.daftarPaket = function (p, fitur) {
   const angka = (n) => Number(n || 0).toLocaleString('id-ID');
   return {
-    // Yang dijual cuma ini. `max_fitur` di data paket sengaja TIDAK dipakai:
-    // itu angka pajangan yang tidak ditegakkan di jalur pesan mana pun.
+    // Yang dijual cuma ini: kuota, masa aktif, owner. `max_fitur` sudah
+    // dibuang dari paket — angkanya dulu pajangan (nol penegakan).
     baris: [
       'Online 24 jam',
       fitur + ' fitur',

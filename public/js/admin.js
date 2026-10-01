@@ -272,8 +272,6 @@
           '<input class="inp" type="number" min="0" data-f="days" data-i="' + i + '" value="' + (p.days ?? 30) + '" /></div>' +
         '<div class="field"><label>Pesan / hari</label>' +
           '<input class="inp" type="number" min="1" data-f="daily_limit" data-i="' + i + '" value="' + (p.daily_limit || 20) + '" /></div>' +
-        '<div class="field"><label>Jumlah fitur</label>' +
-          '<input class="inp" type="number" min="0" data-f="max_fitur" data-i="' + i + '" value="' + (p.max_fitur || 0) + '" /></div>' +
         '<div class="field"><label>Owner number</label>' +
           '<input class="inp" type="number" min="0" data-f="owner_max" data-i="' + i + '" value="' + (p.owner_max || 0) + '" /></div>' +
         '<div class="field"><label>Total pesan diterima</label>' +

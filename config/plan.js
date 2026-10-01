@@ -30,16 +30,16 @@ const ADMIN_ROLE = 'kawula';
 // tahu botnya bisa apa dan nggak ada alasan lanjut bayar.
 const TRIAL = {
   id: 'trial', name: 'Trial', days: 5, slots: 1, daily_limit: 20, once: true,
-  max_fitur: 100, owner_max: 1, receive_limit: 5000,
+  owner_max: 1, receive_limit: 5000,
 };
 
 // `user` = paket Gratis: 0 slot, tidak bisa bikin bot. `days: 0` karena masa
 // aktifnya memang tidak ada — bukan 30 hari gratis.
 const DEFAULT_PLANS = [
-  { id: 'user',    name: 'Gratis',  price: 0,     slots: 0, days: 0,   daily_limit: 10,  max_fitur: 0,   owner_max: 0,      receive_limit: 0 },
-  { id: 'basic',   name: 'Basic',   price: 25000, slots: 1, days: 30,  daily_limit: 30,  max_fitur: 100, owner_max: 1,      receive_limit: 10000 },
-  { id: 'premium', name: 'Premium', price: 50000, slots: 1, days: 30,  daily_limit: 50,  max_fitur: 250, owner_max: 3,      receive_limit: 50000 },
-  { id: 'ultra',   name: 'Ultra',   price: 85000, slots: 1, days: 30,  daily_limit: 100, max_fitur: 400, owner_max: 5,      receive_limit: 100000 },
+  { id: 'user',    name: 'Gratis',  price: 0,     slots: 0, days: 0,   daily_limit: 10,  owner_max: 0,      receive_limit: 0 },
+  { id: 'basic',   name: 'Basic',   price: 25000, slots: 1, days: 30,  daily_limit: 30,  owner_max: 1,      receive_limit: 10000 },
+  { id: 'premium', name: 'Premium', price: 50000, slots: 1, days: 30,  daily_limit: 50,  owner_max: 3,      receive_limit: 50000 },
+  { id: 'ultra',   name: 'Ultra',   price: 85000, slots: 1, days: 30,  daily_limit: 100, owner_max: 5,      receive_limit: 100000 },
 ];
 
 // Dipakai kalau paket dari tabel `settings` tidak ketemu (mis. id paket lama).
