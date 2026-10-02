@@ -118,6 +118,28 @@
           <div class="err" id="harga-error"></div>
           <button class="btn btn-dark" data-act="simpanSetelan">Simpan Setelan</button>
         </div>
+
+        <div class="card">
+          <h3>Pengumuman</h3>
+          <p class="m-sub">Banner yang muncul di dashboard <b>semua</b> user. Kosongkan isinya
+            atau matikan centangnya untuk menutup pengumuman.</p>
+          <div class="field">
+            <label for="f-peng-judul">Judul</label>
+            <input class="inp" id="f-peng-judul" maxlength="120" placeholder="Maintenance singkat" />
+          </div>
+          <div class="field">
+            <label for="f-peng-isi">Isi</label>
+            <textarea class="inp" id="f-peng-isi" rows="4" maxlength="2000"
+              placeholder="Tulis keterangan singkat. Teks biasa, bukan HTML."></textarea>
+            <div class="hint">Maksimal 2000 karakter. Baris baru tetap ditampilkan.</div>
+          </div>
+          <div class="field">
+            <label style="display:flex;align-items:center;gap:8px">
+              <input type="checkbox" id="f-peng-aktif" /> Tampilkan ke user
+            </label>
+          </div>
+          <button class="btn btn-dark" data-act="simpanPengumuman">Simpan Pengumuman</button>
+        </div>
       </section>
     </div>
   </main>

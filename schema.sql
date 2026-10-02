@@ -7,6 +7,18 @@
 -- ============================================================
 -- Table: users
 -- ============================================================
+-- ============================================================
+-- Table: settings  (key/value JSON)
+-- Sumber tunggal harga paket, QRIS manual, mode bayar, dan pengumuman
+-- (`config/pricingStore.js`). Tabel ini SEMPAT HILANG dari schema padahal
+-- dibaca setiap boot — instalasi baru akan mati di /admin tanpa ini.
+-- ============================================================
+CREATE TABLE IF NOT EXISTS settings (
+  `key`   VARCHAR(64) NOT NULL,
+  `value` TEXT NOT NULL,
+  PRIMARY KEY (`key`)
+) ENGINE=InnoDB;
+
 CREATE TABLE IF NOT EXISTS users (
   id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   username     VARCHAR(50) NOT NULL UNIQUE,
@@ -44,6 +56,9 @@ CREATE TABLE IF NOT EXISTS bots (
   -- Ditegakkan engine/gatePaket.js; peringatannya dari engine/kuota.js.
   receive_limit  INT NOT NULL DEFAULT 0,
   received_count INT NOT NULL DEFAULT 0,
+  -- Kenapa bot ini mati ('expired' dari cron paket-habis). Dipakai terapkanPaket
+  -- buat menyalakan kembali bot yang dimatikan sistem setelah user bayar.
+  stop_reason    VARCHAR(32) DEFAULT NULL,
   sqlite_db_path VARCHAR(500) DEFAULT NULL,
   is_running     TINYINT(1) NOT NULL DEFAULT 0,
   status         ENUM('connected', 'disconnected', 'connecting', 'qr_pending') NOT NULL DEFAULT 'disconnected',

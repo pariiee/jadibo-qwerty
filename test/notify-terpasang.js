@@ -28,6 +28,11 @@ const poolPalsu = {
     if (/SELECT plan_expired_at FROM users/i.test(sql)) return [[{ plan_expired_at: null }]];
     if (/UPDATE bots SET daily_limit/i.test(sql)) return [{ affectedRows: 1 }];
     if (/UPDATE users SET plan/i.test(sql)) return [{ affectedRows: 1 }];
+    // Query efek-samping yang ditambahkan `terapkanPaket`: daftar bot milik user
+    // (buat melupakan peringatan kuota + menyalakan bot yang mati karena paket).
+    // Mock WAJIB ikut bentuk baru ini — mock yang ketinggalan bikin tesnya hijau
+    // padahal kodenya sudah beda jalur.
+    if (/SELECT id FROM bots WHERE user_id/i.test(sql)) return [[]];
     return [[]];
   },
 };
@@ -76,6 +81,7 @@ const billing = require('../controllers/billingController');
     if (/UPDATE orders SET status = 'paid'/i.test(sql)) return [{ affectedRows: 1 }];
     if (/SELECT user_id, plan FROM orders/i.test(sql)) return [[{ user_id: 42, plan: 'premium' }]];
     if (/SELECT plan_expired_at FROM users/i.test(sql)) return [[{ plan_expired_at: null }]];
+    if (/SELECT id FROM bots WHERE user_id/i.test(sql)) return [[]];
     return [{ affectedRows: 1 }];
   };
   const t0 = Date.now();

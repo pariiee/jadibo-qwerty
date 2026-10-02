@@ -151,6 +151,8 @@ app.post('/api/bots/:id/resolve-invite', apiLimiter, auth.requireAuth, bot.resol
 app.get('/api/plans',                apiLimiter, billing.daftarPaket);
 // Sisa kuota pesan per bot — dipakai halaman /kuota.
 app.get('/api/kuota',                apiLimiter, auth.requireAuth, billing.kuota);
+// Banner pengumuman dari admin — dipakai dashboard.
+app.get('/api/pengumuman',           apiLimiter, auth.requireAuth, billing.pengumuman);
 // Daftar command bot (halaman /command). Login dulu — daftar fitur itu bagian
 // dari produk, bukan info publik.
 app.get('/api/command',              apiLimiter, auth.requireAuth, command.daftarCommand);
@@ -213,6 +215,8 @@ app.get('/command',    halaman('command.html'));
 // Riwayat pembayaran & profil: dua-duanya halaman USER (bukan admin).
 app.get('/billing',    halaman('billing.html'));
 app.get('/kuota',      halaman('kuota.html'));
+app.get('/log',        halaman('log.html'));
+app.get('/panduan',    halaman('panduan.html'));
 app.get('/profil',     halaman('profil.html'));
 app.get('/pricing',    halaman('pricing.html'));
 // Tautan lama: bot sempat ngasih pesan "buka halaman Langganan", dan orang
@@ -484,8 +488,26 @@ cron.schedule('* * * * *', async () => {
   try {
     for (const bot of await require('./engine/gatePaket').botKedaluwarsa()) {
       try {
+        // `stop_reason='expired'` DULU, baru matikan. Urutan ini penting: kalau
+        // ditulis sesudah, matinya bisa gagal di tengah dan bot berhenti tanpa
+        // penanda — lalu nggak akan pernah dinyalakan lagi sesudah dibayar.
+        await pool.execute("UPDATE bots SET stop_reason = 'expired' WHERE id = ?", [bot.id]);
         await require('./config/engineBus').stopIfRunning(bot.id);
         console.log(`[Cron] Bot ${bot.id} (${bot.username}) dimatikan — paket habis ${bot.plan_expired_at}`);
+        // Kabari pemiliknya, SEKALI per bot (bukan tiap menit): syaratnya
+        // `stop_reason` masih kosong saat giliran ini masuk.
+        //
+        // SENGAJA TIDAK di-await dan dijalankan SETELAH stop — balasannya lewat
+        // bot user sendiri, dan balasan itu nggak bisa jalan selagi botnya masih
+        // terhubung. Untuk paket habis, botnya justru mau dimatikan.
+        if (bot.stop_reason !== 'expired') {
+          require('./engine/notify').kirimKeOwner(bot.user_id,
+            `⏰ *Paket bot kamu sudah habis.*\n\n` +
+            `Bot *${bot.bot_name || bot.id}* dimatikan otomatis karena masa aktifnya ` +
+            `berakhir. Data & pengaturannya tetap aman — begitu paket diperpanjang, ` +
+            `bot dinyalakan otomatis tanpa perlu setting ulang.\n\n` +
+            `Perpanjang: /pricing`).catch(() => {});
+        }
       } catch (e) {
         console.error(`[Cron] Gagal matikan bot ${bot.id}:`, e.message);
       }

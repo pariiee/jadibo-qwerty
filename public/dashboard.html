@@ -15,6 +15,19 @@
     <!-- @include topbar.html -->
 
     <div class="content">
+      <!-- Pengumuman dari admin. Dikasih tombol tutup: banner yang nggak bisa
+           ditutup bikin user kesal. Yang diingat cuma `updated_at`-nya, jadi
+           pengumuman BARU otomatis muncul lagi tanpa perlu minta user apa pun. -->
+      <div class="pengumuman" id="pengumuman" style="display:none">
+        <div class="pengumuman-isi">
+          <strong id="peng-judul"></strong>
+          <p id="peng-isi"></p>
+        </div>
+        <button class="pengumuman-tutup" data-act="tutupPengumuman" aria-label="Tutup pengumuman">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+
       <!-- Kartu ringkasan. Datanya dari /api/auth/me + /api/bots — nggak ada
            endpoint baru, jadi nggak ada request tambahan. -->
       <div class="stats">

@@ -149,7 +149,7 @@ async function kuotaHarian(botData) {
  */
 async function botKedaluwarsa() {
   const [rows] = await pool.execute(
-    `SELECT b.id, b.platform, u.username, u.plan_expired_at
+    `SELECT b.id, b.platform, b.user_id, b.bot_name, u.username, u.plan_expired_at
        FROM bots b JOIN users u ON u.id = b.user_id
       WHERE b.is_running = 1
         AND u.role <> ?

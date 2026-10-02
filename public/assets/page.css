@@ -600,3 +600,40 @@ body.page-billing .kosong-aksi{display:flex;gap:10px;flex-wrap:wrap;justify-cont
 .kuota-harian b{color:var(--txt)}
 #kuota-daftar{display:grid;gap:14px}
 .kuota-legenda ul li{margin-bottom:5px}
+
+/* ── Banner pengumuman di dashboard ───────────────────────────────────────── */
+.pengumuman{display:flex;align-items:flex-start;gap:14px;padding:16px 18px;margin-bottom:18px;border-radius:14px;
+  background:var(--surf1);border:1px solid var(--border2);border-left:3px solid var(--acc)}
+.pengumuman-isi{min-width:0;flex:1}
+.pengumuman-isi strong{display:block;font-size:14px;font-weight:700;color:var(--txt);margin-bottom:4px}
+.pengumuman-isi p{margin:0;font-size:13px;line-height:1.6;color:var(--muted);white-space:pre-line}
+.pengumuman-tutup{flex:0 0 auto;background:none;border:none;padding:2px;cursor:pointer;color:var(--muted);
+  display:grid;place-items:center;border-radius:6px}
+.pengumuman-tutup:hover{color:var(--txt);background:var(--surf3)}
+
+/* ── Halaman Log Aktivitas (/log) ─────────────────────────────────────────── */
+/* #terminal & .log-line sudah ada (dipakai modal log /admin + panel config);
+   di sini cuma dipinjam supaya tidak ada gaya kedua untuk hal yang sama. */
+body.page-log .adm-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+body.page-log .adm-bar .inp{max-width:280px}
+body.page-log #terminal{margin-top:4px;border:1px solid var(--border);border-radius:12px;background:var(--surf1)}
+@media (max-width:760px){
+  body.page-log .adm-bar .inp{max-width:none;width:100%}
+  body.page-log #terminal{height:60vh}
+}
+
+/* ── Halaman Panduan (/panduan) ───────────────────────────────────────────── */
+/* Pakai <details>/<summary> bawaan browser: bisa dibuka-tutup tanpa JS, dan
+   sudah keyboard-accessible. .faq-item/.faq-q dipinjam dari landing page. */
+.panduan{max-width:760px}
+.panduan summary{list-style:none;cursor:pointer}
+.panduan summary::-webkit-details-marker{display:none}
+.panduan details[open] .faq-q svg{transform:rotate(180deg)}
+.panduan .faq-a{display:block;padding:0 20px 18px}
+.panduan ol, .panduan ul{margin:0 0 12px;padding-left:20px}
+.panduan li{margin-bottom:7px}
+.panduan p{margin:0 0 12px}
+.panduan p:last-child{margin-bottom:0}
+.panduan code{font-family:Consolas,Menlo,monospace;font-size:12.5px;background:var(--surf3);
+  border:1px solid var(--border);border-radius:5px;padding:1px 6px;color:var(--txt)}
+.panduan a{color:var(--acc);font-weight:600}

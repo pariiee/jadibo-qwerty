@@ -62,5 +62,11 @@
     daftar.innerHTML = d.bots.map(kartuBot).join('');
   }
 
+
+  // Topbar default-nya menulis "Dashboard" + tombol "Tambah Bot" — dua-duanya
+  // salah di halaman ini. Pola yang sama dipakai command.js/profil.js/billing.js.
+  const sapaan = document.getElementById('greeting');
+  if (sapaan) sapaan.textContent = 'Kuota Pesan';
+  window.openAddBot = () => { location.href = '/dashboard'; };
   muat();
 })();

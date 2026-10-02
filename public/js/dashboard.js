@@ -221,7 +221,44 @@
   (async () => {
     if (!(await whoami())) return;
     await loadBots();
+    // Dipanggil DI SINI, bukan di dalam whoami(): whoami() `return null` kalau
+    // sesinya mati, jadi baris ini ikut ke-skip dan bannernya tidak pernah muncul.
+    muatPengumuman();
   })();
+
+  // ── Pengumuman dari admin ───────────────────────────────────────
+  // Ditutup -> diingat di localStorage pakai `updated_at`. Admin menulis
+  // pengumuman baru = stempelnya berubah = muncul lagi sendiri, tanpa user
+  // perlu menghapus apa pun.
+  function kunciPengumuman(stempel) { return 'yb-pengumuman-tutup:' + (stempel || 'x'); }
+
+  async function muatPengumuman() {
+    let d;
+    try {
+      const res = await fetch('/api/pengumuman', { credentials: 'include' });
+      d = await res.json();
+    } catch { return; }
+    const p = d?.pengumuman;
+    if (!p) return;
+    try {
+      if (localStorage.getItem(kunciPengumuman(p.updated_at))) return;
+    } catch { /* localStorage bisa dimatikan browser — tampilkan saja */ }
+    const box = document.getElementById('pengumuman');
+    box.dataset.stempel = p.updated_at || '';
+    document.getElementById('peng-judul').textContent = p.judul;
+    // textContent, BUKAN innerHTML: isinya tulisan admin, dan innerHTML bikin
+    // satu tag yang tidak sengaja ditulis jadi HTML yang jalan di browser user.
+    document.getElementById('peng-isi').textContent = p.isi;
+    box.style.display = '';
+  }
+
+  window.tutupPengumuman = function () {
+    const box = document.getElementById('pengumuman');
+    box.style.display = 'none';
+    try {
+      if (box.dataset.stempel) localStorage.setItem(kunciPengumuman(box.dataset.stempel), '1');
+    } catch { /* abaikan */ }
+  };
 window.openAddBot = openAddBot; window.closeAdd = closeAdd;
 window.showStep = showStep; window.backStep = backStep; window.pickPlatform = pickPlatform;
 window.logout = logout;

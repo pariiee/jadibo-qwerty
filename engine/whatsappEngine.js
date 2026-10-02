@@ -298,7 +298,11 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
   const dbPath = path.join(botDir, 'session.db');
 
   await logBot(botId, 'info', `Memulai bot "${botData.bot_name}"...`);
-  await pool.execute("UPDATE bots SET status = 'connecting' WHERE id = ?", [botId]);
+  // `stop_reason` dibersihkan di sini — satu-satunya titik semua jalur start
+  // lewat (tombol Start, restart, auto-start boot, dan auto-start sesudah bayar).
+  // Kalau tidak dibersihkan, bot yang sudah dinyalakan manual akan dinyalakan
+  // LAGI setiap kali user bayar paket berikutnya.
+  await pool.execute("UPDATE bots SET status = 'connecting', stop_reason = NULL WHERE id = ?", [botId]);
   broadcast(botId, 'status', { status: 'connecting' });
 
   const store  = buildStore(dbPath);

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Log Aktivitas — yaparbots</title>
+<!-- @include head.html -->
+</head>
+<body class="page-log">
+<div class="app">
+
+  <!-- @include sidebar.html -->
+
+  <main>
+    <!-- @include topbar.html -->
+
+    <div class="content">
+      <div class="cmd-head">
+        <h2>Log Aktivitas</h2>
+        <p class="m-sub">Catatan kejadian tiap bot kamu — pesan masuk, command yang jalan, dan koneksi.</p>
+      </div>
+
+      <div class="adm-bar">
+        <select class="inp" id="pilih-bot" data-act="muatLogHalaman"></select>
+        <select class="inp" id="log-level" data-act="muatLogHalaman">
+          <option value="">Semua level</option>
+          <option value="info">Info</option>
+          <option value="cmd">Command</option>
+          <option value="warn">Peringatan</option>
+          <option value="error">Error</option>
+        </select>
+        <button class="btn btn-outline" data-act="muatLogHalaman">Muat Ulang</button>
+      </div>
+
+      <div id="log-kosong" class="card" style="display:none">
+        <p class="m-sub" style="margin:0 0 12px">Kamu belum punya bot, jadi belum ada log yang bisa ditampilkan.</p>
+        <a class="btn" href="/dashboard">Ke Dashboard</a>
+      </div>
+
+      <div class="terminal" id="terminal">
+        <p class="log-line term-hint">// memuat…</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="/js/head.js"></script>
+<script src="/js/log.js"></script>
+</body>
+</html>

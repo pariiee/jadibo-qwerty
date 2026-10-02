@@ -70,6 +70,40 @@ async function terapkanPaket(userId, planId, days) {
   // buat fitur yang barusan dia bayar.
   require('../engine/gatePaket').segarkan(null);
 
+  // Peringatan kuota disimpan di memori per bot (`engine/kuota.js`). Paket baru =
+  // ambang baru, jadi penandanya harus dilupakan — kalau tidak, peringatan 80%
+  // pada langganan KEDUA tidak akan pernah terkirim. Dilupakan PER BOT, bukan
+  // semua bot: melupakan punya bot lain bikin mereka dapat peringatan dobel.
+  //
+  // SELURUH blok di bawah ini dibungkus try/catch dengan sengaja: paketnya SUDAH
+  // diberikan di atas. Kalau query efek-samping ini gagal (DB hiccup), jangan
+  // sampai `terapkanPaket` melempar — pemanggilnya jalur pembayaran, dan user
+  // yang sudah bayar tidak boleh menerima error karena urusan sampingan.
+  try {
+    const [botKu] = await pool.execute('SELECT id FROM bots WHERE user_id = ?', [userId]);
+    const kuotaMod = require('../engine/kuota');
+    for (const b of botKu) kuotaMod.lupakanPeringatan(b.id);
+
+    // Nyalakan kembali bot yang MATI karena paket habis. Tanpa ini user bayar
+    // Rp85.000 lalu botnya tetap diam sampai dia sadar sendiri dan klik Start —
+    // dan notifikasi "pembayaran diterima" di bawah pun tidak terkirim, karena
+    // `notify.js` mengirim LEWAT bot user sendiri, yang sedang mati.
+    //
+    // SENGAJA TIDAK di-await, sejajar dengan notifikasi: start WA butuh ~14 detik
+    // dan webhook QRIS yang lambat dibalas = QRISku mengirim ulang = paket dobel.
+    const [matiKarenaPaket] = await pool.execute(
+      "SELECT id FROM bots WHERE user_id = ? AND is_running = 0 AND stop_reason = 'expired'",
+      [userId]
+    );
+    for (const b of matiKarenaPaket) {
+      require('../config/engineBus').start(b.id)
+        .then(() => console.log(`[Billing] Bot ${b.id} dinyalakan kembali — paket ${plan.id} aktif`))
+        .catch((e) => console.error(`[Billing] Gagal nyalakan bot ${b.id}:`, e.message));
+    }
+  } catch (e) {
+    console.error('[Billing] Efek samping paket gagal (paket TETAP aktif):', e.message);
+  }
+
   // Kabari pemiliknya lewat WA — SATU titik, jadi jalur webhook, "Cek Status",
   // dan konfirmasi admin semuanya dapat kabar.
   //
@@ -393,7 +427,28 @@ async function adminSettings(req, res) {
     qris_static_url: s.qris_static_url,
     pay_mode: s.pay_mode,
     gateway_enabled: s.gateway_enabled,
+    pengumuman: s.pengumuman || null,
     gateway_configured: !!process.env.QRISKU_API_KEY && !!process.env.QRISKU_WEBHOOK_SECRET,
+  });
+}
+
+/**
+ * GET /api/pengumuman — banner pengumuman buat semua user yang login.
+ *
+ * Sengaja TIDAK pakai tabel baru: `settings` sudah jadi key/value JSON dan
+ * `pricingStore` sudah nge-cache + punya `set()`. Satu baris `settings` cukup.
+ * Hanya yang `aktif` yang dikirim — user nggak perlu tahu ada draft.
+ */
+async function pengumuman(req, res) {
+  const p = pricingStore.all().pengumuman;
+  if (!p || !p.aktif || !String(p.isi || '').trim()) return res.json({ ok: true, pengumuman: null });
+  return res.json({
+    ok: true,
+    pengumuman: {
+      judul: String(p.judul || 'Pengumuman'),
+      isi: String(p.isi),
+      updated_at: p.updated_at || null,
+    },
   });
 }
 
@@ -432,7 +487,7 @@ async function adminSetPlans(req, res) {
 /** PUT /api/admin/billing/settings — QRIS manual & mode bayar. */
 async function adminSetSettings(req, res) {
   try {
-    const { qris_static_url, pay_mode, gateway_enabled, trial_days } = req.body || {};
+    const { qris_static_url, pay_mode, gateway_enabled, trial_days, pengumuman } = req.body || {};
     if (qris_static_url !== undefined) {
       const url = String(qris_static_url).trim();
       // Cuma http(s) — biar tidak ada yang menempelkan javascript: di <img src>.
@@ -449,6 +504,19 @@ async function adminSetSettings(req, res) {
       const d = parseInt(trial_days, 10);
       if (!(d >= 1 && d <= 30)) return sendError(res, 400, 'Trial 1-30 hari');
       await pricingStore.set('trial_days', d);
+    }
+    if (pengumuman !== undefined) {
+      // Tiga field saja. `isi` boleh kosong = pengumuman dimatikan, jadi admin
+      // nggak perlu dua langkah (hapus isi + uncheck aktif) buat menutupnya.
+      const p = pengumuman || {};
+      const isi = String(p.isi || '').trim();
+      if (isi.length > 2000) return sendError(res, 400, 'Isi pengumuman maksimal 2000 karakter');
+      await pricingStore.set('pengumuman', {
+        judul: String(p.judul || '').trim().slice(0, 120),
+        isi,
+        aktif: !!p.aktif && !!isi,
+        updated_at: new Date().toISOString(),
+      });
     }
     return adminSettings(req, res);
   } catch (err) {
@@ -485,7 +553,7 @@ async function kuota(req, res) {
 }
 
 module.exports = {
-  daftarPaket, checkout, daftarOrder, cekOrder, webhook, kuota,
+  daftarPaket, checkout, daftarOrder, cekOrder, webhook, kuota, pengumuman,
   adminOrders, adminKonfirmasi, adminTolak, adminSettings, adminSetPlans, adminSetSettings,
   klaimTrial, klaimTrialSendiri, terapkanPaket, tandaiLunas,
 };

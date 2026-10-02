@@ -250,6 +250,10 @@
     document.getElementById('f-mode').value = d.settings?.pay_mode || 'both';
     document.getElementById('f-qris').value = d.settings?.qris_static_url || '';
     document.getElementById('f-trial').value = d.settings?.trial_days ?? 5;
+    const p = d.pengumuman || {};
+    document.getElementById('f-peng-judul').value = p.judul || '';
+    document.getElementById('f-peng-isi').value = p.isi || '';
+    document.getElementById('f-peng-aktif').checked = !!p.aktif;
   }
 
   function renderPaket() {
@@ -323,6 +327,24 @@
     showToast('Setelan disimpan', 'success');
   }
 
+  // Pengumuman dikirim tersendiri, bukan ikut `simpanSetelan`: admin sering
+  // mengubah harga tanpa berniat menyentuh pengumuman, dan sebaliknya.
+  async function simpanPengumuman() {
+    const err = document.getElementById('harga-error');
+    err.textContent = '';
+    const body = {
+      pengumuman: {
+        judul: document.getElementById('f-peng-judul').value,
+        isi: document.getElementById('f-peng-isi').value,
+        aktif: document.getElementById('f-peng-aktif').checked
+      }
+    };
+    const d = await api('/api/admin/billing/settings', { method: 'PUT', body: JSON.stringify(body) });
+    if (!d?.ok) { err.textContent = d?.message || 'Gagal menyimpan pengumuman'; return; }
+    showToast('Pengumuman disimpan', 'success');
+    muatSetelan();
+  }
+
   document.addEventListener('DOMContentLoaded', async () => {
     const d = await api('/api/auth/me');
     if (!d?.ok) { location.href = '/'; return; }
@@ -360,4 +382,5 @@
   window.hapusPaket = hapusPaket;
   window.simpanPaket = simpanPaket;
   window.simpanSetelan = simpanSetelan;
+  window.simpanPengumuman = simpanPengumuman;
 })();

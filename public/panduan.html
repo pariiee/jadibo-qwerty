@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Panduan — yaparbots</title>
+<!-- @include head.html -->
+</head>
+<body class="page-panduan">
+<div class="app">
+
+  <!-- @include sidebar.html -->
+
+  <main>
+    <!-- @include topbar.html -->
+
+    <div class="content">
+      <div class="cmd-head">
+        <h2>Panduan</h2>
+        <p class="m-sub">Dari bot masih kosong sampai jalan sendiri. Klik salah satu untuk membuka.</p>
+      </div>
+
+      <div class="panduan">
+
+        <details class="faq-item">
+          <summary class="faq-q">1. Bikin bot & sambungkan ke WhatsApp
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </summary>
+          <div class="faq-a">
+            <ol>
+              <li>Buka <b>Dashboard</b>, klik <b>Tambah Bot</b>, isi nama bot. Prefix (awalan command) bebas — contoh <code>.</code></li>
+              <li>Bot muncul sebagai kartu, status <b>Offline</b>. Klik <b>Config</b> untuk masuk ke halamannya.</li>
+              <li>Klik <b>Scan QR</b>, lalu di HP: <b>WhatsApp → titik tiga → Perangkat Tertaut → Tautkan Perangkat</b>, dan scan QR yang muncul.</li>
+              <li>Tidak bisa scan? Pilih <b>Pairing Code</b> dan masukkan 8 angka yang tampil ke WhatsApp di HP kamu.</li>
+              <li>Tunggu status berubah jadi <b>Online</b>. Biasanya 10–20 detik.</li>
+            </ol>
+            <p><b>Penting:</b> nomor yang kamu tautkan = nomor bot. Jangan pakai nomor yang sedang kamu pakai untuk chat pribadi — bot membalas semua pesan yang masuk, dan nomor itu tidak bisa dipakai membuka WhatsApp di HP selama tertaut.</p>
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-q">2. Memakai bot di grup
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </summary>
+          <div class="faq-a">
+            <ol>
+              <li>Masukkan <b>nomor bot</b> ke grup seperti menambahkan anggota biasa.</li>
+              <li>Jadikan dia admin grup (disarankan) — sebagian command seperti buka/tutup grup dan anti-link butuh admin.</li>
+              <li>Di grup, tulis <code>.menu</code> untuk melihat semua command yang tersedia.</li>
+            </ol>
+            <p>Prefix (awalan) tiap bot bisa beda dan diatur di <b>Config</b>. Kalau bot tidak membalas, cek dulu prefix-nya — command tanpa prefix yang benar diabaikan begitu saja.</p>
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-q">3. Mengatur nomor owner
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </summary>
+          <div class="faq-a">
+            <p><b>Nomor owner</b> adalah nomor yang selalu dilayani bot, walaupun kuota pesan habis dan walaupun botnya dipakai orang lain. Kamu sendiri tidak pernah masuk hitungan kuota.</p>
+            <ul>
+              <li>Atur di <b>Config → Pengaturan</b>, atau dari WhatsApp dengan <code>.addowner 62812xxxxxxx</code> saat mengirim dari nomor owner.</li>
+              <li>Jumlah nomor owner dibatasi oleh paket — paket Gratis tidak dapat owner number sama sekali.</li>
+              <li>Kuota owner cuma ditegakkan saat bot dibikin/diubah, jadi pakai nomor yang benar sejak awal.</li>
+            </ul>
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-q">4. Kuota pesan & masa aktif
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </summary>
+          <div class="faq-a">
+            <p>Ada dua batas yang berbeda, dan keduanya dicek terpisah:</p>
+            <ul>
+              <li><b>Kuota seumur paket</b> — total pesan yang boleh diterima bot sejak paket dibeli. Habis = bot berhenti membalas sampai paket dibeli lagi. Tidak reset sendiri.</li>
+              <li><b>Kuota harian</b> — direset otomatis setiap <b>00:00 WIB</b>.</li>
+              <li><b>Masa aktif</b> — setelah lewat, bot dimatikan otomatis oleh sistem dan dinyalakan lagi begitu paket diperpanjang.</li>
+            </ul>
+            <p>Sisa kuotamu bisa dilihat kapan saja di halaman <a href="/kuota">Kuota</a>. Sistem juga mengirim peringatan lewat WhatsApp saat kuota mulai menipis.</p>
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-q">5. Membayar & memperpanjang paket
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </summary>
+          <div class="faq-a">
+            <ol>
+              <li>Buka halaman <a href="/pricing">Pricing</a>, pilih paket, lalu pilih cara bayar.</li>
+              <li><b>QRIS manual</b> — kamu scan QR, bayar dengan nominal <b>persis</b>, lalu admin mengonfirmasi. Simpan halaman <a href="/billing">Riwayat</a>; di sana ada tombol cek status.</li>
+              <li><b>Otomatis</b> — paket aktif sendiri begitu pembayaran masuk, tidak perlu menunggu admin.</li>
+              <li>Paket baru <b>menambah</b> masa aktif yang masih berjalan, bukan menggantinya. Beli lebih awal tidak merugikan.</li>
+            </ol>
+            <p>Bot yang tadinya dimatikan karena paket habis akan <b>dinyalakan otomatis</b> begitu paketnya aktif.</p>
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-q">6. Bot tiba-tiba offline, kenapa?
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </summary>
+          <div class="faq-a">
+            <p>Urutan pengecekan, dari yang paling sering terjadi:</p>
+            <ol>
+              <li><b>Masa aktif paket habis.</b> Cek di <a href="/kuota">Kuota</a> atau <a href="/profil">Profil</a>. Kalau iya, perpanjang di <a href="/pricing">Pricing</a> — botnya nyala sendiri.</li>
+              <li><b>HP-nya membuka WhatsApp dengan nomor yang sama.</b> Tautan akan putus. Tutup WhatsApp di HP bernomor bot.</li>
+              <li><b>WhatsApp di HP logout / ganti perangkat.</b> Hapus sesi di Config, lalu scan QR ulang.</li>
+              <li><b>Sesi tidak valid lagi.</b> Klik <b>Clear Session</b> di Config, lalu scan QR baru.</li>
+            </ol>
+            <p>Log lengkapnya ada di halaman <a href="/log">Log Aktivitas</a> — biasanya penyebabnya kelihatan di baris terakhir sebelum bot berhenti.</p>
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-q">7. Lupa password atau mau ganti nomor HP
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </summary>
+          <div class="faq-a">
+            <p>Password bisa diganti sendiri di halaman <a href="/profil">Profil</a> (butuh password lama). Mengganti password akan <b>mengeluarkan semua perangkat lain</b> yang masih login — termasuk sesi yang mungkin bukan kamu.</p>
+            <p>Nomor HP untuk notifikasi juga diatur di halaman yang sama. Kalau kamu benar-benar lupa password lama, hubungi admin — tidak ada pemulihan lewat email untuk sekarang.</p>
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-q">8. Melihat semua command
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </summary>
+          <div class="faq-a">
+            <p>Halaman <a href="/command">Command</a> memuat seluruh daftar beserta keterangan dan aliasnya, lengkap dengan pencarian dan penyaringan per kategori.</p>
+            <p>Dari WhatsApp, tulis <code>.menu</code> di chat pribadi bot atau di grup. <b>Semua command terbuka untuk semua paket</b> — paket hanya membedakan kuota pesan, masa aktif, dan jumlah nomor owner.</p>
+          </div>
+        </details>
+
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="/js/head.js"></script>
+<script src="/js/panduan.js"></script>
+</body>
+</html>

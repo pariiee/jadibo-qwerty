@@ -37,6 +37,11 @@ const TABLES = {
     // dan terpakai di produksi: instalasi baru akan mati di jalur uangnya.
     ['receive_limit',  "INT NOT NULL DEFAULT 0"],
     ['received_count', "INT NOT NULL DEFAULT 0"],
+    // Kenapa bot ini mati. Diisi 'expired' oleh cron paket-habis; dibersihkan
+    // begitu botnya jalan lagi. Dipakai `terapkanPaket` buat tahu bot mana yang
+    // harus dinyalakan kembali sesudah user bayar — tanpa kolom ini, bot yang
+    // dimatikan cron tetap mati walau paketnya sudah dibayar.
+    ['stop_reason',    "VARCHAR(32) DEFAULT NULL"],
   ],
   rpg_members: [
     // tambahan RPG yang dipakai kode
@@ -102,6 +107,15 @@ const CREATE_TABLES = [
     updated_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE KEY uq_sewa (bot_id, group_jid)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+  // settings — key/value JSON: harga paket, QRIS manual, mode bayar, pengumuman.
+  // Dibaca `config/pricingStore.js` setiap boot. Jangan dihapus dari daftar ini:
+  // tanpa tabelnya, seluruh halaman /admin gagal menyimpan setelan.
+  `CREATE TABLE IF NOT EXISTS settings (
+    \`key\`   VARCHAR(64) NOT NULL,
+    \`value\` TEXT NOT NULL,
+    PRIMARY KEY (\`key\`)
+  ) ENGINE=InnoDB`,
+
   // group_settings
   `CREATE TABLE IF NOT EXISTS group_settings (
     id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
