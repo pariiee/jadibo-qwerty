@@ -771,10 +771,12 @@ module.exports = async function groupHandler(ctx) {
       return true;
     }
 
-    // ── grupopen / grupclose / linkgc / setnamegc — alias ────────────────────
+    // ── grupopen / grupclose / gcopen / gcclose / linkgc / setnamegc — alias ──
     case 'grupopen':
+    case 'gcopen':
       return module.exports({ ...ctx, command: 'open' });
     case 'grupclose':
+    case 'gcclose':
       return module.exports({ ...ctx, command: 'close' });
     case 'linkgc':
       return module.exports({ ...ctx, command: 'link' });
@@ -1807,7 +1809,7 @@ module.exports.limitedCmds = new Set([
   'tagall','tagadmin','tagme','hidetag','h',
   'kick','kickall','promote','demote','add','addai',
   'open','close','mute','unmute','setname','setdesc',
-  'grupopen','grupclose','linkgc','setnamegc',
+  'grupopen','grupclose','gcopen','gcclose','linkgc','setnamegc',
   'link','groupinfo','idgc','leavegc','listadmin',
   'getpp','pp','totag','delete','cekasalmember',
   'mulaiabsen','absen','cekabsen','hapusabsen',
