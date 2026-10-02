@@ -552,8 +552,107 @@ async function kuota(req, res) {
   }
 }
 
+/**
+ * POST /api/admin/bots/:id/kuota — tambah kuota pesan manual (top-up).
+ *
+ * Kenapa tidak menulis `bots.receive_limit`: kolom itu sengaja cuma boleh
+ * MENURUNKAN jatah paket (engine/gatePaket.js `batasKuota()`), jadi menaikkannya
+ * tidak berpengaruh — dan menulis 0 di situ artinya TANPA BATAS, bukan habis.
+ * Top-up disimpan di tabel `kuota_tambahan` dan ditambahkan di atas paket.
+ *
+ * `jumlah` = TOTAL bonus yang berlaku, bukan delta, supaya angka di UI selalu
+ * sama dengan yang ditegakkan dan admin bisa mengoreksi salah input dengan
+ * menulis angka baru.
+ */
+async function adminTopupKuota(req, res) {
+  try {
+    const botId = parseInt(req.params.id, 10);
+    const jumlah = Math.max(0, parseInt(req.body.jumlah, 10) || 0);
+
+    const [bots] = await pool.execute('SELECT id, bot_name FROM bots WHERE id = ? LIMIT 1', [botId]);
+    if (bots.length === 0) return sendError(res, 404, 'Bot tidak ditemukan');
+
+    // UPSERT: baris pertama kali dibuat, sesudahnya angkanya diganti.
+    await pool.execute(
+      `INSERT INTO kuota_tambahan (bot_id, jumlah, catatan) VALUES (?, ?, ?)
+       ON DUPLICATE KEY UPDATE jumlah = VALUES(jumlah), catatan = VALUES(catatan)`,
+      [botId, jumlah, (req.body.catatan || '').slice(0, 255) || null]
+    );
+
+    // Kalau bot ini sebelumnya MATI karena kuota habis, hidupkan lagi dan
+    // bersihkan penanda berhentinya — persis seperti yang dilakukan setelah
+    // pembayaran berhasil. Tanpa ini admin menaikkan kuota tapi botnya tetap
+    // diam, dan itu terbaca sebagai "fitur top-up nggak jalan".
+    //
+    // SENGAJA tidak menyentuh `received_count`: memakai `received_count = 0`
+    // akan MENGHAPUS pemakaian asli user. Menaikkan batas sudah cukup membuat
+    // sisa kuota bertambah.
+    if (jumlah > 0) {
+      try {
+        await pool.execute(
+          "UPDATE bots SET stop_reason = NULL WHERE id = ? AND stop_reason = 'expired'",
+          [botId]
+        );
+      } catch { /* kolom/stop_reason tidak ada di DB lama — bukan alasan gagal */ }
+    }
+
+    const { sisaKuota } = require('../engine/kuota');
+    const sesudah = await sisaKuota(botId);
+    return res.json({
+      ok: true,
+      message: jumlah > 0
+        ? `Kuota tambahan ${bots[0].bot_name} di-set ke ${jumlah} pesan`
+        : `Kuota tambahan ${bots[0].bot_name} dihapus`,
+      kuota: sesudah,
+    });
+  } catch (err) {
+    console.error('[Billing] adminTopupKuota error:', err.message);
+    return sendError(res, 500, 'Terjadi kesalahan server');
+  }
+}
+
+/**
+ * POST /api/admin/bots/:id/reset-kuota — nolkan pemakaian kuota pesan.
+ *
+ * Melepas kuota yang sudah terpakai tanpa mengubah jatah paket/bonus. Dipakai
+ * admin untuk kasus: bot error dan memakan kuota user.
+ *
+ * `received_count` memang di-reset karena DI SINILAH pemakaian disimpan — beda
+ * dengan top-up, yang justru tidak boleh menyentuhnya.
+ */
+async function adminResetKuota(req, res) {
+  try {
+    const botId = parseInt(req.params.id, 10);
+    const [bots] = await pool.execute('SELECT id, received_count FROM bots WHERE id = ? LIMIT 1', [botId]);
+    if (bots.length === 0) return sendError(res, 404, 'Bot tidak ditemukan');
+
+    const sebelum = Number(bots[0].received_count) || 0;
+    await pool.execute('UPDATE bots SET received_count = 0 WHERE id = ?', [botId]);
+
+    // Peringatan kuota disimpan di MEMORI per bot. Tanpa melupakannya, user yang
+    // barusan di-reset tidak akan menerima peringatan 80% lagi pada siklus ini
+    // (penandanya masih dianggap sudah terkirim).
+    try {
+      require('../engine/kuota').lupakanPeringatan(botId);
+    } catch { /* bukan alasan membatalkan reset */ }
+
+    const { sisaKuota } = require('../engine/kuota');
+    const sesudah = await sisaKuota(botId);
+    return res.json({
+      ok: true,
+      message: `Pemakaian kuota direset (${sebelum} pesan dilepas)`,
+      dilepas: sebelum,
+      kuota: sesudah,
+    });
+  } catch (err) {
+    console.error('[Billing] adminResetKuota error:', err.message);
+    return sendError(res, 500, 'Terjadi kesalahan server');
+  }
+}
+
 module.exports = {
   daftarPaket, checkout, daftarOrder, cekOrder, webhook, kuota, pengumuman,
   adminOrders, adminKonfirmasi, adminTolak, adminSettings, adminSetPlans, adminSetSettings,
+  adminTopupKuota, adminResetKuota,
   klaimTrial, klaimTrialSendiri, terapkanPaket, tandaiLunas,
 };

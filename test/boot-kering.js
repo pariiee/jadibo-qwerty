@@ -69,6 +69,8 @@ const RUTE = [
   ['GET',  '/api/billing/orders',        'order milik user'],
   ['GET',  '/api/admin/billing/orders',  'order (admin)'],
   ['GET',  '/api/admin/billing/settings','setelan billing (admin)'],
+  ['POST', '/api/admin/bots/4/kuota',       'top-up kuota pesan (admin)'],
+  ['POST', '/api/admin/bots/4/reset-kuota', 'reset pemakaian kuota (admin)'],
   ['GET',  '/api/bots/4/stats',          'statistik bot'],
   ['GET',  '/api/bots/4/config',         'ekspor config bot'],
   ['POST', '/api/billing/checkout',      'checkout'],

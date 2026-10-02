@@ -187,6 +187,10 @@ app.post('/api/admin/billing/orders/:orderId/reject',  auth.requireAuth, auth.re
 app.get('/api/admin/billing/settings',                auth.requireAuth, auth.requireKing, billing.adminSettings);
 app.put('/api/admin/billing/plans',                   auth.requireAuth, auth.requireKing, billing.adminSetPlans);
 app.put('/api/admin/billing/settings',                auth.requireAuth, auth.requireKing, billing.adminSetSettings);
+// Top-up & reset kuota pesan per bot. Owner-only, sama seperti endpoint admin
+// lain. Dipakai saat kompensasi bot error atau pembelian kuota tambahan.
+app.post('/api/admin/bots/:id/kuota',        auth.requireAuth, auth.requireKing, billing.adminTopupKuota);
+app.post('/api/admin/bots/:id/reset-kuota',  auth.requireAuth, auth.requireKing, billing.adminResetKuota);
 
 // ─── Halaman HTML ─────────────────────────────────────────────────────────────
 // Halaman berisi <!-- @include head.html --> dll; partial di public/partials/

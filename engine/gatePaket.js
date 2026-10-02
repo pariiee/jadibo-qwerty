@@ -83,7 +83,34 @@ async function batasKuota(botId, botData) {
   if (jatah <= 0) return 0;
 
   const sendiri = Number(botData.receive_limit) || 0;
-  return sendiri > 0 ? Math.min(sendiri, jatah) : jatah;
+  const dasar = sendiri > 0 ? Math.min(sendiri, jatah) : jatah;
+
+  // Top-up admin DITAMBAHKAN di atas, bukan menggantikan. Ditaruh paling akhir
+  // dengan sengaja: kuota yang sudah dibayar user tidak boleh bisa diperkecil
+  // oleh salah tulis di tabel tambahan — kalau tabelnya kosong/gagal dibaca,
+  // hasilnya persis seperti sebelum fitur ini ada.
+  return dasar + (await jatahTambahan(botId));
+}
+
+/**
+ * Kuota tambahan yang berlaku untuk bot ini (0 kalau tidak ada).
+ *
+ * Kegagalan baca mengembalikan 0 — BUKAN melempar. `batasKuota()` dipanggil di
+ * jalur setiap pesan masuk; satu error di tabel sampingan tidak boleh membuat
+ * bot berhenti melayani. Efek terburuknya: user kehilangan bonus sementara
+ * sampai query-nya normal, bukan botnya mati.
+ */
+async function jatahTambahan(botId) {
+  try {
+    const [rows] = await pool.execute(
+      'SELECT jumlah FROM kuota_tambahan WHERE bot_id = ? LIMIT 1',
+      [botId]
+    );
+    return Math.max(0, Number(rows[0]?.jumlah) || 0);
+  } catch {
+    // Tabel belum ada (DB lama sebelum sync-schema) → anggap tidak ada top-up.
+    return 0;
+  }
 }
 
 /**
@@ -109,6 +136,11 @@ async function kuotaHabis(botId, botData) {
     if (batas === 0) return false;   // tanpa batas
     if (batas < 0) return true;      // paket habis
 
+    // SATU UPDATE atomik, dan `batas` sudah termasuk kuota tambahan dari
+    // `batasKuota()`. Sengaja TIDAK ada penghitungan bonus terpisah di sini:
+    // `received_count` sudah menghitung SELURUH pemakaian, jadi menambah
+    // pencatat kedua (mis. kolom `terpakai`) berarti dua angka yang bisa
+    // berbeda — dan kuota bonus jadi terhitung dua kali.
     const [res] = await pool.execute(
       'UPDATE bots SET received_count = received_count + 1 WHERE id = ? AND received_count < ?',
       [botId, batas]
@@ -161,5 +193,5 @@ async function botKedaluwarsa() {
 }
 
 module.exports = {
-  pemilikBot, segarkan, batasKuota, kuotaHabis, kuotaHarian, botKedaluwarsa, TTL_MS,
+  pemilikBot, segarkan, batasKuota, kuotaHabis, jatahTambahan, kuotaHarian, botKedaluwarsa, TTL_MS,
 };

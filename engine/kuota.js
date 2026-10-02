@@ -65,7 +65,17 @@ async function sisaKuota(botId) {
   const jatahPaket = Number(paket?.receive_limit) || 0;
   const jatahBot = Number(bot.receive_limit) || 0;
   // Kolom bot cuma boleh MENURUNKAN jatah paket — sama seperti `batasKuota()`.
-  const batas = jatahPaket > 0 ? (jatahBot > 0 ? Math.min(jatahBot, jatahPaket) : jatahPaket) : 0;
+  const dasar = jatahPaket > 0 ? (jatahBot > 0 ? Math.min(jatahBot, jatahPaket) : jatahPaket) : 0;
+
+  // Kuota top-up dari admin DITAMBAHKAN di atas paket. Dihitung lewat fungsi
+  // yang sama dengan penegakan (`gatePaket.jatahTambahan`) supaya angka di
+  // halaman /kuota tidak pernah berbeda dengan yang benar-benar ditegakkan —
+  // dua sumber kebenaran di jalur uang adalah cara paling cepat membuat user
+  // protes "kuota saya masih ada tapi bot diam".
+  const { jatahTambahan } = require('./gatePaket');
+  const bonus = await jatahTambahan(bot.id);
+
+  const batas = dasar + bonus;
   const terpakai = Number(bot.received_count) || 0;
 
   return {
@@ -74,6 +84,9 @@ async function sisaKuota(botId) {
     tanpaBatas: batas === 0,
     batas,
     terpakai,
+    // Ditampilkan terpisah supaya user tahu berapa dari jatahnya yang bonus —
+    // kalau digabung saja, "kok kuota saya nambah?" jadi pertanyaan ke admin.
+    bonus,
     sisa: batas > 0 ? Math.max(0, batas - terpakai) : null,
     persen: batas > 0 ? Math.min(100, Math.round((terpakai / batas) * 100)) : 0,
     // Harian cuma buat ditampilin — `rpg_members.lim` direset cron tiap 00:00.

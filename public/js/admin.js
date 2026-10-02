@@ -62,7 +62,7 @@
     const rows = d.bots || [];
     const tb = document.getElementById('tbl-bot').querySelector('tbody');
     tb.innerHTML = '';
-    if (!rows.length) { tb.innerHTML = '<tr><td class="kosong" colspan="7">Belum ada bot.</td></tr>'; return; }
+    if (!rows.length) { tb.innerHTML = '<tr><td class="kosong" colspan="8">Belum ada bot.</td></tr>'; return; }
     rows.forEach((b) => {
       const tr = document.createElement('tr');
       tr.innerHTML =
@@ -71,10 +71,61 @@
         '<td>' + esc(b.platform || 'whatsapp') + '</td>' +
         '<td>' + (b.is_running ? '<span class="dot on"></span> Jalan' : '<span class="dot off"></span> Mati') + '</td>' +
         '<td>' + (b.received_count ?? 0) + ' / ' + (b.receive_limit || '∞') + '</td>' +
+        '<td>' + (b.bonus_kuota > 0 ? '+' + b.bonus_kuota + ' <small>bonus</small>' : '<small>—</small>') + '</td>' +
         '<td>' + (b.cmd_count ?? 0) + '</td>' +
-        '<td class="aksi"><button class="btn btn-outline btn-sm" data-act="bukaLog(' + b.id + ')">Lihat Log</button></td>';
+        '<td class="aksi">' +
+          '<button class="btn btn-outline btn-sm" data-act="bukaLog(' + b.id + ')">Lihat Log</button> ' +
+          '<button class="btn btn-outline btn-sm" data-act="aturKuota(' + b.id + ')">Kuota</button> ' +
+          '<button class="btn btn-outline btn-sm" data-act="resetKuota(' + b.id + ')">Reset</button>' +
+        '</td>';
       tb.appendChild(tr);
     });
+  }
+
+  /** Nama bot dari baris tabel yang sudah dimuat — biar prompt-nya menyebut nama. */
+  function namaBot(id) {
+    const btn = document.querySelector('[data-act="bukaLog(' + id + ')"]');
+    const tr = btn?.closest('tr');
+    return tr?.querySelector('td b')?.textContent || ('bot #' + id);
+  }
+
+  /**
+   * Top-up kuota pesan. Sengaja pakai prompt bawaan browser, bukan modal baru:
+   * ini aksi admin yang jarang dipakai, dan satu modal lagi berarti satu form
+   * lagi yang harus dirawat. Kalau nanti jadi sering dipakai, baru dibikin modal.
+   */
+  async function aturKuota(id) {
+    const nama = namaBot(id);
+    const jawab = prompt(
+      'Kuota tambahan untuk "' + nama + '" (dalam pesan).\n\n' +
+      '• Isi angka  → set kuota bonus sebanyak itu (di ATAS jatah paket)\n' +
+      '• Isi 0      → hapus kuota bonus\n' +
+      '• Kosongkan  → batal\n\n' +
+      'Catatan: ini TIDAK mengubah jatah paket dan tidak menghapus pemakaian.',
+      ''
+    );
+    if (jawab === null || jawab.trim() === '') return;
+
+    const jumlah = parseInt(jawab, 10);
+    if (!Number.isFinite(jumlah) || jumlah < 0) return showToast('Angka tidak valid', 'error');
+
+    const d = await api('/api/admin/bots/' + id + '/kuota', {
+      method: 'POST',
+      body: JSON.stringify({ jumlah }),
+    });
+    showToast(d?.message || 'Gagal', d?.ok ? 'success' : 'error');
+    if (d?.ok) muatBot();
+  }
+
+  /** Nolkan pemakaian kuota tanpa mengubah jatah paket maupun bonus. */
+  async function resetKuota(id) {
+    const nama = namaBot(id);
+    if (!confirm('Reset pemakaian kuota "' + nama + '"?\n\n' +
+      'Pesan yang sudah terpakai dianggap 0 lagi. Jatah paket & bonus tidak berubah.')) return;
+
+    const d = await api('/api/admin/bots/' + id + '/reset-kuota', { method: 'POST' });
+    showToast(d?.message || 'Gagal', d?.ok ? 'success' : 'error');
+    if (d?.ok) muatBot();
   }
 
   function bukaLog(id) {
@@ -372,6 +423,8 @@
   window.tutupUser = tutupUser;
   window.simpanUser = simpanUser;
   window.muatBot = muatBot;
+  window.aturKuota = aturKuota;
+  window.resetKuota = resetKuota;
   window.bukaLog = bukaLog;
   window.tutupLog = tutupLog;
   window.muatLog = muatLog;

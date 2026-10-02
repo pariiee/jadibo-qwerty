@@ -88,7 +88,7 @@ async function listBots(req, res) {
     const isKing = req.user.role === ADMIN_ROLE;
     // cmd_count = statistik pemakaian per bot (jumlah command yang benar-benar
     // dijalankan). Subquery, bukan JOIN + GROUP BY — jumlah bot masih kecil.
-    const kolom = `b.*, (SELECT COUNT(*) FROM bot_logs l WHERE l.bot_id = b.id AND l.level = 'cmd') AS cmd_count`;
+    const kolom = `b.*, (SELECT COUNT(*) FROM bot_logs l WHERE l.bot_id = b.id AND l.level = 'cmd') AS cmd_count, (SELECT kt.jumlah FROM kuota_tambahan kt WHERE kt.bot_id = b.id) AS bonus_kuota`;
     // Pencarian & batas DI SQL, bukan tarik-semua-lalu-saring-di-browser: begitu
     // botnya ratusan, cara lama bikin /admin lemot + payload gede.
     // ponytail: LIMIT tanpa OFFSET. Tambah halaman kalau ada yang punya >500 bot.

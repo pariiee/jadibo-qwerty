@@ -160,6 +160,26 @@ const CREATE_TABLES = [
     created_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_bot_key (bot_id, list_key)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+
+  // Top-up kuota pesan manual oleh admin (mis. kompensasi bot error, atau
+  // pembelian kuota tambahan di luar paket).
+  //
+  // Kenapa tabel terpisah, bukan langsung `bots.receive_limit`: kolom itu
+  // SENGAJA cuma boleh MENURUNKAN jatah paket (lihat engine/gatePaket.js
+  // `batasKuota()`). Kalau top-up ditulis ke sana, paket tetap jadi penentu dan
+  // angkanya tidak nambah. Lebih buruk lagi, `0` di situ artinya TANPA BATAS,
+  // jadi menghabiskan kuota dengan menulis 0 justru membukanya lebar-lebar.
+  //
+  // `jumlah` = TOTAL kuota tambahan yang berlaku (bukan delta). Angka ini
+  // ditambahkan SETELAH jatah paket, jadi kuota dasar tidak bisa dirusak.
+  // Tidak ada kolom `terpakai`: pemakaian sudah dihitung `bots.received_count`,
+  // dan menyimpan hitungan kedua hanya membuka peluang dua angka berbeda.
+  `CREATE TABLE IF NOT EXISTS kuota_tambahan (
+    bot_id       INT UNSIGNED NOT NULL PRIMARY KEY,
+    jumlah       INT NOT NULL DEFAULT 0,
+    catatan      VARCHAR(255) DEFAULT NULL,
+    updated_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
 ];
 
 async function columnExists(table, colName) {
