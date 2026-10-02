@@ -406,23 +406,12 @@ module.exports = async function ownerHandler(ctx) {
       return true;
     }
 
-    // ─── BACKUP / RESTORE ────────────────────────────────────────────────
-    case 'backup': {
-      if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }
-      const dbPath = botData.sqlite_db_path;
-      if (!dbPath || !fs.existsSync(dbPath)) {
-        await reply('File database tidak ditemukan');
-        return true;
-      }
-      try {
-        const backupPath = dbPath.replace('.db', `_backup_${Date.now()}.db`);
-        fs.copyFileSync(dbPath, backupPath);
-        await reply(`✅ Backup berhasil: ${path.basename(backupPath)}`);
-      } catch (e) {
-        await reply(`Gagal backup: ${rapikanError(e)}`);
-      }
-      return true;
-    }
+    // ─── RESTORE ─────────────────────────────────────────────────────────
+    // `.backup` TIDAK di sini: handler-nya ada di plugins/11-backup.js yang
+    // mengirim dump JSON per-bot sebagai DOKUMEN. Dulu ada `case 'backup'` di
+    // sini yang cuma menyalin file session — dan karena 05 dimuat lebih dulu
+    // dari 11, dia selalu menang, jadi pemilik dapat teks "✅ Backup berhasil"
+    // tanpa file. Satu command, satu handler.
 
     case 'restore': {
       if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }
