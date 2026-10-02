@@ -147,6 +147,14 @@ app.get('/api/bots/:id/stats',         apiLimiter, auth.requireAuth, bot.getBotS
 app.get('/api/bots/:id/config',        apiLimiter, auth.requireAuth, bot.exportConfig);
 app.post('/api/bots/:id/resolve-invite', apiLimiter, auth.requireAuth, bot.resolveInvite);
 
+// ─── Kesehatan sistem ─────────────────────────────────────────────────────────
+// Publik dan TANPA limiter: uptime monitor dari luar harus bisa memanggilnya
+// kapan saja, dan yang dibalas cuma angka kasar — bukan data siapa pun.
+app.get('/health', async (_, res) => {
+  const h = await require('./engine/health').cek();
+  res.status(h.ok ? 200 : 503).json(h);
+});
+
 // ─── Langganan & Pembayaran ──────────────────────────────────────────────────
 app.get('/api/plans',                apiLimiter, billing.daftarPaket);
 // Sisa kuota pesan per bot — dipakai halaman /kuota.
@@ -223,7 +231,18 @@ app.get('/pricing',    halaman('pricing.html'));
 // mungkin sudah bookmark /langganan. Tanpa ini, /langganan jatuh ke catch-all
 // dan diam-diam nampilin landing page — bingung, bukan 404 yang jelas.
 app.get('/langganan', (_, res) => res.redirect(301, '/pricing'));
-app.get('/admin',     halaman('admin.html'));
+// Panel admin sengaja TIDAK di /admin.
+//
+// Bot WhatsApp itu auto-scanner: begitu ada nomor baru masuk, bot jahat langsung
+// mencoba `/.env`, `/admin`, `/config`, `/.git`. Nama yang bisa ditebak = satu
+// permintaan gagal, tapi satu permintaan yang BERHASIL sudah cukup fatal. Jadi
+// path-nya dipindah, dan `/admin` DIHAPUS (bukan di-redirect) — redirect justru
+// memberi tahu penebak bahwa halamannya cuma pindah.
+//
+// Yang benar-benar melindungi tetap sesi login + role `kawula` di dalamnya
+// (`auth.requireKing` di tiap endpoint /api/admin/*). Nama aneh itu lapisan
+// kedua, bukan pengganti.
+app.get('/kountole',  halaman('admin.html'));
 // /login & /register = SATU file, pane dipilih dari pathname (js/auth-page.js).
 app.get('/login',     halaman('login.html'));
 app.get('/register',  halaman('login.html'));
@@ -514,6 +533,15 @@ cron.schedule('* * * * *', async () => {
     }
   } catch (e) {
     console.error('[Cron] Cek paket habis error:', e.message);
+  }
+
+  // ── Alarm kesehatan ───────────────────────────────────────────────────────
+  // Pakai cron yang SUDAH ada (tiap menit) — jangan bikin jadwal baru.
+  // Modulnya sendiri yang mengatur toleransi & anti-spam; di sini cuma panggil.
+  try {
+    require('./engine/health').periksaDanAlarm().catch(() => {});
+  } catch (e) {
+    console.error('[Cron] Health check error:', e.message);
   }
 
   try {

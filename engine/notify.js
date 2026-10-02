@@ -106,4 +106,18 @@ async function nomorHpUser(userId) {
   }
 }
 
-module.exports = { kirimKeOwner, nomorHpUser };
+// Kirim ke nomor TERTENTU lewat bot mana pun yang online — TIDAK butuh DB.
+// Dipakai alarm kesehatan: kalau yang rusak justru databasenya, jalur yang
+// butuh `SELECT` dari DB tidak akan bisa dipakai buat melaporkan kerusakannya.
+async function kirimKeNomor(nomor, teks) {
+  const bersih = String(nomor || '').replace(/\D/g, '');
+  if (!bersih || !teks) return false;
+  const { activeBots } = require('./runtime');
+  for (const botId of activeBots.keys()) {
+    if (await kirimLewatBot(botId, bersih, teks)) return true;
+  }
+  console.warn(`[Notif] tidak ada bot online — pesan ke ${bersih} TIDAK terkirim`);
+  return false;
+}
+
+module.exports = { kirimKeOwner, kirimKeNomor, nomorHpUser };

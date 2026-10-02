@@ -58,7 +58,12 @@ const RUTE = [
   ['GET',  '/register',                  'halaman register'],
   ['GET',  '/pricing',                   'halaman pricing'],
   ['GET',  '/langganan',                 'halaman langganan'],
-  ['GET',  '/admin',                     'halaman admin'],
+  ['GET',  '/kountole',                  'panel admin (path sengaja tidak /admin)'],
+  ['GET',  '/health',                    'kesehatan sistem'],
+  // ENDPOINT /api/admin/* SENGAJA tetap di path itu: yang dipindah cuma
+  // HALAMANNYA. Mengubah path API = mengubah kontrak, dan penebak tidak dapat
+  // apa-apa dari `/api/admin/*` tanpa sesi login + role `kawula`.
+  ['GET',  '/admin',                     'HARUS MATI: panel pindah ke /kountole', 404],
   ['GET',  '/config/4',                  'halaman config bot'],
   ['GET',  '/api/plans',                 'daftar paket'],
   ['GET',  '/api/billing/orders',        'order milik user'],
@@ -85,9 +90,11 @@ const RUTE = [
   if (!siap) { console.log('❌ server nggak listen'); process.exit(1); }
 
   let gagal = 0;
-  for (const [method, path, label] of RUTE) {
+  for (const [method, path, label, harap] of RUTE) {
     const r = await minta(method, path);
-    const jelek = r.status === 404 || r.status === 0 || r.status >= 500;
+    // `harap` diisi kalau status yang BENAR justru status "jelek" (mis. /admin
+    // harus 404). Tanpa itu, memindahkan panel balik ke /admin akan lolos diam-diam.
+    const jelek = harap ? r.status !== harap : (r.status === 404 || r.status === 0 || r.status >= 500);
     if (jelek) gagal++;
     console.log(`${jelek ? '❌' : '✅'} ${String(r.status).padEnd(4)} ${method.padEnd(4)} ${path.padEnd(28)} ${label}`);
   }
@@ -97,6 +104,13 @@ const RUTE = [
   const nyasarOk = nyasar.status === 404;
   if (!nyasarOk) gagal++;
   console.log(`${nyasarOk ? '✅' : '❌'} ${nyasar.status} GET  /halaman-nggak-ada-xyz      (harus 404)`);
+
+  // /health WAJIB 200/503, bukan 404 — kalau dia ikut hilang, uptime monitor
+  // luar akan menganggap server mati padahal cuma route-nya yang lepas.
+  const sehat = await minta('GET', '/health');
+  const sehatOk = sehat.status === 200 || sehat.status === 503;
+  if (!sehatOk) gagal++;
+  console.log(`${sehatOk ? '✅' : '❌'} ${sehat.status} GET  /health                   (200 atau 503, bukan 404)`);
 
   console.log(gagal ? `\n=== GAGAL: ${gagal} rute bermasalah ===` : '\n=== SEMUA RUTE BARU HIDUP ===');
   process.exit(gagal ? 1 : 0);
