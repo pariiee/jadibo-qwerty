@@ -33,7 +33,6 @@ const TABEL_BOT = [
 const queries = [];        // semua SQL yang lewat
 const dikirim = [];        // { jid, content }
 const balasan = [];
-let ownerHandlerBalik = false;   // false = "saya owner", true = "bukan urusan saya"
 let kirimMelempar = false;
 
 function palsukan(modul, ekspor) {
@@ -74,15 +73,16 @@ const poolPalsu = {
 };
 
 palsukan('config/database.js', { pool: poolPalsu, incrementStat: async () => {}, decrementStat: async () => {} });
-// Gerbang owner memanggil handler 05-owner dengan command yang tidak dikenal.
-palsukan('plugins/05-owner.js', async () => ownerHandlerBalik);
+// Gerbang owner sekarang baca `ctx.isOwner` (dihitung engine, satu sumber
+// dengan 10-crm.js dan role `.menu`) — bukan lagi trik panggil 05-owner.
 
 const backup = require('../plugins/11-backup.js');
 
-const ctxBuat = () => ({
+const ctxBuat = (isOwner = true) => ({
   isCmd: true,
   command: 'backup',
   args: [],
+  isOwner,                      // <- sinyal izin positif, satu-satunya gerbang
   jid: '6287778032605@s.whatsapp.net',
   sender: '6287778032605@s.whatsapp.net',
   botData: { id: 4, bot_name: 'zapo BOT', owner_number: '6287778032605' },
@@ -99,15 +99,13 @@ const ctxBuat = () => ({
   cek('command lain -> tidak ditangani', (await backup({ isCmd: true, command: 'lain' })) === false);
 
   // ── 1. BUKAN owner -> ditolak, dan NOL query data ─────────────────────────
-  ownerHandlerBalik = true;
   queries.length = 0; dikirim.length = 0; balasan.length = 0;
-  cek('bukan owner -> ditangani (return true)', (await backup(ctxBuat())) === true);
+  cek('bukan owner -> ditangani (return true)', (await backup(ctxBuat(false))) === true);
   cek('bukan owner -> ada pesan penolakan', /khusus owner/i.test(balasan.join(' ')), balasan.join(' | '));
   cek('bukan owner -> NOL file terkirim', dikirim.length === 0);
   cek('bukan owner -> NOL query ke tabel data', queries.filter(x => /rpg_members|group_settings/.test(x.q)).length === 0);
 
   // ── 2. owner -> file terkirim ─────────────────────────────────────────────
-  ownerHandlerBalik = false;
   queries.length = 0; dikirim.length = 0; balasan.length = 0;
   const hasil = await backup(ctxBuat());
   cek('owner -> ditangani', hasil === true);

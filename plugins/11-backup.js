@@ -101,24 +101,17 @@ module.exports = async function backupHandler(ctx) {
   if (command !== 'backup') return false;
 
   // ── Gerbang owner: WAJIB, dan WAJIB paling awal ────────────────────────────
-  // `isOwner` ada di plugins/05-owner.js dan TIDAK diekspor (module.exports-nya
-  // di-overwrite jadi fungsi handler). Menyalin 20 barisnya ke sini = dua
-  // sumber kebenaran yang cepat atau lambat berbeda. Sebagai gantinya: panggil
-  // handler owner dengan ctx tiruan yang command-nya tidak dikenal.
+  // Pakai `ctx.isOwner` — nilai yang SUDAH dihitung engine (satu sumber, sama
+  // dengan yang dipakai 10-crm.js dan role `.menu`). Sudah menangani LID:
+  // sender `...@lid` di chat pribadi di-resolve ke nomor dulu.
   //
-  // Aman dari efek samping: `ownerHandler` menyelesaikan gate blacklist/warn
-  // lebih dulu, lalu `switch` tidak cocok apa pun dan balik `false` — nol
-  // tulisan DB, nol pesan terkirim.
-  const ownerHandler = require('./05-owner.js');
-  const terlihatOwner = [];
-  const ctxTiruan = {
-    ...ctx,
-    command: '__cek_owner_backup__',
-    reply: async (t) => { terlihatOwner.push(String(t)); },
-  };
-  const dipakaiOwner = await ownerHandler(ctxTiruan);
-  const sayaOwner = !dipakaiOwner && terlihatOwner.length === 0;
-  if (!sayaOwner) {
+  // JANGAN kembali ke trik lama "panggil handler 05-owner dengan ctx tiruan lalu
+  // simpulkan owner dari TIDAK ADANYA balasan". Trik itu punya lubang: 05-owner
+  // membalas `return true` tanpa pesan untuk pengirim yang di-BLACKLIST, dan
+  // kesimpulan "tidak ada balasan = saya owner" membuat orang yang di-ban justru
+  // bisa mengunduh seluruh data member. Menyimpulkan izin dari ketiadaan sinyal
+  // selalu salah — pakai sinyal positif.
+  if (!ctx.isOwner) {
     await reply('⛔ Command ini khusus owner bot. Data cadangan tidak dibagikan ke orang lain.');
     return true;
   }
@@ -140,6 +133,8 @@ module.exports = async function backupHandler(ctx) {
 
     try {
       await client.message.send(jid, {
+        // `{ type:'document', media }` = bahasa zapo, dan zapo memang punya
+        // `case 'document'` (pakai content.media + fileName). Terverifikasi.
         type: 'document',
         media: fs.readFileSync(berkas),
         mimetype: 'application/json',
@@ -170,7 +165,12 @@ module.exports = async function backupHandler(ctx) {
   return true;
 };
 
-// Owner-only: TIDAK masuk ALL_COMMANDS/CATS (sama seperti probe debug di
-// 05-owner) supaya tidak muncul di `.menu` dan tidak dijalankan user biasa.
+// Owner-only: tidak masuk ALL_COMMANDS/CATS supaya tidak muncul di `.menu`.
 // Konsekuensinya alias tidak ada — memang tidak diinginkan di sini.
+//
+// Awas: JANGAN `module.exports = fn` lalu `module.exports.limitedCmds = ...`.
+// Itu MENEMPELKAN properti ke fungsi, bukan menggantinya — dan loader di
+// engine/whatsappEngine.js cuma menerima `typeof mod === 'function'` atau
+// `mod.handler`. Hasilnya plugin dimuat TANPA ERROR, command muncul di log,
+// tapi handler-nya tidak pernah dipanggil dan bot diam saja.
 module.exports.limitedCmds = new Set([]);
