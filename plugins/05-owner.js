@@ -93,6 +93,52 @@ function getBotId(ctx) {
   return ctx.botData.id;
 }
 
+/**
+ * Jalankan operasi DB yang menyimpan KEADAAN yang harus bertahan lintas
+ * restart. Mengembalikan { ok, err } — TIDAK pernah melempar, dan TIDAK pernah
+ * diam.
+ *
+ * Kenapa ini ada: dulu tempat-tempat ini pakai `catch {}` kosong. Akibatnya
+ * nyata, bukan teoretis:
+ *
+ *   - `.ban` hanya menulis blacklist ke MEMORI saat query-nya gagal, lalu tetap
+ *     membalas "🚫 telah di-ban". Bot restart (dan bot ini sudah restart 324
+ *     kali) → orang yang di-ban bisa chat lagi, dan owner tidak pernah tahu.
+ *   - `.setwarnlimit` menulis limit ke DB dalam `catch {}`; komentarnya sendiri
+ *     mengakui "kalau tidak, tiap restart balik ke default 3" — lalu error-nya
+ *     tetap dibuang, jadi memang balik ke default 3 tanpa ada yang sadar.
+ *
+ * Aturannya: error yang MENGHILANGKAN efek sebuah command tidak boleh hilang.
+ * Minimal harus muncul di log dengan nama command-nya.
+ *
+ * @param {string} aksi   nama pendek untuk log, mis. 'ban'
+ * @param {Function} fn   fungsi yang menjalankan query
+ */
+async function simpanTetap(aksi, fn) {
+  try {
+    await fn();
+    return { ok: true, err: null };
+  } catch (e) {
+    // `console.error` sengaja, bukan `logBot`: logBot butuh `client` dan
+    // menulis ke DB — kalau DB-nya sendiri yang sedang bermasalah (penyebab
+    // paling umum error di sini), logBot ikut gagal dan pesannya hilang lagi.
+    console.error(`[Owner] gagal simpan "${aksi}": ${e.message}`);
+    return { ok: false, err: e };
+  }
+}
+
+/**
+ * Balasan untuk operasi yang GAGAL disimpan.
+ *
+ * Sengaja TIDAK menyamarkan kegagalan jadi sukses. Owner memegang command ini;
+ * dia satu-satunya orang yang bisa memperbaiki keadaannya, dan dia tidak bisa
+ * memperbaiki apa yang tidak dia ketahui.
+ */
+function pesanGagalSimpan(apa) {
+  return `⚠️ *${apa}* gagal disimpan di database, jadi hilang saat bot restart.\n` +
+         `Sudah tercatat di log bot. Cek koneksi database lalu ulangi command-nya.`;
+}
+
 function getBlockedSet(botId) {
   if (!blockedUsers.has(botId)) blockedUsers.set(botId, new Set());
   return blockedUsers.get(botId);
@@ -178,16 +224,24 @@ module.exports = async function ownerHandler(ctx) {
         });
         return true;
       }
-      try {
-        await pool.execute(
-          'INSERT IGNORE INTO blacklist (bot_id, jid, reason) VALUES (?, ?, ?)',
-          [botId, target, reason]
-        );
-      } catch { /* non-critical */ }
+      // Simpan ke DB DULU. Ini yang paling penting dari semuanya: ban hanya di
+      // memori = hilang saat restart, dan bot ini sudah restart 324 kali.
+      //
+      // `INSERT IGNORE` sengaja dipertahankan (target yang sudah ada = bukan
+      // error), tapi ERROR LAINNYA tidak boleh lagi hilang.
+      const simpan = await simpanTetap('ban', () => pool.execute(
+        'INSERT IGNORE INTO blacklist (bot_id, jid, reason) VALUES (?, ?, ?)',
+        [botId, target, reason]
+      ));
       getBlockedSet(botId).add(target);
       await client.message.send(jid, {
         type: 'text',
-        text: `🚫 @${target.split('@')[0]} telah di-ban\n_Alasan: ${reason}_`,
+        text: simpan.ok
+          ? `🚫 @${target.split('@')[0]} telah di-ban\n_Alasan: ${reason}_`
+          // Tetap di-ban di memori supaya sesi ini aman, TAPI owner diberi tahu
+          // bahwa ban-nya belum permanen. Diam di sini = owner mengira sudah
+          // beres padahal orangnya bisa masuk lagi begitu bot restart.
+          : pesanGagalSimpan(`Ban @${target.split('@')[0]}`),
         mentions: [target],
       });
       return true;
@@ -198,13 +252,19 @@ module.exports = async function ownerHandler(ctx) {
       const mentioned = ctx.mentioned || [];
       if (!mentioned[0]) { await reply(`Penggunaan: ${p}unban @target`); return true; }
       const target = mentioned[0];
-      try {
-        await pool.execute('DELETE FROM blacklist WHERE bot_id = ? AND jid = ?', [botId, target]);
-      } catch { /* non-critical */ }
-      getBlockedSet(botId).delete(target);
+      // Kebalikan dari `.ban`: kalau DELETE-nya gagal, JANGAN hapus dari memori.
+      // Kalau dihapus juga, orangnya bebas sekarang TAPI ter-ban lagi setelah
+      // restart — dan owner sudah dikasih tahu "berhasil", jadi dia bingung
+      // kenapa orangnya balik ter-ban sendiri.
+      const simpan = await simpanTetap('unban', () => pool.execute(
+        'DELETE FROM blacklist WHERE bot_id = ? AND jid = ?', [botId, target]
+      ));
+      if (simpan.ok) getBlockedSet(botId).delete(target);
       await client.message.send(jid, {
         type: 'text',
-        text: `✅ @${target.split('@')[0]} telah di-unban.`,
+        text: simpan.ok
+          ? `✅ @${target.split('@')[0]} telah di-unban.`
+          : pesanGagalSimpan(`Unban @${target.split('@')[0]}`),
         mentions: [target],
       });
       return true;
@@ -451,15 +511,19 @@ module.exports = async function ownerHandler(ctx) {
       const warnObj = getWarn(botId, jid, target);
       warnObj.count++;
 
-      // Persist to DB
-      try {
-        await pool.execute(
-          `INSERT INTO warn_records (bot_id, group_jid, member_jid, warn_count, warn_limit)
-           VALUES (?, ?, ?, ?, ?)
-           ON DUPLICATE KEY UPDATE warn_count = ?, updated_at = NOW()`,
-          [botId, jid, target, warnObj.count, warnObj.limit, warnObj.count]
-        );
-      } catch { /* non-critical */ }
+      // Persist ke DB DULU, baru naikkan hitungan di memori.
+      // Urutan ini penting: kalau simpan gagal, hitungan di memori tidak
+      // terlanjur naik. Dulu urutannya terbalik DAN error-nya dibuang, jadi
+      // warning bisa "kelihatan" naik di grup padahal hilang saat restart —
+      // member yang seharusnya sudah di-kick justru aman.
+      const simpan = await simpanTetap('warn', () => pool.execute(
+        `INSERT INTO warn_records (bot_id, group_jid, member_jid, warn_count, warn_limit)
+         VALUES (?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE warn_count = ?, updated_at = NOW()`,
+        [botId, jid, target, warnObj.count + 1, warnObj.limit, warnObj.count + 1]
+      ));
+      warnObj.count++;
+      if (!simpan.ok) await reply(pesanGagalSimpan(`Warn @${target.split('@')[0]}`));
 
       const msg = `⚠️ *Warning* @${target.split('@')[0]}\nAlasan : ${reason}\nWarn   : ${warnObj.count}/${warnObj.limit}`;
 
@@ -483,15 +547,16 @@ module.exports = async function ownerHandler(ctx) {
       if (!mentioned[0]) { await reply(`Penggunaan: ${p}unwarn @target`); return true; }
       const target  = mentioned[0];
       const warnObj = getWarn(botId, jid, target);
-      if (warnObj.count > 0) warnObj.count--;
-      try {
-        await pool.execute(
-          'UPDATE warn_records SET warn_count = ? WHERE bot_id = ? AND group_jid = ? AND member_jid = ?',
-          [warnObj.count, botId, jid, target]
-        );
-      } catch {}
+      const baru  = Math.max(0, warnObj.count - 1);
+      const simpan = await simpanTetap('unwarn', () => pool.execute(
+        'UPDATE warn_records SET warn_count = ? WHERE bot_id = ? AND group_jid = ? AND member_jid = ?',
+        [baru, botId, jid, target]
+      ));
+      if (simpan.ok) warnObj.count = baru;
       await client.message.send(jid, {
-        text: `✅ Warn @${target.split('@')[0]} dikurangi. Sisa: ${warnObj.count}/${warnObj.limit}`,
+        text: simpan.ok
+          ? `✅ Warn @${target.split('@')[0]} dikurangi. Sisa: ${warnObj.count}/${warnObj.limit}`
+          : pesanGagalSimpan(`Pengurangan warn @${target.split('@')[0]}`),
         mentions: [target],
       });
       return true;
@@ -503,15 +568,17 @@ module.exports = async function ownerHandler(ctx) {
       if (!mentioned[0]) { await reply(`Penggunaan: ${p}delwarn @target`); return true; }
       const target = mentioned[0];
       const key    = getWarnKey(botId, jid, target);
-      warnData.delete(key);
-      try {
-        await pool.execute(
-          'DELETE FROM warn_records WHERE bot_id = ? AND group_jid = ? AND member_jid = ?',
-          [botId, jid, target]
-        );
-      } catch {}
+      const simpan = await simpanTetap('delwarn', () => pool.execute(
+        'DELETE FROM warn_records WHERE bot_id = ? AND group_jid = ? AND member_jid = ?',
+        [botId, jid, target]
+      ));
+      // Memori baru dihapus kalau DB benar-benar sudah terhapus. Kalau dibalik,
+      // warn yang gagal dihapus dari DB akan MUNCUL LAGI setelah restart.
+      if (simpan.ok) warnData.delete(key);
       await client.message.send(jid, {
-        text: `🗑️ Warn @${target.split('@')[0]} dihapus`,
+        text: simpan.ok
+          ? `🗑️ Warn @${target.split('@')[0]} dihapus`
+          : pesanGagalSimpan(`Penghapusan warn @${target.split('@')[0]}`),
         mentions: [target],
       });
       return true;
@@ -521,14 +588,14 @@ module.exports = async function ownerHandler(ctx) {
       if (!isGroup) { await reply(mess.OnlyGroup); return true; }
       // Reset semua warn di grup ini
       const keysToDelete = [...warnData.keys()].filter(k => k.startsWith(`${botId}:${jid}:`));
-      keysToDelete.forEach(k => warnData.delete(k));
-      try {
-        await pool.execute(
-          'DELETE FROM warn_records WHERE bot_id = ? AND group_jid = ?',
-          [botId, jid]
-        );
-      } catch {}
-      await reply('✅ Semua warn di grup ini direset');
+      const simpan = await simpanTetap('resetwarn', () => pool.execute(
+        'DELETE FROM warn_records WHERE bot_id = ? AND group_jid = ?',
+        [botId, jid]
+      ));
+      if (simpan.ok) keysToDelete.forEach(k => warnData.delete(k));
+      await reply(simpan.ok
+        ? '✅ Semua warn di grup ini direset'
+        : pesanGagalSimpan('Reset semua warn di grup ini'));
       return true;
     }
 
@@ -539,18 +606,24 @@ module.exports = async function ownerHandler(ctx) {
         await reply(`Penggunaan: ${p}setwarnlimit <1-10>`);
         return true;
       }
-      // Update all existing warn entries for this group
-      const prefix = `${botId}:${jid}:`;
-      for (const [key, val] of warnData.entries()) {
-        if (key.startsWith(prefix)) val.limit = limit;
+      // Persist limit ke DB, kalau tidak tiap restart balik ke default 3.
+      // Komentar ini dulu menuliskan akibatnya dengan tepat, tapi tetap memakai
+      // `catch {}` — jadi akibat yang dituliskan itu memang terjadi, tanpa ada
+      // yang tahu. Sekarang kegagalannya dilaporkan.
+      const prefix    = `${botId}:${jid}:`;
+      const entriGrup = [...warnData.entries()].filter(([k]) => k.startsWith(prefix));
+      const simpan    = await simpanTetap('setwarnlimit', () => pool.execute(
+        'UPDATE warn_records SET warn_limit = ? WHERE bot_id = ? AND group_jid = ?',
+        [limit, botId, jid]
+      ));
+      if (!simpan.ok) {
+        // Memori sengaja TIDAK diubah: yang tampil harus sama dengan yang
+        // tersimpan, jadi owner melihat "gagal" dan mengulang — bukan melihat
+        // angka baru yang akan hilang sendiri saat bot restart.
+        await reply(pesanGagalSimpan(`Batas warn ${limit}`));
+        return true;
       }
-      // Persist limit ke DB, kalau tidak tiap restart balik ke default 3
-      try {
-        await pool.execute(
-          'UPDATE warn_records SET warn_limit = ? WHERE bot_id = ? AND group_jid = ?',
-          [limit, botId, jid]
-        );
-      } catch {}
+      for (const [, val] of entriGrup) val.limit = limit;
       await reply(`✅ Batas warn diubah ke ${limit}`);
       return true;
     }
