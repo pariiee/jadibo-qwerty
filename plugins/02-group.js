@@ -1851,9 +1851,15 @@ module.exports = async function groupHandler(ctx) {
         }
       } catch (e) {
         await react('❌');
+        // CETAK ERROR MENTAH ke log SEBELUM dirapikan. `rapikanError()` sengaja
+        // menyamarkan pesan teknis buat user, tapi kalau hasil samarannya yang
+        // jadi satu-satunya jejak, siapa pun yang men-debug jadi buta — persis
+        // yang barusan terjadi: log cuma berisi "ada gangguan teknis di sisi
+        // server" dan tidak ada cara tahu error aslinya apa.
+        console.error('[testswgc] gagal:', e?.stack || e?.message || e);
         await reply(
           `❌ *testswgc* gagal:\n\`${rapikanError(e)}\`\n\n` +
-          `_Kemungkinan zapo-js belum dukung groupStatusMessageV2 — itu batasan paket, bukan bug kode._`
+          `_Detail mentahnya sudah masuk log bot._`
         );
       }
       return true;
