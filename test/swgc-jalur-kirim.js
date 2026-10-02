@@ -101,6 +101,22 @@ console.log('\n=== 7. Command uji sementara sudah dibersihkan ===');
 cek('`testswgc` tidak ada lagi di plugins/02-group.js', !/testswgc/.test(pKode),
   'logikanya sudah pindah ke .swgc — command uji tidak perlu ikut rilis');
 
+console.log('\n=== 8. Gate akses: admin grup / owner / dev saja ===');
+cek('swgc punya gate `isAdmin()`', /case 'swgc'[\s\S]{0,700}?isAdmin\(\)/.test(pKode),
+  'tanpa gate, siapa pun di grup bisa menyuruh');
+cek('owner/dev dilewatkan (bisa nembak grup lain)', /!ctx\.isOwner\s*&&\s*!ctx\.isDev/.test(pKode));
+cek('menolak dengan pesan resmi mess.GrupAdmin', /mess\.GrupAdmin/.test(pKode));
+cek('TIDAK memakai gate isBotAdmin di swgc',
+  !/case 'swgc'[\s\S]{0,400}?isBotAdmin\(\)/.test(pKode),
+  'bot tidak perlu jadi admin — batasannya di SIAPA yang menyuruh');
+
+console.log('\n=== 9. Tidak ada klaim "bot harus admin" yang salah ===');
+const semuaSumber = pKode + fs.readFileSync(path.join(__dirname, '..', 'engine', 'zapo', 'client.js'), 'utf8');
+const nonKomentar = semuaSumber.split('\n').filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l)).join('\n');
+cek('tidak ada instruksi "bot harus admin" di kode non-komentar',
+  !/bot\s+harus\s+admin/i.test(nonKomentar),
+  'itu salah baca catatan referensi — yang dibatasi adalah penyuruhnya');
+
 console.log('');
 console.log(gagal ? `=== GAGAL: ${gagal} masalah ===` : '=== SEMUA CEK LULUS ===');
 process.exit(gagal ? 1 : 0);

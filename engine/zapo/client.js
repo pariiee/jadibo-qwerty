@@ -441,7 +441,9 @@ function createClient({ client, botJid = null, logger = console } = {}) {
      * dipakai zapo (polltype/event_type/view_once) memang dibangun di jalur ini —
      * menambahkannya cuma mengubah stanza yang terbukti jalan.
      *
-     * CATATAN PENTING: bot harus ADMIN di grup tujuan. Tanpa itu WA menolak.
+     * Batasan akses ada di PEMANGGIL (plugins/02-group.js): cuma admin grup,
+     * owner, atau dev yang boleh menyuruh. Bot TIDAK perlu jadi admin di grup
+     * tujuan — cukup ikut jadi anggota.
      */
     async relayStatusGrup(jid, content, opts = {}) {
       const tujuan = bareJid(Array.isArray(jid) ? jid[0] : jid);

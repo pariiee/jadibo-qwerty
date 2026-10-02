@@ -1669,9 +1669,20 @@ module.exports = async function groupHandler(ctx) {
     // ── swgc (kirim status/story ke grup) ────────────────────────────────────
     case 'swgc':
     case 'upswgc': {
-      // Sengaja TANPA gate `isBotAdmin()`: status grup nggak butuh bot jadi
-      // admin (cuma butuh ikut jadi anggota). Referensi juga mencabutnya, dan
-      // buat target grup lain lewat `idgc|caption` gate itu malah salah grup.
+      // Gate: cuma ADMIN GRUP, OWNER, atau DEV yang boleh menyuruh.
+      //
+      // Dan bot TIDAK perlu jadi admin — cuma perlu ikut jadi anggota grup.
+      // (Yang salah tadi: pesan ⚠️ di bawah menyuruh "bot harus admin"; itu
+      // salah baca catatan referensi. Batasannya ada di SIAPA YANG MENYURUH.)
+      //
+      // Owner/dev dilewatkan lebih dulu supaya mereka tetap bisa nembak ke grup
+      // lain lewat `idgc|caption` (di situ mereka bukan anggota grup tujuan,
+      // jadi `isAdmin()` pasti gagal).
+      if (!ctx.isOwner && !ctx.isDev && !await isAdmin()) {
+        await reply(mess.GrupAdmin);
+        return true;
+      }
+
       const teks = args.join(' ').trim();
 
       // Owner boleh nembak ke grup lain: `.swgc <idgc>@g.us|caption`
@@ -1755,11 +1766,7 @@ module.exports = async function groupHandler(ctx) {
           if (ack.error) {
             console.error(`[swgc] WA menolak status grup: error=${ack.error} id=${hasil?.id || '-'}`);
             await react('⚠️');
-            await reply(
-              `⚠️ WA MENOLAK status grup ini (error ${ack.error}).\n\n` +
-              `Kalau terus begini: pastikan *bot sudah jadi ADMIN* di grup itu — ` +
-              `referensinya mencatat itu syaratnya.`
-            );
+            await reply(`⚠️ WA MENOLAK status grup ini (error ${ack.error}).`);
           } else {
             await react('✅');
           }
