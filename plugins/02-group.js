@@ -1784,6 +1784,11 @@ module.exports = async function groupHandler(ctx) {
           );
         }
       } catch (e) {
+        // CATAT DULU, baru dirapikan. `rapikanError()` menyamarkan pesan teknis
+        // untuk user; kalau hasil samarannya jadi satu-satunya jejak, siapa pun
+        // yang men-debug jadi buta. Ini yang bikin bug media di atas tidak
+        // meninggalkan satu baris pun di log.
+        console.error(`[swgc] gagal (unduh/unggah media?):`, e?.stack || e?.message || e);
         await reply(`❌ Gagal kirim status grup: ${rapikanError(e)}`);
       }
       return true;

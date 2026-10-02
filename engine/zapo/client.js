@@ -98,6 +98,34 @@ function attachMentions(content, mentions) {
 const OPERASI_TERKIRIM = ['edit', 'delete', 'react', 'messageId', 'editKey'];
 
 /**
+ * Normalisasi argumen kedua `prepareMedia` menjadi `{ type, mimetype }`.
+ *
+ * Pemanggil di repo ini tidak seragam:
+ *   prepareMedia(buf, 'image/jpeg')                  // bentuk lama (string)
+ *   prepareMedia(buf, { type: 'image', mimetype })   // 02-group & 05-owner
+ *
+ * Signature lama cuma menerima string, sehingga `String({...})` menjadi
+ * `"[object Object]"` → tidak diawali `image/` → jenisnya jatuh ke 'document' →
+ * balikannya `{ documentMessage }`, sementara pemanggil men-destructure
+ * `{ imageMessage }` = undefined. Hasilnya media kosong TANPA satu pun error di
+ * log — itu gejala ".swgc reply media gagal, tapi teks jalan".
+ *
+ * Diekspor sebagai fungsi murni supaya bisa dites langsung (pola sama dengan
+ * `toZapoContent`); tes yang mencocokkan teks sumber tidak akan pernah
+ * menangkap bug bentuk argumen.
+ */
+function normalisasiMedia(opsi) {
+  const obj = typeof opsi === 'object' && opsi !== null;
+  const type = obj ? opsi.type : undefined;
+  const mimetype = (obj ? opsi.mimetype : opsi) || 'image/jpeg';
+  const kind = type || (String(mimetype).startsWith('image/') ? 'image'
+    : String(mimetype).startsWith('video/') ? 'video'
+    : String(mimetype).startsWith('audio/') ? 'audio'
+    : 'document');
+  return { type: kind, mimetype };
+}
+
+/**
  * Plugin kirim content dalam bahasa Baileys (`{ text }`, `{ image, caption }`,
  * `{ document, fileName }`, ...). zapo pakai bahasa sendiri — terjemahin di sini.
  *
@@ -403,13 +431,21 @@ function createClient({ client, botJid = null, logger = console } = {}) {
      * Upload media jadi PROTO (bukan Buffer). Dipakai header pesan tombol
      * (InteractiveMessage.Header butuh proto IDocumentMessage) & status grup.
      * zapo: `message.upload` balikin proto siap-pakai.
+     *
+     * Menerima DUA bentuk, karena pemanggil di repo ini tidak seragam:
+     *   prepareMedia(buf, 'image/jpeg')                  // lama
+     *   prepareMedia(buf, { type: 'image', mimetype })   // dipakai 02-group & 05-owner
+     *
+     * Bentuk object WAJIB didukung: dulu parameter keduanya cuma `mimetype`
+     * (string), jadi `{ type, mimetype }` masuk ke `String(mimetype)` menjadi
+     * `"[object Object]"` → tidak diawali `image/` → `kind` jatuh ke 'document'
+     * → fungsi mengembalikan `{ documentMessage }` sementara pemanggil
+     * men-destructure `{ imageMessage }` (= undefined). Hasilnya status grup
+     * berisi document kosong, tanpa satu pun error di log.
      */
-    async prepareMedia(buffer, mimetype = 'image/jpeg') {
-      const kind = String(mimetype).startsWith('image/') ? 'image'
-        : String(mimetype).startsWith('video/') ? 'video'
-        : String(mimetype).startsWith('audio/') ? 'audio'
-        : 'document';
-      const up = await need('client.message.upload', client.message?.upload)(buffer, { type: kind, mimetype });
+    async prepareMedia(buffer, opsi = 'image/jpeg') {
+      const { type: kind, mimetype: mt } = normalisasiMedia(opsi);
+      const up = await need('client.message.upload', client.message?.upload)(buffer, { type: kind, mimetype: mt });
       return { [`${kind}Message`]: up };
     },
 
@@ -805,5 +841,5 @@ module.exports = {
   BIZ_NODE: [{ attrs: {}, tag: 'biz' }],
   // Utility yang dipakai engine & tes (jangan dihapus — kontrak internal)
   bareJid, angkaJid, asJids, normalisasiPesan, normalizeIncoming,
-  normalizeGroupMeta, toZapoContent, toZapoOptions, isRawProto,
+  normalizeGroupMeta, toZapoContent, toZapoOptions, isRawProto, normalisasiMedia,
 };
