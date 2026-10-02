@@ -11,6 +11,7 @@
  */
 
 const { rapikanError } = require('../engine/pesanError');
+const { randomBytes } = require('crypto');
 const { getMuteGrup, setMuteGrup, daftarMuteGrup } = require('../config/globalSettings');
 const mess             = require('../config/mess');
 const proteksi         = require('./06-proteksi');
@@ -1736,22 +1737,124 @@ module.exports = async function groupHandler(ctx) {
           return true;
         }
 
-        // Kirim sebagai status grup. relayStatusGrup() polos: envelope
-        // groupStatusMessageV2 + messageSecret, relayMessage `{ messageId }`
-        // doang — tanpa `quoted` (WA nolak status grup yg bawa quoted).
+        // Kirim sebagai status grup.
+        //
+        // BATASAN NYATA (terukur di produksi: error=479 SMAX_INVALID):
+        // zapo 1.9.0 TIDAK punya API yang mempublikasikan `groupStatusMessageV2`
+        // ke `@g.us`. `client.status.send()` selalu mengirim ke
+        // `WA_DEFAULTS.STATUS_BROADCAST_JID` dengan daftar KONTAK sebagai
+        // penerima (lihat WaMessageDispatchCoordinator.publishStatusMessage) —
+        // jadi jid grup apa pun di situ menghasilkan alamat yang tidak valid.
+        // encoder-nya memang bisa bikin groupStatusMessageV2, tapi tidak ada
+        // jalur kirimnya.
+        //
+        // Karena itu kegagalannya TIDAK ditelan lagi. Dulu kode ini menyaring
+        // string 'negative publish ack' dan menganggapnya "400 policy yang boleh
+        // dibuang" — padahal 479 (SMAX_INVALID) juga berbentuk 'negative publish
+        // ack'. Akibatnya: centang ✅ terkirim, status tidak pernah jadi, dan
+        // nol pemberitahuan.
         try {
           await client.message.relayStatusGrup(targetGc, content);
+          await react('✅');
         } catch (e) {
-          if (!e.message?.includes('400') && !e.message?.includes('negative publish ack')) {
-            throw e; // lempar ulang kalau bukan error 400 WA
-          }
-          // WA nolak di level policy. Jangan ditelan diem-diem — kalau nggak
-          // dicatat, gejalanya cuma "emoji centang tapi status nggak jadi".
-          console.error(`[swgc] WA nolak status grup: ${e.message}`);
+          const pesan = String(e?.message || e);
+          console.error(`[swgc] gagal kirim status grup: ${pesan}`);
+          // `negative publish ack`/400 polos = WA menolak di level policy.
+          // Selain itu (mis. 479 SMAX_INVALID) = jalurnya memang belum didukung,
+          // jadi beri tahu apa adanya alih-alih centang palsu.
+          const policyWA = /\b400\b/.test(pesan) && !/\b479\b/.test(pesan);
+          await reply(
+            policyWA
+              ? '⚠️ WA menolak status grup ini (policy). Coba media lain atau tunggu beberapa saat.'
+              : `❌ Status grup gagal dikirim.\n_${rapikanError(e)}_`
+          );
         }
-        await react('✅');
       } catch (e) {
         await reply(`❌ Gagal kirim status grup: ${rapikanError(e)}`);
+      }
+      return true;
+    }
+
+    // ── testswgc (UJI status grup — diagnostik owner) ────────────────────────
+    // Mencoba jalur `groupStatusMessageV2` lewat pola "raw proto passthrough"
+    // yang sudah terbukti jalan di project ini (buttonsMessage, interactiveMessage,
+    // dll). `groupStatusMessageV2` SUDAH terdaftar di PROTO_KEYS adapter, jadi
+    // `toZapoContent()` meneruskannya apa adanya.
+    //
+    // Kenapa perlu command terpisah: `.swgc` selama ini "berhasil" (centang ✅)
+    // padahal statusnya tidak pernah jadi — jalur `status.send` mengirim ke
+    // STATUS_BROADCAST_JID (story, bukan grup) dan WA menolaknya `error=479`.
+    // Command ini memisahkan "jalurnya salah" dari "WA menolak isinya", dan
+    // melaporkan ack APA ADANYA supaya terbukti, bukan ditebak.
+    case 'testswgc': {
+      if (!ctx.isOwner) { await reply(mess.ownerOnly); return true; }
+      if (!jid.endsWith('@g.us')) { await reply('Uji ini harus dijalankan di GRUP.'); return true; }
+
+      const teks = args.join(' ').trim();
+
+      // Isi status: reply gambar/video/audio, ATAU teks langsung.
+      // Sama seperti `.swgc`: reply TANPA caption → teks yang diketik dipakai
+      // sebagai caption.
+      const q = ctx.msg?.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+      const imgMsg = q?.imageMessage || ctx.msg?.message?.imageMessage;
+      const vidMsg = q?.videoMessage || ctx.msg?.message?.videoMessage;
+      const audMsg = q?.audioMessage || ctx.msg?.message?.audioMessage;
+
+      let isi;
+      if (imgMsg) {
+        isi = { imageMessage: { ...imgMsg, ...(!imgMsg.caption && teks ? { caption: teks } : {}) } };
+      } else if (vidMsg) {
+        isi = { videoMessage: { ...vidMsg, ...(!vidMsg.caption && teks ? { caption: teks } : {}) } };
+      } else if (audMsg) {
+        // Audio tidak punya field caption di WA — dikirim apa adanya.
+        isi = { audioMessage: { ...audMsg } };
+      } else if (teks) {
+        isi = { conversation: teks };
+      }
+
+      if (!isi) {
+        await reply(
+          `Reply gambar/video/audio, atau ketik teks langsung:\n*${p}testswgc <teks>*\n\n` +
+          `_(kalau reply media tanpa caption, teks abis command jadi captionnya)_`
+        );
+        return true;
+      }
+
+      await react('⏳');
+      try {
+        // Jalur produksi yang sama dengan `.swgc`. Isi langsung dibungkus
+        // `groupStatusMessageV2` — bentuk yang dipakai referensi Baileys.
+        const hasil = await client.message.relayStatusGrup(jid, {
+          groupStatusMessageV2: { message: isi },
+        });
+
+        // Laporkan ack APA ADANYA. `ack.error` terisi = WA menolak walau
+        // promise-nya resolve — tanpa mencetak ini, "sukses" tidak bisa
+        // dibedakan dari "diterima lalu ditolak".
+        const ack = hasil?.ack || {};
+        if (ack.error) {
+          await react('⚠️');
+          await reply(
+            `⚠️ *testswgc*: WA MENOLAK (error ${ack.error})\n` +
+            `• id: \`${hasil?.id || '-'}\`\n` +
+            `• addressing: ${ack.addressingMode || '-'}`
+          );
+        } else {
+          await react('✅');
+          await reply(
+            `✅ *testswgc* terkirim\n` +
+            `• id: \`${hasil?.id || '-'}\`\n` +
+            `• ack.error: (tidak ada)\n` +
+            `• addressing: ${ack.addressingMode || '-'}\n\n` +
+            `_Cek langsung di grup: muncul sebagai Status, bukan pesan biasa?_`
+          );
+        }
+      } catch (e) {
+        await react('❌');
+        await reply(
+          `❌ *testswgc* gagal:\n\`${rapikanError(e)}\`\n\n` +
+          `_Kemungkinan zapo-js belum dukung groupStatusMessageV2 — itu batasan paket, bukan bug kode._`
+        );
       }
       return true;
     }
