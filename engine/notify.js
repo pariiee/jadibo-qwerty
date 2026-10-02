@@ -57,12 +57,25 @@ async function kirimLewatBot(botId, nomor, teks) {
   // sama, tapi arah impornya jadi engine -> controller kalau lewat sana.
   const { activeBots } = require('./runtime');
   const client = activeBots.get(botId) || activeBots.get(String(botId));
-  if (!client) return false;
+  if (!client) {
+    // JANGAN senyap. Notifikasi yang gagal tanpa jejak itu cara paling mahal
+    // kehilangan pelanggan: user bayar, tidak dapat kabar, dan tidak ada satu
+    // baris pun di log yang bisa dipakai buat menelusuri kenapa.
+    console.warn(`[Notif] bot ${botId} tidak ada di activeBots (isi: [${[...activeBots.keys()].join(',')}]) — notif ke ${nomor} TIDAK terkirim`);
+    return false;
+  }
+  if (typeof client?.message?.send !== 'function') {
+    console.warn(`[Notif] bot ${botId} tidak punya client.message.send — notif ke ${nomor} TIDAK terkirim`);
+    return false;
+  }
   try {
     await client.message.send(nomor + '@s.whatsapp.net', { text: teks });
+    console.log(`[Notif] terkirim lewat bot ${botId} ke ${nomor}`);
     return true;
-  } catch {
-    return false; // socket sudah mati — coba bot berikutnya
+  } catch (e) {
+    // Socket mati / nomor tidak valid — coba bot berikutnya, tapi tinggalkan jejak.
+    console.warn(`[Notif] gagal kirim lewat bot ${botId} ke ${nomor}: ${e.message}`);
+    return false;
   }
 }
 
