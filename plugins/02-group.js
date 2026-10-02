@@ -479,16 +479,37 @@ module.exports = async function groupHandler(ctx) {
   }
 
   // Helper: is bot admin?
+  //
+  // Versi lama mencocokkan NOMOR dari `botData.bot_number` ke daftar peserta
+  // pakai `String.includes()`. Tiga cacat, semuanya senyap (hasilnya `false`,
+  // nol error), dan 22 command grup bergantung pada ini:
+  //
+  //  1. `bot_number` itu kolom isian user yang tidak wajib diisi. Kosong /
+  //     beda format = deteksi mati, dan bot dilaporkan "bukan admin" padahal
+  //     jelas-jelas admin.
+  //  2. `.includes()` bukan pencocokan: `62851859635901@...` ikut cocok dengan
+  //     bot `6285185963590` — peserta lain bisa dibaca sebagai bot.
+  //  3. Di grup ber-alamat LID, `p.jid` = `@lid` (bukan nomor) sehingga
+  //     `jidMatch` mati dan hanya `phoneNumber` yang menyelamatkan — padahal
+  //     `phoneNumber` opsional menurut tipe zapo.
+  //
+  // Sekarang: identitas bot diambil dari KREDENSIAL SESINYA (bot tahu siapa
+  // dirinya), lalu dicocokkan PERSIS. Sesi produksi memang menyimpan keduanya
+  // (`me_jid` @s.whatsapp.net + `me_lid` @lid), jadi kedua bentuk ditangani.
+  // Tidak bergantung pada kolom isian yang bisa kosong, dan tidak bisa salah
+  // cocok ke nomor yang kebetulan mirip.
   async function isBotAdmin() {
     const meta = await getMeta();
-    if (!meta) return false;
-    const botNum = botData.bot_number?.replace(/\D/g, '');
-    return meta.participants.some(p => {
-      // Grup LID: p.jid = @lid, p.phoneNumber = 628xxx@s.whatsapp.net
-      const phoneMatch = p.phoneNumber && String(p.phoneNumber).includes(botNum);
-      // Grup biasa: p.jid = 628xxx@s.whatsapp.net
-      const jidMatch = p.jid && p.jid.includes(botNum);
-      return (phoneMatch || jidMatch) && p.isAdmin;
+    if (!meta?.participants) return false;
+
+    const telanjang = (j) => String(j || '').split(':')[0].split('@')[0];
+    const creds = client.auth?.getCurrentCredentials?.() || client.getCurrentCredentials?.() || {};
+    const aku = [telanjang(creds.meJid), telanjang(creds.meLid)].filter(Boolean);
+    if (aku.length === 0) return false;
+
+    return meta.participants.some((p) => {
+      const dia = [p.jid, p.lid, p.phoneNumber].map(telanjang).filter(Boolean);
+      return dia.some((x) => aku.includes(x)) && p.isAdmin === true;
     });
   }
 
