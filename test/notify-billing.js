@@ -126,6 +126,22 @@ const { kirimKeOwner } = require('../engine/notify');
   // 7. argumen kosong
   cek('userId/teks kosong -> false', (await kirimKeOwner(0, '')) === false);
 
+  // ── BENTUK content: `{ type:'text' }`, BUKAN `{ text }` ───────────────────
+  // Ini bug yang bikin notif pembayaran TIDAK PERNAH SAMPAI padahal log bilang
+  // "terkirim". `activeBots` isinya client MENTAH zapo, dan encoder zapo cuma
+  // menganggap pesan teks kalau `content.type === 'text'` (`isSendTextMessage`)
+  // — `{ text }` polos tidak dikenali. Jangan hapus assertion ini: tanpa dia,
+  // `{ text }` balik lagi dan gagalnya senyap, karena `send()` resolve sebelum
+  // stanza-nya benar-benar terkirim.
+  botPalsu.hp = '';
+  botPalsu.aktif = [{ id: 8, owner_number: '6287778032605' }];
+  terkirim.length = 0;
+  await kirimKeOwner(1, 'uji bentuk');
+  const isiContent = terkirim[0]?.isi;
+  cek('content berbentuk objek', !!isiContent && typeof isiContent === 'object', typeof isiContent);
+  cek("content WAJIB { type:'text' } (client mentah zapo)", isiContent?.type === 'text', JSON.stringify(isiContent));
+  cek('teksnya ikut terkirim', isiContent?.text === 'uji bentuk', String(isiContent?.text));
+
   console.log(gagal ? `\n=== GAGAL: ${gagal} masalah ===` : '\n=== SEMUA CEK LULUS ===');
   process.exit(gagal ? 1 : 0);
 })();

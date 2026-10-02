@@ -69,7 +69,24 @@ async function kirimLewatBot(botId, nomor, teks) {
     return false;
   }
   try {
-    await client.message.send(nomor + '@s.whatsapp.net', { text: teks });
+    // `{ type: 'text' }` WAJIB, bukan `{ text }`.
+    //
+    // `activeBots` menyimpan client MENTAH zapo (`whatsappEngine.js` baris ~322
+    // `activeBots.set(botId, client)`), sedangkan plugin menerima ADAPTER
+    // (`engine/zapo/client.js`) yang menerjemahkan bahasa Baileys -> zapo.
+    // Client mentah menolak `{ text }`: encoder zapo hanya menganggap pesan teks
+    // kalau `content.type === 'text'` (`isSendTextMessage`), dan kalau tidak
+    // cocok sama sekali dia jatuh ke `default:` yang melempar
+    // "unsupported media message type: undefined".
+    //
+    // Dicek langsung di mesin dev:
+    //   isSendTextMessage({ text:'hai' })              -> false
+    //   isSendTextMessage({ type:'text', text:'hai' }) -> true
+    //
+    // Ini yang bikin notif pembayaran tidak pernah sampai padahal log bilang
+    // "terkirim": `send()` resolve dengan WAMessage-like SEBELUM stanza-nya
+    // benar-benar dikirim, jadi sukses palsu.
+    await client.message.send(nomor + '@s.whatsapp.net', { type: 'text', text: teks });
     console.log(`[Notif] terkirim lewat bot ${botId} ke ${nomor}`);
     return true;
   } catch (e) {
