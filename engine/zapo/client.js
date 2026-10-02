@@ -596,10 +596,24 @@ function createClient({ client, botJid = null, logger = console } = {}) {
       return need('client.group.rejectMembershipRequests', client.group?.rejectMembershipRequests)(g, list, opts);
     },
 
-    /** `setSetting(jid, 'announcement'|'locked'|'open', true)` — nama setting zapo. */
+    /**
+     * `setSetting(jid, setting, value)` — nama setting sisi zapo.
+     *
+     * Plugin (warisan Baileys) manggil pakai `'open'`/`'close'`, sedangkan zapo
+     * cuma kenal `announcement|restrict|ephemeral|...`. Dulu string itu diteruskan
+     * apa adanya -> `SETTING_TAGS['open']` = undefined -> `tags.off` meledak
+     * ("Cannot read properties of undefined (reading 'off')"), dan `.open`/`.close`
+     * mati total di runtime. Penerjemahan tempatnya DI SINI, bukan di call-site.
+     */
     async setSetting(jid, setting, value) {
       metaCache.delete(bareJid(grupKey(jid)));
-      return need('client.group.setSetting', client.group?.setSetting)(grupKey(jid), setting, value);
+      let nama = setting;
+      let on = value;
+      if (setting === 'open' || setting === 'close') {
+        nama = 'announcement';      // zapo nggak punya 'open'/'close'
+        on = setting === 'close';   // close = announce ON = grup ditutup
+      }
+      return need('client.group.setSetting', client.group?.setSetting)(grupKey(jid), nama, on);
     },
 
     async setSubject(jid, subject) {
