@@ -421,38 +421,57 @@ function createClient({ client, botJid = null, logger = console } = {}) {
 
     /**
      * Status grup (`.swgc`) — kirim ke jid **GRUP** lewat
-     * `messageDispatch.sendMessage` + node `<meta is_group_status="true"/>`.
+     * `messageDispatch.sendMessage` dengan isi `groupStatusMessageV2`.
      *
-     * JANGAN kembali ke `status.send`: koordinator status resmi selalu memakai
-     * `STATUS_BROADCAST_JID` dengan daftar KONTAK sebagai penerima, jadi jid
-     * `@g.us` di situ ditolak server (`error=479 SMAX_INVALID`) — terbukti di
-     * produksi. Method ini dulu hidup di objek `status`; dipindah ke `message`
-     * karena pemanggilnya (`plugins/02-group.js`) memakai `client.message`,
-     * dan sisa salinannya di objek `status` DIHAPUS supaya tidak ada dua
-     * implementasi yang bisa berbeda diam-diam — itu yang bikin perbaikan
-     * sebelumnya tidak berpengaruh sama sekali.
+     * BENTUK YANG TERBUKTI JALAN (dari repo referensi yang memakai Baileys,
+     * bukan dugaan): `messageSecret` 32 byte DIHASILKAN SENDIRI dan dipasang di
+     * DUA lapis — `messageContextInfo` terluar DAN di dalam
+     * `groupStatusMessageV2.message`. `relayMessage`-nya TIDAK memakai
+     * additionalNodes/customNodes sama sekali.
+     *
+     * PENTING — `content` yang masuk ke sini adalah **Proto.IMessage mentah**
+     * (`{ extendedTextMessage: { text } }`, `{ imageMessage: {...} }`), BUKAN
+     * shorthand Baileys/zapo (`{ text }`, `{ type: 'text' }`). zapo hanya
+     * menerjemahkan konten di lapis TERLUAR; karena isi ini disarang di dalam
+     * `groupStatusMessageV2.message`, bentuk shorthand akan sampai ke WA sebagai
+     * proto sampah.
+     *
+     * JANGAN juga memaksa node `<meta is_group_status="true"/>` sebagai
+     * `customNodes`: zapo tidak mengenal atribut itu, dan node `<meta>` yang
+     * dipakai zapo (polltype/event_type/view_once) memang dibangun di jalur ini —
+     * menambahkannya cuma mengubah stanza yang terbukti jalan.
+     *
+     * CATATAN PENTING: bot harus ADMIN di grup tujuan. Tanpa itu WA menolak.
      */
     async relayStatusGrup(jid, content, opts = {}) {
       const tujuan = bareJid(Array.isArray(jid) ? jid[0] : jid);
-      const pesan = toZapoContent(content);
+      const isi = toZapoContent(content);
 
-      // `messageDispatch` nempel di koordinator pesan.
+      // Satu secret, dipakai di dua lapis (persis seperti referensi).
+      const messageSecret = require('crypto').randomBytes(32);
+
+      const pesan = {
+        ...isi,
+        messageContextInfo: {
+          ...(isi?.messageContextInfo || {}),
+          messageSecret,
+        },
+      };
+
       const dispatch = client.message?.messageDispatch
         || client.messageDispatch
         || client.raw?.message?.messageDispatch
         || client.raw?.messageDispatch;
 
-      if (dispatch?.sendMessage) {
-        return dispatch.sendMessage(tujuan, pesan, {
-          customNodes: [{ tag: 'meta', attrs: { is_group_status: 'true' } }],
-          ...(opts.contextInfo ? { contextInfo: opts.contextInfo } : {}),
-        });
+      if (!dispatch?.sendMessage) {
+        throw new Error('zapo: messageDispatch.sendMessage tidak tersedia — versi paket berubah?');
       }
 
-      // Jalur cadangan: kirim sebagai pesan biasa. Statusnya mungkin tidak
-      // terbentuk (node meta tidak ikut), tapi errornya nyata dan bisa dibaca.
-      console.warn('[zapo] messageDispatch tidak ada — status grup dikirim lewat message.send polos');
-      return message.send(tujuan, pesan, opts);
+      return dispatch.sendMessage(
+        tujuan,
+        { groupStatusMessageV2: { message: pesan } },
+        { messageSecret, ...(opts.contextInfo ? { contextInfo: opts.contextInfo } : {}) },
+      );
     },
   };
 

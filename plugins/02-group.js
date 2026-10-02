@@ -1726,7 +1726,9 @@ module.exports = async function groupHandler(ctx) {
             },
           };
         } else if (caption) {
-          content = { text: caption };
+          // Proto mentah, bukan shorthand `{ text }` — lihat catatan di
+          // engine/zapo/client.js `relayStatusGrup`.
+          content = { extendedTextMessage: { text: caption } };
         } else {
           await reply(
             `Cara penggunaan:\n` +
@@ -1809,7 +1811,14 @@ module.exports = async function groupHandler(ctx) {
         // Audio tidak punya field caption di WA — dikirim apa adanya.
         isi = { audioMessage: { ...audMsg } };
       } else if (teks) {
-        isi = { conversation: teks };
+        // WAJIB proto mentah `{ extendedTextMessage: { text } }`, BUKAN
+        // shorthand `{ text }`: `toZapoContent({ text })` mengubahnya jadi
+        // `{ type: 'text' }` — itu bahasa zapo untuk `sendMessage`, bukan
+        // Proto.IMessage. zapo hanya menerjemahkan konten di LAPIS TERLUAR,
+        // jadi kalau bentuk itu ikut dibungkus ke `groupStatusMessageV2.message`
+        // WA menerima proto sampah. `extendedTextMessage` ada di PROTO_KEYS,
+        // jadi diteruskan apa adanya.
+        isi = { extendedTextMessage: { text: teks } };
       }
 
       if (!isi) {
@@ -1822,11 +1831,10 @@ module.exports = async function groupHandler(ctx) {
 
       await react('⏳');
       try {
-        // Jalur produksi yang sama dengan `.swgc`. Isi langsung dibungkus
-        // `groupStatusMessageV2` — bentuk yang dipakai referensi Baileys.
-        const hasil = await client.message.relayStatusGrup(jid, {
-          groupStatusMessageV2: { message: isi },
-        });
+        // Adapter yang membungkus: dia menambahkan `messageSecret` di DUA lapis
+        // dan memasang `groupStatusMessageV2` sendiri — persis bentuk yang
+        // terbukti jalan di repo referensi. Jadi kirim ISI-nya saja.
+        const hasil = await client.message.relayStatusGrup(jid, isi);
 
         // Laporkan ack APA ADANYA. `ack.error` terisi = WA menolak walau
         // promise-nya resolve — tanpa mencetak ini, "sukses" tidak bisa
