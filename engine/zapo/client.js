@@ -420,17 +420,39 @@ function createClient({ client, botJid = null, logger = console } = {}) {
     },
 
     /**
-     * Status grup (`.swgc`) — di zapo coordinator `status` resmi. Nama & posisi
-     * method sengaja BEDA dari API asli (`message.relayStatusGrup`) supaya
-     * plugins/02-group.js nggak perlu diubah.
+     * Status grup (`.swgc`) — kirim ke jid **GRUP** lewat
+     * `messageDispatch.sendMessage` + node `<meta is_group_status="true"/>`.
+     *
+     * JANGAN kembali ke `status.send`: koordinator status resmi selalu memakai
+     * `STATUS_BROADCAST_JID` dengan daftar KONTAK sebagai penerima, jadi jid
+     * `@g.us` di situ ditolak server (`error=479 SMAX_INVALID`) — terbukti di
+     * produksi. Method ini dulu hidup di objek `status`; dipindah ke `message`
+     * karena pemanggilnya (`plugins/02-group.js`) memakai `client.message`,
+     * dan sisa salinannya di objek `status` DIHAPUS supaya tidak ada dua
+     * implementasi yang bisa berbeda diam-diam — itu yang bikin perbaikan
+     * sebelumnya tidak berpengaruh sama sekali.
      */
     async relayStatusGrup(jid, content, opts = {}) {
-      const recipients = (opts.recipients?.length ? opts.recipients : (Array.isArray(jid) ? jid : [jid])).map(bareJid);
-      return need('client.status.send', client.status?.send)({
-        recipients,
-        content: toZapoContent(content),
-        ...(opts.contextInfo ? { contextInfo: opts.contextInfo } : {}),
-      });
+      const tujuan = bareJid(Array.isArray(jid) ? jid[0] : jid);
+      const pesan = toZapoContent(content);
+
+      // `messageDispatch` nempel di koordinator pesan.
+      const dispatch = client.message?.messageDispatch
+        || client.messageDispatch
+        || client.raw?.message?.messageDispatch
+        || client.raw?.messageDispatch;
+
+      if (dispatch?.sendMessage) {
+        return dispatch.sendMessage(tujuan, pesan, {
+          customNodes: [{ tag: 'meta', attrs: { is_group_status: 'true' } }],
+          ...(opts.contextInfo ? { contextInfo: opts.contextInfo } : {}),
+        });
+      }
+
+      // Jalur cadangan: kirim sebagai pesan biasa. Statusnya mungkin tidak
+      // terbentuk (node meta tidak ikut), tapi errornya nyata dan bisa dibaca.
+      console.warn('[zapo] messageDispatch tidak ada — status grup dikirim lewat message.send polos');
+      return message.send(tujuan, pesan, opts);
     },
   };
 
@@ -605,52 +627,6 @@ function createClient({ client, botJid = null, logger = console } = {}) {
       return need('client.status.send', client.status?.send)({ recipients, content: body, ...(opts.contextInfo ? { contextInfo: opts.contextInfo } : {}) });
     },
 
-    /**
-     * Kirim STATUS GRUP ke sebuah grup. Ini yang dipakai `.swgc`/`.testswgc`.
-     *
-     * `groupStatusMessageV2` SUDAH terdaftar di PROTO_KEYS, jadi `toZapoContent()`
-     * meneruskannya apa adanya (pola "raw proto passthrough" yang sama dengan
-     * buttonsMessage/interactiveMessage).
-     *
-     * Node `<meta is_group_status="true"/>` adalah yang membedakan status grup
-     * dari pesan biasa (di Baileys: `additionalNodes`). Dikirim lewat
-     * `customNodes` di jalur `messageDispatch`; kalau jalur itu tidak tersedia di
-     * versi paket yang terpasang, jatuh ke `message.send` polos supaya tetap
-     * dicoba — lebih baik gagal dengan error nyata daripada diam.
-     *
-     * @param {string} jid        JID GRUP (`...@g.us`)
-     * @param {object} content    Proto.IMessage (mis. `{ groupStatusMessageV2: { message } }`)
-     */
-    async kirimStatusGrup(jid, content, opts = {}) {
-      const tujuan = bareJid(jid);
-      const pesan = toZapoContent(content);
-      const nodes = [{ tag: 'meta', attrs: { is_group_status: 'true' } }];
-
-      const dispatch = client.message?.messageDispatch
-        || client.messageDispatch
-        || client.raw?.message?.messageDispatch
-        || client.raw?.messageDispatch;
-
-      if (dispatch?.sendMessage) {
-        return dispatch.sendMessage(tujuan, pesan, {
-          customNodes: nodes,
-          ...(opts.contextInfo ? { contextInfo: opts.contextInfo } : {}),
-        });
-      }
-
-      // Jalur cadangan: kirim sebagai pesan biasa. Statusnya mungkin tidak
-      // terbentuk (node meta tidak ikut), tapi errornya nyata dan bisa dibaca.
-      logger.warn?.('[zapo] messageDispatch tidak ada — kirim status grup lewat message.send polos');
-      return message.send(tujuan, pesan, opts);
-    },
-
-    /** Kompat lama: `relayStatusGrup(jid, content, opts)`. */
-    async relayStatusGrup(jid, content, opts = {}) {
-      // Diarahkan ke jalur GRUP yang benar, bukan lagi `status.send`.
-      // Nama lama dipertahankan supaya pemanggilnya (plugins/02-group.js) tidak
-      // perlu diubah dua kali.
-      return status.kirimStatusGrup(jid, content, opts);
-    },
   };
 
   // ── Contacts (buat resolusi LID <-> nomor di engine/jid.js) ─────────────────
