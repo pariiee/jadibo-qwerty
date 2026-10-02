@@ -1741,23 +1741,28 @@ module.exports = async function groupHandler(ctx) {
 
         // Kirim sebagai status grup.
         //
-        // BATASAN NYATA (terukur di produksi: error=479 SMAX_INVALID):
-        // zapo 1.9.0 TIDAK punya API yang mempublikasikan `groupStatusMessageV2`
-        // ke `@g.us`. `client.status.send()` selalu mengirim ke
-        // `WA_DEFAULTS.STATUS_BROADCAST_JID` dengan daftar KONTAK sebagai
-        // penerima (lihat WaMessageDispatchCoordinator.publishStatusMessage) —
-        // jadi jid grup apa pun di situ menghasilkan alamat yang tidak valid.
-        // encoder-nya memang bisa bikin groupStatusMessageV2, tapi tidak ada
-        // jalur kirimnya.
+        // `client.message.relayStatusGrup()` (adapter) yang membungkus:
+        // `groupStatusMessageV2` + `messageSecret` di DUA lapis, persis bentuk
+        // yang terbukti jalan di `refrensi-botz/plugins/owner-upswtag.js`.
         //
-        // Karena itu kegagalannya TIDAK ditelan lagi. Dulu kode ini menyaring
-        // string 'negative publish ack' dan menganggapnya "400 policy yang boleh
-        // dibuang" — padahal 479 (SMAX_INVALID) juga berbentuk 'negative publish
-        // ack'. Akibatnya: centang ✅ terkirim, status tidak pernah jadi, dan
-        // nol pemberitahuan.
+        // Hasilnya dilaporkan APA ADANYA: WA bisa membalas ack berisi `error`
+        // walaupun promise-nya resolve. Tanpa mencetak `ack.error`, "sukses"
+        // tidak bisa dibedakan dari "diterima lalu ditolak" — dan itu yang dulu
+        // bikin centang ✅ terkirim padahal statusnya tidak pernah jadi.
         try {
-          await client.message.relayStatusGrup(targetGc, content);
-          await react('✅');
+          const hasil = await client.message.relayStatusGrup(targetGc, content);
+          const ack = hasil?.ack || {};
+          if (ack.error) {
+            console.error(`[swgc] WA menolak status grup: error=${ack.error} id=${hasil?.id || '-'}`);
+            await react('⚠️');
+            await reply(
+              `⚠️ WA MENOLAK status grup ini (error ${ack.error}).\n\n` +
+              `Kalau terus begini: pastikan *bot sudah jadi ADMIN* di grup itu — ` +
+              `referensinya mencatat itu syaratnya.`
+            );
+          } else {
+            await react('✅');
+          }
         } catch (e) {
           const pesan = String(e?.message || e);
           console.error(`[swgc] gagal kirim status grup: ${pesan}`);
@@ -1773,102 +1778,6 @@ module.exports = async function groupHandler(ctx) {
         }
       } catch (e) {
         await reply(`❌ Gagal kirim status grup: ${rapikanError(e)}`);
-      }
-      return true;
-    }
-
-    // ── testswgc (UJI status grup — diagnostik owner) ────────────────────────
-    // Mencoba jalur `groupStatusMessageV2` lewat pola "raw proto passthrough"
-    // yang sudah terbukti jalan di project ini (buttonsMessage, interactiveMessage,
-    // dll). `groupStatusMessageV2` SUDAH terdaftar di PROTO_KEYS adapter, jadi
-    // `toZapoContent()` meneruskannya apa adanya.
-    //
-    // Kenapa perlu command terpisah: `.swgc` selama ini "berhasil" (centang ✅)
-    // padahal statusnya tidak pernah jadi — jalur `status.send` mengirim ke
-    // STATUS_BROADCAST_JID (story, bukan grup) dan WA menolaknya `error=479`.
-    // Command ini memisahkan "jalurnya salah" dari "WA menolak isinya", dan
-    // melaporkan ack APA ADANYA supaya terbukti, bukan ditebak.
-    case 'testswgc': {
-      if (!ctx.isOwner) { await reply(mess.ownerOnly); return true; }
-      if (!jid.endsWith('@g.us')) { await reply('Uji ini harus dijalankan di GRUP.'); return true; }
-
-      const teks = args.join(' ').trim();
-
-      // Isi status: reply gambar/video/audio, ATAU teks langsung.
-      // Sama seperti `.swgc`: reply TANPA caption → teks yang diketik dipakai
-      // sebagai caption.
-      const q = ctx.msg?.message?.extendedTextMessage?.contextInfo?.quotedMessage;
-      const imgMsg = q?.imageMessage || ctx.msg?.message?.imageMessage;
-      const vidMsg = q?.videoMessage || ctx.msg?.message?.videoMessage;
-      const audMsg = q?.audioMessage || ctx.msg?.message?.audioMessage;
-
-      let isi;
-      if (imgMsg) {
-        isi = { imageMessage: { ...imgMsg, ...(!imgMsg.caption && teks ? { caption: teks } : {}) } };
-      } else if (vidMsg) {
-        isi = { videoMessage: { ...vidMsg, ...(!vidMsg.caption && teks ? { caption: teks } : {}) } };
-      } else if (audMsg) {
-        // Audio tidak punya field caption di WA — dikirim apa adanya.
-        isi = { audioMessage: { ...audMsg } };
-      } else if (teks) {
-        // WAJIB proto mentah `{ extendedTextMessage: { text } }`, BUKAN
-        // shorthand `{ text }`: `toZapoContent({ text })` mengubahnya jadi
-        // `{ type: 'text' }` — itu bahasa zapo untuk `sendMessage`, bukan
-        // Proto.IMessage. zapo hanya menerjemahkan konten di LAPIS TERLUAR,
-        // jadi kalau bentuk itu ikut dibungkus ke `groupStatusMessageV2.message`
-        // WA menerima proto sampah. `extendedTextMessage` ada di PROTO_KEYS,
-        // jadi diteruskan apa adanya.
-        isi = { extendedTextMessage: { text: teks } };
-      }
-
-      if (!isi) {
-        await reply(
-          `Reply gambar/video/audio, atau ketik teks langsung:\n*${p}testswgc <teks>*\n\n` +
-          `_(kalau reply media tanpa caption, teks abis command jadi captionnya)_`
-        );
-        return true;
-      }
-
-      await react('⏳');
-      try {
-        // Adapter yang membungkus: dia menambahkan `messageSecret` di DUA lapis
-        // dan memasang `groupStatusMessageV2` sendiri — persis bentuk yang
-        // terbukti jalan di repo referensi. Jadi kirim ISI-nya saja.
-        const hasil = await client.message.relayStatusGrup(jid, isi);
-
-        // Laporkan ack APA ADANYA. `ack.error` terisi = WA menolak walau
-        // promise-nya resolve — tanpa mencetak ini, "sukses" tidak bisa
-        // dibedakan dari "diterima lalu ditolak".
-        const ack = hasil?.ack || {};
-        if (ack.error) {
-          await react('⚠️');
-          await reply(
-            `⚠️ *testswgc*: WA MENOLAK (error ${ack.error})\n` +
-            `• id: \`${hasil?.id || '-'}\`\n` +
-            `• addressing: ${ack.addressingMode || '-'}`
-          );
-        } else {
-          await react('✅');
-          await reply(
-            `✅ *testswgc* terkirim\n` +
-            `• id: \`${hasil?.id || '-'}\`\n` +
-            `• ack.error: (tidak ada)\n` +
-            `• addressing: ${ack.addressingMode || '-'}\n\n` +
-            `_Cek langsung di grup: muncul sebagai Status, bukan pesan biasa?_`
-          );
-        }
-      } catch (e) {
-        await react('❌');
-        // CETAK ERROR MENTAH ke log SEBELUM dirapikan. `rapikanError()` sengaja
-        // menyamarkan pesan teknis buat user, tapi kalau hasil samarannya yang
-        // jadi satu-satunya jejak, siapa pun yang men-debug jadi buta — persis
-        // yang barusan terjadi: log cuma berisi "ada gangguan teknis di sisi
-        // server" dan tidak ada cara tahu error aslinya apa.
-        console.error('[testswgc] gagal:', e?.stack || e?.message || e);
-        await reply(
-          `❌ *testswgc* gagal:\n\`${rapikanError(e)}\`\n\n` +
-          `_Detail mentahnya sudah masuk log bot._`
-        );
       }
       return true;
     }

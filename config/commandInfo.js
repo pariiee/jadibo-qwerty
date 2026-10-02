@@ -283,7 +283,7 @@ const DESKRIPSI = {
   "sticker": "Bikin stiker dari gambar atau video",
   "store": "Buka toko item RPG",
   "suitpvp": "Main suit lawan member lain",
-  "swgc": "Kirim teks/media sebagai status grup (⚠️ belum didukung zapo)",
+  "swgc": "Kirim teks/media sebagai status grup (bot harus admin)",
   "tagadmin": "Tag semua admin grup",
   "tagall": "Tag semua member grup",
   "tagme": "Tag diri sendiri",

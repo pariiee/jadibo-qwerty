@@ -83,6 +83,9 @@ cek('memanggil client.message.relayStatusGrup',
 cek('pemanggil TIDAK ikut membungkus dengan groupStatusMessageV2',
   !/relayStatusGrup\s*\([^)]*groupStatusMessageV2/.test(pKode),
   'adapter yang membungkus — kalau pemanggil ikut membungkus, jadi bersarang');
+cek('melaporkan hasil kirim: ack.error diperiksa, bukan langsung centang',
+  /ack\??\.error|ack\.error/.test(pKode) && /react\('⚠️'\)/.test(pKode),
+  'tanpa ini "sukses" tidak bisa dibedakan dari "diterima lalu ditolak"');
 
 console.log('\n=== 6. Isi teks pakai PROTO MENTAH, bukan shorthand zapo ===');
 cek('tidak ada `conversation:` di plugins/02-group.js', !/\bconversation\s*:/.test(pKode),
@@ -93,6 +96,10 @@ cek('tidak mengirim shorthand `{ text: ... }` sama sekali',
 cek('pakai `{ extendedTextMessage: { text } }`',
   /\{\s*extendedTextMessage\s*:\s*\{\s*text\s*:/.test(pKode),
   'extendedTextMessage ada di PROTO_KEYS, jadi diteruskan apa adanya');
+
+console.log('\n=== 7. Command uji sementara sudah dibersihkan ===');
+cek('`testswgc` tidak ada lagi di plugins/02-group.js', !/testswgc/.test(pKode),
+  'logikanya sudah pindah ke .swgc — command uji tidak perlu ikut rilis');
 
 console.log('');
 console.log(gagal ? `=== GAGAL: ${gagal} masalah ===` : '=== SEMUA CEK LULUS ===');
