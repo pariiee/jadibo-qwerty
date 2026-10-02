@@ -109,20 +109,37 @@ function lidToPn(jid) {
   return lidToPhoneCache.get(String(jid)) || jid;
 }
 
-/** Async: cache dulu, lalu peta LID<->PN punya Baileys sendiri (persist di session.db). */
+/** Simpan pasangan LID<->PN dua arah, dengan bentuk yang sudah dinormalkan. */
+function simpanLidPn(lid, pn) {
+  const l = String(lid);
+  const p = toPn(bare(pn)); // buang suffix device (`628xx:0@...`)
+  lidToPhoneCache.set(l, p);
+  phoneToLidCache.set(bare(p), l);
+  return p;
+}
+
+/** Async: cache dulu, lalu peta LID<->PN milik engine, terakhir buku kontak. */
 async function lidToPnAsync(client, jid) {
   if (!isLid(jid)) return jid;
   const cached = lidToPn(jid);
   if (cached !== jid) return cached;
+
+  // Sumber 1: peta LID milik engine (Baileys punya; adapter zapo masih stub).
   try {
     const raw = await client?.lid?.getPn?.(String(jid));
-    if (raw && isPn(raw)) {
-      const pn = toPn(bare(raw)); // `628xx:0@s.whatsapp.net` -> `628xx@s.whatsapp.net`
-      lidToPhoneCache.set(String(jid), pn);
-      phoneToLidCache.set(bare(pn), String(jid));
-      return pn;
-    }
+    if (raw && isPn(raw)) return simpanLidPn(jid, raw);
+  } catch { /* nggak ada -> lanjut ke sumber berikutnya */ }
+
+  // Sumber 2: buku kontak. INI YANG JALAN DI DM.
+  // Di chat pribadi tidak ada metadata grup, jadi peta dari peserta grup kosong
+  // — dan tanpa jalur ini pemilik bot tidak dikenali di DM (role jadi 'user',
+  // command owner-only ditolak).
+  try {
+    const rec = await client?.stores?.contacts?.getByJid?.(String(jid));
+    const pn  = rec?.phoneNumber || rec?.phoneJid || rec?.pn;
+    if (pn && isPn(pn)) return simpanLidPn(jid, pn);
   } catch { /* nggak ada -> biarkan LID */ }
+
   return jid;
 }
 

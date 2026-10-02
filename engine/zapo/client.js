@@ -180,11 +180,20 @@ function normalizeGroupMeta(meta) {
 
 // ─── Pesan masuk: event zapo -> bentuk yang dibaca engine/plugins ─────────────
 function normalizeIncoming(event) {
+  // zapo naruh alamat LID & PN berdampingan di `event.key` (lihat
+  // WaIncomingMessageKey: `remoteJidAlt`/`participantAlt` = "the pn when
+  // addressed by lid"). Dulu field itu TIDAK disalin, jadi engine/jid.js
+  // `cacheLidFromKey()` selalu dapat `undefined` — peta LID->nomor kosong di
+  // DM, dan pemilik bot tidak dikenali sebagai owner di chat pribadi.
+  // Disalin apa adanya; yang memutuskan mana LID mana PN itu engine/jid.js.
+  const src = event.key || {};
   const key = {
     remoteJid: event.chatJid,
     fromMe: !!event.fromMe,
     id: event.id,
     participant: event.senderJid || undefined,
+    participantAlt: src.participantAlt || undefined,
+    remoteJidAlt:   src.remoteJidAlt   || undefined,
   };
   const { timestamp, umurMs } = normalisasiPesan(event);
   return {

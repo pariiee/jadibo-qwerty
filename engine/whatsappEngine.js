@@ -95,7 +95,7 @@ const ownerGreetCooldown = new Map();
 const devGreetCooldown   = new Map(); // key: groupJid → timestamp
 // Logika LID↔PN dipusatkan di engine/jid.js supaya cache-nya SATU (dulu tiap
 // file punya Map sendiri → user bisa tampil beda jid di log yang beda).
-const { cacheLidFromMeta, bare, lidToPn: resolveLid, lidToPnAsync: resolveLidAsync } = require('./jid');
+const { cacheLidFromMeta, cacheLidFromKey, isPn, bare, lidToPn: resolveLid, lidToPnAsync: resolveLidAsync } = require('./jid');
 // Adapter kontrak `client.*` — plugins dari `main` nggak perlu diubah,
 // semua beda antar-library mati di file itu.
 const { createClient: buatAdapter } = require('./zapo/client');
@@ -118,8 +118,14 @@ const BEBAS_SAAT_MUTE = new Set(['unmute', 'listmute']);
  * `ctx.sender` udah di-resolve LID→PN, jadi tinggal `bare`.
  * Pembanding nomor (owner/dev) WAJIB lewat sini: tanpa gerbang ini, nomor yang
  * kosong bisa `'' === ''` dan semua orang jadi owner.
+ *
+ * GERBANG LID: LID itu `238000111222333@lid` — angkanya 15 digit, jadi lolos
+ * `^\d{6,}$` padahal itu BUKAN nomor telepon. Kalau lolos, LID pencari bisa
+ * kebetulan dibandingkan sebagai nomor dan hasilnya acak. Bentuk LID harus
+ * ditolak lebih dulu, sebelum panjang digit diperiksa.
  */
 const nomorPengirim = (jid) => {
+  if (!isPn(jid)) return '';
   const n = bare(jid);
   return /^\d{6,}$/.test(n) ? n : '';
 };
@@ -208,6 +214,14 @@ function buildContext(client, event, botData) {
   const { key, message, chatJid, pushName } = event;
   const jid      = chatJid || key?.remoteJid || '';
   const isGroup  = jid.endsWith('@g.us');
+
+  // Isi peta LID<->nomor dari KEY pesan SEBELUM apa pun di-resolve.
+  // Ini sumber TERMURAH dan satu-satunya yang jalan di DM: zapo menaruh nomor
+  // asli di `key.participantAlt`/`key.remoteJidAlt` ("the pn when addressed by
+  // lid"). Metadata grup hanya ada di chat grup — makanya tanpa jalur ini
+  // pemilik bot tidak dikenali saat mengirim chat pribadi.
+  cacheLidFromKey(key);
+
   const senderRaw = isGroup ? (key?.participant || jid) : jid;
   const sender    = resolveLid(senderRaw);
 
@@ -647,48 +661,44 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
       : 'user';
 
     // ── Owner greeting ────────────────────────────────────────────────────────
-    // Kalau sender adalah owner bot dan pesan di grup, kirim sambutan
-    // Cooldown: 1 hari per grup (biar tidak spam setiap chat)
-    if (ctx.isGroup && botData.owner_number) {
+    // Pakai `ctx.isOwner` yang SUDAH dihitung di atas — jangan bandingkan nomor
+    // sendiri di sini. Dulu blok ini punya perbandingan terpisah, jadi hasilnya
+    // bisa BEDA dengan gate owner: begitu sender datang sebagai LID (umum di
+    // chat pribadi) nomor tidak ke-resolve, dan owner dianggap bukan owner.
+    // Satu sumber kebenaran, satu hasil.
+    // Cooldown: 45 menit per grup (biar tidak spam setiap chat)
+    if (ctx.isGroup && ctx.isOwner) {
       try {
-        const ownerNum    = botData.owner_number.replace(/\D/g, '');
-        const senderNum   = ctx.sender.split('@')[0].split(':')[0];
-        const isOwnerMsg  = senderNum === ownerNum;
-
-        if (isOwnerMsg) {
-          const cdKey  = `${botId}:${jid}`;
-          const last   = ownerGreetCooldown.get(cdKey) || 0;
-          const COOLDOWN = 45 * 60 * 1000; // 45 menit
-          if (Date.now() - last > COOLDOWN) {
-            ownerGreetCooldown.set(cdKey, Date.now());
-            const ownerName = botData.owner_name || 'Owner';
-            const mention   = ctx.sender.split('@')[0];
-            await client.message.send(jid,
-              `📣 *Perhatian semua!*\n\n@${mention} — *${ownerName}* telah hadir! Beri hormat! 🫡`,
-              { mentions: [ctx.sender] }
-            );
-          }
+        const cdKey  = `${botId}:${jid}`;
+        const last   = ownerGreetCooldown.get(cdKey) || 0;
+        const COOLDOWN = 45 * 60 * 1000;
+        if (Date.now() - last > COOLDOWN) {
+          ownerGreetCooldown.set(cdKey, Date.now());
+          const ownerName = botData.owner_name || 'Owner';
+          const mention   = ctx.sender.split('@')[0];
+          await client.message.send(jid,
+            `📣 *Perhatian semua!*\n\n@${mention} — *${ownerName}* telah hadir! Beri hormat! 🫡`,
+            { mentions: [ctx.sender] }
+          );
         }
       } catch { /* non-critical */ }
     }
 
     // ── Developer greeting ────────────────────────────────────────────────────
-    // Kalau sender adalah developer (dari DEVELOPER_NUMBER env), reply pesannya
-    // Cooldown: 1000 detik per grup
-    if (ctx.isGroup && process.env.DEVELOPER_NUMBER) {
+    // Sama seperti owner: pakai `ctx.isDev` (Set DEV_NUMBERS yang sudah dipecah
+    // per koma). Dulu blok ini membaca `process.env.DEVELOPER_NUMBER` lalu
+    // membuang SEMUA non-digit — dengan nomor jamak ("628a,628b") itu menyatu
+    // jadi satu angka palsu yang tidak pernah cocok. Sekarang ikut Set-nya.
+    if (ctx.isGroup && ctx.isDev) {
       try {
-        const devNum    = process.env.DEVELOPER_NUMBER.replace(/\D/g, '');
-        const senderNum = ctx.sender.split('@')[0].split(':')[0];
-        if (senderNum === devNum) {
-          const cdKey = `dev:${botId}:${jid}`;
-          const last  = devGreetCooldown.get(cdKey) || 0;
-          if (Date.now() - last > 45 * 60 * 1000) { // 45 menit
-            devGreetCooldown.set(cdKey, Date.now());
-            await client.message.send(jid,
-              `yah ada dev, bteh gweh jirrr 😭`,
-              { quote: { id: ctx.msg?.key?.id, key: ctx.msg?.key, message: ctx.msg?.message } }
-            );
-          }
+        const cdKey = `dev:${botId}:${jid}`;
+        const last  = devGreetCooldown.get(cdKey) || 0;
+        if (Date.now() - last > 45 * 60 * 1000) { // 45 menit
+          devGreetCooldown.set(cdKey, Date.now());
+          await client.message.send(jid,
+            `yah ada dev, bteh gweh jirrr 😭`,
+            { quote: { id: ctx.msg?.key?.id, key: ctx.msg?.key, message: ctx.msg?.message } }
+          );
         }
       } catch { /* non-critical */ }
     }
