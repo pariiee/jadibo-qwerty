@@ -40,15 +40,16 @@
 
   // ── Navigasi tab ───────────────────────────────────────────────
   function tab(nama) {
-    ['user', 'bot', 'order', 'harga'].forEach((t) => {
+    ['user', 'bot', 'order', 'harga', 'sistem'].forEach((t) => {
       document.getElementById('pane-' + t).style.display = t === nama ? '' : 'none';
     });
     document.querySelectorAll('#tabs .tab').forEach((b) => {
       b.classList.toggle('active', b.dataset.act === "tab('" + nama + "')");
     });
     if (nama === 'bot') muatBot();
-    if (nama === 'order') muatOrder();
+    if (nama === 'order') { muatPendapatan(); muatOrder(); }
     if (nama === 'harga') muatSetelan();
+    if (nama === 'sistem') { muatSistem(); muatAudit(); }
   }
 
   // ── Bot semua user + log ───────────────────────────────────────
@@ -76,7 +77,8 @@
         '<td class="aksi">' +
           '<button class="btn btn-outline btn-sm" data-act="bukaLog(' + b.id + ')">Lihat Log</button> ' +
           '<button class="btn btn-outline btn-sm" data-act="aturKuota(' + b.id + ')">Kuota</button> ' +
-          '<button class="btn btn-outline btn-sm" data-act="resetKuota(' + b.id + ')">Reset</button>' +
+          '<button class="btn btn-outline btn-sm" data-act="resetKuota(' + b.id + ')">Reset</button> ' +
+          '<button class="btn btn-stop btn-sm" data-act="hapusBot(' + b.id + ')">Hapus</button>' +
         '</td>';
       tb.appendChild(tr);
     });
@@ -396,6 +398,136 @@
     muatSetelan();
   }
 
+  // ── Tab "Sistem" ───────────────────────────────────────────────
+  // Kesehatan, beban server, jejak aktivitas admin, pendapatan, broadcast.
+
+  const mb = (n) => (Number(n || 0) / 1024 / 1024).toFixed(0) + ' MB';
+  const jam = (detik) => {
+    const d = Math.floor(Number(detik || 0) / 86400);
+    const j = Math.floor((Number(detik || 0) % 86400) / 3600);
+    const m = Math.floor((Number(detik || 0) % 3600) / 60);
+    return d ? `${d}h ${j}j` : j ? `${j}j ${m}m` : `${m}m`;
+  };
+
+  /** Satu kotak angka: label, nilai besar, keterangan kecil. */
+  const kotak = (label, nilai, sub = '') =>
+    `<div class="sys-item"><div class="lbl">${esc(label)}</div>` +
+    `<div class="val">${esc(nilai)}</div>` +
+    (sub ? `<div class="sub">${esc(sub)}</div>` : '') + `</div>`;
+
+  async function muatSistem() {
+    const el = document.getElementById('sys-sehat');
+    el.innerHTML = kotak('Memuat…', '—');
+    const d = await api('/api/admin/sistem');
+    if (!d?.ok) { el.innerHTML = kotak('Gagal memuat', '—'); return; }
+
+    const h = d.kesehatan || {};
+    el.innerHTML =
+      kotak('Status', h.ok ? 'SEHAT' : 'BERMASALAH', h.db ? 'DB tersambung' : 'DB TIDAK tersambung') +
+      kotak('Bot online', String(h.bots_online ?? 0), `dari ${h.bots_harus_jalan ?? 0} yang harus jalan`) +
+      kotak('Versi', d.versi || '—') +
+      kotak('Waktu server', new Date(d.waktuServer).toLocaleString('id-ID'));
+
+    const alasan = document.getElementById('sys-alasan');
+    alasan.textContent = (h.alasan || []).length ? '⚠️ ' + h.alasan.join(' • ') : '';
+
+    const r = d.resource || {};
+    const ram = r.ram || {};
+    const pakaiRam = ram.total ? Math.round((ram.terpakai / ram.total) * 100) : 0;
+    document.getElementById('sys-resource').innerHTML =
+      kotak('RAM', `${mb(ram.terpakai)} / ${mb(ram.total)}`, `${pakaiRam}% terpakai`) +
+      (r.disk
+        ? kotak('Disk', `${mb(r.disk.terpakai)} / ${mb(r.disk.total)}`,
+            `${Math.round((r.disk.terpakai / r.disk.total) * 100)}% terpakai`)
+        : kotak('Disk', '—', 'tidak terbaca')) +
+      kotak('CPU', `${r.cpu?.inti ?? 0} inti`, (r.cpu?.load || []).map((n) => Number(n).toFixed(2)).join(' / ')) +
+      kotak('Uptime proses', jam(r.uptimeProses), `sistem: ${jam(r.uptimeSistem)}`) +
+      kotak('Node', r.node || '—', r.platform || '');
+    document.getElementById('sys-load-catatan').textContent = r.cpu?.loadCatatan || '';
+  }
+
+  async function muatAudit() {
+    const tb = document.querySelector('#tbl-audit tbody');
+    tb.innerHTML = '<tr><td colspan="6" class="kosong">Memuat…</td></tr>';
+    const d = await api('/api/admin/audit');
+    document.getElementById('audit-catatan').textContent = d?.catatan || '';
+    if (!d?.logs?.length) {
+      tb.innerHTML = '<tr><td colspan="6" class="kosong">Belum ada aktivitas admin.</td></tr>';
+      return;
+    }
+    tb.innerHTML = d.logs.map((l) => {
+      const kelas = l.method === 'DELETE' ? 'st-rejected'
+        : ['POST', 'PUT', 'PATCH'].includes(l.method) ? 'st-pending' : '';
+      return `
+      <tr>
+        <td>${esc(logTime(l.created_at))}<br><span class="hint">${esc(tanggal(l.created_at))}</span></td>
+        <td>${esc(l.username || '—')}</td>
+        <td><span class="badge ${kelas}">${esc(l.method)}</span></td>
+        <td class="hint">${esc(l.path || '')}</td>
+        <td>${esc(String(l.status ?? ''))}</td>
+        <td class="hint">${esc(l.ip || '—')}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  async function muatPendapatan() {
+    const d = await api('/api/admin/pendapatan');
+    if (!d?.ok) return;
+    const r = d.ringkas || {};
+    document.getElementById('rp-ringkas').innerHTML =
+      kotak('Total lunas', rupiah(r.total_lunas), `${r.jumlah_lunas} pesanan`) +
+      kotak('Menunggu', String(r.jumlah_pending ?? 0), 'belum dibayar') +
+      kotak('Rata-rata', r.jumlah_lunas ? rupiah(Math.round(r.total_lunas / r.jumlah_lunas)) : rupiah(0), 'per pesanan');
+
+    // Grafik batang CSS, 14 hari terakhir. Tinggi relatif terhadap hari
+    // terbesar; kalau semua nol, semua batang nol — bukan dipalsukan.
+    const seri = d.seri || [];
+    const puncak = Math.max(1, ...seri.map((s) => s.total));
+    document.getElementById('grafik-pendapatan').innerHTML = seri.map((s) => {
+      const persen = s.total > 0 ? Math.max(4, Math.round((s.total / puncak) * 100)) : 2;
+      const tgl = String(s.tgl).slice(8) + '/' + String(s.tgl).slice(5, 7);
+      return `<div class="bar-wrap" title="${esc(s.tgl)} — ${esc(rupiah(s.total))} (${s.jumlah})">
+        <div class="bar" style="height:${persen}%"></div>
+        <div class="bar-lbl">${esc(tgl)}</div>
+      </div>`;
+    }).join('');
+  }
+
+  async function kirimBroadcast() {
+    const teks = (document.getElementById('bc-teks').value || '').trim();
+    const hasil = document.getElementById('bc-hasil');
+    if (!teks) { hasil.textContent = 'Pesan masih kosong.'; return; }
+    if (!confirm('Kirim pesan ini ke SEMUA user aktif?')) return;
+
+    hasil.textContent = 'Mengirim…';
+    const d = await api('/api/admin/broadcast', {
+      method: 'POST',
+      body: JSON.stringify({ teks }),
+    });
+    if (!d?.ok) { hasil.textContent = d?.message || 'Gagal mengirim.'; return; }
+    // Laporkan apa adanya — termasuk yang TIDAK sampai, dan alasannya.
+    hasil.textContent = d.message;
+    if (d.gagal === 0) document.getElementById('bc-teks').value = '';
+    muatAudit(); // aksi ini ikut terekam; tampilkan segera
+  }
+
+  // ── Hapus bot (admin) ──────────────────────────────────────────
+  // Endpoint-nya sudah ada sejak dulu (`DELETE /api/bots/:id`) dan
+  // `assertOwnership` di botController SUDAH admin-aware; yang hilang cuma
+  // tombolnya.
+  async function hapusBot(id) {
+    const nama = namaBot(id);
+    if (!confirm(
+      `Hapus bot "${nama}"?\n\n` +
+      `Folder sesinya ikut dihapus — bot ini harus scan QR ulang kalau dibuat lagi.\n` +
+      `Tindakan ini tidak bisa dibatalkan.`
+    )) return;
+
+    const d = await api('/api/bots/' + id, { method: 'DELETE' });
+    if (!d?.ok) { alert(d?.message || 'Gagal menghapus bot'); return; }
+    muatBot();
+  }
+
   document.addEventListener('DOMContentLoaded', async () => {
     const d = await api('/api/auth/me');
     if (!d?.ok) { location.href = '/'; return; }
@@ -436,4 +568,9 @@
   window.simpanPaket = simpanPaket;
   window.simpanSetelan = simpanSetelan;
   window.simpanPengumuman = simpanPengumuman;
+  window.hapusBot = hapusBot;
+  window.muatSistem = muatSistem;
+  window.muatAudit = muatAudit;
+  window.muatPendapatan = muatPendapatan;
+  window.kirimBroadcast = kirimBroadcast;
 })();

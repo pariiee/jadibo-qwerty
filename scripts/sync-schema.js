@@ -180,6 +180,28 @@ const CREATE_TABLES = [
     catatan      VARCHAR(255) DEFAULT NULL,
     updated_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+
+  // admin_log — jejak aksi admin (tab "Sistem" di /kountole).
+  //
+  // Ditulis dari SATU middleware di server.js yang menempel ke seluruh
+  // `/api/admin/*`, jadi route admin baru otomatis ikut terekam. Tanpa tabel
+  // ini, middleware-nya gagal mencatat — dan itu sengaja TIDAK memblokir aksi
+  // admin (pencatatan gagal ≠ aksi gagal), cuma meninggalkan baris error.
+  //
+  // `path` (bukan `route`): simpan URL apa adanya, termasuk query string —
+  // supaya filter/limit yang dipakai admin ikut terlihat.
+  `CREATE TABLE IF NOT EXISTS admin_log (
+    id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id    INT UNSIGNED DEFAULT NULL,
+    username   VARCHAR(64) DEFAULT NULL,
+    method     VARCHAR(8) NOT NULL,
+    path       VARCHAR(255) NOT NULL,
+    status     SMALLINT UNSIGNED DEFAULT NULL,
+    ip         VARCHAR(64) DEFAULT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_created (created_at),
+    INDEX idx_user (user_id)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
 ];
 
 async function columnExists(table, colName) {

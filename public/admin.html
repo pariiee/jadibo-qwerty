@@ -20,6 +20,7 @@
         <button class="tab" data-act="tab('bot')">Bot</button>
         <button class="tab" data-act="tab('order')">Pesanan</button>
         <button class="tab" data-act="tab('harga')">Harga & Benefit</button>
+        <button class="tab" data-act="tab('sistem')">Sistem</button>
       </div>
 
       <!-- ── Manajemen User ─────────────────────────────────────── -->
@@ -62,6 +63,14 @@
 
       <!-- ── Pesanan ────────────────────────────────────────────── -->
       <section id="pane-order" style="display:none">
+        <!-- Pendapatan: angkanya NYATA dari tabel orders. Kalau masih nol,
+             tampil nol — bukan dikosongkan supaya kelihatan ramai. -->
+        <div class="card">
+          <h3>Pendapatan</h3>
+          <div id="rp-ringkas" class="sys-grid"></div>
+          <div id="grafik-pendapatan" class="chart"></div>
+        </div>
+
         <div class="adm-bar">
           <select class="inp" id="filter-order" data-act="muatOrder">
             <option value="">Semua status</option>
@@ -81,6 +90,58 @@
             </thead>
             <tbody></tbody>
           </table>
+        </div>
+      </section>
+
+      <!-- ── Sistem ─────────────────────────────────────────────── -->
+      <section id="pane-sistem" style="display:none">
+        <div class="adm-bar">
+          <button class="btn btn-outline" data-act="muatSistem">Muat Ulang</button>
+        </div>
+
+        <!-- Kesehatan + beban server -->
+        <div class="card">
+          <h3>Kesehatan</h3>
+          <div id="sys-sehat" class="sys-grid"></div>
+          <p class="hint" id="sys-alasan"></p>
+        </div>
+
+        <div class="card">
+          <h3>Server</h3>
+          <div id="sys-resource" class="sys-grid"></div>
+          <p class="hint" id="sys-load-catatan"></p>
+        </div>
+
+        <!-- Broadcast: satu pesan ke semua user, lewat bot masing-masing -->
+        <div class="card">
+          <h3>Broadcast ke Semua User</h3>
+          <textarea class="inp" id="bc-teks" rows="4"
+                    placeholder="Pesan yang dikirim ke tiap user lewat bot miliknya sendiri…"></textarea>
+          <p class="hint">
+            Dikirim lewat bot milik TIAP USER. Kalau botnya sedang mati, pesannya
+            tidak sampai — dan itu dilaporkan di bawah, bukan disembunyikan.
+          </p>
+          <div class="adm-bar">
+            <button class="btn btn-dark" data-act="kirimBroadcast">Kirim</button>
+            <span class="hint" id="bc-hasil"></span>
+          </div>
+        </div>
+
+        <!-- Jejak aktivitas admin -->
+        <div class="card">
+          <div class="adm-bar">
+            <h4 style="margin:0">Aktivitas Admin</h4>
+            <button class="btn btn-outline btn-sm" data-act="muatAudit">Muat Ulang</button>
+          </div>
+          <p class="hint" id="audit-catatan"></p>
+          <div class="tbl-wrap">
+            <table class="tbl" id="tbl-audit">
+              <thead>
+                <tr><th>Waktu</th><th>Admin</th><th>Aksi</th><th>Endpoint</th><th>Status</th><th>IP</th></tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
         </div>
       </section>
 

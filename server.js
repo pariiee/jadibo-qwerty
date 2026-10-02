@@ -38,6 +38,7 @@ const { testConnection, seedDefaults, getStats, pool } = require('./config/datab
 const auth = require('./controllers/authController');
 const bot  = require('./controllers/botController');
 const command = require('./controllers/commandController');
+const sistem = require('./controllers/sistemController');
 const billing = require('./controllers/billingController');
 const pricingStore = require('./config/pricingStore');
 const beban        = require('./config/beban');
@@ -177,6 +178,30 @@ app.get('/api/billing/orders',       apiLimiter, auth.requireAuth, billing.dafta
 app.post('/api/billing/orders/:orderId/check', apiLimiter, auth.requireAuth, billing.cekOrder);
 
 // ─── Admin Routes (king only) ─────────────────────────────────────────────────
+//
+// Jejak aktivitas admin: SATU middleware untuk seluruh `/api/admin/*`, dipasang
+// SEBELUM route-nya. Route admin yang ditambah nanti otomatis ikut terekam —
+// pencatatan manual di tiap handler akan bocor begitu ada route baru.
+//
+// `res.on('finish')` dipakai karena status code belum final saat middleware
+// jalan. Pencatatannya fire-and-forget (lihat sistem.catatAudit): gagal mencatat
+// TIDAK BOLEH menggagalkan aksi admin.
+app.use('/api/admin', auth.requireAuth, (req, res, next) => {
+  res.on('finish', () => {
+    sistem.catatAudit({
+      userId: req.user?.id,
+      username: req.user?.username,
+      method: req.method,
+      path: req.originalUrl,
+      status: res.statusCode,
+      // Di belakang Cloudflare Tunnel, req.ip selalu 127.0.0.1 — IP asli ada di
+      // header ini. Jatuh ke req.ip kalau header-nya tidak ada (akses lokal).
+      ip: req.headers['cf-connecting-ip'] || req.ip,
+    });
+  });
+  next();
+});
+
 app.get('/api/admin/users',          auth.requireAuth, auth.requireKing, auth.listUsers);
 app.patch('/api/admin/users/:id',    auth.requireAuth, auth.requireKing, auth.updateUser);
 app.delete('/api/admin/users/:id',   auth.requireAuth, auth.requireKing, auth.deleteUser);
@@ -191,6 +216,12 @@ app.put('/api/admin/billing/settings',                auth.requireAuth, auth.req
 // lain. Dipakai saat kompensasi bot error atau pembelian kuota tambahan.
 app.post('/api/admin/bots/:id/kuota',        auth.requireAuth, auth.requireKing, billing.adminTopupKuota);
 app.post('/api/admin/bots/:id/reset-kuota',  auth.requireAuth, auth.requireKing, billing.adminResetKuota);
+
+// ─── Tab "Sistem" (kesehatan, resource, audit, pendapatan, broadcast) ─────────
+app.get('/api/admin/sistem',      auth.requireAuth, auth.requireKing, sistem.status);
+app.get('/api/admin/audit',       auth.requireAuth, auth.requireKing, sistem.audit);
+app.get('/api/admin/pendapatan',  auth.requireAuth, auth.requireKing, sistem.pendapatan);
+app.post('/api/admin/broadcast',  auth.requireAuth, auth.requireKing, sistem.broadcast);
 
 // ─── Halaman HTML ─────────────────────────────────────────────────────────────
 // Halaman berisi <!-- @include head.html --> dll; partial di public/partials/

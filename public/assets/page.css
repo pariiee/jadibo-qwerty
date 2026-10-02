@@ -462,6 +462,19 @@ body.page-admin .err, body.page-profil .err{color:var(--errTxt);font-size:12px;m
 body.page-admin .err.show{display:block}
 body.page-admin #terminal{margin-top:4px;border:1px solid var(--border);border-radius:12px;background:var(--surf1)}
 
+/* Tab "Sistem": kotak angka (kesehatan/resource) + grafik batang CSS.
+   Tanpa library grafik — 14 batang div cukup, dan tidak menambah dependensi. */
+body.page-admin .sys-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:4px}
+body.page-admin .sys-item{border:1px solid var(--border);border-radius:14px;padding:14px 15px;background:var(--surf1)}
+body.page-admin .sys-item .lbl{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-bottom:8px}
+body.page-admin .sys-item .val{font-size:20px;font-weight:800;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+body.page-admin .sys-item .sub{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.45}
+body.page-admin .card{margin-bottom:14px}
+body.page-admin .chart{display:flex;align-items:flex-end;gap:6px;height:150px;margin-top:16px;padding-top:8px;border-top:1px solid var(--border)}
+body.page-admin .bar-wrap{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;min-width:0}
+body.page-admin .bar{width:100%;background:var(--acc);border-radius:5px 5px 0 0;min-height:2px;transition:height .25s ease}
+body.page-admin .bar-lbl{font-size:10px;color:var(--dim);margin-top:6px;white-space:nowrap;font-variant-numeric:tabular-nums}
+
 /* kartu harga / pricing */
 body.page-pricing .plan-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
 body.page-pricing .plan-card{border:1px solid var(--border);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:8px}
