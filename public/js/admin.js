@@ -75,6 +75,13 @@
         '<td>' + (b.bonus_kuota > 0 ? '+' + b.bonus_kuota + ' <small>bonus</small>' : '<small>—</small>') + '</td>' +
         '<td>' + (b.cmd_count ?? 0) + '</td>' +
         '<td class="aksi">' +
+          // Link ke halaman yang SUDAH ada (`/config/:id` = kontrol/QR/start-stop,
+          // `/bot/:id` = statistik). `assertOwnership` di botController sudah
+          // admin-aware, dan dashboard king memang menampilkan bot SEMUA user —
+          // jadi halamannya jalan; yang hilang cuma jalan masuknya dari sini.
+          // <a href> polos: nol JS, nol endpoint, nol halaman baru.
+          '<a class="btn btn-outline btn-sm" href="/config/' + b.id + '">Kontrol</a> ' +
+          '<a class="btn btn-outline btn-sm" href="/bot/' + b.id + '">Statistik</a> ' +
           '<button class="btn btn-outline btn-sm" data-act="bukaLog(' + b.id + ')">Lihat Log</button> ' +
           '<button class="btn btn-outline btn-sm" data-act="aturKuota(' + b.id + ')">Kuota</button> ' +
           '<button class="btn btn-outline btn-sm" data-act="resetKuota(' + b.id + ')">Reset</button> ' +

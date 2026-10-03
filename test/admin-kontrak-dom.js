@@ -96,6 +96,30 @@ const endpointHilang = [...new Set(endpointJs)].filter((e) => {
 cek(`semua endpoint JS ada di server.js (${new Set(endpointJs).size} unik)`,
   endpointHilang.length === 0, endpointHilang.join(', '));
 
+console.log('\n=== 6. Link ke halaman lain benar-benar ada rutenya ===');
+// Tombol `Kontrol`/`Statistik` di tabel Bot mengarah ke `/config/:id` dan
+// `/bot/:id`. Kalau rutenya hilang/di-rename, link-nya jadi 404 yang cuma
+// ketahuan setelah diklik — tidak ada error, tidak ada tes backend yang
+// memerahkan. Persis pola yang dua bagian sebelumnya kunci.
+// Ambil href baik dari HTML statis maupun dari string HTML yang dibangun JS.
+// Yang dibangun JS berbentuk `href="/config/' + b.id + '"` — regex harus ikut
+// menelan bagian `' + expr + '` baru ketemu `:id`-nya. Kalau tidak, yang
+// tertangkap cuma `/config/` dan tesnya salah menuduh.
+const hrefJs = [...js.matchAll(/href=\\?"(\/[^"]*?)\\?"/g)]
+  .map((m) => m[1].replace(/' \+ [^+]+ \+ '/g, ':id'));
+const hrefHtml = [...html.matchAll(/href="(\/[^"#?]*)"/g)].map((m) => m[1]);
+const ruteHalaman = new Set(
+  [...server.matchAll(/app\.get\('(\/[^']*)'/g)]
+    .map((m) => m[1].replace(/:[A-Za-z]+/g, ':id'))
+);
+const hrefHilang = [...new Set([...hrefJs, ...hrefHtml])]
+  .map((h) => h.replace(/\/\d+/g, '/:id'))
+  .filter((h) => !ruteHalaman.has(h) && !ruteHalaman.has(h.replace(/\/$/, '')));
+cek(`semua link JS+HTML punya rutenya (${new Set([...hrefJs, ...hrefHtml]).size} unik)`,
+  hrefHilang.length === 0, hrefHilang.join(', '));
+cek('link Kontrol -> /config/:id ada', ruteHalaman.has('/config/:id'));
+cek('link Statistik -> /bot/:id ada', ruteHalaman.has('/bot/:id'));
+
 console.log('');
 console.log(gagal ? `=== GAGAL: ${gagal} masalah ===` : '=== SEMUA CEK LULUS ===');
 process.exit(gagal ? 1 : 0);
