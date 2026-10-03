@@ -136,6 +136,7 @@ const DESKRIPSI = {
   "grupclose": "Atur jam grup ditutup otomatis",
   "grupopen": "Atur jam grup dibuka otomatis",
   "gcopen": "Samain dengan .open — buka grup",
+  "timerchat": "Set timer pesan hilang (1d=1 detik, 30m=30 menit)",
   "gsmarena": "Cari spesifikasi HP di GSMArena",
   "hapusabsen": "Hapus sesi absen",
   "hapusgiveaway": "Batalkan giveaway",

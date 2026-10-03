@@ -616,6 +616,24 @@ function createClient({ client, botJid = null, logger = console } = {}) {
       return need('client.group.setSetting', client.group?.setSetting)(grupKey(jid), nama, on);
     },
 
+    /**
+     * Timer pesan hilang (disappearing messages) buat GRUP.
+     *
+     * Di grup, ini BUKAN protocolMessage — WhatsApp pakai IQ
+     * `<ephemeral expiration="N"/>`. zapo udah nyediain
+     * `group.setEphemeralDuration`; di sini cuma diterjemahin + cache meta
+     * dibuang biar `announce`/ephemeral berikutnya dibaca ulang.
+     *
+     * `detik = 0` mematikan. Balikin juga `sebelumnya` (detik) kalau meta
+     * kebetulan nyimpen, biar plugin bisa lapor "dari X ke Y".
+     */
+    async setEphemeral(jid, detik) {
+      const g = grupKey(jid);
+      const hasil = await need('client.group.setEphemeralDuration', client.group?.setEphemeralDuration)(g, Number(detik) || 0);
+      metaCache.delete(bareJid(g));
+      return hasil;
+    },
+
     async setSubject(jid, subject) {
       metaCache.delete(bareJid(grupKey(jid)));
       return need('client.group.setSubject', client.group?.setSubject)(grupKey(jid), subject);

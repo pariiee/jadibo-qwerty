@@ -525,6 +525,23 @@ module.exports = async function groupHandler(ctx) {
     return `${String(h).padStart(2, '0')}.${String(min).padStart(2, '0')}`;
   }
 
+  // Durasi `.timerchat` -> detik. `1d` = 1 detik, `30m` = 30 menit,
+  // `2j` = 2 jam, `1h` = 1 hari. Tanpa satuan dianggap menit.
+  // null = format nggak dikenal (pemanggil yang mutusin balasannya).
+  function parseDurasi(input) {
+    const m = String(input ?? '').trim().toLowerCase().match(/^(\d+)([dmjh]?)$/);
+    if (!m) return null;
+    return Number(m[1]) * { '': 60, d: 1, m: 60, j: 3600, h: 86400 }[m[2]];
+  }
+
+  // Detik -> teks manusia ('1 detik', '30 menit', '2 jam', '1 hari').
+  function ucapDurasi(detik) {
+    for (const [kali, nama] of [[86400, 'hari'], [3600, 'jam'], [60, 'menit'], [1, 'detik']]) {
+      if (detik >= kali && detik % kali === 0) return `${detik / kali} ${nama}`;
+    }
+    return `${detik} detik`;
+  }
+
   switch (command) {
     // ── tagall ──────────────────────────────────────────────────────────────
     case 'tagall': {
@@ -1650,6 +1667,46 @@ module.exports = async function groupHandler(ctx) {
       return true;
     }
 
+    // ── timerchat — timer pesan hilang (disappearing messages) grup ──────────
+    // Format: `.timerchat 1d` (1 detik) · `30m` (30 menit) · `2j` (2 jam) ·
+    // `1h` (1 hari) · `0` / `off` = matikan. Tanpa satuan = menit.
+    case 'timerchat': {
+      if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
+      if (!await isBotAdmin()) { await reply(mess.BotAdmin); return true; }
+
+      const arg = String(args[0] ?? '').trim().toLowerCase();
+      const mati = arg === '' || arg === '0' || arg === 'off';
+      const detik = mati ? 0 : parseDurasi(arg);
+
+      if (detik === null) {
+        await reply(
+          `⚠️ *Durasi nggak dikenali:* ${args[0]}\n\n` +
+          `*Cara Penggunaan:*\n` +
+          `${p}timerchat <durasi>   → set timer pesan hilang\n` +
+          `${p}timerchat off        → matikan timer\n\n` +
+          `*Satuan:*\n` +
+          `\`d\` = detik   → ${p}timerchat 1d  (hilang 1 detik setelah dikirim)\n` +
+          `\`m\` = menit   → ${p}timerchat 30m\n` +
+          `\`j\` = jam     → ${p}timerchat 2j\n` +
+          `\`h\` = hari    → ${p}timerchat 1h\n` +
+          `_Tanpa satuan = menit (${p}timerchat 10 = 10 menit)_`
+        );
+        return true;
+      }
+
+      try {
+        await client.group.setEphemeral(jid, detik);
+      } catch (e) {
+        await reply(`❌ Gagal set timer: ${rapikanError(e)}`);
+        return true;
+      }
+
+      await reply(detik === 0
+        ? '🔕 *Timer pesan dimatikan.*\n\nPesan baru nggak akan hilang lagi.'
+        : `⏳ *Timer pesan diperbarui.*\n\nPesan baru akan hilang *${ucapDurasi(detik)}* setelah dibaca, kecuali disimpan.`);
+      return true;
+    }
+
     // ── catatan — daftar variable template ────────────────────────────────────
     // `.catatan <topik>` buat lihat variable yang didukung di satu topik.
     case 'catatan': {
@@ -1809,7 +1866,7 @@ module.exports.limitedCmds = new Set([
   'tagall','tagadmin','tagme','hidetag','h',
   'kick','kickall','promote','demote','add','addai',
   'open','close','mute','unmute','setname','setdesc',
-  'grupopen','grupclose','gcopen','gcclose','linkgc','setnamegc',
+  'grupopen','grupclose','gcopen','gcclose','linkgc','setnamegc','timerchat',
   'link','groupinfo','idgc','leavegc','listadmin',
   'getpp','pp','totag','delete','cekasalmember',
   'mulaiabsen','absen','cekabsen','hapusabsen',
