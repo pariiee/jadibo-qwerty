@@ -91,14 +91,38 @@ async function decrementStat(key, amount = 1) {
 
 /**
  * Fetch all stats as a plain object.
+ *
+ * Dua angka di sini tampil di LANDING PAGE (publik, tanpa login) dan
+ * counter-nya tidak bisa dipercaya:
+ *
+ *   - `total_bots_online` di-increment tiap event `connection: open` — jadi
+ *     sekali per reconnect DAN sekali per boot proses — sementara decrement-nya
+ *     cuma jalan kalau prosesnya sempat putus dengan rapi. pm2 restart / crash
+ *     tidak pernah menjalankannya. Terbukti LIVE: landing page menulis
+ *     "306 bot online" padahal botnya 1, dan angkanya naik terus.
+ *   - `total_users` sama polanya (register +1, delete -1) → tampil 5 dari 2.
+ *
+ * Jadi keduanya DIHITUNG dari tabelnya langsung, bukan dibaca dari counter.
+ * Sumber kebenarannya sudah ada dan sudah dipakai `/health` — satu definisi
+ * "bot online" untuk seluruh aplikasi: `bots.status = 'connected'`.
+ *
+ * `total_messages` tetap dari counter: dia kumulatif (tidak pernah dikurangi),
+ * jadi tidak punya masalah yang sama.
+ *
  * @returns {Promise<{total_bots_online: number, total_users: number, total_messages: number}>}
  */
 async function getStats() {
   const [rows] = await pool.execute('SELECT stat_key, stat_value FROM stats');
-  return rows.reduce((acc, row) => {
+  const out = rows.reduce((acc, row) => {
     acc[row.stat_key] = Number(row.stat_value);
     return acc;
   }, {});
+
+  const [[b]] = await pool.execute("SELECT SUM(status = 'connected') AS n FROM bots");
+  const [[u]] = await pool.execute('SELECT COUNT(*) AS n FROM users');
+  out.total_bots_online = Number(b?.n || 0);
+  out.total_users = Number(u?.n || 0);
+  return out;
 }
 
 module.exports = { pool, testConnection, seedDefaults, incrementStat, decrementStat, getStats };
