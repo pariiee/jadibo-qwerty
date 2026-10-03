@@ -333,13 +333,34 @@ body.page-bot .modal,body.page-auth .modal,#toast{
   background-image:none;
 }
 /* Section landing: motion.css memasang panel putih transparan bergradasi di
-   5 section ini. Spec minta latar datar, jadi panelnya dibuang. */
+   5 section ini, dan ada VERSI GELAP-nya (`html.dark body.page-index #stats`).
+   Versi gelap itu spesifisitasnya 0,2,2 — MENANG atas `body.page-index #stats`
+   (0,1,1), jadi tanpa `!important` gradasinya cuma hilang di mode terang.
+   Terbukti di produksi: mode gelap masih menyisakan 1 gradasi. */
 body.page-index #stats,body.page-index #howto,body.page-index #harga,
 body.page-index #testimoni,body.page-index #faq{
-  background-image:none;
+  background-image:none!important;
 }
 /* §7.8 progress bar datar; 577 baris page.css memakai gradient hijau→border. */
 body.page-bot .bar .fill{background-image:none;background-color:var(--green)}
+
+/* Batang progres baca: bukan bagian desain v2. `#baca{display:none}` di
+   motion.css KALAH oleh media query-nya sendiri yang menulis `display:block`
+   (selector sama, blok media datang belakangan), jadi mematikan animasinya
+   saja tidak cukup — elemennya masih tampil lengkap dengan gradasinya. */
+#baca{display:none!important;background-image:none!important}
+
+/* Gelembung "keluar" di mockup: glass.css memaksa
+   `html.dark .mock-chat .bub.out{color:var(--onAcc)!important}` — dan di mode
+   gelap --onAcc = --darkink (#0b0c14), yaitu warna teks untuk TOMBOL TERANG.
+   Di atas latar indigo --accent2 itu jadi hijau gelap di atas ungu (kontras
+   rusak). Karena sumbernya `!important`, ini juga harus `!important` dan
+   selector-nya harus menyertakan `.mock-chat` supaya spesifisitasnya sama
+   (0,4,1) — dengan begitu dimenangkan yang dimuat terakhir. */
+body.page-index .mock-chat .bub.out,
+body.page-index .mock-chat .bub.out .bub-cmd{
+  color:#fff!important;
+}
 
 /* Judul hero: gradasi teks DIMATIKAN (§15). Referensi landing memakai
    `h1 em{color:var(--accent)}` — satu warna, bukan gradasi. Jadi teksnya
