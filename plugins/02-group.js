@@ -1697,7 +1697,20 @@ module.exports = async function groupHandler(ctx) {
       try {
         await client.group.setEphemeral(jid, detik);
       } catch (e) {
-        await reply(`❌ Gagal set timer: ${rapikanError(e)}`);
+        // Error mentah WAJIB masuk log. Tanpa ini, IQ yang ditolak WA cuma
+        // muncul ke user sebagai "gangguan teknis di sisi server" (fallback
+        // terakhir rapikanError) dan nggak bisa di-debug sama sekali.
+        console.error(`[timerchat] gagal: ${e.message}`);
+        // zapo nulis kegagalan IQ sebagai `group.setEphemeralDuration iq failed (403: ...)`.
+        const kode = Number(/iq failed \((\d+)/.exec(e.message || '')?.[1]);
+        const alasan = {
+          400: 'WhatsApp nolak durasinya — di grup cuma *24 jam*, *7 hari*, dan *90 hari* yang didukung',
+          403: 'bot bukan admin di grup ini (atau kamu bukan admin)',
+          401: 'izin kelola grup ditolak WhatsApp',
+        }[kode];
+        await reply(alasan
+          ? `❌ Gagal set timer: ${alasan}.`
+          : `❌ Gagal set timer: ${rapikanError(e)}`);
         return true;
       }
 

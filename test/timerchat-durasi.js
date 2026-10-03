@@ -17,12 +17,14 @@ const GRUP = '628123456789-1612345678@g.us';
 const ADMIN = '628999888777@s.whatsapp.net';
 const BOT = '628111222333@s.whatsapp.net';
 const dipanggil = [];
+let galatZapo = null;   // kalau diisi, setEphemeralDuration nolak
 
 const zapoPalsu = {
   on: () => {}, message: {}, stores: {},
   getCredentials: () => ({ meJid: BOT }),
   group: {
     setEphemeralDuration: async (groupJid, detik) => {
+      if (galatZapo) throw galatZapo;
       if (!Number.isSafeInteger(detik) || detik < 0) throw new Error(`invalid expirationSeconds: ${detik}`);
       dipanggil.push({ groupJid, detik });
     },
@@ -75,11 +77,7 @@ const buatCtx = (arg) => ({
   assert.strictEqual(dipanggil.at(-1).groupJid, GRUP);
 
   // konversi balik ke teks
-  const { ucapDurasiDari } = (() => {
-    // ucapDurasi lokal di plugin — uji lewat balasan pesan
-    const cek = { '1d': '1 detik', '30m': '30 menit', '2j': '2 jam', '1h': '1 hari', '90d': '90 detik' };
-    return { ucapDurasiDari: cek };
-  })();
+  const ucapDurasiDari = { '1d': '1 detik', '30m': '30 menit', '2j': '2 jam', '1h': '1 hari', '90d': '90 detik' };
   for (const [arg, teks] of Object.entries(ucapDurasiDari)) {
     terkirim.length = 0;
     await handler(buatCtx(arg));
@@ -87,4 +85,23 @@ const buatCtx = (arg) => ({
   }
 
   console.log(`✅ .timerchat: ${dipanggil.length} panggilan setEphemeralDuration, satuan + validasi benar`);
+
+  // ── Pesan galat IQ: jangan pernah jatuh ke "gangguan teknis" ───────────────
+  const iqErr = (kode, teks) => new Error(`group.setEphemeralDuration iq failed (${kode}: ${teks})`);
+  const galat = { 403: /bot bukan admin/i, 401: /izin kelola grup/i, 400: /24 jam/i };
+  for (const [kode, pola] of Object.entries(galat)) {
+    galatZapo = iqErr(kode, 'forbidden');
+    terkirim.length = 0;
+    await handler(buatCtx('1d'));
+    assert.match(terkirim[0] || '', pola, `IQ ${kode} harus dijelasin`);
+    assert.doesNotMatch(terkirim[0] || '', /gangguan teknis/, `IQ ${kode} nggak boleh jadi "gangguan teknis"`);
+  }
+  // kode nggak dikenal: tetap nggak bocorin raw error ke user
+  galatZapo = iqErr(500, 'internal server error at /var/www/jadibot/x.js');
+  terkirim.length = 0;
+  await handler(buatCtx('1d'));
+  assert.doesNotMatch(terkirim[0] || '', /var\/www|jadibot|iq failed/, 'raw error nggak boleh bocor ke user');
+  galatZapo = null;
+
+  console.log(`✅ .timerchat pesan galat: kode IQ dijelasin, raw error nggak bocor`);
 })();

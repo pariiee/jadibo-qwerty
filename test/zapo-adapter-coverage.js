@@ -20,6 +20,7 @@ const PATHS = [
   'group.addParticipants', 'group.removeParticipants',
   'group.promoteParticipants', 'group.demoteParticipants',
   'group.leaveGroup', 'group.setSubject', 'group.setDescription', 'group.setSetting',
+  'group.setEphemeralDuration',
   'group.joinGroupViaInvite', 'group.approveMembershipRequests', 'group.rejectMembershipRequests',
   'profile.getProfilePicture', 'profile.setProfilePicture', 'profile.setStatus',
   'business.getBusinessProfile', 'business.getVerifiedName',
