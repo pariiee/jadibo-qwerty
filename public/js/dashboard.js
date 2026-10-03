@@ -74,6 +74,70 @@
       : `Sisa ${beli - used} slot lagi dari ${beli}`;
   }
 
+  /**
+   * Banner peringatan di atas dashboard.
+   *
+   * KENAPA ADA: peringatan kuota & masa aktif dikirim lewat WhatsApp, dan
+   * pengirimnya adalah bot MILIK USER SENDIRI (engine/notify.js). Jadi tepat
+   * saat kuota habis — bot berhenti membalas — kabar itu ikut tidak sampai, dan
+   * user cuma melihat bot yang diam tanpa sebab. Ini kanal yang tidak
+   * bergantung pada bot.
+   *
+   * Datanya dari `me` + `bots` yang SUDAH dimuat halaman ini: nol request
+   * tambahan, nol endpoint baru. Ambangnya sengaja sama dengan
+   * engine/kuota.js (80%/95%) — kalau di sana diubah, ubah di sini juga.
+   */
+  function renderPeringatan() {
+    const el = document.getElementById('kuota-alert');
+    if (!el) return;
+
+    const baris = [];
+
+    // 1) Kuota per bot. `receive_limit` 0 = tanpa batas (jangan dihitung).
+    for (const b of bots) {
+      const batas = Number(b.receive_limit) || 0;
+      if (batas <= 0) continue;
+      const pakai = Number(b.received_count) || 0;
+      const persen = Math.round((pakai / batas) * 100);
+      if (persen < 80) continue;
+
+      const habis = pakai >= batas;
+      const nama = b.bot_name || `bot #${b.id}`;
+      baris.push({
+        kritis: habis,
+        teks: habis
+          ? `<b>${esc(nama)}</b> — kuota pesannya <b>habis</b>. Bot berhenti membalas sampai paket ditambah.`
+          : `<b>${esc(nama)}</b> — kuota pesan tinggal <b>${(batas - pakai).toLocaleString('id-ID')}</b> (${persen}% terpakai).`,
+      });
+    }
+
+    // 2) Masa aktif paket. `hari <= 3` sama dengan ambang di renderStats().
+    const exp = me.plan_expired_at ? new Date(me.plan_expired_at) : null;
+    const hari = exp ? Math.ceil((exp - Date.now()) / 86400000) : null;
+    if (me.plan_aktif && hari !== null && hari <= 3) {
+      baris.push({
+        kritis: hari <= 0,
+        teks: hari <= 0
+          ? 'Masa aktif paketmu <b>sudah habis</b>. Bot dimatikan otomatis sampai paket diperpanjang.'
+          : `Masa aktif paketmu tinggal <b>${hari} hari</b>.`,
+      });
+    } else if (me.trial_used && !me.plan_aktif) {
+      baris.push({ kritis: true, teks: 'Paketmu <b>tidak aktif</b>. Bot berhenti membalas sampai paket diperpanjang.' });
+    }
+
+    if (!baris.length) { el.style.display = 'none'; el.innerHTML = ''; return; }
+
+    // Kritis duluan — yang bikin bot benar-benar diam harus dibaca pertama.
+    baris.sort((a, b) => Number(b.kritis) - Number(a.kritis));
+
+    el.className = 'kuota-alert' + (baris.some((x) => x.kritis) ? ' kritis' : '');
+    el.innerHTML =
+      baris.map((x) => `<div class="kuota-alert-baris">${x.kritis ? '⛔' : '⚠️'} <span>${x.teks}</span></div>`).join('') +
+      '<div class="kuota-alert-aksi"><a class="btn btn-outline btn-sm" href="/pricing">Tambah Kuota / Perpanjang</a>' +
+      '<a class="btn btn-outline btn-sm" href="/kuota">Lihat Kuota</a></div>';
+    el.style.display = '';
+  }
+
   // ── Kartu ringkasan ─────────────────────────────────────────────
   // "Bot Online" = bot milik user sendiri, dihitung dari /api/bots.
   // endpoint /stats nggak dipakai karena angkanya global (bocorin jumlah
@@ -107,6 +171,11 @@
     txt('st-online', String(online), online ? 'ok' : 'dim');
     document.getElementById('st-online-sub').textContent = bots.length
       ? `dari ${bots.length} bot kamu` : 'Belum ada bot';
+
+    // Banner kuota/paket. Dipanggil DI SINI supaya ikut jalan di jalur gagal
+    // (/api/bots error) juga — di situ `bots` kosong, tapi peringatan paket
+    // tetap harus muncul.
+    renderPeringatan();
 
     // Slot pun belum keisi di jalur ini — /api/bots nggak jalan, jadi `used` nggak
     // diketahui. Jangan timpa angka terakhir yang udah bener sama tebakan.

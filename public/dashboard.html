@@ -15,6 +15,13 @@
     <!-- @include topbar.html -->
 
     <div class="content">
+      <!-- Kuota kritis. Muncul HANYA kalau ada bot yang kuotanya <=95% atau
+           sudah habis — dan peringatan WA-nya dikirim LEWAT BOT USER SENDIRI,
+           jadi justru saat kuota habis (bot diam) kabar itu tidak sampai. Ini
+           kanal yang tidak bergantung bot. Tanpa tombol tutup: ini kondisi
+           nyata yang belum selesai, bukan pengumuman yang bisa diabaikan. -->
+      <div class="kuota-alert" id="kuota-alert" style="display:none"></div>
+
       <!-- Pengumuman dari admin. Dikasih tombol tutup: banner yang nggak bisa
            ditutup bikin user kesal. Yang diingat cuma `updated_at`-nya, jadi
            pengumuman BARU otomatis muncul lagi tanpa perlu minta user apa pun. -->

@@ -624,6 +624,18 @@ body.page-billing .kosong-aksi{display:flex;gap:10px;flex-wrap:wrap;justify-cont
   display:grid;place-items:center;border-radius:6px}
 .pengumuman-tutup:hover{color:var(--txt);background:var(--surf3)}
 
+/* ── Banner kuota kritis di dashboard ─────────────────────────────────────────
+   Muncul hanya kalau ada kuota <=95% / masa aktif <=3 hari. Warnanya sengaja
+   lebih keras dari .pengumuman: yang ini kondisi nyata yang bikin bot DIAM,
+   bukan pengumuman yang boleh diabaikan. Tanpa tombol tutup. */
+.kuota-alert{display:flex;flex-direction:column;gap:10px;padding:16px 18px;margin-bottom:18px;border-radius:14px;
+  background:var(--surf1);border:1px solid var(--border2);border-left:3px solid var(--warn)}
+.kuota-alert.kritis{border-left-color:var(--errTxt)}
+.kuota-alert-baris{display:flex;align-items:flex-start;gap:10px;font-size:13px;line-height:1.6;color:var(--muted)}
+.kuota-alert-baris span{min-width:0}
+.kuota-alert-baris b{color:var(--txt)}
+.kuota-alert-aksi{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px}
+
 /* ── Halaman Log Aktivitas (/log) ─────────────────────────────────────────── */
 /* #terminal & .log-line sudah ada (dipakai modal log /admin + panel config);
    di sini cuma dipinjam supaya tidak ada gaya kedua untuk hal yang sama. */
