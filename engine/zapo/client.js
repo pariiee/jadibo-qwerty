@@ -606,14 +606,29 @@ function createClient({ client, botJid = null, logger = console } = {}) {
      * mati total di runtime. Penerjemahan tempatnya DI SINI, bukan di call-site.
      */
     async setSetting(jid, setting, value) {
-      metaCache.delete(bareJid(grupKey(jid)));
       let nama = setting;
       let on = value;
       if (setting === 'open' || setting === 'close') {
         nama = 'announcement';      // zapo nggak punya 'open'/'close'
         on = setting === 'close';   // close = announce ON = grup ditutup
       }
-      return need('client.group.setSetting', client.group?.setSetting)(grupKey(jid), nama, on);
+
+      // 1. Kirim ke server WA dulu, baru buang cache-nya.
+      const hasil = await need('client.group.setSetting', client.group?.setSetting)(grupKey(jid), nama, on);
+
+      // 2. Cache dibuang SETELAH server konfirmasi.
+      metaCache.delete(bareJid(grupKey(jid)));
+
+      // 3. Jeda 500ms.
+      // ponytail: ini SLEEP, bukan sinkronisasi — Node tidur, server WA nggak
+      // nunggu apa-apa, dan delay-nya jalan di jalur bot sementara tanda merah
+      // terjadi di jalur HP user (yang nggak lewat bot sama sekali). Efek
+      // sampingnya nyata: command grup berikutnya di grup ini ke-antre 500ms,
+      // dan `.open` yang mendarat di jendela itu baca meta yang sudah berganti.
+      // Kalau terbukti nggak ngefek, hapus baris ini.
+      await new Promise((r) => setTimeout(r, 500));
+
+      return hasil;
     },
 
     async setSubject(jid, subject) {
