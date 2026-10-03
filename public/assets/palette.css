@@ -307,7 +307,7 @@ body.page-auth .modal,body.page-index .modal{
   max-width:480px;
 }
 .panel{border-radius:var(--r-panel)}
-.overlay{background:var(--ovBg);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+/* .overlay diatur lengkap di §7.9 — sengaja tidak diduplikasi di sini. */
 .logo-badge{width:40px;height:40px;border-radius:13px;background:var(--accent2)}
 #toast{border-radius:999px;background:var(--dark);color:var(--darkink)}
 ::selection{background:var(--accent2);color:#fff}
@@ -729,10 +729,21 @@ body.page-admin .tbl tbody tr:hover,body.page-billing .tbl tbody tr:hover,
 .empty h3{margin:0;font-size:18px;font-weight:700}
 .empty p{margin:0;color:var(--mute);font-size:14px}
 
-/* §7.9 Dialog: scrim + panel radius 28px; ≤560px jadi bottom sheet */
-.overlay{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;
-  background:var(--ovBg);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
-.overlay.hidden{display:none}
+/* §7.9 Dialog: scrim + panel radius 28px; ≤560px jadi bottom sheet.
+   KELAS PEMBUKA = `show`, dipakai SELURUH berkas: dashboard.js:241,
+   pricing.js:105, bot-detail.js:363, config.js:406, index.js:99.
+   JANGAN tulis `display:flex` di `.overlay` polos: page.css memasang
+   `display:none` di selector yang sama (0,1,0), jadi berkas yang dimuat
+   belakangan menang dan popup-nya terbuka terus sejak halaman dibuka
+   (terukur: #add-overlay & #bayar-overlay tampil tanpa diklik).
+   Yang benar: `none` sebagai default, `flex` HANYA saat `.show`. */
+.overlay{
+  position:fixed;inset:0;z-index:80;
+  display:none;align-items:center;justify-content:center;padding:18px;
+  background:var(--ovBg);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+}
+.overlay.show{display:flex}
 .overlay .modal,body.page-dashboard .overlay .modal,body.page-admin .overlay .modal{
   width:min(480px,calc(100% - 32px));margin:0;
 }
