@@ -1,0 +1,206 @@
+/* ══════════════════════════════════════════════════════════════════════
+   palette.css — bahasa visual "soft gradient" (dari mockup dashboard).
+
+   KENAPA BERKAS SENDIRI, BUKAN DISUNTING KE theme.css:
+   palet TIDAK tinggal di theme.css saja. `glass.css` (dimuat belakangan)
+   MENIMPA token yang sama, jadi palet efektif sebenarnya ada di DUA tempat.
+   Menyunting theme.css saja = tidak ada yang berubah (glass yang menang), dan
+   menyunting keduanya = dua sumber yang bisa saling bertentangan.
+   Berkas ini dimuat PALING BELAKANG (setelah glass.css) sehingga jadi SATU
+   tempat untuk seluruh palet — satu blok, satu sumber.
+
+   Token-nya nama yang SAMA seperti sebelumnya. Tidak ada nama baru, tidak ada
+   aturan tata letak: page.css/glass.css/motion.css tetap utuh. Yang berubah
+   cuma NILAI.
+
+   Palet: latar radial lavender/peach, permukaan kaca, aksen indigo,
+   "dark" = navy (--dark/--btnPri).
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. Terang ────────────────────────────────────────────────────── */
+:root{
+  /* latar: lavender → peach → biru muda (dipakai body, lihat bagian 3) */
+  --bg:#dfe6fb;
+  --bg2:#fbe9d6;
+
+  /* permukaan kaca */
+  --card:rgba(255,255,255,.72);
+  --card2:rgba(255,255,255,.88);
+  --border:rgba(255,255,255,.72);
+  --border2:rgba(17,20,38,.10);
+
+  /* teks */
+  --txt:#111426;
+  --txt2:#333a52;
+  --muted:#5b6178;      /* naik dari #6b7085: 4.5:1 di --bg2 paling terang */
+  --dim:#6b7085;
+  --dim2:#868ca1;
+
+  /* aksen indigo. --acc = LATAR (teks putih di atasnya),
+     --accTxt = TEKS di latar terang. Dua peran, dua nilai — sama seperti
+     sebelumnya, karena satu nilai tidak bisa lulus WCAG untuk keduanya. */
+  --acc:#4f46e5;
+  --accTxt:#4338ca;
+  --acc2:#0891b2;
+
+  --ok:#16a34a;
+  --onAcc:#ffffff;
+  --btnPri:#14172b;
+  --btnPriTxt:#ffffff;
+
+  /* permukaan semi-transparan */
+  --surf0:rgba(255,255,255,.34);
+  --surf1:rgba(255,255,255,.52);
+  --surf2:rgba(255,255,255,.64);
+  --surf3:rgba(255,255,255,.82);
+
+  --panelA:rgba(251,252,255,.86);
+  --panelB:rgba(255,255,255,.60);
+
+  --off:#c6cbe0;
+  --off2:#aab0c8;
+
+  --okTxt:#15803d;
+  --okTxt2:#047857;
+  --errTxt:#b91c1c;
+  --warnTxt:#b45309;
+  --infoTxt:#0369a1;
+
+  --ovBg:rgba(17,20,38,.42);
+  --sideBg:rgba(255,255,255,.55);
+  --barBg:rgba(255,255,255,.72);
+  --scroll:#c6cbe0;
+  --scrollH:#aab0c8;
+
+  --tile-green:#e6f4ec;
+  --tile-blue:#e4e7fb;
+  --tile-purple:#f0e7fb;
+  --tile-orange:#fff1d6;
+
+  --glow:0 10px 30px rgba(80,90,160,.12);
+  --g1:inset 0 1px 0 rgba(255,255,255,.85);
+  --g2:0 10px 30px -18px rgba(80,90,160,.35);
+  --blur:blur(18px) saturate(160%);
+
+  /* radius lebih besar dari sebelumnya (18px) — ikut mockup */
+  --r-card:24px;
+  --r-shell:36px;
+}
+
+/* ── 2. Gelap (navy) ──────────────────────────────────────────────── */
+html.dark{
+  --bg:#151830;
+  --bg2:#2b2236;
+
+  --card:rgba(30,34,64,.72);
+  --card2:rgba(36,41,76,.88);
+  --border:rgba(255,255,255,.10);
+  --border2:rgba(255,255,255,.18);
+
+  --txt:#eef0fb;
+  --txt2:#dcdfef;
+  --muted:#9a9fba;
+  --dim:#8d94a4;
+  --dim2:#79808f;
+
+  --acc:#6366f1;
+  --accTxt:#a5b4fc;
+  --acc2:#22d3ee;
+
+  --ok:#4ade80;
+  --onAcc:#0b1030;
+  --btnPri:#eef0fb;
+  --btnPriTxt:#14172b;
+
+  --surf0:rgba(255,255,255,.03);
+  --surf1:rgba(255,255,255,.05);
+  --surf2:rgba(255,255,255,.07);
+  --surf3:rgba(255,255,255,.11);
+
+  --panelA:rgba(30,34,64,.72);
+  --panelB:rgba(23,26,48,.55);
+
+  --off:#3d4351;
+  --off2:#4b5261;
+
+  --okTxt:#86efac;
+  --okTxt2:#a7f3d0;
+  --errTxt:#fca5a5;
+  --warnTxt:#fcd34d;
+  --infoTxt:#7dd3fc;
+
+  --ovBg:rgba(6,8,20,.66);
+  --sideBg:rgba(23,26,48,.66);
+  --barBg:rgba(23,26,48,.72);
+  --scroll:#3d4351;
+  --scrollH:#4b5261;
+
+  --tile-green:#173326;
+  --tile-blue:#1b1f45;
+  --tile-purple:#231a3d;
+  --tile-orange:#2b2113;
+
+  --glow:0 10px 30px rgba(0,0,0,.35);
+  --g1:inset 0 1px 0 rgba(255,255,255,.07);
+  --g2:0 10px 30px -18px rgba(0,0,0,.6);
+}
+
+/* ── 3. Latar halaman ─────────────────────────────────────────────── */
+/* Ditaruh di sini (setelah glass.css bagian 3) supaya menang tanpa
+   !important: `background-image` menimpa radial hijau/cyan lama. */
+body{
+  background-color:var(--bg);
+  background-image:
+    radial-gradient(900px 500px at 90% 10%, var(--bg2), transparent 60%),
+    radial-gradient(800px 600px at 5% 90%, #c9cdf0, transparent 60%),
+    linear-gradient(180deg, var(--bg), var(--bg));
+}
+html.dark body{
+  background-image:
+    radial-gradient(900px 500px at 90% 10%, var(--bg2), transparent 60%),
+    radial-gradient(800px 600px at 5% 90%, #1a1d3a, transparent 60%),
+    linear-gradient(180deg, var(--bg), var(--bg));
+}
+
+/* ── 4. Radius & tepi permukaan ───────────────────────────────────── */
+/* Radius saja — tidak ada perubahan tata letak. page.css memakai 18px untuk
+   kartu dan 14px untuk .stat; mockup memakai 24px.
+
+   Daftar selektornya HARUS memuat versi ber-scope-halaman (`body.page-xxx .x`)
+   juga. Kalau tidak, `body.page-dashboard .stat` (spesifisitas 0,2,1) menang
+   atas `.stat` (0,1,0) dan radiusnya TIDAK berubah — inilah yang sempat
+   kejadian: nilainya sudah diganti tapi hasil di browser tetap 14px.
+   ponytail: daftar tangan, bukan :where(). Kalau permukaan baru muncul di
+   page.css, tambahkan ke sini; kalau lupa, cuma radiusnya yang tidak ikut. */
+.card,.panel,.step,.price-card,.tst,.stat,.faq-item,.modal,.tbl-wrap,
+.add-card,.bot-card,.term-panel,
+body.page-dashboard .stat,body.page-profil .stat,
+body.page-admin .modal,body.page-auth .modal,body.page-bot .modal,
+body.page-dashboard .modal,body.page-index .modal,
+body.page-billing .tbl-wrap{
+  border-radius:var(--r-card);
+}
+#toast{border-radius:999px}          /* toast tetap pil, bukan kartu */
+
+/* ── 5. Kontras aksen: teks kecil pakai --accTxt, bukan --acc ─────── */
+/* Sama seperti glass.css bagian 5 — aksen indigo tidak lulus WCAG sebagai
+   teks kecil, jadi elemen teks harus ikut token --accTxt. Daftar elemennya
+   SAMA supaya tidak ada yang terlewat saat nilai --acc berubah. */
+.mk-live,.bub-cmd,.step p b,.switch-line a,.switch-line button,
+body.page-auth .switch-line a,.foot-links a:hover,
+body.page-pricing .pc-list li::before,.nf-code{color:var(--accTxt)}
+.hero h1 .grad{background-image:linear-gradient(120deg,var(--txt),var(--accTxt))}
+@supports not ((-webkit-background-clip:text) or (background-clip:text)){
+  .hero h1 .grad{background-image:none;-webkit-text-fill-color:var(--accTxt);color:var(--accTxt)}
+}
+
+/* ── 6. Font: Plus Jakarta Sans (mockup) ──────────────────────────────
+   theme.css:112 masih menulis 'Inter'. Diganti di sini, bukan di theme.css,
+   supaya seluruh palet + tipografi tetap SATU berkas — dan supaya <link>
+   font lama di head.html tidak perlu diubah lagi kalau fontnya ganti lagi.
+   Monospace (Consolas/Menlo) sengaja TIDAK diikutkan: terminal, kode, dan
+   angka pakai monospace, itu memang disengaja. */
+body,button,input,select,textarea,
+body.page-auth .modal .btn,.inp,select.inp,textarea.inp{
+  font-family:'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+}
