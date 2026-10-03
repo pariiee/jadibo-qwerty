@@ -13,27 +13,22 @@
     { q: 'Bagaimana cara bayar paket?', a: 'Pilih paket di halaman Pricing, lalu bayar otomatis lewat QRIS atau transfer manual dengan QR. Paket aktif setelah pembayaran terkonfirmasi.' },
     { q: 'Ada trial?', a: 'Ada. Trial 5 hari gratis: 1 slot bot, 5.000 pesan, masa aktif 5 hari — cuma bisa diklaim sekali seumur akun.' }
   ];
+  // §7.11 FAQ: <details>/<summary> bawaan browser — accordion + operasi
+  // keyboard didapat gratis, jadi nol JS. Dulu tiap item dibangun manual
+  // dengan tombol dan kelas `.open`, jadi butuh listener + penanda sendiri.
+  // Item PERTAMA dibuka sesuai spec.
   const faqBox = document.getElementById('faq-list');
   faqs.forEach((f, i) => {
-    const item = document.createElement('div');
+    const item = document.createElement('details');
     item.className = 'faq-item';
-    const qBtn = document.createElement('button');
-    qBtn.className = 'faq-q';
-    qBtn.type = 'button';
-    const span = document.createElement('span');
-    span.textContent = f.q;
-    const chev = document.createElement('span');
-    chev.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
-    qBtn.append(span, chev);
-    const ans = document.createElement('div');
+    if (i === 0) item.open = true;
+    const q = document.createElement('summary');
+    q.className = 'faq-q';
+    q.textContent = f.q;
+    const ans = document.createElement('p');
     ans.className = 'faq-a';
     ans.textContent = f.a;
-    qBtn.addEventListener('click', () => {
-      const open = ans.classList.contains('open');
-      faqBox.querySelectorAll('.faq-a').forEach(a => a.classList.remove('open'));
-      if (!open) ans.classList.add('open');
-    });
-    item.append(qBtn, ans);
+    item.append(q, ans);
     faqBox.appendChild(item);
   });
 

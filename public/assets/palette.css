@@ -557,6 +557,183 @@ body.page-panduan .side-user .me,body.page-bot .side-user .me{
   body.page-bot .content{padding:18px 16px 32px}
 }
 
+/* ══ 10. Komponen halaman aplikasi (§7.3–§7.13) ═════════════════════ */
+
+/* §7.3 Kartu statistik: SATU panel dengan pembatas tipis antar kolom
+   (§15: "kelompokkan angka dalam satu panel berpembatas tipis" — dulu 4
+   kartu terpisah). Grid 4 → 2 (≤1000px) → 1 (≤760px). */
+body.page-dashboard .stats,body.page-profil .stats,body.page-kuota .stats{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+  background:var(--card);border:1px solid var(--edge);border-radius:26px;
+  box-shadow:var(--shadow),var(--hl);
+  backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
+  overflow:hidden;
+}
+body.page-dashboard .stats>.stat,body.page-profil .stats>.stat{
+  background:none;border:0;border-left:1px solid var(--line);border-radius:0;
+  box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;
+  padding:22px 24px;display:flex;flex-direction:column;gap:6px;min-height:150px;
+}
+body.page-dashboard .stats>.stat:first-child,
+body.page-profil .stats>.stat:first-child{border-left:0}
+body.page-dashboard .stat .lbl,body.page-profil .stat .lbl{
+  color:var(--mute);font-size:13px;font-weight:500;
+}
+body.page-dashboard .stat .val,body.page-profil .stat .val{
+  font-size:22px;font-weight:700;letter-spacing:-.01em;
+}
+body.page-dashboard .stat .sub,body.page-profil .stat .sub{
+  color:var(--mute);font-size:13px;line-height:1.45;
+}
+/* §7.3 kotak ikon 38px berlatar lembut (`.ic` di referensi) */
+body.page-dashboard .stat .sic,body.page-profil .stat .sic{
+  width:38px;height:38px;border-radius:12px;background:var(--panel);color:var(--ink);
+  display:grid;place-items:center;margin-bottom:8px;
+}
+body.page-dashboard .stat .val.warn,body.page-profil .stat .val.warn{color:var(--amber)}
+@media(max-width:1000px){
+  body.page-dashboard .stats,body.page-profil .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  body.page-dashboard .stats>.stat,body.page-profil .stats>.stat{border-left:0;border-top:1px solid var(--line)}
+  body.page-dashboard .stats>.stat:nth-child(-n+2),
+  body.page-profil .stats>.stat:nth-child(-n+2){border-top:0}
+}
+@media(max-width:760px){
+  body.page-dashboard .stats,body.page-profil .stats{grid-template-columns:minmax(0,1fr)}
+  body.page-dashboard .stats>.stat:nth-child(2),
+  body.page-profil .stats>.stat:nth-child(2){border-top:1px solid var(--line)}
+}
+
+/* §7.4 Kartu bot — kelasnya `.bot-card` (dibuat dashboard.js:198),
+   BUKAN `.card`; `#bot-grid` juga berisi `.add-card` di sebelahnya. */
+body.page-dashboard .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,320px));gap:16px}
+body.page-dashboard .bot-card{
+  display:flex;flex-direction:column;gap:6px;padding:20px;border-radius:24px;
+  background:var(--card);border:1px solid var(--edge);box-shadow:var(--shadow),var(--hl);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+}
+body.page-dashboard .bot-card .row{
+  display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--mute);
+}
+body.page-dashboard .bot-card h3{margin:8px 0 0;font-size:20px;font-weight:700}
+body.page-dashboard .bot-card p{margin:0;color:var(--mute);font-size:13px}
+body.page-dashboard .add-card{
+  border:2px dashed var(--edge);background:var(--greenbg);border-radius:24px;
+  min-height:200px;display:grid;place-items:center;align-content:center;gap:10px;
+  font-weight:600;box-shadow:none;color:var(--ink);cursor:pointer;
+}
+body.page-dashboard .add-card:hover{border-color:var(--accent2)}
+/* §7.7 Badge status: pill + titik 8px. Warna TIDAK sendirian — selalu ada
+   teksnya (yang sudah dilakukan markup). */
+.wa,.tg,.on-dot,.off-dot,.dot-lbl{
+  display:inline-flex;align-items:center;gap:6px;color:var(--ink);
+}
+.wa:before,.on-dot:before{
+  content:"";width:8px;height:8px;border-radius:50%;background:var(--green);flex:none;
+}
+.off-dot:before{content:"";width:8px;height:8px;border-radius:50%;background:var(--mute);flex:none}
+.pill-ok{background:var(--greenbg);color:var(--green)}
+.pill-warn{background:var(--amberbg);color:var(--amber)}
+.pill-err{background:var(--redbg);color:var(--red)}
+.pill-off{background:var(--card);color:var(--mute)}
+.pill-ok,.pill-warn,.pill-err,.pill-off{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:4px 12px;border-radius:999px;font-size:12px;font-weight:600;
+  border:1px solid var(--edge);
+}
+
+/* §7.8 Progress bar kuota: jalur 10px pill; isi --accent2, ≥80% --amber,
+   ≥100% --red. Markup lama pakai .bar>.fill dan .prog>.isi. */
+.bar,.prog{height:10px;border-radius:999px;background:var(--line);overflow:hidden}
+.bar>.fill,.prog>.isi,.kuota-bar>.isi{
+  height:100%;border-radius:999px;background:var(--accent2);transition:width .3s ease;
+}
+.bar>.fill.warn,.prog>.isi.warn,.kuota-bar>.isi.warn,.bar>.fill[data-lvl="warn"]{background:var(--amber)}
+.bar>.fill.kritis,.prog>.isi.kritis,.bar>.fill[data-lvl="kritis"]{background:var(--red)}
+
+/* §7.5 Tabel (Log, Riwayat, Manajemen User, Statistik bot)
+   page.css menulis aturan ini di `body.page-admin .tbl-wrap` (0,2,0) dan
+   `body.page-admin .tbl th` (0,2,1) — plus versi `body.page-bot` untuk
+   halaman statistik. Karena itu daftar selector di sini harus sama-sama
+   ber-scope halaman, bukan `.tbl-wrap` telanjang (0,1,0) yang akan kalah.
+   §14 juga melarang label KAPITAL ber-tracking: `text-transform:uppercase`
+   + `letter-spacing:.1em` di page.css diganti sentence case. */
+body.page-admin .tbl-wrap,body.page-billing .tbl-wrap,
+body.page-dashboard .tbl-wrap,body.page-command .tbl-wrap,
+body.page-kuota .tbl-wrap,body.page-log .tbl-wrap,
+body.page-profil .tbl-wrap,.tbl-wrap{
+  border-radius:var(--r-card);background:var(--card);border:1px solid var(--edge);
+  box-shadow:var(--shadow),var(--hl);
+  backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
+  overflow-x:auto;
+}
+body.page-admin .tbl,body.page-billing .tbl,body.page-bot .tbl,
+.tbl-wrap table{width:100%;border-collapse:collapse}
+body.page-admin .tbl th,body.page-billing .tbl th,body.page-bot .tbl th,
+.tbl-wrap th{
+  text-align:left;font-size:13px;font-weight:600;color:var(--mute);
+  padding:14px 16px;border-bottom:1px solid var(--line);white-space:nowrap;
+  text-transform:none;letter-spacing:0;background:transparent;
+}
+body.page-admin .tbl td,body.page-billing .tbl td,body.page-bot .tbl td,
+.tbl-wrap td{
+  padding:16px;border-bottom:1px solid var(--line);font-size:14px;vertical-align:middle;
+  min-height:52px;
+}
+body.page-admin .tbl tr:last-child td,body.page-billing .tbl tr:last-child td,
+body.page-bot .tbl tr:last-child td,.tbl-wrap tr:last-child td{border-bottom:0}
+body.page-admin .tbl tbody tr:hover,body.page-billing .tbl tbody tr:hover,
+.tbl-wrap tbody tr:hover{background:var(--card)}
+
+/* §7.11 FAQ / accordion */
+.faq-item{background:var(--card);border:1px solid var(--edge);border-radius:20px;
+  box-shadow:var(--hl);margin-bottom:10px;max-width:760px}
+.faq-q{width:100%;display:flex;justify-content:space-between;gap:12px;align-items:center;
+  background:none;border:0;padding:16px 20px;font-weight:600;font-size:15px;text-align:left}
+.faq-a{display:none;padding:0 20px 16px;color:var(--mute);font-size:14px;line-height:1.6}
+.faq-a.open{display:block}
+
+/* §7.13 Keadaan kosong: ikon 56px, judul 18px, satu arahan, satu tombol */
+.empty{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;
+  padding:44px 22px;border-radius:24px;background:var(--card);border:1px solid var(--edge);
+  box-shadow:var(--shadow),var(--hl)}
+.empty .ic{width:56px;height:56px;border-radius:18px;background:var(--peach);
+  display:grid;place-items:center}
+.empty h3{margin:0;font-size:18px;font-weight:700}
+.empty p{margin:0;color:var(--mute);font-size:14px}
+
+/* §7.9 Dialog: scrim + panel radius 28px; ≤560px jadi bottom sheet */
+.overlay{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;
+  background:var(--ovBg);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.overlay.hidden{display:none}
+.overlay .modal,body.page-dashboard .overlay .modal,body.page-admin .overlay .modal{
+  width:min(480px,calc(100% - 32px));margin:0;
+}
+@media(max-width:560px){
+  .overlay{align-items:flex-end}
+  .overlay .modal,body.page-dashboard .overlay .modal,body.page-admin .overlay .modal{
+    width:100%;max-width:100%;border-radius:28px 28px 0 0;
+  }
+}
+
+/* §7.12 Toast — pill gelap, tengah bawah, dukung safe-area */
+#toast{
+  position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));
+  max-width:min(92vw,420px);padding:10px 18px;border-radius:999px;font-size:14px;font-weight:600;
+  background:var(--dark);color:var(--darkink);border:1px solid transparent;
+  box-shadow:var(--shadow);text-align:center;z-index:120;
+  transform:translate(-50%,20px);opacity:0;transition:opacity .25s ease,transform .25s ease;
+  pointer-events:none;
+}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+#toast.toast-error{background:var(--red);color:#fff}
+#toast.toast-success{background:var(--green);color:#fff}
+
+/* §7.7 lencana kecil di sidebar (peran user) */
+.side-user .rl{color:var(--mute);font-size:11px;text-transform:capitalize}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--dark);color:var(--darkink);
+  display:grid;place-items:center;font-weight:700;flex:none}
+body.page-dashboard .btn.stop,body.page-dashboard .btn-danger{color:var(--red)}
+
 /* ══ 9. Matikan animasi lama (Design.md §14 & §15) ══════════════════
    §14: "animasi masuk di setiap section, hover berlebihan" — dihindari.
    §15: "Bayangan tipis dan tegas", "Jangan semua blok sama".
@@ -590,10 +767,14 @@ body.page-index .hero-l>*,body.page-index .hero-visual,
   animation:none!important;
 }
 /* Jaga-jaga: kalau ada aturan lain yang menahan opacity/translate, nilai
-   akhirnya dipaksa seperti keadaan "animasi selesai". */
+   akhirnya dipaksa seperti keadaan "animasi selesai".
+   `.price-card` & `.card` SENGAJA TIDAK ikut di sini: §15 minta kartu
+   berjajar diberi offset (`translateY(22px)`), dan `transform:none!important`
+   di daftar ini akan membatalkannya. Keduanya sudah aman karena
+   `animation:none!important` di atas sudah mematikan animasinya. */
 nav,.nav-links a,body.page-index h2,
-body.page-index .stat,body.page-index .card,body.page-index .step,
-body.page-index .price-card,body.page-index .tst,body.page-index .faq-item{
+body.page-index .stat,body.page-index .step,body.page-index .tst,
+body.page-index .faq-item{
   opacity:1!important;transform:none!important;translate:none!important;scale:none!important;
 }
 
@@ -752,17 +933,36 @@ body.page-index .step i{
 body.page-index .step p b{
   font-family:ui-monospace,Menlo,Consolas,monospace;color:var(--accent);font-weight:600;
 }
-body.page-index .big{font-size:48px;font-weight:800;letter-spacing:-.03em;color:var(--accent)}
-body.page-index .price-card{max-width:460px}
-body.page-index .price-card ul{
-  padding:0;margin:18px 0 24px;list-style:none;display:grid;gap:10px;color:var(--mute);
+/* §7.10 Kartu harga: grid 3 kolom → 1 kolom ≤980px. Tiap kartu = nama 19px,
+   harga 48px/800, daftar centang --green, satu tombol utama di bawah.
+   Berbeda dari §15 "bayangan tipis" — kartu ini memang harus menonjol. */
+body.page-index .price-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:start;
 }
-body.page-index .price-card li:before{content:"\2713 ";color:var(--green);font-weight:700}
+body.page-index .price-card{
+  display:flex;flex-direction:column;padding:26px;border-radius:24px;
+  background:var(--card);border:1px solid var(--edge);box-shadow:var(--shadow),var(--hl);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+}
+body.page-index .pc-harga small{font-size:14px;font-weight:500;color:var(--mute)}
+body.page-index .pc-li{list-style:none;padding:0;margin:18px 0 20px;display:grid;gap:10px;color:var(--mute);font-size:15px}
+body.page-index .pc-li li:before{content:"\2713 ";color:var(--green);font-weight:700}
+body.page-index .pc-extra{color:var(--mute);font-size:13px;margin:0 0 18px}
+/* §15: "beri sedikit offset pada kartu berjajar" — kartu tengah turun 22px */
+@media(min-width:981px){
+  body.page-index .price-grid>*:nth-child(2){transform:translateY(22px)}
+}
+@media(max-width:980px){
+  body.page-index .price-grid{grid-template-columns:1fr}
+  body.page-index .price-grid>*:nth-child(2){transform:none}
+}
+/* Angka besar (§5 "Angka besar 48px/800") */
+body.page-index .big{font-size:48px;font-weight:800;letter-spacing:-.03em;color:var(--accent)}
+body.page-index .price-note{color:var(--mute);font-size:14px;margin-top:26px}
 body.page-index .pc-nama{font-size:19px;font-weight:700}
 body.page-index .pc-harga{font-size:48px;font-weight:800;letter-spacing:-.03em;margin:6px 0 0}
 body.page-index .pc-harga small{font-size:14px;font-weight:500;color:var(--mute)}
-body.page-index .pc-extra{color:var(--mute);font-size:13px;margin:0 0 16px}
-body.page-index .price-note{color:var(--mute);font-size:14px;margin-top:18px}
+
 body.page-index .tst-t{margin:0 0 16px;line-height:1.6}
 body.page-index .tst-f{display:flex;align-items:center;gap:12px}
 body.page-index .tst-f i{
@@ -771,19 +971,23 @@ body.page-index .tst-f i{
 }
 body.page-index .tst-f b{display:block;font-size:14px}
 body.page-index .tst-f span{color:var(--mute);font-size:12px}
-/* §7.11 FAQ: kartu kaca, max-width 760px, penanda + / – */
+/* §7.11 FAQ: <details> dalam kartu kaca, max-width 760px, penanda + / –,
+   item pertama terbuka. Markup-nya <details class="faq-item"> +
+   <summary class="faq-q"> + <p class="faq-a"> — jadi nol JS (accordion
+   bawaan browser, bisa dioperasikan keyboard tanpa apa pun). */
 body.page-index .faq{max-width:760px;display:grid;gap:10px}
 body.page-index .faq-item{padding:0;overflow:hidden}
 body.page-index .faq-q{
   width:100%;display:flex;justify-content:space-between;gap:12px;align-items:center;
   padding:18px 22px;background:none;border:0;text-align:left;font-weight:600;font-size:15px;
+  cursor:pointer;list-style:none;
 }
-body.page-index .faq-q svg{transition:transform .2s ease;flex:none;color:var(--mute)}
-body.page-index .faq-item.open .faq-q svg{transform:rotate(180deg)}
+body.page-index .faq-q::-webkit-details-marker{display:none}
+body.page-index .faq-q:after{content:"+";color:var(--mute);font-size:20px;line-height:1;flex:none}
+body.page-index .faq-item[open] .faq-q:after{content:"\2013"}
 body.page-index .faq-a{
-  display:none;padding:0 22px 18px;color:var(--mute);font-size:14px;line-height:1.65;
+  padding:0 22px 18px;color:var(--mute);font-size:14px;line-height:1.65;margin:0;
 }
-body.page-index .faq-a.open{display:block}
 /* footer */
 body.page-index footer,body.page-auth footer{
   padding:36px 0 50px;color:var(--mute);font-size:14px;border-top:1px solid var(--line);
