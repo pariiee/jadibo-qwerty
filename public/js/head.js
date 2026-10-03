@@ -30,14 +30,19 @@ function toggleTheme() {
 // (`aside.open` + `#sidebar-overlay`) yang cuma bisa buka/tutup, bukan
 // mengecilkan — spec minta dua keadaan berbeda per breakpoint.
 function appShell() { return document.querySelector('.app'); }
+
+// `aria-expanded` diurus DI SINI saja, satu tempat, mengikuti keadaan nyata.
+function setSidebarMini(mini) {
+  var s = appShell();
+  if (s) s.classList.toggle('mini', mini);
+  var b = document.querySelector('[data-act="toggleSidebar"]');
+  if (b) b.setAttribute('aria-expanded', String(!mini));
+}
 window.toggleSidebar = function () {
   var s = appShell();
-  if (s) s.classList.toggle('mini');
+  if (s) setSidebarMini(!s.classList.contains('mini'));
 };
-window.closeSidebar = function () {
-  var s = appShell();
-  if (s) s.classList.add('mini');
-};
+window.closeSidebar = function () { setSidebarMini(true); };
 
 // ── Drawer navbar landing (§8.2) ─────────────────────────────────────
 function siapkanDrawer() {
@@ -78,7 +83,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var s = appShell();
   if (s) {
     var mq = matchMedia('(max-width:760px)');
-    var setMini = function (v) { s.classList.toggle('mini', v); };
+    var setMini = setSidebarMini;   // satu jalur, jadi `aria-expanded` ikut benar
     setMini(mq.matches);
     mq.addEventListener('change', function (e) { setMini(e.matches); });
     // Klik area konten menutup overlay (mobile).
@@ -86,6 +91,10 @@ document.addEventListener('DOMContentLoaded', function () {
     if (utama) utama.addEventListener('click', function (e) {
       if (mq.matches && !s.classList.contains('mini') &&
           !(e.target.closest && e.target.closest('[data-act="toggleSidebar"]'))) setMini(true);
+    });
+    // §8.1: overlay juga ditutup dengan Esc.
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && mq.matches) setMini(true);
     });
   }
 

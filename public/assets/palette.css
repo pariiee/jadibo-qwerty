@@ -461,6 +461,13 @@ body.page-kuota aside,body.page-log aside,body.page-panduan aside{
   -webkit-backdrop-filter:none;
   overflow:hidden;
   padding:22px 14px;
+  /* page.css menyembunyikan sidebar dengan `transform:translateX(-100%)` di
+     `@media(max-width:768px)`. Itu harus dimatikan di SEMUA lebar, bukan cuma
+     di breakpoint mobile kita (760px): di 761–768px transform-nya masih hidup
+     dan sidebar terdorong keluar layar (terukur: x=-209 di 768px). Media query
+     tidak menambah spesifisitas, jadi aturan 0,2,1 di sini menang di lebar
+     mana pun. */
+  transform:none;
 }
 body.page-dashboard main,body.page-admin main,body.page-pricing main,
 body.page-command main,body.page-billing main,body.page-profil main,
