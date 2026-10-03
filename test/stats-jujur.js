@@ -32,8 +32,25 @@ const cek = (nama, syarat, info = '') => {
 };
 
 const baca = (p) => fs.readFileSync(path.join(__dirname, '..', p), 'utf8');
+
+/**
+ * Buang komentar sebelum memeriksa sumber.
+ *
+ * WAJIB. Komentar yang menjelaskan perbaikan ikut menyebut nama fungsi yang
+ * dibuang ("Tanpa `incrementStat('total_bots_online')`…"), jadi pencocokan teks
+ * mentah akan menuduh komentarnya sendiri — persis jebakan yang sudah pernah
+ * kena di repo ini.
+ */
+const tanpaKomentar = (src) => src
+  .split('\n')
+  .filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l))
+  .map((l) => l.replace(/\s\/\/.*$/, ''))  // komentar di ujung baris
+  .join('\n');
+
 const dbSrc = baca('config/database.js');
-const engine = baca('engine/whatsappEngine.js');
+const engine = tanpaKomentar(baca('engine/whatsappEngine.js'));
+const telegramSrc = tanpaKomentar(baca('engine/telegramEngine.js'));
+const authSrc = tanpaKomentar(baca('controllers/authController.js'));
 
 console.log('=== 1. getStats() DIHITUNG dari tabel, bukan dari counter ===');
 // Counter-nya sengaja diisi angka ngawur: kalau getStats masih membacanya,
@@ -87,28 +104,31 @@ Module.prototype.require = function (id) {
   cek('getStats TIDAK pakai is_running (bisa true walau WA-nya belum nyambung)',
     !/SUM\(is_running/i.test(dbSrc));
 
-  console.log('\n=== 3. Increment total_bots_online di-guard ===');
-  // Ambil blok 'connection: open' dan pastikan increment-nya di dalam guard.
-  const blokOpen = engine.slice(engine.indexOf("if (status === 'open')"), engine.indexOf("broadcast(botId, 'status', { status: 'connected' })"));
-  cek('blok connection:open ketemu', blokOpen.length > 0);
-  const idxInc = blokOpen.indexOf("incrementStat('total_bots_online')");
-  cek('increment ada di dalam guard `if (!botTercatatOnline.has(botId))`',
-    blokOpen.includes('if (!botTercatatOnline.has(botId))') && idxInc > blokOpen.indexOf('botTercatatOnline'),
-    'increment tanpa guard = naik tiap reconnect');
-  cek('penanda diisi sebelum increment (biar tidak dobel saat async)',
-    blokOpen.indexOf('botTercatatOnline.add(botId)') < idxInc);
+  console.log('\n=== 3. TIDAK ADA lagi yang menulis counter itu ===');
+  // Guard saja tidak cukup. Decrement-nya cuma jalan kalau proses sempat putus
+  // dengan rapi; pm2 restart / crash tidak pernah menjalankannya — jadi counter
+  // TETAP naik tiap restart, cuma lebih lambat. Satu-satunya perbaikan jujur:
+  // jangan tulis counter-nya sama sekali, hitung dari tabel saat dibaca.
+  cek('whatsappEngine tidak menulis total_bots_online',
+    !/Stat\('total_bots_online'\)/.test(engine),
+    'masih ada di engine/whatsappEngine.js');
+  const telegram = telegramSrc;
+  cek('telegramEngine tidak menulis total_bots_online',
+    !/Stat\('total_bots_online'\)/.test(telegram),
+    'di telegram bahkan decrement-nya tidak pernah ada');
+  const auth = authSrc;
+  cek('authController tidak menulis total_users',
+    !/Stat\('total_users'\)/.test(auth));
 
-  console.log('\n=== 4. Penanda direset di KEDUA jalur mati ===');
-  const jumlahReset = (engine.match(/botTercatatOnline\.delete\(botId\)/g) || []).length;
-  cek(`direset 2x (close event + stopWhatsAppBot), dapat ${jumlahReset}`, jumlahReset === 2);
-  const blokStop = engine.slice(engine.indexOf('async function stopWhatsAppBot'));
-  cek('stopWhatsAppBot ikut mereset',
-    blokStop.slice(0, 900).includes('botTercatatOnline.delete(botId)'));
-
-  console.log('\n=== 5. Penanda TIDAK memakai activeBots (selalu true di jalur open) ===');
-  cek('guard tidak memakai activeBots.has()',
-    !/if \(!activeBots\.has\(botId\)\) \{\s*\n\s*activeBots/.test(blokOpen),
-    'activeBots di-SET sekali di ~336 dan tidak pernah dihapus saat reconnect');
+  console.log('\n=== 4. Counter yang TERSISA cuma yang kumulatif ===');
+  // `total_messages` tidak pernah dikurangi → aman. Kalau suatu saat ada
+  // counter baru, tes ini memaksa penulisnya berpikir dulu.
+  const semuaSumber = [engine, telegramSrc, authSrc, tanpaKomentar(dbSrc)].join('\n');
+  const dikelola = [...semuaSumber.matchAll(/Stat\('([a-z_]+)'/g)].map((m) => m[1]);
+  const unik = [...new Set(dikelola)];
+  cek(`counter yang masih dikelola: ${unik.join(', ') || '(tidak ada)'}`,
+    unik.every((k) => k === 'total_messages'),
+    'counter selain total_messages tidak akan pernah akurat — hitung dari tabelnya');
 
   console.log('');
   console.log(gagal ? `=== GAGAL: ${gagal} masalah ===` : '=== SEMUA CEK LULUS ===');

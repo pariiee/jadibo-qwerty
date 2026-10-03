@@ -6,7 +6,7 @@
  * Setiap bot punya instance TelegramBot tersendiri dengan token dari DB.
  */
 
-const { pool, incrementStat, decrementStat } = require('../config/database');
+const { pool } = require('../config/database');
 const { activeBots } = require('../controllers/botController');
 
 let TelegramBot;
@@ -194,7 +194,9 @@ async function startTelegramBot(botData) {
     const me = await tgBot.getMe();
     await logBot(botId, 'info', `Terhubung sebagai @${me.username} (${me.first_name})`);
     await pool.execute("UPDATE bots SET status = 'connected', is_running = 1 WHERE id = ?", [botId]);
-    await incrementStat('total_bots_online');
+    // Tanpa `incrementStat('total_bots_online')`: di sini bahkan TIDAK ADA
+    // decrement-nya sama sekali, jadi counter-nya cuma bisa naik. Angka
+    // publiknya dihitung dari `bots.status` saat dibaca (getStats()).
     broadcast(botId, 'status', { status: 'connected', username: me.username });
   } catch (e) {
     await logBot(botId, 'error', `Gagal verifikasi token: ${e.message}`);

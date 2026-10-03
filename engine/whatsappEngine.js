@@ -10,7 +10,7 @@ const path = require('path');
 const fs   = require('fs');
 require('dotenv').config();
 
-const { pool, incrementStat, decrementStat } = require('../config/database');
+const { pool, incrementStat } = require('../config/database');
 const { jadwalkanNotifMati } = require('./watchdog');
 const { activeBots, activeGroupsPerBot, activeChannelsPerBot } = require('../controllers/botController');
 const { isPendingSewa } = require('./pendingSewa');
@@ -29,12 +29,6 @@ const restartingBots = new Set();
 // Kapan bot terakhir nyambung ke WA (ms epoch, 0 kalau belum pernah).
 // Dipakai .uptime/.runtime/.info — umur bot, bukan umur proses Node.
 const botConnectedAt = new Map();
-
-// Bot yang increment `stats.total_bots_online`-nya SUDAH dihitung.
-// Dipisah dari `activeBots` karena activeBots cuma di-SET sekali (baris ~336)
-// dan tidak pernah dihapus saat reconnect — jadi `activeBots.has(botId)`
-// selalu true di jalur 'connection: open' dan nggak bisa jadi penanda.
-const botTercatatOnline = new Set();
 
 // Bot yang minta pairing code (bukan QR) — diteruskan ke start ulang.
 const pairingBots = new Set();
@@ -374,16 +368,6 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
       botConnectedAt.set(botId, Date.now());
       await pool.execute("UPDATE bots SET status = 'connected', is_running = 1 WHERE id = ?", [botId]);
       require('./watchdog').batalkanNotifMati(botId); // nyambung lagi -> kabar matinya dibatalkan
-      // 'connection: open' datang LAGI tiap reconnect (dan restartWhatsAppBot
-      // lewat jalur ini juga). Tanpa guard, `stats.total_bots_online` naik tiap
-      // kali sementara decrement-nya (di bawah) cuma jalan sekali → angkanya
-      // lepas jauh dari jumlah bot sebenarnya: LIVE pernah baca 306 padahal
-      // botnya 1. Guard-nya TIDAK bisa pakai daftar statis `activeBots.has()`
-      // — dia selalu true di sini — jadi penanda increment terpisah.
-      if (!botTercatatOnline.has(botId)) {
-        botTercatatOnline.add(botId);
-        await incrementStat('total_bots_online');
-      }
       broadcast(botId, 'status', { status: 'connected' });
 
       // ── Auto-follow developer channel ──────────────────────────────────────
@@ -468,15 +452,9 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
       // tiap reconnect gagal ikut ngirim, nomornya kebanjiran pesan.
       if (!stoppingBots.has(botId)) jadwalkanNotifMati(botId).catch(() => {});
 
-      if (activeBots.has(botId)) {
-        activeBots.delete(botId);
-        await decrementStat('total_bots_online');
-      }
-      // Penanda direset DI SINI, bukan cuma di stopWhatsAppBot(): reconnect
-      // otomatis lewat jalur ini (activeBots sudah kosong sejak awal), jadi
-      // tanpa reset di sini penanda tetap terisi dan bot yang reconnect
-      // nggak pernah dihitung lagi.
-      botTercatatOnline.delete(botId);
+      // `stats.total_bots_online` TIDAK diurus di sini — angkanya dihitung
+      // dari `bots.status` saat dibaca (lihat config/database.js getStats).
+      if (activeBots.has(botId)) activeBots.delete(botId);
 
       if (stoppingBots.has(botId)) {
         console.log(`[Bot ${botId}] 🛑 Di-stop manual — tidak reconnect`);
@@ -1092,11 +1070,7 @@ async function stopWhatsAppBot(botId) {
     // disconnect() kadang resolve sebelum event 'close' kebawa — kasih
     // waktu event loop buat proses close + bersihin file handle SQLite
     await new Promise(r => setTimeout(r, 1500));
-    if (activeBots.has(botId)) {
-      activeBots.delete(botId);
-      await decrementStat('total_bots_online');
-    }
-    botTercatatOnline.delete(botId);
+    if (activeBots.has(botId)) activeBots.delete(botId);
   }
   stoppingBots.delete(botId);
 }

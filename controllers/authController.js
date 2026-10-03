@@ -2,7 +2,7 @@
 
 const bcrypt    = require('bcryptjs');
 const jwt       = require('jsonwebtoken');
-const { pool, incrementStat, decrementStat } = require('../config/database');
+const { pool } = require('../config/database');
 const { ADMIN_ROLE, roleOf, slotsOf, paketOf } = require('../config/plan');
 const pricingStore = require('../config/pricingStore');
 
@@ -122,7 +122,6 @@ async function register(req, res) {
       [username, hashed, 'user']
     );
 
-    await incrementStat('total_users');
 
     // Trial TIDAK auto-aktif — user harus buka /pricing dan klik klaim sendiri
     // (POST /api/billing/trial). Auto-di sini bikin akun baru langsung nyala
@@ -365,7 +364,8 @@ async function deleteUser(req, res) {
       return sendError(res, 400, 'Tidak bisa menghapus akun sendiri');
 
     await pool.execute('DELETE FROM users WHERE id = ?', [id]);
-    await decrementStat('total_users');
+    // `total_users` dihitung dari tabel users saat dibaca (getStats) —
+    // counter-nya dulu sempat tampil 5 padahal usernya 2.
 
     return res.json({ ok: true, message: 'User dihapus' });
   } catch (err) {

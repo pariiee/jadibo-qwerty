@@ -41,11 +41,14 @@ async function testConnection() {
  * @param {string} hashedPassword
  */
 async function seedDefaults(kingUsername, hashedPassword) {
-  // Stats seed
+  // Stats seed.
+  //
+  // HANYA `total_messages`: dia kumulatif (tidak pernah dikurangi), jadi
+  // counter-nya bisa dipercaya. `total_bots_online` dan `total_users` TIDAK
+  // di-seed karena sudah tidak di-maintain — keduanya DIHITUNG dari tabelnya
+  // saat dibaca (getStats()), biar tidak ada dua sumber yang bisa bertentangan.
   await pool.execute(
     `INSERT IGNORE INTO stats (stat_key, stat_value) VALUES
-     ('total_bots_online', 0),
-     ('total_users', 0),
      ('total_messages', 0)`
   );
 
@@ -59,7 +62,6 @@ async function seedDefaults(kingUsername, hashedPassword) {
       'INSERT INTO users (username, password, role) VALUES (?, ?, ?)',
       [kingUsername, hashedPassword, ADMIN_ROLE]
     );
-    await incrementStat('total_users');
     console.log(`[DB] Admin account created: ${kingUsername}`);
   }
 }
@@ -78,17 +80,6 @@ async function incrementStat(key, amount = 1) {
 }
 
 /**
- * Atomically decrement a stat counter (floor at 0).
- * @param {string} key
- * @param {number} amount
- */
-async function decrementStat(key, amount = 1) {
-  await pool.execute(
-    `UPDATE stats SET stat_value = IF(stat_value >= ?, stat_value - ?, 0) WHERE stat_key = ?`,
-    [amount, amount, key]
-  );
-}
-
 /**
  * Fetch all stats as a plain object.
  *
@@ -125,4 +116,4 @@ async function getStats() {
   return out;
 }
 
-module.exports = { pool, testConnection, seedDefaults, incrementStat, decrementStat, getStats };
+module.exports = { pool, testConnection, seedDefaults, incrementStat, getStats };
