@@ -162,6 +162,178 @@ html.dark body{
     linear-gradient(180deg, var(--bg), var(--bg));
 }
 
+/* ── 3b. Shell: cangkang kaca melayang (BENTUK mockup, bukan cuma warnanya) ─ */
+/* Mockup bukan "halaman dengan sidebar" — dia SATU cangkang kaca yang
+   mengambang: `.shell` max-width 1280px, radius 36px, blur 18px, grid
+   230px + isi; `<main>` di dalamnya jadi KARTU terpisah (radius 28px,
+   margin 10px). Produksi sebelumnya: aside nempel tepi kiri (x=0), main
+   transparan tanpa radius, body padding 0.
+
+   Dipetakan ke markup yang SUDAH ada, jadi nol perubahan 15 berkas HTML:
+     .app   -> shell (max-width, grid, radius, blur)  [10 halaman ber-sidebar]
+     .layout-> shell juga, TAPI tanpa kolom sidebar    [bot-detail & config,
+              body.page-bot: anak body-nya `header.topbar` + `div.layout`,
+              tidak ada aside. `.layout` cuma dipakai dua halaman itu, jadi
+              tidak ada halaman lain yang kena.]
+     aside  -> kolom kiri (tidak lagi `fixed`; di HP tetap drawer)
+     main   -> kartu di dalam shell
+   `body` cuma menengahkan shell; shell-nya sendiri yang jadi cangkangnya —
+   bikin <div class="shell"> baru berarti menyunting 15 halaman untuk
+   sesuatu yang CSS-nya sudah ada. */
+body.page-dashboard,body.page-admin,body.page-pricing,body.page-command,
+body.page-billing,body.page-profil,body.page-kuota,body.page-log,
+body.page-panduan,body.page-bot{
+  padding:20px;
+}
+body.page-dashboard .app,body.page-admin .app,body.page-pricing .app,
+body.page-command .app,body.page-billing .app,body.page-profil .app,
+body.page-kuota .app,body.page-log .app,body.page-panduan .app{
+  display:grid;
+  grid-template-columns:230px minmax(0,1fr);
+  width:100%;
+  max-width:1280px;
+  margin:0 auto;
+  min-height:calc(100vh - 40px);
+  border-radius:var(--r-shell);
+  border:1px solid var(--border);
+  background:var(--sideBg);
+  backdrop-filter:var(--blur);
+  -webkit-backdrop-filter:var(--blur);
+  box-shadow:var(--glow);
+}
+/* page-bot: cangkang yang sama, tapi satu kolom (tanpa sidebar) dan
+   topbar-nya ikut radius atas cangkang. */
+body.page-bot .layout{
+  width:100%;
+  max-width:1280px;
+  margin:0 auto;
+  min-height:calc(100vh - 116px);
+  grid-template-columns:1fr;
+  border-radius:var(--r-shell);
+  border:1px solid var(--border);
+  background:var(--sideBg);
+  backdrop-filter:var(--blur);
+  -webkit-backdrop-filter:var(--blur);
+  box-shadow:var(--glow);
+}
+body.page-bot .topbar{
+  max-width:1280px;
+  margin:0 auto 10px;
+  border-radius:24px;
+  border:1px solid var(--border);
+  backdrop-filter:var(--blur);
+  -webkit-backdrop-filter:var(--blur);
+}
+@media(min-width:1024px){
+  body.page-bot .layout{grid-template-columns:2fr 3fr}
+}
+body.page-bot .layout>*,body.page-bot .layout .stats-wrap,body.page-bot .layout .two{
+  min-width:0;
+}
+/* aside berhenti `fixed`: sebelumnya `inset:0 auto 0 0` bikin dia nempel
+   tepi viewport dan keluar dari cangkang. Di HP (<=768px) tetap drawer
+   lewat blok media di bawah. */
+body.page-dashboard aside,body.page-admin aside,body.page-pricing aside,
+body.page-command aside,body.page-billing aside,body.page-profil aside,
+body.page-kuota aside,body.page-log aside,body.page-panduan aside{
+  position:static;
+  inset:auto;
+  width:auto;
+  border-right:none;
+  background:transparent;
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+}
+body.page-dashboard main,body.page-admin main,body.page-pricing main,
+body.page-command main,body.page-billing main,body.page-profil main,
+body.page-kuota main,body.page-log main,body.page-panduan main{
+  margin:10px;
+  margin-left:10px;
+  border-radius:28px;
+  background:var(--panelA);
+  border:1px solid var(--border);
+}
+/* Topbar duduk di tepi atas kartu `main`. TIDAK boleh pakai
+   `overflow:hidden` di main untuk memotong sudutnya: itu membuat main jadi
+   scroll container, dan `position:sticky` di topbar langsung mati (topbar
+   ikut tergulung — sudah terbukti: y -668 setelah scroll 700). Jadi sudut
+   atasnya dibulatkan langsung di topbar-nya. */
+body.page-dashboard .topbar,body.page-admin .topbar,body.page-pricing .topbar,
+body.page-command .topbar,body.page-billing .topbar,body.page-profil .topbar,
+body.page-kuota .topbar,body.page-log .topbar,body.page-panduan .topbar{
+  border-radius:27px 27px 0 0;
+}
+/* isi kartu: padding mengikuti mockup (22px 32px 40px) */
+body.page-dashboard .content,body.page-admin .content,body.page-pricing .content,
+body.page-command .content,body.page-billing .content,body.page-profil .content,
+body.page-kuota .content,body.page-log .content,body.page-panduan .content,
+body.page-bot .content{
+  padding:22px 26px 34px;
+}
+/* nav = pil (mockup pakai 999px); .logo ikut radius badge, bukan kotak penuh */
+body.page-dashboard nav.nav a,body.page-admin nav.nav a,body.page-pricing nav.nav a,
+body.page-command nav.nav a,body.page-billing nav.nav a,body.page-profil nav.nav a,
+body.page-kuota nav.nav a,body.page-log nav.nav a,body.page-panduan nav.nav a,
+body.page-bot nav.nav a{border-radius:999px}
+/* nav aktif = pil navy penuh (mockup: `nav button.on{background:var(--dark);
+   color:var(--darkink)}`). Dipetakan ke --btnPri/--btnPriTxt yang sudah ada:
+   pasangan token "tombol utama" di repo ini, jadi ikut benar di mode gelap. */
+body.page-dashboard nav.nav a.active,body.page-admin nav.nav a.active,
+body.page-pricing nav.nav a.active,body.page-command nav.nav a.active,
+body.page-billing nav.nav a.active,body.page-profil nav.nav a.active,
+body.page-kuota nav.nav a.active,body.page-log nav.nav a.active,
+body.page-panduan nav.nav a.active,body.page-bot nav.nav a.active{
+  background:var(--btnPri);
+  color:var(--btnPriTxt);
+  border-color:transparent;
+  box-shadow:none;
+}
+body.page-dashboard nav.nav a.active::before,body.page-admin nav.nav a.active::before,
+body.page-pricing nav.nav a.active::before,body.page-command nav.nav a.active::before,
+body.page-billing nav.nav a.active::before,body.page-profil nav.nav a.active::before,
+body.page-kuota nav.nav a.active::before,body.page-log nav.nav a.active::before,
+body.page-panduan nav.nav a.active::before,body.page-bot nav.nav a.active::before{
+  left:12px;right:12px;top:auto;bottom:6px;width:auto;height:3px;
+}
+body.page-dashboard .logo,body.page-admin .logo,body.page-pricing .logo,
+body.page-command .logo,body.page-billing .logo,body.page-profil .logo,
+body.page-kuota .logo,body.page-log .logo,body.page-panduan .logo,
+body.page-bot .logo{border-bottom:none;height:auto;padding:18px 18px 8px}
+body.page-dashboard .logo-badge,body.page-admin .logo-badge,
+body.page-pricing .logo-badge,body.page-command .logo-badge,
+body.page-billing .logo-badge,body.page-profil .logo-badge,
+body.page-kuota .logo-badge,body.page-log .logo-badge,
+body.page-panduan .logo-badge,body.page-bot .logo-badge{border-radius:12px}
+body.page-dashboard .side-user,body.page-admin .side-user,body.page-pricing .side-user,
+body.page-command .side-user,body.page-billing .side-user,body.page-profil .side-user,
+body.page-kuota .side-user,body.page-log .side-user,body.page-panduan .side-user,
+body.page-bot .side-user{border-top:none}
+body.page-dashboard .side-user .me,body.page-admin .side-user .me,
+body.page-pricing .side-user .me,body.page-command .side-user .me,
+body.page-billing .side-user .me,body.page-profil .side-user .me,
+body.page-kuota .side-user .me,body.page-log .side-user .me,
+body.page-panduan .side-user .me,body.page-bot .side-user .me{
+  background:var(--surf1);border:1px solid var(--border);border-radius:20px;padding:8px;
+}
+/* Di HP: aside balik jadi drawer (fixed) supaya animasi geser tetap jalan —
+   `position:static` di atas akan mematikan transform translateX. */
+@media(max-width:768px){
+  body.page-dashboard .app,body.page-admin .app,body.page-pricing .app,
+  body.page-command .app,body.page-billing .app,body.page-profil .app,
+  body.page-kuota .app,body.page-log .app,body.page-panduan .app,
+  body.page-bot .app{grid-template-columns:minmax(0,1fr);border-radius:24px}
+  body.page-bot .layout{grid-template-columns:minmax(0,1fr);border-radius:24px}
+  body.page-bot .topbar{border-radius:18px}
+  body.page-dashboard aside,body.page-admin aside,body.page-pricing aside,
+  body.page-command aside,body.page-billing aside,body.page-profil aside,
+  body.page-kuota aside,body.page-log aside,body.page-panduan aside,
+  body.page-bot aside{position:fixed;inset:0 auto 0 0;width:224px;background:var(--sideBg)}
+  body.page-dashboard main,body.page-admin main,body.page-pricing main,
+  body.page-command main,body.page-billing main,body.page-profil main,
+  body.page-kuota main,body.page-log main,body.page-panduan main,
+  body.page-bot main{margin:0;border-radius:0;border:none}
+}
+
 /* ── 4. Radius & tepi permukaan ───────────────────────────────────── */
 /* Radius saja — tidak ada perubahan tata letak. page.css memakai 18px untuk
    kartu dan 14px untuk .stat; mockup memakai 24px.
