@@ -213,7 +213,7 @@ function logout(req, res) {
 async function me(req, res) {
   try {
     const [rows] = await pool.execute(
-      'SELECT id, username, role, plan, plan_expired_at, plan_slots, trial_used_at, phone, created_at FROM users WHERE id = ?',
+      'SELECT id, username, role, plan, plan_expired_at, plan_slots, trial_used_at, phone, email, created_at FROM users WHERE id = ?',
       [req.user.id]
     );
     if (rows.length === 0) return sendError(res, 404, 'User tidak ditemukan');
@@ -452,8 +452,38 @@ async function simpanPhone(req, res) {
   }
 }
 
+/**
+ * POST /api/auth/email — simpan email (jalur notif KETIGA).
+ *
+ * Dua jalur lain (nomor bot & nomor HP) sama-sama dikirim LEWAT BOT MILIK USER.
+ * Jadi saat botnya yang rusak — persis kondisi yang paling butuh kabar —
+ * keduanya ikut mati. Email tidak lewat bot.
+ *
+ * Kosong = hapus. TIDAK unique: satu email boleh dipakai beberapa akun.
+ */
+async function simpanEmail(req, res) {
+  try {
+    const { emailValid } = require('../engine/email');
+    const alamat = String(req.body?.email || '').trim();
+
+    if (!alamat) {
+      await pool.execute('UPDATE users SET email = NULL WHERE id = ?', [req.user.id]);
+      return res.json({ ok: true, message: 'Email dihapus.' });
+    }
+    if (!emailValid(alamat)) {
+      return sendError(res, 400, 'Email tidak valid. Contoh: nama@email.com');
+    }
+
+    await pool.execute('UPDATE users SET email = ? WHERE id = ?', [alamat, req.user.id]);
+    return res.json({ ok: true, message: 'Email disimpan.', email: alamat });
+  } catch (err) {
+    console.error('[Auth] simpanEmail error:', err);
+    return sendError(res, 500, 'Terjadi kesalahan server');
+  }
+}
+
 module.exports = {
-  register, login, logout, me, gantiPassword, simpanPhone,
+  register, login, logout, me, gantiPassword, simpanPhone, simpanEmail,
   listUsers, updateUser, deleteUser,
   requireAuth, requireKing,
 };

@@ -170,6 +170,7 @@ app.get('/api/command',              apiLimiter, auth.requireAuth, command.dafta
 app.post('/api/auth/password',         authLimiter, auth.requireAuth, auth.gantiPassword);
 // Nomor HP — jalur notif kedua. authLimiter karena endpoint ini nulis ke akun.
 app.post('/api/auth/phone',            authLimiter, auth.requireAuth, auth.simpanPhone);
+app.post('/api/auth/email',            authLimiter, auth.requireAuth, auth.simpanEmail);
 app.post('/api/billing/checkout',    apiLimiter, auth.requireAuth, billing.checkout);
 app.post('/api/billing/trial',       apiLimiter, auth.requireAuth, billing.klaimTrialSendiri);
 app.get('/api/billing/orders',       apiLimiter, auth.requireAuth, billing.daftarOrder);

@@ -37,6 +37,7 @@
 
     document.getElementById('pf-user').textContent = u.username;
     document.getElementById('hp-nomor').value = u.phone || '';
+    document.getElementById('em-alamat').value = u.email || '';
     document.getElementById('pf-sejak').textContent = 'Daftar ' + tanggal(u.created_at);
     document.getElementById('pf-role').textContent = u.role_label || '—';
     document.getElementById('pf-paket').textContent = u.plan_name + ' · limit ' + u.daily_limit + '/hari';
@@ -102,11 +103,30 @@
     showToast(d.message || 'Nomor HP disimpan', 'success');
   }
 
+  /** Email — jalur kabar yang TIDAK lewat bot (lihat engine/email.js). */
+  async function simpanEmail(e) {
+    e.preventDefault();
+    const err = document.getElementById('em-error');
+    const ok = document.getElementById('em-ok');
+    err.textContent = ''; ok.textContent = '';
+
+    const alamat = document.getElementById('em-alamat').value.trim();
+    const d = await api('/api/auth/email', {
+      method: 'POST', body: JSON.stringify({ email: alamat }),
+    });
+    if (!d?.ok) { err.textContent = d?.message || 'Gagal menyimpan email.'; return; }
+
+    if (d.email) document.getElementById('em-alamat').value = d.email;
+    ok.textContent = d.message || 'Email disimpan.';
+    showToast(d.message || 'Email disimpan', 'success');
+  }
+
   const sapaan = document.getElementById('greeting');
   if (sapaan) sapaan.textContent = 'Profil Saya';
   window.openAddBot = () => { location.href = '/dashboard'; };
 
   document.getElementById('pw-form').addEventListener('submit', simpanPassword);
   document.getElementById('hp-form').addEventListener('submit', simpanPhone);
+  document.getElementById('em-form').addEventListener('submit', simpanEmail);
   muatProfil();
 })();

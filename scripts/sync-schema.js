@@ -19,6 +19,13 @@ const TABLES = {
   users: [
     ['token_version',   "INT NOT NULL DEFAULT 0"],
     ['phone',           "VARCHAR(20) DEFAULT NULL"],
+    // Email user — jalur kabar yang TIDAK lewat bot. Semua peringatan
+    // (kuota habis, bot mati) dikirim lewat bot MILIK USER, jadi saat botnya
+    // yang rusak, kabarnya ikut hilang. Lihat engine/email.js.
+    // TIDAK unique: satu email boleh dipakai beberapa akun (mis. pengelola
+    // yang mendaftarkan banyak bot), dan unique akan bikin register gagal
+    // dengan pesan yang bikin bingung.
+    ['email',           "VARCHAR(254) DEFAULT NULL"],
     ['plan',            "VARCHAR(32) NOT NULL DEFAULT 'user'"],
     ['plan_expired_at', "DATETIME DEFAULT NULL"],
     ['plan_slots',      "INT NOT NULL DEFAULT 2"],

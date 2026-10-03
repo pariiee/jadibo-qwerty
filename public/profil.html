@@ -63,6 +63,29 @@
         </form>
       </div>
 
+      <!-- Email — jalur kabar yang TIDAK lewat bot.
+           Nomor HP & nomor owner dua-duanya dikirim lewat bot MILIK USER, jadi
+           saat botnya yang rusak, kabarnya ikut hilang. Email tidak. -->
+      <div class="card">
+        <h3>Email</h3>
+        <p class="m-sub">Kalau bot kamu mati, kabarnya dikirim lewat WhatsApp —
+          <b>dari bot itu sendiri</b>, jadi kalau botnya yang bermasalah, kabarnya tidak sampai.
+          Email ini jalur yang tetap jalan.</p>
+        <form id="em-form">
+          <div class="row2">
+            <div class="field">
+              <label for="em-alamat">Alamat Email</label>
+              <input class="inp" id="em-alamat" type="email" placeholder="nama@email.com" autocomplete="email" />
+            </div>
+            <div class="field">
+              <label for="em-btn">&nbsp;</label>
+              <button class="btn btn-dark" id="em-btn" type="submit" style="width:100%">Simpan Email</button>
+            </div>
+          </div>
+          <div class="err" id="em-error"></div>
+          <div class="ok" id="em-ok"></div>
+        </form>
+
       <div class="card">
         <h3>Ganti Password</h3>
         <p class="m-sub">Masukkan password lama dulu — supaya orang lain yang kebetulan

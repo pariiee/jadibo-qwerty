@@ -48,6 +48,18 @@ async function kirimKeOwner(userId, teks) {
       if (await kirimLewatBot(b.id, hp, teks)) return true;
     }
   }
+
+  // JALUR KETIGA — EMAIL.
+  //
+  // Dua jalur di atas SAMA-SAMA menembak lewat bot milik user ini. Jadi justru
+  // di kasus yang paling butuh kabar — kuota habis / bot mati — keduanya ikut
+  // mati, dan user tidak punya cara apa pun untuk tahu. Email tidak lewat bot.
+  //
+  // HANYA dipanggil di sini (setelah dua-duanya gagal): kalau tidak, user yang
+  // botnya normal bakal dapat notif dobel, WA + email, untuk hal yang sama.
+  const { kirimKeUser } = require('./email');
+  if (await kirimKeUser(userId, 'Kabar dari YaaParBot', teks)) return true;
+
   return false;
 }
 
