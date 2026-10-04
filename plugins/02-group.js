@@ -15,7 +15,7 @@ const { randomBytes } = require('crypto');
 const { getMuteGrup, setMuteGrup, daftarMuteGrup } = require('../config/globalSettings');
 const mess             = require('../config/mess');
 const proteksi         = require('./06-proteksi');
-const { lidToPnAsync, bare, toPn, mentionsForChat } = require('../engine/jid');
+const { lidToPn, lidToPnAsync, bare, toPn, mentionsForChat } = require('../engine/jid');
 const { genThumbnail } = require('../engine/thumbnail');
 const { catatan } = require('../engine/template');
 
@@ -445,15 +445,20 @@ module.exports = async function groupHandler(ctx) {
     try { return await client.group.queryGroupMetadata(jid); } catch { return null; }
   }
 
-  // Helper: resolve nomor untuk display mention di teks
-  // Di grup LID, harus pakai LID number bukan phone number agar mention bisa di-tap
+  // Helper: tag untuk teks mention (`@nomor`, bukan `@lid`).
+  //
+  // Dulu dua cabangnya balikin hal yang sama — `participant.jid.split('@')[0]`
+  // — jadi di grup ber-alamat LID (zapo) yang keluar selalu angka LID
+  // (`@238487219482668`), nggak ada artinya buat manusia dan nggak bisa di-tap.
+  // Isi `mentions`-nya tetap perlu LID (tag biru nempel dari situ), tapi yang
+  // DIBACA user harus nomor: `phoneNumber` dari metadata, kalau kosong baru
+  // peta LID<->PN yang diisi `cacheLidFromMeta`.
   function resolveMentionTag(participant) {
-    // Kalau jid adalah LID (@lid), pakai LID number untuk teks @mention
-    if (participant.jid && participant.jid.endsWith('@lid')) {
-      return participant.jid.split('@')[0];
-    }
-    // Kalau phone JID (@s.whatsapp.net), pakai phone number
-    return participant.jid.split('@')[0];
+    const jid = String(participant?.jid || '');
+    if (!jid.endsWith('@lid')) return jid.split('@')[0];
+    if (participant.phoneNumber) return String(participant.phoneNumber).replace(/\D/g, '');
+    const pn = lidToPn(jid);
+    return String(pn || jid).split('@')[0];
   }
 
   // Helper: resolve nomor WA asli untuk display info (bukan mention)
