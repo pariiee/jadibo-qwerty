@@ -540,6 +540,7 @@ module.exports = async function groupHandler(ctx) {
       const mentionJids = [];
       meta.participants.forEach(p => {
         if (p.jid) mentionJids.push(p.jid);
+        const pnum = resolveMentionTag(p); if (pnum) mentionJids.push(`${pnum}@s.whatsapp.net`);
         if (p.lid && p.lid !== p.jid) mentionJids.push(p.lid);
       });
       const tags = meta.participants.map(p => `@${resolveMentionTag(p)}`).join('\n');
@@ -561,6 +562,7 @@ module.exports = async function groupHandler(ctx) {
       const mentionJids = [];
       admins.forEach(p => {
         if (p.jid) mentionJids.push(p.jid);
+        const pnum = resolveMentionTag(p); if (pnum) mentionJids.push(`${pnum}@s.whatsapp.net`);
         if (p.lid && p.lid !== p.jid) mentionJids.push(p.lid);
       });
       const tags = admins.map(a => `@${resolveMentionTag(a)}`).join('\n');
@@ -593,6 +595,7 @@ module.exports = async function groupHandler(ctx) {
       const mentionJids = [];
       meta.participants.forEach(p => {
         if (p.jid) mentionJids.push(p.jid);
+        const pnum = resolveMentionTag(p); if (pnum) mentionJids.push(`${pnum}@s.whatsapp.net`);
         if (p.lid && p.lid !== p.jid) mentionJids.push(p.lid);
       });
 
