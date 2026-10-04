@@ -76,10 +76,18 @@ it('`contextInfo` mentah diteruskan adapter (dulu dibuang total)', () => {
   const ci = { isGroupStatus: true };
   assert.deepStrictEqual(A.toZapoContent({ text: 'x', contextInfo: ci }).contextInfo, ci);
 });
-it('`mentions` nyampe ke proto akhir (dulu dibuang)', async () => {
+it('`mentions` nyampe ke proto akhir UTUH sebagai JID (dulu dipotong jadi angka)', async () => {
+  // Dulu tes ini nge-assert `['628222']` — angka telanjang. Itu mengunci bug:
+  // WA cuma nyocokin `mentionedJid` yang berbentuk JID, jadi tag birunya nggak
+  // pernah muncul padahal tesnya hijau. JID wajib diteruskan apa adanya.
   const m = await bangun({ text: 'hai', mentions: [JID] }, { mentions: [JID] });
   const sub = m.extendedTextMessage || m;
-  assert.deepStrictEqual(sub.contextInfo.mentionedJid, ['628222']);
+  assert.deepStrictEqual(sub.contextInfo.mentionedJid, [JID]);
+
+  // JID @lid juga wajib utuh — di grup ber-alamat LID inilah bentuk yang dipakai.
+  const LID = '238487219482668@lid';
+  const m2 = await bangun({ text: 'hai', mentions: [LID] }, { mentions: [LID] });
+  assert.deepStrictEqual((m2.extendedTextMessage || m2).contextInfo.mentionedJid, [LID]);
 });
 it('gambar Baileys `{ image, caption }` -> bentuk media yang DITERIMA zapo', () => {
   const buf = Buffer.from('jpg');

@@ -67,9 +67,12 @@ const buatCtx = (command, args = []) => ({
   assert.doesNotMatch(teks, /@238487219482668/, 'teks TIDAK boleh @lid admin');
   assert.doesNotMatch(teks, /@281294688809156/, 'teks TIDAK boleh @lid member');
 
-  // mentions: LID wajib ikut (tag biru nempel dari situ)
+  // mentions: LID wajib ikut UTUH (`...@lid`), bukan angka telanjang —
+  // WA diam-diam mengabaikan `mentionedJid` yang bukan JID.
+  assert.ok(mentions.some((m) => String(m).endsWith('@lid')), 'mentions wajib bentuk JID (@lid), bukan angka');
   assert.ok(mentions.some((m) => String(m).includes('238487219482668')), 'mentions wajib bawa LID admin');
   assert.ok(mentions.some((m) => String(m).includes('281294688809156')), 'mentions wajib bawa LID member');
+  assert.ok(mentions.every((m) => String(m).includes('@')), 'nggak boleh ada mention tanpa @ (WA bakal abaikan)');
 
   // ── tagadmin ──────────────────────────────────────────────────────────────
   terkirim.length = 0;

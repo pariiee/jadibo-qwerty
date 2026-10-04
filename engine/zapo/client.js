@@ -88,10 +88,16 @@ const isRawProto = (c) => !!c && typeof c === 'object' && !Buffer.isBuffer(c) &&
 /**
  * Zapo ngebuang `mentions` dari OPSI secara diam-diam (sama kayak Baileys v7):
  * harus nempel di kontennya. Call-site tinggal kirim `{ text, mentions }`.
+ *
+ * JID diteruskan UTUH — jangan dipotong jadi angka. Dulu di sini ada
+ * `mentions.map(angkaJid)` yang memotong `@g.us`/`@lid`/`@s.whatsapp.net`
+ * menjadi angka telanjang; WA diam-diam mengabaikan `mentionedJid` yang bukan
+ * JID, jadi tag biru tidak pernah muncul — tanpa error, tanpa log. Di grup
+ * ber-alamat LID itu mematikan fitur tag sepenuhnya.
  */
 function attachMentions(content, mentions) {
   if (!mentions?.length || !content) return content;
-  return { ...content, mentions: mentions.map(angkaJid) };
+  return { ...content, mentions: [...mentions] };
 }
 
 /** Opsi kirim yang artinya "operasi di pesan TERKIRIM", bukan isi pesan baru. */
@@ -168,7 +174,8 @@ function toZapoContent(c) {
 function toZapoOptions(opts, ambilQuote) {
   if (!opts) return undefined;
   const o = {};
-  if (opts.mentions?.length) o.mentions = opts.mentions.map(angkaJid);
+  // `mentions` diteruskan UTUH (JID lengkap) — lihat attachMentions().
+  if (opts.mentions?.length) o.mentions = [...opts.mentions];
   if (opts.ephemeralExpiration) o.expirationSeconds = opts.ephemeralExpiration;
   if (opts.expirationSeconds) o.expirationSeconds = opts.expirationSeconds;
 
