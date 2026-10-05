@@ -40,6 +40,8 @@ const topchatStore    = new Map(); // groupJid -> Map<jid, count>
 const msgStore        = new Map(); // remoteJid|id -> event (untuk antidelete)
 const fs              = require('fs');
 const path            = require('path');
+const os              = require('os');
+const { execFileSync } = require('child_process');
 
 // Pesan yang BOT kirim sendiri nggak pernah lewat jalur pesan masuk (engine
 // skip `fromMe` di line ~477), jadi store-nya cuma keisi pesan orang lain —
@@ -1736,14 +1738,34 @@ module.exports = async function groupHandler(ctx) {
             },
           };
         } else if (audMsg) {
-          const buffer = await client.message.downloadBytes({ audioMessage: audMsg });
-          const { audioMessage } = await client.message.prepareMedia(buffer, { type: 'audio', mimetype: audMsg.mimetype || 'audio/mp4' });
+          const rawBuf = await client.message.downloadBytes({ audioMessage: audMsg });
+          // WhatsApp status HANYA mendukung voice status: format wajib OGG Opus & type 'ptt'
+          const tmpIn = path.join(os.tmpdir(), `swgc_in_${Date.now()}`);
+          const tmpOut = path.join(os.tmpdir(), `swgc_out_${Date.now()}.ogg`);
+          fs.writeFileSync(tmpIn, rawBuf);
+          let duration = audMsg.seconds || 1;
+          try {
+            execFileSync('ffmpeg', ['-y', '-i', tmpIn, '-c:a', 'libopus', '-b:a', '64k', '-vn', tmpOut], { stdio: 'ignore' });
+            try {
+              const durStr = execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'default=noprint_wrappers=1:nokey=1', tmpOut]).toString().trim();
+              if (durStr && !isNaN(durStr)) duration = Math.round(parseFloat(durStr));
+            } catch {}
+          } catch (e) {
+            console.error('[swgc] konversi audio ke opus gagal:', e.message);
+          }
+          const buf = fs.existsSync(tmpOut) ? fs.readFileSync(tmpOut) : rawBuf;
+          try { fs.unlinkSync(tmpIn); } catch {}
+          try { fs.unlinkSync(tmpOut); } catch {}
+
+          const { audioMessage } = await client.message.prepareMedia(buf, { type: 'ptt', mimetype: 'audio/ogg; codecs=opus' });
+          const waveform = Buffer.from(new Uint8Array(64).map((_, i) => Math.floor(Math.sin((i / 64) * Math.PI) * 70 + Math.random() * 20)));
+
           content = {
             audioMessage: {
               ...audioMessage,
-              seconds: audioMessage.seconds || audMsg.seconds || 1,
-              ptt: false,
-              ...(caption && { caption }),
+              seconds: duration,
+              ptt: true,
+              waveform,
             },
           };
         } else if (caption) {

@@ -457,7 +457,8 @@ function createClient({ client, botJid = null, logger = console } = {}) {
     async prepareMedia(buffer, opsi = 'image/jpeg') {
       const { type: kind, mimetype: mt } = normalisasiMedia(opsi);
       const up = await need('client.message.upload', client.message?.upload)(buffer, { type: kind, mimetype: mt });
-      return { [`${kind}Message`]: up };
+      const msgKey = kind === 'ptt' ? 'audioMessage' : `${kind}Message`;
+      return { [msgKey]: up };
     },
 
     /** Sama seperti prepareMedia, tapi dibungkus sebagai document (buat header tombol). */
