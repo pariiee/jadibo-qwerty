@@ -1739,16 +1739,21 @@ module.exports = async function groupHandler(ctx) {
           };
         } else if (audMsg) {
           const rawBuf = await client.message.downloadBytes({ audioMessage: audMsg });
-          // WhatsApp status HANYA mendukung voice status: format wajib OGG Opus & type 'ptt'
+          // WhatsApp status HANYA mendukung voice status: format wajib OGG Opus, mono 48kHz, max 30 detik
           const tmpIn = path.join(os.tmpdir(), `swgc_in_${Date.now()}`);
           const tmpOut = path.join(os.tmpdir(), `swgc_out_${Date.now()}.ogg`);
           fs.writeFileSync(tmpIn, rawBuf);
-          let duration = audMsg.seconds || 1;
+          let duration = 30;
           try {
-            execFileSync('ffmpeg', ['-y', '-i', tmpIn, '-c:a', 'libopus', '-b:a', '64k', '-vn', tmpOut], { stdio: 'ignore' });
+            execFileSync('ffmpeg', [
+              '-y', '-i', tmpIn,
+              '-vn', '-c:a', 'libopus', '-b:a', '64k', '-ar', '48000', '-ac', '1',
+              '-t', '30',
+              tmpOut,
+            ], { stdio: 'ignore' });
             try {
               const durStr = execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'default=noprint_wrappers=1:nokey=1', tmpOut]).toString().trim();
-              if (durStr && !isNaN(durStr)) duration = Math.round(parseFloat(durStr));
+              if (durStr && !isNaN(durStr)) duration = Math.min(Math.round(parseFloat(durStr)), 30);
             } catch {}
           } catch (e) {
             console.error('[swgc] konversi audio ke opus gagal:', e.message);
