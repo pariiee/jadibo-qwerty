@@ -1744,7 +1744,7 @@ module.exports = async function groupHandler(ctx) {
           const tmpIn = path.join(os.tmpdir(), `swgc_in_${Date.now()}.${ext}`);
           const tmpOut = path.join(os.tmpdir(), `swgc_out_${Date.now()}.ogg`);
           fs.writeFileSync(tmpIn, rawBuf);
-          let duration = 30;
+          let duration = audMsg.seconds || 30;
           try {
             execFileSync('ffmpeg', [
               '-y', '-i', tmpIn,
@@ -1758,12 +1758,11 @@ module.exports = async function groupHandler(ctx) {
               '-ar', '48000',
               '-avoid_negative_ts', 'make_zero',
               '-map_metadata', '-1',
-              '-t', '30',
               tmpOut,
             ], { stdio: 'ignore' });
             try {
               const durStr = execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'default=noprint_wrappers=1:nokey=1', tmpOut]).toString().trim();
-              if (durStr && !isNaN(durStr)) duration = Math.min(Math.round(parseFloat(durStr)), 30);
+              if (durStr && !isNaN(durStr)) duration = Math.round(parseFloat(durStr));
             } catch {}
           } catch (e) {
             console.error('[swgc] konversi audio ke opus gagal:', e.message);
