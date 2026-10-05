@@ -1739,15 +1739,25 @@ module.exports = async function groupHandler(ctx) {
           };
         } else if (audMsg) {
           const rawBuf = await client.message.downloadBytes({ audioMessage: audMsg });
-          // WhatsApp status HANYA mendukung voice status: format wajib OGG Opus, mono 48kHz, max 30 detik
-          const tmpIn = path.join(os.tmpdir(), `swgc_in_${Date.now()}`);
+          // WhatsApp status HANYA mendukung voice status: format wajib OGG Opus VOIP, mono 48kHz, max 30 detik
+          const ext = (audMsg.mimetype || '').includes('ogg') ? 'ogg' : ((audMsg.mimetype || '').includes('mp4') ? 'm4a' : 'mp3');
+          const tmpIn = path.join(os.tmpdir(), `swgc_in_${Date.now()}.${ext}`);
           const tmpOut = path.join(os.tmpdir(), `swgc_out_${Date.now()}.ogg`);
           fs.writeFileSync(tmpIn, rawBuf);
           let duration = 30;
           try {
             execFileSync('ffmpeg', [
               '-y', '-i', tmpIn,
-              '-vn', '-c:a', 'libopus', '-b:a', '64k', '-ar', '48000', '-ac', '1',
+              '-vn',
+              '-c:a', 'libopus',
+              '-b:a', '24k',
+              '-vbr', 'on',
+              '-compression_level', '10',
+              '-application', 'voip',
+              '-ac', '1',
+              '-ar', '48000',
+              '-avoid_negative_ts', 'make_zero',
+              '-map_metadata', '-1',
               '-t', '30',
               tmpOut,
             ], { stdio: 'ignore' });
@@ -1763,7 +1773,7 @@ module.exports = async function groupHandler(ctx) {
           try { fs.unlinkSync(tmpOut); } catch {}
 
           const { audioMessage } = await client.message.prepareMedia(buf, { type: 'ptt', mimetype: 'audio/ogg; codecs=opus' });
-          const waveform = Buffer.from(new Uint8Array(64).map((_, i) => Math.floor(Math.sin((i / 64) * Math.PI) * 70 + Math.random() * 20)));
+          const waveform = audMsg.waveform || Buffer.from(new Uint8Array(64).map((_, i) => Math.floor(Math.sin((i / 64) * Math.PI) * 70 + Math.random() * 20)));
 
           content = {
             audioMessage: {
