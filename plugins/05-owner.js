@@ -191,6 +191,8 @@ module.exports = async function ownerHandler(ctx) {
   if (!ctx.isCmd) return false;
 
   const { command, args, reply, react, sock, client, jid, sender, botData, isGroup } = ctx;
+  const conn = ctx.conn || client || sock;
+  const m    = ctx.m || { chat: jid, ...ctx.msg };
   const botId = getBotId(ctx);
   const p     = botData.prefix;
 
@@ -1291,73 +1293,20 @@ module.exports = async function ownerHandler(ctx) {
       if (!await isOwner(ctx)) { await reply(mess.ownerOnly); return true; }
       try {
         await react(mess.reactLoading);
-
-        const banner = fs.readFileSync(
-          path.resolve(botData.banner_url || process.env.BANNER_DEFAULT),
-        );
-        const thumb = await genThumbnail(banner, 'image/jpeg', 300) || banner;
-
-        const pnJid = String(sender).split(':')[0].split('@')[0];
-        const botNm = botData.bot_name || 'YaaParBot';
-
-        const body = [
-          '╭─── • *「 MENU BOT 」*',
-          `│ ◦ User : *${ctx.pushName || pnJid}*`,
-          `│ ◦ Total Fitur : *${ALL_COMMANDS.length}*`,
-          `│ ◦ Kategori : *${Object.keys(CATS).length}*`,
-          '╰───────────────────•',
-          '',
-          'Pilih kategori lewat tombol di bawah 👇',
-        ].join('\n');
-
-        // SATU bubble `buttonsMessage`: tombol dirender WA **sebaris kanan-kiri**,
-        // dan `single_select` boleh nempel di sini lewat `nativeFlowInfo`
-        // (`proto.Message.ButtonsMessage.Button.nativeFlowInfo`, field 4 —
-        // ada di WAProto, cuma Baileys nggak punya API-nya).
-        // Jadi 📂 = dropdown beneran + Owner = tombol biasa, dua-duanya sebaris.
-        // ✅ TERBUKTI di HP Pak — `type: 1` + `nativeFlowInfo` cukup; `type: 2` dibuang.
-        await sock.message.send(jid, {
-          buttonsMessage: {
-            headerType: 6,
-            locationMessage: {
-              degreesLatitude: 0,
-              degreesLongitude: 0,
-              name: botNm,
-              address: 'Api? yapari.web.id | Jadibot? labs.yapari.web.id',
-              jpegThumbnail: thumb,
+        await conn.relayMessage(m.chat, {
+          interactiveMessage: {
+            body: {
+              text: "Pilih Paket Freedom Internet Harian 🎉"
             },
-            contentText: body,
-            footerText: botData.footer_text || 'Powered by YaaParBot',
-            buttons: [
-              {
-                buttonId: 'btn_cat',
-                buttonText: { displayText: '📂' },
-                type: 1,
-                nativeFlowInfo: {
-                  name: 'single_select',
-                  paramsJson: JSON.stringify({
-                    title: '📂',
-                    sections: [{
-                      title: 'Kategori',
-                      highlight_label: 'YaaPar Menu',
-                      rows: CAT_KEYS.map(k => [k, CATS[k]]).map(([k, v]) => ({
-                        header: '',
-                        title: catLabel(k),
-                        description: `${v.length} Command`,
-                        id: `.menu ${k}`,
-                      })),
-                    }],
-                  }),
-                },
-              },
-              {
-                buttonId: 'btn_owner',
-                buttonText: { displayText: '👤 Owner' },
-                type: 1,
-              },
-            ],
-          },
-        });
+            nativeFlowMessage: {
+              buttons: [{
+                  name: "galaxy_message",
+                  buttonParamsJson: "{\"flow_message_version\":\"3\",\"flow_token\":\"179103497960019790|6285876902820|Prepaid|Freedom Internet Harian|ID\",\"flow_id\":\"1835937950898063\",\"flow_cta\":\"Pilih Paket\",\"flow_action\":\"data_exchange\",\"mode\":\"published\",\"flow_metadata\":{\"flow_json_version\":700,\"data_api_protocol\":\"PUBLIC_KEY\",\"flow_name\":\"Core_Journey_PROD_v2_1790520765758\",\"data_api_version\":300,\"www_proxy_secret\":\"Q5r2BAJ0x_xlM8UdXHLC887Wbvb6O2yQPtQu7em298UZQnE40AThidDfJbLPBX5EjnpdJDtzWKjNJSITlQ\",\"flow_token_signature\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3OTEwMzQ5ODAsImV4cCI6MTgyMjU3MDk4MCwiZmxvd190b2tlbiI6IjE3OTEwMzQ5Nzk2MDAxOTc5MHw2Mjg1ODc2OTAyODIwfFByZXBhaWR8RnJlZWRvbSBJbnRlcm5ldCBIYXJpYW58SUQifQ.Tf6dJe0FKQVYO6g2mpfXRx62kqMnz3sBsJQFn3oW468\",\"categories\":[]}}"
+                }],
+              messageParamsJson: ""
+            }
+          }
+        }, {});
         await react(mess.reactSuccess);
       } catch (e) {
         await react(mess.reactError);

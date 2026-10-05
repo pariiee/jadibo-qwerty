@@ -351,6 +351,10 @@ function createClient({ client, botJid = null, logger = console } = {}) {
       return message.send(jid, toZapoContent(protoContent), opts);
     },
 
+    async relayMessage(jid, protoContent, opts = {}) {
+      return message.send(jid, toZapoContent(protoContent), opts);
+    },
+
     /**
      * Pesan berlabel "AI" (node `<bot biz_bot="1"/>` di Baileys). zapo bikin
      * labelnya dari `messageContextInfo.supportPayload` -> cukup set di content.
@@ -767,6 +771,8 @@ function createClient({ client, botJid = null, logger = console } = {}) {
     emit: (...a) => ev.emit(...a),
 
     message, group, profile, privacy, business, newsletter, status, stores, auth, lid,
+    relayMessage: (targetJid, protoContent, opts = {}) => message.send(targetJid, toZapoContent(protoContent), opts),
+    sendMessage:  (targetJid, content, opts = {})      => message.send(targetJid, toZapoContent(content), opts),
 
     /** Dipakai engine buat jalanin connect() miliknya sendiri. */
     connect:      (...a) => client.connect(...a),
