@@ -825,7 +825,7 @@ body.page-index .faq-item{
 body.page-index .wrap,body.page-auth .wrap{max-width:1180px;margin:0 auto;padding:0 28px}
 
 /* Navbar: kaca menempel (§8.2) */
-body.page-index nav,body.page-auth nav,body.page-index header:first-of-type{
+body.page-index > nav,body.page-auth > nav{
   position:sticky;top:env(safe-area-inset-top,0px);z-index:30;
   background:var(--card);
   border-bottom:1px solid var(--edge);
