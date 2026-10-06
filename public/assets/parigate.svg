@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="emblem-title">
+  <title id="emblem-title">parigate — Shield Gateway Emblem</title>
+  
+  <g transform="translate(0, 0) scale(1.0)">
+    <!-- Outer thin ring -->
+    <circle cx="128" cy="128" r="116" fill="none" stroke="#000000" stroke-width="4"/>
+    <!-- Solid black inner circle -->
+    <circle cx="128" cy="128" r="98" fill="#000000"/>
+    
+    <!-- Shield Gateway Robot Mascot -->
+    <g id="shield-robot-mascot">
+      <!-- Top crest antenna -->
+      <rect x="123" y="62" width="10" height="20" rx="5" fill="#FFFFFF"/>
+      
+      <!-- Flanking ear fins -->
+      <rect x="63" y="112" width="11" height="30" rx="5.5" fill="#FFFFFF"/>
+      <rect x="182" y="112" width="11" height="30" rx="5.5" fill="#FFFFFF"/>
+      
+      <!-- Tapered Shield / Helmet Head (optical refinement: stroke 9.5) -->
+      <path d="M 82 92 C 82 85 88 82 96 82 L 160 82 C 168 82 174 85 174 92 L 178 144 C 178 158 166 168 152 168 L 104 168 C 90 168 78 158 78 144 Z" 
+            fill="none" stroke="#FFFFFF" stroke-width="9.5" stroke-linejoin="round"/>
+            
+      <!-- Edge-to-edge sleek visor -->
+      <rect x="88" y="117" width="80" height="15" rx="7.5" fill="#FFFFFF"/>
+    </g>
+  </g>
+
+</svg>

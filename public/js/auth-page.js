@@ -4,9 +4,26 @@
 (function () {
   const daftar = location.pathname === '/register';
   document.body.dataset.mode = daftar ? 'register' : 'login';
-  document.title = (daftar ? 'Daftar' : 'Masuk') + ' — YaaParBot';
+  document.title = (daftar ? 'Daftar' : 'Masuk') + ' — parigate';
   document.getElementById('auth-login').style.display = daftar ? 'none' : 'block';
   document.getElementById('auth-register').style.display = daftar ? 'block' : 'none';
+
+  // Toggle mata password
+  document.querySelectorAll('.btn-toggle-pass').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-target');
+      const inp = document.getElementById(id);
+      if (!inp) return;
+      const buka = inp.type === 'password';
+      inp.type = buka ? 'text' : 'password';
+      const off = btn.querySelector('.eye-off');
+      const on = btn.querySelector('.eye-on');
+      if (off && on) {
+        off.style.display = buka ? 'none' : '';
+        on.style.display = buka ? '' : 'none';
+      }
+    });
+  });
 
   // Sama seperti index.js — kalau sesi masih hidup, nggak ada gunanya lihat form.
   fetch('/api/auth/me', { credentials: 'include' }).then(r => r.json()).then(d => {
