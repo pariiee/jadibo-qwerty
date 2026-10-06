@@ -23,40 +23,40 @@
    Latar DATAR #dde3f1 / #0c0d12. Tanpa gradasi, blob, atau glow (§3, §15).
    ══════════════════════════════════════════════════════════════════════ */
 
-/* ── 1. Token · solid clean studio (Mockup aesthetic) ────────────────── */
+/* ── 1. Token · terang (Design.md §2) ──────────────────────────────── */
 :root{
-  --bg:#e6e9ee;
-  --ink:#0f172a;
-  --mute:#64748b;
-  --accent:#0f172a;          /* teks aksen */
-  --accent2:#0f172a;         /* logo, tombol aksen, item terpilih */
-  --dark:#0f172a;
+  --bg:#dde3f1;
+  --ink:#12142b;
+  --mute:#5d6384;
+  --accent:#4338ca;          /* teks aksen */
+  --accent2:#4f46e5;         /* logo, tombol aksen, item terpilih */
+  --dark:#13152b;
   --darkink:#ffffff;
-  --peach:#f1f5f9;           /* latar ikon, aksen netral */
-  --green:#10b981;
-  --greenbg:#ecfdf5;
-  --amber:#f59e0b;
-  --amberbg:#fef3c7;
-  --red:#ef4444;
-  --redbg:#fee2e2;
+  --peach:#fde6d0;           /* latar ikon, header mockup */
+  --green:#16a34a;
+  --greenbg:#e6f4ec;
+  --amber:#b45309;
+  --amberbg:#fff1d6;
+  --red:#dc2626;
+  --redbg:#fde4e4;
 
-  /* Solid surfaces — NO GLASS, NO NEUMORPHIC BLUR */
-  --shell:#ffffff;
-  --panel:#ffffff;
-  --card:#ffffff;
-  --edge:#e2e8f0;
-  --hl:none;
-  --line:#e2e8f0;
-  --shadow:0 12px 32px -4px rgba(15,23,42,.06),0 4px 12px -2px rgba(15,23,42,.03);
-  --glass:#ffffff;
+  /* kaca · §2 tabel Glass */
+  --shell:rgba(255,255,255,.28);
+  --panel:rgba(255,255,255,.32);
+  --card:rgba(255,255,255,.55);
+  --edge:rgba(255,255,255,.75);
+  --hl:inset 0 1px 0 rgba(255,255,255,.9);
+  --line:rgba(18,20,43,.09);
+  --shadow:0 10px 30px rgba(80,90,160,.12);
+  --glass:var(--card);       /* nama di mockup landing */
 
-  /* bentuk & sudut */
+  /* §6 bentuk */
   --r-shell:36px;
-  --r-panel:24px;
-  --r-card:20px;
-  --r-chip:999px;
-  --r-inp:14px;
-  --blur:none;
+  --r-panel:28px;
+  --r-card:24px;
+  --r-chip:22px;
+  --r-inp:16px;
+  --blur:blur(18px) saturate(160%);
 
   /* ── Alias nama LAMA → token Design.md ──────────────────────────── */
   --bg2:var(--bg);
@@ -112,27 +112,27 @@
    24 tempat di page.css/theme.css/motion.css). */
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#090a0f;
-    --ink:#f8fafc;
-    --mute:#94a3b8;
-    --accent:#38bdf8;
-    --accent2:#ffffff;
-    --dark:#ffffff;
-    --darkink:#090a0f;
-    --peach:#1e293b;
+    --bg:#0c0d12;
+    --ink:#f2f3f8;
+    --mute:#9ca0b5;
+    --accent:#a5b4fc;
+    --accent2:#6366f1;
+    --dark:#f2f3f8;
+    --darkink:#0b0c14;
+    --peach:rgba(255,255,255,.07);
     --green:#34d399;
     --greenbg:rgba(52,211,153,.14);
     --amber:#fbbf24;
     --amberbg:rgba(251,191,36,.14);
     --red:#f87171;
     --redbg:rgba(248,113,113,.14);
-    --shell:#11131a;
-    --panel:#11131a;
-    --card:#161822;
-    --edge:rgba(255,255,255,.12);
-    --hl:none;
-    --line:rgba(255,255,255,.08);
-    --shadow:0 14px 36px rgba(0,0,0,.6);
+    --shell:rgba(255,255,255,.05);
+    --panel:rgba(255,255,255,.05);
+    --card:rgba(255,255,255,.08);
+    --edge:rgba(255,255,255,.15);
+    --hl:inset 0 1px 0 rgba(255,255,255,.13);
+    --line:rgba(255,255,255,.09);
+    --shadow:0 10px 30px rgba(0,0,0,.5);
     --txt2:#dcdfef;
     --dim:#8d94a4;
     --dim2:#79808f;
@@ -140,42 +140,42 @@
     --okTxt2:#a7f3d0;
     --warnTxt:#fcd34d;
     --errTxt:#fca5a5;
-    --info:#38bdf8;
+    --info:#3b82f6;
     --infoTxt:#7dd3fc;
-    --surf0:#13151f;
-    --surf1:#181b26;
-    --surf2:#1f2330;
-    --surf3:#262b3a;
-    --off2:rgba(255,255,255,.12);
-    --scroll:rgba(255,255,255,.12);
-    --scrollH:rgba(255,255,255,.22);
-    --ovBg:rgba(0,0,0,.7);
+    --surf0:rgba(255,255,255,.03);
+    --surf1:rgba(255,255,255,.05);
+    --surf2:rgba(255,255,255,.07);
+    --surf3:rgba(255,255,255,.11);
+    --off2:rgba(255,255,255,.2);
+    --scroll:rgba(255,255,255,.16);
+    --scrollH:rgba(255,255,255,.28);
+    --ovBg:rgba(4,6,14,.62);
     --tile-blue:#1b1f45;
     --tile-purple:#231a3d;
   }
 }
 :root[data-theme="dark"],html.dark{
-  --bg:#090a0f;
-  --ink:#f8fafc;
-  --mute:#94a3b8;
-  --accent:#38bdf8;
-  --accent2:#ffffff;
-  --dark:#ffffff;
-  --darkink:#090a0f;
-  --peach:#1e293b;
+  --bg:#0c0d12;
+  --ink:#f2f3f8;
+  --mute:#9ca0b5;
+  --accent:#a5b4fc;
+  --accent2:#6366f1;
+  --dark:#f2f3f8;
+  --darkink:#0b0c14;
+  --peach:rgba(255,255,255,.07);
   --green:#34d399;
   --greenbg:rgba(52,211,153,.14);
   --amber:#fbbf24;
   --amberbg:rgba(251,191,36,.14);
   --red:#f87171;
   --redbg:rgba(248,113,113,.14);
-  --shell:#11131a;
-  --panel:#11131a;
-  --card:#161822;
-  --edge:rgba(255,255,255,.12);
-  --hl:none;
-  --line:rgba(255,255,255,.08);
-  --shadow:0 14px 36px rgba(0,0,0,.6);
+  --shell:rgba(255,255,255,.05);
+  --panel:rgba(255,255,255,.05);
+  --card:rgba(255,255,255,.08);
+  --edge:rgba(255,255,255,.15);
+  --hl:inset 0 1px 0 rgba(255,255,255,.13);
+  --line:rgba(255,255,255,.09);
+  --shadow:0 10px 30px rgba(0,0,0,.5);
   --txt2:#dcdfef;
   --dim:#8d94a4;
   --dim2:#79808f;
@@ -183,16 +183,16 @@
   --okTxt2:#a7f3d0;
   --warnTxt:#fcd34d;
   --errTxt:#fca5a5;
-  --info:#38bdf8;
+  --info:#3b82f6;
   --infoTxt:#7dd3fc;
-  --surf0:#13151f;
-  --surf1:#181b26;
-  --surf2:#1f2330;
-  --surf3:#262b3a;
-  --off2:rgba(255,255,255,.12);
-  --scroll:rgba(255,255,255,.12);
-  --scrollH:rgba(255,255,255,.22);
-  --ovBg:rgba(0,0,0,.7);
+  --surf0:rgba(255,255,255,.03);
+  --surf1:rgba(255,255,255,.05);
+  --surf2:rgba(255,255,255,.07);
+  --surf3:rgba(255,255,255,.11);
+  --off2:rgba(255,255,255,.2);
+  --scroll:rgba(255,255,255,.16);
+  --scrollH:rgba(255,255,255,.28);
+  --ovBg:rgba(4,6,14,.62);
   --tile-blue:#1b1f45;
   --tile-purple:#231a3d;
 }
@@ -410,31 +410,37 @@ body.page-kuota .app,body.page-log .app,body.page-panduan .app{
   border-radius:var(--r-shell);
   border:1px solid var(--edge);
   background:var(--shell);
-  box-shadow:var(--shadow);
+  backdrop-filter:blur(34px) saturate(170%);
+  -webkit-backdrop-filter:blur(34px) saturate(170%);
+  box-shadow:var(--shadow),var(--hl);
   transition:grid-template-columns .25s ease;
 }
 /* §8.1 mini: ikon saja, label disembunyikan (butuh <span> di sidebar.html) */
 body.page-dashboard .app.mini,body.page-admin .app.mini,body.page-pricing .app.mini,
 body.page-command .app.mini,body.page-billing .app.mini,body.page-profil .app.mini,
 body.page-kuota .app.mini,body.page-log .app.mini,body.page-panduan .app.mini{
-  grid-template-columns:74px minmax(0,1fr);
+  grid-template-columns:76px minmax(0,1fr);
 }
 body.page-bot .layout{
+  width:100%;
   max-width:1280px;
   margin:0 auto;
+  min-height:calc(100vh - 116px);
+  grid-template-columns:1fr;
   border-radius:var(--r-shell);
   border:1px solid var(--edge);
   background:var(--shell);
-  box-shadow:var(--shadow);
+  backdrop-filter:blur(34px) saturate(170%);
+  -webkit-backdrop-filter:blur(34px) saturate(170%);
+  box-shadow:var(--shadow),var(--hl);
 }
-/* §8.2 panel kanan terapung di dalam shell */
-body.page-dashboard main,body.page-admin main,body.page-pricing main,
-body.page-command main,body.page-billing main,body.page-profil main,
-body.page-kuota main,body.page-log main,body.page-panduan main{
-  margin:10px 10px 10px 0;
-  border-radius:var(--r-panel);
-  background:var(--panel);
+body.page-bot .topbar{
+  max-width:1280px;
+  margin:0 auto 10px;
+  border-radius:var(--r-card);
   border:1px solid var(--edge);
+  backdrop-filter:blur(22px);
+  -webkit-backdrop-filter:blur(22px);
 }
 @media(min-width:1024px){
   body.page-bot .layout{grid-template-columns:2fr 3fr}
@@ -816,126 +822,101 @@ body.page-index .faq-item{
    markup-nya tidak perlu ditulis ulang: `.mk-bar` = header jendela, `.bub`
    = gelembung, `.mock-badge` = chip melayang. Yang berubah cuma gayanya. */
 
-/* ══ 8. Komponen landing (Studio Clean Aesthetic — matching image_4bfb78.png) ══ */
+body.page-index .wrap,body.page-auth .wrap{max-width:1180px;margin:0 auto;padding:0 28px}
 
-body.page-index {
-  background: var(--bg);
-  padding: 24px 20px 48px;
-  min-height: 100vh;
-}
-@media (max-width: 768px) {
-  body.page-index {
-    padding: 10px 8px 32px;
-  }
-}
-
-body.page-index .site-canvas {
-  max-width: 1240px;
-  margin: 0 auto;
-  background: #ffffff;
-  color: #0f172a;
-  border-radius: 36px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 24px 60px -15px rgba(15,23,42,0.07);
-  overflow: hidden;
-}
-
-body.page-index .wrap,body.page-auth .wrap{max-width:1160px;margin:0 auto;padding:0 28px}
-
-/* Navbar: solid clean surface */
-body.page-index > nav,body.page-index .site-canvas > nav,body.page-auth > nav{
-  position:sticky;top:0;z-index:30;
-  background:#ffffff;
-  border-bottom:1px solid #e2e8f0;
+/* Navbar: kaca menempel (§8.2) */
+body.page-index > nav,body.page-auth > nav{
+  position:sticky;top:env(safe-area-inset-top,0px);z-index:30;
+  background:var(--card);
+  border-bottom:1px solid var(--edge);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
 }
 body.page-index .nav-in,body.page-auth .nav-in{
   display:flex;align-items:center;justify-content:space-between;height:74px;gap:16px;
 }
-body.page-index .logo{font-weight:700;font-size:22px;letter-spacing:-.02em;gap:12px;color:#0f172a}
+body.page-index .logo{font-weight:700;font-size:22px;letter-spacing:-.02em;gap:12px;display:inline-flex;align-items:center}
 .nav-logo-img,.side-logo-img{
   object-fit:contain;flex:none;filter:drop-shadow(0 2px 6px rgba(0,0,0,.08));
 }
 .brand-name{
-  font-weight:800;font-size:20px;letter-spacing:-.03em;color:#0f172a;
+  font-weight:800;font-size:20px;letter-spacing:-.03em;color:var(--ink);
 }
+.btn-pill{
+  border-radius:999px;display:inline-flex;align-items:center;gap:6px;
+}
+.btn-pill .arr{font-size:15px;font-weight:400;transition:transform .15s ease}
+.btn-pill:hover .arr{transform:translate(2px,-2px)}
 body.page-index .logo-badge,body.page-auth .logo-badge{
-  width:40px;height:40px;border-radius:13px;background:#0f172a;
+  width:40px;height:40px;border-radius:13px;background:var(--accent2);
 }
-body.page-index .nav-links{display:flex;gap:30px;color:#64748b;font-weight:500}
-body.page-index .nav-links a{color:#64748b}
-body.page-index .nav-links a:hover{color:#0f172a}
-body.page-index .nav-links a.active{color:#0f172a;font-weight:600}
+body.page-index .nav-links{display:flex;gap:30px;color:var(--mute);font-weight:500}
+body.page-index .nav-links a:hover{color:var(--ink)}
+body.page-index .nav-links a.active{color:var(--ink);font-weight:600}
 body.page-index .nav-actions{display:flex;gap:10px;align-items:center}
 body.page-index .theme-btn{
-  width:44px;height:44px;border-radius:50%;border:1px solid #e2e8f0;
-  background:#ffffff;color:#0f172a;
+  width:46px;height:46px;border-radius:50%;border:1px solid var(--edge);
+  background:var(--card);box-shadow:var(--hl);color:var(--ink);
 }
-body.page-index .theme-btn:hover{background:#f8fafc;border-color:#cbd5e1;color:#0f172a}
+body.page-index .theme-btn:hover{background:var(--card);border-color:var(--edge);color:var(--ink)}
 
-/* Hero Section */
+/* Hero */
+/* `.hero` JANGAN dijadikan grid. `index.html` menaruh SELURUH isi hero di
+   dalam `.hero-l`, dan `.wrap` sudah ada DI DALAM hero:
+       <header class="hero"><div class="wrap hero-in">
+         <div class="hero-l">pill + h1 + sub + btns + trust</div>
+         <div class="hero-visual">mockup</div>
+   Kalau grid dipasang di sini, kolom pertamanya jadi `.hero-in` (585px) dan
+   kolom kedua kosong; grid di dalam `.hero-in` lalu bekerja di ruang 585px
+   sehingga tiap anak `.hero-l>` menyusut jadi ~234px dan mockupnya naik
+   menutupi teks (terukur: hero-in 585px, kolom 234+245, h1 mengalir 449px).
+   Grid-nya cukup SATU, di `.hero-in`. `.hero` cuma pembungkus + jarak. */
 body.page-index .hero{
-  padding:64px 0 54px;
-  border-bottom:1px solid #e2e8f0;
-  background:#ffffff;
+  padding:90px 0 70px;
+  border-bottom:1px solid var(--line);
 }
-body.page-index .hero-in{display:grid;grid-template-columns:1.15fr .85fr;gap:44px;align-items:center}
-@media(max-width:960px){
-  body.page-index .hero-in{grid-template-columns:1fr;gap:36px}
-}
+body.page-index .hero-in{display:grid;grid-template-columns:1fr 1.05fr;gap:50px;align-items:center}
 body.page-index .hero-l{min-width:0}
-
-/* Hero Typography & Eyebrow */
-body.page-index .hero-tag{
-  display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;
-  color:#64748b;text-transform:uppercase;letter-spacing:.08em;margin-bottom:18px;
+body.page-index .hero-pill{
+  display:inline-flex;align-items:center;gap:10px;padding:9px 18px;border-radius:999px;
+  background:var(--card);border:1px solid var(--edge);box-shadow:var(--hl);
+  font-size:14px;color:var(--mute);
 }
-body.page-index .tag-dot{width:7px;height:7px;border-radius:50%;background:#10b981}
-body.page-index .hero-pretitle{
-  font-size:13px;font-weight:800;letter-spacing:.14em;color:#64748b;
-  text-transform:uppercase;margin:0 0 10px;
-}
+body.page-index .pill-dot{width:8px;height:8px;border-radius:50%;background:var(--green)}
 body.page-index .hero h1{
-  font-size:clamp(36px,5vw,62px);line-height:1.05;letter-spacing:-.04em;
-  margin:0 0 18px;font-weight:900;color:#0f172a!important;-webkit-text-fill-color:#0f172a!important;
-  text-transform:uppercase;
+  font-size:clamp(42px,6vw,72px);line-height:1.04;letter-spacing:-.035em;
+  margin:30px 0 22px;font-weight:800;
 }
 body.page-index .hero .sub{
-  font-size:17.5px;line-height:1.65;color:#64748b!important;max-width:520px;margin:0 0 30px;
+  font-size:20px;line-height:1.7;color:var(--mute);max-width:560px;margin:0 0 34px;
 }
-body.page-index .hero-btns{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:36px}
-body.page-index .hero-btns .btn{padding:13px 24px;font-size:14.5px;font-weight:700}
-body.page-index .btn-pill{
-  border-radius:999px;display:inline-flex;align-items:center;gap:8px;
+body.page-index .hero-btns{display:flex;gap:14px;flex-wrap:wrap}
+body.page-index .hero-btns .btn{padding:16px 26px;font-size:17px;font-weight:700}
+body.page-index .hero-trust{
+  display:flex;gap:44px;margin-top:56px;padding-top:34px;border-top:1px solid var(--line);
 }
-body.page-index .btn-pill .arr{font-size:16px;font-weight:400;transition:transform .15s ease}
-body.page-index .btn-pill:hover .arr{transform:translate(2px,-2px)}
-body.page-index .btn-outline{
-  background:#ffffff!important;border:1px solid #cbd5e1!important;color:#0f172a!important;
-}
-body.page-index .btn-dark{
-  background:#0f172a!important;border:1px solid #0f172a!important;color:#ffffff!important;
-}
+body.page-index .hero-trust b{font-size:28px;display:block;letter-spacing:-.02em}
+body.page-index .hero-trust span{color:var(--mute);font-size:15px}
 
-/* Hero Floating Dark Stats Card (Mockup Capsule) */
-body.page-index .hero-stats-card{
-  display:inline-flex;align-items:center;gap:20px;padding:13px 24px;border-radius:999px;
-  background:#0f172a;color:#ffffff;
-  box-shadow:0 16px 36px -10px rgba(15,23,42,.22);
+/* Mockup: jendela kaca + chip melayang (§7.14) */
+body.page-index .hero-visual{position:relative;padding:44px 0 40px;min-width:0}
+body.page-index .mock-badge{
+  position:absolute;display:flex;align-items:center;gap:14px;padding:16px 22px;
+  border-radius:22px;background:var(--card);border:1px solid var(--edge);
+  box-shadow:var(--shadow),var(--hl);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
 }
-body.page-index .sc-item{display:flex;flex-direction:column;gap:1px}
-body.page-index .sc-item b{font-size:17px;font-weight:800;letter-spacing:-.02em;color:#ffffff}
-body.page-index .sc-item span{font-size:10.5px;opacity:.8;font-weight:500;color:#cbd5e1}
-body.page-index .sc-div{width:1px;height:24px;background:rgba(255,255,255,.2)}
-
-/* Hero Visual: Futuristic Robot Frame (from mockup) */
-body.page-index .hero-visual{position:relative;display:flex;justify-content:center;min-width:0}
-body.page-index .robot-mockup-frame{
-  position:relative;border-radius:32px;overflow:hidden;background:#f8fafc;
-  border:1px solid var(--edge);box-shadow:0 20px 45px -12px rgba(15,23,42,.1);
-  max-width:400px;width:100%;
+body.page-index .mock-badge b{font-size:26px;display:block;line-height:1.1}
+body.page-index .mock-badge span{color:var(--mute);font-size:14px}
+body.page-index .mock-badge i{
+  width:50px;height:50px;border-radius:15px;background:var(--greenbg);color:var(--accent2);
+  display:grid;place-items:center;flex:none;
 }
-body.page-index .robot-hero-img{
-  width:100%;height:auto;display:block;object-fit:cover;border-radius:32px;
+body.page-index .mk-b1{left:-26px;top:0}
+body.page-index .mk-b2{right:-20px;bottom:0}
+body.page-index .mock{
+  border-radius:26px;background:var(--card);border:1px solid var(--edge);
+  box-shadow:var(--shadow),var(--hl);overflow:hidden;
+  backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);
 }
 body.page-index .mk-bar{
   display:flex;align-items:center;gap:8px;padding:16px 22px;
@@ -988,8 +969,9 @@ body.page-index .price-grid,body.page-index .tst-grid{
 }
 body.page-index .card,body.page-index .step,
 body.page-index .price-card,body.page-index .tst,body.page-index .faq-item{
-  padding:26px;border-radius:24px;background:#ffffff;border:1px solid var(--edge);
-  box-shadow:var(--shadow);
+  padding:26px;border-radius:24px;background:var(--card);border:1px solid var(--edge);
+  box-shadow:var(--shadow),var(--hl);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
 }
 body.page-index .card h4,body.page-index .step h4{margin:14px 0 8px;font-size:19px;font-weight:700}
 body.page-index .card p,body.page-index .step p{

@@ -12,45 +12,52 @@
      sengaja cuma "<div></div>" biar markup-nya nggak berisik -->
 <div id="baca"></div>
 
-<main class="site-canvas">
-
 <!-- @include nav.html -->
 
 <header class="hero">
   <div class="wrap hero-in">
     <div class="hero-l">
-      <div class="hero-tag">
-        <span class="tag-dot"></span>
-        <span>AI &amp; Messaging Infrastructure for Modern Teams</span>
-      </div>
-      <p class="hero-pretitle">BUILD SMARTER AUTOMATION POWERED BY</p>
-      <h1>QWERTYGATE BOTS</h1>
-      <p class="sub">Transform complex messaging workflows into intelligent experiences with enterprise-grade bot gateway solutions designed for WhatsApp, Telegram, and Discord.</p>
+      <span class="hero-pill"><span class="pill-dot"></span> Multi-platform Gateway &middot; WhatsApp &amp; Telegram</span>
+      <h1>Bot Gateway yang <span class="grad">Simpel &amp; Powerful</span></h1>
+      <p class="sub">Kelola bot WhatsApp &amp; Telegram kamu dari satu dashboard. Multi-session, 90+ command, real-time monitor — tanpa ribet.</p>
       <div class="hero-btns">
-        <a class="btn btn-outline btn-pill" href="#features">Explore Features</a>
-        <a class="btn btn-dark btn-pill" href="/register">Start Building <span class="arr">↗</span></a>
+        <button class="btn btn-dark" data-act="openAuth('register')">Mulai Sekarang</button>
+        <a class="btn btn-outline" href="#features">Lihat Fitur</a>
       </div>
-      <div class="hero-stats-card">
-        <div class="sc-item">
-          <b>99.9%</b>
-          <span>Gateway Uptime</span>
-        </div>
-        <div class="sc-div"></div>
-        <div class="sc-item">
-          <b id="mk-msgs">18k+</b>
-          <span>Messages Handled</span>
-        </div>
-        <div class="sc-div"></div>
-        <div class="sc-item">
-          <b id="mk-bots">24/7</b>
-          <span>Multi-Session Active</span>
-        </div>
+      <div class="hero-trust">
+        <div><b>90+</b><span>Command siap pakai</span></div>
+        <div><b>1</b><span>Slot bot per paket</span></div>
+        <div><b>24/7</b><span>Online nonstop</span></div>
       </div>
     </div>
 
     <div class="hero-visual">
-      <div class="robot-mockup-frame">
-        <img src="/assets/robot-hero-exact.png" alt="Qwertygate AI Robot" class="robot-hero-img" width="334" height="367" />
+      <div class="mock-badge mk-b1">
+        <i><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></i>
+        <div><b id="mk-msgs">&mdash;</b><span>pesan ditangani</span></div>
+      </div>
+      <div class="mock-badge mk-b2">
+        <i><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></i>
+        <div><b id="mk-bots">&mdash;</b><span>bot online</span></div>
+      </div>
+      <div class="mock">
+        <div class="mk-bar">
+          <i style="background:#ff5f57"></i><i style="background:#ffbd2e"></i><i style="background:#28c840"></i>
+          <span class="mk-ch"><b></b><span>qwertybots</span></span>
+          <span class="mk-live"><i></i>online</span>
+        </div>
+        <div class="mk-body">
+          <div class="mk-side"><i class="on"></i><i></i><i></i><i></i><i></i></div>
+          <div class="mk-main">
+            <div class="mock-chat">
+              <div class="bub in typing" style="--d:0s"><i></i><i></i><i></i></div>
+              <div class="bub out" style="--d:.5s">halo</div>
+              <div class="bub in" style="--d:1s">Hai guys, aku QwertyBot! Salam kenal 👋</div>
+              <div class="bub out" style="--d:1.5s">bikin bot wa / tele dimana yah?</div>
+              <div class="bub in" style="--d:2s">Jadibot di <b class="bub-cmd">labs.yapari.web.id</b> aja 🚀</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -204,8 +211,6 @@
 </section>
 
 <!-- @include footer.html -->
-
-</main>
 
 <!-- Auth modal -->
 <div class="overlay" id="auth-overlay">
