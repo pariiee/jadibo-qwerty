@@ -278,28 +278,64 @@ app.get('/langganan', (_, res) => res.redirect(301, '/pricing'));
 // Yang benar-benar melindungi tetap sesi login + role `kawula` di dalamnya
 // (`auth.requireKing` di tiap endpoint /api/admin/*). Nama aneh itu lapisan
 // kedua, bukan pengganti.
-app.get('/kountole',  halaman('admin.html'));
-// /login & /register = SATU file, pane dipilih dari pathname (js/auth-page.js).
-app.get('/login',     halaman('login.html'));
-app.get('/register',  halaman('login.html'));
-app.get('/403',       halaman('403.html', 403));
-app.get('/503',       halaman('503.html', 503));
-// `/` WAJIB eksplisit: tanpa ini dia dilayani catch-all, dan begitu catch-all
-// berubah jadi 404, landing page ikut jadi 404.
-app.get('/',          halaman('index.html'));
-// Sisa rute = 404 beneran. Dulu catch-all-nya menyajikan landing page dengan
-// status 200, jadi URL salah ketik kelihatan "berhasil" — user cuma bingung.
-app.get('*',          halaman('404.html', 404));
+// ─── Peta Halaman Error Lengkap ───────────────────────────────────────────────
+const ERROR_MAP = {
+  400: { t: 'Bad Request', d: 'Server tidak dapat memproses permintaan karena format salah atau data tidak lengkap.' },
+  401: { t: 'Unauthorized', d: 'Kamu belum login atau sesi telah berakhir. Silakan login kembali.', p: '/login', pl: 'Login Sekarang' },
+  403: { t: 'Akses Ditolak', d: 'Kamu tidak memiliki izin untuk mengakses halaman atau fitur ini.', p: '/login', pl: 'Masuk Akun Lain' },
+  404: { t: 'Halaman Tidak Ditemukan', d: 'Alamat URL yang kamu tuju salah ketik, sudah dihapus, atau tidak tersedia.' },
+  405: { t: 'Method Not Allowed', d: 'Metode pengiriman data yang digunakan dilarang untuk halaman ini.' },
+  408: { t: 'Request Timeout', d: 'Server memutus koneksi karena proses memakan waktu terlalu lama.', p: 'javascript:location.reload()', pl: 'Coba Lagi' },
+  409: { t: 'Conflict', d: 'Permintaan bertabrakan dengan kondisi akun atau sistem saat ini.' },
+  410: { t: 'Gone', d: 'Halaman atau data ini sudah dihapus permanen dan tidak akan kembali.' },
+  413: { t: 'Payload Too Large', d: 'Ukuran file atau data yang diunggah melebihi batas maksimal server.' },
+  415: { t: 'Unsupported Media Type', d: 'Format atau tipe berkas yang dikirim tidak didukung oleh sistem.' },
+  422: { t: 'Unprocessable Entity', d: 'Format data benar namun isi data tidak memenuhi syarat sistem.' },
+  429: { t: 'Too Many Requests', d: 'Terlalu banyak permintaan dalam waktu singkat. Tunggu beberapa saat lagi.', p: 'javascript:location.reload()', pl: 'Refresh Halaman' },
+  451: { t: 'Unavailable For Legal Reasons', d: 'Akses ke konten ini dibatasi karena regulasi hukum atau sensor.' },
+  500: { t: 'Terjadi Gangguan Server', d: 'Server kami sedang mengalami kendala internal sementara.', p: 'javascript:location.reload()', pl: 'Muat Ulang' },
+  501: { t: 'Not Implemented', d: 'Fitur atau metode ini belum didukung atau belum dibuat di server.' },
+  502: { t: 'Bad Gateway', d: 'Gateway menerima respons tidak valid dari layanan server di belakangnya.', p: 'javascript:location.reload()', pl: 'Muat Ulang' },
+  503: { t: 'Sedang Dalam Pemeliharaan', d: 'Sistem sedang dalam proses pemeliharaan atau kapasitas penuh.', p: 'javascript:location.reload()', pl: 'Cek Status' },
+  504: { t: 'Gateway Timeout', d: 'Gateway kehabisan waktu menunggu respons dari server utama.', p: 'javascript:location.reload()', pl: 'Muat Ulang' },
+  505: { t: 'HTTP Version Not Supported', d: 'Versi protokol HTTP browser Anda tidak didukung oleh server.' },
+};
 
-// ─── Error Handler (500 / 503 / 403) ──────────────────────────────────────────
+const halamanError = (kode = 500, customMsg = null) => (_, res) => {
+  const c = Number(kode) || 500;
+  const info = ERROR_MAP[c] || { t: 'Terjadi Kesalahan', d: 'Terjadi kendala saat memproses permintaan Anda.' };
+  try {
+    const raw = fs.readFileSync(path.join(PUBLIC_HTML, 'error.html'), 'utf8')
+      .replace(INCLUDE_RE, (_, f) => fs.readFileSync(path.join(PUBLIC_HTML, 'partials', f), 'utf8'))
+      .replace(/(\/(?:assets|js)\/[\w.-]+\.(?:css|js))"/g, (m, p) => `${p}?v=${mtimeAset(p)}"`)
+      .replace(/\{\{CODE\}\}/g, String(c))
+      .replace(/\{\{TITLE\}\}/g, info.t)
+      .replace(/\{\{MESSAGE\}\}/g, customMsg || info.d)
+      .replace(/\{\{PRIMARY_HREF\}\}/g, info.p || '/dashboard')
+      .replace(/\{\{PRIMARY_LABEL\}\}/g, info.pl || 'Ke Dashboard');
+    res.status(c).type('html').send(raw);
+  } catch {
+    res.status(c).type('html').send(`<h1>Error ${c}</h1><p>${info.t}</p>`);
+  }
+};
+
+app.get('/kountole',     halaman('admin.html'));
+app.get('/login',        halaman('login.html'));
+app.get('/register',     halaman('login.html'));
+app.get('/403',          halamanError(403));
+app.get('/503',          halamanError(503));
+app.get('/error/:code',  (req, res) => halamanError(parseInt(req.params.code, 10) || 500)(req, res));
+app.get('/',             halaman('index.html'));
+app.get('*',             halamanError(404));
+
+// ─── Error Handler (500 / 503 / 403 / 429 dll) ────────────────────────────────
 app.use((err, req, res, _next) => {
-  console.error('[Server] Uncaught error:', err.message);
+  console.error('[Server] Error:', err.message);
   const status = err.status && err.status >= 400 && err.status < 600 ? err.status : 500;
   if (req.path.startsWith('/api/') || req.xhr || (req.headers.accept || '').includes('json')) {
     return res.status(status).json({ ok: false, message: err.message || 'Terjadi kesalahan pada server' });
   }
-  const file = status === 403 ? '403.html' : status === 503 ? '503.html' : '500.html';
-  return halaman(file, status)(req, res);
+  return halamanError(status, err.message)(req, res);
 });
 
 // ─── WebSocket Hub ────────────────────────────────────────────────────────────
