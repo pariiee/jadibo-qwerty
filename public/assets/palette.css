@@ -1204,4 +1204,23 @@ body.page-auth .switch-line a{
   font-weight:700;color:var(--ink);text-decoration:underline;text-underline-offset:3px;
 }
 
+/* ══ 12. Halaman Error (404, 500) ══════════════════════════════════ */
+body.page-error .modal.auth-card{
+  text-align:center;
+}
+body.page-error .error-badge{
+  display:inline-block;padding:4px 14px;border-radius:999px;
+  background:rgba(18,20,43,.06);color:var(--mute);
+  font-size:12px;font-weight:800;letter-spacing:.08em;margin-bottom:12px;
+}
+:root[data-theme="dark"] body.page-error .error-badge{
+  background:rgba(255,255,255,.08);color:var(--mute);
+}
+body.page-error .error-actions{
+  display:flex;flex-direction:column;gap:10px;margin-top:20px;
+}
+body.page-error .error-actions a{
+  text-decoration:none;display:inline-flex;align-items:center;justify-content:center;
+}
+
 

@@ -289,6 +289,16 @@ app.get('/',          halaman('index.html'));
 // status 200, jadi URL salah ketik kelihatan "berhasil" — user cuma bingung.
 app.get('*',          halaman('404.html', 404));
 
+// ─── Error Handler (500 / 503) ────────────────────────────────────────────────
+app.use((err, req, res, _next) => {
+  console.error('[Server] Uncaught error:', err.message);
+  const status = err.status && err.status >= 400 && err.status < 600 ? err.status : 500;
+  if (req.path.startsWith('/api/') || req.xhr || (req.headers.accept || '').includes('json')) {
+    return res.status(status).json({ ok: false, message: err.message || 'Terjadi kesalahan pada server' });
+  }
+  return halaman('500.html', status)(req, res);
+});
+
 // ─── WebSocket Hub ────────────────────────────────────────────────────────────
 // Map: botId -> Set<WebSocket>
 const botSubscribers = new Map();
