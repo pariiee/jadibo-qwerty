@@ -1161,17 +1161,17 @@ body.page-auth .auth-divider::before,body.page-auth .auth-divider::after{
 }
 body.page-auth .auth-divider span{padding:0 12px}
 body.page-auth .auth-social{
-  display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;
+  display:flex;flex-direction:column;gap:10px;margin-bottom:18px;
 }
 body.page-auth .btn-social{
-  display:inline-flex;align-items:center;justify-content:center;gap:8px;
-  height:40px;border-radius:12px;
+  display:inline-flex;align-items:center;justify-content:center;gap:10px;
+  width:100%;height:44px;border-radius:13px;
   background:var(--card);border:1px solid var(--line);
-  color:var(--ink);font-size:13px;font-weight:600;
-  cursor:pointer;transition:background .15s ease,border-color .15s ease;
+  color:var(--ink);font-size:13.5px;font-weight:600;
+  cursor:pointer;transition:background .15s ease,border-color .15s ease,transform .12s ease;
 }
 body.page-auth .btn-social:hover{
-  background:rgba(18,20,43,.03);border-color:var(--mute);
+  background:rgba(18,20,43,.03);border-color:var(--mute);transform:translateY(-1px);
 }
 body.page-auth .switch-line{
   text-align:center;font-size:13px;color:var(--mute);margin:0;
