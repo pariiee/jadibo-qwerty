@@ -22,8 +22,8 @@
     <h2>Terjadi Gangguan Server</h2>
     <p class="auth-desc">Sistem kami sedang mengalami kendala sementara. Tim kami sudah diberitahu. Silakan muat ulang beberapa saat lagi.</p>
     <div class="error-actions">
-      <a class="btn btn-dark btn-auth-submit" href="javascript:location.reload()">Muat Ulang Halaman</a>
-      <a class="btn btn-social" href="/">Balik ke Beranda</a>
+      <button type="button" class="btn btn-social" onclick="history.length>1?history.back():location.href='/'">Kembali</button>
+      <a class="btn btn-dark btn-auth-submit" href="javascript:location.reload()">Muat Ulang</a>
     </div>
   </div>
 </div>
