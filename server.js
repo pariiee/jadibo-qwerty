@@ -322,9 +322,6 @@ const halamanError = (kode = 500, customMsg = null) => (_, res) => {
 app.get('/kountole',     halaman('admin.html'));
 app.get('/login',        halaman('login.html'));
 app.get('/register',     halaman('login.html'));
-app.get('/403',          halamanError(403));
-app.get('/503',          halamanError(503));
-app.get('/error/:code',  (req, res) => halamanError(parseInt(req.params.code, 10) || 500)(req, res));
 app.get('/',             halaman('index.html'));
 app.get('*',             halamanError(404));
 
