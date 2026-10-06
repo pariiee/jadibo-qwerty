@@ -282,6 +282,8 @@ app.get('/kountole',  halaman('admin.html'));
 // /login & /register = SATU file, pane dipilih dari pathname (js/auth-page.js).
 app.get('/login',     halaman('login.html'));
 app.get('/register',  halaman('login.html'));
+app.get('/403',       halaman('403.html', 403));
+app.get('/503',       halaman('503.html', 503));
 // `/` WAJIB eksplisit: tanpa ini dia dilayani catch-all, dan begitu catch-all
 // berubah jadi 404, landing page ikut jadi 404.
 app.get('/',          halaman('index.html'));
@@ -289,14 +291,15 @@ app.get('/',          halaman('index.html'));
 // status 200, jadi URL salah ketik kelihatan "berhasil" — user cuma bingung.
 app.get('*',          halaman('404.html', 404));
 
-// ─── Error Handler (500 / 503) ────────────────────────────────────────────────
+// ─── Error Handler (500 / 503 / 403) ──────────────────────────────────────────
 app.use((err, req, res, _next) => {
   console.error('[Server] Uncaught error:', err.message);
   const status = err.status && err.status >= 400 && err.status < 600 ? err.status : 500;
   if (req.path.startsWith('/api/') || req.xhr || (req.headers.accept || '').includes('json')) {
     return res.status(status).json({ ok: false, message: err.message || 'Terjadi kesalahan pada server' });
   }
-  return halaman('500.html', status)(req, res);
+  const file = status === 403 ? '403.html' : status === 503 ? '503.html' : '500.html';
+  return halaman(file, status)(req, res);
 });
 
 // ─── WebSocket Hub ────────────────────────────────────────────────────────────
