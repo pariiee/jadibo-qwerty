@@ -122,6 +122,8 @@ app.post('/api/auth/register', authLimiter, auth.register);
 app.post('/api/auth/login',    authLimiter, auth.login);
 app.post('/api/auth/logout',   auth.logout);
 app.get('/api/auth/me',        auth.requireAuth, auth.me);
+app.get('/api/auth/google',          auth.googleRedirect);
+app.get('/api/auth/google/callback', auth.googleCallback);
 
 // ─── Stats (public) ───────────────────────────────────────────────────────────
 app.get('/api/stats', async (req, res) => {

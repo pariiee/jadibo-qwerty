@@ -1,5 +1,6 @@
 'use strict';
 
+const crypto    = require('crypto');
 const bcrypt    = require('bcryptjs');
 const jwt       = require('jsonwebtoken');
 const { pool } = require('../config/database');
@@ -490,8 +491,111 @@ async function simpanEmail(req, res) {
   }
 }
 
+// ─── Google OAuth 2.0 ────────────────────────────────────────────────────────
+const GOOGLE_CLIENT_ID     = () => process.env.GOOGLE_CLIENT_ID || '';
+const GOOGLE_CLIENT_SECRET = () => process.env.GOOGLE_CLIENT_SECRET || '';
+const GOOGLE_REDIRECT_URI  = () => process.env.GOOGLE_REDIRECT_URI || 'https://labs.yapari.web.id/api/auth/google/callback';
+
+function googleRedirect(req, res) {
+  const clientId = GOOGLE_CLIENT_ID();
+  if (!clientId) {
+    return res.status(503).send('Google OAuth belum dikonfigurasi (GOOGLE_CLIENT_ID belum diisi di .env).');
+  }
+  const redirectUri = encodeURIComponent(GOOGLE_REDIRECT_URI());
+  const scope = encodeURIComponent('openid email profile');
+  const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&prompt=select_account`;
+  return res.redirect(url);
+}
+
+async function googleCallback(req, res) {
+  const { code, error } = req.query;
+  if (error || !code) {
+    return res.redirect('/login?err=' + encodeURIComponent(error || 'Login Google dibatalkan'));
+  }
+
+  const clientId = GOOGLE_CLIENT_ID();
+  const clientSecret = GOOGLE_CLIENT_SECRET();
+  if (!clientId || !clientSecret) {
+    return res.status(503).send('Google OAuth belum dikonfigurasi.');
+  }
+
+  try {
+    const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        code,
+        client_id: clientId,
+        client_secret: clientSecret,
+        redirect_uri: GOOGLE_REDIRECT_URI(),
+        grant_type: 'authorization_code'
+      })
+    });
+
+    const tokenData = await tokenRes.json();
+    if (!tokenRes.ok || !tokenData.access_token) {
+      console.error('[Google OAuth] Token error:', tokenData);
+      return res.redirect('/login?err=' + encodeURIComponent('Gagal verifikasi dengan Google'));
+    }
+
+    const userRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: `Bearer ${tokenData.access_token}` }
+    });
+    const profile = await userRes.json();
+    if (!profile || !profile.email) {
+      return res.redirect('/login?err=' + encodeURIComponent('Email Google tidak ditemukan'));
+    }
+
+    const email = profile.email.toLowerCase().trim();
+
+    const [rows] = await pool.execute(
+      'SELECT id, username, role, token_version FROM users WHERE email = ? LIMIT 1',
+      [email]
+    );
+
+    let user;
+    if (rows.length > 0) {
+      user = rows[0];
+    } else {
+      let baseUser = (profile.name || email.split('@')[0])
+        .replace(/[^a-zA-Z0-9_]/g, '')
+        .slice(0, 30);
+      if (baseUser.length < 3) baseUser = 'user_' + Math.floor(Math.random() * 10000);
+
+      let candidate = baseUser;
+      const [uRows] = await pool.execute('SELECT id FROM users WHERE username = ?', [candidate]);
+      if (uRows.length > 0) candidate = `${baseUser}_${Math.floor(1000 + Math.random() * 9000)}`;
+
+      const randomPass = crypto.randomBytes(24).toString('hex');
+      const hashed = await bcrypt.hash(randomPass, 12);
+
+      const [ins] = await pool.execute(
+        'INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)',
+        [candidate, email, hashed, 'user']
+      );
+
+      user = { id: ins.insertId, username: candidate, role: 'user', token_version: 0 };
+    }
+
+    const token = signToken({ id: user.id, username: user.username, role: user.role, tv: user.token_version || 0 });
+
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: req.protocol === 'https',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    return res.redirect('/dashboard');
+  } catch (err) {
+    console.error('[Google OAuth] Error:', err);
+    return res.redirect('/login?err=' + encodeURIComponent('Terjadi kesalahan saat login Google'));
+  }
+}
+
 module.exports = {
   register, login, logout, me, gantiPassword, simpanPhone, simpanEmail,
+  googleRedirect, googleCallback,
   listUsers, updateUser, deleteUser,
   requireAuth, requireKing,
 };

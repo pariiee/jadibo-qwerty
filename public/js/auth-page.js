@@ -8,6 +8,17 @@
   document.getElementById('auth-login').style.display = daftar ? 'none' : 'block';
   document.getElementById('auth-register').style.display = daftar ? 'block' : 'none';
 
+  // Tampilkan pesan error jika redirect dari OAuth (misal ?err=...)
+  const params = new URLSearchParams(location.search);
+  const errParam = params.get('err');
+  if (errParam) {
+    const errBox = document.getElementById(daftar ? 'reg-error' : 'login-error');
+    if (errBox) {
+      errBox.textContent = errParam;
+      errBox.classList.add('show');
+    }
+  }
+
   // Toggle mata password
   document.querySelectorAll('.btn-toggle-pass').forEach(btn => {
     btn.addEventListener('click', () => {
