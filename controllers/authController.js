@@ -95,7 +95,7 @@ async function register(req, res) {
     if (process.env.ALLOW_REGISTER !== '1')
       return sendError(res, 403, 'Registrasi ditutup. Hubungi admin.');
 
-    const { username, password } = req.body;
+    const { username, password, email } = req.body;
 
     if (!username || !password)
       return sendError(res, 400, 'Username dan password wajib diisi');
@@ -103,11 +103,19 @@ async function register(req, res) {
     if (username.length < 3 || username.length > 50)
       return sendError(res, 400, 'Username harus 3-50 karakter');
 
-    if (password.length < 6)
-      return sendError(res, 400, 'Password minimal 6 karakter');
+    if (password.length < 8)
+      return sendError(res, 400, 'Password minimal 8 karakter');
 
     if (!/^[a-zA-Z0-9_]+$/.test(username))
       return sendError(res, 400, 'Username hanya boleh huruf, angka, dan underscore');
+
+    let bersihEmail = null;
+    if (email) {
+      const { emailValid } = require('../engine/email');
+      bersihEmail = String(email).trim().toLowerCase();
+      if (!emailValid(bersihEmail))
+        return sendError(res, 400, 'Format email tidak valid');
+    }
 
     const [existing] = await pool.execute(
       'SELECT id FROM users WHERE username = ?',
@@ -118,8 +126,8 @@ async function register(req, res) {
 
     const hashed = await bcrypt.hash(password, 12);
     const [result] = await pool.execute(
-      'INSERT INTO users (username, password, role) VALUES (?, ?, ?)',
-      [username, hashed, 'user']
+      'INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)',
+      [username, bersihEmail, hashed, 'user']
     );
 
 

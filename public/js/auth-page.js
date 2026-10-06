@@ -25,6 +25,33 @@
     });
   });
 
+  // Indikator kekuatan password pada register
+  const regPass = document.getElementById('reg-password');
+  const regStr = document.getElementById('reg-strength');
+  const regStrTxt = document.getElementById('reg-strength-txt');
+
+  function cekKekuatan(pass) {
+    if (!pass) return { level: '', label: 'Belum diisi' };
+    let skor = 0;
+    if (pass.length >= 8) skor++;
+    if (pass.length >= 10) skor++;
+    if (/[a-z]/.test(pass) && /[A-Z]/.test(pass)) skor++;
+    if (/\d/.test(pass)) skor++;
+    if (/[^a-zA-Z0-9]/.test(pass)) skor++;
+
+    if (pass.length < 8 || skor <= 2) return { level: 'weak', label: 'Lemah' };
+    if (skor === 3) return { level: 'medium', label: 'Sedang' };
+    return { level: 'strong', label: 'Kuat' };
+  }
+
+  if (regPass && regStr && regStrTxt) {
+    regPass.addEventListener('input', () => {
+      const { level, label } = cekKekuatan(regPass.value);
+      regStr.className = 'pass-strength' + (level ? ' ' + level : '');
+      regStrTxt.textContent = label;
+    });
+  }
+
   // Sama seperti index.js — kalau sesi masih hidup, nggak ada gunanya lihat form.
   fetch('/api/auth/me', { credentials: 'include' }).then(r => r.json()).then(d => {
     if (d.ok) location.href = '/dashboard';
@@ -40,26 +67,41 @@
     return res.json();
   }
 
-  function pasang(formId, errId, url, ambil) {
-    document.getElementById(formId).addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const err = document.getElementById(errId);
-      err.classList.remove('show');
-      try {
-        const data = await kirim(url, ambil());
-        if (data.ok) location.href = '/dashboard';
-        else { err.textContent = data.message; err.classList.add('show'); }
-      } catch { err.textContent = 'Gagal terhubung ke server'; err.classList.add('show'); }
-    });
-  }
+  document.getElementById('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const err = document.getElementById('login-error');
+    err.classList.remove('show');
+    try {
+      const data = await kirim('/api/auth/login', {
+        username: document.getElementById('login-username').value.trim(),
+        password: document.getElementById('login-password').value
+      });
+      if (data.ok) location.href = '/dashboard';
+      else { err.textContent = data.message; err.classList.add('show'); }
+    } catch { err.textContent = 'Gagal terhubung ke server'; err.classList.add('show'); }
+  });
 
-  pasang('login-form', 'login-error', '/api/auth/login', () => ({
-    username: document.getElementById('login-username').value.trim(),
-    password: document.getElementById('login-password').value
-  }));
+  document.getElementById('register-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const err = document.getElementById('reg-error');
+    err.classList.remove('show');
 
-  pasang('register-form', 'reg-error', '/api/auth/register', () => ({
-    username: document.getElementById('reg-username').value.trim(),
-    password: document.getElementById('reg-password').value
-  }));
+    const pass = document.getElementById('reg-password').value;
+    const { level } = cekKekuatan(pass);
+    if (level !== 'strong') {
+      err.textContent = 'Password harus berstatus Kuat (min. 8 karakter, kombinasi huruf besar, kecil & angka)';
+      err.classList.add('show');
+      return;
+    }
+
+    try {
+      const data = await kirim('/api/auth/register', {
+        username: document.getElementById('reg-username').value.trim(),
+        email: document.getElementById('reg-email').value.trim(),
+        password: pass
+      });
+      if (data.ok) location.href = '/dashboard';
+      else { err.textContent = data.message; err.classList.add('show'); }
+    } catch { err.textContent = 'Gagal terhubung ke server'; err.classList.add('show'); }
+  });
 })();

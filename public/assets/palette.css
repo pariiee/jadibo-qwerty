@@ -1135,6 +1135,30 @@ body.page-auth .btn-toggle-pass{
   border-radius:8px;transition:color .15s ease;
 }
 body.page-auth .btn-toggle-pass:hover{color:var(--ink)}
+body.page-auth .pass-strength{
+  margin-top:8px;display:flex;align-items:center;justify-content:space-between;gap:12px;
+}
+body.page-auth .strength-bars{
+  display:flex;gap:4px;flex:1;height:5px;
+}
+body.page-auth .s-bar{
+  flex:1;height:100%;border-radius:999px;background:rgba(18,20,43,.08);transition:background .2s ease;
+}
+body.page-auth .strength-txt{
+  font-size:12px;font-weight:700;letter-spacing:-.01em;min-width:44px;text-align:right;color:var(--mute);
+}
+body.page-auth .pass-strength.weak .s-bar:nth-child(1){background:#ef4444}
+body.page-auth .pass-strength.weak .strength-txt{color:#ef4444}
+
+body.page-auth .pass-strength.medium .s-bar:nth-child(1),
+body.page-auth .pass-strength.medium .s-bar:nth-child(2){background:#f59e0b}
+body.page-auth .pass-strength.medium .strength-txt{color:#f59e0b}
+
+body.page-auth .pass-strength.strong .s-bar:nth-child(1),
+body.page-auth .pass-strength.strong .s-bar:nth-child(2),
+body.page-auth .pass-strength.strong .s-bar:nth-child(3){background:#10b981}
+body.page-auth .pass-strength.strong .strength-txt{color:#10b981}
+
 body.page-auth .auth-aux{
   display:flex;justify-content:flex-end;margin:-2px 0 14px;
 }
