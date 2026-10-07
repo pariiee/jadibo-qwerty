@@ -1056,14 +1056,41 @@ body.page-index .pc-extra{margin-top:auto;padding-top:14px;border-top:1px dashed
   body.page-index .price-grid{grid-template-columns:1fr}
 }
 
-body.page-index .tst-t{margin:0 0 16px;line-height:1.6}
-body.page-index .tst-f{display:flex;align-items:center;gap:12px}
-body.page-index .tst-f i{
-  width:38px;height:38px;border-radius:50%;background:var(--accent2);color:#fff;
-  display:grid;place-items:center;font-weight:700;font-style:normal;flex:none;
+body.page-index .tst-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;
 }
-body.page-index .tst-f b{display:block;font-size:14px}
-body.page-index .tst-f span{color:var(--mute);font-size:12px}
+body.page-index .tst{
+  display:flex;flex-direction:column;padding:26px 24px;border-radius:20px;
+  background:#ffffff;border:1px solid #e2e8f0;box-shadow:0 8px 24px -8px rgba(15,23,42,.04);
+  transition:transform .2s ease,box-shadow .2s ease;
+}
+:root[data-theme="dark"] body.page-index .tst,html.dark body.page-index .tst{
+  background:#13152b;border-color:rgba(255,255,255,.08);box-shadow:0 12px 30px -10px rgba(0,0,0,.4);
+}
+body.page-index .tst:hover{
+  transform:translateY(-3px);box-shadow:0 14px 32px -10px rgba(15,23,42,.08);
+}
+body.page-index .tst-head{
+  display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;
+}
+body.page-index .tst-stars{
+  display:inline-flex;align-items:center;gap:3px;
+}
+body.page-index .tst-rating-tag{
+  font-size:11.5px;font-weight:700;color:#f59e0b;letter-spacing:.03em;
+  background:rgba(245,158,11,.1);padding:2px 8px;border-radius:999px;
+}
+body.page-index .tst-t{
+  margin:0 0 20px;line-height:1.6;font-size:14.5px;color:var(--txt);font-weight:500;font-style:normal;
+  flex:1;
+}
+body.page-index .tst-f{display:flex;align-items:center;gap:12px;margin-top:auto}
+body.page-index .tst-f i{
+  width:40px;height:40px;border-radius:50%;background:#0f172a;color:#ffffff;
+  display:grid;place-items:center;font-weight:800;font-style:normal;flex:none;font-size:15px;
+}
+body.page-index .tst-f b{display:block;font-size:14.5px;font-weight:700;color:var(--txt)}
+body.page-index .tst-f span{color:var(--muted);font-size:12.5px;font-weight:500}
 /* §7.11 FAQ: <details> dalam kartu kaca, max-width 760px, penanda + / –,
    item pertama terbuka. Markup-nya <details class="faq-item"> +
    <summary class="faq-q"> + <p class="faq-a"> — jadi nol JS (accordion
