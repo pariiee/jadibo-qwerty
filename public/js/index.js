@@ -4,14 +4,12 @@
 (function () {
 // ── FAQ ─────────────────────────────────────────────────────────
   const faqs = [
-    { q: 'Berapa batas bot per akun?', a: 'Satu bot per paket yang aktif. Akun gratis belum dapat slot — slot terbuka setelah kamu klaim Trial atau bayar paket.' },
-    { q: 'Platform apa saja yang didukung?', a: 'WhatsApp (via Baileys) dan Telegram (via Bot API). Bisa tambah platform lain lewat plugin.' },
-    { q: 'Apakah sesi WhatsApp tersimpan?', a: 'Ya, setiap bot punya file SQLite session tersendiri di folder /sessions/bot_<id>/. Data tidak bercampur antar bot.' },
-    { q: 'Bagaimana cara login WhatsApp?', a: 'Kamu bisa memilih Scan QR Code atau Pairing Code (8 digit) yang langsung ditampilkan di dashboard.' },
-    { q: 'Apakah bisa custom prefix dan footer?', a: 'Bisa. Setiap bot bisa dikonfigurasi dengan prefix, footer text, nama bot, nomor owner, dan deskripsi sendiri.' },
-    { q: 'Apa beda role user, premium, dan admin?', a: 'User dibatasi kuota paketnya. Premium mendapat jatah lebih. Admin punya akses penuh: kelola semua user, bot, dan harga paket.' },
-    { q: 'Bagaimana cara bayar paket?', a: 'Pilih paket di halaman Pricing, lalu bayar otomatis lewat QRIS atau transfer manual dengan QR. Paket aktif setelah pembayaran terkonfirmasi.' },
-    { q: 'Ada trial?', a: 'Ada. Trial 5 hari gratis: 1 slot bot, 5.000 pesan, masa aktif 5 hari — cuma bisa diklaim sekali seumur akun.' }
+    { q: 'Platform apa saja yang didukung oleh qwertygate?', a: 'qwertygate mendukung integrasi penuh untuk WhatsApp (via QR / 8-digit Pairing Code), Telegram (via Bot Token API), dan Discord Bot. Kamu bisa mengelola semua bot multi-platform ini dari 1 dashboard.' },
+    { q: 'Bagaimana cara menghubungkan bot saya?', a: 'Untuk WhatsApp: cukup scan QR code atau masukkan 8-digit Pairing Code. Untuk Telegram & Discord: tinggal paste Token Bot resmi dari Telegram BotFather atau Discord Developer Portal.' },
+    { q: 'Apakah pesan dan sesi bot saya aman & terisolasi?', a: 'Ya, 100% aman. Setiap bot memiliki isolated multi-session tersendiri di database terpisah, sehingga tidak ada risiko kebocoran data atau crash bersama antar bot.' },
+    { q: 'Berapa batas bot dan kuota pesan per akun?', a: 'Setiap paket aktif memberikan slot bot dan kuota pesan harian/bulanan. Kamu juga bisa mengklaim paket Trial gratis untuk mencoba seluruh fitur sebelum berlangganan.' },
+    { q: 'Apakah mendukung webhook dan kustomisasi command?', a: 'Tentu saja! Lebih dari 90+ command built-in (RPG, grup moderation, tools, AI) siap pakai, plus dukungan kustom prefix, footer, nama bot, dan Webhook REST API.' },
+    { q: 'Bagaimana metode pembayaran langganan?', a: 'Pembayaran dilakukan secara otomatis via QRIS (ShopeePay, GoPay, OVO, Dana, M-Banking) dengan konfirmasi instant via Webhook real-time.' }
   ];
   // §7.11 FAQ: <details>/<summary> bawaan browser — accordion + operasi
   // keyboard didapat gratis, jadi nol JS. Dulu tiap item dibangun manual
