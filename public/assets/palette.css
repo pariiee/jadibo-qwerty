@@ -989,23 +989,24 @@ body.page-index .price-grid,body.page-index .tst-grid{
 }
 body.page-index .card,body.page-index .step,
 body.page-index .price-card,body.page-index .tst,body.page-index .faq-item{
-  padding:26px;border-radius:24px;background:var(--card);border:1px solid var(--edge);
-  box-shadow:var(--shadow),var(--hl);
-  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  padding:26px;border-radius:24px;background:var(--card);border:1px solid var(--border);
+  box-shadow:var(--shadow);
 }
-body.page-index .card h4,body.page-index .step h4{margin:14px 0 8px;font-size:19px;font-weight:700}
+body.page-index .card h4,body.page-index .step h4{margin:14px 0 8px;font-size:19px;font-weight:700;color:var(--txt)}
 body.page-index .card p,body.page-index .step p{
-  margin:0;color:var(--mute);line-height:1.6;font-size:15px;
+  margin:0;color:var(--muted);line-height:1.6;font-size:15px;
 }
-/* §15: ikon monokrom, bukan ubin pastel beragam warna. `stroke` di CSS
-   mengalahkan atribut presentasi SVG, jadi inline stroke="#059669" ikut mati. */
-body.page-index .icon{
-  width:46px;height:46px;border-radius:14px;display:grid;place-items:center;
-  background:var(--peach)!important;
+body.page-index .card-dark{
+  background:var(--dark)!important;
+  color:var(--darkink)!important;
+  border-color:var(--dark)!important;
 }
-body.page-index .icon svg *{stroke:var(--accent2)}
-body.page-index .card-dark{background:var(--card)}
-body.page-index .card-dark .lead{font-size:24px;font-weight:700;letter-spacing:-.02em}
+body.page-index .card-dark .lead{
+  font-size:24px;font-weight:700;letter-spacing:-.02em;color:#ffffff!important;
+}
+body.page-index .card-dark p{
+  color:#94a3b8!important;
+}
 body.page-index .step i{
   width:38px;height:38px;border-radius:12px;background:var(--peach);color:var(--accent);
   display:grid;place-items:center;font-weight:700;font-style:normal;margin-bottom:6px;
