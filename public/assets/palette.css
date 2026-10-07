@@ -1064,6 +1064,49 @@ body.page-index .bub.out .bub-cmd{color:#fff}
 body.page-index .typing{display:flex;gap:6px;padding:14px 18px}
 body.page-index .typing i{width:8px;height:8px;border-radius:50%;background:var(--mute);opacity:.6}
 
+/* Live Statistik Section */
+body.page-index .stats-head{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px;
+}
+body.page-index .stat-live-pulse{
+  display:inline-block;width:7px;height:7px;border-radius:50%;background:#10b981;
+  box-shadow:0 0 10px #10b981;margin-right:6px;vertical-align:middle;animation:yb-pulse 2s infinite ease-in-out;
+}
+body.page-index .live-realtime-badge{
+  font-size:11px;font-weight:700;color:#10b981;display:inline-flex;align-items:center;gap:6px;
+  padding:4px 10px;border-radius:999px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);
+}
+body.page-index .live-realtime-badge .pulse-ring{
+  width:6px;height:6px;border-radius:50%;background:#10b981;display:inline-block;
+}
+body.page-index #stats{padding:48px 0 60px}
+body.page-index .stats{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:18px;max-width:100%!important;margin:0;
+}
+body.page-index .stat{
+  border-radius:20px;padding:22px 24px;background:var(--card);
+  border:1px solid var(--border);box-shadow:0 8px 24px -10px rgba(18,20,43,.06);
+  position:relative;overflow:hidden;
+}
+:root[data-theme="dark"] body.page-index .stat{
+  background:#111218!important;border-color:rgba(255,255,255,.08)!important;
+}
+body.page-index .stat b{
+  font-size:32px;font-weight:800;letter-spacing:-.03em;color:var(--txt);line-height:1.1;display:block;margin-bottom:4px;
+}
+body.page-index .stat span{
+  font-size:13px;font-weight:600;color:var(--muted);
+}
+body.page-index .stat-foot{
+  position:absolute;bottom:0;left:0;right:0;height:3px;
+}
+@media(max-width:880px){
+  body.page-index .stats{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:480px){
+  body.page-index .stats{grid-template-columns:1fr}
+}
+
 /* Section (§15: judul menyebut isinya, label tidak KAPITAL ber-tracking) */
 body.page-index section{padding:80px 0;border-top:1px solid var(--line)}
 body.page-index .sec-label{
