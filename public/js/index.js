@@ -153,6 +153,18 @@
     tautan.forEach(function (a) { const s = document.querySelector(a.getAttribute('href')); if (s) io.observe(s); });
   }
 
+  // ── Overlapping section scroll reveal across all devices ────────
+  if ('IntersectionObserver' in window) {
+    const secIo = new IntersectionObserver(function (es) {
+      es.forEach(function (e) {
+        if (e.isIntersecting) e.target.classList.add('in-view');
+      });
+    }, { threshold: 0.05, rootMargin: '0px 0px -20px 0px' });
+    document.querySelectorAll('body.page-index section, body.page-index footer').forEach(function (s) {
+      secIo.observe(s);
+    });
+  }
+
 window.toggleTheme = toggleTheme; window.openAuth = openAuth; window.closeAuth = closeAuth;
 window.switchAuth = switchAuth;
 
