@@ -25,79 +25,79 @@
 
 /* ── 1. Token · terang (Design.md §2) ──────────────────────────────── */
 :root{
-  --bg:#dde3f1;
-  --ink:#12142b;
-  --mute:#5d6384;
-  --accent:#4338ca;          /* teks aksen */
-  --accent2:#4f46e5;         /* logo, tombol aksen, item terpilih */
-  --dark:#13152b;
+  --bg:#fafafa;
+  --ink:#0f172a;
+  --mute:#64748b;
+  --accent:#3b82f6;          /* teks aksen */
+  --accent2:#2563eb;         /* logo, tombol aksen, item terpilih */
+  --dark:#0f172a;
   --darkink:#ffffff;
-  --peach:#fde6d0;           /* latar ikon, header mockup */
-  --green:#16a34a;
-  --greenbg:#e6f4ec;
-  --amber:#b45309;
-  --amberbg:#fff1d6;
-  --red:#dc2626;
-  --redbg:#fde4e4;
+  --peach:#f1f5f9;           /* latar ikon, header mockup */
+  --green:#10b981;
+  --greenbg:rgba(16,185,129,.08);
+  --amber:#f59e0b;
+  --amberbg:rgba(245,158,11,.08);
+  --red:#ef4444;
+  --redbg:rgba(239,68,68,.08);
 
-  /* kaca · §2 tabel Glass */
-  --shell:rgba(255,255,255,.28);
-  --panel:rgba(255,255,255,.32);
-  --card:rgba(255,255,255,.55);
-  --edge:rgba(255,255,255,.75);
-  --hl:inset 0 1px 0 rgba(255,255,255,.9);
-  --line:rgba(18,20,43,.09);
-  --shadow:0 10px 30px rgba(80,90,160,.12);
+  /* Clean Solid & Subtle Surface (Bukan Kaca Abu Murahan) */
+  --shell:#ffffff;
+  --panel:#ffffff;
+  --card:#ffffff;
+  --edge:#e2e8f0;
+  --hl:none;
+  --line:#e2e8f0;
+  --shadow:0 10px 30px -10px rgba(15,23,42,.06);
   --glass:var(--card);       /* nama di mockup landing */
 
   /* §6 bentuk */
-  --r-shell:36px;
-  --r-panel:28px;
-  --r-card:24px;
-  --r-chip:22px;
-  --r-inp:16px;
-  --blur:blur(18px) saturate(160%);
+  --r-shell:24px;
+  --r-panel:20px;
+  --r-card:16px;
+  --r-chip:14px;
+  --r-inp:12px;
+  --blur:none;
 
   /* ── Alias nama LAMA → token Design.md ──────────────────────────── */
-  --bg2:var(--bg);
+  --bg2:#f8fafc;
   --txt:var(--ink);
-  --txt2:#333a52;
+  --txt2:#1e293b;
   --muted:var(--mute);
-  --dim:#6f7590;
-  --dim2:#868ca1;
+  --dim:#94a3b8;
+  --dim2:#cbd5e1;
   --acc:var(--accent2);
   --accTxt:var(--accent);
   --onAcc:var(--darkink);
   --btnPri:var(--dark);
   --btnPriTxt:var(--darkink);
   --ok:var(--green);
-  --okTxt:#15803d;
+  --okTxt:#059669;
   --okTxt2:#047857;
   --warn:var(--amber);
   --warnTxt:var(--amber);
   --err:var(--red);
   --errTxt:var(--red);
   --info:#2563eb;
-  --infoTxt:#0369a1;
-  --card2:var(--card);
-  --border:var(--edge);
-  --border2:var(--line);
-  --surf0:rgba(255,255,255,.18);
-  --surf1:rgba(255,255,255,.28);
-  --surf2:rgba(255,255,255,.38);
-  --surf3:rgba(255,255,255,.55);
-  --panelA:var(--panel);
-  --panelB:var(--shell);
-  --sideBg:var(--shell);
-  --barBg:var(--shell);
-  --off:var(--line);
-  --off2:rgba(18,20,43,.18);
-  --scroll:rgba(18,20,43,.18);
-  --scrollH:rgba(18,20,43,.3);
-  --ovBg:rgba(10,15,40,.35);
-  --glow:var(--shadow);
-  --g1:var(--hl);
-  --g2:var(--shadow);
+  --infoTxt:#0284c7;
+  --card2:#ffffff;
+  --border:#e2e8f0;
+  --border2:#cbd5e1;
+  --surf0:#f8fafc;
+  --surf1:#f1f5f9;
+  --surf2:#e2e8f0;
+  --surf3:#ffffff;
+  --panelA:#ffffff;
+  --panelB:#ffffff;
+  --sideBg:#ffffff;
+  --barBg:#ffffff;
+  --off:#cbd5e1;
+  --off2:#94a3b8;
+  --scroll:#cbd5e1;
+  --scrollH:#94a3b8;
+  --ovBg:rgba(15,23,42,.4);
+  --glow:0 12px 32px -8px rgba(15,23,42,.08);
+  --g1:none;
+  --g2:0 10px 30px -10px rgba(15,23,42,.06);
   --tile-green:var(--greenbg);
   --tile-blue:#e4e7fb;
   --tile-purple:#f0e7fb;

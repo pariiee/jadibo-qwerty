@@ -15,45 +15,44 @@
 
 /* ── 1. Token: terang (putih-abu) ─────────────────────────────────── */
 :root{
-  --bg:#f1f2f5;
-  --bg2:#e8e9ee;
-  --card:rgba(255,255,255,.58);
-  --card2:rgba(255,255,255,.76);
-  --border:rgba(255,255,255,.72);
-  --border2:rgba(17,24,39,.12);
-  --txt:#191b20;
-  --muted:#4e5461;
-  --dim:#6b7280;
-  --acc:#127038;
-  --accTxt:#0f6b32;
-  --acc2:#0e7490;
-  --ok:#127038;
+  --bg:#fafafa;
+  --bg2:#f8fafc;
+  --card:#ffffff;
+  --card2:#ffffff;
+  --border:#e2e8f0;
+  --border2:rgba(15,23,42,.08);
+  --txt:#0f172a;
+  --muted:#64748b;
+  --dim:#94a3b8;
+  --acc:#2563eb;
+  --accTxt:#2563eb;
+  --acc2:#0284c7;
+  --ok:#10b981;
   --onAcc:#ffffff;
-  --btnPri:#1c1e24;
+  --btnPri:#0f172a;
   --btnPriTxt:#ffffff;
-  --surf0:rgba(255,255,255,.34);
-  --surf1:rgba(255,255,255,.52);
-  --surf2:rgba(255,255,255,.64);
-  --surf3:rgba(255,255,255,.82);
-  --panelA:rgba(255,255,255,.58);
-  --panelB:rgba(255,255,255,.38);
-  --off:#c3c6cf;
-  --off2:#a8acb8;
-  --dim2:#8b909c;
-  --txt2:#33363e;
-  --okTxt:#0f6b32;
-  --okTxt2:#0f6b32;
-  --infoTxt:#0b4f7a;
-  --ovBg:rgba(18,21,28,.38);
-  --sideBg:rgba(255,255,255,.62);
-  --barBg:rgba(255,255,255,.72);
-  --scroll:#c3c6cf;
-  --scrollH:#a8acb8;
-  --glow:0 20px 44px -26px rgba(16,24,40,.38);
-  /* bayangan kaca berlapis: 1px tepi dalam terang + sebaran lembut */
-  --g1:inset 0 1px 0 rgba(255,255,255,.85);
-  --g2:0 10px 30px -18px rgba(16,24,40,.35);
-  --blur:blur(16px) saturate(160%);
+  --surf0:#f8fafc;
+  --surf1:#f1f5f9;
+  --surf2:#e2e8f0;
+  --surf3:#ffffff;
+  --panelA:#ffffff;
+  --panelB:#ffffff;
+  --off:#cbd5e1;
+  --off2:#94a3b8;
+  --dim2:#cbd5e1;
+  --txt2:#1e293b;
+  --okTxt:#059669;
+  --okTxt2:#047857;
+  --infoTxt:#0284c7;
+  --ovBg:rgba(15,23,42,.4);
+  --sideBg:#ffffff;
+  --barBg:#ffffff;
+  --scroll:#cbd5e1;
+  --scrollH:#94a3b8;
+  --glow:0 12px 32px -8px rgba(15,23,42,.08);
+  --g1:none;
+  --g2:0 10px 30px -10px rgba(15,23,42,.06);
+  --blur:none;
 }
 
 /* ── 2. Token: gelap ──────────────────────────────────────────────── */
