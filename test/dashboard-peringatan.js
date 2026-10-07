@@ -87,13 +87,13 @@ cek('79% -> diam (belum mengganggu)', h.html === '');
 h = jalankan([botKu(80, 100)], PAKET_OK);
 cek('80% -> muncul', h.html.includes('QWERTY'), h.html.slice(0, 80));
 cek('80% -> menyebut sisa 20', h.html.includes('20'), h.html.slice(0, 200));
-cek('80% -> peringatan (⚠️), bukan kritis (⛔)', h.html.includes('⚠️') && !h.html.includes('⛔'));
+cek('80% -> peringatan (icon), bukan kritis', (h.html.includes('path') || h.html.includes('⚠️')) && !h.html.includes('circle cx="12"'));
 cek('80% -> tidak ditandai kritis di kelasnya', !h.className.includes('kritis'), h.className);
 
 console.log('\n=== 3. Kuota HABIS = kritis ===');
 h = jalankan([botKu(100, 100)], PAKET_OK);
 cek('menyebut "habis"', /habis/i.test(h.html), h.html.slice(0, 200));
-cek('pakai ikon kritis ⛔', h.html.includes('⛔'));
+cek('pakai ikon kritis svg/⛔', h.html.includes('circle cx="12"') || h.html.includes('⛔'));
 cek('elemen dapat kelas kritis', h.className.includes('kritis'), h.className);
 
 console.log('\n=== 4. Tanpa batas (receive_limit 0) JANGAN dihitung ===');
@@ -112,7 +112,7 @@ h = jalankan([], { ...PAKET_OK, plan_expired_at: jauh });
 cek('sisa 30 hari -> diam', h.html === '');
 const kemarin = new Date(Date.now() - 86400000).toISOString();
 h = jalankan([], { ...PAKET_OK, plan_expired_at: kemarin });
-cek('sudah lewat -> kritis ⛔', h.html.includes('⛔') && h.className.includes('kritis'));
+cek('sudah lewat -> kritis svg/⛔', (h.html.includes('circle cx="12"') || h.html.includes('⛔')) && h.className.includes('kritis'));
 
 console.log('\n=== 6. Paket tidak aktif ===');
 h = jalankan([], { plan_aktif: false, trial_used: true, plan_expired_at: null });
@@ -122,9 +122,9 @@ cek('belum pernah ambil paket -> JANGAN muncul (bukan kesalahan)', h.html === ''
 
 console.log('\n=== 7. Kritis diurut paling atas ===');
 h = jalankan([botKu(85, 100, 'HAMPIR')], { ...PAKET_OK, plan_expired_at: kemarin });
-const iKritis = h.html.indexOf('⛔');
-const iPeringatan = h.html.indexOf('⚠️');
-cek('⛔ muncul sebelum ⚠️', iKritis >= 0 && iPeringatan >= 0 && iKritis < iPeringatan,
+const iKritis = h.html.indexOf('circle cx="12"');
+const iPeringatan = h.html.indexOf('path d="M10.29');
+cek('kritis muncul sebelum peringatan', iKritis >= 0 && iPeringatan >= 0 && iKritis < iPeringatan,
   `kritis@${iKritis} peringatan@${iPeringatan}`);
 
 console.log('\n=== 8. Jalur ke perbaikan ada ===');
