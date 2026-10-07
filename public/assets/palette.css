@@ -997,9 +997,13 @@ body.page-index .card p,body.page-index .step p{
   margin:0;color:var(--muted);line-height:1.6;font-size:15px;
 }
 body.page-index .card-dark{
-  background:var(--dark)!important;
-  color:var(--darkink)!important;
-  border-color:var(--dark)!important;
+  background:#0f172a!important;
+  color:#ffffff!important;
+  border-color:#1e293b!important;
+}
+:root[data-theme="dark"] body.page-index .card-dark,html.dark body.page-index .card-dark{
+  background:#1e293b!important;
+  border-color:rgba(255,255,255,.12)!important;
 }
 body.page-index .card-dark .lead{
   font-size:24px;font-weight:700;letter-spacing:-.02em;color:#ffffff!important;
