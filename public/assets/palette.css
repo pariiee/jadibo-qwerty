@@ -1056,17 +1056,27 @@ body.page-index .pc-extra{margin-top:auto;padding-top:14px;border-top:1px dashed
   body.page-index .price-grid{grid-template-columns:1fr}
 }
 
-body.page-index .tst-section-hdr{
-  display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:36px;
+/* §7.11 Testimonials Layout: Split Left Promo + Right 2-Column Cards Grid */
+body.page-index .tst-layout-grid{
+  display:grid;grid-template-columns:1fr 1.6fr;gap:48px;align-items:start;
 }
-@media(max-width:768px){
-  body.page-index .tst-section-hdr{flex-direction:column;align-items:flex-start}
+@media(max-width:960px){
+  body.page-index .tst-layout-grid{grid-template-columns:1fr;gap:36px}
 }
-body.page-index .tst-hdr-sub{
-  font-size:16px;color:var(--muted);max-width:540px;margin:8px 0 0;line-height:1.6;
+body.page-index .tst-left-box{
+  position:sticky;top:90px;
 }
-body.page-index .tst-grid{
-  display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;
+body.page-index .tst-left-box h2{
+  font-size:clamp(30px,3.8vw,44px);line-height:1.15;letter-spacing:-.03em;margin:0 0 16px;
+}
+body.page-index .tst-cta-btn{
+  margin-top:28px;padding:14px 26px;border-radius:12px;font-weight:700;display:inline-flex;align-items:center;gap:8px;
+}
+body.page-index .tst-right-cards .tst-grid{
+  display:grid;grid-template-columns:repeat(2,1fr);gap:18px;
+}
+@media(max-width:640px){
+  body.page-index .tst-right-cards .tst-grid{grid-template-columns:1fr}
 }
 body.page-index .tst{
   display:flex;flex-direction:column;padding:26px 24px;border-radius:20px;
