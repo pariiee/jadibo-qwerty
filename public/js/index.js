@@ -86,19 +86,20 @@
 
   // ── Testimoni ───────────────────────────────────────────────────
   const tst = [
-    { n: 'Rizky', r: 'Owner Store Bot', t: 'Bot on 24 jam, jarang delay. Pelanggan senang karena balasannya cepat.' },
-    { n: 'Nadia', r: 'Admin Grup Jualan', t: 'Setup-nya cuma scan QR, nggak sampai semenit. Fiturnya banyak banget.' },
-    { n: 'Bagas', r: 'Reseller Bot', t: 'Bisa atur prefix dan footer sendiri, jadi tiap bot klien kelihatan beda.' },
-    { n: 'Sari', r: 'Owner Komunitas', t: 'Limit pesannya jelas kelihatan di dashboard, jadi nggak kaget pas kena batas.' },
-    { n: 'Dimas', r: 'Freelancer', t: 'Harga paketnya masuk akal buat yang baru mulai. Naik paket tinggal bayar lagi.' },
-    { n: 'Putri', r: 'Owner Toko Online', t: 'Menu dan fiturnya kepotong sesuai paket, jadi nggak bingung milih yang mana.' }
+    { n: "Michael Grant", r: "Content Creator", t: "It's not just about followers, it's about building a real community that supports each other." },
+    { n: "David Kim", r: "Social Media Strategist", t: "I've grown my audience faster here than on any other messaging platform I've tried." },
+    { n: "Emma Rodriguez", r: "Digital Marketer at SocialLift", t: "User-friendly, engaging, and built for growth. Every connection you make here is meaningful." },
+    { n: "Rizky Pratama", r: "Store Bot Community Lead", t: "Bot online 24 jam nonstop dan stabil banget. Pelanggan toko senang karena semua respon instan tanpa delay." }
   ];
-  const g = document.getElementById('tst-grid');
+  const g = document.getElementById("tst-grid");
+  const starSvg = '<svg width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+  const starBlock = '<div class="tst-head"><div class="tst-stars">' + starSvg.repeat(5) + '</div><span class="tst-rating-tag">Rating</span></div>';
   tst.forEach(x => {
-    const el = document.createElement('div');
-    el.className = 'tst';
+    const el = document.createElement("div");
+    el.className = "tst";
     el.innerHTML =
-      '<p class="tst-t">' + x.t + '</p>' +
+      starBlock +
+      '<p class="tst-t">“' + x.t + '”</p>' +
       '<div class="tst-f"><i>' + x.n[0] + '</i><div><b>' + x.n + '</b><span>' + x.r + '</span></div></div>';
     g.appendChild(el);
   });
