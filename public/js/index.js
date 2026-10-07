@@ -153,16 +153,71 @@
     tautan.forEach(function (a) { const s = document.querySelector(a.getAttribute('href')); if (s) io.observe(s); });
   }
 
-  // ── Overlapping section scroll reveal across all devices ────────
-  if ('IntersectionObserver' in window) {
-    const secIo = new IntersectionObserver(function (es) {
-      es.forEach(function (e) {
-        if (e.isIntersecting) e.target.classList.add('in-view');
-      });
-    }, { threshold: 0.05, rootMargin: '0px 0px -20px 0px' });
-    document.querySelectorAll('body.page-index section, body.page-index footer').forEach(function (s) {
-      secIo.observe(s);
+  // ── GSAP + ScrollTrigger Animations ──────────────────────────────
+  if (window.gsap && window.ScrollTrigger) {
+    gsap.registerPlugin(ScrollTrigger);
+
+    // 1. Scrubbed Parallax Overlapping Section Deck Lift
+    document.querySelectorAll('body.page-index section, body.page-index footer').forEach(function (sec) {
+      gsap.fromTo(sec,
+        { y: 36, opacity: 0.92 },
+        {
+          y: 0,
+          opacity: 1,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: sec,
+            start: 'top bottom',
+            end: 'top 75%',
+            scrub: 0.6
+          }
+        }
+      );
     });
+
+    // 2. Section Headings Reveal
+    document.querySelectorAll('body.page-index section .wrap > h2, body.page-index section .sec-label, body.page-index section .sub').forEach(function (el) {
+      gsap.from(el, {
+        scrollTrigger: { trigger: el, start: 'top 88%' },
+        y: 22, opacity: 0, duration: 0.65, ease: 'power2.out'
+      });
+    });
+
+    // 3. Stats cards stagger
+    gsap.from('#stats .stat', {
+      scrollTrigger: { trigger: '#stats', start: 'top 85%' },
+      y: 32, opacity: 0, stagger: 0.08, duration: 0.7, ease: 'power2.out'
+    });
+
+    // 4. Features bento cards stagger
+    gsap.from('#features .card', {
+      scrollTrigger: { trigger: '#features', start: 'top 82%' },
+      y: 36, opacity: 0, stagger: 0.1, duration: 0.7, ease: 'power2.out'
+    });
+
+    // 5. How-to steps stagger
+    gsap.from('#howto .step', {
+      scrollTrigger: { trigger: '#howto', start: 'top 82%' },
+      y: 32, opacity: 0, stagger: 0.12, duration: 0.65, ease: 'power2.out'
+    });
+
+    // 6. Testimonials cards stagger
+    gsap.from('#testimoni .tst', {
+      scrollTrigger: { trigger: '#testimoni', start: 'top 82%' },
+      y: 32, opacity: 0, stagger: 0.1, duration: 0.65, ease: 'power2.out'
+    });
+
+    // 7. Harga cards stagger (after dynamic fetch)
+    setTimeout(function () {
+      const cards = document.querySelectorAll('#harga .price-card');
+      if (cards.length) {
+        gsap.from(cards, {
+          scrollTrigger: { trigger: '#harga', start: 'top 82%' },
+          y: 40, opacity: 0, stagger: 0.12, duration: 0.75, ease: 'back.out(1.2)'
+        });
+        ScrollTrigger.refresh();
+      }
+    }, 450);
   }
 
 window.toggleTheme = toggleTheme; window.openAuth = openAuth; window.closeAuth = closeAuth;

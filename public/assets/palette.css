@@ -1124,31 +1124,31 @@ body.page-index .stat-foot{
   body.page-index .stats{grid-template-columns:1fr}
 }
 
-/* ══ Overlapping Sticky Section Cards Scroll Animation ══ */
+/* ══ Overlapping Section Cards & GSAP Smooth Stacking ══ */
 body.page-index section,
 body.page-index footer{
-  position:sticky!important;
-  top:min(64px,calc(100vh - 100% - 10px))!important;
-  background:#090a0f!important;
+  position:relative;
+  margin-top:-32px;
   border-top-left-radius:32px;
   border-top-right-radius:32px;
-  box-shadow:0 -24px 60px rgba(0,0,0,.6);
-  border-top:1px solid rgba(255,255,255,.1);
+  box-shadow:0 -22px 54px rgba(0,0,0,.55);
+  border-top:1px solid rgba(255,255,255,.09);
+  background:#090a0f!important;
 }
 body.page-index .hero{position:relative;z-index:1}
-body.page-index #platforms{position:relative;z-index:2}
+body.page-index #platforms{position:relative;z-index:2;margin-top:-20px}
 body.page-index #stats{z-index:3}
 body.page-index #features{z-index:4}
 body.page-index #howto{z-index:5}
 body.page-index #harga{z-index:6}
 body.page-index #testimoni{z-index:7}
-body.page-index footer{z-index:8}
+body.page-index footer{z-index:8;margin-top:-32px}
 
 :root:not([data-theme="dark"]) body.page-index section,
 :root:not([data-theme="dark"]) body.page-index footer{
   background:#ffffff!important;
   border-top-color:#e2e8f0;
-  box-shadow:0 -16px 40px rgba(15,23,42,.1);
+  box-shadow:0 -16px 40px rgba(15,23,42,.08);
 }
 
 /* Section (§15: judul menyebut isinya, label tidak KAPITAL ber-tracking) */
