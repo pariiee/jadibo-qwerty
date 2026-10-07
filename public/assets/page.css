@@ -208,9 +208,9 @@ h2{font-size:28px;font-weight:800;letter-spacing:-.4px;margin-bottom:22px}
 .faq-q{width:100%;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px 20px;background:none;border:none;cursor:pointer;font-size:14px;font-weight:600;color:var(--txt);text-align:left;font-family:inherit;transition:background .16s}
 .faq-q:hover{background:var(--surf1)}
 .faq-q svg{flex-shrink:0;transition:transform .24s cubic-bezier(.22,1,.36,1)}
-.faq-item:has(.faq-a.open) .faq-q svg{transform:rotate(180deg)}
-.faq-a{display:none;padding:0 20px 18px;color:var(--muted);font-size:14px;line-height:1.65}
-.faq-a.open{display:block}
+.faq-item[open] .faq-q svg{transform:rotate(180deg)}
+.faq-a{display:block;padding:0 20px 18px;color:var(--muted);font-size:14px;line-height:1.65}
+.faq-item:not([open]) .faq-a{display:none}
 /* footer */ footer{border-top:1px solid var(--border);margin-top:40px;background:rgba(255,255,255,.012)}
 .foot-in{max-width:1200px;margin:0 auto;padding:26px 20px;display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between}
 .foot-logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px}

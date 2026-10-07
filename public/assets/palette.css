@@ -717,8 +717,8 @@ body.page-admin .tbl tbody tr:hover,body.page-billing .tbl tbody tr:hover,
   box-shadow:var(--hl);margin-bottom:10px;max-width:760px}
 .faq-q{width:100%;display:flex;justify-content:space-between;gap:12px;align-items:center;
   background:none;border:0;padding:16px 20px;font-weight:600;font-size:15px;text-align:left}
-.faq-a{display:none;padding:0 20px 16px;color:var(--mute);font-size:14px;line-height:1.6}
-.faq-a.open{display:block}
+.faq-a{display:block;padding:0 20px 16px;color:var(--mute);font-size:14px;line-height:1.6}
+.faq-item:not([open]) .faq-a{display:none}
 
 /* §7.13 Keadaan kosong: ikon 56px, judul 18px, satu arahan, satu tombol */
 .empty{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;
