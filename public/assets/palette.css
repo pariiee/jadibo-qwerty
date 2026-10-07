@@ -1011,12 +1011,37 @@ body.page-index .card-dark .lead{
 body.page-index .card-dark p{
   color:#94a3b8!important;
 }
+body.page-index .step{
+  position:relative;display:flex;flex-direction:column;padding:30px 26px;border-radius:22px;
+  background:#ffffff;border:1px solid #e2e8f0;box-shadow:0 8px 24px -8px rgba(15,23,42,.04);
+  transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease;
+}
+:root[data-theme="dark"] body.page-index .step,html.dark body.page-index .step{
+  background:#111218!important;
+  border-color:rgba(255,255,255,.08)!important;
+  box-shadow:0 12px 32px -10px rgba(0,0,0,.6)!important;
+}
+body.page-index .step:hover{
+  transform:translateY(-3px);border-color:#cbd5e1;box-shadow:0 14px 32px -10px rgba(15,23,42,.08);
+}
+:root[data-theme="dark"] body.page-index .step:hover,html.dark body.page-index .step:hover{
+  border-color:rgba(255,255,255,.16)!important;
+}
 body.page-index .step i{
-  width:38px;height:38px;border-radius:12px;background:var(--peach);color:var(--accent);
-  display:grid;place-items:center;font-weight:700;font-style:normal;margin-bottom:6px;
+  width:40px;height:40px;border-radius:12px;background:#0f172a;color:#ffffff;
+  display:grid;place-items:center;font-weight:800;font-style:normal;margin-bottom:16px;font-size:16px;
+}
+:root[data-theme="dark"] body.page-index .step i,html.dark body.page-index .step i{
+  background:#1e293b!important;color:#38bdf8!important;border:1px solid rgba(255,255,255,.1)!important;
+}
+body.page-index .step h4{
+  margin:0 0 10px;font-size:18.5px;font-weight:700;color:var(--txt);letter-spacing:-.01em;
+}
+body.page-index .step p{
+  margin:0;color:var(--muted);line-height:1.6;font-size:14.5px;
 }
 body.page-index .step p b{
-  font-family:ui-monospace,Menlo,Consolas,monospace;color:var(--accent);font-weight:600;
+  font-family:ui-monospace,Menlo,Consolas,monospace;color:var(--acc);font-weight:700;
 }
 /* §7.10 Kartu harga: Modern SaaS Plan Card (sesuai target reference) */
 body.page-index .price-grid{
