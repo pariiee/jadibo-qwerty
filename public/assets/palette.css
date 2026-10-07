@@ -1124,35 +1124,24 @@ body.page-index .stat-foot{
   body.page-index .stats{grid-template-columns:1fr}
 }
 
-/* ══ Overlapping Section Cards & GSAP Smooth Stacking ══ */
-body.page-index section,
-body.page-index footer{
+/* ══ Seamless Connected Flow (Nol Potongan Card Antar-Section, 1 Kanvas Mengalir) ══ */
+body.page-index section{
   position:relative;
-  margin-top:-32px;
-  border-top-left-radius:32px;
-  border-top-right-radius:32px;
-  box-shadow:0 -22px 54px rgba(0,0,0,.55);
-  border-top:1px solid rgba(255,255,255,.09);
-  background:#090a0f!important;
+  padding:44px 0 52px;
+  border-top:1px solid rgba(255,255,255,.06);
 }
-body.page-index .hero{position:relative;z-index:1}
-body.page-index #platforms{position:relative;z-index:2;margin-top:-20px}
-body.page-index #stats{z-index:3}
-body.page-index #features{z-index:4}
-body.page-index #howto{z-index:5}
-body.page-index #harga{z-index:6}
-body.page-index #testimoni{z-index:7}
-body.page-index footer{z-index:8;margin-top:-32px}
-
-:root:not([data-theme="dark"]) body.page-index section,
-:root:not([data-theme="dark"]) body.page-index footer{
-  background:#ffffff!important;
+:root:not([data-theme="dark"]) body.page-index section{
   border-top-color:#e2e8f0;
-  box-shadow:0 -16px 40px rgba(15,23,42,.08);
+}
+body.page-index #platforms{
+  position:relative;
+  border-top:none;
+}
+body.page-index .hero{
+  position:relative;
 }
 
 /* Section (§15: judul menyebut isinya, label tidak KAPITAL ber-tracking) */
-body.page-index section{padding:38px 0 46px;border-top:1px solid var(--line)}
 body.page-index .sec-label{
   text-transform:none;letter-spacing:0;font-size:12.5px;font-weight:600;
   color:var(--mute);margin:0 0 4px;
@@ -1406,7 +1395,7 @@ body.page-index .faq-a{
 }
 /* footer: 1:1 layout reference */
 body.page-index footer,body.page-auth footer,footer{
-  border-top:1px solid #e2e8f0;margin-top:80px;background:#ffffff;padding:80px 0 36px;
+  border-top:1px solid #e2e8f0;margin-top:0;background:#ffffff;padding:64px 0 36px;
 }
 :root[data-theme="dark"] body.page-index footer,:root[data-theme="dark"] footer,
 html.dark body.page-index footer,html.dark footer{

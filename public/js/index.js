@@ -61,6 +61,14 @@
     if (d.trial) document.getElementById('price-note').textContent =
       'Belum yakin? Klaim Trial ' + d.trial.days + ' hari gratis dulu — ' + d.trial.slots +
       ' slot bot, cuma sekali seumur akun.';
+
+    if (window.gsap && window.ScrollTrigger) {
+      gsap.from('#price-grid .price-card', {
+        scrollTrigger: { trigger: '#harga', start: 'top 82%' },
+        y: 50, opacity: 0, stagger: 0.14, duration: 0.85, ease: 'power3.out'
+      });
+      ScrollTrigger.refresh();
+    }
   }).catch(() => {});
 
   // ── Testimoni ───────────────────────────────────────────────────
@@ -157,67 +165,44 @@
   if (window.gsap && window.ScrollTrigger) {
     gsap.registerPlugin(ScrollTrigger);
 
-    // 1. Scrubbed Parallax Overlapping Section Deck Lift
-    document.querySelectorAll('body.page-index section, body.page-index footer').forEach(function (sec) {
-      gsap.fromTo(sec,
-        { y: 36, opacity: 0.92 },
-        {
-          y: 0,
-          opacity: 1,
-          ease: 'none',
-          scrollTrigger: {
-            trigger: sec,
-            start: 'top bottom',
-            end: 'top 75%',
-            scrub: 0.6
-          }
-        }
-      );
-    });
-
-    // 2. Section Headings Reveal
+    // 1. Section Headings & Labels Reveal
     document.querySelectorAll('body.page-index section .wrap > h2, body.page-index section .sec-label, body.page-index section .sub').forEach(function (el) {
       gsap.from(el, {
         scrollTrigger: { trigger: el, start: 'top 88%' },
-        y: 22, opacity: 0, duration: 0.65, ease: 'power2.out'
+        y: 35, opacity: 0, duration: 0.75, ease: 'power3.out'
       });
     });
 
-    // 3. Stats cards stagger
+    // 2. Stats cards stagger
     gsap.from('#stats .stat', {
-      scrollTrigger: { trigger: '#stats', start: 'top 85%' },
-      y: 32, opacity: 0, stagger: 0.08, duration: 0.7, ease: 'power2.out'
+      scrollTrigger: { trigger: '#stats', start: 'top 84%' },
+      y: 45, opacity: 0, stagger: 0.1, duration: 0.8, ease: 'power3.out'
     });
 
-    // 4. Features bento cards stagger
+    // 3. Features bento cards stagger
     gsap.from('#features .card', {
-      scrollTrigger: { trigger: '#features', start: 'top 82%' },
-      y: 36, opacity: 0, stagger: 0.1, duration: 0.7, ease: 'power2.out'
+      scrollTrigger: { trigger: '#features', start: 'top 80%' },
+      y: 50, opacity: 0, stagger: 0.12, duration: 0.85, ease: 'power3.out'
     });
 
-    // 5. How-to steps stagger
+    // 4. How-to steps stagger
     gsap.from('#howto .step', {
-      scrollTrigger: { trigger: '#howto', start: 'top 82%' },
-      y: 32, opacity: 0, stagger: 0.12, duration: 0.65, ease: 'power2.out'
+      scrollTrigger: { trigger: '#howto', start: 'top 80%' },
+      y: 45, opacity: 0, stagger: 0.12, duration: 0.8, ease: 'power3.out'
     });
 
-    // 6. Testimonials cards stagger
+    // 5. Testimonials cards stagger & left box
     gsap.from('#testimoni .tst', {
-      scrollTrigger: { trigger: '#testimoni', start: 'top 82%' },
-      y: 32, opacity: 0, stagger: 0.1, duration: 0.65, ease: 'power2.out'
+      scrollTrigger: { trigger: '#testimoni', start: 'top 80%' },
+      y: 45, opacity: 0, stagger: 0.1, duration: 0.8, ease: 'power3.out'
     });
-
-    // 7. Harga cards stagger (after dynamic fetch)
-    setTimeout(function () {
-      const cards = document.querySelectorAll('#harga .price-card');
-      if (cards.length) {
-        gsap.from(cards, {
-          scrollTrigger: { trigger: '#harga', start: 'top 82%' },
-          y: 40, opacity: 0, stagger: 0.12, duration: 0.75, ease: 'back.out(1.2)'
-        });
-        ScrollTrigger.refresh();
-      }
-    }, 450);
+    const tstLeft = document.querySelector('.tst-left-box');
+    if (tstLeft) {
+      gsap.from(tstLeft, {
+        scrollTrigger: { trigger: '#testimoni', start: 'top 82%' },
+        y: 40, opacity: 0, duration: 0.85, ease: 'power3.out'
+      });
+    }
   }
 
 window.toggleTheme = toggleTheme; window.openAuth = openAuth; window.closeAuth = closeAuth;
