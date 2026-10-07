@@ -47,7 +47,7 @@
           '<div class="pc-desc">Solusi otomatisasi andal untuk operasional bot kamu.</div>' +
           '<div class="pc-harga">' + rupiah(p.price) + '<span>/ ' + p.days + ' hari</span></div>' +
         '</div>' +
-        '<a class="btn ' + (isPop ? 'btn-dark' : 'btn-outline') + ' pc-btn" href="/register">Get Started ↗</a>' +
+        '<a class="btn ' + (isPop ? 'btn-dark' : 'btn-outline') + ' pc-btn" href="/register">Get Started <svg class="arr-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg></a>' +
         '<div class="pc-divider"></div>' +
         '<div class="pc-feat-label">Fitur &amp; Kapasitas:</div>' +
         '<ul class="pc-li">' +

@@ -884,8 +884,17 @@ body.page-index .hero-btns .btn{padding:14px 26px;font-size:15px;font-weight:700
 body.page-index .btn-pill{
   border-radius:999px;display:inline-flex;align-items:center;gap:8px;
 }
-body.page-index .btn-pill .arr{font-size:16px;font-weight:400;transition:transform .15s ease}
-body.page-index .btn-pill:hover .arr{transform:translate(2px,-2px)}
+body.page-index .btn-pill .arr,
+body.page-index .btn .arr-icon,
+.btn .arr-icon,
+.arr-icon{
+  display:inline-block;vertical-align:middle;margin-left:5px;flex-shrink:0;
+  transition:transform .18s ease;
+}
+body.page-index .btn-pill:hover .arr,
+.btn:hover .arr-icon{
+  transform:translate(2px,-2px);
+}
 
 /* Hero Floating Dark Stats Card (Mockup Capsule) */
 body.page-index .hero-stats-card{
