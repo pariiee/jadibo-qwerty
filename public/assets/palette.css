@@ -155,46 +155,46 @@
   }
 }
 :root[data-theme="dark"],html.dark{
-  --bg:#0c0d12;
-  --ink:#f2f3f8;
-  --mute:#9ca0b5;
-  --accent:#a5b4fc;
-  --accent2:#6366f1;
-  --dark:#f2f3f8;
-  --darkink:#0b0c14;
-  --peach:rgba(255,255,255,.07);
-  --green:#34d399;
-  --greenbg:rgba(52,211,153,.14);
-  --amber:#fbbf24;
-  --amberbg:rgba(251,191,36,.14);
-  --red:#f87171;
-  --redbg:rgba(248,113,113,.14);
-  --shell:rgba(255,255,255,.05);
-  --panel:rgba(255,255,255,.05);
-  --card:rgba(255,255,255,.08);
-  --edge:rgba(255,255,255,.15);
-  --hl:inset 0 1px 0 rgba(255,255,255,.13);
-  --line:rgba(255,255,255,.09);
-  --shadow:0 10px 30px rgba(0,0,0,.5);
-  --txt2:#dcdfef;
-  --dim:#8d94a4;
-  --dim2:#79808f;
-  --okTxt:#86efac;
-  --okTxt2:#a7f3d0;
+  --bg:#090a0f;
+  --ink:#f8fafc;
+  --mute:#94a3b8;
+  --accent:#60a5fa;
+  --accent2:#3b82f6;
+  --dark:#ffffff;
+  --darkink:#090a0f;
+  --peach:rgba(255,255,255,.05);
+  --green:#10b981;
+  --greenbg:rgba(16,185,129,.12);
+  --amber:#f59e0b;
+  --amberbg:rgba(245,158,11,.12);
+  --red:#ef4444;
+  --redbg:rgba(239,68,68,.12);
+  --shell:#111218;
+  --panel:#111218;
+  --card:#111218;
+  --edge:rgba(255,255,255,.08);
+  --hl:none;
+  --line:rgba(255,255,255,.08);
+  --shadow:0 12px 36px -10px rgba(0,0,0,.6);
+  --txt2:#e2e8f0;
+  --dim:#64748b;
+  --dim2:#475569;
+  --okTxt:#34d399;
+  --okTxt2:#6ee7b7;
   --warnTxt:#fcd34d;
   --errTxt:#fca5a5;
-  --info:#3b82f6;
+  --info:#38bdf8;
   --infoTxt:#7dd3fc;
-  --surf0:rgba(255,255,255,.03);
-  --surf1:rgba(255,255,255,.05);
-  --surf2:rgba(255,255,255,.07);
-  --surf3:rgba(255,255,255,.11);
-  --off2:rgba(255,255,255,.2);
-  --scroll:rgba(255,255,255,.16);
-  --scrollH:rgba(255,255,255,.28);
-  --ovBg:rgba(4,6,14,.62);
-  --tile-blue:#1b1f45;
-  --tile-purple:#231a3d;
+  --surf0:#090a0f;
+  --surf1:#111218;
+  --surf2:#181922;
+  --surf3:#22232e;
+  --off2:rgba(255,255,255,.15);
+  --scroll:rgba(255,255,255,.12);
+  --scrollH:rgba(255,255,255,.24);
+  --ovBg:rgba(0,0,0,.7);
+  --tile-blue:rgba(59,130,246,.12);
+  --tile-purple:rgba(168,85,247,.12);
 }
 
 /* ── 3. Latar: DATAR (§3 "Tidak ada gradasi, blob, atau glow") ─────── */
@@ -1002,8 +1002,8 @@ body.page-index .card-dark{
   border-color:#1e293b!important;
 }
 :root[data-theme="dark"] body.page-index .card-dark,html.dark body.page-index .card-dark{
-  background:#1e293b!important;
-  border-color:rgba(255,255,255,.12)!important;
+  background:#171923!important;
+  border-color:rgba(255,255,255,.1)!important;
 }
 body.page-index .card-dark .lead{
   font-size:24px;font-weight:700;letter-spacing:-.02em;color:#ffffff!important;
@@ -1028,7 +1028,7 @@ body.page-index .price-card{
   transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease;
 }
 :root[data-theme="dark"] body.page-index .price-card,html.dark body.page-index .price-card{
-  background:#13152b;border-color:rgba(255,255,255,.08);box-shadow:0 12px 36px -10px rgba(0,0,0,.4);
+  background:#111218;border-color:rgba(255,255,255,.08);box-shadow:0 12px 36px -10px rgba(0,0,0,.6);
 }
 body.page-index .price-card:hover{
   transform:translateY(-4px);box-shadow:0 20px 40px -12px rgba(15,23,42,.1);
@@ -1088,7 +1088,7 @@ body.page-index .tst{
   transition:transform .2s ease,box-shadow .2s ease;
 }
 :root[data-theme="dark"] body.page-index .tst,html.dark body.page-index .tst{
-  background:#13152b;border-color:rgba(255,255,255,.08);box-shadow:0 12px 30px -10px rgba(0,0,0,.4);
+  background:#111218;border-color:rgba(255,255,255,.08);box-shadow:0 12px 30px -10px rgba(0,0,0,.6);
 }
 body.page-index .tst:hover{
   transform:translateY(-3px);box-shadow:0 14px 32px -10px rgba(15,23,42,.08);
