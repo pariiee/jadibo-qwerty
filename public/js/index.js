@@ -2,34 +2,6 @@
 // CSP sekarang nggak ngebolehin script inline, jadi dibungkus fungsi biasa —
 // yang perlu dipanggil HTML diekspor ke window di bawah.
 (function () {
-// ── FAQ ─────────────────────────────────────────────────────────
-  const faqs = [
-    { q: 'Platform apa saja yang didukung oleh qwertygate?', a: 'qwertygate mendukung integrasi penuh untuk WhatsApp (via QR / 8-digit Pairing Code), Telegram (via Bot Token API), dan Discord Bot. Kamu bisa mengelola semua bot multi-platform ini dari 1 dashboard.' },
-    { q: 'Bagaimana cara menghubungkan bot saya?', a: 'Untuk WhatsApp: cukup scan QR code atau masukkan 8-digit Pairing Code. Untuk Telegram & Discord: tinggal paste Token Bot resmi dari Telegram BotFather atau Discord Developer Portal.' },
-    { q: 'Apakah pesan dan sesi bot saya aman & terisolasi?', a: 'Ya, 100% aman. Setiap bot memiliki isolated multi-session tersendiri di database terpisah, sehingga tidak ada risiko kebocoran data atau crash bersama antar bot.' },
-    { q: 'Berapa batas bot dan kuota pesan per akun?', a: 'Setiap paket aktif memberikan slot bot dan kuota pesan harian/bulanan. Kamu juga bisa mengklaim paket Trial gratis untuk mencoba seluruh fitur sebelum berlangganan.' },
-    { q: 'Apakah mendukung webhook dan kustomisasi command?', a: 'Tentu saja! Lebih dari 90+ command built-in (RPG, grup moderation, tools, AI) siap pakai, plus dukungan kustom prefix, footer, nama bot, dan Webhook REST API.' },
-    { q: 'Bagaimana metode pembayaran langganan?', a: 'Pembayaran dilakukan secara otomatis via QRIS (ShopeePay, GoPay, OVO, Dana, M-Banking) dengan konfirmasi instant via Webhook real-time.' }
-  ];
-  // §7.11 FAQ: <details>/<summary> bawaan browser — accordion + operasi
-  // keyboard didapat gratis, jadi nol JS. Dulu tiap item dibangun manual
-  // dengan tombol dan kelas `.open`, jadi butuh listener + penanda sendiri.
-  // Item PERTAMA dibuka sesuai spec.
-  const faqBox = document.getElementById('faq-list');
-  faqs.forEach((f, i) => {
-    const item = document.createElement('details');
-    item.className = 'faq-item';
-    if (i === 0) item.open = true;
-    const q = document.createElement('summary');
-    q.className = 'faq-q';
-    q.textContent = f.q;
-    const ans = document.createElement('p');
-    ans.className = 'faq-a';
-    ans.textContent = f.a;
-    item.append(q, ans);
-    faqBox.appendChild(item);
-  });
-
   // ── Live stats ──────────────────────────────────────────────────
   function updateStats(s) {
     const short = n => n >= 1000 ? Math.round(n / 1000) + 'k' : String(n);
