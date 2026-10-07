@@ -436,7 +436,7 @@
       kotak('Waktu server', new Date(d.waktuServer).toLocaleString('id-ID'));
 
     const alasan = document.getElementById('sys-alasan');
-    alasan.textContent = (h.alasan || []).length ? '⚠️ ' + h.alasan.join(' • ') : '';
+    alasan.textContent = (h.alasan || []).length ? h.alasan.join(' • ') : '';
 
     const r = d.resource || {};
     const ram = r.ram || {};
