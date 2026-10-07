@@ -1014,35 +1014,47 @@ body.page-index .step i{
 body.page-index .step p b{
   font-family:ui-monospace,Menlo,Consolas,monospace;color:var(--accent);font-weight:600;
 }
-/* §7.10 Kartu harga: grid 3 kolom → 1 kolom ≤980px. Tiap kartu = nama 19px,
-   harga 48px/800, daftar centang --green, satu tombol utama di bawah.
-   Berbeda dari §15 "bayangan tipis" — kartu ini memang harus menonjol. */
+/* §7.10 Kartu harga: Modern SaaS Plan Card (sesuai target reference) */
 body.page-index .price-grid{
-  display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:start;
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;align-items:stretch;
 }
 body.page-index .price-card{
-  display:flex;flex-direction:column;padding:26px;border-radius:24px;
-  background:var(--card);border:1px solid var(--edge);box-shadow:var(--shadow),var(--hl);
-  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  position:relative;display:flex;flex-direction:column;padding:32px 28px;border-radius:24px;
+  background:#ffffff;border:1px solid #e2e8f0;box-shadow:0 10px 30px -10px rgba(15,23,42,.05);
+  transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease;
 }
-body.page-index .pc-harga small{font-size:14px;font-weight:500;color:var(--mute)}
-body.page-index .pc-li{list-style:none;padding:0;margin:18px 0 20px;display:grid;gap:10px;color:var(--mute);font-size:15px}
-body.page-index .pc-li li:before{content:"\2713 ";color:var(--green);font-weight:700}
-body.page-index .pc-extra{color:var(--mute);font-size:13px;margin:0 0 18px}
-/* §15: "beri sedikit offset pada kartu berjajar" — kartu tengah turun 22px */
-@media(min-width:981px){
-  body.page-index .price-grid>*:nth-child(2){transform:translateY(22px)}
+:root[data-theme="dark"] body.page-index .price-card,html.dark body.page-index .price-card{
+  background:#13152b;border-color:rgba(255,255,255,.08);box-shadow:0 12px 36px -10px rgba(0,0,0,.4);
 }
+body.page-index .price-card:hover{
+  transform:translateY(-4px);box-shadow:0 20px 40px -12px rgba(15,23,42,.1);
+}
+body.page-index .price-card-popular{
+  border:2px solid #2563eb!important;
+  box-shadow:0 16px 40px -12px rgba(37,99,235,.15)!important;
+}
+body.page-index .pc-badge{
+  position:absolute;top:-13px;right:24px;padding:4px 14px;border-radius:999px;
+  background:#2563eb;color:#ffffff;font-size:11.5px;font-weight:700;letter-spacing:.03em;
+  box-shadow:0 4px 12px rgba(37,99,235,.3);
+}
+body.page-index .pc-top{margin-bottom:20px}
+body.page-index .pc-nama{font-size:20px;font-weight:800;color:var(--txt);margin-bottom:6px;letter-spacing:-.02em}
+body.page-index .pc-desc{font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:18px}
+body.page-index .pc-harga{font-size:36px;font-weight:900;color:var(--txt);letter-spacing:-.03em;display:flex;align-items:baseline;gap:6px}
+body.page-index .pc-harga span{font-size:13.5px;font-weight:500;color:var(--muted)}
+body.page-index .pc-btn{width:100%;justify-content:center;padding:12px 18px;font-weight:700;border-radius:12px;margin-bottom:24px}
+body.page-index .pc-divider{height:1px;background:#e2e8f0;margin-bottom:20px}
+:root[data-theme="dark"] body.page-index .pc-divider,html.dark body.page-index .pc-divider{background:rgba(255,255,255,.08)}
+body.page-index .pc-feat-label{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:14px}
+body.page-index .pc-li{list-style:none;padding:0;margin:0 0 18px;display:flex;flex-direction:column;gap:12px}
+body.page-index .pc-li li{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--txt);font-weight:500}
+body.page-index .pc-li li:before{display:none}
+body.page-index .pc-li li svg{color:#2563eb;flex:none}
+body.page-index .pc-extra{margin-top:auto;padding-top:14px;border-top:1px dashed #e2e8f0;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#2563eb}
 @media(max-width:980px){
   body.page-index .price-grid{grid-template-columns:1fr}
-  body.page-index .price-grid>*:nth-child(2){transform:none}
 }
-/* Angka besar (§5 "Angka besar 48px/800") */
-body.page-index .big{font-size:48px;font-weight:800;letter-spacing:-.03em;color:var(--accent)}
-body.page-index .price-note{color:var(--mute);font-size:14px;margin-top:26px}
-body.page-index .pc-nama{font-size:19px;font-weight:700}
-body.page-index .pc-harga{font-size:48px;font-weight:800;letter-spacing:-.03em;margin:6px 0 0}
-body.page-index .pc-harga small{font-size:14px;font-weight:500;color:var(--mute)}
 
 body.page-index .tst-t{margin:0 0 16px;line-height:1.6}
 body.page-index .tst-f{display:flex;align-items:center;gap:12px}

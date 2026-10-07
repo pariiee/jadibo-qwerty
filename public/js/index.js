@@ -56,16 +56,25 @@
     if (!d?.ok) return;
     const rupiah = n => 'Rp' + Number(n || 0).toLocaleString('id-ID');
     const grid = document.getElementById('price-grid');
-    d.plans.forEach(p => {
+    d.plans.forEach((p, idx) => {
       const k = daftarPaket(p, d.fitur || 0);
+      const isPop = idx === 1 || p.name.toLowerCase().includes('pro') || p.name.toLowerCase().includes('premium');
       const el = document.createElement('div');
-      el.className = 'price-card';
+      el.className = 'price-card' + (isPop ? ' price-card-popular' : '');
       el.innerHTML =
-        '<div class="pc-nama">' + p.name + '</div>' +
-        '<div class="pc-harga">' + rupiah(p.price) + '<small> / ' + p.days + ' hari</small></div>' +
-        '<ul class="pc-li">' + k.baris.map(t => '<li>' + t + '</li>').join('') + '</ul>' +
-        '<p class="pc-extra">' + k.extra + '</p>' +
-        '<a class="btn btn-dark" href="/register">Pilih Paket</a>';
+        (isPop ? '<div class="pc-badge">Popular</div>' : '') +
+        '<div class="pc-top">' +
+          '<div class="pc-nama">' + p.name + '</div>' +
+          '<div class="pc-desc">Solusi otomatisasi andal untuk operasional bot kamu.</div>' +
+          '<div class="pc-harga">' + rupiah(p.price) + '<span>/ ' + p.days + ' hari</span></div>' +
+        '</div>' +
+        '<a class="btn ' + (isPop ? 'btn-dark' : 'btn-outline') + ' pc-btn" href="/register">Get Started ↗</a>' +
+        '<div class="pc-divider"></div>' +
+        '<div class="pc-feat-label">Fitur &amp; Kapasitas:</div>' +
+        '<ul class="pc-li">' +
+          k.baris.map(t => '<li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> ' + t + '</li>').join('') +
+        '</ul>' +
+        (k.extra ? '<div class="pc-extra"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> ' + k.extra + '</div>' : '');
       grid.appendChild(el);
     });
     // Trial = dimensinya sama dengan paket (fitur/owner/received/masa aktif),
