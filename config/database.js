@@ -113,6 +113,12 @@ async function getStats() {
   const [[u]] = await pool.execute('SELECT COUNT(*) AS n FROM users');
   out.total_bots_online = Number(b?.n || 0);
   out.total_users = Number(u?.n || 0);
+  try {
+    const { ALL_COMMANDS } = require('../plugins/01-info');
+    out.total_commands = Number(ALL_COMMANDS?.length || 0);
+  } catch {
+    out.total_commands = 0;
+  }
   return out;
 }
 

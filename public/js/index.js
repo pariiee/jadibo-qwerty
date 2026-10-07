@@ -5,11 +5,20 @@
   // ── Live stats ──────────────────────────────────────────────────
   function updateStats(s) {
     const short = n => n >= 1000 ? Math.round(n / 1000) + 'k' : String(n);
-    document.getElementById('stat-bots').textContent     = (s.total_bots_online ?? 0).toLocaleString('id-ID');
-    document.getElementById('stat-users').textContent    = (s.total_users ?? 0).toLocaleString('id-ID');
-    document.getElementById('stat-messages').textContent = (s.total_messages ?? 0).toLocaleString('id-ID');
-    document.getElementById('mk-msgs').textContent = short(s.total_messages ?? 0);
-    document.getElementById('mk-bots').textContent = short(s.total_bots_online ?? 0);
+    const set = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = val;
+    };
+    set('stat-bots', (s.total_bots_online ?? 0).toLocaleString('id-ID'));
+    set('stat-users', (s.total_users ?? 0).toLocaleString('id-ID'));
+    set('stat-messages', (s.total_messages ?? 0).toLocaleString('id-ID'));
+    if (s.total_commands) {
+      set('stat-commands', Number(s.total_commands).toLocaleString('id-ID'));
+      set('mk-cmds', Number(s.total_commands).toLocaleString('id-ID'));
+      set('rfc-cmds', Number(s.total_commands).toLocaleString('id-ID'));
+    }
+    set('mk-msgs', short(s.total_messages ?? 0));
+    set('mk-bots', short(s.total_bots_online ?? 0));
   }
   try {
     const ws = new WebSocket((location.protocol === 'https:' ? 'wss' : 'ws') + '://' + location.host);
