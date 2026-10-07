@@ -906,6 +906,14 @@ body.page-index .sc-item{display:flex;flex-direction:column;gap:1px}
 body.page-index .sc-item b{font-size:18px;font-weight:800;letter-spacing:-.02em}
 body.page-index .sc-item span{font-size:11px;opacity:.75;font-weight:500}
 body.page-index .sc-div{width:1px;height:26px;background:rgba(255,255,255,.16)}
+@media(max-width:768px){
+  body.page-index .hero-stats-card{
+    display:grid;grid-template-columns:repeat(2,1fr);gap:14px 18px;border-radius:22px;
+    width:100%;max-width:100%;box-sizing:border-box;padding:18px 20px;
+  }
+  body.page-index .hero-stats-card .sc-div{display:none}
+  body.page-index .hero-stats-card .sc-item{align-items:flex-start}
+}
 
 /* Hero Visual: Futuristic Robot Frame */
 body.page-index .hero-visual{position:relative;padding:10px 0;min-width:0}
@@ -1233,7 +1241,11 @@ body.page-index .tst-layout-grid{
   display:grid;grid-template-columns:1fr 1.6fr;gap:48px;align-items:start;
 }
 @media(max-width:960px){
-  body.page-index .tst-layout-grid{grid-template-columns:1fr;gap:36px}
+  body.page-index .tst-layout-grid{grid-template-columns:1fr;gap:32px}
+  body.page-index .tst-left-box{position:static;top:auto}
+  body.page-index .tst-left-box h2{font-size:clamp(24px,5.5vw,34px);margin-bottom:12px}
+  body.page-index .tst-hdr-sub{font-size:14.5px;line-height:1.6;margin-bottom:18px}
+  body.page-index .tst-cta-btn{margin-top:0;display:inline-flex;padding:12px 22px;border-radius:12px;font-size:14px}
 }
 body.page-index .tst-left-box{
   position:sticky;top:90px;
@@ -1248,7 +1260,17 @@ body.page-index .tst-right-cards .tst-grid{
   display:grid;grid-template-columns:repeat(2,1fr);gap:18px;
 }
 @media(max-width:640px){
-  body.page-index .tst-right-cards .tst-grid{grid-template-columns:1fr}
+  body.page-index .tst-right-cards .tst-grid{grid-template-columns:1fr;gap:14px}
+  body.page-index .tst{
+    padding:20px 18px!important;border-radius:18px!important;
+  }
+  body.page-index .tst-t{
+    font-size:14px!important;line-height:1.6!important;margin:0 0 16px!important;
+  }
+  body.page-index .tst-f{gap:10px}
+  body.page-index .tst-f i{width:36px;height:36px;font-size:13.5px}
+  body.page-index .tst-f b{font-size:14px}
+  body.page-index .tst-f span{font-size:12px}
 }
 body.page-index .tst{
   display:flex;flex-direction:column;padding:26px 24px;border-radius:20px;
