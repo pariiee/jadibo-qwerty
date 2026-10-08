@@ -154,6 +154,16 @@
   fetch('/api/auth/me', { credentials: 'include' }).then(r => r.json()).then(d => {
     if (d.ok) location.href = '/dashboard';
   }).catch(() => {});
+  // ── Floating Glass Pill Navbar on Scroll ─────────────────────────
+  const navEl = document.querySelector('body.page-index > nav');
+  if (navEl) {
+    const onNavScroll = function () {
+      navEl.classList.toggle('scrolled', window.scrollY > 30);
+    };
+    window.addEventListener('scroll', onNavScroll, { passive: true });
+    onNavScroll();
+  }
+
   // ── Scroll-spy navbar ───────────────────────────────────────────
   // Nggak mindahin apa pun, cuma nandain tautan yang lagi dibaca.
   // Batasnya sempit (-45% atas, -50% bawah) = pita tipis di tengah layar,
