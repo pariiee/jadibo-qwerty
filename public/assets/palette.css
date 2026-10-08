@@ -1127,6 +1127,10 @@ body.page-index section{
   position:relative;
   padding:44px 0 52px;
   border-top:1px solid rgba(255,255,255,.06);
+  border-radius:0!important;
+  box-shadow:none!important;
+  margin:0!important;
+  background:transparent!important;
 }
 :root:not([data-theme="dark"]) body.page-index section{
   border-top-color:#e2e8f0;

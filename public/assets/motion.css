@@ -97,39 +97,20 @@ html{scroll-behavior:smooth;scroll-padding-top:76px}
 }
 
 /* ── 2c. Kapsul kaca tiap seksi ───────────────────────────────────── */
-/* Panel putihnya BUKAN animasi — dia cuma dipakai sebagai panggung saat
-   scroll (lihat §5). Tanpa panel, kartu yang naik-turun cuma kelihatan
-   seperti "teks melayang di atas putih", nggak kebaca sebagai gerakan.
-
-   .wrap dipakai di semua halaman, jadi bahasanya dibatasi body.page-index. */
-@supports not (backdrop-filter: blur(1px)){
-  body.page-index #stats,body.page-index #howto,body.page-index #harga,
-  body.page-index #testimoni,body.page-index #faq{background:var(--card)}
-}
+/* Panel putih/kaca per-section dimatikan total agar halaman 1 kanvas mengalir mulus (nyambung tanpa card/bayangan pemotong) */
 body.page-index #stats,body.page-index #howto,body.page-index #harga,
-body.page-index #testimoni,body.page-index #faq{
-  margin:0 0 clamp(16px,3vw,32px);
-  padding:clamp(30px,5.4vw,62px) 0;
-  background-image:linear-gradient(180deg,rgba(255,255,255,.5),rgba(255,255,255,.26));
-  border:1px solid rgba(255,255,255,.6); border-radius:clamp(20px,3.4vw,32px);
-  backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
-  box-shadow:0 20px 48px -34px rgba(16,24,40,.5);
-}
-/* panel gelap: ambang kacanya pakai putih transparan, bukan item gelap */
+body.page-index #testimoni,body.page-index #faq,
 html.dark body.page-index #stats,html.dark body.page-index #howto,html.dark body.page-index #harga,
 html.dark body.page-index #testimoni,html.dark body.page-index #faq{
-  background-image:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.022));
-  border-color:rgba(255,255,255,.09);
+  margin:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  border:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+  background-image:none!important;
+  background:transparent!important;
 }
-/* jarak tepi HP (page.css bikin .wrap selebar layar di mobile) */
-@media(max-width:768px){
-  body.page-index #stats,body.page-index #howto,body.page-index #harga,
-  body.page-index #testimoni,body.page-index #faq{margin-inline:10px}
-}
-/* first/last-child punya margin sendiri; bahasan kita lebih khusus jadi
-   rule reset-nya kalah — tempel ulang biar benar-benar dempet. */
-body.page-index #stats{margin-top:0}
-body.page-index #faq{margin-bottom:0}
 
 /* ── 3. Batang progres baca (div#baca di index.html) ──────────────── */
 #baca{display:none}
