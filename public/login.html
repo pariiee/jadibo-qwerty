@@ -38,7 +38,7 @@
         </div>
       </div>
       <div class="auth-aux">
-        <a href="https://wa.me/6287778032605?text=Halo%20admin%2C%20saya%20lupa%20password%20akun%20parigate" target="_blank" rel="noopener" class="auth-link-sub">Forgot Password?</a>
+        <a href="/forgot-password" class="auth-link-sub">Forgot Password?</a>
       </div>
       <div class="err" id="login-error"></div>
       <button class="btn btn-dark btn-auth-submit" type="submit">Login</button>
@@ -103,6 +103,55 @@
     </div>
 
     <p class="switch-line">Already have an account? <a href="/login">Log in</a></p>
+  </div>
+
+  <!-- PANE FORGOT PASSWORD -->
+  <div class="modal auth-card" id="auth-forgot" style="display:none">
+    <div class="auth-brand">
+      <img src="/assets/parigate.svg" alt="parigate" class="auth-logo" width="60" height="60" />
+    </div>
+    <h2>Forgot Password?</h2>
+    <p class="auth-desc">Enter your registered email address to receive a secure reset link.</p>
+
+    <form id="forgot-form">
+      <div class="field">
+        <label for="forgot-email">Email Address</label>
+        <input class="inp" id="forgot-email" type="email" placeholder="nama@email.com" autocomplete="email" required />
+      </div>
+      <div class="err" id="forgot-error"></div>
+      <div class="ok-msg" id="forgot-ok" style="display:none;color:#10b981;font-size:13.5px;margin-bottom:14px;font-weight:600;line-height:1.4"></div>
+      <button class="btn btn-dark btn-auth-submit" id="forgot-submit-btn" type="submit">Send Reset Link</button>
+    </form>
+
+    <p class="switch-line" style="margin-top:22px"><a href="/login">&larr; Back to Login</a></p>
+  </div>
+
+  <!-- PANE RESET PASSWORD -->
+  <div class="modal auth-card" id="auth-reset" style="display:none">
+    <div class="auth-brand">
+      <img src="/assets/parigate.svg" alt="parigate" class="auth-logo" width="60" height="60" />
+    </div>
+    <h2>Set New Password</h2>
+    <p class="auth-desc">Please choose a new, strong password.</p>
+
+    <form id="reset-form">
+      <input type="hidden" id="reset-token" />
+      <div class="field">
+        <label for="reset-pass">New Password</label>
+        <div class="inp-pass-wrap">
+          <input class="inp" id="reset-pass" type="password" placeholder="Min. 8 karakter kuat" autocomplete="new-password" required />
+          <button type="button" class="btn-toggle-pass" data-target="reset-pass" aria-label="Toggle password" title="Toggle password">
+            <svg class="eye-off" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            <svg class="eye-on" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="err" id="reset-error"></div>
+      <div class="ok-msg" id="reset-ok" style="display:none;color:#10b981;font-size:13.5px;margin-bottom:14px;font-weight:600;line-height:1.4"></div>
+      <button class="btn btn-dark btn-auth-submit" id="reset-submit-btn" type="submit">Update Password</button>
+    </form>
+
+    <p class="switch-line" style="margin-top:22px"><a href="/login">&larr; Back to Login</a></p>
   </div>
 </div>
 

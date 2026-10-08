@@ -56,6 +56,8 @@ const RUTE = [
   ['GET',  '/',                          'halaman index'],
   ['GET',  '/login',                     'halaman login'],
   ['GET',  '/register',                  'halaman register'],
+  ['GET',  '/forgot-password',           'halaman forgot password'],
+  ['GET',  '/reset-password',            'halaman reset password'],
   ['GET',  '/pricing',                   'halaman pricing'],
   ['GET',  '/langganan',                 'halaman langganan'],
   ['GET',  '/kountole',                  'panel admin (path sengaja tidak /admin)'],

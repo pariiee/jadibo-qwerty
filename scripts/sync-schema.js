@@ -209,6 +209,19 @@ const CREATE_TABLES = [
     INDEX idx_created (created_at),
     INDEX idx_user (user_id)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+
+  // password_resets — token reset password 1x pakai (expired 15 menit)
+  `CREATE TABLE IF NOT EXISTS password_resets (
+    id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id    INT UNSIGNED NOT NULL,
+    token      VARCHAR(128) NOT NULL,
+    expires_at DATETIME NOT NULL,
+    used_at    DATETIME DEFAULT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_token (token),
+    INDEX idx_user (user_id),
+    INDEX idx_expires (expires_at)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
 ];
 
 async function columnExists(table, colName) {

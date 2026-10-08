@@ -1,21 +1,45 @@
-// Halaman /login dan /register pakai SATU file (public/login.html) — server
-// menyajikan file yang sama untuk dua rute, pane-nya dipilih dari pathname.
+// Halaman /login, /register, /forgot-password, dan /reset-password pakai SATU file (public/login.html) — server
+// menyajikan file yang sama untuk rute auth, pane-nya dipilih dari pathname.
 // CSP nggak ngebolehin script inline, jadi logikanya di sini.
 (function () {
-  const daftar = location.pathname === '/register';
-  document.body.dataset.mode = daftar ? 'register' : 'login';
-  document.title = (daftar ? 'Daftar' : 'Masuk') + ' — parigate';
-  document.getElementById('auth-login').style.display = daftar ? 'none' : 'block';
-  document.getElementById('auth-register').style.display = daftar ? 'block' : 'none';
+  const path = location.pathname;
+  const isDaftar = path === '/register';
+  const isForgot = path === '/forgot-password';
+  const isReset = path === '/reset-password';
+
+  document.body.dataset.mode = isDaftar ? 'register' : (isForgot ? 'forgot' : (isReset ? 'reset' : 'login'));
+  document.title = (isDaftar ? 'Daftar' : (isForgot ? 'Lupa Password' : (isReset ? 'Reset Password' : 'Masuk'))) + ' — qwertygate';
+
+  document.getElementById('auth-login').style.display = (!isDaftar && !isForgot && !isReset) ? 'block' : 'none';
+  document.getElementById('auth-register').style.display = isDaftar ? 'block' : 'none';
+  document.getElementById('auth-forgot').style.display = isForgot ? 'block' : 'none';
+  document.getElementById('auth-reset').style.display = isReset ? 'block' : 'none';
 
   // Tampilkan pesan error jika redirect dari OAuth (misal ?err=...)
   const params = new URLSearchParams(location.search);
   const errParam = params.get('err');
   if (errParam) {
-    const errBox = document.getElementById(daftar ? 'reg-error' : 'login-error');
+    const errBox = document.getElementById(isDaftar ? 'reg-error' : 'login-error');
     if (errBox) {
       errBox.textContent = errParam;
       errBox.classList.add('show');
+    }
+  }
+
+  // Token reset password dari URL
+  const resetToken = params.get('token');
+  if (isReset) {
+    if (!resetToken) {
+      const rErr = document.getElementById('reset-error');
+      if (rErr) {
+        rErr.textContent = 'Token reset tidak ditemukan di tautan. Silakan minta tautan baru dari halaman Lupa Password.';
+        rErr.classList.add('show');
+      }
+      const rBtn = document.getElementById('reset-submit-btn');
+      if (rBtn) rBtn.disabled = true;
+    } else {
+      const tokInput = document.getElementById('reset-token');
+      if (tokInput) tokInput.value = resetToken;
     }
   }
 
@@ -115,4 +139,83 @@
       else { err.textContent = data.message; err.classList.add('show'); }
     } catch { err.textContent = 'Gagal terhubung ke server'; err.classList.add('show'); }
   });
+
+  // Forgot password handler
+  const forgotForm = document.getElementById('forgot-form');
+  if (forgotForm) {
+    forgotForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const err = document.getElementById('forgot-error');
+      const ok = document.getElementById('forgot-ok');
+      const btn = document.getElementById('forgot-submit-btn');
+      err.classList.remove('show');
+      ok.style.display = 'none';
+      btn.disabled = true;
+      btn.textContent = 'Mengirim...';
+
+      try {
+        const data = await kirim('/api/auth/forgot-password', {
+          email: document.getElementById('forgot-email').value.trim()
+        });
+        if (data.ok) {
+          ok.textContent = 'Instruksi reset password telah dikirim ke email kamu! Silakan cek kotak masuk / spam.';
+          ok.style.display = 'block';
+          forgotForm.reset();
+        } else {
+          err.textContent = data.message || 'Gagal mengirim email reset';
+          err.classList.add('show');
+        }
+      } catch {
+        err.textContent = 'Gagal terhubung ke server';
+        err.classList.add('show');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Send Reset Link';
+      }
+    });
+  }
+
+  // Reset password handler
+  const resetForm = document.getElementById('reset-form');
+  if (resetForm) {
+    resetForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const err = document.getElementById('reset-error');
+      const ok = document.getElementById('reset-ok');
+      const btn = document.getElementById('reset-submit-btn');
+      err.classList.remove('show');
+      ok.style.display = 'none';
+
+      const pass = document.getElementById('reset-pass').value;
+      const token = document.getElementById('reset-token').value;
+
+      if (!token) {
+        err.textContent = 'Token reset tidak ditemukan.';
+        err.classList.add('show');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Menyimpan...';
+
+      try {
+        const data = await kirim('/api/auth/reset-password', { token, password: pass });
+        if (data.ok) {
+          ok.textContent = 'Password berhasil diperbarui! Mengalihkan ke login...';
+          ok.style.display = 'block';
+          setTimeout(() => { location.href = '/login'; }, 1800);
+        } else {
+          err.textContent = data.message || 'Gagal mereset password';
+          err.classList.add('show');
+          btn.disabled = false;
+          btn.textContent = 'Update Password';
+        }
+      } catch {
+        err.textContent = 'Gagal terhubung ke server';
+        err.classList.add('show');
+        btn.disabled = false;
+        btn.textContent = 'Update Password';
+      }
+    });
+  }
 })();

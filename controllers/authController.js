@@ -593,8 +593,131 @@ async function googleCallback(req, res) {
   }
 }
 
+/**
+ * POST /api/auth/forgot-password
+ * Body: { email }
+ */
+async function forgotPassword(req, res) {
+  try {
+    const crypto = require('crypto');
+    const { emailValid, kirimEmail, siap } = require('../engine/email');
+    const email = String(req.body?.email || '').trim().toLowerCase();
+
+    if (!email || !emailValid(email)) {
+      return sendError(res, 400, 'Format email tidak valid');
+    }
+
+    const [rows] = await pool.execute(
+      'SELECT id, username, email FROM users WHERE email = ? LIMIT 1',
+      [email]
+    );
+
+    const pesanAman = 'Jika email terdaftar, instruksi reset password telah dikirim.';
+    if (!rows.length) {
+      return res.json({ ok: true, message: pesanAman });
+    }
+
+    const user = rows[0];
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 menit
+
+    await pool.execute(`
+      CREATE TABLE IF NOT EXISTS password_resets (
+        id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        user_id    INT UNSIGNED NOT NULL,
+        token      VARCHAR(128) NOT NULL,
+        expires_at DATETIME NOT NULL,
+        used_at    DATETIME DEFAULT NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY uq_token (token),
+        INDEX idx_user (user_id),
+        INDEX idx_expires (expires_at)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+
+    await pool.execute(
+      'UPDATE password_resets SET used_at = NOW() WHERE user_id = ? AND used_at IS NULL',
+      [user.id]
+    );
+
+    await pool.execute(
+      'INSERT INTO password_resets (user_id, token, expires_at) VALUES (?, ?, ?)',
+      [user.id, token, expiresAt]
+    );
+
+    const baseUrl = process.env.BASE_URL || (req.protocol + '://' + req.get('host'));
+    const resetUrl = `${baseUrl}/reset-password?token=${token}`;
+
+    const subjek = 'Reset Password Akun qwertygate';
+    const teks = `Halo ${user.username},\n\nKami menerima permintaan untuk mereset password akun qwertygate kamu.\n\nKlik tautan berikut untuk membuat password baru (berlaku 15 menit, 1x pakai):\n${resetUrl}\n\nJika kamu tidak meminta reset password, abaikan pesan ini.\n\nSalam,\nTim qwertygate`;
+
+    if (siap()) {
+      await kirimEmail(user.email, subjek, teks);
+    } else {
+      console.log(`[Reset Password] Link untuk ${user.username} (${user.email}): ${resetUrl}`);
+    }
+
+    return res.json({ ok: true, message: pesanAman });
+  } catch (err) {
+    console.error('[Auth] forgotPassword error:', err);
+    return sendError(res, 500, 'Terjadi kesalahan server');
+  }
+}
+
+/**
+ * POST /api/auth/reset-password
+ * Body: { token, password }
+ */
+async function resetPassword(req, res) {
+  try {
+    const { token, password } = req.body || {};
+    if (!token || !password) {
+      return sendError(res, 400, 'Token dan password baru wajib diisi');
+    }
+    if (String(password).length < 6) {
+      return sendError(res, 400, 'Password minimal 6 karakter');
+    }
+
+    const [rows] = await pool.execute(
+      'SELECT id, user_id, expires_at, used_at FROM password_resets WHERE token = ? LIMIT 1',
+      [String(token).trim()]
+    );
+
+    if (!rows.length) {
+      return sendError(res, 400, 'Tautan reset tidak valid atau sudah kedaluwarsa');
+    }
+
+    const resetItem = rows[0];
+    if (resetItem.used_at) {
+      return sendError(res, 400, 'Tautan reset ini sudah pernah digunakan');
+    }
+
+    if (new Date(resetItem.expires_at) < new Date()) {
+      return sendError(res, 400, 'Tautan reset sudah kedaluwarsa (berlaku 15 menit). Silakan minta tautan baru.');
+    }
+
+    const hashed = await bcrypt.hash(password, 10);
+
+    await pool.execute(
+      'UPDATE users SET password = ?, token_version = COALESCE(token_version, 0) + 1 WHERE id = ?',
+      [hashed, resetItem.user_id]
+    );
+
+    await pool.execute(
+      'UPDATE password_resets SET used_at = NOW() WHERE id = ?',
+      [resetItem.id]
+    );
+
+    return res.json({ ok: true, message: 'Password berhasil diubah. Silakan masuk dengan password baru kamu.' });
+  } catch (err) {
+    console.error('[Auth] resetPassword error:', err);
+    return sendError(res, 500, 'Terjadi kesalahan server');
+  }
+}
+
 module.exports = {
   register, login, logout, me, gantiPassword, simpanPhone, simpanEmail,
+  forgotPassword, resetPassword,
   googleRedirect, googleCallback,
   listUsers, updateUser, deleteUser,
   requireAuth, requireKing,
