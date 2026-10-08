@@ -855,7 +855,7 @@ body.page-index .theme-btn:hover{background:var(--card);border-color:var(--edge)
 /* Hero */
 body.page-index .hero{
   padding:20px 0 50px!important;
-  border-bottom:1px solid var(--line);
+  border-bottom:none!important;
 }
 body.page-index .hero-in{display:grid;grid-template-columns:1fr 1.05fr;gap:48px;align-items:center}
 body.page-index .hero-l{min-width:0}
@@ -1122,22 +1122,24 @@ body.page-index .stat-foot{
   body.page-index .stats{grid-template-columns:1fr}
 }
 
-/* ══ Seamless Connected Flow (Nol Potongan Card Antar-Section, 1 Kanvas Mengalir) ══ */
+/* ══ Seamless Connected Flow (Nol Potongan Card & Nol Garis Pemotong Antar-Section) ══ */
 body.page-index section{
   position:relative;
   padding:44px 0 52px;
-  border-top:1px solid rgba(255,255,255,.06);
+  border-top:none!important;
+  border-bottom:none!important;
   border-radius:0!important;
   box-shadow:none!important;
   margin:0!important;
   background:transparent!important;
 }
 :root:not([data-theme="dark"]) body.page-index section{
-  border-top-color:#e2e8f0;
+  border-top:none!important;
 }
 body.page-index #platforms{
   position:relative;
-  border-top:none;
+  border-top:none!important;
+  border-bottom:none!important;
 }
 body.page-index .hero{
   position:relative;
