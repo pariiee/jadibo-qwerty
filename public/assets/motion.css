@@ -144,25 +144,13 @@ html.dark body.page-index #testimoni,html.dark body.page-index #faq{
    nyusul, baru kartu-kartunya. Itu yang bikin scroll terasa ada iramanya
    (yang bikin "nggak krasa" di versi pertama: SEMUA elemen pakai satu
    efek yang sama, jadi nggak ada yang menonjol). */
+/* Matikan m-pop view-timeline CSS agar tidak mengacak posisi vertikal kartu (digantikan GSAP yang presisi) */
 @media (prefers-reduced-motion:no-preference){
   @supports (animation-timeline:view()){
     body.page-index .sec-label{
       animation:m-lbl .6s linear both;animation-timeline:view();animation-range:entry 2% entry 26%}
     body.page-index h2{
       animation:m-masuk .7s linear both;animation-timeline:view();animation-range:entry 5% entry 32%}
-    body.page-index .stat,body.page-index .card,body.page-index .step,
-    body.page-index .price-card,body.page-index .tst,body.page-index .faq-item{
-      animation:m-pop linear both;animation-timeline:view();animation-range:entry 2% entry 38%}
-    /* baris bertingkat: baris ke-2 & ke-3 nyusul */
-    body.page-index .feat>.card:nth-child(2),body.page-index .stats>.stat:nth-child(2),
-    body.page-index .steps>.step:nth-child(2),body.page-index .price-grid>*:nth-child(2),
-    body.page-index .tst-grid>*:nth-child(2){animation-delay:90ms}
-    body.page-index .feat>.card:nth-child(3),body.page-index .stats>.stat:nth-child(3),
-    body.page-index .steps>.step:nth-child(3),body.page-index .price-grid>*:nth-child(3),
-    body.page-index .tst-grid>*:nth-child(3){animation-delay:180ms}
-    body.page-index .feat>.card:nth-child(4){animation-delay:270ms}
-    body.page-index .feat>.card:nth-child(5){animation-delay:360ms}
-    body.page-index .feat>.card:nth-child(6){animation-delay:450ms}
   }
 }
 /* Jaring pengaman: kalau browser NGGAK dukung view-timeline, transisi
