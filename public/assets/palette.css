@@ -811,9 +811,7 @@ body.page-index .hero-l>*,body.page-index .hero-visual,
    berjajar diberi offset (`translateY(22px)`), dan `transform:none!important`
    di daftar ini akan membatalkannya. Keduanya sudah aman karena
    `animation:none!important` di atas sudah mematikan animasinya. */
-nav,.nav-links a,body.page-index h2,
-body.page-index .stat,body.page-index .step,body.page-index .tst,
-body.page-index .faq-item{
+nav,.nav-links a{
   opacity:1!important;transform:none!important;translate:none!important;scale:none!important;
 }
 
@@ -1158,6 +1156,15 @@ body.page-index .card,body.page-index .step,
 body.page-index .price-card,body.page-index .tst,body.page-index .faq-item{
   padding:20px 22px;border-radius:20px;background:var(--card);border:1px solid var(--border);
   box-shadow:var(--shadow);
+  transition:transform .25s ease,border-color .3s ease,box-shadow .3s ease;
+}
+:root[data-theme="dark"] body.page-index .card:hover,
+:root[data-theme="dark"] body.page-index .stat:hover,
+:root[data-theme="dark"] body.page-index .step:hover,
+:root[data-theme="dark"] body.page-index .price-card:hover,
+:root[data-theme="dark"] body.page-index .tst:hover{
+  border-color:rgba(56,189,248,.45)!important;
+  box-shadow:0 0 28px -4px rgba(56,189,248,.2),0 12px 32px -10px rgba(0,0,0,.5)!important;
 }
 body.page-index .card h4,body.page-index .step h4{margin:10px 0 6px;font-size:17px;font-weight:700;color:var(--txt)}
 body.page-index .card p,body.page-index .step p{
