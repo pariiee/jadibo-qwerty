@@ -49,10 +49,11 @@ nav{animation:m-navdrop .5s cubic-bezier(.22,1,.36,1) both}
 .nav-links a:nth-child(4){animation-delay:.23s}
 .nav-links a:nth-child(5){animation-delay:.28s}
 /* transparan di paling atas → jadi kaca + garis + bayangan begitu
-   halaman digeser 90px. Semua di compositor, nol scroll listener. */
+   halaman digeser 90px. Semua di compositor, nol scroll listener.
+   Khusus landing index, nav murni transparan (floating pill diurus palette.css) */
 @media (prefers-reduced-motion:no-preference){
   @supports (animation-timeline:scroll()){
-    nav{animation:m-navdrop .5s cubic-bezier(.22,1,.36,1) both,m-nav linear both;
+    body:not(.page-index) nav{animation:m-navdrop .5s cubic-bezier(.22,1,.36,1) both,m-nav linear both;
         animation-timeline:auto,scroll(root block);
         animation-range:normal,0 90px}
   }
