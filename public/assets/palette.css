@@ -945,17 +945,6 @@ body.page-index .nav-actions button[data-act="toggleTheme"]{
 }
 
 body.page-index .nav-burger{display:none!important}
-@media(max-width:980px){
-  body.page-index .nav-burger{
-    display:grid!important;place-items:center!important;width:36px!important;height:36px!important;
-    min-height:36px!important;max-height:36px!important;border-radius:50%!important;padding:0!important;
-    border:1px solid rgba(255,255,255,.1)!important;background:rgba(255,255,255,.04)!important;
-    color:var(--ink)!important;flex-shrink:0!important;
-  }
-  :root:not([data-theme="dark"]) body.page-index .nav-burger{
-    border-color:rgba(15,23,42,.1)!important;background:rgba(15,23,42,.04)!important;
-  }
-}
 
 body.page-index .nav-actions .btn{
   height:36px!important;min-height:36px!important;max-height:36px!important;
@@ -1250,10 +1239,14 @@ body.page-index .stat-foot{
   position:absolute;bottom:0;left:0;right:0;height:3px;
 }
 @media(max-width:880px){
-  body.page-index .stats{grid-template-columns:repeat(2,1fr)}
+  body.page-index .stats{grid-template-columns:repeat(2,1fr)!important;gap:12px!important}
+  body.page-index .stat{padding:16px 14px!important}
 }
 @media(max-width:480px){
-  body.page-index .stats{grid-template-columns:1fr}
+  body.page-index .stats{grid-template-columns:repeat(2,1fr)!important;gap:10px!important}
+  body.page-index .stat{padding:14px 12px!important}
+  body.page-index .stat b{font-size:22px!important}
+  body.page-index .stat span{font-size:11.5px!important}
 }
 
 /* ══ Seamless Connected Flow (Nol Potongan Card & Nol Garis Pemotong Antar-Section) ══ */
@@ -1700,21 +1693,22 @@ html.dark body.page-index footer,html.dark footer{
   body.page-index .mk-side i{width:34px;height:34px}
   body.page-index .mock-chat{padding:18px 14px}
   body.page-index .bub{font-size:14px}
-  body.page-index .nav-actions .btn-outline{display:none}
+  body.page-index .nav-actions .btn-dark{display:none!important}
+  body.page-index .nav-actions .btn-outline{display:inline-flex!important}
+  body.page-index .nav-burger{display:none!important}
 }
+@media(max-width:768px){
+  body.page-index .nav-actions .btn-dark{display:none!important}
+  body.page-index .nav-actions .btn-outline{display:inline-flex!important}
+  body.page-index .nav-burger{display:none!important}
+}
+
 /* §8.2 drawer navbar landing (tombolnya ditambah di nav.html) */
-body.page-index .nav-burger,body.page-auth .nav-burger{display:none}
-body.page-index .drawer{
-  display:none;position:absolute;left:14px;right:14px;top:calc(100% + 8px);
-  flex-direction:column;gap:2px;padding:10px;border-radius:22px;
-  background:color-mix(in srgb,var(--bg) 90%,transparent);
-  border:1px solid var(--edge);box-shadow:var(--shadow),var(--hl);
-}
-body.page-index .drawer.open{display:flex}
-body.page-index .drawer a{padding:14px 16px;border-radius:14px;font-weight:600}
-body.page-index .drawer a:hover{background:var(--card)}
+body.page-index .nav-burger{display:none!important}
+body.page-auth .nav-burger{display:none}
+body.page-index .drawer{display:none!important}
 @media(max-width:980px){
-  body.page-index .nav-burger,body.page-auth .nav-burger{display:grid}
+  body.page-auth .nav-burger{display:grid}
 }
 
 /* ══ 11. Halaman Auth parigate (login & register modern card) ════════ */
