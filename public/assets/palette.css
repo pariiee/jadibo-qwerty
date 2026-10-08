@@ -1123,6 +1123,10 @@ body.page-index .stat-foot{
 }
 
 /* ══ Seamless Connected Flow (Nol Potongan Card Antar-Section, 1 Kanvas Mengalir) ══ */
+html.lenis, html.lenis body{height:auto}
+.lenis.lenis-smooth{scroll-behavior:auto!important}
+.lenis.lenis-smooth [data-lenis-prevent]{overscroll-behavior:contain}
+.lenis.lenis-stopped{overflow:hidden}
 body.page-index section{
   position:relative;
   padding:44px 0 52px;
