@@ -161,53 +161,9 @@
     tautan.forEach(function (a) { const s = document.querySelector(a.getAttribute('href')); if (s) io.observe(s); });
   }
 
-  // ── Lenis Smooth Momentum Inertia Scroll (Opsi 2) ────────────────
-  if (window.Lenis) {
-    const lenis = new Lenis({
-      duration: 1.25,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      orientation: 'vertical',
-      smoothWheel: true,
-      wheelMultiplier: 1.05,
-      touchMultiplier: 1.5,
-    });
-    window.lenis = lenis;
-
-    function raf(time) {
-      lenis.raf(time);
-      requestAnimationFrame(raf);
-    }
-    requestAnimationFrame(raf);
-
-    if (window.ScrollTrigger) {
-      lenis.on('scroll', ScrollTrigger.update);
-      gsap.ticker.add((time) => {
-        lenis.raf(time * 1000);
-      });
-      gsap.ticker.lagSmoothing(0);
-    }
-  }
-
-  // ── GSAP + ScrollTrigger Animations ──────────────────────────────
+  // ── GSAP + ScrollTrigger Staggered Bento Lift (Opsi 1) ───────────
   if (window.gsap && window.ScrollTrigger) {
     gsap.registerPlugin(ScrollTrigger);
-
-    // ── Opsi 4: Hero Pin & Shrink Transition (Apple style) ───────────
-    if (document.querySelector('.hero .hero-in')) {
-      gsap.to('.hero .hero-in', {
-        scale: 0.9,
-        opacity: 0.35,
-        y: -50,
-        transformOrigin: 'center top',
-        ease: 'power1.inOut',
-        scrollTrigger: {
-          trigger: '.hero',
-          start: 'top top',
-          end: 'bottom 10%',
-          scrub: 0.6
-        }
-      });
-    }
 
     // 1. Section Headings & Labels Reveal
     document.querySelectorAll('body.page-index section .wrap > h2, body.page-index section .sec-label, body.page-index section .sub').forEach(function (el) {
@@ -220,10 +176,22 @@
     // 2. Stats cards stagger
     gsap.from('#stats .stat', {
       scrollTrigger: { trigger: '#stats', start: 'top 84%' },
-      y: 45, opacity: 0, stagger: 0.1, duration: 0.8, ease: 'power3.out'
+      y: 50, opacity: 0, stagger: 0.1, duration: 0.8, ease: 'power3.out'
     });
 
-    // 3. Testimonials cards stagger & left box
+    // 3. Features bento cards stagger
+    gsap.from('#features .card', {
+      scrollTrigger: { trigger: '#features', start: 'top 80%' },
+      y: 55, opacity: 0, stagger: 0.12, duration: 0.85, ease: 'power3.out'
+    });
+
+    // 4. How-to steps stagger
+    gsap.from('#howto .step', {
+      scrollTrigger: { trigger: '#howto', start: 'top 80%' },
+      y: 50, opacity: 0, stagger: 0.12, duration: 0.8, ease: 'power3.out'
+    });
+
+    // 5. Testimonials cards stagger & left box
     gsap.from('#testimoni .tst', {
       scrollTrigger: { trigger: '#testimoni', start: 'top 80%' },
       y: 45, opacity: 0, stagger: 0.1, duration: 0.8, ease: 'power3.out'
