@@ -1096,12 +1096,13 @@ body.page-index .live-realtime-badge .pulse-ring{
 }
 body.page-index #stats{padding:32px 0 40px}
 body.page-index .stats{
-  display:grid;grid-template-columns:repeat(4,1fr);gap:16px;max-width:100%!important;margin:0;
+  display:grid!important;grid-template-columns:repeat(4,1fr)!important;gap:16px!important;max-width:100%!important;margin:0!important;align-items:stretch!important;
 }
 body.page-index .stat{
   border-radius:18px;padding:18px 20px;background:var(--card);
   border:1px solid var(--border);box-shadow:0 8px 24px -10px rgba(18,20,43,.06);
-  position:relative;overflow:hidden;
+  position:relative;overflow:hidden;margin:0!important;
+  transition:border-color .2s ease,box-shadow .2s ease!important;
 }
 :root[data-theme="dark"] body.page-index .stat{
   background:#111218!important;border-color:rgba(255,255,255,.08)!important;

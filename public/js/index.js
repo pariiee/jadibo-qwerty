@@ -39,6 +39,12 @@
       const k = daftarPaket(p, d.fitur || 0);
       const isPop = idx === 1 || p.name.toLowerCase().includes('pro') || p.name.toLowerCase().includes('premium');
       const tierKey = idx === 0 ? 'starter' : (idx === 1 ? 'pro' : 'enterprise');
+      const taglines = {
+        basic: 'Solusi awal otomatisasi bot personal & pengujian.',
+        premium: 'Solusi otomatisasi andal untuk operasional bisnis kamu.',
+        ultra: 'Kapasitas maksimal & performa tinggi tanpa kompromi.'
+      };
+      const tagline = taglines[p.id?.toLowerCase()] || taglines.basic;
       const el = document.createElement('div');
       el.className = 'price-card' + (isPop ? ' price-card-popular' : '') + ' tier-' + tierKey;
       el.innerHTML =
@@ -47,7 +53,7 @@
             '<span class="pc-tier-icon pc-icon-' + tierKey + '"></span>' +
             '<span class="pc-tier-title">' + p.name.toUpperCase() + '</span>' +
           '</div>' +
-          '<div class="pc-tagline">Powerful &amp; Simple Solution</div>' +
+          '<div class="pc-tagline">' + tagline + '</div>' +
           '<div class="pc-price-wrap">' +
             '<span class="pc-price-val">' + rupiah(p.price) + '</span>' +
             '<span class="pc-price-cycle">/ ' + p.days + ' hari</span>' +
@@ -175,10 +181,11 @@
       });
     });
 
-    // 2. Stats cards stagger
+    // 2. Stats cards stagger (once + clearProps untuk mencegah glitch posisi tangga)
     gsap.from('#stats .stat', {
-      scrollTrigger: { trigger: '#stats', start: 'top 84%' },
-      y: 50, opacity: 0, stagger: 0.1, duration: 0.8, ease: 'power3.out'
+      scrollTrigger: { trigger: '#stats', start: 'top 85%', once: true },
+      y: 40, opacity: 0, stagger: 0.08, duration: 0.7, ease: 'power3.out',
+      clearProps: 'transform,opacity'
     });
 
     // 3. Features bento cards stagger
