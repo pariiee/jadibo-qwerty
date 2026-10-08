@@ -192,6 +192,49 @@
   if (window.gsap && window.ScrollTrigger) {
     gsap.registerPlugin(ScrollTrigger);
 
+    // ── Opsi 3: Multi-Layer Parallax Depth (Stripe / Raycast style) ──
+    // A. Hero Parallax: visual orbit kosmik melayang lebih lambat saat di-scroll
+    if (document.querySelector('.hero-visual')) {
+      gsap.to('.hero-visual', {
+        y: 110,
+        ease: 'none',
+        scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: 0.5 }
+      });
+    }
+    if (document.querySelector('.hero-l')) {
+      gsap.to('.hero-l', {
+        y: 50,
+        ease: 'none',
+        scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: 0.5 }
+      });
+    }
+
+    // B. Features Bento Grid Differential Parallax (layer kartu bergerak beda kedalaman)
+    if (window.innerWidth > 768) {
+      document.querySelectorAll('#features .card').forEach(function (card, i) {
+        gsap.fromTo(card,
+          { y: (i % 2 === 0 ? 25 : -25) },
+          {
+            y: (i % 2 === 0 ? -25 : 25),
+            ease: 'none',
+            scrollTrigger: { trigger: '#features', start: 'top bottom', end: 'bottom top', scrub: 0.8 }
+          }
+        );
+      });
+
+      // C. How-to Steps Floating Parallax
+      document.querySelectorAll('#howto .step').forEach(function (step, i) {
+        gsap.fromTo(step,
+          { y: 20 * (i - 1) },
+          {
+            y: -20 * (i - 1),
+            ease: 'none',
+            scrollTrigger: { trigger: '#howto', start: 'top bottom', end: 'bottom top', scrub: 0.7 }
+          }
+        );
+      });
+    }
+
     // 1. Section Headings & Labels Reveal
     document.querySelectorAll('body.page-index section .wrap > h2, body.page-index section .sec-label, body.page-index section .sub').forEach(function (el) {
       gsap.from(el, {
@@ -206,19 +249,7 @@
       y: 45, opacity: 0, stagger: 0.1, duration: 0.8, ease: 'power3.out'
     });
 
-    // 3. Features bento cards stagger
-    gsap.from('#features .card', {
-      scrollTrigger: { trigger: '#features', start: 'top 80%' },
-      y: 50, opacity: 0, stagger: 0.12, duration: 0.85, ease: 'power3.out'
-    });
-
-    // 4. How-to steps stagger
-    gsap.from('#howto .step', {
-      scrollTrigger: { trigger: '#howto', start: 'top 80%' },
-      y: 45, opacity: 0, stagger: 0.12, duration: 0.8, ease: 'power3.out'
-    });
-
-    // 5. Testimonials cards stagger & left box
+    // 3. Testimonials cards stagger & left box
     gsap.from('#testimoni .tst', {
       scrollTrigger: { trigger: '#testimoni', start: 'top 80%' },
       y: 45, opacity: 0, stagger: 0.1, duration: 0.8, ease: 'power3.out'
