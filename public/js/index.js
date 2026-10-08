@@ -192,46 +192,20 @@
   if (window.gsap && window.ScrollTrigger) {
     gsap.registerPlugin(ScrollTrigger);
 
-    // ── Opsi 3: Multi-Layer Parallax Depth (Stripe / Raycast style) ──
-    // A. Hero Parallax: visual orbit kosmik melayang lebih lambat saat di-scroll
-    if (document.querySelector('.hero-visual')) {
-      gsap.to('.hero-visual', {
-        y: 110,
-        ease: 'none',
-        scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: 0.5 }
-      });
-    }
-    if (document.querySelector('.hero-l')) {
-      gsap.to('.hero-l', {
-        y: 50,
-        ease: 'none',
-        scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: 0.5 }
-      });
-    }
-
-    // B. Features Bento Grid Differential Parallax (layer kartu bergerak beda kedalaman)
-    if (window.innerWidth > 768) {
-      document.querySelectorAll('#features .card').forEach(function (card, i) {
-        gsap.fromTo(card,
-          { y: (i % 2 === 0 ? 25 : -25) },
-          {
-            y: (i % 2 === 0 ? -25 : 25),
-            ease: 'none',
-            scrollTrigger: { trigger: '#features', start: 'top bottom', end: 'bottom top', scrub: 0.8 }
-          }
-        );
-      });
-
-      // C. How-to Steps Floating Parallax
-      document.querySelectorAll('#howto .step').forEach(function (step, i) {
-        gsap.fromTo(step,
-          { y: 20 * (i - 1) },
-          {
-            y: -20 * (i - 1),
-            ease: 'none',
-            scrollTrigger: { trigger: '#howto', start: 'top bottom', end: 'bottom top', scrub: 0.7 }
-          }
-        );
+    // ── Opsi 4: Hero Pin & Shrink Transition (Apple style) ───────────
+    if (document.querySelector('.hero .hero-in')) {
+      gsap.to('.hero .hero-in', {
+        scale: 0.9,
+        opacity: 0.35,
+        y: -50,
+        transformOrigin: 'center top',
+        ease: 'power1.inOut',
+        scrollTrigger: {
+          trigger: '.hero',
+          start: 'top top',
+          end: 'bottom 10%',
+          scrub: 0.6
+        }
       });
     }
 
