@@ -29,7 +29,7 @@ function toggleTheme() {
 // Kelas penanda = `mini` di `.app`. Ini menggantikan mekanisme lama
 // (`aside.open` + `#sidebar-overlay`) yang cuma bisa buka/tutup, bukan
 // mengecilkan — spec minta dua keadaan berbeda per breakpoint.
-function appShell() { return document.querySelector('.app'); }
+function appShell() { return document.querySelector('.shell, .app'); }
 
 // `aria-expanded` diurus DI SINI saja, satu tempat, mengikuti keadaan nyata.
 function setSidebarMini(mini) {

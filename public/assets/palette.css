@@ -591,44 +591,44 @@ body.page-panduan .side-user .me,body.page-bot .side-user .me{
    (§15: "kelompokkan angka dalam satu panel berpembatas tipis" — dulu 4
    kartu terpisah). Grid 4 → 2 (≤1000px) → 1 (≤760px). */
 body.page-dashboard .stats,body.page-profil .stats,body.page-kuota .stats{
-  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
-  background:var(--card);border:1px solid var(--edge);border-radius:26px;
-  box-shadow:var(--shadow),var(--hl);
-  backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
-  overflow:hidden;
+  display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  background:var(--card)!important;border:1px solid var(--edge)!important;border-radius:26px!important;
+  box-shadow:var(--shadow),var(--hl)!important;
+  backdrop-filter:blur(18px)!important;-webkit-backdrop-filter:blur(18px)!important;
+  overflow:hidden!important;
 }
-body.page-dashboard .stats>.stat,body.page-profil .stats>.stat{
-  background:none;border:0;border-left:1px solid var(--line);border-radius:0;
-  box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;
-  padding:22px 24px;display:flex;flex-direction:column;gap:6px;min-height:150px;
+body.page-dashboard .stats>.card,body.page-dashboard .stats>.stat,body.page-profil .stats>.stat{
+  background:none!important;border:0!important;border-left:1px solid var(--line)!important;border-radius:0!important;
+  box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+  padding:22px 24px!important;display:flex!important;flex-direction:column!important;gap:6px!important;min-height:150px!important;
 }
-body.page-dashboard .stats>.stat:first-child,
-body.page-profil .stats>.stat:first-child{border-left:0}
-body.page-dashboard .stat .lbl,body.page-profil .stat .lbl{
+body.page-dashboard .stats>.card:first-child,body.page-dashboard .stats>.stat:first-child,
+body.page-profil .stats>.stat:first-child{border-left:0!important}
+body.page-dashboard .stats .lbl,body.page-dashboard .stat .lbl,body.page-profil .stat .lbl{
   color:var(--mute);font-size:13px;font-weight:500;
 }
-body.page-dashboard .stat .val,body.page-profil .stat .val{
-  font-size:22px;font-weight:700;letter-spacing:-.01em;
+body.page-dashboard .stats h3,body.page-dashboard .stat .val,body.page-profil .stat .val{
+  margin:0;font-size:22px;font-weight:700;letter-spacing:-.01em;color:var(--ink);
 }
-body.page-dashboard .stat .sub,body.page-profil .stat .sub{
-  color:var(--mute);font-size:13px;line-height:1.45;
+body.page-dashboard .stats p,body.page-dashboard .stat .sub,body.page-profil .stat .sub{
+  margin:0;color:var(--mute);font-size:13px;line-height:1.45;
 }
 /* §7.3 kotak ikon 38px berlatar lembut (`.ic` di referensi) */
-body.page-dashboard .stat .sic,body.page-profil .stat .sic{
+body.page-dashboard .ic,body.page-dashboard .stat .sic,body.page-profil .stat .sic{
   width:38px;height:38px;border-radius:12px;background:var(--panel);color:var(--ink);
   display:grid;place-items:center;margin-bottom:8px;
 }
 body.page-dashboard .stat .val.warn,body.page-profil .stat .val.warn{color:var(--amber)}
 @media(max-width:1000px){
-  body.page-dashboard .stats,body.page-profil .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
-  body.page-dashboard .stats>.stat,body.page-profil .stats>.stat{border-left:0;border-top:1px solid var(--line)}
-  body.page-dashboard .stats>.stat:nth-child(-n+2),
-  body.page-profil .stats>.stat:nth-child(-n+2){border-top:0}
+  body.page-dashboard .stats,body.page-profil .stats{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  body.page-dashboard .stats>.card,body.page-dashboard .stats>.stat,body.page-profil .stats>.stat{border-left:0!important;border-top:1px solid var(--line)!important}
+  body.page-dashboard .stats>.card:nth-child(-n+2),body.page-dashboard .stats>.stat:nth-child(-n+2),
+  body.page-profil .stats>.stat:nth-child(-n+2){border-top:0!important}
 }
 @media(max-width:760px){
-  body.page-dashboard .stats,body.page-profil .stats{grid-template-columns:minmax(0,1fr)}
-  body.page-dashboard .stats>.stat:nth-child(2),
-  body.page-profil .stats>.stat:nth-child(2){border-top:1px solid var(--line)}
+  body.page-dashboard .stats,body.page-profil .stats{grid-template-columns:minmax(0,1fr)!important}
+  body.page-dashboard .stats>.card:nth-child(2),body.page-dashboard .stats>.stat:nth-child(2),
+  body.page-profil .stats>.stat:nth-child(2){border-top:1px solid var(--line)!important}
 }
 
 /* §7.4 Kartu bot & Top Action Bar — 1:1 Reference Styling */
