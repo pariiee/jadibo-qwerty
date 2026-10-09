@@ -13,7 +13,7 @@
     document.getElementById('side-role').textContent  = me.role_label || me.role;
     document.getElementById('greeting').textContent   = 'Selamat Datang Kembali, ' + me.username;
     const hg = document.getElementById('hero-greeting');
-    if (hg) hg.innerHTML = '<span>Selamat Datang Kembali,</span>' + esc(me.username);
+    if (hg) hg.innerHTML = '<span>Selamat Datang Kembali,</span><br>' + esc(me.username);
     if (me.is_admin) document.getElementById('nav-admin').style.display = '';
     renderStats();
     return me;
