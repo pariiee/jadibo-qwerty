@@ -13,7 +13,7 @@
     document.getElementById('side-role').textContent  = me.role_label || me.role;
     document.getElementById('greeting').textContent   = 'Selamat Datang Kembali, ' + me.username;
     const hg = document.getElementById('hero-greeting');
-    if (hg) hg.innerHTML = '<span>Selamat Datang Kembali,</span><br>' + esc(me.username);
+    if (hg) hg.innerHTML = '<span>Selamat Datang Kembali,</span>' + esc(me.username);
     if (me.is_admin) document.getElementById('nav-admin').style.display = '';
     renderStats();
     return me;
@@ -57,13 +57,6 @@
     // nentuin boleh nambah bot apa nggak — di situ admin dapet 999, dan angka
     // itu yang bikin baris ini nulis "1 / ∞" padahal jatahnya 2.
     const beli = me?.slots_beli ?? maxSlots;
-    const box = document.getElementById('slot-dots');
-    box.innerHTML = '';
-    for (let i = 0; i < Math.min(beli, 12); i++) {
-      const d = document.createElement('i');
-      if (i < used) d.className = 'on';
-      box.appendChild(d);
-    }
     document.getElementById('slot-text').textContent = `${used} / ${beli}`;
 
     const elSlot = document.getElementById('st-slot');
@@ -333,4 +326,71 @@ window.openAddBot = openAddBot; window.closeAdd = closeAdd;
 window.showStep = showStep; window.backStep = backStep; window.pickPlatform = pickPlatform;
 window.logout = logout;
 
+})();
+
+// ── Menu HP (≤760px): bar tab bawah + bottom sheet ──────────────────
+// Dibangun dari link sidebar (aside nav.nav a), jadi rute/ikon/menu aktif ikut otomatis.
+(function () {
+  const tabs = document.getElementById('mtabs');
+  const sheet = document.getElementById('msheet');
+  if (!tabs || !sheet) return;
+  const more = document.getElementById('m-more');
+  const MAX_TABS = 4;
+  let opener = null;
+
+  // Link admin disembunyikan lewat style inline (dashboard.js membukanya
+  // setelah whoami), jadi dibaca ulang tiap sheet dibuka.
+  const links = () => [...document.querySelectorAll('aside nav.nav a')].filter(a => a.style.display !== 'none');
+  const label = a => (a.querySelector('.txt') || a).textContent.trim();
+  const icon = a => (a.querySelector('svg') || { outerHTML: '' }).outerHTML;
+
+  function item(a, cls) {
+    const el = document.createElement('a');
+    el.className = cls + (a.classList.contains('active') ? ' active' : '');
+    el.href = a.getAttribute('href') || '#';
+    el.innerHTML = icon(a) + '<span>' + label(a).replace(/[<>&]/g, '') + '</span>';
+    return el;
+  }
+
+  function buildTabs() {
+    tabs.innerHTML = '';
+    links().slice(0, MAX_TABS).forEach(a => tabs.appendChild(item(a, 'mtab')));
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'mtab';
+    b.setAttribute('aria-haspopup', 'dialog');
+    b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span>Lainnya</span>';
+    b.onclick = () => setSheet(true);
+    tabs.appendChild(b);
+  }
+
+  function fillSheet() {
+    more.innerHTML = '';
+    links().slice(MAX_TABS).forEach(a => more.appendChild(item(a, 'mi')));
+    const name = (document.getElementById('side-name') || {}).textContent || '';
+    document.getElementById('m-name').textContent = name;
+    document.getElementById('m-role').textContent = (document.getElementById('side-role') || {}).textContent || '';
+    document.getElementById('m-av').textContent = (name[0] || '?').toUpperCase();
+  }
+
+  function setSheet(open) {
+    if (open) { fillSheet(); opener = document.activeElement; }
+    document.body.classList.toggle('msheet-open', open);
+    sheet.setAttribute('aria-hidden', String(!open));
+    if (open) (sheet.querySelector('.mi') || sheet).focus();
+    else if (opener) opener.focus();
+  }
+
+  document.getElementById('mscrim').addEventListener('click', () => setSheet(false));
+  document.getElementById('m-out').addEventListener('click', () => { if (window.logout) window.logout(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') setSheet(false); });
+  matchMedia('(min-width:761px)').addEventListener('change', e => { if (e.matches) setSheet(false); });
+
+  let y0 = null;
+  sheet.addEventListener('touchstart', e => { y0 = e.touches[0].clientY; }, { passive: true });
+  sheet.addEventListener('touchend', e => {
+    if (y0 !== null && e.changedTouches[0].clientY - y0 > 70 && sheet.scrollTop === 0) setSheet(false);
+    y0 = null;
+  });
+
+  buildTabs();
 })();

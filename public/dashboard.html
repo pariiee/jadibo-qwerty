@@ -5,99 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>yaparbots – Dashboard</title>
 <!-- @include head.html -->
-<style>
-/* 1:1 Glassmorphic Dashboard Shell & Layout */
-body.page-dashboard{
-  background:var(--bg3)!important;
-  color:var(--ink)!important;
-  padding:20px!important;
-  display:flex!important;
-  position:relative!important;
-  overflow-x:hidden!important;
-  margin:0!important;
-  min-height:100vh!important;
-}
-body.page-dashboard .shell, body.page-dashboard .app{
-  flex:1!important;
-  max-width:1280px!important;
-  margin:0 auto!important;
-  display:grid!important;
-  grid-template-columns:230px 1fr!important;
-  background:var(--shell)!important;
-  border:1px solid var(--edge)!important;
-  border-radius:32px!important;
-  backdrop-filter:blur(26px)!important;
-  -webkit-backdrop-filter:blur(34px)!important;
-  box-shadow:var(--shadow),var(--hl)!important;
-  overflow:hidden!important;
-  position:relative!important;
-  transition:grid-template-columns .25s ease!important;
-  min-height:calc(100vh - 40px)!important;
-}
-body.page-dashboard .shell.mini, body.page-dashboard .app.mini{
-  grid-template-columns:76px 1fr!important;
-}
-body.page-dashboard aside{
-  grid-column:1!important;
-  position:static!important;
-  inset:auto!important;
-  width:auto!important;
-  overflow:hidden!important;
-  padding:22px 14px!important;
-  display:flex!important;
-  flex-direction:column!important;
-  gap:6px!important;
-  background:none!important;
-  border:none!important;
-  box-shadow:none!important;
-  transform:none!important;
-}
-body.page-dashboard main{
-  grid-column:2!important;
-  position:static!important;
-  background:var(--panel)!important;
-  margin:10px!important;
-  margin-left:10px!important;
-  border-radius:26px!important;
-  padding:22px 32px 40px!important;
-  min-width:0!important;
-  border:1px solid var(--edge)!important;
-  box-shadow:var(--hl)!important;
-  backdrop-filter:blur(22px)!important;
-  -webkit-backdrop-filter:blur(22px)!important;
-}
-body.page-dashboard .content{
-  padding:0!important;
-}
-@media (max-width:760px){
-  body.page-dashboard{padding:8px!important}
-  body.page-dashboard .shell, body.page-dashboard .shell.mini,
-  body.page-dashboard .app, body.page-dashboard .app.mini{
-    grid-template-columns:64px 1fr!important;
-    border-radius:26px!important;
-  }
-  body.page-dashboard .shell:not(.mini) aside, body.page-dashboard .app:not(.mini) aside{
-    position:absolute!important;
-    z-index:20!important;
-    left:0!important;
-    top:0!important;
-    bottom:0!important;
-    width:220px!important;
-    background:var(--card)!important;
-    backdrop-filter:blur(34px)!important;
-    -webkit-backdrop-filter:blur(34px)!important;
-    border-right:1px solid var(--edge)!important;
-    box-shadow:var(--shadow)!important;
-  }
-  body.page-dashboard main{
-    padding:18px 16px 32px!important;
-    margin:6px!important;
-  }
-}
-</style>
 </head>
 <body class="page-dashboard">
-<div class="shell">
+<div class="app shell">
 
   <!-- @include sidebar.html -->
 
@@ -127,7 +37,7 @@ body.page-dashboard .content{
 
       <!-- Hero Greeting -->
       <section class="hero">
-        <h1 id="hero-greeting"><span>Selamat Datang Kembali,</span><br>...</h1>
+        <h1 id="hero-greeting"><span>Selamat Datang Kembali,</span>...</h1>
       </section>
 
       <!-- Kartu ringkasan -->
@@ -167,7 +77,6 @@ body.page-dashboard .content{
       </section>
 
       <h2>Slot bot kamu <small id="slot-text">0 / 0</small></h2>
-      <span id="slot-dots" style="display:none"></span>
       <div class="bots" id="bot-grid"></div>
 
       <div class="empty" id="empty-state" style="display:none">
@@ -261,6 +170,18 @@ body.page-dashboard .content{
       </section>
     </div>
   </main>
+</div>
+
+<!-- Navigasi HP (≤760px): bar tab + sheet. Isinya dibangun dari link sidebar oleh dashboard.js -->
+<nav class="mtabs" id="mtabs" aria-label="Navigasi utama"></nav>
+<div class="mscrim" id="mscrim"></div>
+<div class="msheet" id="msheet" role="dialog" aria-modal="true" aria-label="Menu lainnya" aria-hidden="true">
+  <div class="mgrip"></div>
+  <div class="mme"><div class="mav" id="m-av"></div><div><b id="m-name"></b><small id="m-role"></small></div></div>
+  <div id="m-more"></div>
+  <button class="mi out" id="m-out" type="button">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>Keluar
+  </button>
 </div>
 
 <!-- Add bot modal -->
