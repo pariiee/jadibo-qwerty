@@ -12,6 +12,8 @@
     document.getElementById('side-name').textContent  = me.username;
     document.getElementById('side-role').textContent  = me.role_label || me.role;
     document.getElementById('greeting').textContent   = 'Selamat Datang Kembali, ' + me.username;
+    const hg = document.getElementById('hero-greeting');
+    if (hg) hg.innerHTML = '<span>Selamat Datang Kembali,</span><br>' + esc(me.username);
     if (me.is_admin) document.getElementById('nav-admin').style.display = '';
     renderStats();
     return me;
@@ -195,24 +197,21 @@
 
     bots.forEach(bot => {
       const card = document.createElement('div');
-      card.className = 'bot-card';
+      card.className = 'card bc';
       card.addEventListener('click', () => { location.href = '/bot/' + bot.id; });
       const on = bot.is_running;
-      const stCls = on ? 'st-on' : (bot.status === 'connecting' ? 'st-wait' : 'st-off');
       const stTxt = on ? 'Online' : (bot.status === 'connecting' ? 'Connecting' : 'Offline');
       card.innerHTML =
-        '<div class="bc-top">' +
-          '<div class="bc-platform">' + (bot.platform === 'telegram' ? tgIcon(14) : waIcon(14)) + '<span>' + esc(bot.platform) + '</span></div>' +
-          '<div class="bc-status"><span class="st-dot ' + stCls + '"></span>' + stTxt + '</div>' +
+        '<div class="row">' +
+          '<span class="wa">' + esc(bot.platform === 'telegram' ? 'Telegram' : 'WhatsApp') + '</span>' +
+          '<span class="on-dot ' + (on ? '' : 'off') + '">' + stTxt + '</span>' +
         '</div>' +
         '<h3>' + esc(bot.bot_name) + '</h3>' +
-        '<div class="desc">' + (bot.description ? esc(bot.description) : 'Tidak ada deskripsi') + '</div>' +
-        '<div class="bc-meta"><span>Prefix: <b>' + esc(bot.prefix) + '</b></span><span>' + esc(new Date(bot.created_at).toLocaleDateString('id-ID')) + '</span></div>' +
-        // Setup pindah ke /config/:id, /bot/:id sekarang statistik. Dua tombol
-        // eksplisit biar user nggak nebak-nebak isi kartunya.
-        '<div class="bc-acts">' +
-          '<button class="bc-btn" data-cfg>Config</button>' +
-          '<button class="bc-btn" data-stat>Statistik</button>' +
+        '<div class="row" style="margin-top:2px">' + (bot.description ? esc(bot.description) : 'Tidak ada deskripsi') + '</div>' +
+        '<div class="row" style="margin-top:14px"><span>Prefix: <b style="color:var(--ink)">' + esc(bot.prefix) + '</b></span><span>' + esc(new Date(bot.created_at).toLocaleDateString('id-ID')) + '</span></div>' +
+        '<div class="btns">' +
+          '<button data-cfg>Config</button>' +
+          '<button data-stat>Statistik</button>' +
         '</div>';
       grid.appendChild(card);
       card.querySelector('[data-cfg]').addEventListener('click', (e) => { e.stopPropagation(); location.href = '/config/' + bot.id; });
@@ -220,9 +219,11 @@
     });
 
     if (bots.length < maxSlots) {
-      const add = document.createElement('div');
-      add.className = 'add-card';
-      add.innerHTML = '<div class="add-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#71717a" stroke-width="2" stroke-linecap="round"/></svg></div><span>Tambah Bot</span>';
+      const add = document.createElement('button');
+      add.className = 'add add-btn';
+      add.style.color = 'inherit';
+      add.style.cursor = 'pointer';
+      add.innerHTML = '<span class="round"><svg class="i" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span>Tambah Bot';
       add.addEventListener('click', openAddBot);
       grid.appendChild(add);
     }

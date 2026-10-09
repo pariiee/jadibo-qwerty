@@ -35,56 +35,50 @@
         </button>
       </div>
 
-      <!-- Kartu ringkasan. Datanya dari /api/auth/me + /api/bots — nggak ada
-           endpoint baru, jadi nggak ada request tambahan.
-           §7.3: satu panel (CSS .stats) dengan 4 kolom berpembatas tipis;
-           tiap kolom = kotak ikon 38px + label 13px + nilai 22px + deskripsi. -->
-      <div class="stats">
-        <div class="stat">
-          <span class="sic" aria-hidden="true">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 3l8 4-8 4-8-4 8-4zM4 12l8 4 8-4M4 17l8 4 8-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </span>
-          <div class="lbl">Role</div>
-          <div class="val" id="st-role">—</div>
-          <div class="sub" id="st-role-sub"></div>
-        </div>
-        <div class="stat">
-          <span class="sic" aria-hidden="true">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="4" y="5" width="16" height="15" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M4 10h16M9 3v4M15 3v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-          </span>
-          <div class="lbl">Kedaluwarsa</div>
-          <div class="val" id="st-exp">—</div>
-          <div class="sub" id="st-exp-sub"></div>
-        </div>
-        <div class="stat">
-          <span class="sic" aria-hidden="true">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </span>
-          <div class="lbl">Bot Online</div>
-          <div class="val" id="st-online">0</div>
-          <div class="sub" id="st-online-sub"></div>
-        </div>
-        <div class="stat">
-          <span class="sic" aria-hidden="true">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 7h18v10H3zM3 11h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-          </span>
-          <div class="lbl">Slot yang sudah dibeli</div>
-          <div class="val" id="st-slot">0</div>
-          <div class="sub" id="st-slot-sub"></div>
-        </div>
-      </div>
+      <!-- Hero Greeting -->
+      <section class="hero">
+        <h1 id="hero-greeting"><span>Selamat Datang Kembali,</span><br>...</h1>
+      </section>
 
-      <div class="slot-head">
-        <div>
-          <div class="lbl">Slot Bot Kamu</div>
-          <div class="slot-row">
-            <span class="slot-dots" id="slot-dots"></span>
-            <span class="slot-txt" id="slot-text">0 / 0</span>
+      <!-- Kartu ringkasan -->
+      <section class="stats">
+        <div class="card">
+          <div class="ic">
+            <svg class="i" viewBox="0 0 24 24"><path d="M12 3l8 4-8 4-8-4 8-4zM4 12l8 4 8-4M4 17l8 4 8-4"/></svg>
           </div>
+          <span class="lbl">Role</span>
+          <h3 id="st-role">—</h3>
+          <p id="st-role-sub">Akses peran akun</p>
         </div>
-      </div>
+        <div class="card">
+          <div class="ic">
+            <svg class="i" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>
+          </div>
+          <span class="lbl">Kedaluwarsa</span>
+          <h3 style="color:var(--mute)" id="st-exp">Tidak ada</h3>
+          <p id="st-exp-sub">Masa aktif langganan</p>
+        </div>
+        <div class="card">
+          <div class="ic">
+            <svg class="i" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg>
+          </div>
+          <span class="lbl">Bot online</span>
+          <h3 style="color:var(--green)" id="st-online">0</h3>
+          <p id="st-online-sub">dari 0 bot kamu</p>
+        </div>
+        <div class="card">
+          <div class="ic">
+            <svg class="i" viewBox="0 0 24 24"><path d="M3 7h18v10H3zM3 11h18"/></svg>
+          </div>
+          <span class="lbl">Slot yang sudah dibeli</span>
+          <h3 id="st-slot">0</h3>
+          <p id="st-slot-sub">Kapasitas slot akun</p>
+        </div>
+      </section>
 
-      <div class="grid" id="bot-grid"></div>
+      <h2>Slot bot kamu <small id="slot-text">0 / 0</small></h2>
+      <span id="slot-dots" style="display:none"></span>
+      <div class="bots" id="bot-grid"></div>
 
       <div class="empty" id="empty-state" style="display:none">
         <div class="ic">
@@ -92,7 +86,7 @@
         </div>
         <h3>Belum ada bot</h3>
         <p>Tambah bot pertama kamu untuk memulai</p>
-        <button class="btn btn-dark" data-act="openAddBot">Tambah Bot Sekarang</button>
+        <button class="pill add-btn" data-act="openAddBot" style="margin-top:12px">Tambah Bot Sekarang</button>
       </div>
 
       <!-- FAQ: <details> bawaan browser, jadi nol JavaScript. -->
