@@ -1957,3 +1957,587 @@ body.page-error .error-actions button{
   text-decoration:none;display:inline-flex;align-items:center;justify-content:center;
 }
 
+/* ══ 13. Unified Dashboard Shell for all Internal App Pages ══════════ */
+:root {
+  --bg3: #0c0d12;
+  --shell: rgba(255,255,255,.03);
+  --panel: rgba(255,255,255,.04);
+  --card: rgba(255,255,255,.06);
+  --edge: rgba(255,255,255,.14);
+  --hl: inset 0 1px 0 rgba(255,255,255,.12);
+  --ink: #f2f3f8;
+  --mute: #9ca0b5;
+  --line: rgba(255,255,255,.09);
+  --dark: #f2f3f8;
+  --darkink: #0b0c14;
+  --green: #34d399;
+  --greenbg: rgba(52,211,153,.14);
+  --shadow: 0 2px 8px rgba(0,0,0,.3);
+}
+
+body.page-command,
+body.page-kuota,
+body.page-log,
+body.page-panduan,
+body.page-billing,
+body.page-profil,
+body.page-pricing,
+body.page-bot,
+body.page-admin {
+  background: var(--bg3) !important;
+  color: var(--ink) !important;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+  margin: 0 !important;
+  padding: 20px !important;
+  min-height: 100vh !important;
+}
+
+body.page-command a,
+body.page-kuota a,
+body.page-log a,
+body.page-panduan a,
+body.page-billing a,
+body.page-profil a,
+body.page-pricing a,
+body.page-bot a,
+body.page-admin a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Shell wrapper */
+body.page-command .app,
+body.page-kuota .app,
+body.page-log .app,
+body.page-panduan .app,
+body.page-billing .app,
+body.page-profil .app,
+body.page-pricing .app,
+body.page-admin .app,
+body.page-bot .layout {
+  display: grid !important;
+  grid-template-columns: 230px 1fr !important;
+  max-width: 1280px !important;
+  margin: 0 auto !important;
+  background: var(--shell) !important;
+  border: 1px solid var(--edge) !important;
+  border-radius: 32px !important;
+  backdrop-filter: blur(26px) !important;
+  -webkit-backdrop-filter: blur(34px) !important;
+  box-shadow: var(--shadow), var(--hl) !important;
+  overflow: hidden !important;
+  position: relative !important;
+  min-height: calc(100vh - 40px) !important;
+  transition: grid-template-columns .25s ease !important;
+}
+
+body.page-command .app.mini,
+body.page-kuota .app.mini,
+body.page-log .app.mini,
+body.page-panduan .app.mini,
+body.page-billing .app.mini,
+body.page-profil .app.mini,
+body.page-pricing .app.mini,
+body.page-admin .app.mini {
+  grid-template-columns: 76px 1fr !important;
+}
+
+/* Sidebar styling */
+body.page-command aside,
+body.page-kuota aside,
+body.page-log aside,
+body.page-panduan aside,
+body.page-billing aside,
+body.page-profil aside,
+body.page-pricing aside,
+body.page-admin aside {
+  grid-column: 1 !important;
+  position: static !important;
+  inset: auto !important;
+  width: auto !important;
+  overflow: hidden !important;
+  padding: 22px 14px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+body.page-command aside .brand,
+body.page-kuota aside .brand,
+body.page-log aside .brand,
+body.page-panduan aside .brand,
+body.page-billing aside .brand,
+body.page-profil aside .brand,
+body.page-pricing aside .brand,
+body.page-admin aside .brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  font-weight: 700 !important;
+  font-size: 18px !important;
+  padding: 0 10px 18px !important;
+  color: var(--ink) !important;
+}
+
+body.page-command aside .logo,
+body.page-kuota aside .logo,
+body.page-log aside .logo,
+body.page-panduan aside .logo,
+body.page-billing aside .logo,
+body.page-profil aside .logo,
+body.page-pricing aside .logo,
+body.page-admin aside .logo {
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 12px !important;
+  background: var(--dark) !important;
+  color: var(--darkink) !important;
+  display: grid !important;
+  place-items: center !important;
+  overflow: hidden !important;
+  flex: none !important;
+}
+
+body.page-command nav.nav,
+body.page-kuota nav.nav,
+body.page-log nav.nav,
+body.page-panduan nav.nav,
+body.page-billing nav.nav,
+body.page-profil nav.nav,
+body.page-pricing nav.nav,
+body.page-admin nav.nav {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+}
+
+body.page-command nav.nav a,
+body.page-kuota nav.nav a,
+body.page-log nav.nav a,
+body.page-panduan nav.nav a,
+body.page-billing nav.nav a,
+body.page-profil nav.nav a,
+body.page-pricing nav.nav a,
+body.page-admin nav.nav a {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 10px 12px !important;
+  border: 0 !important;
+  background: none !important;
+  border-radius: 999px !important;
+  color: var(--mute) !important;
+  font-weight: 500 !important;
+  text-align: left !important;
+  text-decoration: none !important;
+  transition: all .15s ease !important;
+}
+
+body.page-command nav.nav a:visited,
+body.page-kuota nav.nav a:visited,
+body.page-log nav.nav a:visited,
+body.page-panduan nav.nav a:visited,
+body.page-billing nav.nav a:visited,
+body.page-profil nav.nav a:visited,
+body.page-pricing nav.nav a:visited,
+body.page-admin nav.nav a:visited {
+  color: var(--mute) !important;
+}
+
+body.page-command nav.nav a:hover,
+body.page-kuota nav.nav a:hover,
+body.page-log nav.nav a:hover,
+body.page-panduan nav.nav a:hover,
+body.page-billing nav.nav a:hover,
+body.page-profil nav.nav a:hover,
+body.page-pricing nav.nav a:hover,
+body.page-admin nav.nav a:hover {
+  background: var(--card) !important;
+  box-shadow: var(--hl) !important;
+  color: var(--ink) !important;
+}
+
+body.page-command nav.nav a.active,
+body.page-command nav.nav a.on,
+body.page-kuota nav.nav a.active,
+body.page-kuota nav.nav a.on,
+body.page-log nav.nav a.active,
+body.page-log nav.nav a.on,
+body.page-panduan nav.nav a.active,
+body.page-panduan nav.nav a.on,
+body.page-billing nav.nav a.active,
+body.page-billing nav.nav a.on,
+body.page-profil nav.nav a.active,
+body.page-profil nav.nav a.on,
+body.page-pricing nav.nav a.active,
+body.page-pricing nav.nav a.on,
+body.page-admin nav.nav a.active,
+body.page-admin nav.nav a.on {
+  background: var(--dark) !important;
+  color: var(--darkink) !important;
+  font-weight: 600 !important;
+}
+
+body.page-command nav.nav a.active::before,
+body.page-kuota nav.nav a.active::before,
+body.page-log nav.nav a.active::before,
+body.page-panduan nav.nav a.active::before,
+body.page-billing nav.nav a.active::before,
+body.page-profil nav.nav a.active::before,
+body.page-pricing nav.nav a.active::before,
+body.page-admin nav.nav a.active::before {
+  display: none !important;
+}
+
+body.page-command aside .me,
+body.page-kuota aside .me,
+body.page-log aside .me,
+body.page-panduan aside .me,
+body.page-billing aside .me,
+body.page-profil aside .me,
+body.page-pricing aside .me,
+body.page-admin aside .me {
+  margin-top: auto !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 12px !important;
+  background: var(--card) !important;
+  border: 1px solid var(--edge) !important;
+  box-shadow: var(--hl) !important;
+  border-radius: 20px !important;
+}
+
+body.page-command aside .av,
+body.page-kuota aside .av,
+body.page-log aside .av,
+body.page-panduan aside .av,
+body.page-billing aside .av,
+body.page-profil aside .av,
+body.page-pricing aside .av,
+body.page-admin aside .av {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 50% !important;
+  background: var(--dark) !important;
+  color: var(--darkink) !important;
+  display: grid !important;
+  place-items: center !important;
+  font-weight: 700 !important;
+  flex: none !important;
+}
+
+body.page-command aside .out,
+body.page-kuota aside .out,
+body.page-log aside .out,
+body.page-panduan aside .out,
+body.page-billing aside .out,
+body.page-profil aside .out,
+body.page-pricing aside .out,
+body.page-admin aside .out {
+  margin: 6px 6px 0 !important;
+  display: flex !important;
+  gap: 8px !important;
+  align-items: center !important;
+  color: var(--mute) !important;
+  background: none !important;
+  border: 0 !important;
+  padding: 6px 10px !important;
+  cursor: pointer !important;
+  border-radius: 999px !important;
+  transition: all .15s ease !important;
+}
+
+body.page-command aside .out:hover,
+body.page-kuota aside .out:hover,
+body.page-log aside .out:hover,
+body.page-panduan aside .out:hover,
+body.page-billing aside .out:hover,
+body.page-profil aside .out:hover,
+body.page-pricing aside .out:hover,
+body.page-admin aside .out:hover {
+  background: var(--card) !important;
+  color: var(--ink) !important;
+}
+
+/* Main panel container */
+body.page-command main,
+body.page-kuota main,
+body.page-log main,
+body.page-panduan main,
+body.page-billing main,
+body.page-profil main,
+body.page-pricing main,
+body.page-admin main {
+  grid-column: 2 !important;
+  background: var(--panel) !important;
+  margin: 10px !important;
+  margin-left: 10px !important;
+  border-radius: 26px !important;
+  padding: 22px 32px 40px !important;
+  min-width: 0 !important;
+  border: 1px solid var(--edge) !important;
+  box-shadow: var(--hl) !important;
+  backdrop-filter: blur(22px) !important;
+  -webkit-backdrop-filter: blur(22px) !important;
+  position: static !important;
+}
+
+body.page-command .content,
+body.page-kuota .content,
+body.page-log .content,
+body.page-panduan .content,
+body.page-billing .content,
+body.page-profil .content,
+body.page-pricing .content,
+body.page-admin .content {
+  padding: 0 !important;
+}
+
+/* Topbar in all subpages */
+body.page-command .topbar,
+body.page-kuota .topbar,
+body.page-log .topbar,
+body.page-panduan .topbar,
+body.page-billing .topbar,
+body.page-profil .topbar,
+body.page-pricing .topbar,
+body.page-admin .topbar {
+  position: static !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  padding: 0 !important;
+  margin: 0 0 16px 0 !important;
+  height: auto !important;
+  border-radius: 0 !important;
+}
+
+body.page-command .topbar-title,
+body.page-kuota .topbar-title,
+body.page-log .topbar-title,
+body.page-panduan .topbar-title,
+body.page-billing .topbar-title,
+body.page-profil .topbar-title,
+body.page-pricing .topbar-title,
+body.page-admin .topbar-title {
+  display: none !important;
+}
+
+body.page-command .top,
+body.page-kuota .top,
+body.page-log .top,
+body.page-panduan .top,
+body.page-billing .top,
+body.page-profil .top,
+body.page-pricing .top,
+body.page-admin .top {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+body.page-command .round,
+body.page-kuota .round,
+body.page-log .round,
+body.page-panduan .round,
+body.page-billing .round,
+body.page-profil .round,
+body.page-pricing .round,
+body.page-admin .round {
+  width: 42px !important;
+  height: 42px !important;
+  border-radius: 50% !important;
+  border: 1px solid var(--edge) !important;
+  box-shadow: var(--hl) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  background: var(--card) !important;
+  display: grid !important;
+  place-items: center !important;
+  cursor: pointer !important;
+  color: var(--ink) !important;
+}
+
+body.page-command .pill,
+body.page-kuota .pill,
+body.page-log .pill,
+body.page-panduan .pill,
+body.page-billing .pill,
+body.page-profil .pill,
+body.page-pricing .pill,
+body.page-admin .pill {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  padding: 11px 18px !important;
+  font-weight: 600 !important;
+  background: var(--dark) !important;
+  color: var(--darkink) !important;
+  cursor: pointer !important;
+}
+
+/* Headings & Texts */
+body.page-command h2,
+body.page-kuota h2,
+body.page-log h2,
+body.page-panduan h2,
+body.page-billing h2,
+body.page-profil h2,
+body.page-pricing h2,
+body.page-admin h2 {
+  font-size: 24px !important;
+  font-weight: 700 !important;
+  color: var(--ink) !important;
+  margin: 0 0 6px 0 !important;
+}
+
+body.page-command .m-sub,
+body.page-kuota .kuota-sub,
+body.page-log .log-sub,
+body.page-panduan .panduan-sub,
+body.page-billing .m-sub {
+  color: var(--mute) !important;
+  font-size: 14px !important;
+  margin: 0 0 20px 0 !important;
+}
+
+/* Controls: Inputs, Selects, Buttons */
+body.page-command .inp,
+body.page-kuota .inp,
+body.page-log .inp,
+body.page-panduan .inp,
+body.page-billing .inp,
+body.page-profil .inp,
+body.page-pricing .inp,
+body.page-admin .inp {
+  background: var(--card) !important;
+  border: 1px solid var(--edge) !important;
+  border-radius: 14px !important;
+  color: var(--ink) !important;
+  padding: 10px 16px !important;
+  box-shadow: var(--hl) !important;
+  font-family: inherit !important;
+}
+
+body.page-command .inp:focus,
+body.page-kuota .inp:focus,
+body.page-log .inp:focus,
+body.page-panduan .inp:focus,
+body.page-billing .inp:focus,
+body.page-profil .inp:focus,
+body.page-pricing .inp:focus,
+body.page-admin .inp:focus {
+  outline: none !important;
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 2px rgba(99,102,241,.2) !important;
+}
+
+body.page-command .btn-outline,
+body.page-kuota .btn-outline,
+body.page-log .btn-outline,
+body.page-panduan .btn-outline,
+body.page-billing .btn-outline,
+body.page-profil .btn-outline,
+body.page-pricing .btn-outline,
+body.page-admin .btn-outline {
+  background: var(--card) !important;
+  border: 1px solid var(--edge) !important;
+  border-radius: 999px !important;
+  color: var(--ink) !important;
+  padding: 10px 20px !important;
+  font-weight: 600 !important;
+  box-shadow: var(--hl) !important;
+  cursor: pointer !important;
+  transition: all .2s ease !important;
+}
+
+body.page-command .btn-outline:hover,
+body.page-kuota .btn-outline:hover,
+body.page-log .btn-outline:hover,
+body.page-panduan .btn-outline:hover,
+body.page-billing .btn-outline:hover,
+body.page-profil .btn-outline:hover,
+body.page-pricing .btn-outline:hover,
+body.page-admin .btn-outline:hover {
+  background: var(--dark) !important;
+  color: var(--darkink) !important;
+}
+
+/* Command Rows & Lists */
+body.page-command .cmd-row {
+  border: 1px solid var(--edge) !important;
+  border-radius: 18px !important;
+  padding: 14px 18px !important;
+  background: var(--card) !important;
+  box-shadow: var(--hl) !important;
+  margin-bottom: 10px !important;
+  color: var(--ink) !important;
+}
+
+body.page-command .cmd-row summary {
+  color: var(--ink) !important;
+}
+
+body.page-command .cmd-nama {
+  background: rgba(255,255,255,.08) !important;
+  color: var(--ink) !important;
+  border-radius: 8px !important;
+  padding: 4px 10px !important;
+  font-weight: 700 !important;
+}
+
+body.page-command .cmd-kat {
+  color: var(--mute) !important;
+}
+
+body.page-command .cmd-isi {
+  border-top: 1px solid var(--edge) !important;
+  padding-top: 12px !important;
+  margin-top: 12px !important;
+}
+
+body.page-command .cmd-desk {
+  color: var(--ink) !important;
+}
+
+body.page-command .cmd-alias-item {
+  background: rgba(255,255,255,.06) !important;
+  color: var(--mute) !important;
+  border-radius: 6px !important;
+  padding: 3px 8px !important;
+}
+
+/* Kuota, Log, Panduan, Billing Cards */
+body.page-kuota .card,
+body.page-log .card,
+body.page-panduan .card,
+body.page-billing .card,
+body.page-profil .card,
+body.page-pricing .card,
+body.page-admin .card,
+body.page-kuota .kuota-card,
+body.page-log .log-row,
+body.page-panduan .panduan-card,
+body.page-billing .bill-row {
+  background: var(--card) !important;
+  border: 1px solid var(--edge) !important;
+  border-radius: 20px !important;
+  box-shadow: var(--hl) !important;
+  backdrop-filter: blur(14px) !important;
+  color: var(--ink) !important;
+}
+
