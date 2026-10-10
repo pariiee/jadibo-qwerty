@@ -38,7 +38,7 @@
 
   function render() {
     const b = botData;
-    document.title = b.bot_name + ' — yaparbots';
+    document.title = b.bot_name + ' — qwertygate';
     document.getElementById('hdr-name').textContent = b.bot_name;
     document.getElementById('hdr-icon').innerHTML = b.platform === 'telegram' ? tgIcon(18) : waIcon(18);
     document.getElementById('cfg-panel').classList.toggle('tg', b.platform === 'telegram');
@@ -337,7 +337,7 @@
     const imp = (m, t) => { el.textContent = m; el.className = 'ctrl-msg show' + (t === 'err' ? ' err' : ''); };
     try {
       const j = JSON.parse(await file.text());
-      if (j.v !== 1 || !j.bot) return imp('Bukan file config yaparbots (versi tidak didukung).', 'err');
+      if (j.v !== 1 || !j.bot) return imp('Bukan file config qwertygate (versi tidak didukung).', 'err');
       const b = j.bot;
       const put = (id, v) => { const n = document.getElementById(id); if (n) n.value = (v === null || v === undefined) ? '' : v; };
       put('cfg-name', b.bot_name);      put('cfg-botnum', b.bot_number);

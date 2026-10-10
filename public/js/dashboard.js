@@ -266,7 +266,7 @@
       bot_number: document.getElementById('f-botnum').value.trim() || undefined,
       owner_number: document.getElementById('f-owner').value.trim() || undefined,
       prefix: document.getElementById('f-prefix').value.trim() || '!',
-      footer_text: document.getElementById('f-footer').value.trim() || 'Powered by yaparbots',
+      footer_text: document.getElementById('f-footer').value.trim() || 'Powered by qwertygate',
       telegram_token: document.getElementById('f-token').value.trim() || undefined
     };
     const d = await api('/api/bots', { method: 'POST', body: JSON.stringify(body) });

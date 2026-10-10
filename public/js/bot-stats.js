@@ -77,7 +77,7 @@
     const d = await api('/api/bots/' + botId);
     if (!d?.ok) { alert('Bot tidak ditemukan'); location.href = '/dashboard'; return; }
     const b = d.bot;
-    document.title = 'Statistik ' + b.bot_name + ' — yaparbots';
+    document.title = 'Statistik ' + b.bot_name + ' — qwertygate';
     document.getElementById('hdr-name').textContent = b.bot_name;
     document.getElementById('hdr-icon').innerHTML = b.platform === 'telegram' ? tgIcon(18) : waIcon(18);
     document.getElementById('btn-config').href = '/config/' + botId;

@@ -38,7 +38,7 @@
 
   function render() {
     const b = botData;
-    document.title = b.bot_name + ' — yaparbots';
+    document.title = b.bot_name + ' — qwertygate';
     document.getElementById('hdr-name').textContent = b.bot_name;
     document.getElementById('hdr-icon').innerHTML = b.platform === 'telegram' ? tgIcon(18) : waIcon(18);
     document.getElementById('cfg-panel').classList.toggle('tg', b.platform === 'telegram');
