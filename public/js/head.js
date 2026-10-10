@@ -111,14 +111,13 @@ document.addEventListener('DOMContentLoaded', function () {
     a.classList.toggle('on', match);
   });
 
-  // Sinkron avatar topbar dengan sidebar
+  // Isi avatar topbar jika ada
   var topAv = document.getElementById('top-avatar-txt');
-  var sideAv = document.getElementById('side-avatar');
-  if (topAv && sideAv) {
-    if (sideAv.textContent && sideAv.textContent !== '?') topAv.textContent = sideAv.textContent;
-    var obs = new MutationObserver(function () {
-      if (sideAv.textContent) topAv.textContent = sideAv.textContent;
-    });
-    obs.observe(sideAv, { childList: true, characterData: true, subtree: true });
+  if (topAv && topAv.textContent === '?') {
+    fetch('/api/auth/me').then(function (r) { return r.json(); }).then(function (d) {
+      if (d && d.ok && d.user && d.user.username) {
+        topAv.textContent = d.user.username[0].toUpperCase();
+      }
+    }).catch(function () {});
   }
 });

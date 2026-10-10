@@ -543,9 +543,8 @@
       location.href = '/dashboard';
       return;
     }
-    document.getElementById('side-avatar').textContent = (d.user.username || '?')[0].toUpperCase();
-    document.getElementById('side-name').textContent = d.user.username;
-    document.getElementById('side-role').textContent = d.user.role_label || d.user.role;
+    const topAv = document.getElementById('top-avatar-txt');
+    if (topAv) topAv.textContent = (d.user.username || '?')[0].toUpperCase();
     document.getElementById('greeting').textContent = 'Administrator';
     document.getElementById('nav-admin').style.display = '';
 

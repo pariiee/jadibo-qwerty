@@ -8,9 +8,8 @@
     const d = await api('/api/auth/me');
     if (!d?.ok) { location.href = '/'; return null; }
     me = d.user;
-    document.getElementById('side-avatar').textContent = (me.username || '?')[0].toUpperCase();
-    document.getElementById('side-name').textContent  = me.username;
-    document.getElementById('side-role').textContent  = me.role_label || me.role;
+    const topAv = document.getElementById('top-avatar-txt');
+    if (topAv) topAv.textContent = (me.username || '?')[0].toUpperCase();
     document.getElementById('greeting').textContent   = 'Selamat Datang Kembali, ' + me.username;
     const hg = document.getElementById('hero-greeting');
     if (hg) hg.innerHTML = '<span>Selamat Datang Kembali,</span><br>' + esc(me.username);
