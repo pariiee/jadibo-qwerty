@@ -110,4 +110,15 @@ document.addEventListener('DOMContentLoaded', function () {
     a.classList.toggle('active', match);
     a.classList.toggle('on', match);
   });
+
+  // Sinkron avatar topbar dengan sidebar
+  var topAv = document.getElementById('top-avatar-txt');
+  var sideAv = document.getElementById('side-avatar');
+  if (topAv && sideAv) {
+    if (sideAv.textContent && sideAv.textContent !== '?') topAv.textContent = sideAv.textContent;
+    var obs = new MutationObserver(function () {
+      if (sideAv.textContent) topAv.textContent = sideAv.textContent;
+    });
+    obs.observe(sideAv, { childList: true, characterData: true, subtree: true });
+  }
 });
