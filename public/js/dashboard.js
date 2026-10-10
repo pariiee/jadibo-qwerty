@@ -4,6 +4,25 @@
 (function () {
 // ── Session via cookie — tidak pakai localStorage ────────────────
   let me = null;
+  function typeWriter(el, text, speed) {
+    if (!el || !text) return;
+    el.textContent = '';
+    let i = 0;
+    const cursor = document.createElement('span');
+    cursor.className = 'type-cursor';
+    cursor.textContent = '|';
+    el.appendChild(cursor);
+    const timer = setInterval(() => {
+      if (i < text.length) {
+        cursor.before(text.charAt(i));
+        i++;
+      } else {
+        clearInterval(timer);
+        setTimeout(() => { if (cursor.parentNode) cursor.remove(); }, 3000);
+      }
+    }, speed || 45);
+  }
+
   async function whoami() {
     const d = await api('/api/auth/me');
     if (!d?.ok) { location.href = '/'; return null; }
@@ -12,7 +31,10 @@
     if (topAv) topAv.textContent = (me.username || '?')[0].toUpperCase();
     document.getElementById('greeting').textContent   = 'Selamat Datang Kembali, ' + me.username;
     const hg = document.getElementById('hero-greeting');
-    if (hg) hg.innerHTML = '<span class="hero-sub">Selamat Datang Kembali,</span><br><span class="hero-user" id="hero-name">' + esc(me.username) + '</span>';
+    if (hg) {
+      hg.innerHTML = '<span class="hero-sub">Selamat Datang Kembali,</span><br><span class="hero-user" id="hero-name"></span>';
+      typeWriter(document.getElementById('hero-name'), me.username);
+    }
     if (me.is_admin) document.getElementById('nav-admin').style.display = '';
     const nd = document.getElementById('nav-dashboard');
     if (nd) nd.classList.add('on', 'active');
