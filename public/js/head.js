@@ -103,9 +103,11 @@ document.addEventListener('DOMContentLoaded', function () {
   // /pricing.html (preview) maupun /pricing (rute server.js)
   var nama = kini === '/' ? 'index' : kini.split('/').pop().replace(/\.html$/, '');
   if (/^\/bot\//.test(kini)) nama = 'dashboard';   // halaman detail bot = anak Dashboard
-  document.querySelectorAll('#sidebar .nav a[href]').forEach(function (a) {
+  document.querySelectorAll('#sidebar nav a[href], aside nav a[href]').forEach(function (a) {
     var h = (a.getAttribute('href') || '/').replace(/\/+$/, '') || '/';
     var hn = h === '/' ? 'index' : h.split('/').pop().replace(/\.html$/, '');
-    a.classList.toggle('active', h === kini || hn === nama);
+    var match = (h === kini || hn === nama);
+    a.classList.toggle('active', match);
+    a.classList.toggle('on', match);
   });
 });
