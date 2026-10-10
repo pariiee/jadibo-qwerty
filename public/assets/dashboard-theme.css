@@ -83,20 +83,93 @@ aside{
   width:auto!important;
   transform:none!important;
 }
-.brand{display:flex!important;align-items:center!important;gap:10px!important;font-weight:700!important;font-size:18px!important;padding:0 10px 18px!important;color:var(--ink)!important}
-.logo{width:34px!important;height:34px!important;border-radius:12px!important;background:var(--dark)!important;color:var(--darkink)!important;display:grid!important;place-items:center!important;overflow:hidden!important;flex:none!important}
-nav{display:flex!important;flex-direction:column!important;gap:4px!important}
-nav a,nav button{display:flex!important;align-items:center!important;gap:12px!important;padding:10px 12px!important;border:0!important;background:none!important;border-radius:999px!important;color:var(--mute)!important;font-weight:500!important;text-align:left!important;text-decoration:none!important;transition:all .15s ease!important}
-nav a:visited{color:var(--mute)!important}
-nav a:hover,nav button:hover{background:var(--card)!important;box-shadow:var(--hl)!important;color:var(--ink)!important}
-nav a.on,nav a.active,nav button.on{background:var(--dark)!important;color:var(--darkink)!important;font-weight:600!important}
-nav a.active::before,nav a.on::before{display:none!important}
-svg.i{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.me{margin-top:auto!important;display:flex!important;align-items:center!important;gap:10px!important;padding:12px!important;background:var(--card)!important;border:1px solid var(--edge)!important;box-shadow:var(--hl)!important;border-radius:20px!important}
-.av{width:36px!important;height:36px!important;border-radius:50%!important;background:var(--dark)!important;color:var(--darkink)!important;display:grid!important;place-items:center!important;font-weight:700!important;flex:none!important}
-.me small{display:block!important;color:var(--mute)!important;font-size:12px!important}
-.out{margin:6px 6px 0!important;display:flex!important;gap:8px!important;align-items:center!important;color:var(--mute)!important;background:none!important;border:0!important;padding:6px 10px!important;cursor:pointer!important;border-radius:999px!important}
-.out:hover{background:var(--card)!important;color:var(--ink)!important}
+aside .brand, .brand{height:auto!important;border:none!important;padding:0 10px 18px!important;display:flex!important;align-items:center!important;gap:10px!important;font-weight:700!important;font-size:18px!important;color:var(--ink)!important}
+aside .logo, .logo{width:34px!important;height:34px!important;min-height:34px!important;max-height:34px!important;border-radius:12px!important;background:var(--dark)!important;color:var(--darkink)!important;display:grid!important;place-items:center!important;overflow:hidden!important;flex:none!important;border:none!important;padding:0!important;margin:0!important}
+aside .logo img{width:100%!important;height:100%!important;object-fit:cover!important;display:block!important;border-radius:12px!important}
+aside nav, aside nav.nav, nav.nav, nav{flex:none!important;padding:0!important;margin:0!important;display:flex!important;flex-direction:column!important;gap:4px!important;background:none!important;border:none!important}
+aside nav a, aside nav button, nav.nav a, nav a{
+  display:flex!important;
+  align-items:center!important;
+  gap:12px!important;
+  padding:10px 12px!important;
+  border:0!important;
+  background:none!important;
+  border-radius:999px!important;
+  color:var(--mute)!important;
+  font-weight:500!important;
+  font-size:14px!important;
+  text-align:left!important;
+  text-decoration:none!important;
+  transition:all .15s ease!important;
+  transform:none!important;
+  box-shadow:none!important;
+}
+aside nav a:visited, nav.nav a:visited, nav a:visited{color:var(--mute)!important}
+aside nav a:hover, aside nav button:hover, nav.nav a:hover, nav a:hover{
+  background:var(--card)!important;
+  box-shadow:var(--hl)!important;
+  color:var(--ink)!important;
+  border-color:transparent!important;
+  transform:none!important;
+}
+aside nav a.on, aside nav a.active, aside nav button.on, nav.nav a.active, nav a.on, nav a.active{
+  background:var(--dark)!important;
+  color:var(--darkink)!important;
+  font-weight:600!important;
+  border-color:transparent!important;
+  box-shadow:none!important;
+  transform:none!important;
+}
+aside nav a::before, aside nav a::after, nav.nav a::before, nav.nav a::after{
+  display:none!important;
+  content:none!important;
+}
+svg.i{width:18px!important;height:18px!important;flex:none!important;stroke:currentColor!important;fill:none!important;stroke-width:1.8!important;stroke-linecap:round!important;stroke-linejoin:round!important}
+aside .me, .me{
+  margin-top:auto!important;
+  display:flex!important;
+  align-items:center!important;
+  gap:10px!important;
+  padding:12px!important;
+  background:var(--card)!important;
+  border:1px solid var(--edge)!important;
+  box-shadow:var(--hl)!important;
+  border-radius:20px!important;
+}
+aside .av, .av{
+  width:36px!important;
+  height:36px!important;
+  border-radius:50%!important;
+  background:var(--dark)!important;
+  color:var(--darkink)!important;
+  display:grid!important;
+  place-items:center!important;
+  font-weight:700!important;
+  font-size:14px!important;
+  flex:none!important;
+}
+aside .me div{display:flex!important;flex-direction:column!important}
+aside .me b{color:var(--ink)!important;font-size:14px!important;font-weight:600!important}
+aside .me small{display:block!important;color:var(--mute)!important;font-size:12px!important}
+aside .out, .out{
+  margin:6px 6px 0!important;
+  display:flex!important;
+  gap:8px!important;
+  align-items:center!important;
+  color:var(--mute)!important;
+  background:none!important;
+  border:0!important;
+  padding:6px 10px!important;
+  cursor:pointer!important;
+  border-radius:999px!important;
+  font-size:13px!important;
+  font-weight:500!important;
+  transition:all .15s ease!important;
+}
+aside .out:hover, .out:hover{
+  background:var(--card)!important;
+  color:var(--ink)!important;
+}
 .mini .brand span,.mini nav a span,.mini nav button span,.mini .me div,.mini .out span{display:none!important}
 .mini .brand,.mini .me,.mini .out{justify-content:center!important;padding-inline:0!important}
 .mini nav a,.mini nav button{justify-content:center!important;padding:11px!important}.mini aside{padding-inline:10px!important}
