@@ -14,6 +14,8 @@
     const hg = document.getElementById('hero-greeting');
     if (hg) hg.innerHTML = '<span>Selamat Datang Kembali,</span><br>' + esc(me.username);
     if (me.is_admin) document.getElementById('nav-admin').style.display = '';
+    const nd = document.getElementById('nav-dashboard');
+    if (nd) nd.classList.add('on', 'active');
     renderStats();
     return me;
   }
