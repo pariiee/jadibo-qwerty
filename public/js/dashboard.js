@@ -12,7 +12,7 @@
     if (topAv) topAv.textContent = (me.username || '?')[0].toUpperCase();
     document.getElementById('greeting').textContent   = 'Selamat Datang Kembali, ' + me.username;
     const hg = document.getElementById('hero-greeting');
-    if (hg) hg.innerHTML = '<span>Selamat Datang Kembali,</span><br>' + esc(me.username);
+    if (hg) hg.innerHTML = '<span class="hero-sub">Selamat Datang Kembali,</span><br><span class="hero-user" id="hero-name">' + esc(me.username) + '</span>';
     if (me.is_admin) document.getElementById('nav-admin').style.display = '';
     const nd = document.getElementById('nav-dashboard');
     if (nd) nd.classList.add('on', 'active');
