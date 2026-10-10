@@ -111,13 +111,37 @@ document.addEventListener('DOMContentLoaded', function () {
     a.classList.toggle('on', match);
   });
 
-  // Isi avatar topbar jika ada
+  // Isi avatar topbar jika ada & popover user data
   var topAv = document.getElementById('top-avatar-txt');
-  if (topAv && topAv.textContent === '?') {
-    fetch('/api/auth/me').then(function (r) { return r.json(); }).then(function (d) {
-      if (d && d.ok && d.user && d.user.username) {
-        topAv.textContent = d.user.username[0].toUpperCase();
-      }
-    }).catch(function () {});
+  var pName = document.getElementById('pop-name');
+  var pEmail = document.getElementById('pop-email');
+  var pRole = document.getElementById('pop-role');
+  fetch('/api/auth/me').then(function (r) { return r.json(); }).then(function (d) {
+    if (d && d.ok && d.user) {
+      var u = d.user;
+      if (topAv && u.username) topAv.textContent = u.username[0].toUpperCase();
+      if (pName) pName.textContent = u.username || 'User';
+      if (pEmail) pEmail.textContent = u.email || (u.username + '@gmail.com');
+      if (pRole) pRole.textContent = u.role_label || u.role || 'Basic';
+    }
+  }).catch(function () {});
+
+  function toggleUserMenu() {
+    var pop = document.getElementById('user-popover');
+    var btn = document.getElementById('top-avatar-btn');
+    if (!pop) return;
+    var buka = pop.style.display !== 'none';
+    pop.style.display = buka ? 'none' : 'flex';
+    if (btn) btn.setAttribute('aria-expanded', buka ? 'false' : 'true');
   }
+  window.toggleUserMenu = toggleUserMenu;
+
+  document.addEventListener('click', function (e) {
+    var pop = document.getElementById('user-popover');
+    var btn = document.getElementById('top-avatar-btn');
+    if (pop && pop.style.display !== 'none' && !pop.contains(e.target) && (!btn || !btn.contains(e.target))) {
+      pop.style.display = 'none';
+      if (btn) btn.setAttribute('aria-expanded', 'false');
+    }
+  });
 });

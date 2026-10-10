@@ -217,6 +217,10 @@ html.dark .theme-switch .ts-moon{
 
 /* User avatar in topbar */
 .top-avatar{
+  background:none!important;
+  border:none!important;
+  padding:0!important;
+  cursor:pointer!important;
   text-decoration:none!important;
   display:block!important;
 }
@@ -236,6 +240,93 @@ html.dark .theme-switch .ts-moon{
 }
 .top-avatar:hover .av{
   transform:scale(1.05)!important;
+}
+
+/* User Popover Card (image_92eb2a.png) */
+.user-popover{
+  position:absolute!important;
+  top:calc(100% + 10px)!important;
+  right:0!important;
+  width:230px!important;
+  background:#1e1f24!important;
+  border:1px solid var(--edge)!important;
+  border-radius:20px!important;
+  box-shadow:0 12px 36px rgba(0,0,0,.5), var(--hl)!important;
+  backdrop-filter:blur(24px)!important;
+  -webkit-backdrop-filter:blur(24px)!important;
+  z-index:100!important;
+  overflow:hidden!important;
+  padding:14px 16px!important;
+  flex-direction:column!important;
+  gap:12px!important;
+}
+.pop-header{
+  display:flex!important;
+  flex-direction:column!important;
+  gap:3px!important;
+  padding-bottom:12px!important;
+  border-bottom:1px solid rgba(255,255,255,.08)!important;
+}
+.pop-name{
+  color:#fff!important;
+  font-size:15px!important;
+  font-weight:700!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+.pop-email{
+  color:var(--mute)!important;
+  font-size:12px!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  margin-bottom:6px!important;
+}
+.pop-badge{
+  display:inline-block!important;
+  padding:3px 10px!important;
+  font-size:11px!important;
+  font-weight:700!important;
+  color:#facc15!important;
+  background:rgba(250,204,21,.1)!important;
+  border:1px solid rgba(250,204,21,.3)!important;
+  border-radius:999px!important;
+}
+.pop-menu{
+  display:flex!important;
+  flex-direction:column!important;
+  gap:4px!important;
+}
+.pop-item{
+  display:flex!important;
+  align-items:center!important;
+  gap:10px!important;
+  padding:8px 10px!important;
+  border-radius:10px!important;
+  color:#d1d5db!important;
+  font-size:13.5px!important;
+  font-weight:500!important;
+  text-decoration:none!important;
+  background:none!important;
+  border:none!important;
+  cursor:pointer!important;
+  width:100%!important;
+  text-align:left!important;
+  transition:all .15s ease!important;
+}
+.pop-item:hover{
+  background:rgba(255,255,255,.07)!important;
+  color:#fff!important;
+}
+.pop-item svg{
+  width:16px!important;
+  height:16px!important;
+  stroke:currentColor!important;
+  fill:none!important;
+}
+.pop-logout:hover{
+  color:#f87171!important;
 }
 
 /* typography & cards */

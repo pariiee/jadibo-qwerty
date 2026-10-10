@@ -6,7 +6,7 @@
     
     <h1 id="greeting" class="topbar-title" style="display:none">Dashboard</h1>
 
-    <div class="top-actions" style="display:flex;gap:12px;align-items:center">
+    <div class="top-actions" style="display:flex;gap:12px;align-items:center;position:relative">
       <button class="theme-switch" id="theme" data-act="toggleTheme" aria-label="Ganti tema" title="Ganti tema">
         <span class="ts-icon ts-sun">
           <svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
@@ -16,9 +16,28 @@
         </span>
       </button>
 
-      <a href="/profil" class="top-avatar" aria-label="Profil Akun" title="Profil Akun">
+      <button type="button" class="top-avatar" id="top-avatar-btn" data-act="toggleUserMenu" aria-label="Menu Akun" aria-haspopup="true" aria-expanded="false">
         <div class="av" id="top-avatar-txt">?</div>
-      </a>
+      </button>
+
+      <!-- Popover Menu Profile (image_92eb2a.png) -->
+      <div class="user-popover" id="user-popover" style="display:none">
+        <div class="pop-header">
+          <b class="pop-name" id="pop-name">...</b>
+          <span class="pop-email" id="pop-email">...</span>
+          <div><span class="pop-badge" id="pop-role">Basic</span></div>
+        </div>
+        <div class="pop-menu">
+          <a href="/profil" class="pop-item">
+            <svg class="i" viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg>
+            <span>Profil</span>
+          </a>
+          <button type="button" class="pop-item pop-logout" data-act="logout">
+            <svg class="i" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+            <span>Keluar</span>
+          </button>
+        </div>
+      </div>
 
       <button class="pill add-btn" data-act="openAddBot" style="display:none" aria-hidden="true"></button>
     </div>
