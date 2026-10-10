@@ -23,40 +23,41 @@
    Latar DATAR #dde3f1 / #0c0d12. Tanpa gradasi, blob, atau glow (§3, §15).
    ══════════════════════════════════════════════════════════════════════ */
 
-/* ── 1. Token · terang (Design.md §2) ──────────────────────────────── */
+/* ── 1. Token · Gelap Glassmorphic (1:1 Sesuai Dashboard) ──────────── */
 :root{
-  --bg:#fafafa;
-  --ink:#0f172a;
-  --mute:#64748b;
-  --accent:#3b82f6;          /* teks aksen */
-  --accent2:#2563eb;         /* logo, tombol aksen, item terpilih */
-  --dark:#0f172a;
-  --darkink:#ffffff;
-  --peach:#f1f5f9;           /* latar ikon, header mockup */
-  --green:#10b981;
-  --greenbg:rgba(16,185,129,.08);
-  --amber:#f59e0b;
-  --amberbg:rgba(245,158,11,.08);
-  --red:#ef4444;
-  --redbg:rgba(239,68,68,.08);
+  --bg:#0c0d12;
+  --bg3:#0c0d12;
+  --ink:#f2f3f8;
+  --mute:#9ca0b5;
+  --accent:#a5b4fc;
+  --accent2:#6366f1;
+  --dark:#f2f3f8;
+  --darkink:#0b0c14;
+  --peach:rgba(255,255,255,.07);
+  --green:#34d399;
+  --greenbg:rgba(52,211,153,.14);
+  --amber:#fbbf24;
+  --amberbg:rgba(251,191,36,.14);
+  --red:#f87171;
+  --redbg:rgba(248,113,113,.14);
 
-  /* Clean Solid & Subtle Surface (Bukan Kaca Abu Murahan) */
-  --shell:#ffffff;
-  --panel:#ffffff;
-  --card:#ffffff;
-  --edge:#e2e8f0;
-  --hl:none;
-  --line:#e2e8f0;
-  --shadow:0 10px 30px -10px rgba(15,23,42,.06);
-  --glass:var(--card);       /* nama di mockup landing */
+  /* Glassmorphic Surfaces (1:1 Sesuai Dashboard Mockup) */
+  --shell:rgba(255,255,255,.03);
+  --panel:rgba(255,255,255,.04);
+  --card:rgba(255,255,255,.06);
+  --edge:rgba(255,255,255,.14);
+  --hl:inset 0 1px 0 rgba(255,255,255,.12);
+  --line:rgba(255,255,255,.09);
+  --shadow:0 2px 8px rgba(0,0,0,.3);
+  --glass:var(--card);
 
-  /* §6 bentuk */
-  --r-shell:24px;
-  --r-panel:20px;
-  --r-card:16px;
+  /* Bentuk & Radius */
+  --r-shell:32px;
+  --r-panel:26px;
+  --r-card:20px;
   --r-chip:14px;
-  --r-inp:12px;
-  --blur:none;
+  --r-inp:14px;
+  --blur:22px;
 
   /* ── Alias nama LAMA → token Design.md ──────────────────────────── */
   --bg2:#f8fafc;
@@ -155,46 +156,47 @@
   }
 }
 :root[data-theme="dark"],html.dark{
-  --bg:#090a0f;
-  --ink:#f8fafc;
-  --mute:#94a3b8;
-  --accent:#60a5fa;
-  --accent2:#3b82f6;
-  --dark:#ffffff;
-  --darkink:#090a0f;
-  --peach:rgba(255,255,255,.05);
-  --green:#10b981;
-  --greenbg:rgba(16,185,129,.12);
-  --amber:#f59e0b;
-  --amberbg:rgba(245,158,11,.12);
-  --red:#ef4444;
-  --redbg:rgba(239,68,68,.12);
-  --shell:#111218;
-  --panel:#111218;
-  --card:#111218;
-  --edge:rgba(255,255,255,.08);
-  --hl:none;
-  --line:rgba(255,255,255,.08);
-  --shadow:0 12px 36px -10px rgba(0,0,0,.6);
-  --txt2:#e2e8f0;
-  --dim:#64748b;
-  --dim2:#475569;
-  --okTxt:#34d399;
-  --okTxt2:#6ee7b7;
+  --bg:#0c0d12;
+  --bg3:#0c0d12;
+  --ink:#f2f3f8;
+  --mute:#9ca0b5;
+  --accent:#a5b4fc;
+  --accent2:#6366f1;
+  --dark:#f2f3f8;
+  --darkink:#0b0c14;
+  --peach:rgba(255,255,255,.07);
+  --green:#34d399;
+  --greenbg:rgba(52,211,153,.14);
+  --amber:#fbbf24;
+  --amberbg:rgba(251,191,36,.14);
+  --red:#f87171;
+  --redbg:rgba(248,113,113,.14);
+  --shell:rgba(255,255,255,.03);
+  --panel:rgba(255,255,255,.04);
+  --card:rgba(255,255,255,.06);
+  --edge:rgba(255,255,255,.14);
+  --hl:inset 0 1px 0 rgba(255,255,255,.12);
+  --line:rgba(255,255,255,.09);
+  --shadow:0 2px 8px rgba(0,0,0,.3);
+  --txt2:#dcdfef;
+  --dim:#8d94a4;
+  --dim2:#79808f;
+  --okTxt:#86efac;
+  --okTxt2:#a7f3d0;
   --warnTxt:#fcd34d;
   --errTxt:#fca5a5;
-  --info:#38bdf8;
+  --info:#3b82f6;
   --infoTxt:#7dd3fc;
-  --surf0:#090a0f;
-  --surf1:#111218;
-  --surf2:#181922;
-  --surf3:#22232e;
-  --off2:rgba(255,255,255,.15);
-  --scroll:rgba(255,255,255,.12);
-  --scrollH:rgba(255,255,255,.24);
-  --ovBg:rgba(0,0,0,.7);
-  --tile-blue:rgba(59,130,246,.12);
-  --tile-purple:rgba(168,85,247,.12);
+  --surf0:rgba(255,255,255,.03);
+  --surf1:rgba(255,255,255,.04);
+  --surf2:rgba(255,255,255,.06);
+  --surf3:rgba(255,255,255,.11);
+  --off2:rgba(255,255,255,.2);
+  --scroll:rgba(255,255,255,.16);
+  --scrollH:rgba(255,255,255,.28);
+  --ovBg:rgba(4,6,14,.62);
+  --tile-blue:#1b1f45;
+  --tile-purple:#231a3d;
 }
 
 /* ── 3. Latar: DATAR (§3 "Tidak ada gradasi, blob, atau glow") ─────── */
