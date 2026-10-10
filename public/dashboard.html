@@ -86,6 +86,16 @@ h2 small{color:var(--mute);font-weight:500;font-size:14px}
 .faq p{margin:12px 0 0;color:var(--mute);font-size:14px;line-height:1.6}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--dark);color:var(--darkink);padding:10px 18px;border-radius:999px;font-size:14px;opacity:0;transition:.25s;pointer-events:none}
 .toast.show{opacity:1;transform:translate(-50%,0)}
+@media (min-width: 761px){
+  body{height:100vh;overflow:hidden}
+  .shell{height:calc(100vh - 40px);max-height:calc(100vh - 40px)}
+  aside{height:100%;overflow-y:auto}
+  main{height:calc(100% - 20px);overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.12) transparent}
+  main::-webkit-scrollbar{width:6px}
+  main::-webkit-scrollbar-track{background:transparent}
+  main::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:999px}
+  main::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.24)}
+}
 @media (max-width:1000px){.stats{grid-template-columns:repeat(2,1fr)}.stats .card{border-left:0;border-top:1px solid var(--line)}.stats .card:nth-child(-n+2){border-top:0}.bot{display:none}}
 @media (max-width:760px){
   body{padding:8px}.shell,.shell.mini{grid-template-columns:64px 1fr;border-radius:26px}

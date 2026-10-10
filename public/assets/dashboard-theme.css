@@ -373,6 +373,31 @@ summary::-webkit-details-marker{display:none!important}
   background:var(--card)!important;box-shadow:var(--hl)!important;border-radius:20px!important;border:1px solid var(--edge)!important;padding:16px 20px!important;margin-bottom:10px!important;backdrop-filter:blur(18px)!important;-webkit-backdrop-filter:blur(18px)!important;color:var(--ink)!important;
 }
 
+@media (min-width: 761px){
+  body{
+    height:100vh!important;
+    overflow:hidden!important;
+  }
+  .shell, .app{
+    height:calc(100vh - 40px)!important;
+    max-height:calc(100vh - 40px)!important;
+  }
+  aside{
+    height:100%!important;
+    overflow-y:auto!important;
+  }
+  main{
+    height:calc(100% - 20px)!important;
+    overflow-y:auto!important;
+    scrollbar-width:thin;
+    scrollbar-color:rgba(255,255,255,.12) transparent;
+  }
+  main::-webkit-scrollbar{width:6px}
+  main::-webkit-scrollbar-track{background:transparent}
+  main::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:999px}
+  main::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.24)}
+}
+
 @media (max-width:760px){
   body{padding:8px!important}
   .shell,.shell.mini,.app,.app.mini{grid-template-columns:64px 1fr!important;border-radius:26px!important}
