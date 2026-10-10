@@ -126,43 +126,21 @@ aside nav a::before, aside nav a::after, nav.nav a::before, nav.nav a::after{
 }
 svg.i{width:18px!important;height:18px!important;flex:none!important;stroke:currentColor!important;fill:none!important;stroke-width:1.8!important;stroke-linecap:round!important;stroke-linejoin:round!important}
 aside .me, .me{
-  margin-top:auto!important;
-  display:flex!important;
-  align-items:center!important;
-  gap:10px!important;
-  padding:12px!important;
-  background:var(--card)!important;
-  border:1px solid var(--edge)!important;
-  box-shadow:var(--hl)!important;
-  border-radius:20px!important;
+  display:none!important;
 }
-aside .av, .av{
-  width:36px!important;
-  height:36px!important;
-  border-radius:50%!important;
-  background:var(--dark)!important;
-  color:var(--darkink)!important;
-  display:grid!important;
-  place-items:center!important;
-  font-weight:700!important;
-  font-size:14px!important;
-  flex:none!important;
-}
-aside .me div{display:flex!important;flex-direction:column!important}
-aside .me b{color:var(--ink)!important;font-size:14px!important;font-weight:600!important}
-aside .me small{display:block!important;color:var(--mute)!important;font-size:12px!important}
 aside .out, .out{
-  margin:6px 6px 0!important;
+  margin-top:auto!important;
+  margin-bottom:0!important;
   display:flex!important;
   gap:8px!important;
   align-items:center!important;
   color:var(--mute)!important;
   background:none!important;
   border:0!important;
-  padding:6px 10px!important;
+  padding:10px 12px!important;
   cursor:pointer!important;
   border-radius:999px!important;
-  font-size:13px!important;
+  font-size:14px!important;
   font-weight:500!important;
   transition:all .15s ease!important;
 }
