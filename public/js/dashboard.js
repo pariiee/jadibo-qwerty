@@ -7,20 +7,34 @@
   function typeWriter(el, text, speed) {
     if (!el || !text) return;
     el.textContent = '';
-    let i = 0;
+    let i = 0, isDeleting = false;
     const cursor = document.createElement('span');
     cursor.className = 'type-cursor';
     cursor.textContent = '|';
     el.appendChild(cursor);
-    const timer = setInterval(() => {
-      if (i < text.length) {
-        cursor.before(text.charAt(i));
-        i++;
+
+    function tick() {
+      if (isDeleting) {
+        if (i > 0) {
+          i--;
+          if (cursor.previousSibling) cursor.previousSibling.remove();
+          setTimeout(tick, 35);
+        } else {
+          isDeleting = false;
+          setTimeout(tick, 600);
+        }
       } else {
-        clearInterval(timer);
-        setTimeout(() => { if (cursor.parentNode) cursor.remove(); }, 3000);
+        if (i < text.length) {
+          cursor.before(text.charAt(i));
+          i++;
+          setTimeout(tick, speed || 60);
+        } else {
+          isDeleting = true;
+          setTimeout(tick, 3500);
+        }
       }
-    }, speed || 45);
+    }
+    tick();
   }
 
   async function whoami() {
