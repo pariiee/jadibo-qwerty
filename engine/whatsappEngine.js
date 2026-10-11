@@ -1116,8 +1116,6 @@ module.exports = {
   startWhatsAppBot, stopWhatsAppBot,
   restartWhatsAppBot, restartWhatsAppBotInBackground, getBotConnectedAt, botNyangkut,
   setWsBroadcast, getBotGlobalSetting, setBotGlobalSetting,
-  // Dipakai `.restart` (plugins/05-owner.js) buat nulis alasan gagal ke bot_logs.
-  // Di Baileys fungsi ini nggak pernah diekspor → pemanggilnya `logBot?.()`
-  // jadi diam-diam nggak nulis apa-apa. Diekspor di sini biar log-nya beneran ada.
   logBot,
+  loadPlugins,
 };

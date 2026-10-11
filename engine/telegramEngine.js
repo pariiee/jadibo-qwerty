@@ -8,6 +8,14 @@
 
 const { pool } = require('../config/database');
 const { activeBots } = require('../controllers/botController');
+const { buildUniversalContext } = require('./universalAdapter');
+const { loadPlugins } = require('./whatsappEngine');
+
+let _plugins = null;
+function getPlugins() {
+  if (!_plugins) _plugins = loadPlugins();
+  return _plugins;
+}
 
 let TelegramBot;
 try {
@@ -122,6 +130,35 @@ async function handleMessage(tgBot, msg, botData, botId) {
     await tgBot.sendMessage(chatId, args);
     await logBot(botId, 'cmd', `[cmd] echo`);
     return;
+  }
+
+  // ── Universal Plugin Dispatch (AI, Tools, Downloader, Games) ──
+  try {
+    const ctx = buildUniversalContext({
+      platform: 'telegram',
+      bot: tgBot,
+      chatId,
+      senderId: msg.from?.id,
+      pushName: [msg.from?.first_name, msg.from?.last_name].filter(Boolean).join(' ') || 'Telegram User',
+      text,
+      rawMsg: msg,
+      botData,
+    });
+
+    const plugins = getPlugins();
+    for (const handler of plugins) {
+      try {
+        const handled = await handler(ctx);
+        if (handled) {
+          await logBot(botId, 'cmd', `[cmd] ${ctx.command}`);
+          return;
+        }
+      } catch (err) {
+        console.warn(`[TelegramPlugin] ${ctx.command}:`, err.message);
+      }
+    }
+  } catch (e) {
+    console.warn('[TelegramAdapter] Error:', e.message);
   }
 
   // Command tidak dikenal

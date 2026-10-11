@@ -27,9 +27,11 @@ const SEMUA = info.ALL_COMMANDS;
 const KATEGORI = info.CATS;
 const SEMUA_ALIAS = new Set(Object.values(ALIAS).flat());
 
-// Engine support audit: WA (semua), Telegram (core commands), Discord (core commands)
-const TELE_COMMANDS = new Set(['ping', 'menu', 'info', 'uptime', 'start', 'echo']);
-const DISCORD_COMMANDS = new Set(['ping', 'menu', 'info', 'uptime']);
+// Engine support audit:
+// WA: mendukung seluruh 320 command (100%)
+// Telegram & Discord (via universalAdapter): mendukung kategori umum (info, tools, downloader, game, maker, fun, dll.)
+// Eksklusif WhatsApp: manajemen grup WA (LID/admin WA), proteksi grup WA, dan native flow button.
+const WA_EXCLUSIVE_CATS = new Set(['grup', 'group', 'proteksi', 'button']);
 
 // Satu command bisa muncul di >1 kategori; yang dipakai = kategori pertama
 // menurut urutan menu, sama seperti `.menu` di bot.
@@ -60,8 +62,9 @@ function daftarCommand(req, res) {
       .map((c) => {
         const k = PETA_KATEGORI.get(c) || 'lain';
         const engines = ['wa'];
-        if (TELE_COMMANDS.has(c)) engines.push('tele');
-        if (DISCORD_COMMANDS.has(c)) engines.push('discord');
+        if (!WA_EXCLUSIVE_CATS.has(k)) {
+          engines.push('tele', 'discord');
+        }
         return {
           nama: c,
           kategori: k,
