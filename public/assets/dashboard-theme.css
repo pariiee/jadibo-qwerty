@@ -469,8 +469,9 @@ summary::-webkit-details-marker{display:none!important}
 .cmd-desk{color:var(--ink)!important;margin:0 0 10px!important;font-size:14px!important;line-height:1.5!important}
 .cmd-alias-item{background:rgba(255,255,255,.06)!important;color:var(--mute)!important;border-radius:6px!important;padding:3px 8px!important}
 .cmd-bar{display:flex!important;gap:10px!important;flex-wrap:wrap!important;align-items:center!important;margin-bottom:16px!important}
-.cmd-bar .inp{flex:1 1 200px!important;min-width:150px!important}
-.cmd-bar select.inp{flex:0 1 200px!important}
+.cmd-bar .inp{height:42px!important;min-height:42px!important;border-radius:14px!important;padding:0 16px!important;font-size:13.5px!important;flex:1 1 200px!important;min-width:150px!important}
+.cmd-bar .custom-select-wrap{flex:0 1 220px!important;min-width:170px!important}
+.cmd-bar .btn{height:42px!important;min-height:42px!important;border-radius:14px!important;padding:0 20px!important;font-size:13.5px!important;font-weight:600!important}
 .cmd-info{color:var(--mute)!important;font-size:13px!important;margin-bottom:14px!important}
 .cmd-pager{display:flex!important;align-items:center!important;gap:12px!important;margin-top:16px!important}
 .cmd-pager span{color:var(--mute)!important;font-size:13px!important}
@@ -515,9 +516,9 @@ summary::-webkit-details-marker{display:none!important}
 .cs-trigger{
   display:inline-flex;align-items:center;justify-content:space-between;gap:10px;
   background:rgba(255,255,255,0.05)!important;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
-  border:1px solid var(--edge)!important;box-shadow:var(--hl)!important;border-radius:14px!important;padding:8px 14px!important;
-  font-family:inherit;font-size:13px;font-weight:500;color:var(--ink)!important;
-  cursor:pointer;transition:all .2s ease;user-select:none;min-height:38px;box-sizing:border-box;width:100%;
+  border:1px solid var(--edge)!important;box-shadow:var(--hl)!important;border-radius:14px!important;padding:0 16px!important;
+  font-family:inherit;font-size:13.5px;font-weight:500;color:var(--ink)!important;
+  cursor:pointer;transition:all .2s ease;user-select:none;height:42px!important;min-height:42px!important;box-sizing:border-box;width:100%;
 }
 .cs-trigger:hover{
   background:rgba(255,255,255,0.09)!important;
