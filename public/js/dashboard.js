@@ -6,18 +6,13 @@
   let me = null;
   function typeWriter(el, text, speed) {
     if (!el || !text) return;
-    el.textContent = '';
     let i = 0, isDeleting = false;
-    const cursor = document.createElement('span');
-    cursor.className = 'type-cursor';
-    cursor.textContent = '|';
-    el.appendChild(cursor);
 
     function tick() {
       if (isDeleting) {
         if (i > 0) {
           i--;
-          if (cursor.previousSibling) cursor.previousSibling.remove();
+          el.textContent = text.slice(0, i);
           setTimeout(tick, 35);
         } else {
           isDeleting = false;
@@ -25,8 +20,8 @@
         }
       } else {
         if (i < text.length) {
-          cursor.before(text.charAt(i));
           i++;
+          el.textContent = text.slice(0, i);
           setTimeout(tick, speed || 60);
         } else {
           isDeleting = true;
