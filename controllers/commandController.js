@@ -27,6 +27,10 @@ const SEMUA = info.ALL_COMMANDS;
 const KATEGORI = info.CATS;
 const SEMUA_ALIAS = new Set(Object.values(ALIAS).flat());
 
+// Engine support audit: WA (semua), Telegram (core commands), Discord (core commands)
+const TELE_COMMANDS = new Set(['ping', 'menu', 'info', 'uptime', 'start', 'echo']);
+const DISCORD_COMMANDS = new Set(['ping', 'menu', 'info', 'uptime']);
+
 // Satu command bisa muncul di >1 kategori; yang dipakai = kategori pertama
 // menurut urutan menu, sama seperti `.menu` di bot.
 const PETA_KATEGORI = new Map();
@@ -55,6 +59,9 @@ function daftarCommand(req, res) {
       .filter((c) => !SEMUA_ALIAS.has(c))
       .map((c) => {
         const k = PETA_KATEGORI.get(c) || 'lain';
+        const engines = ['wa'];
+        if (TELE_COMMANDS.has(c)) engines.push('tele');
+        if (DISCORD_COMMANDS.has(c)) engines.push('discord');
         return {
           nama: c,
           kategori: k,
@@ -62,6 +69,7 @@ function daftarCommand(req, res) {
           prefix: '.' + c,
           deskripsi: DESKRIPSI[c] || '',
           alias: ALIAS[c] || [],
+          engines,
         };
       });
     if (kategori) daftar = daftar.filter((c) => c.kategori === kategori);

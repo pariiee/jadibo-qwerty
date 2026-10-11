@@ -458,16 +458,25 @@ h2 small{color:var(--mute)!important;font-weight:500!important;font-size:14px!im
 
 /* details / rows (Command, FAQ, Log, etc.) */
 details, .cmd-row{
-  background:var(--card)!important;box-shadow:var(--hl)!important;border-radius:20px!important;border:1px solid var(--edge)!important;padding:16px 20px!important;margin-bottom:10px!important;backdrop-filter:blur(18px)!important;-webkit-backdrop-filter:blur(18px)!important;color:var(--ink)!important;
+  background:var(--card)!important;box-shadow:var(--hl)!important;border-radius:14px!important;border:1px solid var(--edge)!important;padding:10px 16px!important;margin-bottom:8px!important;backdrop-filter:blur(18px)!important;-webkit-backdrop-filter:blur(18px)!important;color:var(--ink)!important;transition:all .15s ease!important;
 }
-summary{cursor:pointer!important;font-weight:600!important;list-style:none!important;display:flex!important;justify-content:space-between!important;gap:12px!important;color:var(--ink)!important}
+details[open], .cmd-row[open]{background:rgba(255,255,255,0.07)!important;border-color:rgba(255,255,255,0.2)!important}
+summary{cursor:pointer!important;font-weight:600!important;list-style:none!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;color:var(--ink)!important}
 summary::-webkit-details-marker{display:none!important}
-.cmd-nama{background:rgba(255,255,255,.08)!important;border:1px solid var(--edge)!important;color:var(--ink)!important;border-radius:10px!important;padding:4px 10px!important;font-size:14px!important;font-weight:700!important}
-.cmd-kat{color:var(--mute)!important;font-size:13px!important;font-weight:500!important;margin-left:10px!important}
-.cmd-panah{color:var(--mute)!important}
-.cmd-isi{border-top:1px solid var(--line)!important;padding-top:14px!important;margin-top:14px!important}
-.cmd-desk{color:var(--ink)!important;margin:0 0 10px!important;font-size:14px!important;line-height:1.5!important}
-.cmd-alias-item{background:rgba(255,255,255,.06)!important;color:var(--mute)!important;border-radius:6px!important;padding:3px 8px!important}
+.cmd-kiri{display:flex!important;align-items:center!important;gap:8px!important}
+.cmd-nama{background:rgba(255,255,255,.07)!important;border:1px solid var(--edge)!important;color:var(--ink)!important;border-radius:8px!important;padding:3px 8px!important;font-size:13px!important;font-weight:600!important;font-family:monospace!important}
+.cmd-kat{color:var(--mute)!important;font-size:11px!important;font-weight:500!important;background:rgba(255,255,255,0.04)!important;border:1px solid rgba(255,255,255,0.06)!important;border-radius:6px!important;padding:2px 7px!important;letter-spacing:0.02em!important}
+.cmd-kanan{display:flex!important;align-items:center!important;gap:10px!important}
+.cmd-engines{display:inline-flex!important;align-items:center!important;gap:5px!important}
+.engine-badge{display:inline-flex!important;align-items:center!important;justify-content:center!important;width:22px!important;height:22px!important;border-radius:6px!important;border:1px solid var(--edge)!important;box-shadow:var(--hl)!important;cursor:default!important}
+.engine-badge.wa{background:rgba(37,211,102,.12)!important;color:#25d366!important;border-color:rgba(37,211,102,.25)!important}
+.engine-badge.tg{background:rgba(34,158,217,.12)!important;color:#229ed9!important;border-color:rgba(34,158,217,.25)!important}
+.engine-badge.dc{background:rgba(88,101,242,.12)!important;color:#5865f2!important;border-color:rgba(88,101,242,.25)!important}
+.cmd-panah{color:var(--mute)!important;display:inline-flex!important;align-items:center!important;transition:transform .2s ease!important}
+details[open] .cmd-panah{transform:rotate(180deg)!important;color:var(--ink)!important}
+.cmd-isi{border-top:1px solid var(--line)!important;padding-top:10px!important;margin-top:10px!important}
+.cmd-desk{color:var(--ink)!important;margin:0 0 8px!important;font-size:13px!important;line-height:1.4!important}
+.cmd-alias-item{background:rgba(255,255,255,.06)!important;color:var(--mute)!important;border-radius:6px!important;padding:2px 6px!important;font-size:12px!important}
 .cmd-bar{display:flex!important;gap:10px!important;flex-wrap:wrap!important;align-items:center!important;margin-bottom:16px!important}
 .cmd-bar .inp{height:42px!important;min-height:42px!important;border-radius:14px!important;padding:0 16px!important;font-size:13.5px!important;flex:1 1 200px!important;min-width:150px!important}
 .cmd-bar .custom-select-wrap{flex:0 1 220px!important;min-width:170px!important}
