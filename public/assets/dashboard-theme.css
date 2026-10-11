@@ -510,43 +510,46 @@ summary::-webkit-details-marker{display:none!important}
   .shell,.shell.mini,.app,.app.mini{grid-template-columns:64px 1fr!important;border-radius:26px!important}
 }
 
-/* ── Custom Select Glassmorphic (§Obsidian) ────────────────────────── */
+/* ── Custom Select Glassmorphic (§Obsidian Glass) ──────────────────── */
 .custom-select-wrap{position:relative;display:inline-block;vertical-align:middle}
 .cs-trigger{
   display:inline-flex;align-items:center;justify-content:space-between;gap:10px;
-  background:rgba(18,22,36,0.75)!important;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
-  border:1px solid rgba(255,255,255,0.08)!important;border-radius:12px!important;padding:8px 14px!important;
-  font-family:inherit;font-size:13px;font-weight:500;color:#f1f5f9!important;
+  background:rgba(255,255,255,0.05)!important;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border:1px solid var(--edge)!important;box-shadow:var(--hl)!important;border-radius:14px!important;padding:8px 14px!important;
+  font-family:inherit;font-size:13px;font-weight:500;color:var(--ink)!important;
   cursor:pointer;transition:all .2s ease;user-select:none;min-height:38px;box-sizing:border-box;width:100%;
 }
-.cs-trigger:hover{background:rgba(26,32,53,0.85)!important;border-color:rgba(99,102,241,0.35)!important}
+.cs-trigger:hover{
+  background:rgba(255,255,255,0.09)!important;
+  border-color:rgba(255,255,255,0.24)!important;
+}
 .cs-trigger.open{
-  border-color:#6366f1!important;background:rgba(22,27,46,0.95)!important;
-  box-shadow:0 0 0 3px rgba(99,102,241,0.18),0 8px 20px -4px rgba(0,0,0,0.4);
+  border-color:rgba(255,255,255,0.32)!important;background:rgba(255,255,255,0.1)!important;
+  box-shadow:0 8px 24px rgba(0,0,0,0.4), var(--hl)!important;
 }
 .cs-label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left}
-.cs-arrow{width:14px;height:14px;stroke:#94a3b8;transition:transform .2s ease;flex-shrink:0}
-.cs-trigger.open .cs-arrow{transform:rotate(180deg);stroke:#818cf8}
+.cs-arrow{width:14px;height:14px;stroke:var(--mute);transition:transform .2s ease;flex-shrink:0}
+.cs-trigger.open .cs-arrow{transform:rotate(180deg);stroke:var(--ink)}
 .cs-menu{
   position:absolute;top:calc(100% + 6px);left:0;min-width:100%;width:max-content;max-width:320px;max-height:240px;
-  overflow-y:auto;background:rgba(13,16,28,0.97)!important;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
-  border:1px solid rgba(255,255,255,0.1)!important;border-radius:14px!important;padding:6px;
-  box-shadow:0 16px 36px -4px rgba(0,0,0,0.7),0 0 0 1px rgba(255,255,255,0.04);
-  z-index:9999;display:none;flex-direction:column;gap:2px;box-sizing:border-box;
+  overflow-y:auto;background:rgba(20,22,30,0.82)!important;backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);
+  border:1px solid var(--edge)!important;border-radius:16px!important;padding:6px;
+  box-shadow:0 16px 40px rgba(0,0,0,0.55), var(--hl)!important;
+  z-index:9999;display:none;flex-direction:column;gap:3px;box-sizing:border-box;
 }
 .cs-menu::-webkit-scrollbar{width:5px}
 .cs-menu::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:99px}
 .cs-menu.open{display:flex;animation:csFade .15s cubic-bezier(0.16,1,0.3,1)}
 @keyframes csFade{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
 .cs-option{
-  padding:8px 12px;border-radius:8px;font-size:13px;font-weight:500;color:#cbd5e1;
+  padding:8px 12px;border-radius:10px;font-size:13px;font-weight:500;color:var(--mute);
   cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;
   transition:all .15s ease;user-select:none;white-space:nowrap;
 }
-.cs-option:hover{background:rgba(99,102,241,0.15);color:#fff}
-.cs-option.on{background:rgba(99,102,241,0.22);color:#a5b4fc;font-weight:600}
-.cs-option.on::after{content:'';display:inline-block;width:5px;height:5px;border-radius:50%;background:#818cf8;box-shadow:0 0 6px #818cf8}
+.cs-option:hover{background:rgba(255,255,255,0.08);color:var(--ink)}
+.cs-option.on{background:rgba(255,255,255,0.12);color:#fff;font-weight:600}
+.cs-option.on::after{content:'';display:inline-block;width:5px;height:5px;border-radius:50%;background:#fff;box-shadow:0 0 8px rgba(255,255,255,0.8)}
 
 /* Fallback styling bila select asli masih sempat render */
-select.inp,select{background-color:rgba(18,22,36,0.75)!important;color:#f1f5f9!important;border:1px solid rgba(255,255,255,0.08)!important;border-radius:12px!important}
-select.inp option,select option{background-color:#0f121d!important;color:#f1f5f9!important;padding:8px 12px!important}
+select.inp,select{background-color:rgba(255,255,255,0.05)!important;color:var(--ink)!important;border:1px solid var(--edge)!important;border-radius:14px!important}
+select.inp option,select option{background-color:#12141c!important;color:var(--ink)!important;padding:8px 12px!important}
