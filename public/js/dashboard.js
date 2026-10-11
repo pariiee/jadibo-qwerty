@@ -70,14 +70,19 @@
 
   // ── Data ────────────────────────────────────────────────────────
   let bots = [];
+  let botKuota = new Map();
   let maxSlots = 2;
 
   async function loadBots() {
-    const d = await api('/api/bots');
+    const [dBots, dKuota] = await Promise.all([
+      api('/api/bots'),
+      api('/api/kuota')
+    ]);
     maxSlots = me?.slots_max ?? (me?.is_admin ? 999 : 0);
     // Daftar bot gagal? Kartu ringkasan tetap keisi — jangan tinggalin strip.
-    if (!d?.ok) { renderStats(); return; }
-    bots = d.bots;
+    if (!dBots?.ok) { renderStats(); return; }
+    bots = dBots.bots || [];
+    botKuota = new Map((dKuota?.bots || []).map(k => [k.id, k]));
     renderSlots();
     renderStats();
     renderBots();
@@ -218,7 +223,7 @@
     const grid = document.getElementById('bot-grid');
     const empty = document.getElementById('empty-state');
     grid.innerHTML = '';
-    empty.style.display = bots.length ? 'none' : '';
+    if (empty) empty.style.display = 'none';
 
     bots.forEach(bot => {
       const card = document.createElement('div');
@@ -226,13 +231,38 @@
       card.addEventListener('click', () => { location.href = '/bot/' + bot.id; });
       const on = bot.is_running;
       const stTxt = on ? 'Online' : (bot.status === 'connecting' ? 'Connecting' : 'Offline');
+      const k = botKuota.get(bot.id);
+
+      let kuotaHtml = '';
+      if (k) {
+        if (k.tanpaBatas) {
+          kuotaHtml = '<div class="bot-kuota-sec">' +
+            '<div class="bot-kuota-info"><span>Kuota Pesan</span><b>Tanpa Batas</b></div>' +
+            '<div class="bot-kuota-sub">Akun bebas batas kuota</div>' +
+          '</div>';
+        } else if (!k.paketAktif) {
+          kuotaHtml = '<div class="bot-kuota-sec">' +
+            '<div class="bot-kuota-info"><span>Kuota Pesan</span><b style="color:var(--errTxt)">Paket Berakhir</b></div>' +
+            '<div class="bot-kuota-sub">Perpanjang di menu Pricing</div>' +
+          '</div>';
+        } else {
+          const w = k.persen >= 95 ? 'var(--errTxt)' : (k.persen >= 80 ? 'var(--warn)' : 'var(--green)');
+          kuotaHtml = '<div class="bot-kuota-sec">' +
+            '<div class="bot-kuota-info"><span>Kuota Pesan</span><b>' + Number(k.sisa || 0).toLocaleString('id-ID') + ' / ' + Number(k.batas || 0).toLocaleString('id-ID') + '</b></div>' +
+            '<div class="bot-kuota-bar"><div class="bot-kuota-fill" style="width:' + Math.min(100, k.persen) + '%;background:' + w + '"></div></div>' +
+            '<div class="bot-kuota-sub">' + k.persen + '% terpakai · harian: ' + Number(k.harian || 0).toLocaleString('id-ID') + '</div>' +
+          '</div>';
+        }
+      }
+
       card.innerHTML =
         '<div class="row">' +
-          '<span class="wa">' + esc(bot.platform === 'telegram' ? 'Telegram' : 'WhatsApp') + '</span>' +
+          '<span class="eb-label ' + (bot.platform === 'telegram' ? 'eb-tg' : 'eb-wa') + '">' + esc(bot.platform === 'telegram' ? 'Telegram' : 'WhatsApp') + '</span>' +
           '<span class="on-dot ' + (on ? '' : 'off') + '">' + stTxt + '</span>' +
         '</div>' +
-        '<h3>' + esc(bot.bot_name) + '</h3>' +
-        '<div class="row" style="margin-top:2px">' + (bot.description ? esc(bot.description) : 'Tidak ada deskripsi') + '</div>' +
+        '<h3 style="margin:10px 0 4px">' + esc(bot.bot_name) + '</h3>' +
+        '<div class="row" style="margin-top:2px;font-size:13px;color:var(--mute)">' + (bot.description ? esc(bot.description) : 'Tidak ada deskripsi') + '</div>' +
+        kuotaHtml +
         '<div class="row" style="margin-top:14px"><span>Prefix: <b style="color:var(--ink)">' + esc(bot.prefix) + '</b></span><span>' + esc(new Date(bot.created_at).toLocaleDateString('id-ID')) + '</span></div>' +
         '<div class="btns">' +
           '<button data-cfg>Config</button>' +
@@ -243,15 +273,12 @@
       card.querySelector('[data-stat]').addEventListener('click', (e) => { e.stopPropagation(); location.href = '/bot/' + bot.id; });
     });
 
-    if (bots.length < maxSlots) {
-      const add = document.createElement('button');
-      add.className = 'add add-btn';
-      add.style.color = 'inherit';
-      add.style.cursor = 'pointer';
-      add.innerHTML = '<span class="round"><svg class="i" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span>Tambah Bot';
-      add.addEventListener('click', openAddBot);
-      grid.appendChild(add);
-    }
+    // Selalu tampilkan card Tambah Bot
+    const add = document.createElement('div');
+    add.className = 'card add-card';
+    add.innerHTML = '<span class="round"><svg class="i" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span><span>+ Tambah Bot</span>';
+    add.addEventListener('click', openAddBot);
+    grid.appendChild(add);
   }
 
   // ── Add bot ─────────────────────────────────────────────────────
