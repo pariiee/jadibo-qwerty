@@ -241,6 +241,9 @@ html.dark .theme-switch .ts-moon{
 .top-avatar:hover .av{
   transform:scale(1.05)!important;
 }
+.topbar .pill, .top-actions .pill, .add-btn.pill {
+  display:none!important;
+}
 
 /* User Popover Card (image_92eb2a.png) */
 .user-popover{
