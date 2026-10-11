@@ -468,10 +468,12 @@ summary::-webkit-details-marker{display:none!important}
 .cmd-kat{color:var(--mute)!important;font-size:11px!important;font-weight:500!important;background:rgba(255,255,255,0.04)!important;border:1px solid rgba(255,255,255,0.06)!important;border-radius:6px!important;padding:2px 7px!important;letter-spacing:0.02em!important}
 .cmd-kanan{display:flex!important;align-items:center!important;gap:10px!important}
 .cmd-engines{display:inline-flex!important;align-items:center!important;gap:5px!important}
-.engine-badge{display:inline-flex!important;align-items:center!important;justify-content:center!important;width:22px!important;height:22px!important;border-radius:6px!important;border:1px solid var(--edge)!important;box-shadow:var(--hl)!important;cursor:default!important}
-.engine-badge.wa{background:rgba(37,211,102,.12)!important;color:#25d366!important;border-color:rgba(37,211,102,.25)!important}
-.engine-badge.tg{background:rgba(34,158,217,.12)!important;color:#229ed9!important;border-color:rgba(34,158,217,.25)!important}
-.engine-badge.dc{background:rgba(88,101,242,.12)!important;color:#5865f2!important;border-color:rgba(88,101,242,.25)!important}
+.engine-badge{display:inline-flex!important;align-items:center!important;justify-content:center!important;width:24px!important;height:24px!important;border-radius:7px!important;border:1px solid var(--edge)!important;box-shadow:var(--hl)!important;cursor:default!important;flex-shrink:0!important;padding:0!important}
+.engine-badge::before,.engine-badge::after{display:none!important;content:none!important}
+.engine-badge svg{display:block!important;margin:auto!important}
+.engine-badge.eb-wa{background:rgba(37,211,102,.12)!important;color:#25d366!important;border-color:rgba(37,211,102,.28)!important}
+.engine-badge.eb-tg{background:rgba(34,158,217,.12)!important;color:#229ed9!important;border-color:rgba(34,158,217,.28)!important}
+.engine-badge.eb-dc{background:rgba(88,101,242,.12)!important;color:#5865f2!important;border-color:rgba(88,101,242,.28)!important}
 .cmd-panah{color:var(--mute)!important;display:inline-flex!important;align-items:center!important;transition:transform .2s ease!important}
 details[open] .cmd-panah{transform:rotate(180deg)!important;color:var(--ink)!important}
 .cmd-isi{border-top:1px solid var(--line)!important;padding-top:10px!important;margin-top:10px!important}
