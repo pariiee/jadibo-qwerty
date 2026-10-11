@@ -144,4 +144,143 @@ document.addEventListener('DOMContentLoaded', function () {
       if (btn) btn.setAttribute('aria-expanded', 'false');
     }
   });
+
+  // ── Custom Select Dropdown (§Obsidian Glassmorphic) ─────────────────
+  function enhanceCustomSelect(sel) {
+    if (!sel || sel.dataset.csInit === '1') return;
+    sel.dataset.csInit = '1';
+    sel.style.display = 'none';
+
+    var wrap = document.createElement('div');
+    wrap.className = 'custom-select-wrap';
+    if (sel.id) wrap.dataset.for = sel.id;
+    if (sel.style.maxWidth) wrap.style.maxWidth = sel.style.maxWidth;
+
+    var trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'cs-trigger';
+    if (sel.className) {
+      sel.className.split(' ').filter(Boolean).forEach(function (c) {
+        if (c !== 'inp') trigger.classList.add(c);
+      });
+    }
+    trigger.setAttribute('aria-haspopup', 'listbox');
+    trigger.setAttribute('aria-expanded', 'false');
+
+    var label = document.createElement('span');
+    label.className = 'cs-label';
+
+    var arrow = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    arrow.setAttribute('class', 'cs-arrow');
+    arrow.setAttribute('viewBox', '0 0 24 24');
+    arrow.setAttribute('fill', 'none');
+    arrow.setAttribute('stroke', 'currentColor');
+    arrow.setAttribute('stroke-width', '2');
+    arrow.setAttribute('stroke-linecap', 'round');
+    arrow.setAttribute('stroke-linejoin', 'round');
+    var poly = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+    poly.setAttribute('points', '6 9 12 15 18 9');
+    arrow.appendChild(poly);
+
+    trigger.appendChild(label);
+    trigger.appendChild(arrow);
+
+    var menu = document.createElement('div');
+    menu.className = 'cs-menu';
+    menu.setAttribute('role', 'listbox');
+
+    wrap.appendChild(trigger);
+    wrap.appendChild(menu);
+    sel.parentNode.insertBefore(wrap, sel.nextSibling);
+
+    function syncOptions() {
+      menu.innerHTML = '';
+      var opts = sel.options;
+      var curIdx = sel.selectedIndex >= 0 ? sel.selectedIndex : 0;
+      label.textContent = opts[curIdx] ? opts[curIdx].textContent : (sel.getAttribute('placeholder') || 'Pilih...');
+
+      for (var i = 0; i < opts.length; i++) {
+        (function (idx) {
+          var o = opts[idx];
+          var item = document.createElement('div');
+          item.className = 'cs-option' + (idx === curIdx ? ' on' : '');
+          item.textContent = o.textContent;
+          item.dataset.val = o.value;
+          item.addEventListener('click', function (e) {
+            e.stopPropagation();
+            sel.selectedIndex = idx;
+            sel.value = o.value;
+            label.textContent = o.textContent;
+            menu.querySelectorAll('.cs-option').forEach(function (el, j) {
+              el.classList.toggle('on', j === idx);
+            });
+            close();
+            sel.dispatchEvent(new Event('change', { bubbles: true }));
+            if (typeof sel.onchange === 'function') sel.onchange();
+            if (sel.dataset && sel.dataset.act) {
+              var act = sel.dataset.act.trim();
+              var m = /^([A-Za-z_$][\w$]*)(?:\((.*)\))?$/.exec(act);
+              if (m && typeof window[m[1]] === 'function') {
+                window[m[1]](m[2] === undefined ? undefined : m[2], sel);
+              }
+            }
+          });
+          menu.appendChild(item);
+        })(i);
+      }
+    }
+
+    function open() {
+      document.querySelectorAll('.cs-menu.open').forEach(function (m) {
+        if (m !== menu) {
+          m.classList.remove('open');
+          var tr = m.previousElementSibling;
+          if (tr) { tr.classList.remove('open'); tr.setAttribute('aria-expanded', 'false'); }
+        }
+      });
+      menu.classList.add('open');
+      trigger.classList.add('open');
+      trigger.setAttribute('aria-expanded', 'true');
+    }
+
+    function close() {
+      menu.classList.remove('open');
+      trigger.classList.remove('open');
+      trigger.setAttribute('aria-expanded', 'false');
+    }
+
+    trigger.addEventListener('click', function (e) {
+      e.stopPropagation();
+      menu.classList.contains('open') ? close() : open();
+    });
+
+    sel.addEventListener('change', function () {
+      var curIdx = sel.selectedIndex >= 0 ? sel.selectedIndex : 0;
+      if (sel.options[curIdx]) label.textContent = sel.options[curIdx].textContent;
+      menu.querySelectorAll('.cs-option').forEach(function (el, j) {
+        el.classList.toggle('on', j === curIdx);
+      });
+    });
+
+    var mo = new MutationObserver(syncOptions);
+    mo.observe(sel, { childList: true, subtree: true });
+
+    syncOptions();
+  }
+
+  function initCustomSelects() {
+    document.querySelectorAll('select.inp, select').forEach(enhanceCustomSelect);
+  }
+  window.initCustomSelects = initCustomSelects;
+  initCustomSelects();
+
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('.custom-select-wrap')) {
+      document.querySelectorAll('.cs-menu.open').forEach(function (m) {
+        m.classList.remove('open');
+        var tr = m.previousElementSibling;
+        if (tr) { tr.classList.remove('open'); tr.setAttribute('aria-expanded', 'false'); }
+      });
+    }
+  });
 });
