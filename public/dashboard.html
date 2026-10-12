@@ -190,16 +190,5 @@ h2 small{color:var(--mute);font-weight:500;font-size:14px}
 <script src="/js/head.js" defer></script>
 <script src="/js/act.js"></script>
 <script src="/js/dashboard.js"></script>
-<script>
-const shell=document.querySelector('.shell'),burger=document.getElementById('burger'),mq=matchMedia('(max-width:760px)');
-function setMini(v){shell.classList.toggle('mini',v);burger.setAttribute('aria-expanded',String(!v))}
-setMini(mq.matches);mq.addEventListener('change',e=>setMini(e.matches));
-burger.onclick=()=>setMini(!shell.classList.contains('mini'));
-document.querySelector('main').addEventListener('click',e=>{if(mq.matches&&!shell.classList.contains('mini')&&!burger.contains(e.target))setMini(true)});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&mq.matches)setMini(true)});
-document.getElementById('theme').onclick=()=>{const r=document.documentElement;
-  const dark=r.dataset.theme?r.dataset.theme==='dark':matchMedia('(prefers-color-scheme: dark)').matches;
-  r.dataset.theme=dark?'light':'dark'};
-</script>
 </body>
 </html>

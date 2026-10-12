@@ -91,11 +91,11 @@ aside{
   width:auto!important;
   transform:none!important;
 }
-aside .brand, .brand{height:auto!important;border:none!important;padding:0 10px 18px!important;display:flex!important;align-items:center!important;gap:10px!important;font-weight:700!important;font-size:18px!important;color:var(--ink)!important}
-aside .logo, .logo{width:34px!important;height:34px!important;min-height:34px!important;max-height:34px!important;border-radius:12px!important;background:var(--dark)!important;color:var(--darkink)!important;display:grid!important;place-items:center!important;overflow:hidden!important;flex:none!important;border:none!important;padding:0!important;margin:0!important}
+aside .brand{height:auto!important;border:none!important;padding:0 10px 18px!important;display:flex!important;align-items:center!important;gap:10px!important;font-weight:700!important;font-size:18px!important;color:var(--ink)!important}
+aside .logo{width:34px!important;height:34px!important;min-height:34px!important;max-height:34px!important;border-radius:12px!important;background:var(--dark)!important;color:var(--darkink)!important;display:grid!important;place-items:center!important;overflow:hidden!important;flex:none!important;border:none!important;padding:0!important;margin:0!important}
 aside .logo img{width:100%!important;height:100%!important;object-fit:cover!important;display:block!important;border-radius:12px!important}
-aside nav, aside nav.nav, nav.nav, nav{flex:none!important;padding:0!important;margin:0!important;display:flex!important;flex-direction:column!important;gap:4px!important;background:none!important;border:none!important}
-aside nav a, aside nav button, nav.nav a, nav a{
+aside nav, aside nav.nav{flex:none!important;padding:0!important;margin:0!important;display:flex!important;flex-direction:column!important;gap:4px!important;background:none!important;border:none!important}
+aside nav a, aside nav button{
   display:flex!important;
   align-items:center!important;
   gap:12px!important;
