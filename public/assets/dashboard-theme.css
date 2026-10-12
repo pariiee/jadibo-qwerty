@@ -33,7 +33,15 @@
 }
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box}
-body{
+body.page-index, body.page-auth {
+  display:block!important;
+  padding:0!important;
+  height:auto!important;
+  min-height:100vh!important;
+  overflow:visible!important;
+  overflow-x:hidden!important;
+}
+body:not(.page-index):not(.page-auth){
   margin:0!important;
   min-height:100vh!important;
   font-family:'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',sans-serif!important;
@@ -496,7 +504,7 @@ details[open] .cmd-panah{transform:rotate(180deg)!important;color:var(--ink)!imp
 }
 
 @media (min-width: 761px){
-  body{
+  body:not(.page-index):not(.page-auth){
     height:100vh!important;
     overflow:hidden!important;
   }
@@ -521,7 +529,7 @@ details[open] .cmd-panah{transform:rotate(180deg)!important;color:var(--ink)!imp
 }
 
 @media (max-width:760px){
-  body{padding:8px!important}
+  body:not(.page-index):not(.page-auth){padding:8px!important}
   .shell,.shell.mini,.app,.app.mini{grid-template-columns:64px 1fr!important;border-radius:26px!important}
 }
 
