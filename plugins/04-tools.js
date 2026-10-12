@@ -4804,12 +4804,17 @@ module.exports = async function toolsHandler(ctx) {
         const caption = `🎵 *TikTok*${title ? `\n${title}` : ''}${author ? `\n👤 ${author}` : ''}`;
 
         // ── Photomode (slide foto) → kirim tiap gambar ────────────────────────
-        const images = (res.images || res.download || []).filter(Boolean);
+        const ttHeaders = {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+          'Referer': 'https://www.tiktok.com/',
+        };
+        const isPhoto = res.type === 'image' || (Array.isArray(res.images) && res.images.length > 0);
+        const images = isPhoto ? (res.images?.length ? res.images : res.download || []).filter(Boolean) : [];
         if (images.length) {
           await react(mess.reactSuccess);
           for (let i = 0; i < Math.min(images.length, 10); i++) {
             const imgUrl = images[i];
-            const imgRes = await axios.get(imgUrl, { responseType: 'arraybuffer', timeout: 60000 });
+            const imgRes = await axios.get(imgUrl, { headers: ttHeaders, responseType: 'arraybuffer', timeout: 60000 });
             const { buf, ct } = await jpegkan(Buffer.from(imgRes.data), imgRes.headers['content-type']);
             const thumb  = await genThumbnail(buf, ct);
             await client.message.send(jid, {
@@ -4822,11 +4827,29 @@ module.exports = async function toolsHandler(ctx) {
         }
 
         // ── Video biasa ───────────────────────────────────────────────────────
-        const dlUrl = res.video?.no_watermark;
-        if (!dlUrl) throw new Error(alasanBe || 'Media tidak ditemukan di response API');
-        const vidRes = await axios.get(dlUrl, { responseType: 'arraybuffer', timeout: 90000 });
+        const candidateUrls = [
+          res.video?.no_watermark,
+          ...(Array.isArray(res.video?.list) ? res.video.list : []),
+          ...(Array.isArray(res.download) ? res.download : []),
+        ].filter(Boolean);
+        if (!candidateUrls.length) throw new Error(alasanBe || 'Media tidak ditemukan di response API');
+
+        let vbuf = null;
+        let lastErr = null;
+        for (const dlUrl of candidateUrls) {
+          try {
+            const vidRes = await axios.get(dlUrl, { headers: ttHeaders, responseType: 'arraybuffer', timeout: 90000 });
+            if (vidRes.data && vidRes.data.length > 1000) {
+              vbuf = Buffer.from(vidRes.data);
+              break;
+            }
+          } catch (err) {
+            lastErr = err;
+          }
+        }
+        if (!vbuf) throw lastErr || new Error(alasanBe || 'Gagal mengunduh video TikTok');
+
         await react(mess.reactSuccess);
-        const vbuf  = Buffer.from(vidRes.data);
         const thumb = await genThumbnail(vbuf, 'video/mp4');
         await client.message.send(jid, {
           type: 'video', media: vbuf, mimetype: 'video/mp4',
