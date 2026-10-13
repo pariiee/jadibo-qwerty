@@ -3204,6 +3204,12 @@ module.exports._uji = {
   ENERGI_MAKS, ENERGI_REGEN_MENIT, DUR_MAKS, STORE_ITEMS,
 };
 
+// Helper atomic — di-export agar tes konkurensi (test/konkurensi-uang.js)
+// bisa memanggilnya langsung. Tidak dipanggil dari plugin lain; tinggal
+// satu pintu dari handler 'transfer' & 'coinflip' di file ini.
+module.exports.updateMoneyDelta = updateMoneyDelta;
+module.exports.transferMoney    = transferMoney;
+
 // Command yang kena limit untuk user biasa
 module.exports.limitedCmds = new Set([
   'jodoh','tembak','terima','tolak','confess','kapan',

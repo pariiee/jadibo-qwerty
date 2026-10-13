@@ -21,6 +21,7 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 const net = require('net');
+const crypto = require('crypto');
 
 // Pakai .env di root repo (mysql2 dibaca config/database.js, yang baca .env
 // via require('dotenv').config() di server.js — tapi di sini server.js belum
@@ -73,7 +74,16 @@ function cekReachable() {
     // Hapus sisa tes sebelumnya
     await pool.execute('DELETE FROM rpg_members WHERE bot_id = ?', [botId]);
     await pool.execute('DELETE FROM bots WHERE id = ?', [botId]);
-    // Setup: bot dummy + 2 member dengan saldo 10.000
+    await pool.execute('DELETE FROM users WHERE id IN (?, ?)', [userIdA, userIdB]);
+    // Setup: 2 user dummy + bot dummy + 2 member dengan saldo 10.000
+    await pool.execute(
+      "INSERT INTO users (id, username, password, role) VALUES (?, ?, ?, 'user')",
+      [userIdA, 'test_uang_a', crypto.randomBytes(8).toString('hex')]
+    );
+    await pool.execute(
+      "INSERT INTO users (id, username, password, role) VALUES (?, ?, ?, 'user')",
+      [userIdB, 'test_uang_b', crypto.randomBytes(8).toString('hex')]
+    );
     await pool.execute(
       'INSERT INTO bots (id, user_id, platform, bot_name, prefix) VALUES (?, ?, ?, ?, ?)',
       [botId, userIdA, 'whatsapp', 'test_uang', '.']
@@ -176,6 +186,7 @@ function cekReachable() {
       const { pool } = require('../config/database');
       await pool.execute('DELETE FROM rpg_members WHERE bot_id = ?', [botId]);
       await pool.execute('DELETE FROM bots WHERE id = ?', [botId]);
+      await pool.execute('DELETE FROM users WHERE id IN (?, ?)', [userIdA, userIdB]);
       await pool.end();
     } catch {}
   }
