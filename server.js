@@ -27,6 +27,14 @@ if (!process.env.KING_PASSWORD) {
   console.error('[Boot] KING_PASSWORD kosong di .env — server dihentikan.');
   process.exit(1);
 }
+// KING_USERNAME: wajib juga, simetris dengan KING_PASSWORD. Tanpa default
+// publik ('admin' / 'king' di .env.example) yang tetap di-hardcode di source
+// — admin publik tercipta kalau env lupa diisi. Pakai placeholder yang
+// jelas di .env.example; yang asli Pak yang isi.
+if (!process.env.KING_USERNAME) {
+  console.error('[Boot] KING_USERNAME kosong di .env — server dihentikan.');
+  process.exit(1);
+}
 
 require('./config/net'); // paksa IPv4 (lihat komentarnya) — worker juga pakai
 
