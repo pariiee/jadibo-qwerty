@@ -369,9 +369,9 @@ body.page-bot-stats .chart-summary {
 body.page-bot-stats .chart {
   display: block !important;
   width: 100% !important;
-  height: 240px !important;
-  padding: 16px 12px 10px !important;
-  border-radius: 20px !important;
+  height: 300px !important;
+  padding: 14px 10px 6px !important;
+  border-radius: 16px !important;
   background: var(--inner-bg) !important;
   border: 1px solid var(--line) !important;
   box-sizing: border-box !important;
@@ -390,24 +390,21 @@ body.page-bot-stats .chart-point {
   outline: none !important;
 }
 body.page-bot-stats .chart-point circle {
-  transition: r .2s ease, fill .2s ease, stroke .2s ease !important;
+  transition: r .15s ease, fill .15s ease !important;
 }
 body.page-bot-stats .chart-point:hover circle,
 body.page-bot-stats .chart-point:focus circle {
-  r: 7 !important;
-  fill: #a5b4fc !important;
-  stroke: #ffffff !important;
+  r: 8 !important;
 }
 
 body.page-bot-stats .chart-tip {
   opacity: 0 !important;
   pointer-events: none !important;
-  transition: opacity .2s ease, transform .2s ease !important;
+  transition: opacity .15s ease !important;
 }
 body.page-bot-stats .chart-point:hover .chart-tip,
 body.page-bot-stats .chart-point:focus .chart-tip {
   opacity: 1 !important;
-  transform: translate(0, -6px) !important;
 }
 </style>
 </head>
