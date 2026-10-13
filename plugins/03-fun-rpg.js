@@ -2668,8 +2668,20 @@ module.exports = async function funRpgHandler(ctx) {
       }
 
       const koinDapat = hasil.koin[0] === 0 ? 0 : Math.floor(Math.random() * (hasil.koin[1] - hasil.koin[0] + 1)) + hasil.koin[0];
-      const newMoney  = (member.money || 0) - GACHA_COST + koinDapat;
-      const res       = await applyXpGain(botData.id, sender, hasil.xp, { money: newMoney });
+
+      // Uang & XP dipisah: uang lewat updateMoneyDelta (kunci baris + cek saldo
+      // atomik), XP lewat applyXpGain (satu-satunya jalur XP, hitung level).
+      // Dulu keduanya satu updateMember({money}) — baca-lalu-tulis `member.money`
+      // yang bisa dua kali lolos cek saldo saat gacha dispam.
+      const rMoney = await updateMoneyDelta(botId, sender, -GACHA_COST + koinDapat);
+      if (!rMoney.ok) {
+        await reply(rMoney.reason === 'insufficient'
+          ? `❌ Money tidak cukup!\nBiaya gacha: *${formatNum(GACHA_COST)}*`
+          : '❌ Gagal memproses gacha, coba lagi.');
+        return true;
+      }
+      const newMoney = rMoney.money;
+      const res      = await applyXpGain(botId, sender, hasil.xp);
 
       const rarityEmoji = { Common: '⚪', Uncommon: '🟢', Rare: '🔵', Epic: '🟣', Legendary: '🟡' };
       await reply(
@@ -2734,8 +2746,17 @@ module.exports = async function funRpgHandler(ctx) {
       }
 
       const menang   = Math.floor(SLOT_COST * multiplier);
-      const newMoney = (member.money || 0) - SLOT_COST + menang;
-      await updateMember(botData.id, sender, { money: newMoney });
+      // updateMoneyDelta: kunci baris + cek saldo atomik. Cek `member.money`
+      // di atas cuma untuk pesan yang ramah; ini yang benar-benar menjaga.
+      const delta    = -SLOT_COST + menang;
+      const r        = await updateMoneyDelta(botId, sender, delta);
+      if (!r.ok) {
+        await reply(r.reason === 'insufficient'
+          ? `❌ Money tidak cukup!\nBiaya slot: *${formatNum(SLOT_COST)}*`
+          : '❌ Gagal memproses slot, coba lagi.');
+        return true;
+      }
+      const newMoney = r.money;
 
       await reply(
         `🎰 *SLOT MACHINE*\n\n` +
