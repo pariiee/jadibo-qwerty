@@ -1141,7 +1141,7 @@ module.exports = async function groupHandler(ctx) {
           await client.message.send(jid, { text, mentions: members, contextInfo: fwdCtx });
         }
       } catch (e) {
-        await reply(`Error: ${e.message}`);
+        await reply(`Error: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -1622,7 +1622,7 @@ module.exports = async function groupHandler(ctx) {
           `*Contoh:*\n` +
           `${p}${command} ${isOpen ? 'Selamat pagi @namegc, grup sudah dibuka!' : 'Selamat tinggal @user dari @namegc'} \n` +
           `${p}${command} ${isOpen ? '07.00' : '22.00'} ${isOpen ? 'Grup dibuka jam @jam WIB' : 'Grup ditutup jam @jam WIB'}\n\n` +
-          `_Tanpa teks = pakai default dari .env (${isOpen ? 'DEFAULT_SETOPEN' : 'DEFAULT_SETCLOSE'})_\n\n` +
+          `_Tanpa teks = pakai teks bawaan yang sudah disiapkan._\n\n` +
           catatan(command)
         );
         return true;
@@ -1655,7 +1655,7 @@ module.exports = async function groupHandler(ctx) {
       await reply(
         `✅ *${isOpen ? 'BUKA' : 'TUTUP'} grup disimpan!*\n` +
         (jam ? `⏰ Jadwal otomatis: *${jam}* WIB setiap hari.\n` : '') +
-        (teks ? `📝 Teks pengumuman:\n${teks}` : `📝 Teks: default .env (${isOpen ? 'DEFAULT_SETOPEN' : 'DEFAULT_SETCLOSE'})`)
+        (teks ? `📝 Teks pengumuman:\n${teks}` : `📝 Teks: bawaan sistem`)
       );
       return true;
     }
@@ -1812,7 +1812,9 @@ module.exports = async function groupHandler(ctx) {
           if (ack.error) {
             console.error(`[swgc] WA menolak status grup: error=${ack.error} id=${hasil?.id || '-'}`);
             await react('⚠️');
-            await reply(`⚠️ WA MENOLAK status grup ini (error ${ack.error}).`);
+            // `ack.error` = kode protokol WA (mis. "negative publish ack") — tetap di log,
+            // jangan dikirim ke chat: user nggak bisa ngapa-ngapain dengan kode itu.
+            await reply('⚠️ Status grup ini ditolak WhatsApp. Coba lagi beberapa saat lagi.');
           } else {
             await react('✅');
           }

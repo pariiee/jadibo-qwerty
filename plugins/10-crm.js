@@ -16,6 +16,7 @@
  */
 
 const mess = require('../config/mess');
+const { rapikanError } = require('../engine/pesanError');
 
 // ─── Ambil quoted message dari proto pesan masuk ────────────────────────────
 function getQuoted(message) {
@@ -170,7 +171,7 @@ module.exports = async function crmHandler(ctx) {
   try {
     await client.message.send(jid, clean, { quote: ctx.msg });
   } catch (e) {
-    await reply(`❌ Gagal me-relay pesan ini: ${e.message || e}`);
+    await reply(`❌ Gagal me-relay pesan ini: ${rapikanError(e)}`);
     return true;
   }
 

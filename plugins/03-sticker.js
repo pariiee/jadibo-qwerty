@@ -9,6 +9,7 @@
 const mess               = require('../config/mess');
 const { genThumbnail }   = require('../engine/thumbnail');
 const { upload, apiGet } = require('../engine/api');
+const { rapikanError } = require('../engine/pesanError');
 
 module.exports = async function stickerConvertHandler(ctx) {
   if (!ctx.isCmd) return false;
@@ -91,7 +92,8 @@ module.exports = async function stickerConvertHandler(ctx) {
     await react(mess.reactSuccess);
   } catch (e) {
     await react(mess.reactError);
-    await reply(`${mess.error}\n${e.message}`);
+    await reply(`${mess.error}
+${rapikanError(e)}`);
   }
 
   return true;

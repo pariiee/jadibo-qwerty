@@ -499,7 +499,7 @@ const GOOGLE_REDIRECT_URI  = () => process.env.GOOGLE_REDIRECT_URI || 'https://l
 function googleRedirect(req, res) {
   const clientId = GOOGLE_CLIENT_ID();
   if (!clientId) {
-    return res.status(503).send('Google OAuth belum dikonfigurasi (GOOGLE_CLIENT_ID belum diisi di .env).');
+    return res.status(503).send('Google OAuth belum dikonfigurasi. Hubungi admin.');
   }
   const redirectUri = encodeURIComponent(GOOGLE_REDIRECT_URI());
   const scope = encodeURIComponent('openid email profile');

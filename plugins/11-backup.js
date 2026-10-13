@@ -23,6 +23,7 @@ const fs   = require('fs');
 const os   = require('os');
 const path = require('path');
 const { pool } = require('../config/database');
+const { rapikanError } = require('../engine/pesanError');
 
 // Tabel yang isinya MILIK SATU BOT, semua dengan kolom `bot_id`.
 // Daftar ini sengaja eksplisit, bukan hasil scan `information_schema`: scan
@@ -160,7 +161,7 @@ module.exports = async function backupHandler(ctx) {
   } catch (e) {
     console.error('[Backup] gagal:', e.message);
     await react('❌');
-    await reply(`❌ Cadangan gagal: ${e.message}`);
+    await reply(`❌ Cadangan gagal: ${rapikanError(e)}`);
   }
   return true;
 };

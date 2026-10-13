@@ -10,6 +10,7 @@ const { proto } = require('zapo-js');
 const fs   = require('fs');
 const path = require('path');
 const { genThumbnail } = require('../engine/thumbnail');
+const { rapikanError } = require('../engine/pesanError');
 
 const BTN  = proto.Message.ButtonsMessage.Button.Type;
 const HDR  = proto.Message.ButtonsMessage.HeaderType;
@@ -172,7 +173,7 @@ module.exports = async function btnProbeHandler(ctx) {
       await client.message.send(jid, payload);
       await reply(`✅ *${label}* terkirim`);
     } catch (e) {
-      await reply(`❌ *${label}* GAGAL kirim: ${e.message}`);
+      await reply(`❌ *${label}* GAGAL kirim: ${rapikanError(e)}`);
     }
     await new Promise(r => setTimeout(r, 1500));
   }

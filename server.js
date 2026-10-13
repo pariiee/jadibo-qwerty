@@ -335,10 +335,14 @@ app.get('*',             halamanError(404));
 app.use((err, req, res, _next) => {
   console.error('[Server] Error:', err.message);
   const status = err.status && err.status >= 400 && err.status < 600 ? err.status : 500;
+  // Handler ini jaring TERAKHIR: `err.message` di sini belum tentu manusiawi
+  // (bisa bawa nama kolom DB, path, atau errno). Log detailnya, tapi yang
+  // keluar ke user cuma kalimat generik — sama seperti engine/pesanError.js.
+  const pesan = 'Terjadi kesalahan pada server. Coba lagi sebentar lagi.';
   if (req.path.startsWith('/api/') || req.xhr || (req.headers.accept || '').includes('json')) {
-    return res.status(status).json({ ok: false, message: err.message || 'Terjadi kesalahan pada server' });
+    return res.status(status).json({ ok: false, message: pesan });
   }
-  return halamanError(status, err.message)(req, res);
+  return halamanError(status)(req, res);
 });
 
 // ─── WebSocket Hub ────────────────────────────────────────────────────────────

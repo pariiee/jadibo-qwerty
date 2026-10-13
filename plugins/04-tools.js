@@ -603,7 +603,8 @@ module.exports = async function toolsHandler(ctx) {
         await react(mess.reactSuccess);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`${mess.error}\n${e.message}`);
+        await reply(`${mess.error}
+${rapikanError(e)}`);
       }
       return true;
     }
@@ -641,7 +642,8 @@ module.exports = async function toolsHandler(ctx) {
         await react(mess.reactSuccess);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`${mess.error}\n${e.message}`);
+        await reply(`${mess.error}
+${rapikanError(e)}`);
       }
       return true;
     }
@@ -683,7 +685,8 @@ module.exports = async function toolsHandler(ctx) {
         await react(mess.reactSuccess);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`${mess.error}\n${e.message}`);
+        await reply(`${mess.error}
+${rapikanError(e)}`);
       }
       return true;
     }
@@ -770,7 +773,8 @@ module.exports = async function toolsHandler(ctx) {
         await react(mess.reactSuccess);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`${mess.error}\n${e.message}`);
+        await reply(`${mess.error}
+${rapikanError(e)}`);
       }
       return true;
     }
@@ -852,7 +856,8 @@ module.exports = async function toolsHandler(ctx) {
         await react(mess.reactSuccess);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`${mess.error}\n${e.message}`);
+        await reply(`${mess.error}
+${rapikanError(e)}`);
       }
       return true;
     }
@@ -931,7 +936,8 @@ module.exports = async function toolsHandler(ctx) {
         await react(mess.reactSuccess);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`${mess.error}\n${e.message}`);
+        await reply(`${mess.error}
+${rapikanError(e)}`);
       }
       return true;
     }
@@ -961,7 +967,8 @@ module.exports = async function toolsHandler(ctx) {
         await react(mess.reactSuccess);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`${mess.error}\n${e.message}`);
+        await reply(`${mess.error}
+${rapikanError(e)}`);
       }
       return true;
     }
@@ -991,7 +998,8 @@ module.exports = async function toolsHandler(ctx) {
         await react(mess.reactSuccess);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`${mess.error}\n${e.message}`);
+        await reply(`${mess.error}
+${rapikanError(e)}`);
       }
       return true;
     }
@@ -1069,7 +1077,8 @@ module.exports = async function toolsHandler(ctx) {
         await react(mess.reactSuccess);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`${mess.error}\n${e.message}`);
+        await reply(`${mess.error}
+${rapikanError(e)}`);
       }
       return true;
     }
@@ -1153,7 +1162,8 @@ module.exports = async function toolsHandler(ctx) {
         await react(mess.reactSuccess);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`${mess.error}\n${e.message}`);
+        await reply(`${mess.error}
+${rapikanError(e)}`);
       }
       return true;
     }
@@ -1222,7 +1232,8 @@ module.exports = async function toolsHandler(ctx) {
         await react(mess.reactSuccess);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`${mess.error}\n${e.message}`);
+        await reply(`${mess.error}
+${rapikanError(e)}`);
       }
       return true;
     }
@@ -1307,7 +1318,8 @@ module.exports = async function toolsHandler(ctx) {
         await react(mess.reactSuccess);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`${mess.error}\n${e.message}`);
+        await reply(`${mess.error}
+${rapikanError(e)}`);
       }
       return true;
     }
@@ -1384,7 +1396,8 @@ module.exports = async function toolsHandler(ctx) {
         await react(mess.reactSuccess);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`${mess.error}\n${e.message}`);
+        await reply(`${mess.error}
+${rapikanError(e)}`);
       }
       return true;
     }
@@ -1431,7 +1444,8 @@ module.exports = async function toolsHandler(ctx) {
         await react(mess.reactSuccess);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`${mess.error}\n${e.message}`);
+        await reply(`${mess.error}
+${rapikanError(e)}`);
       }
       return true;
     }
@@ -1492,7 +1506,8 @@ module.exports = async function toolsHandler(ctx) {
         await react(mess.reactSuccess);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`${mess.error}\n${e.message}`);
+        await reply(`${mess.error}
+${rapikanError(e)}`);
       }
       return true;
     }
@@ -1574,7 +1589,8 @@ module.exports = async function toolsHandler(ctx) {
         await react(mess.reactSuccess);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`${mess.error}\n${e.message}`);
+        await reply(`${mess.error}
+${rapikanError(e)}`);
       }
       return true;
     }
@@ -1599,7 +1615,8 @@ module.exports = async function toolsHandler(ctx) {
         if (typeof d === 'object' && !d.arti) text += JSON.stringify(d, null, 2);
         await reply(text);
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -1632,7 +1649,8 @@ module.exports = async function toolsHandler(ctx) {
         if (text.length > 4000) text = text.slice(0, 4000) + '\n_...terpotong_';
         await reply(text);
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -1657,7 +1675,8 @@ module.exports = async function toolsHandler(ctx) {
         }
         await reply(text);
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -1680,7 +1699,8 @@ module.exports = async function toolsHandler(ctx) {
         } else { text += d; }
         await reply(text);
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -1737,7 +1757,8 @@ module.exports = async function toolsHandler(ctx) {
           }
         }
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -1773,7 +1794,8 @@ module.exports = async function toolsHandler(ctx) {
         text += `🌙 *Fase Bulan:* ${s.fase_bulan || '-'}`;
         await reply(text.trim());
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -1804,7 +1826,8 @@ module.exports = async function toolsHandler(ctx) {
         });
         await reply(text.trim());
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -1828,7 +1851,8 @@ module.exports = async function toolsHandler(ctx) {
         text += `📋 *Status:* ${d.message || d.status || '-'}`;
         await reply(text.trim());
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -1846,7 +1870,8 @@ module.exports = async function toolsHandler(ctx) {
         if (!d?.result) throw new Error('Gagal bypass link');
         await reply(`🔓 *Bypass Link*\n\n🔗 *Input:* ${d.input}\n✅ *Result:* ${d.result}`);
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -1865,7 +1890,8 @@ module.exports = async function toolsHandler(ctx) {
         if (!d?.final_url) throw new Error('Gagal bypass link');
         await reply(`🔓 *Bypass SFL*\n\n✅ *Result:* ${d.final_url}`);
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -1898,7 +1924,8 @@ module.exports = async function toolsHandler(ctx) {
         text += `*Terjemahan:*\n${d.translated}`;
         await reply(text.trim());
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -1948,7 +1975,8 @@ module.exports = async function toolsHandler(ctx) {
         });
         await client.message.send(jid, { type: 'image', media: Buffer.from(res.data), mimetype: 'image/png', caption: `📷 *QR Code*\n_${qrText}_` });
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -1979,7 +2007,8 @@ module.exports = async function toolsHandler(ctx) {
         if (!teks) throw new Error('QR Code tidak terbaca');
         await reply(`📷 *Decode QR Code*\n\n📋 *Isi:*\n${teks}`);
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -2010,7 +2039,8 @@ module.exports = async function toolsHandler(ctx) {
         if (!teks) throw new Error('Teks tidak terdeteksi');
         await reply(`📖 *OCR — Hasil*\n\n${teks}`);
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -2045,7 +2075,8 @@ module.exports = async function toolsHandler(ctx) {
         const thumb = await genThumbnail(upBuf, 'image/jpeg');
         await client.message.send(jid, { type: 'image', media: upBuf, mimetype: 'image/jpeg', caption: '✨ *Upscale Berhasil*', ...(thumb ? { jpegThumbnail: thumb } : {}) });
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -2089,7 +2120,8 @@ module.exports = async function toolsHandler(ctx) {
         d.styles.forEach(s => { text += `*${s.style}:* ${s.result}\n`; });
         await reply(text.trim());
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -2178,7 +2210,8 @@ module.exports = async function toolsHandler(ctx) {
         await react(mess.reactError);
         // Pesan 400 dari API udah kalimat manusia ("Simbol 'X' tidak ditemukan…")
         // — pakai itu, jangan ditimpa "Request failed with status code 400".
-        await reply(`${mess.error}\n${e.response?.data?.message || e.message}`);
+        await reply(`${mess.error}
+${rapikanError(e)}`);
       }
       return true;
     }
@@ -2210,7 +2243,8 @@ module.exports = async function toolsHandler(ctx) {
         if (lok.kecamatan?.nama) text += `📍 *Kecamatan:* ${lok.kecamatan.nama}\n`;
         await reply(text.trim());
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -2238,7 +2272,8 @@ module.exports = async function toolsHandler(ctx) {
         if (d.timezone) text += `⏰ *Timezone:* ${d.timezone}\n`;
         await reply(text.trim());
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -2264,7 +2299,8 @@ module.exports = async function toolsHandler(ctx) {
         }
         await reply(text.trim());
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -2294,7 +2330,8 @@ module.exports = async function toolsHandler(ctx) {
         }
         await reply(text.trim());
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -2319,7 +2356,8 @@ module.exports = async function toolsHandler(ctx) {
         });
         await reply(text.trim());
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -2350,7 +2388,8 @@ module.exports = async function toolsHandler(ctx) {
         text += `🌃 *Isya:* ${j.isya || '-'}`;
         await reply(text.trim());
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -2383,7 +2422,8 @@ module.exports = async function toolsHandler(ctx) {
         if (kalender.length > 7) text += `_...dan ${kalender.length - 7} hari lainnya_`;
         await reply(text.trim());
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -2410,7 +2450,8 @@ module.exports = async function toolsHandler(ctx) {
         if (h.hari) text += `   Hari: ${h.hari}`;
         await reply(text.trim());
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -2438,7 +2479,8 @@ module.exports = async function toolsHandler(ctx) {
         });
         await reply(text.trim());
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -2466,7 +2508,8 @@ module.exports = async function toolsHandler(ctx) {
         });
         await reply(text.trim());
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -2493,7 +2536,8 @@ module.exports = async function toolsHandler(ctx) {
         if (d.keywords?.length) text += `🏷️ ${d.keywords.slice(0,8).join(', ')}\n`;
         await reply(text);
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -2526,7 +2570,8 @@ module.exports = async function toolsHandler(ctx) {
         if (text.length > 4000) text = text.slice(0, 4000) + '\n_...terpotong_';
         await reply(text);
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -2557,7 +2602,8 @@ module.exports = async function toolsHandler(ctx) {
         }
         await reply(text);
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -2604,7 +2650,8 @@ module.exports = async function toolsHandler(ctx) {
         });
         await reply(text.trim());
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -2632,7 +2679,8 @@ module.exports = async function toolsHandler(ctx) {
         });
         await reply(text.trim());
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -2659,7 +2707,8 @@ module.exports = async function toolsHandler(ctx) {
         });
         await reply(text.trim());
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -2698,7 +2747,8 @@ module.exports = async function toolsHandler(ctx) {
         });
         await reply(text.trim());
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -2733,7 +2783,8 @@ module.exports = async function toolsHandler(ctx) {
           await reply(`🖼️ *Pinterest: ${qPin}*\n_${list.length} hasil ditemukan_`);
         }
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -2764,7 +2815,8 @@ module.exports = async function toolsHandler(ctx) {
         if (text.length > 4000) text = text.slice(0, 4000) + '\n_...terpotong_';
         await reply(text.trim());
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -2788,7 +2840,8 @@ module.exports = async function toolsHandler(ctx) {
         });
         await reply(text.trim());
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -2816,7 +2869,8 @@ module.exports = async function toolsHandler(ctx) {
         });
         await reply(text.trim());
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -2843,7 +2897,8 @@ module.exports = async function toolsHandler(ctx) {
         });
         await reply(text.trim());
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -2921,7 +2976,8 @@ module.exports = async function toolsHandler(ctx) {
         if (text.length > 4000) text = text.slice(0, 4000) + '\n_...terpotong_';
         await reply(text);
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -2972,7 +3028,8 @@ module.exports = async function toolsHandler(ctx) {
           }
         }
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -3000,7 +3057,8 @@ module.exports = async function toolsHandler(ctx) {
         });
         await reply(text.trim());
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -3031,7 +3089,8 @@ module.exports = async function toolsHandler(ctx) {
         await react(mess.reactSuccess);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`${mess.error}\n${e.message}`);
+        await reply(`${mess.error}
+${rapikanError(e)}`);
       }
       return true;
     }
@@ -3078,7 +3137,8 @@ module.exports = async function toolsHandler(ctx) {
         await react(mess.reactSuccess);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`${mess.error}\n${e.message}`);
+        await reply(`${mess.error}
+${rapikanError(e)}`);
       }
       return true;
     }
@@ -3124,7 +3184,8 @@ module.exports = async function toolsHandler(ctx) {
         await react(mess.reactSuccess);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`${mess.error}\n${e.message}`);
+        await reply(`${mess.error}
+${rapikanError(e)}`);
       }
       return true;
     }
@@ -3164,7 +3225,8 @@ module.exports = async function toolsHandler(ctx) {
         await react(mess.reactSuccess);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`${mess.error}\n${e.message}`);
+        await reply(`${mess.error}
+${rapikanError(e)}`);
       }
       return true;
     }
@@ -3196,7 +3258,8 @@ module.exports = async function toolsHandler(ctx) {
         await react(mess.reactSuccess);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`${mess.error}\n${e.message}`);
+        await reply(`${mess.error}
+${rapikanError(e)}`);
       }
       return true;
     }
@@ -3236,7 +3299,8 @@ module.exports = async function toolsHandler(ctx) {
         await react(mess.reactSuccess);
       } catch (e) {
         await react(mess.reactError);
-        await reply(`${mess.error}\n${e.message}`);
+        await reply(`${mess.error}
+${rapikanError(e)}`);
       }
       return true;
     }
@@ -3351,7 +3415,8 @@ module.exports = async function toolsHandler(ctx) {
 
         await sendResult(`🔗 *URL Media*\n\n${fileUrl}\n\n📦 Ukuran: ${sizeKb}\n⏳ Expired: ${expiredText}\n🏷️ Tipe: ${mediaLabel}`);
       } catch (e) {
-        await reply(`${mess.error}\n${e.message}`);
+        await reply(`${mess.error}
+${rapikanError(e)}`);
       }
       return true;
     }
@@ -3529,7 +3594,7 @@ module.exports = async function toolsHandler(ctx) {
           caption:  mediaMsg.caption || '',
         });
       } catch (e) {
-        await reply(`❌ Media gagal dimuat: ${e.message}`);
+        await reply(`❌ Media gagal dimuat: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -5240,7 +5305,8 @@ module.exports = async function toolsHandler(ctx) {
           await reply(text.trim());
         }
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -5275,7 +5341,8 @@ module.exports = async function toolsHandler(ctx) {
           await reply(text.trim());
         }
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -5307,7 +5374,8 @@ module.exports = async function toolsHandler(ctx) {
           await reply(text.trim());
         }
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -5349,7 +5417,8 @@ module.exports = async function toolsHandler(ctx) {
           await reply(text.trim());
         }
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -5385,7 +5454,8 @@ module.exports = async function toolsHandler(ctx) {
         }
         await reply(text.trim());
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -5417,7 +5487,8 @@ module.exports = async function toolsHandler(ctx) {
         if (pet.name) text += `🐾 *Pet:* ${pet.name} (${pet.speciesName})\n`;
         await reply(text.trim());
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -5447,7 +5518,8 @@ module.exports = async function toolsHandler(ctx) {
           await reply(text.trim());
         }
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 
@@ -5484,7 +5556,8 @@ module.exports = async function toolsHandler(ctx) {
           await reply(text.trim());
         }
         await react(mess.reactSuccess);
-      } catch (e) { await react(mess.reactError); await reply(`${mess.error}\n${e.message}`); }
+      } catch (e) { await react(mess.reactError); await reply(`${mess.error}
+${rapikanError(e)}`); }
       return true;
     }
 

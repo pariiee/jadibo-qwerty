@@ -25,7 +25,8 @@ const JEDA_CEK_MS = 20_000;
 const _cekTrakhir = new Map();
 
 async function call(method, path, body) {
-  if (!KEY) throw Object.assign(new Error('QRISKU_API_KEY belum diisi'), { status: 503 });
+  // Nama variabel .env tidak boleh bocor ke pesan yang dilihat user.
+  if (!KEY) throw Object.assign(new Error('Layanan pembayaran otomatis belum aktif'), { status: 503 });
 
   const res = await fetch(BASE + path, {
     method,

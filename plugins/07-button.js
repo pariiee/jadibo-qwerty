@@ -308,7 +308,7 @@ module.exports = async function buttonHandler(ctx) {
         });
         await reply('✅ List ke self-chat TERKIRIM (companion tidak diblokir total)');
       } catch (e) {
-        await reply(`❌ List ke self-chat GAGAL: ${e.message}`);
+        await reply(`❌ List ke self-chat GAGAL: ${rapikanError(e)}`);
       }
       return true;
     }
@@ -331,7 +331,7 @@ module.exports = async function buttonHandler(ctx) {
         });
         await reply(`✅ List ke DM *${targetDm}* TERKIRIM`);
       } catch (e) {
-        await reply(`❌ List ke DM GAGAL: ${e.message}`);
+        await reply(`❌ List ke DM GAGAL: ${rapikanError(e)}`);
       }
       return true;
     }

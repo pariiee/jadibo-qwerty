@@ -645,7 +645,9 @@ async function resolveInvite(req, res) {
       if (!jid) return sendError(res, 400, 'Gagal mendapatkan JID dari link ini');
       return res.json({ ok: true, jid, name });
     } catch (e) {
-      return sendError(res, 400, `Gagal resolve link: ${e.message}`);
+      // Pesan asli (errno/path/nama library) jangan sampai ke layar user.
+      console.error('[Bot] resolveInvite gagal:', e.message);
+      return sendError(res, 400, 'Link undangan tidak bisa dibaca. Pastikan link masih aktif.');
     }
   } catch (err) {
     console.error('[Bot] resolveInvite error:', err);

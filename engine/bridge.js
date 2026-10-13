@@ -22,6 +22,7 @@
  */
 
 const http = require('http');
+const { rapikanError } = require('./pesanError');
 
 const WEB_URL = process.env.ENGINE_WEB_URL || 'http://127.0.0.1:3000';
 const KUNCI = process.env.INTERNAL_KEY;
@@ -119,11 +120,12 @@ async function route(req, res) {
     const out = await jalankan({ op: req.body?.op, botId, args: req.body?.args });
     return res.json({ ok: true, ...out });
   } catch (e) {
-    // Error mentah tetap masuk log PM2; yang keluar cuma kalimat yang kita
-    // tulis sendiri (e.status di-set) — sisanya umum.
+    // Error mentah tetap masuk log PM2; yang keluar cuma kalimat manusia.
+    // `rapikanError` sudah mempertahankan pesan yang kita tulis sendiri dan
+    // menerjemahkan yang masih bau teknis — jadi nggak perlu cabang `e.status`.
     console.error(`[Bridge] ${req.body?.op} bot=${botId} GAGAL:`, e.message);
     const st = e.status || 500;
-    return res.status(st).json({ ok: false, status: st, message: e.status ? e.message : 'Terjadi kesalahan di engine zapo' });
+    return res.status(st).json({ ok: false, status: st, message: rapikanError(e) });
   }
 }
 

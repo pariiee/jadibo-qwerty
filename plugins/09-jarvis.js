@@ -145,8 +145,11 @@ module.exports = async function jarvisHandler(ctx) {
   const base  = (process.env.BASE_AI || '').replace(/\/+$/, '');
   const key   = process.env.KEY_AI;
   const model = process.env.MODEL_AI || 'auto';
+  // Pesannya generik: nama variabel .env jangan pernah muncul di chat user.
+  const MSG_AI_KOSONG = '❌ Fitur AI belum diaktifkan. Hubungi owner bot ya.';
+
   if (!base || !key) {
-    await reply('❌ BASE_AI / KEY_AI belum diisi di .env');
+    await reply(MSG_AI_KOSONG);
     return true;
   }
 
