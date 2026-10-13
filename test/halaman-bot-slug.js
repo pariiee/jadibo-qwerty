@@ -22,7 +22,11 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 
-const baca = (p) => fs.readFileSync(path.join(__dirname, '..', p), 'utf8');
+// UJI_DIR memungkinkan tes dijalankan terhadap file yang DISAJIKAN server
+// (hasil `curl /js/head.js`), bukan cuma salinan di repo — supaya "sudah
+// dites" berarti "yang benar-benar dikirim ke browser".
+const BASE = process.env.UJI_DIR || path.join(__dirname, '..');
+const baca = (p) => fs.readFileSync(path.join(BASE, p), 'utf8');
 
 
 /** Dokumen minimal supaya head.js bisa dimuat di luar browser. */
