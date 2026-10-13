@@ -62,14 +62,26 @@
         '<td style="text-align:right" class="muted">' + jam(u.terakhir) + '</td></tr>'),
       5, 'Belum ada aktivitas user.');
 
-    // Batang harian: lebar relatif ke hari paling ramai — nggak butuh chart lib.
+    // Batang harian: lebar relatif ke hari paling ramai — visual modern & informatif.
     const chart = document.getElementById('chart');
-    const maks = Math.max(1, ...d.harian.map(h => Number(h.n)));
+    const totalCmdHarian = d.harian.reduce((acc, h) => acc + Number(h.n || 0), 0);
+    const maks = Math.max(1, ...d.harian.map(h => Number(h.n || 0)));
+
+    const sumEl = document.getElementById('chart-sum');
+    if (sumEl && d.harian.length) {
+      sumEl.textContent = '7 Hari: ' + n(totalCmdHarian) + ' cmd • Puncak: ' + n(maks);
+    }
+
     chart.innerHTML = d.harian.length
-      ? d.harian.map(h =>
-          '<div class="bar" title="' + esc(h.tgl) + ': ' + n(h.n) + ' command">' +
-          '<div class="fill" style="height:' + Math.round(Number(h.n) / maks * 100) + '%"></div>' +
-          '<span>' + esc(tgl(h.tgl)) + '</span></div>').join('')
+      ? d.harian.map(h => {
+          const val = Number(h.n || 0);
+          const pct = Math.max(val > 0 ? 8 : 2, Math.round((val / maks) * 100));
+          return '<div class="bar" title="' + esc(h.tgl) + ': ' + n(val) + ' command">' +
+            '<span class="val">' + n(val) + '</span>' +
+            '<div class="bar-track"><div class="fill" style="height:' + pct + '%"></div></div>' +
+            '<span class="date">' + esc(tgl(h.tgl)) + '</span>' +
+            '</div>';
+        }).join('')
       : '<p class="muted">Belum ada data.</p>';
   }
 

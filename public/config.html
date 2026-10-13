@@ -6,8 +6,479 @@
 <title>Config Bot — qwertygate</title>
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
 <!-- @include head.html -->
+<style>
+/* Scoped styling khusus konfigurasi bot (/config/:id) */
+:root {
+  --inner-bg: rgba(0,0,0,.18);
+  --th-bg: #12141c;
+}
+:root[data-theme="light"] {
+  --bg3: #f0f3fa;
+  --shell: rgba(255,255,255,.8);
+  --panel: rgba(255,255,255,.9);
+  --card: #ffffff;
+  --edge: rgba(0,0,0,.08);
+  --hl: inset 0 1px 0 rgba(255,255,255,1);
+  --ink: #0f172a;
+  --mute: #475569;
+  --line: rgba(0,0,0,.06);
+  --inner-bg: rgba(241,245,249,.8);
+  --th-bg: #f8fafc;
+  --green: #16a34a;
+  --shadow: 0 4px 20px rgba(0,0,0,.05);
+}
+
+html {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  height: auto !important;
+}
+
+html body:not(.page-index):not(.page-auth).page-bot-config,
+body.page-bot.page-bot-config {
+  margin: 0 !important;
+  height: auto !important;
+  min-height: 100vh !important;
+  max-height: none !important;
+  padding: 24px 20px 48px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  overflow: visible !important;
+  overflow-y: visible !important;
+  overflow-x: hidden !important;
+}
+
+@media (min-width: 761px) {
+  html body:not(.page-index):not(.page-auth).page-bot-config,
+  body.page-bot.page-bot-config {
+    height: auto !important;
+    min-height: 100vh !important;
+    max-height: none !important;
+    overflow: visible !important;
+    overflow-y: visible !important;
+    overflow-x: hidden !important;
+  }
+}
+
+body.page-bot-config .topbar {
+  width: 100% !important;
+  max-width: 1280px !important;
+  margin: 0 auto 20px !important;
+  padding: 14px 24px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 14px !important;
+  height: auto !important;
+  min-height: 64px !important;
+  background: var(--shell) !important;
+  border: 1px solid var(--edge) !important;
+  border-radius: 24px !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  box-shadow: var(--shadow), var(--hl) !important;
+  box-sizing: border-box !important;
+  flex-wrap: wrap !important;
+}
+
+body.page-bot-config .back-link {
+  width: 38px !important;
+  height: 38px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 12px !important;
+  background: var(--card) !important;
+  border: 1px solid var(--edge) !important;
+  color: var(--ink) !important;
+  flex-shrink: 0 !important;
+  text-decoration: none !important;
+  transition: all .2s cubic-bezier(.16,1,.3,1) !important;
+}
+body.page-bot-config .back-link:hover {
+  background: var(--panel) !important;
+  transform: translateX(-2px) !important;
+}
+
+body.page-bot-config .ttl {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+body.page-bot-config .ttl #hdr-icon {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+}
+body.page-bot-config .ttl h1 {
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  color: var(--ink) !important;
+  margin: 0 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+body.page-bot-config .st {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  padding: 4px 12px !important;
+  border-radius: 999px !important;
+  background: var(--card) !important;
+  border: 1px solid var(--edge) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: var(--ink) !important;
+  flex-shrink: 0 !important;
+}
+body.page-bot-config .dot {
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  background: #ef4444 !important;
+  flex-shrink: 0 !important;
+}
+body.page-bot-config .dot.on {
+  background: var(--green) !important;
+  box-shadow: 0 0 10px rgba(52,211,153,.5) !important;
+}
+body.page-bot-config .dot.wait {
+  background: #f59e0b !important;
+  box-shadow: 0 0 10px rgba(245,158,11,.5) !important;
+}
+
+body.page-bot-config #bot-pick {
+  background: var(--card) !important;
+  border: 1px solid var(--edge) !important;
+  color: var(--ink) !important;
+  border-radius: 12px !important;
+  padding: 8px 14px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  outline: none !important;
+  transition: all .2s ease !important;
+}
+body.page-bot-config #bot-pick:focus {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 3px rgba(99,102,241,.15) !important;
+}
+
+body.page-bot-config .top-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  flex-shrink: 0 !important;
+}
+body.page-bot-config .top-actions .btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 8px 16px !important;
+  border-radius: 12px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  background: var(--card) !important;
+  border: 1px solid var(--edge) !important;
+  color: var(--ink) !important;
+  text-decoration: none !important;
+  cursor: pointer !important;
+  transition: all .2s ease !important;
+}
+body.page-bot-config .top-actions .btn:hover {
+  background: var(--panel) !important;
+}
+body.page-bot-config .top-actions .btn-danger {
+  background: rgba(239,68,68,.1) !important;
+  border-color: rgba(239,68,68,.25) !important;
+  color: #ef4444 !important;
+}
+body.page-bot-config .top-actions .btn-danger:hover {
+  background: rgba(239,68,68,.2) !important;
+}
+
+body.page-bot-config .theme-btn {
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 12px !important;
+  background: var(--card) !important;
+  border: 1px solid var(--edge) !important;
+  color: var(--ink) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: all .2s ease !important;
+}
+body.page-bot-config .theme-btn:hover {
+  background: var(--panel) !important;
+}
+
+/* Layout Grid 2 Kolom */
+body.page-bot-config .layout {
+  width: 100% !important;
+  max-width: 1280px !important;
+  margin: 0 auto !important;
+  display: grid !important;
+  grid-template-columns: 1.15fr 1fr !important;
+  gap: 20px !important;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+}
+@media (max-width: 960px) {
+  body.page-bot-config .layout {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+body.page-bot-config .cols {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 20px !important;
+  width: 100% !important;
+}
+
+body.page-bot-config .panel {
+  background: var(--panel) !important;
+  border: 1px solid var(--edge) !important;
+  border-radius: 24px !important;
+  padding: 24px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  box-shadow: var(--shadow), var(--hl) !important;
+  box-sizing: border-box !important;
+}
+body.page-bot-config .panel h2 {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  color: var(--ink) !important;
+  margin: 0 !important;
+}
+
+/* Tombol Kontrol */
+body.page-bot-config .ctrl-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 10px !important;
+}
+@media (max-width: 520px) {
+  body.page-bot-config .ctrl-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+body.page-bot-config .ctrl-grid .btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 7px !important;
+  padding: 11px 12px !important;
+  border-radius: 12px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all .2s ease !important;
+  border: 1px solid var(--edge) !important;
+}
+body.page-bot-config .btn-ok {
+  background: rgba(34,197,94,.14) !important;
+  color: #22c55e !important;
+  border-color: rgba(34,197,94,.3) !important;
+}
+body.page-bot-config .btn-ok:hover:not(:disabled) {
+  background: rgba(34,197,94,.24) !important;
+  transform: translateY(-1px) !important;
+}
+body.page-bot-config .btn-stop {
+  background: rgba(239,68,68,.14) !important;
+  color: #ef4444 !important;
+  border-color: rgba(239,68,68,.3) !important;
+}
+body.page-bot-config .btn-stop:hover:not(:disabled) {
+  background: rgba(239,68,68,.24) !important;
+  transform: translateY(-1px) !important;
+}
+body.page-bot-config .ctrl-grid .btn:disabled {
+  opacity: .4 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+}
+
+/* Form Styling */
+body.page-bot-config .field {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  margin-bottom: 14px !important;
+}
+body.page-bot-config .field label {
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: .05em !important;
+  text-transform: uppercase !important;
+  color: var(--mute) !important;
+}
+body.page-bot-config .field .req {
+  color: #ef4444 !important;
+}
+body.page-bot-config .field .hint {
+  font-size: 11.5px !important;
+  color: var(--mute) !important;
+  line-height: 1.5 !important;
+  margin-top: 3px !important;
+}
+body.page-bot-config .inp {
+  background: var(--inner-bg) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 12px !important;
+  padding: 10px 14px !important;
+  font-size: 13.5px !important;
+  color: var(--ink) !important;
+  outline: none !important;
+  transition: border-color .2s, box-shadow .2s !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+}
+body.page-bot-config .inp:focus {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 3px rgba(99,102,241,.15) !important;
+}
+body.page-bot-config .row2 {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 12px !important;
+}
+body.page-bot-config .save {
+  width: 100% !important;
+  padding: 12px !important;
+  border-radius: 12px !important;
+  background: linear-gradient(180deg, #6366f1, #4f46e5) !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  font-size: 14px !important;
+  border: none !important;
+  box-shadow: 0 4px 16px rgba(99,102,241,.3) !important;
+  cursor: pointer !important;
+  transition: transform .2s, filter .2s !important;
+  margin-top: 10px !important;
+}
+body.page-bot-config .save:hover {
+  transform: translateY(-1px) !important;
+  filter: brightness(1.08) !important;
+}
+
+/* Terminal Panel */
+body.page-bot-config .term-panel {
+  padding: 0 !important;
+  overflow: hidden !important;
+  background: #090a0f !important;
+  border: 1px solid var(--edge) !important;
+}
+body.page-bot-config .term-head {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 12px 18px !important;
+  background: rgba(255,255,255,.03) !important;
+  border-bottom: 1px solid var(--line) !important;
+}
+body.page-bot-config .term-dots {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+body.page-bot-config .term-dots span:not(.lb) {
+  width: 10px !important;
+  height: 10px !important;
+  border-radius: 50% !important;
+}
+body.page-bot-config .term-dots .lb {
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  color: var(--ink) !important;
+  margin-left: 6px !important;
+}
+body.page-bot-config .term-right {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+body.page-bot-config .term-right .state {
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  background: #ef4444 !important;
+}
+body.page-bot-config .term-right .state.live {
+  background: #22c55e !important;
+  box-shadow: 0 0 10px rgba(34,197,94,.5) !important;
+}
+body.page-bot-config .term-right .lbl {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: var(--mute) !important;
+}
+body.page-bot-config .clear-btn {
+  background: rgba(255,255,255,.06) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 8px !important;
+  padding: 3px 9px !important;
+  font-size: 11px !important;
+  color: var(--mute) !important;
+  cursor: pointer !important;
+  transition: all .2s ease !important;
+}
+body.page-bot-config .clear-btn:hover {
+  background: rgba(255,255,255,.12) !important;
+  color: var(--ink) !important;
+}
+body.page-bot-config #terminal {
+  height: 400px !important;
+  overflow-y: auto !important;
+  padding: 16px !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  font-size: 12px !important;
+  line-height: 1.7 !important;
+  color: #e2e8f0 !important;
+}
+
+/* Modals */
+body.page-bot-config .overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(0,0,0,.65) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  display: none !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 9999 !important;
+}
+body.page-bot-config .overlay.show {
+  display: flex !important;
+}
+body.page-bot-config .modal {
+  background: var(--bg3) !important;
+  border: 1px solid var(--edge) !important;
+  border-radius: 24px !important;
+  width: 90% !important;
+  max-width: 440px !important;
+  padding: 28px !important;
+  box-shadow: 0 24px 60px rgba(0,0,0,.5) !important;
+}
+</style>
 </head>
-<body class="page-bot">
+<body class="page-bot page-bot-config">
 
 <header class="topbar">
   <a href="/dashboard" class="back-link" aria-label="Kembali ke dashboard">
