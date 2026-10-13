@@ -80,8 +80,8 @@
           // admin-aware, dan dashboard king memang menampilkan bot SEMUA user —
           // jadi halamannya jalan; yang hilang cuma jalan masuknya dari sini.
           // <a href> polos: nol JS, nol endpoint, nol halaman baru.
-          '<a class="btn btn-outline btn-sm" href="/config/' + b.id + '">Kontrol</a> ' +
-          '<a class="btn btn-outline btn-sm" href="/bot/' + b.id + '">Statistik</a> ' +
+          '<a class="btn btn-outline btn-sm" href="/config/' + botHref(b) + '">Kontrol</a> ' +
+          '<a class="btn btn-outline btn-sm" href="/bot/' + botHref(b) + '">Statistik</a> ' +
           '<button class="btn btn-outline btn-sm" data-act="bukaLog(' + b.id + ')">Lihat Log</button> ' +
           '<button class="btn btn-outline btn-sm" data-act="aturKuota(' + b.id + ')">Kuota</button> ' +
           '<button class="btn btn-outline btn-sm" data-act="resetKuota(' + b.id + ')">Reset</button> ' +

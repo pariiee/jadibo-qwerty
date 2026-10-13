@@ -5,6 +5,7 @@ const fs     = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const { pool } = require('../config/database');
 const { ADMIN_ROLE, slotsOf, ownerMax, receiveLimit } = require('../config/plan');
+const { resolveBotId, pastikanSlug } = require('../config/botSlug');
 const pricingStore = require('../config/pricingStore');
 
 const SESSIONS_DIR = path.resolve(process.env.SESSIONS_DIR || './sessions');
@@ -46,9 +47,14 @@ function getDbPath(botId) {
  * Ensure the user owns this bot (or is admin tertinggi).
  */
 async function assertOwnership(req, res, botId) {
+  // `:id` sudah di-resolve jadi id angka oleh app.param('id') di server.js
+  // (menerima nomor lama maupun slug publik). Baris ini cadangan untuk pemanggil
+  // yang tidak lewat rute itu.
+  const idAngka = (await resolveBotId(botId)) ?? Number(botId);
+
   const [rows] = await pool.execute(
-    'SELECT id, user_id FROM bots WHERE id = ?',
-    [botId]
+    'SELECT id, user_id, public_id FROM bots WHERE id = ?',
+    [idAngka]
   );
   if (rows.length === 0) { sendError(res, 404, 'Bot tidak ditemukan'); return null; }
   const bot = rows[0];
@@ -56,6 +62,9 @@ async function assertOwnership(req, res, botId) {
     sendError(res, 403, 'Akses ditolak');
     return null;
   }
+  // Slug publik: dipakai untuk link di UI. Bot lama yang belum punya langsung
+  // dibuatkan di sini, jadi migrasi kolom saja sudah cukup.
+  if (!bot.public_id) bot.public_id = await pastikanSlug(bot.id);
   return bot;
 }
 
@@ -78,7 +87,19 @@ function maskToken(token) {
 function publicBot(bot) {
   if (!bot) return bot;
   const { telegram_token, ...rest } = bot;
+  // `public_id` diteruskan APA ADANYA (bisa null untuk bot lama) — UI memakai
+  // `slug` yang sudah diisi di bawah, bukan kolom mentahnya.
   return { ...rest, telegram_token: maskToken(telegram_token) };
+}
+
+/**
+ * Tambahkan `slug` (alamat halaman) & buang `public_id` mentah dari payload.
+ * Dipakai semua jalur yang mengembalikan bot ke UI supaya link selalu slug.
+ */
+function denganSlug(bot) {
+  if (!bot) return bot;
+  const { public_id, ...rest } = publicBot(bot);
+  return { ...rest, slug: public_id || null };
 }
 
 // ─── GET /api/bots ────────────────────────────────────────────────────────────
@@ -109,7 +130,7 @@ async function listBots(req, res) {
     const [bots] = await pool.execute(query, params);
     // publicBot() nge-`...rest` → username yang di-JOIN KEHILANGAN. Ambil dulu.
     const enriched = bots.map(b => ({
-      ...publicBot(b),
+      ...denganSlug(b),
       username: b.username,
       // is_running harus dari DB (di-update engine pas connected/disconnected),
       // bukan activeBots.has() — Map itu ke-set SEBELUM connect selesai,
@@ -133,7 +154,7 @@ async function getBot(req, res) {
     const [rows] = await pool.execute('SELECT * FROM bots WHERE id = ?', [req.params.id]);
     return res.json({
       ok: true,
-      bot: { ...publicBot(rows[0]), is_running: rows[0].is_running === 1 },
+      bot: { ...denganSlug(rows[0]), is_running: rows[0].is_running === 1 },
     });
   } catch (err) {
     console.error('[Bot] getBot error:', err);
@@ -196,6 +217,12 @@ async function createBot(req, res) {
     );
 
     const botId = result.insertId;
+
+    // Slug publik untuk URL halaman. Dibuat SEKARANG, bukan saat pertama dibuka:
+    // response create sudah mengembalikannya, dan UI langsung mengarahkan ke
+    // `/config/<slug>` — kalau masih null, user melihat URL angka lagi.
+    const slug = await pastikanSlug(botId);
+
     const dbPath = getDbPath(botId);
 
     // Create session directory
@@ -211,6 +238,7 @@ async function createBot(req, res) {
       ok: true,
       message: 'Bot berhasil dibuat',
       bot_id: botId,
+      slug: slug || null,
     });
   } catch (err) {
     console.error('[Bot] createBot error:', err);

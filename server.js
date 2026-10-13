@@ -54,6 +54,7 @@ const PORT = parseInt(process.env.PORT || '3000', 10);
 // Panel ini & panel Baileys berbagi tabel `bots` di DB yang sama.
 const { ENGINE_BOT_ID, mine, isMine } = require('./config/engineScope');
 const { ADMIN_ROLE } = require('./config/roles');
+const { resolveBotId, pastikanSlug } = require('./config/botSlug');
 
 // ─── Security & Middleware ────────────────────────────────────────────────────
 app.use(helmet({
@@ -140,6 +141,26 @@ app.get('/api/stats', async (req, res) => {
 // ─── Bot Routes ───────────────────────────────────────────────────────────────
 app.get('/api/bots',                    apiLimiter, auth.requireAuth, bot.listBots);
 app.post('/api/bots',                   apiLimiter, auth.requireAuth, bot.createBot);
+// `:id` di sini boleh nomor LAMA (4) atau slug publik. Ditulis SEKALI di sini,
+// bukan di tiap handler: 11 endpoint bot + 2 endpoint admin bot semuanya lewat
+// `req.params.id`, dan menambal satu per satu berarti yang terlewat tetap
+// bekerja dengan nomor — persis jenis lubang yang bikin "kok cuma sebagian".
+// `HANYA` rute /api/bots & /api/admin/bots: `/api/admin/users/:id` juga `:id`
+// dan itu id USER, bukan bot.
+const resolveIdBot = async (req, res, next) => {
+  const idAngka = await resolveBotId(req.params.id);
+  if (idAngka === null) return res.status(404).json({ ok: false, message: 'Bot tidak ditemukan' });
+  req.params.id = String(idAngka);
+  next();
+};
+app.param('id', (req, res, next, nilai) => {
+  // app.param berlaku untuk SEMUA rute ber-`:id`. Supaya rute user tidak ikut
+  // ditafsirkan sebagai slug bot, hanya jalur /api/bots & /api/admin/bots yang
+  // di-resolve; sisanya diteruskan apa adanya.
+  const jalurBot = /^\/api\/(admin\/)?bots\//.test(req.path);
+  if (!jalurBot) return next();
+  resolveIdBot(req, res, next);
+});
 app.get('/api/bots/:id',                apiLimiter, auth.requireAuth, bot.getBot);
 app.patch('/api/bots/:id',              apiLimiter, auth.requireAuth, bot.updateBot);
 app.delete('/api/bots/:id',             apiLimiter, auth.requireAuth, bot.deleteBot);
@@ -254,6 +275,8 @@ const halaman = (nama, kode = 200) => (_, res) => {
   }
 };
 app.get('/dashboard', halaman('dashboard.html'));
+// `:id` di URL halaman boleh nomor LAMA (4) atau slug publik. Nomor tetap
+// didukung supaya bookmark & riwayat lama tidak mati — lihat config/botSlug.js.
 app.get('/bot/:id',   halaman('bot-detail.html'));
 // Setup bot dipisah dari /bot/:id — di sana sekarang statistik. Halaman ini
 // yang megang form konfigurasi + import/export, dan punya pemilih bot sendiri

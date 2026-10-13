@@ -216,8 +216,6 @@
   function esc(s) {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   }
-  const waIcon = (s) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.37 5.07L2 22l5.09-1.34A9.95 9.95 0 0 0 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2z" fill="#25D366"/></svg>`;
-  const tgIcon = (s) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#229ED9"/></svg>`;
 
   function renderBots() {
     const grid = document.getElementById('bot-grid');
@@ -228,7 +226,7 @@
     bots.forEach(bot => {
       const card = document.createElement('div');
       card.className = 'card bc';
-      card.addEventListener('click', () => { location.href = '/bot/' + bot.id; });
+      card.addEventListener('click', () => { location.href = '/bot/' + botHref(bot); });
       const on = bot.is_running;
       const stTxt = on ? 'Online' : (bot.status === 'connecting' ? 'Connecting' : 'Offline');
       const k = botKuota.get(bot.id);
@@ -269,8 +267,8 @@
           '<button data-stat>Statistik</button>' +
         '</div>';
       grid.appendChild(card);
-      card.querySelector('[data-cfg]').addEventListener('click', (e) => { e.stopPropagation(); location.href = '/config/' + bot.id; });
-      card.querySelector('[data-stat]').addEventListener('click', (e) => { e.stopPropagation(); location.href = '/bot/' + bot.id; });
+      card.querySelector('[data-cfg]').addEventListener('click', (e) => { e.stopPropagation(); location.href = '/config/' + botHref(bot); });
+      card.querySelector('[data-stat]').addEventListener('click', (e) => { e.stopPropagation(); location.href = '/bot/' + botHref(bot); });
     });
 
     // Selalu tampilkan card Tambah Bot
@@ -331,7 +329,7 @@
     };
     const d = await api('/api/bots', { method: 'POST', body: JSON.stringify(body) });
     if (!d) return;
-    if (d.ok) { closeAdd(); location.href = '/config/' + d.bot_id; }
+    if (d.ok) { closeAdd(); location.href = '/config/' + (d.slug || d.bot_id); }
     else { err.textContent = d.message; err.classList.add('show'); }
   });
 

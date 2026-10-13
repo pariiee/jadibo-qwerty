@@ -4,9 +4,6 @@
   const botId = (location.pathname.match(/\/(\d+)\/?$/) || [])[1];
   if (!botId) { location.href = '/dashboard'; return; }
 
-  const waIcon = (s) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.37 5.07L2 22l5.09-1.34A9.95 9.95 0 0 0 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2z" fill="#25D366"/></svg>`;
-  const tgIcon = (s) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#229ED9"/></svg>`;
-
   async function api(path) {
     try {
       const res = await fetch(path, { credentials: 'include' });
@@ -213,8 +210,8 @@
     const b = d.bot;
     document.title = 'Statistik ' + b.bot_name + ' — qwertygate';
     document.getElementById('hdr-name').textContent = b.bot_name;
-    document.getElementById('hdr-icon').innerHTML = b.platform === 'telegram' ? tgIcon(18) : waIcon(18);
-    document.getElementById('btn-config').href = '/config/' + botId;
+    document.getElementById('hdr-icon').innerHTML = platIcon(b.platform, 18);
+    document.getElementById('btn-config').href = '/config/' + botHref(b);
 
     // is_running = "user mau bot ini jalan", bukan "socket kebuka" — sama seperti
     // di halaman config, biar nggak kedip Offline tiap WA mutusin koneksi.

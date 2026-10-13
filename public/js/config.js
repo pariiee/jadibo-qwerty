@@ -23,9 +23,6 @@
     } catch { return null; }
   }
 
-  const waIcon = (s) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.37 5.07L2 22l5.09-1.34A9.95 9.95 0 0 0 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2z" fill="#25D366"/></svg>`;
-  const tgIcon = (s) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#229ED9"/></svg>`;
-
   // ── Load bot ─────────────────────────────────────────────────────
   async function loadBot() {
     const d = await api('/api/bots/' + botId);
@@ -40,7 +37,7 @@
     const b = botData;
     document.title = b.bot_name + ' — qwertygate';
     document.getElementById('hdr-name').textContent = b.bot_name;
-    document.getElementById('hdr-icon').innerHTML = b.platform === 'telegram' ? tgIcon(18) : waIcon(18);
+    document.getElementById('hdr-icon').innerHTML = platIcon(b.platform, 18);
     document.getElementById('cfg-panel').classList.toggle('tg', b.platform === 'telegram');
 
     if (b.platform === 'telegram') {
@@ -419,7 +416,7 @@
   document.getElementById('btn-export').href = '/api/bots/' + botId + '/config';
   document.getElementById('btn-export2').onclick = () => { location.href = '/api/bots/' + botId + '/config'; };
   document.getElementById('cfg-file').onchange = (e) => { if (e.target.files[0]) doImport(e.target.files[0]); };
-  document.getElementById('btn-stats').href = '/bot/' + botId;
+  document.getElementById('btn-stats').href = '/bot/' + botHref(b);
   document.getElementById('btn-del').onclick = confirmDelete;
   // Pemilih bot: id-nya ada di URL, jadi pindah bot = pindah URL (reload).
   // Nol state baru, nol risiko "setengah ter-render".
@@ -427,9 +424,9 @@
     const d = await api('/api/bots');
     if (!d?.ok) return;
     const sel = document.getElementById('bot-pick');
-    sel.innerHTML = d.bots.map(b => '<option value="' + b.id + '">' + esc(b.bot_name) + '</option>').join('');
-    sel.value = botId;
-    sel.onchange = (e) => { location.href = '/config/' + e.target.value; };
+    sel.innerHTML = d.bots.map(b => '<option value="' + botHref(b) + '">' + esc(b.bot_name) + '</option>').join('');
+    sel.value = botHref(bot);
+    sel.onchange = (e) => { location.href = '/config/' + e.target.value; };   // value = slug
   })();
 
   loadBot();

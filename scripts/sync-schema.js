@@ -32,6 +32,10 @@ const TABLES = {
     ['trial_used_at',   "DATETIME DEFAULT NULL"],
   ],
   bots: [
+    // Alamat publik bot untuk URL halaman (`/bot/<slug>`), mis. mh3gs9kdfj2p.
+    // Acak, bukan turunan id: id yang bisa ditebak bikin /bot/4 gampang
+    // ditemukan bot auto-scanner. Nomor lama tetap jalan.
+    ['public_id',      "VARCHAR(32) DEFAULT NULL"],
     ['owner_name',     "VARCHAR(100) DEFAULT NULL"],
     ['channel_id',     "VARCHAR(100) DEFAULT NULL"],
     ['qris_url',       "TEXT DEFAULT NULL"],
@@ -299,6 +303,41 @@ async function run() {
     }
   } catch (e) {
     console.log(`  ! rpg_members.limit/lim: ${e.message}`);
+  }
+
+  // 2b) Slug publik bot (`public_id`) — dipakai URL halaman `/bot/<slug>`.
+  //
+  // Dua hal sekaligus: isi baris yang masih NULL, lalu pasang UNIQUE supaya
+  // tidak ada dua bot berbagi alamat. Tanpa UNIQUE, tabrakan slug akan lolos
+  // diam-diam dan `/bot/<slug>` jadi tidak tentu milik siapa.
+  try {
+    const [perlu] = await pool.execute('SELECT id FROM bots WHERE public_id IS NULL OR public_id = ""');
+    if (perlu.length) {
+      const { pastikanSlug } = require('../config/botSlug');
+      let diisi = 0;
+      for (const b of perlu) {
+        if (await pastikanSlug(b.id)) diisi++;
+      }
+      console.log(`  + bots.public_id diisi untuk ${diisi}/${perlu.length} bot`);
+    } else {
+      console.log('  = bots.public_id (semua sudah terisi)');
+    }
+  } catch (e) {
+    console.log(`  ! bots.public_id backfill: ${e.message}`);
+  }
+
+  try {
+    const [idx] = await pool.execute(
+      "SELECT COUNT(*) AS c FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'bots' AND INDEX_NAME = 'uq_bots_public_id'"
+    );
+    if (idx[0].c === 0) {
+      await pool.execute('ALTER TABLE bots ADD UNIQUE KEY uq_bots_public_id (public_id)');
+      console.log('  + UNIQUE bots.public_id');
+    } else {
+      console.log('  = UNIQUE bots.public_id (sudah ada)');
+    }
+  } catch (e) {
+    console.log(`  ! UNIQUE bots.public_id: ${e.message}`);
   }
 
   // 3) Buat tabel yang belum ada

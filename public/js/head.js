@@ -72,6 +72,44 @@ function siapkanDrawer() {
   });
 }
 
+// ── Ikon platform (§7) ───────────────────────────────────────────────
+// Satu definisi untuk halaman mana pun lewat `window.waIcon(s)` /
+// `window.tgIcon(s)`. Sebelumnya SVG-nya ditulis ulang di bot-stats.js,
+// bot-detail.js, config.js, dan dashboard.js — dan salinannya sudah berbeda:
+// dashboard.html punya versi bergaris putih (`.plat-btn`, ikon besar),
+// sisanya versi satu-lapis. Perbedaan itu yang bikin ikon WhatsApp di satu
+// halaman kelihatan beda dari halaman lain.
+//
+// Ikon di `.plat-btn` dashboard.html DIBIARKAN inline: ukurannya 34px, dan
+// versi bergaris putih memang lebih enak dilihat di ukuran itu.
+(function () {
+  var WA_PATH =
+    '<path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.37 5.07L2 22l5.09-1.34A9.95 9.95 0 0 0 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2z" fill="#25D366"/>' +
+    '<path d="M17 14.8c-.3-.15-1.77-.87-2.05-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.95 1.17-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.47-.89-.79-1.49-1.77-1.66-2.07-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51h-.81c-.2 0-.52.07-.79.37s-.61 1-.61 1.97.74 2.12.84 2.27c.1.15 1.46 2.22 3.53 3.12.49.21.88.34 1.18.44.5.16.95.14 1.3.08.4-.06 1.22-.5 1.4-.98.17-.48.17-.9.12-1-.05-.1-.2-.15-.5-.3z" fill="#fff"/>';
+  window.waIcon = function (s) {
+    return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24" aria-hidden="true">' + WA_PATH + '</svg>';
+  };
+  // Telegram: lingkaran penuh, jadi logo aslinya pakai warna latar. Dipakai
+  // satu lapis supaya seragam dengan waIcon di ukuran kecil (13–18px).
+  var TG_PATH = '<path fill="#229ED9" d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161l-1.97 9.288c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.022c.24-.213-.054-.333-.373-.12L7.94 13.428l-2.943-.92c-.64-.203-.652-.64.133-.948l11.5-4.432c.534-.194 1-.12.932.633z"/>';
+  window.tgIcon = function (s) {
+    return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24" aria-hidden="true">' + TG_PATH + '</svg>';
+  };
+  /** Ikon sesuai platform bot. */
+  window.platIcon = function (platform, s) {
+    return platform === 'telegram' ? window.tgIcon(s) : window.waIcon(s);
+  };
+})();
+
+// ── Alamat bot untuk URL halaman ─────────────────────────────────────
+// Link memakai `slug` (acak, dari `bots.public_id`) supaya `/bot/4` tidak
+// gampang ditebak bot auto-scanner. `id` tetap jadi cadangan untuk bot lama
+// yang belum sempat punya slug — server menerima dua-duanya.
+window.botHref = function (bot) {
+  if (!bot) return '';
+  return bot.slug || bot.public_id || bot.id || (bot.bot && (bot.bot.slug || bot.bot.id)) || '';
+};
+
 // ── Menu aktif ikut halaman yang sedang dibuka ───────────────────────
 // Dulu `active` ditulis mati di sidebar.html (selalu "Dashboard"), jadi di
 // /pricing & /admin salah nyala.
