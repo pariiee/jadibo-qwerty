@@ -488,7 +488,7 @@ async function getBotStats(req, res) {
     const bot = await assertOwnership(req, res, req.params.id);
     if (!bot) return;
 
-    const hari = Math.min(Math.max(parseInt(req.query.hari || '30', 10) || 30, 1), 365);
+    const hari = Math.min(Math.max(parseInt(req.query.hari || '7', 10) || 7, 1), 365);
 
     // `info` = tiap pesan masuk, `cmd` = yang beneran dibalas. Baris `info`
     // (termasuk media) tetap kehitung sebagai aktivitas user.
