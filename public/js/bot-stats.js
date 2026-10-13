@@ -87,13 +87,14 @@
 
     const sumEl = document.getElementById('chart-sum');
     if (sumEl) {
-      sumEl.textContent = '7 Hari: ' + n(totalCmdHarian) + ' cmd • Puncak: ' + n(maks);
+      sumEl.textContent = totalHari + ' Hari: ' + n(totalCmdHarian) + ' cmd • Puncak: ' + n(maks);
     }
 
     const W = 760, H = 220;
     const padL = 45, padR = 25, padT = 32, padB = 35;
     const cW = W - padL - padR;
     const cH = H - padT - padB;
+    const bottomY = padT + cH;
 
     const pts = listHarian.map((h, i) => {
       const x = padL + (i / Math.max(1, listHarian.length - 1)) * cW;
@@ -111,16 +112,15 @@
         const p2 = p[i + 1];
         const p3 = i + 2 < p.length ? p[i + 2] : p2;
         const cp1x = p1.x + (p2.x - p0.x) / 6;
-        const cp1y = p1.y + (p2.y - p0.y) / 6;
+        const cp1y = Math.min(bottomY, Math.max(padT - 6, p1.y + (p2.y - p0.y) / 6));
         const cp2x = p2.x - (p3.x - p1.x) / 6;
-        const cp2y = p2.y - (p3.y - p1.y) / 6;
+        const cp2y = Math.min(bottomY, Math.max(padT - 6, p2.y - (p3.y - p1.y) / 6));
         s += ` C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
       }
       return s;
     }
 
     const linePath = spline(pts);
-    const bottomY = padT + cH;
     const areaPath = pts.length > 1
       ? `${linePath} L ${pts[pts.length - 1].x.toFixed(1)} ${bottomY} L ${pts[0].x.toFixed(1)} ${bottomY} Z`
       : '';
@@ -133,10 +133,24 @@
         `<text x="${padL - 10}" y="${y + 4}" text-anchor="end" fill="var(--mute)" font-size="10.5" font-weight="600">${n(val)}</text>`;
     });
 
+    // Pilih maksimal 7 titik tanggal pada sumbu X agar teks tidak bertumpuk
+    const maxTicks = 7;
+    const tickIndices = new Set();
+    if (pts.length <= maxTicks) {
+      pts.forEach((_, i) => tickIndices.add(i));
+    } else {
+      const step = (pts.length - 1) / (maxTicks - 1);
+      for (let i = 0; i < maxTicks; i++) {
+        tickIndices.add(Math.round(i * step));
+      }
+    }
+
     let xGrid = '';
-    pts.forEach(p => {
-      xGrid += `<line x1="${p.x}" y1="${padT}" x2="${p.x}" y2="${bottomY}" stroke="var(--line)" stroke-dasharray="3,3" stroke-width="1" />` +
-        `<text x="${p.x}" y="${H - 10}" text-anchor="middle" fill="var(--mute)" font-size="11" font-weight="700">${esc(tgl(p.tgl))}</text>`;
+    pts.forEach((p, idx) => {
+      if (tickIndices.has(idx)) {
+        xGrid += `<line x1="${p.x.toFixed(1)}" y1="${padT}" x2="${p.x.toFixed(1)}" y2="${bottomY}" stroke="var(--line)" stroke-dasharray="3,3" stroke-width="1" />` +
+          `<text x="${p.x.toFixed(1)}" y="${H - 10}" text-anchor="middle" fill="var(--mute)" font-size="11" font-weight="700">${esc(tgl(p.tgl))}</text>`;
+      }
     });
 
     let nodes = '';
@@ -144,7 +158,7 @@
       nodes += `<g class="chart-point" tabindex="0">` +
         `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4.5" fill="#818cf8" stroke="var(--card)" stroke-width="2.5" />` +
         `<g class="chart-tip" transform="translate(${p.x.toFixed(1)}, ${(p.y - 12).toFixed(1)})">` +
-        `<rect x="-26" y="-25" width="52" height="23" rx="7" fill="#ffffff" filter="drop-shadow(0 4px 10px rgba(0,0,0,0.3))" />` +
+        `<rect x="-30" y="-25" width="60" height="23" rx="7" fill="#ffffff" filter="drop-shadow(0 4px 10px rgba(0,0,0,0.3))" />` +
         `<text x="0" y="-10" text-anchor="middle" fill="#0f172a" font-size="11" font-weight="800">${n(p.n)}</text>` +
         `<polygon points="-4,-3 4,-3 0,1" fill="#ffffff" />` +
         `</g>` +
