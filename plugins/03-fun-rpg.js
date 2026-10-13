@@ -410,6 +410,106 @@ function cdRemain(lastRaw, cooldownMs) {
   return cooldownMs - (Date.now() - last);
 }
 
+/**
+ * klaimBerkala(botId, jid, kolomWaktu, ambangMs, tambah, absolut) — klaim
+ * ber-cooldown yang TIDAK bisa dobel saat dispam.
+ *
+ * Masalah pola lama: `cek last_x` di JS → hitung reward → `UPDATE`. Dua
+ * request bersamaan dua-duanya lolos cek (last_x masih lama), dua-duanya
+ * dapat reward. Cooldown 24 jam pun tidak menolong karena ceknya di memori.
+ *
+ * Solusinya satu UPDATE bersyarat: syarat cooldown jadi bagian WHERE, jadi
+ * MySQL sendiri yang memutuskan pemenangnya. `affectedRows === 1` berarti
+ * KITA yang menang; `0` berarti sudah ada yang klaim / belum lewat.
+ *
+ * `tambah`   = kolom yang NILAINYA DITAMBAH ke nilai sekarang (`money = money + ?`).
+ *              Dipakai untuk reward. Aman dari lost-update.
+ * `absolut`  = kolom yang NILAINYA DITIMPA (`xp = ?`, `level = ?`).
+ *              Dipakai untuk hasil hitungan JS (calcXpLevel). Hanya boleh
+ *              diisi kalau request ini yang menang — kalau tidak, nilai
+ *              hitungan JS bisa menimpa perubahan request lain.
+ *
+ * PENTING: `xp` & `level` JANGAN masuk `tambah`. Mereka hasil `calcXpLevel`
+ * (nilai absolut), bukan penambahan — dulu sempat saya masukkan ke `tambah`
+ * dan `xp = xp + newXp` bikin XP dua kali lipat.
+ *
+ * # ponytail: satu query, tanpa transaksi terpisah. Cukup karena semua yang
+ * perlu atomik sudah di dalam WHERE.
+ */
+const KOLOM_ANGKA = new Set(['money', 'lim', 'bank_money', 'healt', 'energi']);
+
+async function klaimBerkala(botId, jid, kolomWaktu, ambangMs, tambah = {}, absolut = {}) {
+  const batas = new Date(Date.now() - ambangMs);
+  const set = [`\`${kolomWaktu}\` = NOW()`];
+  const nilai = [];
+  for (const [k, v] of Object.entries(tambah)) {
+    if (!KOLOM_ANGKA.has(k)) throw new Error(`klaimBerkala: '${k}' bukan kolom angka`);
+    set.push(`\`${k}\` = \`${k}\` + ?`); nilai.push(Number(v) || 0);
+  }
+  for (const [k, v] of Object.entries(absolut)) {
+    set.push(`\`${k}\` = ?`); nilai.push(v);
+  }
+  const [res] = await pool.execute(
+    `UPDATE rpg_members SET ${set.join(', ')}
+      WHERE bot_id = ? AND jid = ?
+        AND (\`${kolomWaktu}\` IS NULL OR \`${kolomWaktu}\` <= ?)`,
+    [...nilai, botId, jid, batas]
+  );
+  return res.affectedRows === 1;
+}
+
+/**
+ * klaimBerEnergi(botId, jid, { kolomWaktu, ambangMs, biayaEnergi, tambah, absolut })
+ * — klaim ber-cooldown YANG SEKALIGUS memotong energi, dalam SATU query.
+ *
+ * Kenapa terpisah dari klaimBerkala: handler ber-energi (mancing/berburu/kerja)
+ * dulu memotong energi DULUAN (`pakaiEnergi`), baru update reward. Kalau reward
+ * gagal (cooldown sudah lewat di request paralel), energi sudah terlanjur
+ * terpotong tanpa imbalan. Menggabungkan semuanya jadi satu UPDATE menutup itu.
+ *
+ * Syarat energi & cooldown jadi bagian WHERE — MySQL yang memutuskan menang,
+ * bukan JS. `affectedRows === 1` = kita dapat reward + energi terpotong
+ * sekaligus; `0` = tidak ada yang berubah (energi kurang ATAU masih cooldown).
+ *
+ * Energi dihitung dengan regen seperti `energiSekarang()`, tapi nilai regen
+ * dikirim pemanggil lewat `energiBaru` supaya rumus regen tetap satu tempat.
+ *
+ * # ponytail: dua query (hitung energi → UPDATE). Energi regen berbasis waktu,
+ * jadi tidak ada lost-update nyata; yang penting cooldown tidak dobel.
+ */
+async function klaimBerEnergi(botId, jid, { kolomWaktu, ambangMs, biayaEnergi = 0, energiBaru, tambah = {}, absolut = {} }) {
+  const batas = new Date(Date.now() - ambangMs);
+  const set = [`\`${kolomWaktu}\` = NOW()`];
+  const nilai = [];
+
+  if (biayaEnergi > 0) {
+    set.push('`energi` = ?', '`last_energi` = NOW()');
+    nilai.push(energiBaru);   // sudah dikurangi biaya oleh pemanggil
+  }
+  for (const [k, v] of Object.entries(tambah)) {
+    if (!KOLOM_ANGKA.has(k)) throw new Error(`klaimBerEnergi: '${k}' bukan kolom angka`);
+    set.push(`\`${k}\` = \`${k}\` + ?`); nilai.push(Number(v) || 0);
+  }
+  for (const [k, v] of Object.entries(absolut)) {
+    set.push(`\`${k}\` = ?`); nilai.push(v);
+  }
+
+  // Syarat energi: baris hanya lolos kalau energi saat ini masih cukup.
+  // `energi` bisa NULL di baris lama → anggap penuh (ENERGI_MAKS) seperti
+  // `energiSekarang()` yang memperlakukan user lama sebagai penuh.
+  const syaratEnergi = biayaEnergi > 0
+    ? ' AND COALESCE(`energi`, ' + ENERGI_MAKS + ') >= ' + Number(biayaEnergi)
+    : '';
+
+  const [res] = await pool.execute(
+    `UPDATE rpg_members SET ${set.join(', ')}
+      WHERE bot_id = ? AND jid = ?
+        AND (\`${kolomWaktu}\` IS NULL OR \`${kolomWaktu}\` <= ?)${syaratEnergi}`,
+    [...nilai, botId, jid, batas]
+  );
+  return res.affectedRows === 1;
+}
+
 /** Ambil atau buat row RPG member di DB */
 async function getOrCreateMember(botId, jid, name) {
   if (!isJlidUser(jid)) return undefined;   // grup/newsletter/LID: nggak punya baris RPG
@@ -1201,33 +1301,44 @@ module.exports = async function funRpgHandler(ctx) {
     case 'claim':
     case 'daily': {
       try {
-        const m   = await getOrCreateMember(botData.id, sender, pushName);
-        const now = new Date();
-        if (m.last_claim) {
-          const diff = now - new Date(m.last_claim);
-          if (diff < DAILY_COOLDOWN) {
-            const remaining = Math.ceil((DAILY_COOLDOWN - diff) / 3600000);
-            await reply(`⏳ Kamu sudah klaim hari ini. Coba lagi dalam *${remaining} jam*`);
-            return true;
-          }
+        const botId = botData.id;
+        const m = await getOrCreateMember(botId, sender, pushName);
+        if (!m) { await reply('❌ User tidak valid.'); return true; }
+
+        // Cek ramah di JS dulu: kalau masih cooldown, tidak perlu hit DB lagi.
+        const sisaCd = cdRemain(m.last_claim, DAILY_COOLDOWN);
+        if (sisaCd > 0) {
+          const remaining = Math.ceil(sisaCd / 3600000);
+          await reply(`⏳ Kamu sudah klaim hari ini. Coba lagi dalam *${remaining} jam*`);
+          return true;
         }
+
         // Premium tier: reward 2x + bonus lebih besar + limit +50
-        const isPrem   = ctx.isPremium || false;
-        const base     = isPrem ? DAILY_REWARD * 2 : DAILY_REWARD;
-        const bonus    = isPrem
+        const isPrem = ctx.isPremium || false;
+        const base   = isPrem ? DAILY_REWARD * 2 : DAILY_REWARD;
+        const bonus  = isPrem
           ? Math.floor(Math.random() * 500) + 200
           : Math.floor(Math.random() * 200);
-        const total    = base + bonus;
-        const newMoney = Number(m.money) + total;
-        const newLim   = isPrem ? Number(m.lim) + 50 : Number(m.lim);
-        await updateMember(botData.id, sender, { money: newMoney, lim: newLim, last_claim: now });
-        const premTag  = isPrem ? '\n⭐ *Bonus Premium aktif!*' : '';
+        const total  = base + bonus;
+
+        // UPDATE bersyarat: syarat cooldown jadi bagian WHERE. Kalau dua
+        // request datang bersamaan, hanya SATU yang affectedRows=1 — yang
+        // lain tidak dapat reward. Ini pengganti cek-di-JS yang bisa dobel.
+        const dapat = await klaimBerkala(botId, sender, 'last_claim', DAILY_COOLDOWN,
+          { money: total, ...(isPrem ? { lim: 50 } : {}) });
+        if (!dapat) {
+          await reply(`⏳ Kamu sudah klaim hari ini. Coba lagi besok.`);
+          return true;
+        }
+
+        const sesudah = await findMember(botId, sender);
+        const premTag = isPrem ? '\n⭐ *Bonus Premium aktif!*' : '';
         await reply(
           `🎁 *Daily Claim*${premTag}\n\n` +
           `+${base} base\n` +
           `+${bonus} bonus\n` +
           (isPrem ? `+50 limit\n` : '') +
-          `\nTotal: ${formatNum(newMoney)} 🪙\nLimit: ${newLim}`
+          `\nTotal: ${formatNum(sesudah?.money ?? total)} 🪙\nLimit: ${sesudah?.lim ?? '-'}`
         );
       } catch (e) { await reply(`Gagal: ${rapikanError(e)}`); }
       return true;
@@ -1509,10 +1620,10 @@ module.exports = async function funRpgHandler(ctx) {
     case 'hunt': {
       const botId  = botData.id;
       const member = await getOrCreateMember(botId, sender, pushName);
+      if (!member) { await reply('❌ User tidak valid.'); return true; }
 
       // Cek cooldown 1 jam
       const sisaCd = cdRemain(member.last_berburu, 3600000);
-      const now    = Date.now();
       if (sisaCd > 0) {
         const h = Math.floor(sisaCd / 3600000);
         const m = Math.floor((sisaCd % 3600000) / 60000);
@@ -1521,8 +1632,8 @@ module.exports = async function funRpgHandler(ctx) {
         return true;
       }
 
-      const cukupEnergi = await pakaiEnergi(botId, sender, member, 20);
-      if (!cukupEnergi.ok) { await reply(pesanEnergiKurang(cukupEnergi.energi, 20)); return true; }
+      const energiAwal = energiSekarang(member);
+      if (energiAwal < 20) { await reply(pesanEnergiKurang(energiAwal, 20)); return true; }
 
       // 12 hewan, random 0-9 masing-masing
       const HEWAN = ['🐂','🐅','🐘','🐐','🐼','🐊','🐃','🐮','🐒','🐗','🐖','🐓'];
@@ -1533,19 +1644,46 @@ module.exports = async function funRpgHandler(ctx) {
       const HARGA = [500,800,700,300,600,900,400,350,250,450,200,150];
       const totalKoin = hasil.reduce((acc, jml, i) => acc + jml * HARGA[i], 0);
 
-      // Update hewan_json di DB (merge dengan existing)
-      // ponytail: ditulis sebagai kolom terpisah, JANGAN JSON.stringify(map hasil
-      // `member.hewan_json` — nilainya bisa string kalau driver balikin JSON mentah,
-      // dan JSON.stringify(string) = string ber-quote dobel = data rusak.
-      const hewanData = bacaJson(member);
-      NAMA.forEach((n, i) => { hewanData[n] = (Number(hewanData[n]) || 0) + hasil[i]; });
-      const newMoney = (Number(member.money) || 0) + totalKoin;
+      // TRANSAKSI: kunci baris, cek ulang cooldown, merge hewan_json, tulis
+      // semuanya. `hewan_json` itu read-modify-write JSON — tidak bisa
+      // diekspresikan `col = col + ?`, jadi butuh kunci baris supaya dua
+      // berburu paralel tidak saling menimpa hasil hewan.
+      const conn = await pool.getConnection();
+      let dapat = false;
+      try {
+        await conn.beginTransaction();
+        const [[kini]] = await conn.execute(
+          'SELECT money, hewan_json, last_berburu FROM rpg_members WHERE bot_id=? AND jid=? FOR UPDATE',
+          [botId, sender]
+        );
+        if (kini && cdRemain(kini.last_berburu, 3600000) <= 0) {
+          // ponytail: ditulis sebagai kolom terpisah, JANGAN JSON.stringify(map
+          // hasil `member.hewan_json` — nilainya bisa string kalau driver balikin
+          // JSON mentah, dan JSON.stringify(string) = string ber-quote dobel.
+          const hewanData = bacaJson(kini);
+          NAMA.forEach((n, i) => { hewanData[n] = (Number(hewanData[n]) || 0) + hasil[i]; });
+          await conn.execute(
+            `UPDATE rpg_members
+                SET money = money + ?, hewan_json = ?, last_berburu = NOW(),
+                    energi = ?, last_energi = NOW()
+              WHERE bot_id = ? AND jid = ?`,
+            [totalKoin, JSON.stringify(hewanData), energiAwal - 20, botId, sender]
+          );
+          dapat = true;
+        }
+        await conn.commit();
+      } catch (e) {
+        try { await conn.rollback(); } catch {}
+        throw e;
+      } finally {
+        conn.release();
+      }
+      if (!dapat) {
+        await reply(`Sepertinya kamu sudah kecapean!\n\nCoba lagi nanti.`);
+        return true;
+      }
 
-      await updateMember(botId, sender, {
-        money:        newMoney,
-        hewan_json:   JSON.stringify(hewanData),
-        last_berburu: new Date().toISOString().slice(0, 19).replace('T', ' '),
-      });
+      const sesudah = await findMember(botId, sender);
 
       // Kirim animasi 3 pesan dengan setTimeout
       await reply('🏹 Sedang mencari mangsa...');
@@ -1561,7 +1699,7 @@ module.exports = async function funRpgHandler(ctx) {
           const baris5 = `${HEWAN[4]} = [ ${hasil[4]} ]         ${HEWAN[10]} = [ ${hasil[10]} ]`;
           const baris6 = `${HEWAN[5]} = [ ${hasil[5]} ]         ${HEWAN[11]} = [ ${hasil[11]} ]`;
           await client.message.send(jid,
-            `• *Hasil Berburu*\n\n*${baris1}*\n*${baris2}*\n*${baris3}*\n*${baris4}*\n*${baris5}*\n*${baris6}*\n\n💰 Nilai: *+${formatNum(totalKoin)}*\nTotal: *${formatNum(newMoney)}*\n⚡ Energi sisa: *${cukupEnergi.energi}*`
+            `• *Hasil Berburu*\n\n*${baris1}*\n*${baris2}*\n*${baris3}*\n*${baris4}*\n*${baris5}*\n*${baris6}*\n\n💰 Nilai: *+${formatNum(totalKoin)}*\nTotal: *${formatNum(sesudah?.money ?? '-')}*\n⚡ Energi sisa: *${energiAwal - 20}*`
           );
         } catch {}
       }, 6000);
@@ -1766,15 +1904,25 @@ module.exports = async function funRpgHandler(ctx) {
 
       const gData   = JOB_GAJI[member.job] || { min: 50000, max: 100000 };
       const gaji    = Math.floor(Math.random() * (gData.max - gData.min + 1)) + gData.min;
-      const jobexp  = Math.min(500, (member.jobexp || 0) + 1);
-      const newMoney = (Number(member.money) || 0) + gaji;
       const kapital = member.job.split(' ').map(w => w[0].toUpperCase() + w.slice(1)).join(' ');
 
-      await updateMember(botId, sender, {
-        money:       newMoney,
-        jobexp,
-        last_gajian: new Date().toISOString().slice(0, 19).replace('T', ' '),
-      });
+      // UPDATE bersyarat: cooldown di WHERE. `jobexp` dibatasi 500 di SQL
+      // (LEAST) supaya tidak perlu baca-ubah-tulis di JS.
+      const batas = new Date(Date.now() - 86400000);
+      const [res] = await pool.execute(
+        `UPDATE rpg_members
+            SET money = money + ?, jobexp = LEAST(500, COALESCE(jobexp, 0) + 1), last_gajian = NOW()
+          WHERE bot_id = ? AND jid = ?
+            AND (last_gajian IS NULL OR last_gajian <= ?)`,
+        [gaji, botId, sender, batas]
+      );
+      if (res.affectedRows !== 1) {
+        await reply(`Kamu sudah ambil gaji hari ini!\n\nTunggu sampai besok.`);
+        return true;
+      }
+
+      const sesudah = await findMember(botId, sender);
+      const jobexp = Number(sesudah?.jobexp) || 0;
 
       await reply(
         `💼 *GAJIAN*\n\n` +
@@ -1782,8 +1930,8 @@ module.exports = async function funRpgHandler(ctx) {
         `💼 Pekerjaan : *${kapital}*\n` +
         `💰 Gaji      : *+${formatNum(gaji)}*\n` +
         `📊 Job EXP   : *${jobexp}%* / 500%\n\n` +
-        `Total: *${formatNum(newMoney)}*\n` +
-        `⚡ Energi sisa: *${energiSekarang(member)}*`
+        `Total: *${formatNum(sesudah?.money ?? '-')}*\n` +
+        `⚡ Energi sisa: *${energiSekarang(sesudah || member)}*`
       );
       return true;
     }
@@ -2274,20 +2422,18 @@ module.exports = async function funRpgHandler(ctx) {
     case 'mancing': {
       const botId  = botData.id;
       const member = await getOrCreateMember(botId, sender, pushName);
+      if (!member) { await reply('❌ User tidak valid.'); return true; }
 
-      // Cek cooldown
+      // Cek ramah di JS (biar pesannya spesifik), penjaga sebenarnya di DB.
       const sisaCd = cdRemain(member.last_mancing, MANCING_COOLDOWN);
-      const now    = Date.now();
-
       if (sisaCd > 0) {
         const mnt = Math.floor(sisaCd / 60000);
         const dtk = Math.floor((sisaCd % 60000) / 1000);
         await reply(`🎣 Joran masih basah!\n\nCoba lagi dalam *${mnt}m ${dtk}d*`);
         return true;
       }
-
-      const cukupEnergi = await pakaiEnergi(botId, sender, member, 15);
-      if (!cukupEnergi.ok) { await reply(pesanEnergiKurang(cukupEnergi.energi, 15)); return true; }
+      const energiAwal = energiSekarang(member);
+      if (energiAwal < 15) { await reply(pesanEnergiKurang(energiAwal, 15)); return true; }
 
       // Animasi mancing (single message langsung)
       const ikan   = pickIkan();
@@ -2297,15 +2443,23 @@ module.exports = async function funRpgHandler(ctx) {
 
       // Hitung level up
       const { xp: newXp, level: newLevel } = calcXpLevel(member.xp, member.level || 1, xpGet);
-      const newMoney = (Number(member.money) || 0) + reward;
 
-      await updateMember(botId, sender, {
-        money:        newMoney,
-        xp:           newXp,
-        level:        newLevel,
-        last_mancing: new Date().toISOString().slice(0, 19).replace('T', ' '),
+      // Satu query: cooldown + potong energi + reward. Tidak ada energi
+      // terpotong tanpa imbalan kalau request paralel menang duluan.
+      const dapat = await klaimBerEnergi(botId, sender, {
+        kolomWaktu:  'last_mancing',
+        ambangMs:    MANCING_COOLDOWN,
+        biayaEnergi: 15,
+        energiBaru:  energiAwal - 15,
+        tambah:      { money: reward },
+        absolut:     { xp: newXp, level: newLevel },
       });
+      if (!dapat) {
+        await reply(`🎣 Joran masih basah!\n\nCoba lagi nanti.`);
+        return true;
+      }
 
+      const sesudah = await findMember(botId, sender);
       const TIER_LABELS = { Kecil: '🟢 Kecil', Sedang: '🟡 Sedang', Besar: '🟠 Besar', Langka: '🔴 Langka', Sampah: '⚫ Sampah' };
 
       let txt =
@@ -2323,7 +2477,7 @@ module.exports = async function funRpgHandler(ctx) {
           txt += `\n\n🎉 *LEVEL UP!* Naik ke level *${newLevel}* (${getRankByLevel(newLevel)})`;
         }
         if (ctx.isPremium) txt += `\n⭐ Bonus XP premium diterapkan!`;
-        txt += `\n\nTotal: *${formatNum(newMoney)}*\n⚡ Energi sisa: *${cukupEnergi.energi}*`;
+        txt += `\n\nTotal: *${formatNum(sesudah?.money ?? '-')}*\n⚡ Energi sisa: *${energiAwal - 15}*`;
       }
 
       await reply(txt);
@@ -2431,22 +2585,19 @@ module.exports = async function funRpgHandler(ctx) {
     case 'kerja': {
       const botId = botData.id;
       const member = await getOrCreateMember(botId, sender, pushName);
+      if (!member) { await reply('❌ User tidak valid.'); return true; }
 
       // Cek cooldown
       const sisaCd = cdRemain(member.last_kerja, KERJA_COOLDOWN);
-      const now    = Date.now();
-
       if (sisaCd > 0) {
-        const jam  = Math.floor(sisaCd / 3600000);
-        const mnt  = Math.floor((sisaCd % 3600000) / 60000);
-        const dtk  = Math.floor((sisaCd % 60000) / 1000);
+        const jam = Math.floor(sisaCd / 3600000);
+        const mnt = Math.floor((sisaCd % 3600000) / 60000);
+        const dtk = Math.floor((sisaCd % 60000) / 1000);
         await reply(`⏳ Kamu masih lelah!\n\nIstirahat dulu: *${jam}j ${mnt}m ${dtk}d*`);
         return true;
       }
-
-      // Energi dipotong setelah cooldown lolos
-      const cukupEnergi = await pakaiEnergi(botId, sender, member, 25);
-      if (!cukupEnergi.ok) { await reply(pesanEnergiKurang(cukupEnergi.energi, 25)); return true; }
+      const energiAwal = energiSekarang(member);
+      if (energiAwal < 25) { await reply(pesanEnergiKurang(energiAwal, 25)); return true; }
 
       const JOBS = [
         { nama: 'Petani',    min: 80,  max: 200, xp: 5  },
@@ -2462,15 +2613,22 @@ module.exports = async function funRpgHandler(ctx) {
 
       // Hitung level up
       const { xp: newXp, level: newLevel } = calcXpLevel(member.xp, member.level || 1, xpGet);
-      const newMoney = (Number(member.money) || 0) + reward;
 
-      await updateMember(botId, sender, {
-        money:      newMoney,
-        xp:         newXp,
-        level:      newLevel,
-        last_kerja: new Date().toISOString().slice(0, 19).replace('T', ' '),
+      // Satu query: cooldown + energi + reward.
+      const dapat = await klaimBerEnergi(botId, sender, {
+        kolomWaktu:  'last_kerja',
+        ambangMs:    KERJA_COOLDOWN,
+        biayaEnergi: 25,
+        energiBaru:  energiAwal - 25,
+        tambah:      { money: reward },
+        absolut:     { xp: newXp, level: newLevel },
       });
+      if (!dapat) {
+        await reply(`⏳ Kamu masih lelah!\n\nCoba lagi nanti.`);
+        return true;
+      }
 
+      const sesudah = await findMember(botId, sender);
       let txt =
         `💼 *KERJA — ${job.nama}*\n\n` +
         `💰 Dapat: *+${formatNum(reward)}*\n` +
@@ -2479,7 +2637,7 @@ module.exports = async function funRpgHandler(ctx) {
         txt += `\n\n🎉 *LEVEL UP!* Kamu naik ke level *${newLevel}* (${getRankByLevel(newLevel)})`;
       }
       if (ctx.isPremium) txt += `\n⭐ Bonus XP premium sudah diterapkan!`;
-      txt += `\n\nTotal: *${formatNum(newMoney)}*\n⚡ Energi sisa: *${cukupEnergi.energi}*`;
+      txt += `\n\nTotal: *${formatNum(sesudah?.money ?? '-')}*\n⚡ Energi sisa: *${energiAwal - 25}*`;
       await reply(txt);
       return true;
     }
@@ -2776,10 +2934,10 @@ module.exports = async function funRpgHandler(ctx) {
     case 'hourly': {
       const botId  = botData.id;
       const member = await getOrCreateMember(botId, sender, pushName);
+      if (!member) { await reply('❌ User tidak valid.'); return true; }
 
       const HOURLY_COOLDOWN = 3600 * 1000; // 1 jam
       const sisaCd = cdRemain(member.last_hourly, HOURLY_COOLDOWN);
-      const now    = Date.now();
 
       if (sisaCd > 0) {
         const mnt = Math.floor(sisaCd / 60000);
@@ -2792,22 +2950,25 @@ module.exports = async function funRpgHandler(ctx) {
       const xpGet   = Math.floor(Math.random() * 6) + 5 + (ctx.isPremium ? 3 : 0); // 5–10 (+3 premium)
 
       const { xp: newXp, level: newLevel } = calcXpLevel(member.xp, member.level || 1, xpGet);
-      const newMoney = (Number(member.money) || 0) + koinGet;
 
-      await updateMember(botId, sender, {
-        money:        newMoney,
-        xp:           newXp,
-        level:        newLevel,
-        last_hourly:  now,
-      });
+      // UPDATE bersyarat: cooldown di WHERE, jadi spam tidak bisa dobel klaim.
+      // money = reward (delta), xp/level = hasil hitungan JS (absolut).
+      const dapat = await klaimBerkala(botId, sender, 'last_hourly', HOURLY_COOLDOWN,
+        { money: koinGet },
+        { xp: newXp, level: newLevel });
+      if (!dapat) {
+        await reply(`⏳ *HOURLY* masih cooldown!\n\nCoba lagi nanti.`);
+        return true;
+      }
 
+      const sesudah = await findMember(botId, sender);
       let txt =
         `⏰ *HOURLY CLAIM*\n\n` +
         `💰 Money : *+${formatNum(koinGet)}*\n` +
         `✨ XP   : *+${xpGet}*`;
       if (newLevel > (member.level || 1)) txt += `\n\n🎉 *LEVEL UP!* → Level *${newLevel}* (${getRankByLevel(newLevel)})`;
       if (ctx.isPremium) txt += `\n⭐ Bonus XP premium!`;
-      txt += `\n\nTotal: *${formatNum(newMoney)}*\nKlaim lagi dalam *1 jam*`;
+      txt += `\n\nTotal: *${formatNum(sesudah?.money ?? '-')}*\nKlaim lagi dalam *1 jam*`;
       await reply(txt);
       return true;
     }
@@ -2834,16 +2995,17 @@ module.exports = async function funRpgHandler(ctx) {
       const limGet   = 10; // +10 limit
 
       const { xp: newXp, level: newLevel } = calcXpLevel(member.xp, member.level || 1, xpGet);
-      const newMoney = (Number(member.money) || 0) + koinGet;
-      const newLim   = (Number(member.lim) || 0) + limGet;
 
-      await updateMember(botId, sender, {
-        money:       newMoney,
-        xp:          newXp,
-        level:       newLevel,
-        lim:         newLim,
-        last_weekly: now,
-      });
+      // money & lim = delta (money = money + ?), xp/level = absolut.
+      const dapat = await klaimBerkala(botId, sender, 'last_weekly', WEEKLY_COOLDOWN,
+        { money: koinGet, lim: limGet },
+        { xp: newXp, level: newLevel });
+      if (!dapat) {
+        await reply(`⏳ *WEEKLY* masih cooldown!\n\nCoba lagi nanti.`);
+        return true;
+      }
+
+      const sesudah = await findMember(botId, sender);
 
       let txt =
         `📅 *WEEKLY CLAIM*\n\n` +
@@ -2852,7 +3014,7 @@ module.exports = async function funRpgHandler(ctx) {
         `🔋 Limit : *+${limGet}*`;
       if (newLevel > (member.level || 1)) txt += `\n\n🎉 *LEVEL UP!* → Level *${newLevel}* (${getRankByLevel(newLevel)})`;
       if (ctx.isPremium) txt += `\n⭐ Bonus XP premium!`;
-      txt += `\n\nTotal: *${formatNum(newMoney)}*\nKlaim lagi dalam *7 hari*`;
+      txt += `\n\nTotal: *${formatNum(sesudah?.money ?? '-')}*\nKlaim lagi dalam *7 hari*`;
       await reply(txt);
       return true;
     }
@@ -2897,14 +3059,17 @@ module.exports = async function funRpgHandler(ctx) {
       }
 
       const { xp: newXp, level: newLevel } = calcXpLevel(member.xp, member.level || 1, xpGet);
-      const newMoney = (Number(member.money) || 0) + koinGet + bonusKoin;
 
-      await updateMember(botId, sender, {
-        money:          newMoney,
-        xp:             newXp,
-        level:          newLevel,
-        last_dailymisi: now,
-      });
+      // money = delta, xp/level = absolut (hasil calcXpLevel).
+      const dapat = await klaimBerkala(botId, sender, 'last_dailymisi', MISI_COOLDOWN,
+        { money: koinGet + bonusKoin },
+        { xp: newXp, level: newLevel });
+      if (!dapat) {
+        await reply(`⏳ Misi harian sudah selesai!\n\nKembali nanti.`);
+        return true;
+      }
+
+      const sesudah = await findMember(botId, sender);
 
       let txt =
         `📋 *MISI HARIAN*\n\n` +
@@ -2914,7 +3079,7 @@ module.exports = async function funRpgHandler(ctx) {
         bonusTxt;
       if (newLevel > (member.level || 1)) txt += `\n\n🎉 *LEVEL UP!* → Level *${newLevel}* (${getRankByLevel(newLevel)})`;
       if (ctx.isPremium) txt += `\n⭐ Bonus XP premium!`;
-      txt += `\n\nTotal: *${formatNum(newMoney)}*\nMisi baru tersedia dalam *24 jam*`;
+      txt += `\n\nTotal: *${formatNum(sesudah?.money ?? '-')}*\nMisi baru tersedia dalam *24 jam*`;
       await reply(txt);
       return true;
     }
@@ -3225,11 +3390,13 @@ module.exports._uji = {
   ENERGI_MAKS, ENERGI_REGEN_MENIT, DUR_MAKS, STORE_ITEMS,
 };
 
-// Helper atomic — di-export agar tes konkurensi (test/konkurensi-uang.js)
+// Helper atomic — di-export agar tes konkurensi (test/konkurensi-*.js)
 // bisa memanggilnya langsung. Tidak dipanggil dari plugin lain; tinggal
-// satu pintu dari handler 'transfer' & 'coinflip' di file ini.
+// satu pintu dari handler di file ini.
 module.exports.updateMoneyDelta = updateMoneyDelta;
 module.exports.transferMoney    = transferMoney;
+module.exports.klaimBerkala     = klaimBerkala;
+module.exports.klaimBerEnergi   = klaimBerEnergi;
 
 // Command yang kena limit untuk user biasa
 module.exports.limitedCmds = new Set([
