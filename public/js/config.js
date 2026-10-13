@@ -8,7 +8,8 @@
   let ws = null;
   let statusPoller = null;
 
-  const botId = (location.pathname.match(/\/(\d+)\/?$/) || [])[1];
+  // id bisa slug ATAU nomor lama — pakai helper bersama, jangan regex sendiri.
+  const botId = botIdDariPath(location.pathname);
   if (!botId) { location.href = '/dashboard'; }
 
   async function api(path, opts = {}) {

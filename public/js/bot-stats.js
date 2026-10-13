@@ -1,7 +1,8 @@
 // Halaman statistik bot. Nol WebSocket — angka di sini nggak perlu realtime,
 // jadi cukup satu fetch pas buka + refresh manual. Live log ada di /config/:id.
 (function () {
-  const botId = (location.pathname.match(/\/(\d+)\/?$/) || [])[1];
+  // id bisa slug ATAU nomor lama — pakai helper bersama, jangan regex sendiri.
+  const botId = botIdDariPath(location.pathname);
   if (!botId) { location.href = '/dashboard'; return; }
 
   async function api(path) {

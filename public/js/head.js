@@ -110,6 +110,23 @@ window.botHref = function (bot) {
   return bot.slug || bot.public_id || bot.id || (bot.bot && (bot.bot.slug || bot.bot.id)) || '';
 };
 
+/**
+ * Ambil id/slug bot dari pathname halaman.
+ *
+ * WAJIB dipakai semua halaman /bot/:id & /config/:id — JANGAN tulis regex
+ * sendiri. Versi lama masing-masing file cuma cocok angka (`\/(\d+)\/?$`),
+ * jadi begitu URL-nya jadi slug, hasilnya `undefined` dan halaman langsung
+ * mental ke /dashboard tanpa pesan apa pun.
+ *
+ * `(?:bot|config)` sengaja disebut eksplisit: tanpa itu, `/dashboard` ikut
+ * cocok sebagai "slug" dan halaman mengirim permintaan ke bot bernama
+ * "dashboard".
+ */
+window.botIdDariPath = function (pathname) {
+  const m = String(pathname || '').match(/^\/(?:bot|config)\/([^/]+)\/?$/);
+  return m ? decodeURIComponent(m[1]) : null;
+};
+
 // ── Menu aktif ikut halaman yang sedang dibuka ───────────────────────
 // Dulu `active` ditulis mati di sidebar.html (selalu "Dashboard"), jadi di
 // /pricing & /admin salah nyala.
