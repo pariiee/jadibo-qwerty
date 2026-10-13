@@ -30,8 +30,40 @@ try { require('dotenv').config({ path: path.join(__dirname, '..', '.env') }); } 
 
 const HOST = process.env.DB_HOST || 'localhost';
 const PORT = Number(process.env.DB_PORT || 3306);
+const DB_PRODUKSI = process.env.DB_NAME || 'yaaparbot';
+const DB_TES      = process.env.DB_NAME_TEST || '';
 
 console.log('=== Tes konkurensi updateMoneyDelta/transferMoney ===\n');
+
+// ── 0a. WAJIB pakai DB terpisah ─────────────────────────────────────────────
+// Tes ini INSERT users/bots/rpg_members lalu menghapusnya. Kalau dijalankan
+// di DB produksi, satu crash sebelum `finally` = data dummy nyangkut di DB
+// pelanggan. Jadi: tolak jalan kecuali DB_NAME_TEST diisi DAN beda dari
+// DB_NAME. Jangan pernah "sekadar hati-hati" — DB produksi tidak boleh
+// disentuh tes, titik.
+//
+// Belum diisi = SKIP (exit 0): setup DB adalah langkah manual, dan tes lain
+// tidak boleh ikut merah cuma karena DB tes belum dibuat.
+// Sudah diisi tapi SAMA dengan produksi = GAGAL (exit 1): itu salah pakai.
+console.log(`DB produksi : ${DB_PRODUKSI}`);
+console.log(`DB tes      : ${DB_TES || '(kosong)'}`);
+if (!DB_TES) {
+  console.log('\n⏭  SKIP: DB_NAME_TEST belum diisi di .env.');
+  console.log('   Tes konkurensi sengaja TIDAK jalan di DB produksi.');
+  console.log('   Buat DB terpisah dulu:');
+  console.log('     CREATE DATABASE yaaparbot_test;');
+  console.log('     mysql yaaparbot_test < schema.sql');
+  console.log('   lalu tambahkan ke .env:  DB_NAME_TEST=yaaparbot_test');
+  process.exit(0);
+}
+if (DB_TES === DB_PRODUKSI) {
+  console.error('\n❌ GAGAL: DB_NAME_TEST sama dengan DB_NAME.');
+  console.error('   Tes ini menghapus baris data (bot_id=999000, users 999001/999002).');
+  console.error('   Di DB produksi itu tidak boleh. Pakai nama DB yang berbeda.');
+  process.exit(1);
+}
+process.env.DB_NAME = DB_TES;   // config/database.js baca ini saat require
+console.log(`✅ pakai DB tes: ${DB_TES}\n`);
 
 // ── 0. Reachability: kalau DB tidak bisa dijangkau, skip ────────────────────
 function cekReachable() {
