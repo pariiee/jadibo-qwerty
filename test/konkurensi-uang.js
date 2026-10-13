@@ -169,7 +169,8 @@ function cekReachable() {
     const sukses3 = results3.filter(r => r.ok).length;
     const [[r3]] = await pool.execute('SELECT money FROM rpg_members WHERE bot_id=? AND jid=?', [botId, jidA]);
     const saldoAkhir3 = Number(r3.money);
-    const ekspektasi = 10000 + (2 * rencanaMenang - N3);  // 10000 + menang*10 - kalah*10
+    // Rumus: 10000 + (menang × 10) - ((N - menang) × 10) = 10000 + (2×menang - N) × 10
+    const ekspektasi = 10000 + (2 * rencanaMenang - N3) * 10;
     console.log(`  rencana menang: ${rencanaMenang}/${N3}`);
     console.log(`  saldo akhir: ${saldoAkhir3} (ekspektasi ${ekspektasi})`);
     assert.strictEqual(saldoAkhir3, ekspektasi,
