@@ -146,15 +146,20 @@ async function handleMessage(tgBot, msg, botData, botId) {
     });
 
     const plugins = getPlugins();
-    for (const handler of plugins) {
-      try {
-        const handled = await handler(ctx);
-        if (handled) {
-          await logBot(botId, 'cmd', `[cmd] ${ctx.command}`);
-          return;
+    // Cooldown terpusat — sama dengan whatsappEngine, tolak SEBELUM plugin.
+    const { cooldownGuard } = require('./cooldown');
+    const cd = await cooldownGuard(ctx);
+    if (cd.ok) {
+      for (const handler of plugins) {
+        try {
+          const handled = await handler(ctx);
+          if (handled) {
+            await logBot(botId, 'cmd', `[cmd] ${ctx.command}`);
+            return;
+          }
+        } catch (err) {
+          console.warn(`[TelegramPlugin] ${ctx.command}:`, err.message);
         }
-      } catch (err) {
-        console.warn(`[TelegramPlugin] ${ctx.command}:`, err.message);
       }
     }
   } catch (e) {
