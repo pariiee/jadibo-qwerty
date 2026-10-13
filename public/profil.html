@@ -17,10 +17,9 @@
     <div class="content">
       <div class="cmd-head">
         <h2>Profil Saya</h2>
-        <p class="m-sub">Ringkasan akun kamu, plus ganti password.</p>
       </div>
 
-      <div class="stats">
+      <div class="stats span-all">
         <div class="stat">
           <div class="lbl">Username</div>
           <div class="val" id="pf-user">—</div>
@@ -43,48 +42,42 @@
         </div>
       </div>
 
+      <!-- Dua kartu berjajar (grid 2 kolom dari page.css) supaya 3 form isian
+           tidak menumpuk jadi halaman panjang. Form pendek (HP + Email)
+           digabung di kiri, Password di kanan. -->
       <div class="card">
-        <h3>Nomor HP</h3>
-        <p class="m-sub">Kabar pembayaran & bot mati dikirim ke WhatsApp. Kalau bot kamu
-          sedang putus, nomor ini yang dipakai — jadi jangan sampai kosong.</p>
+        <h3>Kontak & Keamanan</h3>
+        <p class="m-sub">Nomor HP dipakai bot mengirim kabar pembayaran & saat bot mati
+          — kalau bot kamu putus, nomor inilah jalurnya.</p>
         <form id="hp-form">
-          <div class="row2">
-            <div class="field">
-              <label for="hp-nomor">Nomor HP</label>
-              <input class="inp" id="hp-nomor" type="tel" placeholder="08123456789" autocomplete="tel" />
-            </div>
-            <div class="field">
-              <label for="hp-btn">&nbsp;</label>
-              <button class="btn btn-dark" id="hp-btn" type="submit" style="width:100%">Simpan Nomor</button>
-            </div>
+          <div class="field">
+            <label for="hp-nomor">Nomor HP</label>
+            <input class="inp" id="hp-nomor" type="tel" placeholder="08123456789" autocomplete="tel" />
           </div>
           <div class="err" id="hp-error"></div>
           <div class="ok" id="hp-ok"></div>
+          <button class="btn btn-dark submit" id="hp-btn" type="submit">Simpan Nomor</button>
         </form>
-      </div>
 
-      <!-- Email — jalur kabar yang TIDAK lewat bot.
-           Nomor HP & nomor owner dua-duanya dikirim lewat bot MILIK USER, jadi
-           saat botnya yang rusak, kabarnya ikut hilang. Email tidak. -->
-      <div class="card">
+        <hr class="pisah" />
+
+        <!-- Email — jalur kabar yang TIDAK lewat bot.
+             Nomor HP & nomor owner dua-duanya dikirim lewat bot MILIK USER, jadi
+             saat botnya yang rusak, kabarnya ikut hilang. Email tidak. -->
         <h3>Email</h3>
         <p class="m-sub">Kalau bot kamu mati, kabarnya dikirim lewat WhatsApp —
           <b>dari bot itu sendiri</b>, jadi kalau botnya yang bermasalah, kabarnya tidak sampai.
           Email ini jalur yang tetap jalan.</p>
         <form id="em-form">
-          <div class="row2">
-            <div class="field">
-              <label for="em-alamat">Alamat Email</label>
-              <input class="inp" id="em-alamat" type="email" placeholder="nama@email.com" autocomplete="email" />
-            </div>
-            <div class="field">
-              <label for="em-btn">&nbsp;</label>
-              <button class="btn btn-dark" id="em-btn" type="submit" style="width:100%">Simpan Email</button>
-            </div>
+          <div class="field">
+            <label for="em-alamat">Alamat Email</label>
+            <input class="inp" id="em-alamat" type="email" placeholder="nama@email.com" autocomplete="email" />
           </div>
           <div class="err" id="em-error"></div>
           <div class="ok" id="em-ok"></div>
+          <button class="btn btn-dark submit" id="em-btn" type="submit">Simpan Email</button>
         </form>
+      </div>
 
       <div class="card">
         <h3>Ganti Password</h3>
@@ -95,15 +88,13 @@
             <label for="pw-lama">Password Lama</label>
             <input class="inp" id="pw-lama" type="password" autocomplete="current-password" required />
           </div>
-          <div class="row2">
-            <div class="field">
-              <label for="pw-baru">Password Baru</label>
-              <input class="inp" id="pw-baru" type="password" placeholder="Min. 6 karakter" autocomplete="new-password" required />
-            </div>
-            <div class="field">
-              <label for="pw-ulang">Ulangi Password Baru</label>
-              <input class="inp" id="pw-ulang" type="password" autocomplete="new-password" required />
-            </div>
+          <div class="field">
+            <label for="pw-baru">Password Baru</label>
+            <input class="inp" id="pw-baru" type="password" placeholder="Min. 6 karakter" autocomplete="new-password" required />
+          </div>
+          <div class="field">
+            <label for="pw-ulang">Ulangi Password Baru</label>
+            <input class="inp" id="pw-ulang" type="password" autocomplete="new-password" required />
           </div>
           <div class="err" id="pw-error"></div>
           <button class="btn btn-dark submit" type="submit">Simpan Password Baru</button>

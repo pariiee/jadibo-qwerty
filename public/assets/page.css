@@ -592,6 +592,27 @@ body.page-profil .card .m-sub{margin-bottom:18px}
 body.page-profil .card .submit{margin-top:6px}
 body.page-profil .err.show{display:block}
 
+/* Jaring 2 kolom: biar 3 form isian tidak menumpuk jadi halaman panjang.
+   `.content` jadi grid, dan yang memang perlu selebar halaman (kartu
+   statistik, judul) diberi `.span-all`. Di ≤1000px turun jadi 1 kolom. */
+body.page-profil .content{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:18px;align-items:start;
+}
+body.page-profil .content>.span-all,
+body.page-profil .content>.cmd-head{grid-column:1/-1}
+body.page-profil .content>.card{margin:0}
+@media(max-width:1000px){
+  body.page-profil .content{grid-template-columns:minmax(0,1fr)}
+}
+/* Email ditaruh di bawah HP dalam kartu yang sama; garis pemisah tipis saja
+   (dulu dua kartu terpisah = satu kartu cuma berisi satu input). */
+body.page-profil .pisah{
+  border:0;border-top:1px solid var(--line);margin:22px 0 18px;
+}
+/* Tombol simpan: ikut lebar kartu, sama seperti tombol password. */
+body.page-profil .card .btn.submit{width:100%;justify-content:center}
+
 /* ── Riwayat Pembayaran (/billing) ──────────────────────────────────────────── */
 body.page-billing .tbl td code{font-family:Consolas,Menlo,monospace;font-size:12px}
 body.page-billing #order-note a{color:var(--acc);font-weight:700}
