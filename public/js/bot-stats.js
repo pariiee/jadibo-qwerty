@@ -62,18 +62,36 @@
         '<td style="text-align:right" class="muted">' + jam(u.terakhir) + '</td></tr>'),
       5, 'Belum ada aktivitas user.');
 
-    // Batang harian: lebar relatif ke hari paling ramai — visual modern & informatif.
+    // Batang harian: 7 hari penuh (isi 0 jika tidak ada aktivitas di hari tsb)
+    const hariMap = new Map();
+    (d.harian || []).forEach(h => {
+      const k = String(h.tgl || '').slice(0, 10);
+      hariMap.set(k, Number(h.n || 0));
+    });
+
+    const listHarian = [];
+    const totalHari = Number(d.ringkas?.hari || 7);
+    for (let i = totalHari - 1; i >= 0; i--) {
+      const dt = new Date();
+      dt.setDate(dt.getDate() - i);
+      const y = dt.getFullYear();
+      const m = String(dt.getMonth() + 1).padStart(2, '0');
+      const day = String(dt.getDate()).padStart(2, '0');
+      const k = `${y}-${m}-${day}`;
+      listHarian.push({ tgl: k, n: hariMap.get(k) || 0 });
+    }
+
     const chart = document.getElementById('chart');
-    const totalCmdHarian = d.harian.reduce((acc, h) => acc + Number(h.n || 0), 0);
-    const maks = Math.max(1, ...d.harian.map(h => Number(h.n || 0)));
+    const totalCmdHarian = listHarian.reduce((acc, h) => acc + Number(h.n || 0), 0);
+    const maks = Math.max(1, ...listHarian.map(h => Number(h.n || 0)));
 
     const sumEl = document.getElementById('chart-sum');
-    if (sumEl && d.harian.length) {
+    if (sumEl) {
       sumEl.textContent = '7 Hari: ' + n(totalCmdHarian) + ' cmd • Puncak: ' + n(maks);
     }
 
-    chart.innerHTML = d.harian.length
-      ? d.harian.map(h => {
+    chart.innerHTML = listHarian.length
+      ? listHarian.map(h => {
           const val = Number(h.n || 0);
           const pct = Math.max(val > 0 ? 8 : 2, Math.round((val / maks) * 100));
           return '<div class="bar" title="' + esc(h.tgl) + ': ' + n(val) + ' command">' +

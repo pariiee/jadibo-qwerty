@@ -369,7 +369,8 @@ body.page-bot-stats .chart-summary {
 body.page-bot-stats .chart {
   display: flex !important;
   align-items: flex-end !important;
-  gap: 14px !important;
+  justify-content: space-around !important;
+  gap: 12px !important;
   height: 220px !important;
   padding: 24px 18px 16px !important;
   overflow-x: auto !important;
@@ -380,14 +381,15 @@ body.page-bot-stats .chart {
 }
 
 body.page-bot-stats .bar {
-  flex: 1 0 44px !important;
+  flex: 1 1 0 !important;
+  max-width: 90px !important;
   display: flex !important;
   flex-direction: column !important;
   justify-content: flex-end !important;
   align-items: center !important;
   height: 100% !important;
   gap: 8px !important;
-  min-width: 0 !important;
+  min-width: 38px !important;
   cursor: default !important;
 }
 

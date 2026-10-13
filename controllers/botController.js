@@ -526,13 +526,25 @@ async function getBotStats(req, res) {
       [bot.id]
     );
 
-    const [harian] = await pool.execute(
-      `SELECT DATE(created_at) AS tgl, COUNT(*) AS n
+    const [harianRaw] = await pool.execute(
+      `SELECT DATE_FORMAT(created_at, '%Y-%m-%d') AS tgl, COUNT(*) AS n
          FROM bot_logs
-        WHERE bot_id = ? AND level = 'cmd' AND created_at >= NOW() - INTERVAL ? DAY
+        WHERE bot_id = ? AND level = 'cmd' AND created_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
         GROUP BY tgl ORDER BY tgl`,
       [bot.id, hari]
     );
+
+    const petaHarian = new Map(harianRaw.map(r => [String(r.tgl), Number(r.n || 0)]));
+    const harian = [];
+    for (let i = hari - 1; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const kunci = `${y}-${m}-${day}`;
+      harian.push({ tgl: kunci, n: petaHarian.get(kunci) || 0 });
+    }
 
     // Command yang sering gagal. `cmderr` punya dua bentuk: baris command biasa
     // (level cmd yang gagal) dan 'handler: <pesan>' dari engine @1072 — yang
