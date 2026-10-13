@@ -16,6 +16,13 @@
 const axios    = require('axios');
 const FormData = require('form-data');
 
+// Jalur IPv6 ke Cloudflare balikin 413 "The POST data is too large." begitu body
+// lewat ~2MB (IPv4 lolos 60MB+), dan `yapari.web.id` mengiklankan AAAA — Node
+// milih IPv6 dulu. `config/net.js` sudah paksa IPv4 lewat globalAgent; agent
+// eksplisit di sini supaya jalur upload nggak ikut rusak kalau urutan require
+// atau agent global berubah. Terbukti: 8MB tanpa ini = 413, dengan ini = 200.
+const ipv4 = new (require('https').Agent)({ family: 4 });
+
 /** `${BASE_API}` tanpa '/' di ujung. Pakai `url()` untuk menyambung path, jangan `base()` langsung. */
 const base = () => String(process.env.BASE_API || '').replace(/\/+$/, '');
 const auth = () => ({ 'X-API-Key': process.env.KEY_API });
@@ -57,8 +64,10 @@ async function uploadInfo(buffer, filename, mimetype, opts = {}) {
 
   const res = await axios.post(url(endpoint), form, {
     headers: { ...form.getHeaders(), ...auth() },
-    timeout: opts.timeout ?? (opts.v2 ? 30000 : 20000),
+    // v2 = URL permanen: file besar wajar (40–60MB butuh ~45s), 30s terlalu pendek.
+    timeout: opts.timeout ?? (opts.v2 ? 120000 : 20000),
     maxBodyLength: Infinity,
+    httpsAgent: ipv4,
   });
 
   // v2: result.* | v1: results.*  — plus fallback bentuk lama
@@ -76,12 +85,12 @@ async function uploadInfo(buffer, filename, mimetype, opts = {}) {
 
 /** GET endpoint API. Balikin axios response (panggil `.data` / `.data.results` sendiri). */
 function apiGet(path, opts = {}) {
-  return axios.get(url(path), { headers: auth(), timeout: 30000, ...opts });
+  return axios.get(url(path), { headers: auth(), timeout: 30000, httpsAgent: ipv4, ...opts });
 }
 
 /** POST endpoint API. `body` di-JSON-kan, bukan multipart — pakai `upload()` untuk file. */
 function apiPost(path, body, opts = {}) {
-  return axios.post(url(path), body, { headers: auth(), timeout: 30000, ...opts });
+  return axios.post(url(path), body, { headers: auth(), timeout: 30000, httpsAgent: ipv4, ...opts });
 }
 
 module.exports = { base, url, auth, upload, uploadInfo, apiGet, apiPost };

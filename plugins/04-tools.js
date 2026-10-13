@@ -3430,7 +3430,7 @@ module.exports = async function toolsHandler(ctx) {
 
         await sendResult(`🔗 *URL Media (Permanen)*\n\n${info.url}\n\n📦 Ukuran: ${sizeKb}\n⏳ Expired: ${expiredText}${providerText}`);
       } catch (e) {
-        await reply(`${mess.error}\n${e.message}`);
+        await reply(`❌ Gagal upload: ${rapikanError(e)}`);
       }
       return true;
     }
