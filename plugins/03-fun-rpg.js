@@ -423,6 +423,88 @@ async function getOrCreateMember(botId, jid, name) {
   return findMember(botId, jid);
 }
 
+/**
+ * updateMoneyDelta(botId, jid, delta) — ganti money atomik di dalam SATU row.
+ *
+ * Dipakai oleh command yang hanya menyentuh satu akun (coinflip, slot, claim,
+ * daily, dll). return { ok, money } — `ok:false` artinya saldo tidak cukup.
+ *
+ * KUNCI `money` dengan SELECT ... FOR UPDATE di transaksi supaya dua request
+ * bersamaan tidak baca saldo yang sama dan dua-duanya lolos cek. Tanpa ini,
+ * flood command yang baca-lalu-tulis duplikasi uang.
+ *
+ * # ponytail: getConnection() + BEGIN/COMMIT = 2 round-trip. Akali dengan
+ * `UPDATE ... WHERE money + ? >= 0` kalau throughput penting.
+ */
+async function updateMoneyDelta(botId, jid, delta) {
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+    const [rows] = await conn.execute(
+      'SELECT money FROM rpg_members WHERE bot_id = ? AND jid = ? FOR UPDATE',
+      [botId, jid]
+    );
+    if (!rows[0]) { await conn.rollback(); return { ok: false, reason: 'not_found' }; }
+    const cur = Number(rows[0].money) || 0;
+    const next = cur + delta;
+    if (next < 0) { await conn.rollback(); return { ok: false, reason: 'insufficient' }; }
+    await conn.execute(
+      'UPDATE rpg_members SET money = ? WHERE bot_id = ? AND jid = ?',
+      [next, botId, jid]
+    );
+    await conn.commit();
+    return { ok: true, money: next };
+  } catch (e) {
+    try { await conn.rollback(); } catch {}
+    throw e;
+  } finally {
+    conn.release();
+  }
+}
+
+/**
+ * transferMoney(botId, pengirim, penerima, nominal) — pindah uang antara dua
+ * akun dalam SATU transaksi dengan mengunci kedua baris.
+ *
+ * Urutan kunci: JID pengirim DAN penerima diurutkan leksikografis supaya
+ * dua transfer berlawanan (A→B dan B→A) tidak deadlock — InnoDB lock selalu
+ * dalam urutan yang sama.
+ */
+async function transferMoney(botId, pengirim, penerima, nominal) {
+  if (nominal <= 0) throw new Error('nominal harus > 0');
+  const [a, b] = [pengirim, penerima].sort();
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+    // Kunci dalam urutan JID (sorted) — deadlock-proof.
+    const [rows] = await conn.execute(
+      'SELECT jid, money FROM rpg_members WHERE bot_id = ? AND jid IN (?, ?) ORDER BY jid FOR UPDATE',
+      [botId, a, b]
+    );
+    const byJid = Object.fromEntries(rows.map(r => [r.jid, Number(r.money) || 0]));
+    const dari   = byJid[pengirim];
+    const ke     = byJid[penerima];
+    if (dari == null) { await conn.rollback(); return { ok: false, reason: 'sender_not_found' }; }
+    if (ke   == null) { await conn.rollback(); return { ok: false, reason: 'target_not_found' }; }
+    if (dari < nominal) { await conn.rollback(); return { ok: false, reason: 'insufficient' }; }
+    await conn.execute(
+      'UPDATE rpg_members SET money = ? WHERE bot_id = ? AND jid = ?',
+      [dari - nominal, botId, pengirim]
+    );
+    await conn.execute(
+      'UPDATE rpg_members SET money = ? WHERE bot_id = ? AND jid = ?',
+      [ke + nominal,   botId, penerima]
+    );
+    await conn.commit();
+    return { ok: true, dariBaru: dari - nominal, keBaru: ke + nominal };
+  } catch (e) {
+    try { await conn.rollback(); } catch {}
+    throw e;
+  } finally {
+    conn.release();
+  }
+}
+
 /** Ambil row RPG member — TANPA auto-create. Return undefined kalau belum ada. */
 async function findMember(botId, jid) {
   const [rows] = await pool.execute(
@@ -2419,31 +2501,33 @@ module.exports = async function funRpgHandler(ctx) {
       if (nominal <= 0 || isNaN(nominal)) { await reply('❌ Jumlah tidak valid!'); return true; }
       if (nominal < 10) { await reply('❌ Minimal transfer 10 Money!'); return true; }
 
-      const pengirim  = await getOrCreateMember(botId, sender, pushName);
-      if ((pengirim.money || 0) < nominal) {
-        await reply(`❌ Money tidak cukup!\n\nMoney kamu: *${formatNum(pengirim.money || 0)}*\nDibutuhkan: *${formatNum(nominal)}*`);
-        return true;
-      }
-
-      // Ambil nama penerima
-      const [tRows] = await pool.execute(
-        'SELECT name, money FROM rpg_members WHERE bot_id = ? AND jid = ? LIMIT 1',
-        [botId, target]
-      );
-      const penerima = tRows[0];
-      if (!penerima) {
-        // Auto-create penerima
-        await getOrCreateMember(botId, target, resolveMentionNum(target));
-      }
-      const penerimaMoney = penerima ? (penerima.money || 0) : 0;
-      const penerimaNama  = penerima?.name || resolveMentionNum(target);
+      // Pastikan kedua row ada — di luar transaksi; idempotent.
+      const pengirim = await getOrCreateMember(botId, sender, pushName);
+      if (!pengirim) { await reply('❌ User tidak valid.'); return true; }
+      let targetRow = await findMember(botId, target);
+      if (!targetRow) targetRow = await getOrCreateMember(botId, target, resolveMentionNum(target));
+      if (!targetRow) { await reply('❌ Target tidak valid.'); return true; }
 
       // Potong tax 2%
       const tax      = Math.floor(nominal * 0.02);
       const diterima = nominal - tax;
 
-      await updateMember(botId, sender, { money: (pengirim.money || 0) - nominal });
-      await updateMember(botId, target, { money: penerimaMoney + diterima });
+      // transferMoney mengunci kedua row dalam satu transaksi — anti double-spend.
+      let res;
+      try {
+        res = await transferMoney(botId, sender, target, diterima);
+      } catch (e) {
+        await reply(`❌ Gagal transfer: ${rapikanError(e)}`);
+        return true;
+      }
+      if (!res.ok) {
+        if (res.reason === 'insufficient') {
+          await reply(`❌ Money tidak cukup!\n\nMoney kamu: *${formatNum(pengirim.money || 0)}*\nDibutuhkan: *${formatNum(nominal)}*`);
+        } else {
+          await reply('❌ Transfer gagal, coba lagi nanti.');
+        }
+        return true;
+      }
 
       await client.message.send(jid,
         `💸 *TRANSFER BERHASIL*\n\n` +
@@ -2452,7 +2536,7 @@ module.exports = async function funRpgHandler(ctx) {
         `Jumlah: *${formatNum(nominal)}*\n` +
         `Pajak : *${formatNum(tax)}* (2%)\n` +
         `Diterima: *${formatNum(diterima)}*\n\n` +
-        `Sisa Money kamu: *${formatNum((pengirim.money || 0) - nominal)}*`,
+        `Sisa Money kamu: *${formatNum(res.dariBaru)}*`,
         { mentions: [sender, target] }
       );
       return true;
@@ -2477,20 +2561,30 @@ module.exports = async function funRpgHandler(ctx) {
       if (nominal < 10) { await reply('❌ Minimal taruhan 10 Money!'); return true; }
       if (nominal > 50000) { await reply('❌ Maksimal taruhan 50.000 Money!'); return true; }
 
+      // Pastikan row ada. Cek saldo di sini untuk pesan yang manusiawi;
+      // updateMoneyDelta mengunci baris yang sama dan revalidasi atomik.
       const member = await getOrCreateMember(botId, sender, pushName);
-      if ((member.money || 0) < nominal) {
-        await reply(`❌ Money tidak cukup!\n\nMoney kamu: *${formatNum(member.money || 0)}*`);
+      if (!member || (Number(member.money) || 0) < nominal) {
+        await reply(`❌ Money tidak cukup!\n\nMoney kamu: *${formatNum(member?.money || 0)}*`);
         return true;
       }
 
-      const isHeads  = ['heads', 'h', 'angka'].includes(pilihan);
-      const result   = Math.random() < 0.5 ? 'heads' : 'tails';
-      const menang   = isHeads === (result === 'heads');
-      const newMoney = menang
-        ? (member.money || 0) + nominal
-        : (member.money || 0) - nominal;
+      const isHeads = ['heads', 'h', 'angka'].includes(pilihan);
+      const result  = Math.random() < 0.5 ? 'heads' : 'tails';
+      const menang  = isHeads === (result === 'heads');
+      const delta   = menang ? nominal : -nominal;
 
-      await updateMember(botId, sender, { money: newMoney });
+      // updateMoneyDelta mengunci row + validasi saldo atomik — flood coinflip
+      // tidak bisa bikin saldo jadi negatif atau duplikasi kemenangan.
+      const r = await updateMoneyDelta(botId, sender, delta);
+      if (!r.ok) {
+        if (r.reason === 'insufficient') {
+          await reply(`❌ Money tidak cukup (saldo berubah saat taruhan).`);
+        } else {
+          await reply(`❌ Gagal: ${rapikanError(new Error(r.reason))}`);
+        }
+        return true;
+      }
 
       await reply(
         `🪙 *COIN FLIP*\n\n` +
@@ -2499,7 +2593,7 @@ module.exports = async function funRpgHandler(ctx) {
         (menang
           ? `🎉 *MENANG!* +${formatNum(nominal)}`
           : `😢 *KALAH!* -${formatNum(nominal)}`) +
-        `\n\nSisa Money: *${formatNum(newMoney)}*`
+        `\n\nSisa Money: *${formatNum(r.money)}*`
       );
       return true;
     }
