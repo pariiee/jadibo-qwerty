@@ -4989,7 +4989,11 @@ ${rapikanError(e)}`);
               return buf;
             }
           }
-          const r = await axios.get(v.play_url, { responseType: 'arraybuffer', timeout: 90000 });
+          const r = await axios.get(v.play_url, {
+            responseType:    'arraybuffer',
+            timeout:         90000,
+            maxContentLength: 100 * 1024 * 1024,   // 100MB cap — TikTok bisa lebih panjang
+          });
           return Buffer.from(r.data);
         };
 

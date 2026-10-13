@@ -89,12 +89,26 @@ async function terapkanPaket(userId, planId, days) {
     // dan notifikasi "pembayaran diterima" di bawah pun tidak terkirim, karena
     // `notify.js` mengirim LEWAT bot user sendiri, yang sedang mati.
     //
+    // Reset `stop_reason` DULU, baru start. Tanpa reset, kalau `engineBus.start`
+    // gagal (QR timeout / zapo error) dan user restart server, `autoStartBots`
+    // akan skip bot ini karena filter `stop_reason <> 'expired'`. Padahal
+    // paketnya SUDAH aktif dan botnya harusnya jalan. startBot sendiri juga
+    // sudah reset stop_reason (engine/whatsappEngine.js:319), tapi kita tidak
+    // boleh andalkan startBot untuk ini: kalau proses startBot crash di
+    // tengah, stop_reason kembali ke 'expired' dan boot berikutnya skip.
+    //
     // SENGAJA TIDAK di-await, sejajar dengan notifikasi: start WA butuh ~14 detik
     // dan webhook QRIS yang lambat dibalas = QRISku mengirim ulang = paket dobel.
     const [matiKarenaPaket] = await pool.execute(
       "SELECT id FROM bots WHERE user_id = ? AND is_running = 0 AND stop_reason = 'expired'",
       [userId]
     );
+    if (matiKarenaPaket.length) {
+      await pool.execute(
+        "UPDATE bots SET stop_reason = NULL WHERE user_id = ? AND stop_reason = 'expired'",
+        [userId]
+      );
+    }
     for (const b of matiKarenaPaket) {
       require('../config/engineBus').start(b.id)
         .then(() => console.log(`[Billing] Bot ${b.id} dinyalakan kembali — paket ${plan.id} aktif`))

@@ -19,6 +19,22 @@ if (!process.env.INTERNAL_KEY) {
   console.error('[Boot] INTERNAL_KEY kosong di .env — server dihentikan.');
   process.exit(1);
 }
+// KING_PASSWORD: tanpa fallback. Kalau .env lupa diisi (atau di-reset tanpa
+// niat), admin akan ter-seed dengan password PUBLIK. Itu lebih bahaya
+// daripada server tidak jalan — bot auto-scanner mencoba 'admin/king123'
+// dalam menit pertama setelah VPS online.
+if (!process.env.KING_PASSWORD) {
+  console.error('[Boot] KING_PASSWORD kosong di .env — server dihentikan.');
+  process.exit(1);
+}
+// KING_USERNAME: wajib juga, simetris dengan KING_PASSWORD. Tanpa default
+// publik ('admin' / 'king' di .env.example) yang tetap di-hardcode di source
+// — admin publik tercipta kalau env lupa diisi. Pakai placeholder yang
+// jelas di .env.example; yang asli Pak yang isi.
+if (!process.env.KING_USERNAME) {
+  console.error('[Boot] KING_USERNAME kosong di .env — server dihentikan.');
+  process.exit(1);
+}
 
 require('./config/net'); // paksa IPv4 (lihat komentarnya) — worker juga pakai
 
@@ -514,8 +530,13 @@ cron.schedule('*/10 * * * * *', async () => {
 async function autoStartBots() {
   try {
     const [sc, sp] = mine('id', 'AND');
+    // Filter stop_reason='expired': cron 1-menit (server.js:628) set ini saat
+    // paket habis. Tanpa filter, server restart antara cron & boot akan
+    // nyalakan bot yang sudah dimatikan sistem — boot harusnya respect
+    // keputusan cron, bukan override.
     const [rows] = await pool.execute(
-      `SELECT * FROM bots WHERE is_running = 1${sc}`, sp
+      `SELECT * FROM bots WHERE is_running = 1
+         AND (stop_reason IS NULL OR stop_reason <> 'expired')${sc}`, sp
     );
     if (rows.length === 0) return;
     console.log(`[Boot] Auto-starting ${rows.length} bot(s)...`);
@@ -539,9 +560,10 @@ async function autoStartBots() {
 async function boot() {
   await testConnection();
 
-  // Hash king password and seed
-  const hashed = await bcrypt.hash(process.env.KING_PASSWORD || 'king123', 12);
-  await seedDefaults(process.env.KING_USERNAME || 'admin', hashed);
+  // Hash king password and seed. KING_PASSWORD sudah dijaga kosong di guard
+  // boot di atas — di sini tinggal dipakai. Tanpa fallback.
+  const hashed = await bcrypt.hash(process.env.KING_PASSWORD, 12);
+  await seedDefaults(process.env.KING_USERNAME, hashed);
 
   server.listen(PORT, async () => {
     console.log('');

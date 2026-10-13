@@ -61,6 +61,16 @@ const TABLES = {
     ['koin',           "BIGINT NOT NULL DEFAULT 0"],
     ['lim',            "INT NOT NULL DEFAULT 100"],
     ['healt',          "INT NOT NULL DEFAULT 100"],
+    // energi: gerbang biaya buat mancing/kerja/berburu/tambang/maling/adventure/
+    // koboy. Kode menulis kolom ini sejak lama (pakaiEnergi/energiSekarang) tapi
+    // kolomnya LUPA dibuat — akibatnya ketujuh fitur itu mati total di produksi
+    // ('Unknown column energi'). Ditambahkan di sini supaya `deploy.py` yang
+    // menjalankan sync-schema ikut membuatnya otomatis.
+    ['energi',         "INT NOT NULL DEFAULT 100"],
+    ['last_energi',    "DATETIME DEFAULT NULL"],
+    // last_bertarung: cooldown `.bertarung`/`.fight`. Sama seperti energi —
+    // kode menulisnya sejak lama, kolomnya lupa dibuat, jadi fiturnya mati.
+    ['last_bertarung', "DATETIME DEFAULT NULL"],
     ['sword',          "INT NOT NULL DEFAULT 0"],
     ['armor',          "INT NOT NULL DEFAULT 0"],
     ['job',            "VARCHAR(50) NOT NULL DEFAULT 'Pengangguran'"],

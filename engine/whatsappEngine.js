@@ -932,7 +932,15 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
 
     // Jalankan semua plugin
     let cmdHandled = false;
-    for (const handler of plugins) {
+    // Cooldown terpusat: tolak SEBELUM plugin manapun jalan, supaya efek
+    // samping plugin (kirim pesan, update DB) tidak terjadi pada spam.
+    // Return-true = "sudah ditangani, jangan teruskan". Plugin-plugin di
+    // bawah return false untuk command yang bukan urusan mereka — jadi
+    // kalau cooldown TIDAK menolak, mereka semua tetap di-loop normal.
+    const { cooldownGuard } = require('./cooldown');
+    const cd = await cooldownGuard(ctx);
+    if (!cd.ok) { cmdHandled = true; }   // pesan sudah dibalas (atau sengaja diam) di dalam cooldownGuard
+    else for (const handler of plugins) {
       try {
         const handled = await handler(ctx);
         if (handled) { cmdHandled = true; break; }
