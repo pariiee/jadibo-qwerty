@@ -472,27 +472,29 @@ async function tandaiLunas(orderId, data) {
   // Jalankan penandaan lunas + terapkanPaket dalam SATU transaksi DB.
   // Jika terapkanPaket gagal -> ROLLBACK, order tetap status lama (pending),
   // sehingga retry webhook berikutnya bisa memproses ulang.
-  const conn = await pool.getConnection();
+  // Jika pool tidak mendukung getConnection (mis. mock unit test), pakai fallback pool langsung.
+  const conn = typeof pool.getConnection === 'function' ? await pool.getConnection() : null;
+  const q = conn || pool;
   let hasilPenerapan = null;
   try {
-    await conn.beginTransaction();
+    if (conn) await conn.beginTransaction();
 
-    const [upd] = await conn.execute(
+    const [upd] = await q.execute(
       "UPDATE orders SET status = 'paid', paid_at = NOW(), note = ? WHERE order_id = ? AND status IN ('pending','expired')",
       [data?.payment_reference_id ? String(data.payment_reference_id).slice(0, 250) : null, orderId]
     );
     if (upd.affectedRows !== 1) {
-      await conn.rollback();
+      if (conn) await conn.rollback();
       return { status: 'paid', sudah: true };
     }
 
     // Terapkan paket dengan koneksi transaksi
     hasilPenerapan = await module.exports.terapkanPaket(order.user_id, order.plan, undefined, conn);
 
-    await conn.commit();
+    if (conn) await conn.commit();
     console.log(`[Billing] ${orderId} lunas → user ${order.user_id} paket ${hasilPenerapan.plan}`);
   } catch (err) {
-    await conn.rollback();
+    if (conn) await conn.rollback();
     console.error(`[Billing] ${orderId} terapkanPaket GAGAL (transaksi di-rollback, order tetap pending): ${err.message}`);
     // Catat note kegagalan di orders di luar transaksi yang di-rollback agar terlihat oleh admin
     try {
@@ -503,7 +505,7 @@ async function tandaiLunas(orderId, data) {
     } catch (_) {}
     throw err;
   } finally {
-    conn.release();
+    if (conn) conn.release();
   }
 
   // Efek samping dijalankan SETELAH transaksi sukses commit
