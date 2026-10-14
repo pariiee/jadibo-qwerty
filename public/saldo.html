@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Saldo — qwertygate</title>
+<!-- @include head.html -->
+</head>
+<body class="page-saldo">
+<div class="app">
+
+  <!-- @include sidebar.html -->
+
+  <main>
+    <!-- @include topbar.html -->
+
+    <div class="content">
+      <div class="cmd-head">
+        <h2>Saldo</h2>
+        <p class="m-sub">Top up saldo, lalu pakai buat memperpanjang paket. Saldo tidak bisa ditarik atau dikirim ke akun lain.</p>
+      </div>
+
+      <!-- Banner auto-perpanjang. Muncul HANYA kalau ada masalah yang perlu
+           tindakan user (saldo kurang). Tanpa ini, paketnya habis tanpa kabar. -->
+      <div id="banner-auto" class="card" style="display:none"></div>
+
+      <div class="grid-2" style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">
+        <!-- Kartu saldo -->
+        <div class="card">
+          <div class="m-sub" style="margin:0 0 6px">Saldo kamu</div>
+          <div id="saldo-angka" style="font-size:32px;font-weight:800;line-height:1.1">—</div>
+          <div id="saldo-paket" class="m-sub" style="margin:10px 0 0">Memuat…</div>
+
+          <div id="blok-topup" style="margin-top:16px;display:none">
+            <div class="m-sub" style="margin:0 0 8px">Top up</div>
+            <div id="pilihan-cepat" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px"></div>
+            <input class="inp" id="nominal" inputmode="numeric" autocomplete="off" placeholder="Nominal (min Rp10.000)" />
+            <div class="m-sub" id="petunjuk-nominal" style="margin:6px 0 0"></div>
+            <button class="btn" id="btn-topup" data-act="topup" style="margin-top:12px;width:100%">Buat tagihan QRIS</button>
+          </div>
+        </div>
+
+        <!-- Kartu perpanjang -->
+        <div class="card">
+          <div class="m-sub" style="margin:0 0 8px">Perpanjang paket</div>
+          <div id="tabel-paket"></div>
+        </div>
+      </div>
+
+      <!-- Auto-perpanjang -->
+      <div class="card" style="margin-top:16px">
+        <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer">
+          <input type="checkbox" id="auto-renew" data-act="autoRenew" style="margin-top:3px" />
+          <span>
+            <b>Auto-perpanjang</b>
+            <span class="m-sub" style="display:block;margin-top:4px">
+              Kalau aktif, paket diperpanjang otomatis dari saldo <b>24 jam sebelum habis</b>.
+              Kalau saldo kurang: <b>tidak dipotong sebagian</b> — kamu dapat kabar lewat WA/email dan banner di halaman ini.
+              Default mati.
+            </span>
+          </span>
+        </label>
+        <div class="m-sub" id="auto-status" style="margin:10px 0 0"></div>
+      </div>
+
+      <!-- Tagihan QRIS yang sedang menunggu -->
+      <div id="blok-qris" class="card" style="margin-top:16px;display:none"></div>
+
+      <!-- Riwayat dari wallet_ledger. SENGAJA bukan dari /billing: perpanjang
+           dari saldo tidak membuat order, jadi riwayat berbasis order akan
+           menghilangkan setiap perpanjangan — justru yang paling ingin dilihat. -->
+      <div class="cmd-head" style="margin-top:24px">
+        <h2 style="font-size:18px">Riwayat Saldo</h2>
+        <p class="m-sub">Semua pergerakan saldo: top up, perpanjang, auto-perpanjang, dan penyesuaian admin.</p>
+      </div>
+
+      <div class="tbl-wrap">
+        <table class="tbl" id="tbl-ledger">
+          <thead>
+            <tr>
+              <th>Waktu</th><th>Jenis</th>
+              <th style="text-align:right">Jumlah</th>
+              <th style="text-align:right">Saldo Sesudah</th>
+              <th>Keterangan</th>
+            </tr>
+          </thead>
+          <tbody><tr><td colspan="5" class="kosong">Memuat…</td></tr></tbody>
+        </table>
+      </div>
+
+      <div class="card" id="ledger-kosong" style="display:none">
+        <p class="m-sub" style="margin:0">Belum ada pergerakan saldo. Top up dulu buat mulai.</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="/js/head.js"></script>
+<script src="/js/saldo.js"></script>
+</body>
+</html>

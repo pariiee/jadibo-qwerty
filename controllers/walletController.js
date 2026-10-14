@@ -313,6 +313,18 @@ async function perpanjangDariSaldo(userId, planId, { tipe = 'perpanjang', ref = 
     // klien, jangan longgarkan ref ini.
     const refLedger = ref || `perpanjang:${userId}:${plan.id}:${Date.now()}`;
 
+    // ── LEDGER DULU, PAKET BELAKANGAN — dan urutan ini yang penting ──────────
+    //
+    // `ref` yang UNIK di wallet_ledger adalah penjaga idempotensinya. Kalau
+    // baris ledger ditulis SESUDAH `terapkanPaket`, percobaan kedua (ref sama)
+    // sempat menjalankan `UPDATE users SET plan_expired_at = ...` lebih dulu —
+    // masa aktifnya BERTAMBAH sebulan sebelum barisnya ditolak ER_DUP_ENTRY.
+    // Saldonya memang utuh (transaksinya rollback), tapi paketnya bertambah
+    // gratis: 5 percobaan duplikat = +152 hari padahal cuma bayar sekali.
+    //
+    // Ditaruh di depan, percobaan kedua gagal di baris ini dan TIDAK PERNAH
+    // sampai menyentuh users/bots. Rollback tetap aman: UPDATE saldo di atas dan
+    // baris ledger ini dibatalkan bersama-sama kalau ada yang gagal setelahnya.
     await conn.execute('UPDATE users SET saldo = ? WHERE id = ?', [saldoBaru, userId]);
     await conn.execute(
       `INSERT INTO wallet_ledger (user_id, tipe, jumlah, saldo_sesudah, ref, alasan)
@@ -323,6 +335,13 @@ async function perpanjangDariSaldo(userId, planId, { tipe = 'perpanjang', ref = 
     // Ikut transaksi ini. Efek sampingnya DITUNDA — lihat `terapkanPaket`.
     const hasil = await require('./billingController').terapkanPaket(userId, plan.id, null, conn);
 
+    // COMMIT DI DALAM SINI, bukan diserahkan ke `terapkanPaket`.
+    //
+    // Sebelumnya `terapkanPaket(conn)` yang memanggil `conn.commit()`, dan itu
+    // rapuh: kalau ada pemanggil lain yang lupa, uangnya tidak tersimpan — atau
+    // lebih buruk, commit terjadi lalu ada yang gagal SESUDAH commit sehingga
+    // tidak bisa di-rollback lagi. Satu fungsi, satu tanggung jawab: `terapkanPaket`
+    // menulis, pemilik transaksi yang commit/rollback.
     await conn.commit();
 
     // Baru sekarang: nyalakan bot & kabari. Gagalnya tidak membatalkan apa pun
@@ -350,15 +369,67 @@ async function perpanjangDariSaldo(userId, planId, { tipe = 'perpanjang', ref = 
   }
 }
 
-/** POST /api/wallet/perpanjang — { plan: 'basic' }. Harga & masa dari server. */
+/**
+ * POST /api/wallet/perpanjang — { plan: 'basic', idempotency_key?: '<uuid>' }.
+ *
+ * Harga & masa dari server; klien cuma menentukan paket mana.
+ *
+ * TIGA lapis terhadap dobel-klik / request ganda, dari yang paling luar:
+ *
+ *  1. JEDA 30 DETIK per (user, paket). Menangkap dobel-klik yang ref-nya BEDA
+ *     (klien tanpa idempotency_key, dua klik di milidetik berbeda) — kasus yang
+ *     tidak bisa ditangkap `ref` karena ref-nya memang berbeda.
+ *  2. `idempotency_key` dari klien dipakai sebagai `ref` ledger: request yang
+ *     terkirim dua kali dengan kunci SAMA ditolak ER_DUP_ENTRY.
+ *  3. Tanpa kunci klien, `ref` = (user, paket, milidetik) — dobel-klik di
+ *     milidetik yang sama tetap tertangkap.
+ *
+ * Lapis 1 dan 2/3 saling melengkapi: 1 menahan sebelum menyentuh DB, 2/3 menahan
+ * di level DB (tahan terhadap dua proses/worker).
+ */
 async function perpanjang(req, res) {
   try {
     const planId = String(req.body?.plan || '').trim();
-    const hasil = await perpanjangDariSaldo(req.user.id, planId);
+
+    // Kunci dari klien divalidasi bentuknya sebelum dipakai jadi `ref`:
+    // panjang dibatasi (kolomnya VARCHAR(120)) dan karakter dibatasi supaya
+    // tidak ada yang menyelipkan sesuatu yang aneh ke jurnal.
+    let ref = null;
+    const kunci = req.body?.idempotency_key;
+    if (kunci !== undefined && kunci !== null && kunci !== '') {
+      const k = String(kunci).trim();
+      if (!/^[A-Za-z0-9._:-]{8,80}$/.test(k)) {
+        return sendError(res, 400, 'idempotency_key tidak valid');
+      }
+      ref = `perpanjang:${req.user.id}:k:${k}`;
+    }
+
+    // Lapis 1: jeda. Ditaruh SEBELUM validasi paket supaya percobaan beruntun
+    // tidak menghabiskan jatah limiter maupun menyentuh DB.
+    //
+    // Kalau ada idempotency_key, jeda TIDAK diterapkan: kuncinya sudah menjamin
+    // idempotensi, dan user yang sengaja membeli dua kali (mis. memperpanjang
+    // sampai 2 tahun) harus bisa. Jeda ini khusus untuk request yang TIDAK
+    // membawa kunci — di situ tidak ada cara membedakan "dobel-klik" dari
+    // "memang mau dua kali", jadi jeda yang dipilih.
+    if (!ref && masihJeda(req.user.id, planId)) {
+      return res.status(429).json({
+        ok: false,
+        reason: 'terlalu_cepat',
+        message: 'Permintaan perpanjang baru saja diproses. Tunggu sebentar sebelum mengulang.',
+      });
+    }
+
+    const hasil = await perpanjangDariSaldo(req.user.id, planId, { ref });
     if (!hasil.ok) {
       // 402 Payment Required untuk saldo kurang — beda dari 400 (permintaan
       // salah). Yang perlu dilakukan user adalah top up, bukan memperbaiki
       // isian form.
+      if (hasil.reason === 'sudah_diperpanjang') {
+        // 200 + ok:true: bagi user ini BUKAN kegagalan — permintaannya memang
+        // sudah terpenuhi (barusan, oleh request yang sama).
+        return res.json({ ok: true, sudah: true, message: 'Permintaan ini sudah diproses sebelumnya.' });
+      }
       const kode = hasil.reason === 'saldo_kurang' ? 402 : 400;
       return res.status(kode).json({ ok: false, message: hasil.message, saldo: hasil.saldo, reason: hasil.reason });
     }
@@ -373,7 +444,27 @@ async function perpanjang(req, res) {
   }
 }
 
-// ─── Auto-perpanjang ──────────────────────────────────────────────────────────
+// Jeda anti-dobel-klik untuk perpanjang manual tanpa idempotency_key.
+//
+// ponytail: map di memori, per PROSES. Cukup karena app ini satu proses; kalau
+// nanti di-scale ke beberapa worker, ganti ke kunci di DB (baris per user) —
+// penjaga `ref` ledger sudah tahan lintas-proses, ini cuma lapis pertama.
+const KUNCI_PER_ID = new Map();
+const JEDA_PERPANJANG_MS = 30_000;
+
+/** true = masih dalam jeda (tolak). false = boleh, dan jedanya dibuka. */
+function masihJeda(userId, planId) {
+  const k = `${userId}:${planId}`;
+  const t = KUNCI_PER_ID.get(k) || 0;
+  if (Date.now() - t < JEDA_PERPANJANG_MS) return true;
+  KUNCI_PER_ID.set(k, Date.now());
+  // Bersihkan yang sudah lewat supaya map-nya tidak tumbuh selamanya.
+  if (KUNCI_PER_ID.size > 5000) {
+    const batas = Date.now() - JEDA_PERPANJANG_MS;
+    for (const [kk, v] of KUNCI_PER_ID) if (v < batas) KUNCI_PER_ID.delete(kk);
+  }
+  return false;
+}
 
 /**
  * Cron auto-perpanjang. Dijalankan TIAP JAM dari `server.js`.
@@ -811,11 +902,14 @@ async function adminPendapatan(req, res) {
   }
 }
 
+/** Map jeda, diekspor buat TES. Jangan dipakai produksi. */
+function mapJedaInternal() { return KUNCI_PER_ID; }
+
 module.exports = {
   terapkanTopup, buatOrderTopup,
   perpanjangDariSaldo, perpanjang, autoRenew,
   ringkasan, riwayat, setAutoRenew,
   adminUsers, adminLedger, adminAdjust, adminKonsistensi, adminPendapatan,
   // Diekspor buat tes (murni, tanpa DB).
-  paketBisaDibeli, tanggalRef,
+  paketBisaDibeli, tanggalRef, masihJeda, mapJedaInternal,
 };

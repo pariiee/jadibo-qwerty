@@ -141,13 +141,15 @@ ok('cekOrigin dipasang SETELAH cookieParser (butuh req.cookies)', () => {
 
 console.log('\n=== 6. Cron auto-perpanjang tiap jam ===');
 ok('cron auto-perpanjang pakai jadwal tiap jam', () => {
-  assert.ok(/cron\.schedule\('0 \* \* \* \*'/.test(src), "jadwal '0 * * * *' (tiap jam) tidak ditemukan");
+  // Lewat pembungkus `cronAman` — lihat NO_BOOT_SIDE_EFFECTS di server.js.
+  assert.ok(/cronAman\.schedule\('0 \* \* \* \*'/.test(src),
+    "jadwal '0 * * * *' (tiap jam) tidak ditemukan");
 });
 ok('cron memanggil wallet.autoRenew', () => {
   assert.ok(/wallet\.autoRenew\(\)/.test(src), 'cron tidak memanggil wallet.autoRenew()');
 });
 ok('cron dibungkus try/catch (error tidak mematikan proses)', () => {
-  const i = src.indexOf("cron.schedule('0 * * * *'");
+  const i = src.indexOf("cronAman.schedule('0 * * * *'");
   const blok = src.slice(i, i + 400);
   assert.ok(/try\s*\{/.test(blok) && /catch/.test(blok), 'tidak ada try/catch di sekitar autoRenew()');
 });
