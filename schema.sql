@@ -50,6 +50,23 @@ CREATE TABLE IF NOT EXISTS users (
   plan_expired_at DATETIME DEFAULT NULL,
   plan_slots   INT NOT NULL DEFAULT 2,
   trial_used_at DATETIME DEFAULT NULL,
+  -- Dompet. `saldo` HANYA bertambah lewat webhook/konfirmasi order topup dan
+  -- hanya berkurang lewat perpanjangan paket. Tidak ada tarik saldo, tidak ada
+  -- transfer antar user.
+  --
+  -- BIGINT (bukan INT): rupiah itu bilangan bulat, dan INT UNSIGNED mentok
+  -- ~4,29 miliar. Satu akun pengelola yang menampung banyak top up bisa
+  -- menyentuh itu, dan overflow-nya DIAM-DIAM jadi error atau nilai terpotong.
+  -- SIGNED, bukan UNSIGNED: UNSIGNED bikin `saldo - ?` yang lewat nol
+  -- "berhasil" jadi nilai raksasa (wrap-around) alih-alih ditolak MySQL.
+  saldo        BIGINT NOT NULL DEFAULT 0,
+  -- Auto-perpanjang: default MATI. `auto_renew_status` menyimpan hasil
+  -- percobaan terakhir ('sukses' | 'saldo_kurang' | NULL) supaya user tahu
+  -- kenapa paketnya tidak diperpanjang — tanpa itu cron gagal senyap dan
+  -- paketnya habis tanpa kabar apa pun.
+  auto_renew   TINYINT(1) NOT NULL DEFAULT 0,
+  auto_renew_status    VARCHAR(32) DEFAULT NULL,
+  auto_renew_status_at DATETIME DEFAULT NULL,
   is_active    TINYINT(1) NOT NULL DEFAULT 1,
   created_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -310,3 +327,43 @@ CREATE TABLE IF NOT EXISTS orders (
   INDEX idx_user (user_id),
   INDEX idx_status (status)
 );
+
+-- ============================================================
+-- Table: wallet_ledger  (jurnal dompet)
+-- ============================================================
+-- SETIAP perubahan `users.saldo` WAJIB meninggalkan satu baris di sini, di
+-- dalam transaksi yang sama. Tabel ini INSERT-only — tidak ada UPDATE, tidak
+-- ada DELETE — jadi `SUM(jumlah)` per user harus selalu sama dengan
+-- `users.saldo`. Kalau tidak sama, ada yang menyentuh saldo tanpa lewat jurnal.
+--
+-- `ref` UNIK dan itu sengaja: dia penjaga idempotensi, bukan sekadar label.
+-- Webhook QRISku dikirim ulang sampai 4x (immediate, 1s, 5s, 15s) dan cron
+-- auto-perpanjang bisa jalan dobel. Bentuk ref:
+--   topup:<order_id>                     -- satu kredit per order
+--   perpanjang:<userId>:<epoch-ms>       -- user menekan tombol
+--   auto:<userId>:<tanggal-expired>      -- satu kali per periode
+--   adjust:<userId>:<epoch-ms>           -- admin, dengan alasan wajib
+-- INSERT kedua dengan ref sama gagal di level DB, jadi tidak mungkin dobel
+-- walau dua request lolos pengecekan aplikasi bersamaan.
+--
+-- `jumlah` SIGNED: topup/adjust positif, perpanjang/auto negatif. Tanda
+-- disimpan di data supaya invarian SUM(jumlah) = saldo berlaku apa adanya,
+-- tanpa perlu menafsirkan `tipe` saat menjumlahkan.
+--
+-- `saldo_sesudah` sengaja disimpan (bukan dihitung ulang saat dibaca): kalau
+-- nanti ada baris yang perlu dikoreksi, angka historis di jurnal tidak ikut
+-- berubah. Tanpa ini riwayat jadi tidak bisa diaudit.
+CREATE TABLE IF NOT EXISTS wallet_ledger (
+  id           BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id      INT UNSIGNED NOT NULL,
+  tipe         ENUM('topup', 'perpanjang', 'auto', 'adjust') NOT NULL,
+  jumlah       BIGINT NOT NULL,
+  saldo_sesudah BIGINT NOT NULL,
+  ref          VARCHAR(120) NOT NULL,
+  alasan       VARCHAR(255) DEFAULT NULL,
+  created_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  -- Penjaga idempotensi. Ini yang bikin webhook ganda / cron dobel aman.
+  UNIQUE KEY uq_ledger_ref (ref),
+  -- Urutan riwayat per user; DESC pakai index ini, tidak perlu sort.
+  INDEX idx_user (user_id, id)
+) ENGINE=InnoDB;

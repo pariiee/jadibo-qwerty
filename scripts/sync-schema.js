@@ -30,6 +30,18 @@ const TABLES = {
     ['plan_expired_at', "DATETIME DEFAULT NULL"],
     ['plan_slots',      "INT NOT NULL DEFAULT 2"],
     ['trial_used_at',   "DATETIME DEFAULT NULL"],
+    // Dompet. `saldo` SIGNED (bukan UNSIGNED): dengan UNSIGNED, `saldo - ?`
+    // yang melewati nol tidak ditolak MySQL — dia wrap-around jadi nilai
+    // raksasa, dan user tiba-tiba punya saldo miliaran rupiah. BIGINT karena
+    // INT UNSIGNED mentok ~4,29 miliar.
+    //
+    // `auto_renew_status` + `auto_renew_status_at`: hasil percobaan
+    // auto-perpanjang terakhir. Tanpa kolom ini cron gagal senyap — paket
+    // habis dan user tidak tahu kenapa.
+    ['saldo',               "BIGINT NOT NULL DEFAULT 0"],
+    ['auto_renew',          "TINYINT(1) NOT NULL DEFAULT 0"],
+    ['auto_renew_status',   "VARCHAR(32) DEFAULT NULL"],
+    ['auto_renew_status_at',"DATETIME DEFAULT NULL"],
   ],
   bots: [
     // Alamat publik bot untuk URL halaman (`/bot/<slug>`), mis. mh3gs9kdfj2p.
@@ -235,6 +247,29 @@ const CREATE_TABLES = [
     UNIQUE KEY uq_token (token),
     INDEX idx_user (user_id),
     INDEX idx_expires (expires_at)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+  // wallet_ledger — jurnal dompet. Lihat schema.sql untuk penjelasan lengkap.
+  //
+  // Dibuat lewat CREATE_TABLES (bukan TABLES) karena ini tabel BARU: TABLES
+  // cuma menambah kolom ke tabel yang sudah ada. `ensureColumn` sengaja cuma
+  // ADD COLUMN kalau belum ada — dia TIDAK pernah mengubah kolom yang sudah
+  // ada di produksi, jadi menjalankan skrip ini dua kali aman.
+  //
+  // `ref` UNIK adalah penjaga idempotensi: webhook QRISku dikirim ulang sampai
+  // 4x, dan cron auto-perpanjang bisa jalan dobel. INSERT kedua dengan ref yang
+  // sama ditolak DB, jadi saldo tidak mungkin bertambah dua kali walau dua
+  // request lolos pengecekan aplikasi bersamaan.
+  `CREATE TABLE IF NOT EXISTS wallet_ledger (
+    id            BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id       INT UNSIGNED NOT NULL,
+    tipe          ENUM('topup','perpanjang','auto','adjust') NOT NULL,
+    jumlah        BIGINT NOT NULL,
+    saldo_sesudah BIGINT NOT NULL,
+    ref           VARCHAR(120) NOT NULL,
+    alasan        VARCHAR(255) DEFAULT NULL,
+    created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_ledger_ref (ref),
+    INDEX idx_user (user_id, id)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
 ];
 
