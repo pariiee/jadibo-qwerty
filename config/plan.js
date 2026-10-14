@@ -37,6 +37,7 @@ const TRIAL = {
 // aktifnya memang tidak ada — bukan 30 hari gratis.
 const DEFAULT_PLANS = [
   { id: 'user',    name: 'Gratis',  price: 0,     slots: 0, days: 0,   daily_limit: 10,  owner_max: 0,      receive_limit: 0 },
+  { id: 'test100', name: 'Test 100', price: 100,  slots: 1, days: 1,   daily_limit: 10,  owner_max: 1,      receive_limit: 1000 },
   { id: 'basic',   name: 'Basic',   price: 25000, slots: 1, days: 30,  daily_limit: 30,  owner_max: 1,      receive_limit: 10000 },
   { id: 'premium', name: 'Premium', price: 50000, slots: 1, days: 30,  daily_limit: 50,  owner_max: 3,      receive_limit: 50000 },
   { id: 'ultra',   name: 'Ultra',   price: 85000, slots: 1, days: 30,  daily_limit: 100, owner_max: 5,      receive_limit: 100000 },
