@@ -12,11 +12,14 @@
  * masing-masing plugin — penambalan tersebar bikin satu per satu bisa
  * kelewat, dan dispatcher adalah satu titik yang lebih mudah diaudit.
  *
- * Siapa yang KECUALI:
- *   - ctx.isOwner & ctx.isDev  → kelompok 'umum' (0.5 dtk) & 'berat'
- *     & 'upload' & 'judi' (lihat engine/cooldown.js).
- *   - kelompok 'owner-destructive' TETAP kena untuk semua, termasuk
- *     owner — tujuannya menahan typo, bukan anti-spam.
+ * Siapa yang KECUALI (opsi A — keputusan Pak):
+ *   - HANYA kelompok yang mendefinisikan `pengecualian` yang membebaskan
+ *     owner/dev dari cooldown. Saat ini cuma 'umum' (0.5 dtk).
+ *   - Semua kelompok lain — 'berat', 'upload', 'judi', 'admin-grup',
+ *     'owner-destructive' — TETAP kena untuk owner & dev juga.
+ *   - Mau membebaskan kelompok lain? Tambahkan `pengecualian` di kelompok
+ *     ITU. Jangan tambal di engine/cooldown.js — perilakunya sengaja
+ *     dibaca dari tabel ini supaya satu tempat saja yang menentukan.
  *
  * Mengubah nilai: edit ms, deploy. Tidak perlu restart plugin.
  */
@@ -35,6 +38,7 @@ const TABEL = {
   'berat': {
     ms: 3000,
     balasan: true,
+    // Tanpa `pengecualian` = owner & dev TETAP kena (opsi A).
     daftar: [
       // 04-tools — downloader
       'play','tiktok','tiktokdl','ttdl','tt','ttsearch',

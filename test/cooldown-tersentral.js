@@ -70,16 +70,29 @@ assert.ok(iC > 0 && iD > 0, 'cooldownGuard atau loop plugin tidak ditemukan di t
 assert.ok(iC < iD, 'cooldownGuard dipanggil SETELAH loop plugin di Telegram');
 console.log('✅ cooldownGuard() dipanggil sebelum loop plugin di Telegram');
 
-// ── 5. Pengecualian owner & dev ─────────────────────────────────────────────
-console.log('\n=== 5. Pengecualian owner & dev ===');
-// engine/cooldown.js: pengecualian untuk isOwner & isDev kecuali owner-destructive
+// ── 5. Pengecualian owner & dev (Opsi A) ────────────────────────────────────
+console.log('\n=== 5. Pengecualian owner & dev (Opsi A: hanya kelompok ber-`pengecualian`) ===');
+// engine/cooldown.js: pengecualian dibaca dari tabel config. Opsi A — owner/dev
+// HANYA dibebaskan di kelompok yang mendefinisikan `pengecualian` (cuma 'umum').
 assert.ok(/pengecualian[\s\S]{0,200}?isOwner\s*&&\s*ctx\.isOwner/.test(cdEngine),
   'pengecualian isOwner tidak ada');
 assert.ok(/pengecualian[\s\S]{0,200}?isDev\s*&&\s*ctx\.isDev/.test(cdEngine),
   'pengecualian isDev tidak ada');
-assert.ok(/nama\s*!==\s*'owner-destructive'[\s\S]{0,200}?pengecualian/.test(cdEngine),
-  'owner-destructive TIDAK ikut pengecualian (anti-typo untuk owner sendiri)');
-console.log('✅ isOwner & isDev dikecualikan, KECUALI kelompok owner-destructive');
+// Pengecualian TIDAK boleh lagi di-hardcode mengecualikan 'owner-destructive'
+// (versi lama: `nama !== 'owner-destructive' && pengecualian`). Opsi A: perilaku
+// murni dari tabel config, jadi kelompok tanpa `pengecualian` tetap kena.
+assert.ok(/if\s*\(\s*pengecualian\s*\)/.test(cdEngine),
+  'guard harus `if (pengecualian)` — perilaku dibaca dari tabel config (opsi A)');
+assert.ok(!/nama\s*!==\s*'owner-destructive'/.test(cdEngine),
+  'sisa pengecualian hardcode lama — opsi A tidak boleh mengecualikan per-nama kelompok');
+console.log('✅ isOwner & isDev dibebaskan lewat tabel config (opsi A), tanpa hardcode nama kelompok');
+// Konfigurasi: HANYA 'umum' yang punya `pengecualian`.
+for (const [nama, cfg] of Object.entries(tabel.TABEL)) {
+  const punya = !!cfg.pengecualian;
+  assert.strictEqual(punya, nama === 'umum',
+    `kelompok '${nama}' ${punya ? 'punya' : 'tidak punya'} pengecualian — opsi A: cuma 'umum'`);
+}
+console.log("✅ hanya kelompok 'umum' yang punya `pengecualian` (opsi A)");
 
 // ── 6. Throttle balasan pelanggaran ──────────────────────────────────────────
 console.log('\n=== 6. Pelanggaran: balas SEKALI per jendela ===');

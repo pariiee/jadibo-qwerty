@@ -10,10 +10,10 @@
  * Cara kerja:
  *   1. Cek `ctx.command` (di-lower-case oleh dispatcher).
  *   2. Cari kelompok di `config/cooldown.js`.
- *   3. Owner & dev dikecualikan dari kelompok 'umum', 'berat', 'upload',
- *      'judi', 'admin-grup' — TAPI TIDAK dari 'owner-destructive' (tu-
- *      juan-nya anti-typo, bukan anti-spam, dan owner adalah yang paling
- *      terdampak mis-click).
+ *   3. Owner & dev dikecualikan HANYA di kelompok yang mendefinisikan
+ *      `pengecualian` di config/cooldown.js — saat ini cuma 'umum'.
+ *      Kelompok 'berat', 'upload', 'judi', 'admin-grup', dan
+ *      'owner-destructive' TETAP kena untuk owner & dev (opsi A).
  *   4. Map<key, ts> = lastHit. Key = `${senderJid}:${namaKelompok}`.
  *   5. Kalau `now - ts < ms`:
  *        - kelompok 'umum' (balasan:false) → diam, return {ok:false, diam:true}
@@ -57,8 +57,11 @@ async function cooldownGuard(ctx) {
   const cfg = kelompokUntuk(cmd) || cfgDefault(cmd);
   const { nama, ms, balasan, pengecualian } = cfg;
 
-  // Owner & dev: dikecualikan dari semua kelompok KECUALI owner-destructive.
-  if (nama !== 'owner-destructive' && pengecualian) {
+  // Opsi A: owner & dev TETAP kena cooldown di kelompok mana pun yang TIDAK
+  // mendefinisikan `pengecualian` (semua kecuali 'umum'). Perilaku dibaca dari
+  // tabel config, bukan di-hardcode di sini — supaya satu tempat saja yang
+  // menentukan siapa yang dibebaskan.
+  if (pengecualian) {
     if (pengecualian.isOwner && ctx.isOwner) return { ok: true };
     if (pengecualian.isDev   && ctx.isDev)   return { ok: true };
   }

@@ -84,17 +84,36 @@ const tunggu = (ms) => new Promise((r) => setTimeout(r, ms));
     'dev spam kedua lolos di "umum"');
   console.log('✅ dev: 2 command berturut-turut lolos di "umum"');
 
-  // KEPUTUSAN: pengecualian owner/dev hanya berlaku untuk kelompok yang
-  // MENDEFINISIKAN `pengecualian` — saat ini HANYA 'umum'. Kelompok 'berat'
-  // dkk SENGAJA tidak mengecualikan siapa pun. Kalau nanti owner/dev mau
-  // dibebaskan dari 'berat' juga, tambahkan `pengecualian` di config/cooldown.js
-  // DAN ubah assert di bawah ini.
-  console.log('\n=== c2. Owner/dev TETAP kena kelompok "berat" (sesuai config) ===');
+  // KEPUTUSAN PAK — Opsi A: owner & dev dikecualikan HANYA di kelompok yang
+  // mendefinisikan `pengecualian` di config/cooldown.js. Saat ini cuma 'umum'.
+  // Kelompok 'berat', 'upload', 'judi', 'admin-grup', dan 'owner-destructive'
+  // SENGAJA tetap kena untuk owner & dev juga.
+  console.log('\n=== c2. Opsi A: owner & dev TETAP kena kelompok "berat" ===');
+  for (const [siapa, flag] of [['owner', { isOwner: true }], ['dev', { isDev: true }]]) {
+    reset();
+    assert.strictEqual((await cooldownGuard(ctx({ command: 'play', ...flag }))).ok, true,
+      `${siapa} pertama di "berat" harus lolos`);
+    const r2 = await cooldownGuard(ctx({ command: 'play', ...flag }));
+    assert.strictEqual(r2.ok, false,
+      `${siapa} kedua di "berat" harus DIBLOKIR — opsi A: hanya 'umum' yang membebaskan`);
+    assert.strictEqual(r2.dilanggar, 'berat', `kelompok salah: ${r2.dilanggar}`);
+    console.log(`✅ ${siapa} kena cooldown "berat" (opsi A)`);
+  }
+
+  // Pasangannya: 'umum' memang membebaskan owner & dev — satu-satunya
+  // kelompok yang punya `pengecualian` di config/cooldown.js.
+  console.log('\n=== c3. Opsi A: "umum" membebaskan owner & dev ===');
   reset();
-  await cooldownGuard(ctx({ command: 'play', isDev: true }));
-  assert.strictEqual((await cooldownGuard(ctx({ command: 'play', isDev: true }))).ok, false,
-    'dev kedua di "berat" harus DIBLOKIR — kelompok berat tidak mengecualikan siapa pun');
-  console.log('✅ dev kena cooldown "berat" (perilaku yang dikonfigurasi)');
+  assert.strictEqual((await cooldownGuard(ctx({ command: 'menu', isOwner: true }))).ok, true,
+    'owner lolos di "umum"');
+  assert.strictEqual((await cooldownGuard(ctx({ command: 'menu', isOwner: true }))).ok, true,
+    'owner lolos lagi di "umum"');
+  reset();
+  assert.strictEqual((await cooldownGuard(ctx({ command: 'menu', isDev: true }))).ok, true,
+    'dev lolos di "umum"');
+  assert.strictEqual((await cooldownGuard(ctx({ command: 'menu', isDev: true }))).ok, true,
+    'dev lolos lagi di "umum"');
+  console.log('✅ owner & dev dibebaskan di "umum" (satu-satunya kelompok ber-`pengecualian`)');
 
   // ── d. Balasan "⏳ Tunggu" sekali per jendela ───────────────────────────────
   console.log('\n=== d. Balasan sekali per jendela ===');
@@ -112,6 +131,24 @@ const tunggu = (ms) => new Promise((r) => setTimeout(r, ms));
     `balasan harus 1, dapat ${balasan.length} — user spam dibanjiri pesan`);
   assert.match(balasan[0], /Tunggu/ && /detik/, `isi balasan aneh: ${balasan[0]}`);
   console.log(`✅ 5 pelanggaran → ${balasan.length} balasan ("${balasan[0].slice(0, 30)}...")`);
+
+  // ── d2. check-and-set SINKRON (benar-benar bersamaan, bukan berurutan) ─────
+  // Kalau ada `await` di antara `lastHit.get` dan `lastHit.set`, dua request
+  // yang masuk dalam tick yang sama bisa dua-duanya lolos cooldown. Tes d di
+  // atas hanya membuktikan urutan sekuensial; yang ini membuktikan
+  // ketiadaan jendela race — 20 panggilan dilempar lewat Promise.all,
+  // semuanya mulai sebelum ada yang selesai.
+  console.log('\n=== d2. check-and-set sinkron: 20 panggilan BERSAMAAN ===');
+  reset();
+  const b2 = [];
+  const hasil = await Promise.all(
+    Array.from({ length: 20 }, () => cooldownGuard(ctx({ command: 'play', balasan: b2 }))));
+  const lolos = hasil.filter((r) => r.ok).length;
+  assert.strictEqual(lolos, 1,
+    `harus TEPAT 1 lolos dari 20 bersamaan, dapat ${lolos} — ada await di antara baca & set`);
+  assert.strictEqual(b2.length, 1,
+    `balasan harus 1 dari 20 bersamaan, dapat ${b2.length} — balasan bisa dobel`);
+  console.log(`✅ 20 bersamaan → ${lolos} lolos, ${b2.length} balasan (check-and-set sinkron)`);
 
   // ── e. Bot berbeda tidak saling mengganggu (key termasuk sender) ───────────
   console.log('\n=== e. Sender berbeda tidak saling blokir ===');
