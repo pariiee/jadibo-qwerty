@@ -24,7 +24,10 @@ const poolPalsu = {
   execute: async (sql, params = []) => {
     dicatat.push(sql.replace(/\s+/g, ' ').trim().slice(0, 60));
     if (/UPDATE orders SET status = 'paid'/i.test(sql)) return [{ affectedRows: 1 }];
-    if (/SELECT user_id, plan FROM orders/i.test(sql)) return [[{ user_id: 42, plan: 'premium' }]];
+    // `tandaiLunas` baca order DULU (termasuk status) sebelum menandai lunas,
+    // supaya order yang ditolak tidak terlanjur jadi 'paid'.
+    if (/SELECT user_id, plan, amount, order_id, status FROM orders/i.test(sql))
+      return [[{ user_id: 42, plan: 'premium', amount: 50000, order_id: 'ORD-TES-1', status: 'pending' }]];
     if (/SELECT plan_expired_at FROM users/i.test(sql)) return [[{ plan_expired_at: null }]];
     if (/UPDATE bots SET daily_limit/i.test(sql)) return [{ affectedRows: 1 }];
     if (/UPDATE users SET plan/i.test(sql)) return [{ affectedRows: 1 }];
@@ -63,7 +66,12 @@ const billing = require('../controllers/billingController');
   cek('notif menyebut tanggal berakhir', /aktif sampai/i.test(notif[0]?.teks || ''));
 
   // ── 2. Order yang sudah pernah lunas: jangan dobel ─────────────────────────
+  // Ordernya tetap 'pending' saat dibaca (penjaga dobelnya ada di
+  // `WHERE status IN ('pending','expired')` -> affectedRows 0), jadi yang
+  // membuktikan tidak dobel adalah affectedRows-nya, bukan status di SELECT.
   poolPalsu.execute = async (sql) => {
+    if (/SELECT user_id, plan, amount, order_id, status FROM orders/i.test(sql))
+      return [[{ user_id: 42, plan: 'premium', amount: 50000, order_id: 'ORD-TES-1', status: 'pending' }]];
     if (/UPDATE orders SET status = 'paid'/i.test(sql)) return [{ affectedRows: 0 }];
     return [[]];
   };
@@ -79,7 +87,8 @@ const billing = require('../controllers/billingController');
   notif.length = 0;
   poolPalsu.execute = async (sql, params = []) => {
     if (/UPDATE orders SET status = 'paid'/i.test(sql)) return [{ affectedRows: 1 }];
-    if (/SELECT user_id, plan FROM orders/i.test(sql)) return [[{ user_id: 42, plan: 'premium' }]];
+    if (/SELECT user_id, plan, amount, order_id, status FROM orders/i.test(sql))
+      return [[{ user_id: 42, plan: 'premium', amount: 50000, order_id: 'ORD-TES-2', status: 'pending' }]];
     if (/SELECT plan_expired_at FROM users/i.test(sql)) return [[{ plan_expired_at: null }]];
     if (/SELECT id FROM bots WHERE user_id/i.test(sql)) return [[]];
     return [{ affectedRows: 1 }];

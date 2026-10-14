@@ -34,16 +34,46 @@ const buatOrderId = () =>
 /**
  * Terapkan paket ke user. Masa aktif DITAMBAH dari sisa yang masih jalan,
  * jadi upgrade di tengah periode tidak menghanguskan sisa hari.
+ *
+ * Pencocokan paket EKSAK — sengaja TIDAK lewat `pricingStore.getPlan()`.
+ *
+ * `getPlan()` fallback ke `DEFAULT_PLANS[0]` untuk id yang tidak dikenal, dan
+ * itu paket Gratis: `{ id:'user', price:0, days:0, daily_limit:10 }`. Jadi id
+ * yang salah ketik — atau order top up yang lolos ke sini — tidak melempar,
+ * tapi DIAM-DIAM:
+ *   - `days || plan.days` jadi 0  -> plan_expired_at = sekarang (paket HABIS)
+ *   - daily_limit bot turun ke 10 -> kuota user dirampas
+ *   - stop_reason dibersihkan     -> bot dinyalakan dengan paket Gratis
+ * User bayar, saldo masuk, paketnya rusak, dan tidak ada satu baris error pun.
+ *
+ * Karena itu id yang tidak dikenal GAGAL BERISIK di sini. Pemanggilnya jalur
+ * uang, jadi lebih baik kelihatan daripada jalan diam-diam.
  */
 async function terapkanPaket(userId, planId, days) {
-  const plan = pricingStore.getPlan(planId);
+  const plan = pricingStore.plans().find((p) => p.id === planId);
+  if (!plan) {
+    throw Object.assign(new Error(`Paket tidak dikenal: ${planId}`), { kode: 'PAKET_TIDAK_DIKENAL' });
+  }
+  // `days` yang DIKIRIM EKSPLISIT dipakai apa adanya — termasuk kalau 0 atau
+  // negatif, dan itu ditolak di bawah. Dulu bentuknya `days || plan.days`, dan
+  // karena 0 itu falsy, `days: 0` DIAM-DIAM jadi 30 hari. Pemanggil yang
+  // bermaksud "jangan kasih masa aktif" dapat sebulan penuh tanpa peringatan.
+  // undefined/null = memang tidak mengirim, baru jatuh ke jatah paket.
+  const masa = days === undefined || days === null ? Number(plan.days) || 0 : Number(days) || 0;
+  if (masa <= 0) {
+    throw Object.assign(
+      new Error(`Masa aktif paket ${plan.id} tidak valid (${masa} hari)`),
+      { kode: 'PAKET_MASA_NOL' }
+    );
+  }
+
   const [rows] = await pool.execute(
     'SELECT plan_expired_at FROM users WHERE id = ?',
     [userId]
   );
   const sisa = rows[0]?.plan_expired_at ? new Date(rows[0].plan_expired_at) : null;
   const dasar = sisa && sisa > new Date() ? sisa : new Date();
-  const akhir = new Date(dasar.getTime() + (days || plan.days) * 86400000);
+  const akhir = new Date(dasar.getTime() + masa * 86400000);
 
   // Dua efek: masa aktif ditambah, DAN kuota pesan bot miliknya disesuaikan
   // dengan paket baru. Tanpa baris terakhir, user bayar tapi kuotanya tetap
@@ -328,21 +358,60 @@ async function cekOrder(req, res) {
 
 /**
  * Tandai lunas + terapkan paket — hanya sekali. Penjaganya perpindahan status:
- * UPDATE ... WHERE status = 'pending'. affectedRows 0 = sudah pernah diproses.
+ * UPDATE ... WHERE status IN ('pending','expired'). affectedRows 0 = sudah
+ * pernah diproses.
+ *
+ * DUA hal yang sengaja diperiksa SEBELUM status diubah:
+ *
+ * 1. Order dibaca dulu, bukan sesudah. Kalau `terapkanPaket` dipanggil dan
+ *    ternyata menolak (paket tak dikenal), ordernya sudah terlanjur 'paid' dan
+ *    tidak ada cara mengembalikannya — user bayar, paket tidak dapat, dan
+ *    ordernya kelihatan selesai.
+ *
+ * 2. Order `plan='topup'` TIDAK PERNAH lewat `terapkanPaket`. Order top up
+ *    tidak menjual masa aktif — dia menambah saldo. Tanpa gerbang ini, id
+ *    'topup' tidak ada di daftar paket, dan sebelum `terapkanPaket` diperketat
+ *    dia jatuh ke paket Gratis: plan_expired_at di-set ke SEKARANG (paket user
+ *    habis) dan daily_limit bot diturunkan ke 10. Sekarang pun tetap dijaga
+ *    di sini, karena `terapkanPaket` melempar untuk id tak dikenal dan
+ *    pelemparan itu tidak boleh sampai menandai order lunas.
+ *
+ * Status 'expired' ikut diterima: QRISku menyatakan paid tapi webhook-nya baru
+ * sampai setelah QR lewat masa berlaku (5 menit). Pembayarannya nyata, jadi
+ * jangan ditolak cuma karena lewat jam.
  */
 async function tandaiLunas(orderId, data) {
+  // Nama kolom ditulis satu per satu, bukan `SELECT *`: `terapkanTopup`
+  // menerima baris ini apa adanya sebagai "order", jadi bentuknya harus tetap.
+  const [rows] = await pool.execute(
+    'SELECT user_id, plan, amount, order_id, status FROM orders WHERE order_id = ?',
+    [orderId]
+  );
+  if (rows.length === 0) {
+    return { status: 'unknown', sudah: false, error: 'order tidak ditemukan' };
+  }
+  const order = rows[0];
+
+  // Gerbang top up. Cabang ini yang mencegah saldo diproses sebagai paket.
+  if (order.plan === 'topup') {
+    const wallet = require('./walletController');
+    return wallet.terapkanTopup(order, data);
+  }
+
+  // Validasi paket DULU, sebelum status diubah.
+  if (!pricingStore.plans().some((p) => p.id === order.plan)) {
+    console.error(`[Billing] ${orderId} DITOLAK: plan '${order.plan}' tidak dikenal — order TIDAK ditandai lunas`);
+    return { status: order.status, sudah: false, error: `paket '${order.plan}' tidak dikenal` };
+  }
+
   const [upd] = await pool.execute(
-    "UPDATE orders SET status = 'paid', paid_at = NOW(), note = ? WHERE order_id = ? AND status = 'pending'",
+    "UPDATE orders SET status = 'paid', paid_at = NOW(), note = ? WHERE order_id = ? AND status IN ('pending','expired')",
     [data?.payment_reference_id ? String(data.payment_reference_id).slice(0, 250) : null, orderId]
   );
   if (upd.affectedRows !== 1) return { status: 'paid', sudah: true };
 
-  const [rows] = await pool.execute(
-    'SELECT user_id, plan FROM orders WHERE order_id = ?',
-    [orderId]
-  );
-  const hasil = await terapkanPaket(rows[0].user_id, rows[0].plan);
-  console.log(`[Billing] ${orderId} lunas → user ${rows[0].user_id} paket ${hasil.plan}`);
+  const hasil = await terapkanPaket(order.user_id, order.plan);
+  console.log(`[Billing] ${orderId} lunas → user ${order.user_id} paket ${hasil.plan}`);
   return hasil;
 }
 

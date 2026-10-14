@@ -72,7 +72,21 @@ const poolPalsu = {
 };
 
 palsukan('config/database.js', { pool: poolPalsu, incrementStat: async () => {}, decrementStat: async () => {} });
-palsukan('config/pricingStore.js', { getPlan: (id) => ({ id, name: 'Basic', price: 25000, days: 30, daily_limit: 30, receive_limit: 10000 }), plans: () => [] });
+// `terapkanPaket` mencocokkan plan LEWAT `plans()` (bukan `getPlan()`), karena
+// `getPlan()` fallback ke paket Gratis untuk id tak dikenal dan itu diam-diam
+// menghabiskan paket user. Mock WAJIB ikut bentuk baru ini — `plans: () => []`
+// dulu bikin pencocokannya tidak nemu apa pun, dan tesnya merah padahal kodenya
+// benar. Mock yang ketinggalan = tes yang berbohong, dua arah.
+const PAKET = [
+  { id: 'user', name: 'Gratis', price: 0, days: 0, daily_limit: 10, receive_limit: 0 },
+  { id: 'basic', name: 'Basic', price: 25000, days: 30, daily_limit: 30, receive_limit: 10000 },
+  { id: 'premium', name: 'Premium', price: 50000, days: 30, daily_limit: 50, receive_limit: 50000 },
+];
+palsukan('config/pricingStore.js', {
+  plans: () => PAKET,
+  getPlan: (id) => PAKET.find((p) => p.id === id) || PAKET[0],
+  all: () => ({ plans: PAKET }),
+});
 palsukan('config/qrisku.js', {});
 palsukan('engine/gatePaket.js', { segarkan: () => {}, kuotaHarian: () => 30, kuotaHabis: async () => false });
 palsukan('engine/kuota.js', {
