@@ -268,13 +268,17 @@
         ? '<button class="btn btn-sm btn-dark" data-act="konfirmasi(\'' + o.order_id + '\')">Konfirmasi</button>' +
           '<button class="btn btn-sm btn-outline" data-act="tolak(\'' + o.order_id + '\')">Tolak</button>'
         : '<span class="m-sub">—</span>';
+      const gagalPaket = o.note && o.note.includes('paket gagal diterapkan');
+      const badgeGagal = gagalPaket
+        ? '<span class="badge" style="background:rgba(239,68,68,.14);color:var(--errTxt);margin-left:4px" title="' + (o.note || '').replace(/"/g, '&quot;') + '">paket gagal diterapkan</span>'
+        : '';
       tr.innerHTML =
         '<td><code>' + o.order_id + '</code></td>' +
         '<td>' + (o.username || '—') + '</td>' +
         '<td>' + (o.plan_name || o.plan) + '</td>' +
         '<td>' + rupiah(o.amount) + '</td>' +
         '<td>' + (o.method === 'manual' ? 'Manual' : 'QRISku') + '</td>' +
-        '<td><span class="badge st-' + o.status + '">' + o.status + '</span></td>' +
+        '<td><span class="badge st-' + o.status + '">' + o.status + '</span>' + badgeGagal + '</td>' +
         '<td>' + tanggal(o.created_at) + '</td>' +
         '<td class="aksi">' + tombol + '</td>';
       tb.appendChild(tr);
