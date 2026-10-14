@@ -52,12 +52,38 @@ command hidup: mancing, kerja, berburu, bertarung, maling, adventure, koboy
 
 **Masalah.** Pola baca-lalu-tulis: `SELECT money` → hitung di JS → `UPDATE money = <hasil>`. Dua request bersamaan dua-duanya lolos → saldo dobel.
 
-**Bukti (tes konkurensi MySQL, sebelum diperbaiki):**
+**KOREKSI (klaim lama salah — dihapus).** Laporan versi sebelumnya menulis:
+> ~~"100× paralel -1 → 64 menang, saldo 10280 vs ekspektasi 10028 (selisih 252)"~~
+
+**Klaim itu TIDAK VALID.** Dua kesalahan:
+1. Angka `10280 vs 10028` berasal dari **rumus ekspektasi tes yang salah** (lupa ×10), bukan dari race — dan sudah saya perbaiki sendiri di commit `3e0f0df` ("fix(tes): rumus ekspektasi coinflip salah (×10 lupa)").
+2. Tes itu dijalankan pada kode yang **sudah** diperbaiki (`updateMoneyDelta` belum ada di `099787e`).
+
+**Bukti sebelum/sesudah yang sebenarnya** (dijalankan 13 Okt 2026, DB tes `yaaparbot_test`, 3× ulang, hasil identik):
 ```
-100× paralel -1 (harusnya 64 menang)
-  menang: 64, saldo: 10280  ← vs ekspektasi 10028 (selisih 252)
+=== A. POLA LAMA (SELECT lalu UPDATE nilai hasil) ===
+  request paralel   : 100
+  dilaporkan sukses : 100
+  saldo awal        : 10000
+  saldo akhir       : 9999
+  seharusnya        : 9900
+  update HILANG     : 99
+  >> LOST UPDATE TERBUKTI (99 dari 100 update tidak mendarat)
+
+=== B. ATOMIC (UPDATE money = money - 1 WHERE money >= 1) ===
+  request paralel   : 100
+  dilaporkan sukses : 100
+  saldo akhir       : 9900   seharusnya 9900
+  >> RACE TIDAK ADA (konsisten)
 ```
-Saldo bertambah dari sumber yang tidak ada. Uang palsu.
+Catatan penting soal **arah** hilangnya update: saldo akhir `9999` **lebih tinggi** dari seharusnya (`9900`) karena 99 `UPDATE` saling menimpa — uang **tidak terpotong**, bukan bertambah. Untuk `coinflip`/`transfer` arahnya bisa dua-duanya (menang/menang atau saldo jadi minus), tergantung urutan baca. Yang terbukti di sini: **lost update 99%**, bukan "uang palsu bertambah".
+
+Menjalankan **tes asli** terhadap kode lama (`099787e`, git worktree) **tidak bisa dilakukan**: `test/konkurensi-uang.js` dan helper `updateMoneyDelta` **belum ada** di commit itu.
+```
+git cat-file -e 099787e:test/konkurensi-uang.js  -> fatal: not in '099787e'
+git show 099787e:plugins/03-fun-rpg.js | grep -c updateMoneyDelta -> 0
+node test/konkurensi-uang.js (di worktree 099787e) -> exit 1, "updateMoneyDelta is not a function"
+```
 
 **Perbaikan.** Semua jalur kritis jadi **UPDATE bersyarat** — MySQL yang memutuskan pemenang, bukan JS:
 
@@ -128,7 +154,7 @@ Diterapkan di **81 tempat** (7 plugin bot) + **25 file BE**. Detail teknis tetap
 
 ---
 
-## 3. 🟠 Belum dikerjakan
+## 3. ⬜ Belum dikerjakan
 
 | # | Temuan | Lokasi | Risiko |
 |---|---|---|---|
@@ -139,9 +165,39 @@ Diterapkan di **81 tempat** (7 plugin bot) + **25 file BE**. Detail teknis tetap
 | 5 | `bank`/`atm` multi-field belum atomic | `plugins/03-fun-rpg.js` | Race saldo bank |
 | 6 | `dungeon`, `adventure`, `koboy` belum atomic | `plugins/03-fun-rpg.js` | Race reward |
 
+**#25 (start manual saat `expired`) — status: DIPERBAIKI (belum di-commit/deploy).**
+Bukan "skip": pada 14 Okt diputuskan dikerjakan. Guard ditambahkan di `startBot()`
+(tolak 402 kalau `stop_reason='expired'` dan paket user belum aktif) +
+`test/start-bot-expired.js` (kontrak + 5 kasus perilaku, diverifikasi MERAH saat guard
+dilepas). Menunggu perintah Pak untuk commit/deploy.
+
+> ### Klarifikasi #3 dari laporan asli (downloader spam-able)
+>
+> **Semua command memang sudah kena kelompok `umum` (0.5 dtk)** — `config/cooldown.js`
+> memakai `daftar: null` di `umum`, dan `cfgDefault()` (dipanggil `kelompokUntuk()`
+> yang mengembalikan `null`) menerapkan kelompok itu untuk command apa pun yang tidak
+> masuk kategori lain. Jadi klaim "downloaders tanpa cooldown" **sudah tidak berlaku**.
+>
+> **Arti "112 belum"** pada laporan sebelumnya: dari **245 `case`** di
+> `plugins/04-tools.js`, **133 command** terdaftar eksplisit di kelompok `berat`/
+> `upload`/`judi` (cooldown 3–5 detik), sehingga **112 command** tidak punya cooldown
+> yang LEBIH KETAT dari `umum` 0.5 detik. Perlu ditegaskan: **112 itu BUKAN "tanpa
+> cooldown sama sekali"** — semuanya tetap kena `umum` 0.5 dtk. Yang belum adalah
+> cooldown spesifik per-kategori untuk yang 112 itu.
+>
+> **Koreksi angka:** klaim lama "133 command dari 245" membandingkan daftar cooldown
+> global (yang meliputi command plugin lain) dengan `case` 04-tools saja — apel vs jeruk.
+> Angka yang benar-benar bermakna: **berapa `case` di 04-tools yang tercakup kategori
+> lebih ketat**, dan itu **belum dihitung ulang per-plugin**. Status: **sebagian,
+> cakupan sebenarnya belum terukur.**
+
 ---
 
-## 4. 🟡 & 🟢 (18 temuan sisa)
+#19 dan #23 dinyatakan **tidak valid** — laporan asli menandainya **bukan masalah**
+(#19: `bot_slug` collision sudah sangat rendah; #23: `antidelete` auto-stats memang
+perilaku yang diinginkan). Keduanya tidak punya pekerjaan tersisa.
+
+## 4. 🟡 & 🟢 (temuan sisa)
 
 Lihat `docs/audit-1b-risiko.md` untuk inventaris lengkap call site. Ringkasnya: validasi input upload, batas ukuran beberapa jalur, konsistensi error handling, hardening header, logging audit untuk aksi owner.
 
@@ -175,10 +231,15 @@ Lihat `docs/audit-1b-risiko.md` untuk inventaris lengkap call site. Ringkasnya: 
 ## 7. Rekomendasi berikutnya (urut prioritas)
 
 1. **Sisa Cluster A/B** — `copet`, `maling`, `bank`/`atm`, `dungeon`, `adventure`, `koboy` (pola race yang sama, tinggal pakai helper yang sudah ada)
-2. **Keputusan cooldown owner/dev** — butuh jawaban Pak (A) atau (B)
+2. **Cakupan cooldown per-plugin** — hitung ulang berapa `case` di 04-tools yang benar-benar tercakup kategori lebih ketat (angka "112" lama belum terukur, lihat bagian 3)
 3. **`.kickall` konfirmasi ganda**
 4. **`.viewonce` privasi**
 5. **Temuan 🟡/🟢** — hardening & konsistensi
+
+**Keputusan cooldown owner/dev: Opsi A (SELESAI).** Owner/dev dikecualikan HANYA di
+kelompok `umum`. Kode ternyata sudah berperilaku A; yang salah cuma komentar &
+judul tes — sudah diselaraskan di `config/cooldown.js`, `engine/cooldown.js`,
+`test/cooldown-perilaku.js` (+ tes konkurensi check-and-set `d2`).
 
 ---
 
@@ -186,5 +247,11 @@ Lihat `docs/audit-1b-risiko.md` untuk inventaris lengkap call site. Ringkasnya: 
 
 - Waktu merge, `deploy.py` saya jalankan **2×** tanpa sengaja. Efek: restart PM2 ganda saja. Tidak ada kerusakan.
 - Sempat **salah curiga** kolom energi tidak dibuat, padahal output deploy cuma terpotong di tampilan. Pelajaran: baca log lengkap sebelum melapor.
-- `test/cooldown-perilaku.js` menemukan owner/dev tidak dikecualikan di kelompok `berat` — **masih menunggu keputusan Pak**, belum saya ubah.
+- **`node_modules` sempat hilang** (14 Okt). Saya tidak bisa memastikan penyebabnya —
+  kandidatnya `shutil.rmtree` pada worktree yang berisi junction `node_modules`, tapi
+  **tidak terbukti**. Dipulihkan dengan `npm ci`. Sejak itu: **tidak memakai junction
+  atau `shutil.rmtree` untuk worktree**; kalau butuh kode lama, copy ke folder
+  terpisah lalu `npm ci` di sana.
+- **Klaim "58 file tes lolos" sempat tidak bisa direproduksi** selama `node_modules`
+  kosong; setelah dipulihkan, suite kembali hijau (58/58).
 - 3 file `.bak` di VPS (`.env.bak-1790673167`, `.env.bak-20261002-104810`, `plugins/02-group.js.bak-sebelum-tagall`) **tidak dihapus** — berisi kredensial, menunggu izin Pak.
