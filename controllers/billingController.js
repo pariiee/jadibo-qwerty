@@ -469,24 +469,49 @@ async function tandaiLunas(orderId, data) {
     return { status: order.status, sudah: false, error: `paket '${order.plan}' tidak dikenal` };
   }
 
-  const [upd] = await pool.execute(
-    "UPDATE orders SET status = 'paid', paid_at = NOW(), note = ? WHERE order_id = ? AND status IN ('pending','expired')",
-    [data?.payment_reference_id ? String(data.payment_reference_id).slice(0, 250) : null, orderId]
-  );
-  if (upd.affectedRows !== 1) return { status: 'paid', sudah: true };
-
+  // Jalankan penandaan lunas + terapkanPaket dalam SATU transaksi DB.
+  // Jika terapkanPaket gagal -> ROLLBACK, order tetap status lama (pending),
+  // sehingga retry webhook berikutnya bisa memproses ulang.
+  const conn = await pool.getConnection();
+  let hasilPenerapan = null;
   try {
-    const hasil = await terapkanPaket(order.user_id, order.plan);
-    console.log(`[Billing] ${orderId} lunas → user ${order.user_id} paket ${hasil.plan}`);
-    return hasil;
-  } catch (err) {
-    console.error(`[Billing] ${orderId} terapkanPaket GAGAL: ${err.message}`);
-    await pool.execute(
-      "UPDATE orders SET note = CONCAT(COALESCE(note, ''), ' | paket gagal diterapkan: ', ?) WHERE order_id = ?",
-      [err.message.slice(0, 150), orderId]
+    await conn.beginTransaction();
+
+    const [upd] = await conn.execute(
+      "UPDATE orders SET status = 'paid', paid_at = NOW(), note = ? WHERE order_id = ? AND status IN ('pending','expired')",
+      [data?.payment_reference_id ? String(data.payment_reference_id).slice(0, 250) : null, orderId]
     );
+    if (upd.affectedRows !== 1) {
+      await conn.rollback();
+      return { status: 'paid', sudah: true };
+    }
+
+    // Terapkan paket dengan koneksi transaksi
+    hasilPenerapan = await module.exports.terapkanPaket(order.user_id, order.plan, undefined, conn);
+
+    await conn.commit();
+    console.log(`[Billing] ${orderId} lunas → user ${order.user_id} paket ${hasilPenerapan.plan}`);
+  } catch (err) {
+    await conn.rollback();
+    console.error(`[Billing] ${orderId} terapkanPaket GAGAL (transaksi di-rollback, order tetap pending): ${err.message}`);
+    // Catat note kegagalan di orders di luar transaksi yang di-rollback agar terlihat oleh admin
+    try {
+      await pool.execute(
+        "UPDATE orders SET note = ? WHERE order_id = ? AND status IN ('pending','expired')",
+        [`paket gagal diterapkan: ${err.message}`.slice(0, 250), orderId]
+      );
+    } catch (_) {}
     throw err;
+  } finally {
+    conn.release();
   }
+
+  // Efek samping dijalankan SETELAH transaksi sukses commit
+  if (hasilPenerapan?.efekSamping) {
+    await jalankanEfekSamping(hasilPenerapan.efekSamping);
+  }
+
+  return { plan: hasilPenerapan.plan, sampai: hasilPenerapan.sampai, kuota: hasilPenerapan.kuota };
 }
 
 // ─── POST /api/payment/webhook (QRISku) ───────────────────────────────────────
