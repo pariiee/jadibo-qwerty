@@ -4,7 +4,7 @@ const path   = require('path');
 const fs     = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const { pool } = require('../config/database');
-const { ADMIN_ROLE, slotsOf, ownerMax, receiveLimit } = require('../config/plan');
+const { ADMIN_ROLE, slotsOf, ownerMax, receiveLimit, aktif } = require('../config/plan');
 const { resolveBotId, pastikanSlug } = require('../config/botSlug');
 const pricingStore = require('../config/pricingStore');
 
@@ -339,6 +339,23 @@ async function startBot(req, res) {
 
     const [rows] = await pool.execute('SELECT * FROM bots WHERE id = ?', [bot.id]);
     const botData = rows[0];
+
+    // Temuan audit #25 — bot yang dimatikan cron karena paket habis
+    // (stop_reason='expired') TIDAK boleh dinyalakan manual. Tanpa guard ini,
+    // pemilik bisa klik Start berulang: bot hidup ~1 menit, cron matiin,
+    // klik lagi — bot hidup ~50-60% waktu tanpa bayar.
+    //
+    // Pengecualian: kalau paketnya SUDAH dibayar lagi (plan_expired_at masih
+    // di depan), Start sah — jadi cek paket dulu, bukan cuma stop_reason.
+    // Admin (kawula) tetap boleh, sama seperti jalur lain di controller ini.
+    if (botData && botData.stop_reason === 'expired' && req.user.role !== ADMIN_ROLE) {
+      const [u] = await pool.execute(
+        'SELECT role, plan_expired_at FROM users WHERE id = ?', [botData.user_id]);
+      if (!aktif(u[0])) {
+        return sendError(res, 402,
+          'Masa paket sudah habis. Perpanjang paket dulu sebelum menyalakan bot.');
+      }
+    }
 
     // Engine-nya ada di proses lain — kirim perintah, bukan panggil fungsi.
     const usePairingCode = req.body.use_pairing_code === true;
