@@ -72,7 +72,7 @@ function simpanQuote(map, jid, event) {
   while (map.size > QUOTE_MAX) map.delete(map.keys().next().value);
 }
 
-// ─── Bentuk konten: bahasa plugin (Baileys) -> bahasa zapo ────────────────────
+// ─── Bentuk konten: bahasa plugin (engine lama) -> bahasa zapo ────────────────────
 
 /** Field `Proto.IMessage` yang bikin content dianggap proto mentah siap-kirim. */
 const PROTO_KEYS = [
@@ -86,7 +86,7 @@ const PROTO_KEYS = [
 const isRawProto = (c) => !!c && typeof c === 'object' && !Buffer.isBuffer(c) && PROTO_KEYS.some((k) => c[k] !== undefined);
 
 /**
- * Zapo ngebuang `mentions` dari OPSI secara diam-diam (sama kayak Baileys v7):
+ * Zapo ngebuang `mentions` dari OPSI secara diam-diam (sama kayak engine lama):
  * harus nempel di kontennya. Call-site tinggal kirim `{ text, mentions }`.
  *
  * JID diteruskan UTUH — jangan dipotong jadi angka. Dulu di sini ada
@@ -132,12 +132,12 @@ function normalisasiMedia(opsi) {
 }
 
 /**
- * Plugin kirim content dalam bahasa Baileys (`{ text }`, `{ image, caption }`,
+ * Plugin kirim content dalam bahasa engine lama (`{ text }`, `{ image, caption }`,
  * `{ document, fileName }`, ...). zapo pakai bahasa sendiri — terjemahin di sini.
  *
  * Yang SENGAJA nggak diterjemahin: `Proto.IMessage` mentah (mis. tombol
  * nativeFlow) — zapo nerima apa adanya, jadi NOL additionalNodes, nol hack
- * relayMessage. Di Baileys ini butuh proto mentah + `<biz>`/`<bot>`; di zapo
+ * relayMessage. Di engine lama ini butuh proto mentah + `<biz>`/`<bot>`; di zapo
  * cukup `message.send`.
  */
 function toZapoContent(c) {
@@ -151,7 +151,7 @@ function toZapoContent(c) {
   // jadi NOL additionalNodes, nol hack relayMessage.
   if (isRawProto(c)) return c;
 
-  // Sisanya bahasa Baileys lama (`{ text }`, `{ image, caption }`, `{ react }`,
+  // Sisanya bahasa engine lama lama (`{ text }`, `{ image, caption }`, `{ react }`,
   // `{ delete }`) — dipakai plugin yang belum dipindah ke bahasa zapo.
   // `contextInfo` & `mentions` ikut dibawa: zapo naruh keduanya di KONTEN,
   // bukan di opsi (kalau kelewat, quote/mention/trik fakemsg hilang diam-diam).
@@ -170,7 +170,7 @@ function toZapoContent(c) {
   return c;
 }
 
-/** Opsi kirim bahasa Baileys (`{ quoted, mentions, ephemeralExpiration }`) -> zapo. */
+/** Opsi kirim bahasa engine lama (`{ quoted, mentions, ephemeralExpiration }`) -> zapo. */
 function toZapoOptions(opts, ambilQuote) {
   if (!opts) return undefined;
   const o = {};
@@ -199,7 +199,7 @@ function toZapoOptions(opts, ambilQuote) {
 }
 
 // ─── Normalisasi meta grup ────────────────────────────────────────────────────
-// Plugin baca `participants[].jid` + `.isAdmin`/`.isSuperAdmin` (warisan Baileys);
+// Plugin baca `participants[].jid` + `.isAdmin`/`.isSuperAdmin` (warisan engine lama);
 // zapo pakai `id` + `isAdmin`/`isSuperAdmin`. Samakan biar engine/jid.js jalan.
 function normalizeGroupMeta(meta) {
   if (!meta || !Array.isArray(meta.participants)) return meta;
@@ -298,7 +298,7 @@ function createClient({ client, botJid = null, logger = console } = {}) {
   };
 
   // ── Normalisasi hasil aksi grup ─────────────────────────────────────────────
-  // Plugin cek `status === 'ok'` + `r.code` (warisan Baileys). zapo balikin
+  // Plugin cek `status === 'ok'` + `r.code` (warisan engine lama). zapo balikin
   // `{ jid, success }` — tanpa normalisasi ini aksi SUKSES dilaporin gagal.
   const normHasil = (res, jids) => {
     const arr = Array.isArray(res) ? res : [];
@@ -312,7 +312,7 @@ function createClient({ client, botJid = null, logger = console } = {}) {
   // ── Pesan ───────────────────────────────────────────────────────────────────
   const message = {
     /**
-     * `send(jid, content, opts)` — `content` boleh bahasa Baileys (`{text}`,
+     * `send(jid, content, opts)` — `content` boleh bahasa engine lama (`{text}`,
      * `{image,caption}`) ATAU `Proto.IMessage` mentah (tombol nativeFlow).
      * Balikin WAMessage-like: `{ key: { id, remoteJid, fromMe } }`.
      */
@@ -324,8 +324,8 @@ function createClient({ client, botJid = null, logger = console } = {}) {
       const withMentions = attachMentions(content, daftarMention);
       const body = toZapoContent(withMentions);
       const o = { ...toZapoOptions({ ...opts, mentions: daftarMention }, ambilQuote) };
-      // `edit` gaya Baileys cuma FLAG ("ini edit") — targetnya ditentukan oleh
-      // `messageId` (Baileys kirim stanza ber-id sama + attr edit=1). zapo minta
+      // `edit` gaya engine lama cuma FLAG ("ini edit") — targetnya ditentukan oleh
+      // `messageId` (engine lama kirim stanza ber-id sama + attr edit=1). zapo minta
       // targetnya eksplisit di `editKey`, jadi ambil dari situ.
       if (content?.edit) o.editKey = { id: opts.messageId || content.edit?.id || content.edit?.key?.id };
       if (opts.messageId) o.id = opts.messageId;
@@ -346,7 +346,7 @@ function createClient({ client, botJid = null, logger = console } = {}) {
       return wam;
     },
 
-    /** Proto mentah: di Baileys perlu relayMessage + additionalNodes, di zapo send() biasa. */
+    /** Proto mentah: di engine lama perlu relayMessage + additionalNodes, di zapo send() biasa. */
     async sendRaw(jid, protoContent, opts = {}) {
       return message.send(jid, toZapoContent(protoContent), opts);
     },
@@ -356,7 +356,7 @@ function createClient({ client, botJid = null, logger = console } = {}) {
     },
 
     /**
-     * Pesan berlabel "AI" (node `<bot biz_bot="1"/>` di Baileys). zapo bikin
+     * Pesan berlabel "AI" (node `<bot biz_bot="1"/>` di engine lama). zapo bikin
      * labelnya dari `messageContextInfo.supportPayload` -> cukup set di content.
      */
     async sendAi(jid, text, opts = {}) {
@@ -471,7 +471,7 @@ function createClient({ client, botJid = null, logger = console } = {}) {
      * Status grup (`.swgc`) — kirim ke jid **GRUP** lewat
      * `messageDispatch.sendMessage` dengan isi `groupStatusMessageV2`.
      *
-     * BENTUK YANG TERBUKTI JALAN (dari repo referensi yang memakai Baileys,
+     * BENTUK YANG TERBUKTI JALAN (dari repo referensi yang memakai engine lama,
      * bukan dugaan): `messageSecret` 32 byte DIHASILKAN SENDIRI dan dipasang di
      * DUA lapis — `messageContextInfo` terluar DAN di dalam
      * `groupStatusMessageV2.message`. `relayMessage`-nya TIDAK memakai
@@ -479,7 +479,7 @@ function createClient({ client, botJid = null, logger = console } = {}) {
      *
      * PENTING — `content` yang masuk ke sini adalah **Proto.IMessage mentah**
      * (`{ extendedTextMessage: { text } }`, `{ imageMessage: {...} }`), BUKAN
-     * shorthand Baileys/zapo (`{ text }`, `{ type: 'text' }`). zapo hanya
+     * shorthand engine lama/zapo (`{ text }`, `{ type: 'text' }`). zapo hanya
      * menerjemahkan konten di lapis TERLUAR; karena isi ini disarang di dalam
      * `groupStatusMessageV2.message`, bentuk shorthand akan sampai ke WA sebagai
      * proto sampah.
@@ -611,7 +611,7 @@ function createClient({ client, botJid = null, logger = console } = {}) {
     /**
      * `setSetting(jid, setting, value)` — nama setting sisi zapo.
      *
-     * Plugin (warisan Baileys) manggil pakai `'open'`/`'close'`, sedangkan zapo
+     * Plugin (warisan engine lama) manggil pakai `'open'`/`'close'`, sedangkan zapo
      * cuma kenal `announcement|restrict|ephemeral|...`. Dulu string itu diteruskan
      * apa adanya -> `SETTING_TAGS['open']` = undefined -> `tags.off` meledak
      * ("Cannot read properties of undefined (reading 'off')"), dan `.open`/`.close`
@@ -650,7 +650,7 @@ function createClient({ client, botJid = null, logger = console } = {}) {
   const profile = {
     /**
      * Balikin URL string (atau null) — BUKAN `{ url }`. Call-site lama baca
-     * `pp?.url`; di Baileys itu bikin PP selalu jatuh ke default padahal grup
+     * `pp?.url`; di engine lama itu bikin PP selalu jatuh ke default padahal grup
      * punya PP. Normalisasi di adapter, bukan di tiap call-site.
      */
     async getProfilePicture(jid) {
@@ -699,7 +699,7 @@ function createClient({ client, botJid = null, logger = console } = {}) {
   // sebagai penerima, jadi jid `@g.us` di situ ditolak server dengan
   // `error=479 SMAX_INVALID`. Sudah terbukti di produksi (4× gagal).
   //
-  // Jalur yang benar (dari payload Baileys yang terbukti jalan): kirim pesan
+  // Jalur yang benar (dari payload engine lama yang terbukti jalan): kirim pesan
   // BIASA ke jid GRUP, dengan isi `groupStatusMessageV2`, plus node tambahan
   // `<meta is_group_status="true"/>`. zapo menyediakan itu lewat
   // `messageDispatch.sendMessage(to, content, { customNodes })`.
@@ -732,7 +732,7 @@ function createClient({ client, botJid = null, logger = console } = {}) {
   const auth = {
     async requestPairingCode(phone, custom = null) {
       // CATATAN: zapo param ke-2 = BOOLEAN (shouldShowPushNotification), BEDA
-      // dari Baileys yang param ke-2 = customCode. Call-site Baileys kirim
+      // dari engine lama yang param ke-2 = customCode. Call-site engine lama kirim
       // string -> diterjemahin ke param ke-3.
       const fn = need('client.auth.requestPairingCode', client.auth?.requestPairingCode);
       return typeof custom === 'string'
@@ -782,7 +782,7 @@ function createClient({ client, botJid = null, logger = console } = {}) {
     isConnected:  (...a) => auth.isConnected(...a),
   };
 
-  // ── Jembatan event zapo -> event gaya Baileys yang ditunggu engine ─────────
+  // ── Jembatan event zapo -> event gaya engine lama yang ditunggu engine ─────────
   /**
    * zapo ngasih `client.on('message', ev)`. Engine/plugin nunggu:
    *   'messages.upsert'  { messages: [wam] }
@@ -828,13 +828,13 @@ function createClient({ client, botJid = null, logger = console } = {}) {
         ev.emit('creds.update', payload);
       });
     }
-    // Pairing: engine nunggu nama event Baileys -> diteruskan apa adanya
+    // Pairing: engine nunggu nama event engine lama -> diteruskan apa adanya
     for (const e of ['auth_qr', 'auth_pairing_code', 'auth_pairing_required', 'auth_passkey_required']) {
       client.on?.(e, (p) => ev.emit(e, p));
     }
   }
 
-  // Aksi `client.group` zapo -> bentuk group-participants.update Baileys
+  // Aksi `client.group` zapo -> bentuk group-participants.update engine lama
   function normalisasiGroup(g) {
     const aksi = g?.action || g?.type;
     const action = aksi === 'add' ? 'add'
@@ -862,7 +862,7 @@ module.exports = {
   createClient,
   // Dipakai plugins (kontrak `client.*`)
   onMessageSent,
-  // Node `<bot>`/`<biz>` — dipakai Baileys buat nandain jalur bot. Di zapo label
+  // Node `<bot>`/`<biz>` — dipakai engine lama buat nandain jalur bot. Di zapo label
   // AI datang dari `messageContextInfo.supportPayload`, jadi ini cuma biar
   // `require` di plugins/05-owner.js (command debug `.testai`) nggak meledak.
   AI_NODES: [{ attrs: { biz_bot: '1' }, tag: 'bot' }, { attrs: {}, tag: 'biz' }],

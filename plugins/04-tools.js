@@ -1950,7 +1950,7 @@ ${rapikanError(e)}`); }
         if (!hasil.subarray(0, 4).equals(Buffer.from([0x89, 0x50, 0x4E, 0x47]))) {
           throw new Error('Balasan API bukan gambar PNG');
         }
-        // Image message + mimetype image/png: baileys ngunggah byte APA ADANYA
+        // Image message + mimetype image/png: engine lama ngunggah byte APA ADANYA
         // (nggak re-encode), jadi alpha tetep utuh.
         await client.message.send(jid, {
           type: 'image',

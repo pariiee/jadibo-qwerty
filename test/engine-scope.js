@@ -1,7 +1,7 @@
 'use strict';
 /**
- * Uji guard ENGINE_BOT_ID: panel zapo & panel Baileys berbagi tabel `bots`.
- * Kalau guard bocor, panel zapo bisa start/stop bot Baileys pakai engine zapo.
+ * Uji guard ENGINE_BOT_ID: panel zapo & panel engine lama berbagi tabel `bots`.
+ * Kalau guard bocor, panel zapo bisa start/stop bot engine lama pakai engine zapo.
  */
 const assert = require('assert');
 const path   = require('path');
@@ -29,7 +29,7 @@ process.env.ENGINE_BOT_ID = '2';
 delete require.cache[require.resolve('../config/engineScope')];
 S = require('../config/engineScope');
 ok('ENGINE_BOT_ID=2 → isMine(2) true', () => assert.strictEqual(S.isMine(2), true));
-ok('ENGINE_BOT_ID=2 → isMine(1) false (baris Baileys ditolak)', () => assert.strictEqual(S.isMine(1), false));
+ok('ENGINE_BOT_ID=2 → isMine(1) false (baris panel lain ditolak)', () => assert.strictEqual(S.isMine(1), false));
 ok('ENGINE_BOT_ID=2 → isMine("2") true (string dari JWT/param)', () => assert.strictEqual(S.isMine('2'), true));
 ok("mine('id','AND') → SQL + param benar", () => {
   assert.deepStrictEqual(S.mine('id', 'AND'), [' AND id = ?', [2]]);
@@ -77,7 +77,7 @@ ok('shutdown SQL sah', () => {
 delete process.env.ENGINE_BOT_ID;
 delete require.cache[require.resolve('../config/engineScope')];
 S = require('../config/engineScope');
-ok('sakelar mati → nol perubahan perilaku (regresi panel Baileys)', () => {
+ok('sakelar mati → nol perubahan perilaku (regresi panel engine lama)', () => {
   assert.strictEqual(S.ENGINE_BOT_ID, null);
   assert.strictEqual(S.isMine(1), true);
   assert.deepStrictEqual(S.mine('id', 'AND'), ['', []]);

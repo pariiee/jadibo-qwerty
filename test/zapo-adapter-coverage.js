@@ -72,7 +72,7 @@ assert.deepStrictEqual(asJids('a@s.whatsapp.net'), ['a@s.whatsapp.net'], 'asJids
 assert.strictEqual(isRawProto({ text: 'hai' }), false, 'teks biasa bukan proto');
 assert.strictEqual(isRawProto({ interactiveMessage: {} }), true, 'interactiveMessage = proto mentah');
 assert.strictEqual(isRawProto({ imageMessage: { url: 'x' } }), true, 'imageMessage = proto mentah');
-// Bahasa Baileys lama DITERJEMAHIN ke bahasa zapo (`type` + `media`) — zapo
+// Bahasa engine lama lama DITERJEMAHIN ke bahasa zapo (`type` + `media`) — zapo
 // nggak ngenalin `{ text }` / `{ image }` polos; content-nya jadi kosong 0 byte.
 assert.deepStrictEqual(toZapoContent({ text: 'hai' }), { type: 'text', text: 'hai' }, 'teks -> type:text');
 assert.deepStrictEqual(
@@ -97,7 +97,7 @@ console.log('  ✓ bareJid, asJids, isRawProto, toZapoContent, normalisasiPesan'
 
 const meta = { participants: [{ id: 'a@s.whatsapp.net', isAdmin: true }] };
 normalizeGroupMeta(meta);
-assert.strictEqual(meta.participants[0].jid, 'a@s.whatsapp.net', 'participant.id -> .jid (warisan Baileys)');
+assert.strictEqual(meta.participants[0].jid, 'a@s.whatsapp.net', 'participant.id -> .jid (warisan engine lama)');
 assert.strictEqual(meta.participants[0].isAdmin, true, 'isAdmin diteruskan');
 assert.strictEqual(meta.participants[0].admin, 'admin', 'isAdmin -> admin string');
 console.log('  ✓ normalizeGroupMeta');

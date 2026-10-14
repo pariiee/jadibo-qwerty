@@ -682,7 +682,7 @@ module.exports = async function groupHandler(ctx) {
 
     // ── add (tambah member via nomor) / addai (tambahin bot AI) ──────────────
     case 'add':
-    // `.addai` = tambahin bot AI ke grup. Baileys mau JID-nya, bukan nomor:
+    // `.addai` = tambahin bot AI ke grup. engine lama mau JID-nya, bukan nomor:
     // `.addai` polos -> Meta AI, `.addai <kode>` -> dari tabel AI_JID,
     // `.addai 628xx@bot` -> JID mentah. Gate `isAdmin()` tetap; `isBotAdmin()`
     // tetap (bot harus admin biar WA nggak nolak diem-diem).
@@ -795,7 +795,7 @@ module.exports = async function groupHandler(ctx) {
 
     // ── open / close — kalau grupnya UDAH di posisi yang diminta, jangan
     // kirim tag-nya lagi (percuma + WA ngirim notif "grup dibuka/ditutup" ke
-    // semua member). Cukup tengok `meta.announce` (Baileys: `!!<announcement>`
+    // semua member). Cukup tengok `meta.announce` (engine lama: `!!<announcement>`
     // = announce ON = grup TUTUP).
     case 'open': {
       if (!await isAdmin()) { await reply(mess.GrupAdmin); return true; }
@@ -1508,7 +1508,7 @@ module.exports = async function groupHandler(ctx) {
     // ── setppgc ───────────────────────────────────────────────────────────────
     // Ganti foto profil grup (reply gambar)
     // Client signature: setProfilePicture(jid, buffer) — arg-nya JANGAN dibalik,
-    // kalau kebalik Baileys nge-`in`-in string jid dan error
+    // kalau kebalik engine lama nge-`in`-in string jid dan error
     // "Cannot use 'in' operator to search for 'stream' in <jid>".
     case 'setppgc': {
       if (!await isBotAdmin()) { await reply(mess.BotAdmin); return true; }

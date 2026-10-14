@@ -12,7 +12,7 @@
  *     `messageContextInfo`, jadi `messageSecret` status tidak ikut; akibatnya WA
  *     menuliskannya ke STATUS PRIBADI pengirim (kejadian di produksi).
  *  3. Node `<meta is_group_status="true"/>` dipaksa lewat `customNodes`
- *     berdasarkan satu payload mentah. Referensi yang TERBUKTI jalan (Baileys)
+ *     berdasarkan satu payload mentah. Referensi yang TERBUKTI jalan (engine lama)
  *     tidak memakai node itu sama sekali.
  *
  * Sumber kebenarannya `refrensi-botz/plugins/owner-upswtag.js`:

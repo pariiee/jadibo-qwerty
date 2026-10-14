@@ -5,7 +5,7 @@
  * "Cannot read properties of undefined (reading 'off')".
  *
  * Akar: zapo `group.setSetting(groupJid, setting, enabled)` cuma kenal setting
- * `announcement|restrict|ephemeral|...`; plugin (warisan Baileys) manggil
+ * `announcement|restrict|ephemeral|...`; plugin (warisan engine lama) manggil
  * `'open'`/`'close'`. `SETTING_TAGS['open']` = undefined -> `tags.off` meledak.
  * Adapter yang harus nerjemahin — bukan tiap call-site.
  *

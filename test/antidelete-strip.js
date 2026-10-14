@@ -81,8 +81,8 @@ console.log('   ✓ tanpa fileLength -> fallback ke ukuran buffer');
 
 // ── 5. Jalur non-zapo tetap jalan ────────────────────────────────────────────
 console.log('\n── 5. objek tanpa `media` sama sekali ──');
-const BAIL = { imageMessage: { mediaKey: Buffer.alloc(32), mimetype: 'image/jpeg', caption: 'foto' } };
-assert.strictEqual(ringkasPesan(BAIL), BAIL);
+const TANPA_MEDIA = { imageMessage: { mediaKey: Buffer.alloc(32), mimetype: 'image/jpeg', caption: 'foto' } };
+assert.strictEqual(ringkasPesan(TANPA_MEDIA), TANPA_MEDIA);
 console.log('   ✓ nggak disentuh');
 
 // ── 6. Bentuk 1: hasil normalisasi zapo (hook pesan-terkirim) ────────────────

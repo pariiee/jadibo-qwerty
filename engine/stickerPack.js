@@ -93,8 +93,8 @@ function zipStore(entri) {
 }
 
 // ─── Media key ───────────────────────────────────────────────────────────────
-// HKDF sesuai RFC 5869, sama seperti `expandMediaKey` di Baileys. Pakai
-// `crypto.hkdfSync` (stdlib Node) — dulu numpang `hkdf` dari baileys, dan
+// HKDF sesuai RFC 5869, sama seperti `expandMediaKey` di engine lama. Pakai
+// `crypto.hkdfSync` (stdlib Node) — dulu numpang `hkdf` dari engine lama, dan
 // zapo nggak nge-export itu. Salt/panjangnya sama, hasilnya identik.
 function kunciMedia(mediaKey, info) {
   const crypto = require('crypto');

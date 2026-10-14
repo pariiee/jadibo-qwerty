@@ -1,13 +1,13 @@
 // Cek blok `.info` + asal nama/versi engine. Jalankan: node test/info-engine.js
-// Jalan di dua branch: main (baileys) & zapo-deploy (zapo-js).
 const fs = require('fs');
 
 let gagal = 0;
 const cek = (nama, ok) => { console.log((ok ? '[OK]   ' : '[FAIL] ') + nama); if (!ok) gagal++; };
 
 // 1. engine WA yang beneran di-require di file ini — bukan tebakan
+// Cuma zapo-js yang boleh; kalau ada library lain nyempil, tes ini merah.
 const info = fs.readFileSync('plugins/01-info.js', 'utf8');
-const paketEngine = (info.match(/require\('(baileys|zapo-js)'\)/) || [])[1];
+const paketEngine = (info.match(/require\('(zapo-js)'\)/) || [])[1];
 cek('plugins/01-info.js require engine: ' + paketEngine, !!paketEngine);
 
 // 2. helper infoEngine() ada & kandidatnya nyakup engine yang kepakai di branch ini

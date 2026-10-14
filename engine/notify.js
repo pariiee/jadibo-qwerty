@@ -85,7 +85,7 @@ async function kirimLewatBot(botId, nomor, teks) {
     //
     // `activeBots` menyimpan client MENTAH zapo (`whatsappEngine.js` baris ~322
     // `activeBots.set(botId, client)`), sedangkan plugin menerima ADAPTER
-    // (`engine/zapo/client.js`) yang menerjemahkan bahasa Baileys -> zapo.
+    // (`engine/zapo/client.js`) yang menerjemahkan bahasa engine lama -> zapo.
     // Client mentah menolak `{ text }`: encoder zapo hanya menganggap pesan teks
     // kalau `content.type === 'text'` (`isSendTextMessage`), dan kalau tidak
     // cocok sama sekali dia jatuh ke `default:` yang melempar

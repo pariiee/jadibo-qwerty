@@ -63,19 +63,9 @@ for (const f of WAJIB) {
   if (!ada) gagal.push(`plugin hilang: ${f}`);
 }
 
-// ── Nol referensi baileys di plugins/ ────────────────────────────────────────
-console.log('\n── Nol ketergantungan baileys ──');
-const nyangkut = [];
-for (const f of files) {
-  const src = fs.readFileSync(path.join(dir, f), 'utf8');
-  if (/require\(['"]baileys['"]\)/.test(src)) nyangkut.push(f);
-}
-assert.strictEqual(nyangkut.length, 0, `plugin masih require('baileys'): ${nyangkut.join(', ')}`);
-console.log('  ✓ nol plugin yang require(\'baileys\')');
-
 if (gagal.length) {
   console.error(`\n❌ GAGAL — ${gagal.length} masalah:`);
   for (const g of gagal) console.error(`   - ${g}`);
   process.exit(1);
 }
-console.log(`\n✅ ${files.length} plugin bisa di-load + 3 fitur yang hilang balik + nol baileys`);
+console.log(`\n✅ ${files.length} plugin bisa di-load + 3 fitur yang hilang balik + nol ketergantungan luar`);

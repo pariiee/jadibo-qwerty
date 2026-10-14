@@ -1,7 +1,7 @@
 'use strict';
 /**
  * test/zapo-stickerpack-hkdf.js
- * `engine/stickerPack.js` dulu numpang `hkdf` dari baileys; sekarang pakai
+ * `engine/stickerPack.js` dulu numpang `hkdf` dari engine lama; sekarang pakai
  * `crypto.hkdfSync` stdlib. Kalau turunannya beda sedikit saja, WhatsApp
  * nerima stanza-nya tapi kartu sticker pack-nya BLANK — nol error, nol log.
  * Jadi hasilnya dibandingkan ke implementasi HKDF manual (RFC 5869).
@@ -58,4 +58,4 @@ const macHarap = crypto.createHmac('sha256', k.macKey).update(Buffer.concat([k.i
 assert.ok(mac.equals(macHarap), 'MAC 10 byte = HMAC(iv‖body)[:10]');
 console.log('  ✓ enkripsi: MAC 10 byte di ekor cocok (pack diterima WA)');
 
-console.log('\n✅ HKDF sticker pack identik dengan Baileys (nol risiko kartu blank)');
+console.log('\n✅ HKDF sticker pack identik dengan engine lama (nol risiko kartu blank)');

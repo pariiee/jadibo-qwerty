@@ -1,10 +1,10 @@
 'use strict';
 
 /**
- * Panel zapo & panel Baileys berbagi tabel `bots` di DB MySQL yang sama.
+ * Panel zapo & panel engine lama berbagi tabel `bots` di DB MySQL yang sama.
  * ENGINE_BOT_ID = id baris `bots` milik panel ini. Kalau di-set, panel ini hanya
  * melihat/menyentuh baris itu — tanpa ini, start/stop dari panel zapo bisa
- * menjalankan bot Baileys pakai engine zapo (dua bot rebutan nomor yang sama).
+ * menjalankan bot engine lama pakai engine zapo (dua bot rebutan nomor yang sama).
  * Kosong = tanpa batas (dev/lokal).
  */
 const ENGINE_BOT_ID = process.env.ENGINE_BOT_ID

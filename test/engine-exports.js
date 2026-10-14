@@ -3,7 +3,7 @@
  * test/engine-exports.js — guard: tiap simbol yang di-destructure plugin dari
  * modul engine/config WAJIB beneran diekspor.
  *
- * Kenapa ada: waktu port Baileys→zapo, beberapa modul kekurangan blok yang
+ * Kenapa ada: waktu port engine lama→zapo, beberapa modul kekurangan blok yang
  * dipakai plugin (`config/mess.js` kehilangan roleLabel, `config/globalSettings.js`
  * kehilangan getMuteGrup, `engine/thumbnail.js` kehilangan param size + jpegkan).
  * Semuanya meledak sebagai `Cannot read properties of undefined` / TypeError saat

@@ -10,7 +10,7 @@
  *      nggak rekursif) -> file ini ditaruh di `plugins/` biar kebaca.
  *   2. plugin di sini CommonJS + terima `ctx` (engine/whatsappEngine.js buildContext),
  *      bukan ESM `m/conn` -> gate & kirimnya pakai ctx. `generateWAMessageFromContent` /
- *      `jidNormalizedUser` dari '@rexxhayanasi/elaina-baileys' nggak dibutuhin:
+ *      `jidNormalizedUser` dari library itu nggak dibutuhin:
  *      itu cuma buat ngerakit WAMessage manual, sementara adapter
  *      `client.message.send()` udah ngerjain itu (dan paketnya nggak ada di node_modules).
  */

@@ -46,7 +46,7 @@ function cacheLidFromMeta(participants) {
 }
 
 /**
- * Baileys v7 kirim peserta grup sebagai OBJEK (`{ id, lid, phoneNumber }`), bukan
+ * engine lama kirim peserta grup sebagai OBJEK (`{ id, lid, phoneNumber }`), bukan
  * string. Dulu objek ini diteruskan apa adanya ke engine, jadi `@user` di
  * welcome/bye tampil `@[object Object]` dan cek `.banmember` nggak pernah kena.
  * Satu tempat normalisasi — semua pemakai event ikut sehat.
@@ -83,7 +83,7 @@ function participantJids(participants) {
 
 /**
  * Isi cache dari key pesan masuk. INI SUMBER UTAMANYA, bukan metadata grup.
- * Baileys v7 naruh PN-nya langsung di key (`participantAlt` / `remoteJidAlt`) dan
+ * engine lama naruh PN-nya langsung di key (`participantAlt` / `remoteJidAlt`) dan
  * nyimpen mapping-nya sendiri ke session.db sebelum emit `messages.upsert`
  * (lib/Socket/messages-recv.js ~1277). Jadi pesan PERTAMA setelah restart udah
  * kebaca — nggak nunggu metadata grup, nggak ada network call.
@@ -124,7 +124,7 @@ async function lidToPnAsync(client, jid) {
   const cached = lidToPn(jid);
   if (cached !== jid) return cached;
 
-  // Sumber 1: peta LID milik engine (Baileys punya; adapter zapo masih stub).
+  // Sumber 1: peta LID milik engine (engine lama punya; adapter zapo masih stub).
   try {
     const raw = await client?.lid?.getPn?.(String(jid));
     if (raw && isPn(raw)) return simpanLidPn(jid, raw);
@@ -153,7 +153,7 @@ function pnToLid(jid) {
   return phoneToLidCache.get(key) || jid;
 }
 
-/** Async: cache dulu, lalu peta LID<->PN punya Baileys sendiri (persist di session.db). */
+/** Async: cache dulu, lalu peta LID<->PN punya engine lama sendiri (persist di session.db). */
 async function pnToLidAsync(client, jid) {
   if (!jid) return jid;
   const cached = pnToLid(jid);

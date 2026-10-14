@@ -4,9 +4,9 @@
  *
  * Kenapa tes ini ada: `.fakemsg` gagal di engine zapo
  *   `[fakemsg] cannot apply contextInfo: no compatible submessage found`
- * padahal di Baileys lancar. Sebabnya adapter zapo salah nerjemahin content:
+ * padahal di engine lama lancar. Sebabnya adapter zapo salah nerjemahin content:
  * plugin zapo sudah nulis BAHASA ZAPO (`{ type:'text' }`, `{ type:'revoke' }`),
- * tapi `toZapoContent` cuma ngenal bahasa Baileys lama, jadi `type`/`target`/
+ * tapi `toZapoContent` cuma ngenal bahasa engine lama lama, jadi `type`/`target`/
  * `media`/`contextInfo` dibuang → content jadi `{}` → 0 byte.
  *
  * Tes jalan lewat kode zapo yang ASLI (`buildMediaMessageContent` +
@@ -29,7 +29,7 @@ const deps = {
 };
 const ambilQuote = () => null; // quote nggak ketemu di cache — sama kayak produksi
 
-/** content plugin -> adapter -> zapo -> proto. `opts` = opsi gaya Baileys. */
+/** content plugin -> adapter -> zapo -> proto. `opts` = opsi gaya engine lama. */
 async function bangun(contentPlugin, opts = {}) {
   const o = A.toZapoOptions(opts, ambilQuote) || {};
   const body = A.toZapoContent(contentPlugin);
@@ -66,8 +66,8 @@ it('bahasa zapo `{ type:image, media }` — `media` nggak hilang', () => {
   assert.strictEqual(A.toZapoContent({ type: 'image', media: buf }).media, buf);
 });
 
-// ── Bahasa Baileys lama: diterjemahin ke zapo, dan ISINYA nyampe ─────────────
-it("teks Baileys `{ text }` -> extendedTextMessage terisi (bukan 0 byte)", async () => {
+// ── Bahasa engine lama lama: diterjemahin ke zapo, dan ISINYA nyampe ─────────────
+it("teks engine lama `{ text }` -> extendedTextMessage terisi (bukan 0 byte)", async () => {
   const m = await bangun({ text: 'halo bre' });
   assert.strictEqual(m.extendedTextMessage.text, 'halo bre');
   assert.ok(byte(m) > 0, 'proto kosong');
@@ -89,7 +89,7 @@ it('`mentions` nyampe ke proto akhir UTUH sebagai JID (dulu dipotong jadi angka)
   const m2 = await bangun({ text: 'hai', mentions: [LID] }, { mentions: [LID] });
   assert.deepStrictEqual((m2.extendedTextMessage || m2).contextInfo.mentionedJid, [LID]);
 });
-it('gambar Baileys `{ image, caption }` -> bentuk media yang DITERIMA zapo', () => {
+it('gambar engine lama `{ image, caption }` -> bentuk media yang DITERIMA zapo', () => {
   const buf = Buffer.from('jpg');
   const out = A.toZapoContent({ image: buf, caption: 'hai' });
   assert.ok(C.isSendMediaMessage(out), 'zapo nggak ngenalin hasilnya sebagai media');
