@@ -5,9 +5,6 @@
 -- nama database — biar bisa dipakai di box mana pun tanpa mengedit file ini.
 
 -- ============================================================
--- Table: users
--- ============================================================
--- ============================================================
 -- Table: settings  (key/value JSON)
 -- Sumber tunggal harga paket, QRIS manual, mode bayar, dan pengumuman
 -- (`config/pricingStore.js`). Tabel ini SEMPAT HILANG dari schema padahal
@@ -19,14 +16,40 @@ CREATE TABLE IF NOT EXISTS settings (
   PRIMARY KEY (`key`)
 ) ENGINE=InnoDB;
 
+-- ============================================================
+-- Table: users
+-- ============================================================
+-- Role: `user` | `premium` (turunan langganan aktif, bukan kolom) | `kawula`
+-- (admin tertinggi). Nama `kawula` sengaja tidak umum — lihat config/plan.js.
+--
+-- `ENUM` di sini SEMPAT salah tulis ('user','king') padahal kode memakai
+-- `kawula` (ADMIN_ROLE). Di MySQL default (mode ketat), INSERT admin `kawula`
+-- GAGAL sehingga instalasi baru tidak punya admin sama sekali; di mode longgar
+-- dia tersimpan sebagai string kosong. Dua-duanya bikin `/api/admin/*` mati dan
+-- error-nya menyesatkan (`Akses ditolak`, seolah role-nya benar tapi bukan admin).
+--
+-- Kolom langganan (plan, plan_expired_at, plan_slots, trial_used_at) SEMPAT
+-- HILANG dari file ini padahal dibaca setiap request (`/api/auth/me`, billing).
+-- Instalasi baru langsung mati dengan ER_BAD_FIELD_ERROR. `scripts/sync-schema.js`
+-- yang selama ini menutupi lubangnya untuk DB yang sudah ada — file ini harus
+-- berdiri sendiri, karena `schema.sql` yang dipakai bikin DB baru.
+--
+-- `role` memuat `premium` juga: config/plan.js menghitungnya dari langganan,
+-- tapi enumerasi ini pernah diisi `premium` di DB yang berjalan, jadi dibiarkan
+-- supaya DB lama dan skema ini tidak berbeda.
+-- ============================================================
 CREATE TABLE IF NOT EXISTS users (
   id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   username     VARCHAR(50) NOT NULL UNIQUE,
   password     VARCHAR(255) NOT NULL,
-  role         ENUM('user', 'king') NOT NULL DEFAULT 'user',
+  role         ENUM('user', 'premium', 'kawula', 'king') NOT NULL DEFAULT 'user',
   token_version INT NOT NULL DEFAULT 0,
   phone        VARCHAR(20) DEFAULT NULL,
   email        VARCHAR(254) DEFAULT NULL,
+  plan         VARCHAR(32) NOT NULL DEFAULT 'user',
+  plan_expired_at DATETIME DEFAULT NULL,
+  plan_slots   INT NOT NULL DEFAULT 2,
+  trial_used_at DATETIME DEFAULT NULL,
   is_active    TINYINT(1) NOT NULL DEFAULT 1,
   created_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
