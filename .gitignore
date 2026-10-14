@@ -1,5 +1,9 @@
 # ── Dependencies ──
 node_modules/
+node_modules.bak/
+
+# ── Backup files ──
+*.bak*
 
 # ── Environment & secrets ──
 .env
