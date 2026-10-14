@@ -15,10 +15,18 @@ KREDENSIAL SSH JANGAN ditaruh di file ini. Isi lewat salah satu:
 import os, re, sys
 
 def _vps_config():
-    # Cari .vps di sebelah skrip INI, lalu di parent (biar salinan di scripts/
-    # tetap nemu file yang sama dengan salinan di root).
+    # Cari .vps di sebelah skrip INI, lalu naik ke atas sampai ketemu.
+    # JANGAN berhenti di 1 level: skrip ini ada di <repo>/scripts/, sementara
+    # .vps biasanya di root proyek yang satu-dua level di atasnya. Kalau
+    # cuma naik 1 level, skrip GAGAL nemu .vps dan deploy mati dengan
+    # "HOST VPS nggak ketemu" padahal file-nya ada.
     base = os.path.dirname(os.path.abspath(__file__))
-    kandidat = [base, os.path.dirname(base)]
+    kandidat = [base]
+    d = base
+    for _ in range(4):                     # ponytail: maks 4 level naik
+        d = os.path.dirname(d)
+        if d and d != kandidat[-1]:
+            kandidat.append(d)
     target = None
     for d in kandidat:
         for nama in (".vps.new", ".vps"):

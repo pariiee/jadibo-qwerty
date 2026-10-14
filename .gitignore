@@ -7,6 +7,13 @@ node_modules/
 .env.*.local
 !.env.example
 
+# ── Kredensial SSH VPS (dipakai scripts/deploy.py) ──
+# WAJIB di-ignore: isinya password SSH. Kalau ikut ter-commit, kredensial
+# VPS bocor ke GitHub — dan riwayat git tidak bisa "dilupakan".
+.vps
+.vps.new
+.vps.*
+
 # ── WhatsApp/Telegram session (kredensial pairing — JANGAN commit!) ──
 sessions/
 *.session.db
