@@ -38,6 +38,28 @@ if (!process.env.KING_USERNAME) {
 
 require('./config/net'); // paksa IPv4 (lihat komentarnya) — worker juga pakai
 
+/**
+ * Bendera uji: jalankan server TANPA efek samping boot.
+ *
+ * Kenapa perlu: menjalankan `server.js` penuh untuk menguji RUTE ternyata ikut
+ * menyalakan bot (autoStartBots) dan menulis ke DB lewat cron — di DB yang SAMA
+ * dengan proses PM2 yang sedang jalan. Untuk uji rute, satu-satunya yang
+ * dibutuhkan adalah Express-nya "listen"; sisanya efek samping yang tidak
+ * diminta. Dua proses juga bisa rebutan bot.
+ *
+ * Dengan NO_BOOT_SIDE_EFFECTS=1:
+ *   - `autoStartBots()` dilewati (tidak ada bot dinyalakan)
+ *   - SELURUH `cron.schedule` jadi no-op (tidak ada cron yang terdaftar)
+ *   - seed admin tetap jalan (idempoten, tidak mengubah apa pun kalau sudah ada)
+ *
+ * Diverifikasi oleh test/boot-tanpa-efek.js — yang membaca source ini, jadi
+ * tidak ada cara menjalankan server penuh "untuk uji" tanpa ketahuan.
+ */
+const TANPA_EFEK = process.env.NO_BOOT_SIDE_EFFECTS === '1';
+if (TANPA_EFEK) {
+  console.warn('[Boot] NO_BOOT_SIDE_EFFECTS=1 — autoStartBots & SELURUH cron dimatikan (mode uji).');
+}
+
 const fs           = require('fs');
 const express      = require('express');
 const http         = require('http');
@@ -56,6 +78,8 @@ const bot  = require('./controllers/botController');
 const command = require('./controllers/commandController');
 const sistem = require('./controllers/sistemController');
 const billing = require('./controllers/billingController');
+const wallet  = require('./controllers/walletController');
+const cekOrigin = require('./config/cekOrigin');
 const pricingStore = require('./config/pricingStore');
 const beban        = require('./config/beban');
 const { setWsBroadcast: setWsBroadcastWa, startWhatsAppBot } = require('./engine/whatsappEngine');
@@ -67,7 +91,7 @@ const wss    = new WebSocket.Server({ server });
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
 
-// Panel ini & panel Baileys berbagi tabel `bots` di DB yang sama.
+// Panel ini & panel engine lama berbagi tabel `bots` di DB yang sama.
 const { ENGINE_BOT_ID, mine, isMine } = require('./config/engineScope');
 const { ADMIN_ROLE } = require('./config/roles');
 const { resolveBotId, pastikanSlug } = require('./config/botSlug');
@@ -115,6 +139,18 @@ app.post(
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// Lapis kedua CSRF: Origin/Referer, HANYA untuk POST ber-cookie.
+//
+// Dipasang SETELAH `cookieParser` (butuh req.cookies) dan SETELAH rute webhook
+// di atas — jadi webhook TIDAK pernah kena: dia bukan request browser, tidak
+// punya Origin, dan keasliannya sudah dibuktikan tanda tangan HMAC dari raw
+// body. Kalau webhook ikut diperiksa, pembayaran sah akan ditolak.
+//
+// Pertahanan utamanya tetap `SameSite=Lax` di cookie (controllers/authController.js),
+// yang memang tidak mengirim cookie pada POST lintas-situs. Ini tambahan di
+// jalur uang, karena satu POST yang lolos = saldo atau paket berubah.
+app.use(cekOrigin.cekOrigin);
+
 // Static files — index:false supaya '/' tidak disajikan mentah oleh static
 // (halaman harus lewat renderer include di bawah, biar partial ikut dirangkai)
 app.use(express.static(path.join(__dirname, 'public'), { index: false }));
@@ -132,6 +168,31 @@ const apiLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 120,
   message: { ok: false, message: 'Rate limit terlampaui.' },
+});
+
+// Limiter jalur UANG. Lebih ketat dari apiLimiter, dan dipisah supaya
+// permintaan murah (baca daftar command, statistik) tidak memakan jatah
+// pembelian.
+//
+// Angkanya sengaja sedang: 10/menit masih longgar untuk user yang mengubah
+// pikiran beberapa kali, tapi membuat penebakan harga/nominal atau percobaan
+// perpanjang beruntun jadi tidak berguna. `topupLimiter` lebih ketat lagi
+// karena tiap panggilan membuat tagihan BARU di QRISku — akun gateway-nya bisa
+// kena rate limit (60/menit per IP di sisi mereka) kalau kita tidak menahan.
+const moneyLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  message: { ok: false, message: 'Terlalu banyak permintaan. Tunggu sebentar.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const topupLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 5,
+  message: { ok: false, message: 'Terlalu banyak membuat tagihan. Tunggu sebentar.' },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
 // ─── Auth Routes ──────────────────────────────────────────────────────────────
@@ -219,6 +280,22 @@ app.get('/api/billing/orders',       apiLimiter, auth.requireAuth, billing.dafta
 // config/qrisku.js supaya akun QRISku tidak kena ban.
 app.post('/api/billing/orders/:orderId/check', apiLimiter, auth.requireAuth, billing.cekOrder);
 
+// ─── Dompet (saldo) ──────────────────────────────────────────────────────────
+//
+// Halaman /saldo. Semua POST di sini memindahkan uang, jadi pakai moneyLimiter
+// / topupLimiter — bukan apiLimiter (120/menit itu jatah baca, bukan jatah
+// transaksi).
+//
+// `:userId` (bukan `:id`) SENGAJA: `app.param('id')` di atas dipakai buat
+// me-resolve slug bot, dan walaupun regex-nya cuma cocok untuk /api/(admin/)bots/,
+// memakai nama parameter yang berbeda menghilangkan kemungkinan salah tangkap
+// sepenuhnya.
+app.get('/api/wallet',               apiLimiter,   auth.requireAuth, wallet.ringkasan);
+app.get('/api/wallet/ledger',        apiLimiter,   auth.requireAuth, wallet.riwayat);
+app.post('/api/wallet/topup',        topupLimiter, auth.requireAuth, wallet.buatOrderTopup);
+app.post('/api/wallet/perpanjang',   moneyLimiter, auth.requireAuth, wallet.perpanjang);
+app.post('/api/wallet/auto-renew',   moneyLimiter, auth.requireAuth, wallet.setAutoRenew);
+
 // ─── Admin Routes (king only) ─────────────────────────────────────────────────
 //
 // Jejak aktivitas admin: SATU middleware untuk seluruh `/api/admin/*`, dipasang
@@ -258,6 +335,15 @@ app.put('/api/admin/billing/settings',                auth.requireAuth, auth.req
 // lain. Dipakai saat kompensasi bot error atau pembelian kuota tambahan.
 app.post('/api/admin/bots/:id/kuota',        auth.requireAuth, auth.requireKing, billing.adminTopupKuota);
 app.post('/api/admin/bots/:id/reset-kuota',  auth.requireAuth, auth.requireKing, billing.adminResetKuota);
+
+// ─── Admin: dompet ───────────────────────────────────────────────────────────
+// Lihat saldo & jurnal user, penyesuaian manual (alasan wajib), dan pemeriksaan
+// konsistensi SUM(jurnal) == saldo. TIDAK ada tarik saldo / transfer antar user.
+app.get('/api/admin/wallet/users',                    auth.requireAuth, auth.requireKing, wallet.adminUsers);
+app.get('/api/admin/wallet/users/:userId/ledger',     auth.requireAuth, auth.requireKing, wallet.adminLedger);
+app.post('/api/admin/wallet/users/:userId/adjust',    moneyLimiter, auth.requireAuth, auth.requireKing, wallet.adminAdjust);
+app.get('/api/admin/wallet/konsistensi',              auth.requireAuth, auth.requireKing, wallet.adminKonsistensi);
+app.get('/api/admin/wallet/pendapatan',               auth.requireAuth, auth.requireKing, wallet.adminPendapatan);
 
 // ─── Tab "Sistem" (kesehatan, resource, audit, pendapatan, broadcast) ─────────
 app.get('/api/admin/sistem',      auth.requireAuth, auth.requireKing, sistem.status);
@@ -302,6 +388,8 @@ app.get('/command',    halaman('command.html'));
 // Riwayat pembayaran & profil: dua-duanya halaman USER (bukan admin).
 app.get('/billing',    halaman('billing.html'));
 app.get('/kuota',      halaman('kuota.html'));
+// Dompet: saldo, top up, perpanjang, riwayat, auto-perpanjang.
+app.get('/saldo',      halaman('saldo.html'));
 app.get('/log',        halaman('log.html'));
 app.get('/panduan',    halaman('panduan.html'));
 app.get('/profil',     halaman('profil.html'));
@@ -515,8 +603,15 @@ setWsBroadcastWa(broadcastGabungan);
 setWsBroadcastTg(broadcastGabungan);
 app.post('/internal/op', bridge.route);
 
-// ─── Periodic Stats Broadcast ─────────────────────────────────────────────────
-cron.schedule('*/10 * * * * *', async () => {
+// Pembungkus cron: no-op total saat NO_BOOT_SIDE_EFFECTS=1.
+//
+// Diambil sebagai SATU pembungkus (bukan `if (TANPA_EFEK) return;` di dalam
+// tiap callback) supaya cron BARU yang ditambahkan nanti otomatis ikut mati di
+// mode uji — tidak ada cara lupa. Yang salah itu bukan isi cron-nya, tapi
+// "menjalankan cron sama sekali" waktu cuma mau menguji rute.
+const cronAman = TANPA_EFEK ? { schedule: () => ({ stop() {}, destroy() {} }) } : cron;
+
+cronAman.schedule('*/10 * * * * *', async () => {
   try {
     const stats = await getStats();
     const payload = JSON.stringify({ type: 'stats', payload: stats });
@@ -573,12 +668,21 @@ async function boot() {
     console.log(`║  Mode : ${(process.env.NODE_ENV || 'development').padEnd(32)}║`);
     console.log('╚══════════════════════════════════════════╝');
     console.log('');
-    await autoStartBots();
+    // Keadaan lapis kedua CSRF dilaporkan saat boot. Kalau ALLOWED_ORIGIN kosong,
+    // hanya origin sendiri yang diterima — dan itu HARUS kelihatan di log,
+    // bukan jadi perilaku diam-diam yang beda antara dev dan produksi.
+    const csrf = cekOrigin.csrfDiperiksa();
+    console.log(`[Boot] CSRF origin: ${csrf.env} = ${csrf.jumlah ? csrf.izin.join(', ') : '(kosong — hanya origin sendiri)'}`);
+    if (TANPA_EFEK) {
+      console.log('[Boot] NO_BOOT_SIDE_EFFECTS=1 — bot & cron TIDAK dijalankan.');
+    } else {
+      await autoStartBots();
+    }
   });
 }
 
 // ─── Auto Reset Limit Harian — setiap hari jam 00:00 WIB (UTC+7) ─────────────
-cron.schedule('0 17 * * *', async () => {
+cronAman.schedule('0 17 * * *', async () => {
   try {
     // Reset per-bot sesuai daily_limit masing-masing
     const [sc, sp] = mine('id', 'AND');
@@ -611,7 +715,7 @@ cron.schedule('0 17 * * *', async () => {
 // `bot_logs` tumbuh ~1 MB/hari (1.187 baris/1,1 MB dalam 1 hari) dan TIDAK
 // pernah dibersihkan. Yang ditampilkan cuma 100 baris terakhir (getBotLogs,
 // maks 500) — jadi sisanya cuma berat. Simpan 500 terakhir per bot.
-cron.schedule('0 3 * * *', async () => {
+cronAman.schedule('0 3 * * *', async () => {
   try {
     const [bots] = await pool.execute('SELECT id FROM bots');
     let total = 0;
@@ -634,7 +738,7 @@ cron.schedule('0 3 * * *', async () => {
 }, { timezone: 'Asia/Jakarta' });
 
 // ─── Cron Jadwal Buka/Tutup Grup Otomatis — setiap menit ─────────────────────
-cron.schedule('* * * * *', async () => {
+cronAman.schedule('* * * * *', async () => {
   // ── Bot yang paketnya habis: matikan ──────────────────────────────────────
   // Sebelum ini paket lewat cuma nge-drop fitur ke jatah Gratis sementara
   // botnya tetap nyambung ke WhatsApp — bayar atau tidak, nomornya tetap
@@ -718,6 +822,27 @@ cron.schedule('* * * * *', async () => {
     }
   } catch (e) {
     console.error('[Cron] Jadwal grup error:', e.message);
+  }
+}, { timezone: 'Asia/Jakarta' });
+
+// ─── Cron Auto-Perpanjang — TIAP JAM ─────────────────────────────────────────
+//
+// Jadwal TERPISAH, bukan numpang cron 1-menit: jendelanya 24 jam, jadi
+// memeriksanya tiap menit cuma mengulang pekerjaan yang sama 1.440 kali sehari.
+// Tiap jam sudah lebih dari cukup — perpanjangan terjadi minimal 24 jam sebelum
+// paket habis, jadi tidak ada momen mepet yang terlewat.
+//
+// Basis waktu: jam WIB, konsisten dengan cron lain di file ini. Perbandingan
+// tanggalnya sendiri memakai UTC_TIMESTAMP() di dalam `autoRenew()` — jangan
+// dicampur, karena `plan_expired_at` disimpan UTC oleh pool (timezone '+00:00').
+//
+// AMAN kalau jalan dua kali (mis. restart tepat di menit yang sama): idempotensi
+// dijaga ref 'auto:<userId>:<tanggalExpired>' yang UNIK di wallet_ledger.
+cronAman.schedule('0 * * * *', async () => {
+  try {
+    await wallet.autoRenew();
+  } catch (e) {
+    console.error('[Cron] Auto-perpanjang error:', e.message);
   }
 }, { timezone: 'Asia/Jakarta' });
 
