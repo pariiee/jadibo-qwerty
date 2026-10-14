@@ -48,8 +48,29 @@ const buatOrderId = () =>
  *
  * Karena itu id yang tidak dikenal GAGAL BERISIK di sini. Pemanggilnya jalur
  * uang, jadi lebih baik kelihatan daripada jalan diam-diam.
+ *
+ * ── `conn` (OPSIONAL) ────────────────────────────────────────────────────────
+ * Tanpa `conn`, fungsinya pakai `pool` dan MENJALANKAN efek sampingnya sendiri
+ * — perilaku lama, dipakai jalur QRIS (webhook / Cek Status / konfirmasi admin).
+ *
+ * Dengan `conn`, tiga UPDATE-nya ikut transaksi milik pemanggil, dan efek
+ * sampingnya TIDAK dijalankan: dikembalikan sebagai `efekSamping` supaya
+ * pemanggil menjalankannya SETELAH commit. Dipakai `perpanjangDariSaldo`, yang
+ * harus bisa rollback saldo kalau paketnya gagal.
+ *
+ * Kenapa harus begitu, bukan sekadar "panggil efek samping di dalam transaksi":
+ *   - `engineBus.start` menyalakan WhatsApp, ~14 detik, dan menembak jaringan.
+ *     Di dalam transaksi itu menahan lock `users` selama belasan detik.
+ *   - Kalau transaksinya ternyata rollback, botnya sudah terlanjur menyala
+ *     padahal paket tidak diberikan.
+ *   - `notify` juga jalur jaringan; kegagalannya tidak boleh membatalkan uang.
+ *
+ * URUTAN KUNCI (bebas deadlock): `SELECT ... FOR UPDATE` di users DULU (dilakukan
+ * pemanggil), lalu di sini UPDATE bots, lalu UPDATE users. Satu jalur, urut
+ * users -> bots, jadi tidak ada siklus. Query `UPDATE bots` pakai idx_user,
+ * bukan full scan.
  */
-async function terapkanPaket(userId, planId, days) {
+async function terapkanPaket(userId, planId, days, conn = null) {
   const plan = pricingStore.plans().find((p) => p.id === planId);
   if (!plan) {
     throw Object.assign(new Error(`Paket tidak dikenal: ${planId}`), { kode: 'PAKET_TIDAK_DIKENAL' });
@@ -67,7 +88,11 @@ async function terapkanPaket(userId, planId, days) {
     );
   }
 
-  const [rows] = await pool.execute(
+  // Satu baris, bukan abstraksi: semua query di bawah lewat `q`. Dengan `conn`
+  // mereka jadi bagian transaksi pemanggil; tanpa `conn` sama seperti dulu.
+  const q = conn || pool;
+
+  const [rows] = await q.execute(
     'SELECT plan_expired_at FROM users WHERE id = ?',
     [userId]
   );
@@ -82,7 +107,7 @@ async function terapkanPaket(userId, planId, days) {
   // `receive_limit` di-set ulang dari paket + hitungannya di-reset ke 0: beli
   // paket = kuota terima pesan penuh lagi. Kalau hitungannya tidak direset,
   // pelanggan lama langsung mentok begitu paket barunya masuk.
-  await pool.execute(
+  await q.execute(
     'UPDATE bots SET daily_limit = ?, receive_limit = ?, received_count = 0 WHERE user_id = ?',
     [kuota, plan.receive_limit || 0, userId]
   );
@@ -90,55 +115,93 @@ async function terapkanPaket(userId, planId, days) {
   // `plan_slots` tidak diisi dari paket — jatah dibaca dari paket saat dipakai,
   // jadi kalau admin mengubah jatah per harga, semua user langsung ikut.
   // Kolom itu disisakan untuk override manual per user.
-  await pool.execute(
+  await q.execute(
     'UPDATE users SET plan = ?, plan_expired_at = ? WHERE id = ?',
     [plan.id, akhir, userId]
   );
 
-  // Paket baru = jatah fitur & kuota baru. Cache di gatePaket cuma 60 detik,
-  // tapi segarkan() memangkasnya jadi nol — user nggak perlu nunggu semenit
-  // buat fitur yang barusan dia bayar.
-  require('../engine/gatePaket').segarkan(null);
-
-  // Peringatan kuota disimpan di memori per bot (`engine/kuota.js`). Paket baru =
-  // ambang baru, jadi penandanya harus dilupakan — kalau tidak, peringatan 80%
-  // pada langganan KEDUA tidak akan pernah terkirim. Dilupakan PER BOT, bukan
-  // semua bot: melupakan punya bot lain bikin mereka dapat peringatan dobel.
+  // Bot yang MATI karena paket habis. Dibaca di dalam transaksi supaya daftarnya
+  // konsisten dengan perubahan di atas.
   //
-  // SELURUH blok di bawah ini dibungkus try/catch dengan sengaja: paketnya SUDAH
-  // diberikan di atas. Kalau query efek-samping ini gagal (DB hiccup), jangan
-  // sampai `terapkanPaket` melempar — pemanggilnya jalur pembayaran, dan user
-  // yang sudah bayar tidak boleh menerima error karena urusan sampingan.
+  // DIBUNGKUS try/catch DENGAN SENGAJA, dan ini bukan kehati-hatian berlebihan:
+  // blok ini dulunya ada di bagian efek-samping yang tidak boleh menggagalkan
+  // pembayaran, dan paketnya SUDAH diberikan di dua UPDATE di atas. Kalau query
+  // ini melempar (DB hiccup) dan dibiarkan naik, pemanggilnya jalur uang —
+  // webhook membalas error padahal ordernya sudah diproses, dan user yang sudah
+  // bayar melihat "gagal".
+  //
+  // Reset `stop_reason` DULU, baru start. Tanpa reset, kalau `engineBus.start`
+  // gagal (QR timeout / zapo error) dan user restart server, `autoStartBots`
+  // akan skip bot ini karena filter `stop_reason <> 'expired'`. Padahal
+  // paketnya SUDAH aktif dan botnya harusnya jalan. startBot sendiri juga sudah
+  // reset stop_reason (engine/whatsappEngine.js:319), tapi kita tidak boleh
+  // andalkan startBot untuk ini: kalau proses startBot crash di tengah,
+  // stop_reason kembali ke 'expired' dan boot berikutnya skip.
+  const matiKarenaPaket = [];
   try {
-    const [botKu] = await pool.execute('SELECT id FROM bots WHERE user_id = ?', [userId]);
-    const kuotaMod = require('../engine/kuota');
-    for (const b of botKu) kuotaMod.lupakanPeringatan(b.id);
-
-    // Nyalakan kembali bot yang MATI karena paket habis. Tanpa ini user bayar
-    // Rp85.000 lalu botnya tetap diam sampai dia sadar sendiri dan klik Start —
-    // dan notifikasi "pembayaran diterima" di bawah pun tidak terkirim, karena
-    // `notify.js` mengirim LEWAT bot user sendiri, yang sedang mati.
-    //
-    // Reset `stop_reason` DULU, baru start. Tanpa reset, kalau `engineBus.start`
-    // gagal (QR timeout / zapo error) dan user restart server, `autoStartBots`
-    // akan skip bot ini karena filter `stop_reason <> 'expired'`. Padahal
-    // paketnya SUDAH aktif dan botnya harusnya jalan. startBot sendiri juga
-    // sudah reset stop_reason (engine/whatsappEngine.js:319), tapi kita tidak
-    // boleh andalkan startBot untuk ini: kalau proses startBot crash di
-    // tengah, stop_reason kembali ke 'expired' dan boot berikutnya skip.
-    //
-    // SENGAJA TIDAK di-await, sejajar dengan notifikasi: start WA butuh ~14 detik
-    // dan webhook QRIS yang lambat dibalas = QRISku mengirim ulang = paket dobel.
-    const [matiKarenaPaket] = await pool.execute(
+    const [rowsMati] = await q.execute(
       "SELECT id FROM bots WHERE user_id = ? AND is_running = 0 AND stop_reason = 'expired'",
       [userId]
     );
+    matiKarenaPaket.push(...rowsMati);
     if (matiKarenaPaket.length) {
-      await pool.execute(
+      await q.execute(
         "UPDATE bots SET stop_reason = NULL WHERE user_id = ? AND stop_reason = 'expired'",
         [userId]
       );
     }
+  } catch (e) {
+    console.error('[Billing] Gagal siapkan bot yang dimatikan sistem (paket TETAP diberikan):', e.message);
+  }
+
+  const hasil = { plan: plan.id, sampai: akhir, kuota };
+
+  // Dengan transaksi milik pemanggil: JANGAN jalankan efek samping, kembalikan.
+  if (conn) return { ...hasil, efekSamping: { userId, plan, akhir, kuota, matiKarenaPaket } };
+
+  // Di-await seperti kode lama (dulu query `SELECT id FROM bots` juga awaited di
+  // titik ini). Isi efek sampingnya sendiri tetap fire-and-forget: start WA dan
+  // notif TIDAK ditunggu, karena webhook yang lambat dibalas = QRISku kirim
+  // ulang = paket dobel.
+  await jalankanEfekSamping({ userId, plan, akhir, kuota, matiKarenaPaket });
+  return hasil;
+}
+
+/**
+ * Semua yang BUKAN tulis-DB dari penerapan paket: segarkan cache, lupakan
+ * peringatan kuota, nyalakan bot yang mati karena paket habis, kirim notif.
+ *
+ * Dipisah supaya pemanggil bertransaksi bisa menundanya sampai SETELAH commit.
+ * SELURUHNYA dibungkus try/catch dengan sengaja: paketnya SUDAH diberikan, dan
+ * user yang sudah bayar tidak boleh menerima error karena urusan sampingan.
+ */
+async function jalankanEfekSamping({ userId, plan, akhir, kuota, matiKarenaPaket = [] }) {
+  try {
+    // Paket baru = jatah fitur & kuota baru. Cache di gatePaket cuma 60 detik,
+    // tapi segarkan() memangkasnya jadi nol — user nggak perlu nunggu semenit
+    // buat fitur yang barusan dia bayar.
+    require('../engine/gatePaket').segarkan(null);
+
+    // Peringatan kuota disimpan di memori per bot (`engine/kuota.js`). Paket
+    // baru = ambang baru, jadi penandanya harus dilupakan — kalau tidak,
+    // peringatan 80% pada langganan KEDUA tidak akan pernah terkirim.
+    //
+    // Dilupakan untuk SEMUA bot milik user ini, bukan cuma yang mati karena
+    // paket: bot yang distop user sendiri pun kuotanya direset oleh paket baru,
+    // jadi penanda lamanya ikut basi. Daftarnya dibaca di sini (bukan di dalam
+    // transaksi) dan dibungkus try/catch — ini efek samping, gagal membacanya
+    // tidak boleh menggagalkan paket yang sudah diberikan.
+    try {
+      const [botKu] = await pool.execute('SELECT id FROM bots WHERE user_id = ?', [userId]);
+      const kuotaMod = require('../engine/kuota');
+      for (const b of botKu) kuotaMod.lupakanPeringatan(b.id);
+    } catch (e) {
+      console.error('[Billing] Gagal melupakan peringatan kuota (paket TETAP aktif):', e.message);
+    }
+
+    // SENGAJA TIDAK di-await, sejajar dengan notifikasi: start WA butuh ~14
+    // detik dan webhook QRIS yang lambat dibalas = QRISku mengirim ulang =
+    // paket dobel.
     for (const b of matiKarenaPaket) {
       require('../config/engineBus').start(b.id)
         .then(() => console.log(`[Billing] Bot ${b.id} dinyalakan kembali — paket ${plan.id} aktif`))
@@ -159,11 +222,9 @@ async function terapkanPaket(userId, planId, days) {
     .kirimKeOwner(userId,
       `✅ *Pembayaran diterima!*\n\n` +
       `Paket *${plan.name}* sudah aktif sampai *${tgl}*.\n` +
-      `Limit harian bot kamu sekarang ${plan.daily_limit} pesan.\n\n` +
+      `Limit harian bot kamu sekarang ${kuota} pesan.\n\n` +
       `_Cek di halaman Riwayat: /billing_`)
     .catch(() => { /* nggak ada bot online — bukan alasan bikin checkout gagal */ });
-
-  return { plan: plan.id, sampai: akhir, kuota };
 }
 
 /**
@@ -738,4 +799,8 @@ module.exports = {
   adminOrders, adminKonfirmasi, adminTolak, adminSettings, adminSetPlans, adminSetSettings,
   adminTopupKuota, adminResetKuota,
   klaimTrial, klaimTrialSendiri, terapkanPaket, tandaiLunas,
+  // Dipakai `walletController.perpanjangDariSaldo`: `terapkanPaket(..., conn)`
+  // mengembalikan efek samping yang BELUM dijalankan, dan pemanggil yang
+  // bertransaksi harus menjalankannya sendiri SETELAH commit.
+  jalankanEfekSamping,
 };

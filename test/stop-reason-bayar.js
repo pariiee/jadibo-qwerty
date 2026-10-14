@@ -31,12 +31,19 @@ const billing = fs.readFileSync(path.join(base, 'controllers/billingController.j
 
 // ── 1. terapkanPaket: reset stop_reason ──────────────────────────────────────
 console.log('=== 1. terapkanPaket: UPDATE stop_reason = NULL ===');
-// Ambil blok dari deklarasi 'matiKarenaPaket' (baris `const [...] = await
-// pool.execute`) sampai .catch pertama. Komentar di atas mungkin menyebut
-// "engineBus.start" — jadi kita match dengan konteks yang unik: "UPDATE bots
-// SET stop_reason = NULL" HARUS muncul di dalam blok.
-const idxDec = billing.indexOf("const [matiKarenaPaket]");
-assert.ok(idxDec >= 0, "deklarasi 'const [matiKarenaPaket]' tidak ditemukan");
+// Ambil blok dari deklarasi 'matiKarenaPaket' sampai .catch pertama. Komentar di
+// atas mungkin menyebut "engineBus.start" — jadi kita match dengan konteks yang
+// unik: "UPDATE bots SET stop_reason = NULL" HARUS muncul di dalam blok.
+//
+// Anchor-nya menerima dua bentuk deklarasi: `const [matiKarenaPaket] = await ...`
+// (destructuring langsung dari pool.execute) dan `const matiKarenaPaket = []`
+// yang diisi di dalam try/catch. Bentuk kedua dipakai sekarang karena blok ini
+// TIDAK BOLEH fatal: paketnya sudah diberikan di atas, jadi DB hiccup di sini
+// tidak boleh menggagalkan pembayaran yang sudah masuk. Sifat itu dikunci
+// terpisah di bagian 1b — bukan sekadar dilepas.
+const mDec = /const\s+(\[\s*)?matiKarenaPaket/.exec(billing);
+assert.ok(mDec, "deklarasi 'matiKarenaPaket' tidak ditemukan");
+const idxDec = mDec.index;
 const idxCatch = billing.indexOf('.catch(', idxDec);
 assert.ok(idxCatch > idxDec, ".catch setelah deklarasi tidak ditemukan");
 const blok = billing.slice(idxDec, idxCatch);
@@ -67,6 +74,31 @@ console.log('\n=== 3. Pola sama di adminTopupKuota (referensi) ===');
 assert.ok(/adminTopupKuota[\s\S]{0,1500}?UPDATE\s+bots\s+SET\s+stop_reason\s*=\s*NULL[\s\S]{0,200}?AND\s+stop_reason\s*=\s*'expired'/i.test(billing),
   'adminTopupKuota: pola UPDATE stop_reason=NULL WHERE stop_reason=expired tidak ada');
 console.log('✅ adminTopupKuota masih pakai pola yang sama');
+
+// ── 1b. Blok ini TIDAK BOLEH fatal ───────────────────────────────────────────
+// Paketnya sudah diberikan di dua UPDATE di atas blok ini. Kalau query
+// "bot mana yang harus dinyalakan" melempar (DB hiccup) dan dibiarkan naik,
+// pemanggilnya jalur uang: webhook membalas error padahal ordernya sudah
+// diproses, dan user yang sudah bayar melihat "gagal". Jalur QRIS ini pernah
+// dijaga; tes ini memastikan penjaganya tidak hilang saat kodenya dirapikan.
+console.log('\n=== 1b. query efek samping dibungkus try/catch (paket tidak boleh batal) ===');
+assert.ok(/try\s*\{[\s\S]{0,900}?matiKarenaPaket\.push/.test(billing),
+  'query daftar bot mati TIDAK ada di dalam try/catch — DB hiccup akan membatalkan pembayaran');
+assert.ok(/catch\s*\([^)]*\)\s*\{[\s\S]{0,300}?paket TETAP diberikan/.test(billing),
+  'catch-nya tidak menjelaskan bahwa paket tetap diberikan (penanda penjaga hilang)');
+console.log('✅ query daftar bot mati aman: gagal = paket tetap diberikan');
+
+// ── 1c. Efek samping dipisah, dan bisa ditunda pemanggil bertransaksi ────────
+// `perpanjangDariSaldo` memakai terapkanPaket(..., conn) dan HARUS menjalankan
+// efek sampingnya SETELAH commit — bukan di dalam transaksi (start WA ~14 detik
+// menahan lock users) dan bukan saat rollback (bot menyala tanpa paket).
+console.log('\n=== 1c. efek samping bisa ditunda (untuk pemanggil bertransaksi) ===');
+assert.ok(/async function jalankanEfekSamping\(/.test(billing), 'jalankanEfekSamping tidak ada');
+assert.ok(/if \(conn\) return \{ \.\.\.hasil, efekSamping:/.test(billing),
+  'terapkanPaket(conn) tidak mengembalikan efekSamping untuk ditunda');
+assert.ok(/jalankanEfekSamping,\s*\n\};/.test(billing),
+  'jalankanEfekSamping tidak diekspor — walletController tidak bisa menundanya');
+console.log('✅ efek samping tunable: dijalankan pemanggil SETELAH commit');
 
 // ── 4. Reset terjadi saat user bayar, BUKAN saat startBot manual ────────────
 console.log('\n=== 4. Reset ada di jalur pembayaran (bukan andalkan startBot) ===');
