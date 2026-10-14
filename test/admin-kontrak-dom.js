@@ -80,9 +80,16 @@ console.log('\n=== 4. Tab yang dipanggil JS ada elemen pane-nya ===');
 const tabNama = [...jsKode.matchAll(/'(\w+)',\s*'(\w+)',\s*'(\w+)',\s*'(\w+)'(?:,\s*'(\w+)')?\]\.forEach\(\(t\) => \{[\s\S]{0,120}?pane-/g)]
   .flatMap((m) => m.slice(1).filter(Boolean));
 const paneAda = [...html.matchAll(/id="pane-(\w+)"/g)].map((m) => m[1]);
+// Panjangnya sengaja TIDAK harus sama: pane pertama (`user`) adalah tab default
+// dan memang tidak punya tombolnya sendiri — tabel tab-nya cuma 5 tombol untuk
+// 6 pane. Yang wajib: setiap tab punya pane, dan tidak ada pane yatim yang
+// tidak bisa dibuka sama sekali.
 cek(`semua tab punya pane-nya (${tabNama.length} tab, ${paneAda.length} pane)`,
-  tabNama.every((t) => paneAda.includes(t)) && tabNama.length === paneAda.length,
+  tabNama.every((t) => paneAda.includes(t)),
   `tab: ${tabNama.join(',')} | pane: ${paneAda.join(',')}`);
+cek('tidak ada pane yang tidak bisa dibuka (tab-nya hilang)',
+  paneAda.every((p) => tabNama.includes(p) || p === 'user'),
+  `pane tanpa tab: ${paneAda.filter((p) => !tabNama.includes(p) && p !== 'user').join(',') || '(tidak ada)'}`);
 
 console.log('\n=== 5. Endpoint yang dipanggil JS benar-benar terdaftar di server ===');
 const server = baca('server.js');
