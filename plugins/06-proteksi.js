@@ -398,7 +398,7 @@ module.exports = async function proteksiHandler(ctx) {
     if (!fitur) {
       await reply(
         `⚙️ *Status Fitur — ${jid.split('@')[0]}*\n\n` +
-        await proteksi.statusFitur(botData.id, jid) +
+        await module.exports.statusFitur(botData.id, jid) +
         `\n_Ketik \`${p}on <fitur>\` atau \`${p}off <fitur>\` untuk toggle._`
       );
       return true;
