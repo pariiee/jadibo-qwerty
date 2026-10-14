@@ -20,6 +20,7 @@
         <button class="tab" data-act="tab('bot')">Bot</button>
         <button class="tab" data-act="tab('order')">Pesanan</button>
         <button class="tab" data-act="tab('harga')">Harga & Benefit</button>
+        <button class="tab" data-act="tab('saldo')">Saldo</button>
         <button class="tab" data-act="tab('sistem')">Sistem</button>
       </div>
 
@@ -202,8 +203,88 @@
           <button class="btn btn-dark" data-act="simpanPengumuman">Simpan Pengumuman</button>
         </div>
       </section>
+
+      <!-- ── Saldo ──────────────────────────────────────────────── -->
+      <section id="pane-saldo" style="display:none">
+        <!-- Rincian pendapatan. `pendapatan` di tab Sistem TIDAK diubah:
+             SUM(orders.amount) WHERE status='paid' itu pendapatan TUNAI dan
+             sudah benar. Perpanjang dari saldo tidak membuat baris orders,
+             jadi tidak ada dobel hitung. Di sini cuma PEMECAHANNYA, plus
+             "saldo beredar" = kewajiban platform ke user. -->
+        <div class="grid-2" style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))">
+          <div class="card">
+            <h3 style="margin:0 0 10px;font-size:15px">Pendapatan Tunai</h3>
+            <div id="saldo-pendapatan"><p class="m-sub" style="margin:0">Memuat…</p></div>
+          </div>
+          <div class="card">
+            <h3 style="margin:0 0 10px;font-size:15px">Saldo Beredar</h3>
+            <div id="saldo-beredar"><p class="m-sub" style="margin:0">Memuat…</p></div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:16px">
+          <h3 style="margin:0 0 6px;font-size:15px">Konsistensi Jurnal</h3>
+          <p class="m-sub" style="margin:0 0 10px">
+            Setiap perubahan saldo wajib meninggalkan satu baris jurnal. Kalau daftar ini tidak kosong,
+            ada yang menyentuh <code>users.saldo</code> tanpa lewat <code>wallet_ledger</code>.
+          </p>
+          <div id="saldo-konsistensi"><p class="m-sub" style="margin:0">Memuat…</p></div>
+        </div>
+
+        <div class="adm-bar" style="margin-top:16px">
+          <input class="inp" id="cari-saldo" placeholder="Cari username…" />
+          <button class="btn btn-outline" data-act="muatSaldo">Muat Ulang</button>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl" id="tbl-saldo">
+            <thead>
+              <tr>
+                <th>User</th><th>Paket</th>
+                <th style="text-align:right">Saldo</th>
+                <th style="text-align:right">Jurnal</th>
+                <th style="text-align:right">Selisih</th>
+                <th>Auto</th><th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
     </div>
   </main>
+</div>
+
+<!-- Modal: ledger + penyesuaian saldo satu user -->
+<div class="overlay" id="modal-saldo">
+  <div class="modal">
+    <button class="modal-close" data-act="tutupSaldo" aria-label="Tutup">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+    <h3 id="ms-judul">Saldo User</h3>
+    <div id="ms-ringkas"></div>
+
+    <div class="field" style="margin-top:14px">
+      <label for="f-adj-jumlah">Penyesuaian (boleh negatif)</label>
+      <input class="inp" id="f-adj-jumlah" inputmode="numeric" placeholder="mis. 50000 atau -10000" />
+      <div class="hint">Saldo tidak boleh jadi minus.</div>
+    </div>
+    <div class="field">
+      <label for="f-adj-alasan">Alasan <b>(wajib)</b></label>
+      <input class="inp" id="f-adj-alasan" maxlength="200" placeholder="mis. kompensasi bot error 2 hari" />
+      <div class="hint">Tercatat di jurnal bersama nama admin. Tanpa alasan, penyesuaian ditolak.</div>
+    </div>
+    <button class="btn btn-dark" data-act="simpanAdjust">Simpan Penyesuaian</button>
+
+    <h4 style="margin:18px 0 8px;font-size:14px">Jurnal</h4>
+    <div class="tbl-wrap">
+      <table class="tbl" id="tbl-ms-ledger">
+        <thead>
+          <tr><th>Waktu</th><th>Jenis</th><th style="text-align:right">Jumlah</th><th>Alasan</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
 <!-- Modal: atur paket satu user -->

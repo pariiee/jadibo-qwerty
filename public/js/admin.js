@@ -40,7 +40,7 @@
 
   // ── Navigasi tab ───────────────────────────────────────────────
   function tab(nama) {
-    ['user', 'bot', 'order', 'harga', 'sistem'].forEach((t) => {
+    ['user', 'bot', 'order', 'harga', 'saldo', 'sistem'].forEach((t) => {
       document.getElementById('pane-' + t).style.display = t === nama ? '' : 'none';
     });
     document.querySelectorAll('#tabs .tab').forEach((b) => {
@@ -49,6 +49,7 @@
     if (nama === 'bot') muatBot();
     if (nama === 'order') { muatPendapatan(); muatOrder(); }
     if (nama === 'harga') muatSetelan();
+    if (nama === 'saldo') muatSaldo();
     if (nama === 'sistem') { muatSistem(); muatAudit(); }
   }
 
@@ -500,6 +501,149 @@
     }).join('');
   }
 
+  // ── Tab Saldo ─────────────────────────────────────────────────
+  //
+  // TIGA hal yang ditampilkan, dan pemisahannya sengaja:
+  //   1. Rincian pendapatan (top up vs paket langsung) — PEMECAHAN dari angka
+  //      yang sudah ada di tab Sistem. Rumus di sana tidak diubah.
+  //   2. Saldo beredar = kewajiban platform ke user. BUKAN pendapatan: uangnya
+  //      sudah masuk waktu top up, sebagian masih akan dipakai perpanjang.
+  //   3. Konsistensi jurnal. Kalau ada selisih, ada yang menyentuh
+  //      users.saldo tanpa lewat wallet_ledger — dan angka saldo berhenti
+  //      bisa dipercaya.
+  async function muatSaldo() {
+    const cari = (document.getElementById('cari-saldo')?.value || '').trim();
+    const [d, k, p] = await Promise.all([
+      api('/api/admin/wallet/users' + (cari ? '?q=' + encodeURIComponent(cari) : '')),
+      api('/api/admin/wallet/konsistensi'),
+      api('/api/admin/wallet/pendapatan'),
+    ]);
+
+    // ── Rincian pendapatan ──
+    if (p?.ok) {
+      const t = p.topup || { jumlah: 0, total: 0 };
+      const l = p.paket_langsung || { jumlah: 0, total: 0 };
+      document.getElementById('saldo-pendapatan').innerHTML =
+        kotak('Dari top up saldo', rupiah(t.total), `${t.jumlah} transaksi`) +
+        kotak('Dari paket langsung', rupiah(l.total), `${l.jumlah} transaksi`) +
+        `<p class="m-sub" style="margin:10px 0 0">${esc(p.catatan || '')}</p>`;
+    } else {
+      document.getElementById('saldo-pendapatan').innerHTML = '<p class="m-sub" style="margin:0">Gagal memuat.</p>';
+    }
+
+    // ── Saldo beredar ──
+    if (k?.ok) {
+      document.getElementById('saldo-beredar').innerHTML =
+        `<div style="font-size:26px;font-weight:800">${esc(k.saldo_beredar_text || rupiah(k.saldo_beredar))}</div>` +
+        '<p class="m-sub" style="margin:8px 0 0">Total saldo semua user — kewajiban platform, bukan pendapatan. ' +
+        'Uangnya sudah dihitung sebagai pendapatan waktu top up.</p>';
+
+      const kk = document.getElementById('saldo-konsistensi');
+      if (k.konsisten) {
+        kk.innerHTML = '<p style="margin:0;color:#059669;font-weight:600">✓ Semua saldo cocok dengan jurnalnya.</p>';
+      } else {
+        // SENGAJA ditampilkan mencolok. Selisih = saldo yang tidak bisa
+        // dipertanggungjawabkan, dan itu perlu ditindak, bukan disembunyikan.
+        kk.innerHTML = '<p style="margin:0 0 8px;color:#b91c1c;font-weight:700">' +
+          `⚠ ${k.menyimpang.length} user punya selisih saldo vs jurnal</p>` +
+          '<div class="tbl-wrap"><table class="tbl"><thead><tr>' +
+          '<th>User</th><th style="text-align:right">Saldo</th><th style="text-align:right">Jurnal</th>' +
+          '<th style="text-align:right">Selisih</th></tr></thead><tbody>' +
+          k.menyimpang.map((u) => '<tr>' +
+            `<td>${esc(u.username)}</td>` +
+            `<td style="text-align:right">${rupiah(u.saldo)}</td>` +
+            `<td style="text-align:right">${rupiah(u.jurnal_total)}</td>` +
+            `<td style="text-align:right;color:#b91c1c;font-weight:700">${rupiah(u.selisih)}</td>` +
+            '</tr>').join('') +
+          '</tbody></table></div>';
+      }
+    }
+
+    // ── Tabel user ──
+    const tbody = document.querySelector('#tbl-saldo tbody');
+    if (!d?.ok) { tbody.innerHTML = '<tr><td colspan="7" class="kosong">Gagal memuat saldo.</td></tr>'; return; }
+    if (!d.users.length) { tbody.innerHTML = '<tr><td colspan="7" class="kosong">Tidak ada user.</td></tr>'; return; }
+
+    tbody.innerHTML = d.users.map((u) => {
+      const auto = u.auto_renew
+        ? (u.auto_renew_status === 'saldo_kurang'
+            ? '<span class="badge st-rejected">saldo kurang</span>'
+            : u.auto_renew_status === 'sukses'
+              ? '<span class="badge st-paid">sukses</span>'
+              : '<span class="badge">aktif</span>')
+        : '<span class="muted">mati</span>';
+      const selisih = Number(u.selisih);
+      return '<tr>' +
+        `<td><b>${esc(u.username)}</b></td>` +
+        `<td>${esc(u.plan || '—')}</td>` +
+        `<td style="text-align:right;font-weight:700">${rupiah(u.saldo)}</td>` +
+        `<td style="text-align:right" class="muted">${rupiah(u.jurnal_total)}<br><span style="font-size:11px">${u.jurnal_baris} baris</span></td>` +
+        `<td style="text-align:right;color:${selisih === 0 ? '#059669' : '#b91c1c'};font-weight:700">${selisih === 0 ? '✓' : rupiah(selisih)}</td>` +
+        `<td>${auto}</td>` +
+        `<td class="aksi"><button class="btn btn-outline btn-sm" data-act="bukaSaldo(${u.id}, '${esc(u.username)}')">Atur</button></td>` +
+        '</tr>';
+    }).join('');
+  }
+
+  let saldoAktif = null;
+
+  async function bukaSaldo(userId, username) {
+    saldoAktif = userId;
+    document.getElementById('ms-judul').textContent = 'Saldo — ' + username;
+    document.getElementById('f-adj-jumlah').value = '';
+    document.getElementById('f-adj-alasan').value = '';
+    document.getElementById('modal-saldo').classList.add('open');
+    await muatLedgerSaldo();
+  }
+
+  async function muatLedgerSaldo() {
+    const ringkas = document.getElementById('ms-ringkas');
+    const tbody = document.querySelector('#tbl-ms-ledger tbody');
+    const d = await api('/api/admin/wallet/users/' + saldoAktif + '/ledger?limit=100');
+    if (!d?.ok) { ringkas.innerHTML = '<p class="m-sub">Gagal memuat.</p>'; tbody.innerHTML = ''; return; }
+    ringkas.innerHTML = `<div class="m-sub">Saldo sekarang</div>` +
+      `<div style="font-size:24px;font-weight:800">${rupiah(d.saldo)}</div>`;
+    tbody.innerHTML = d.ledger.length
+      ? d.ledger.map((r) => {
+          const naik = Number(r.jumlah) >= 0;
+          return '<tr>' +
+            `<td class="muted">${esc(logTime(r.created_at))}</td>` +
+            `<td>${esc(r.tipe)}</td>` +
+            `<td style="text-align:right;font-weight:700;color:${naik ? '#059669' : '#b91c1c'}">` +
+              `${naik ? '+' : '−'}${rupiah(Math.abs(r.jumlah))}</td>` +
+            `<td class="muted">${esc(r.alasan || '—')}</td>` +
+            '</tr>';
+        }).join('')
+      : '<tr><td colspan="4" class="kosong">Belum ada pergerakan.</td></tr>';
+  }
+
+  function tutupSaldo() {
+    document.getElementById('modal-saldo').classList.remove('open');
+    saldoAktif = null;
+  }
+
+  async function simpanAdjust() {
+    if (!saldoAktif) return;
+    const jumlah = parseInt(String(document.getElementById('f-adj-jumlah').value || '').replace(/[^\d-]/g, ''), 10);
+    const alasan = (document.getElementById('f-adj-alasan').value || '').trim();
+
+    if (!Number.isInteger(jumlah) || jumlah === 0) { alert('Jumlah harus bilangan bulat dan tidak nol.'); return; }
+    // Divalidasi di UI cuma buat pesan cepat; server tetap wajib. Kalau aturannya
+    // berubah di server, UI ini tidak bisa jadi lubang.
+    if (!alasan) { alert('Alasan wajib diisi — tanpa itu, penyesuaian tidak bisa dipertanggungjawabkan.'); return; }
+    if (!confirm(`Ubah saldo user ini sebesar ${jumlah > 0 ? '+' : ''}${rupiah(jumlah)}?\n\nAlasan: ${alasan}`)) return;
+
+    const d = await api('/api/admin/wallet/users/' + saldoAktif + '/adjust', {
+      method: 'POST', body: JSON.stringify({ jumlah, alasan }),
+    });
+    if (!d?.ok) { alert(d?.message || 'Gagal menyimpan.'); return; }
+    alert(d.message || 'Saldo disesuaikan.');
+    document.getElementById('f-adj-jumlah').value = '';
+    document.getElementById('f-adj-alasan').value = '';
+    await muatLedgerSaldo();
+    muatSaldo();
+  }
+
   async function kirimBroadcast() {
     const teks = (document.getElementById('bc-teks').value || '').trim();
     const hasil = document.getElementById('bc-hasil');
@@ -578,5 +722,9 @@
   window.muatSistem = muatSistem;
   window.muatAudit = muatAudit;
   window.muatPendapatan = muatPendapatan;
+  window.muatSaldo = muatSaldo;
+  window.bukaSaldo = bukaSaldo;
+  window.tutupSaldo = tutupSaldo;
+  window.simpanAdjust = simpanAdjust;
   window.kirimBroadcast = kirimBroadcast;
 })();
