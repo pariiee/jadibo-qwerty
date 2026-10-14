@@ -33,14 +33,25 @@ function ambilLimitedCmds(kode) {
 function buildLimitedCmds(pluginsDir = path.resolve('./plugins')) {
   const result = new Set();
   if (!fs.existsSync(pluginsDir)) return result;
-  const files = fs.readdirSync(pluginsDir).filter((f) => f.endsWith('.js')).sort();
-  for (const file of files) {
+
+  function scan(dir) {
     try {
-      for (const cmd of ambilLimitedCmds(fs.readFileSync(path.join(pluginsDir, file), 'utf8'))) {
-        result.add(cmd);
+      for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, ent.name);
+        if (ent.isDirectory()) {
+          scan(full);
+        } else if (ent.isFile() && ent.name.endsWith('.js')) {
+          try {
+            for (const cmd of ambilLimitedCmds(fs.readFileSync(full, 'utf8'))) {
+              result.add(cmd);
+            }
+          } catch { /* skip */ }
+        }
       }
-    } catch { /* file nggak kebaca — lewat */ }
+    } catch { /* skip */ }
   }
+
+  scan(pluginsDir);
   return result;
 }
 

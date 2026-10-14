@@ -290,7 +290,7 @@ async function daftarPaket(req, res) {
 /** Total command yang beredar. Gagal baca = 0, jangan bikin endpointnya mati. */
 function jumlahCommand() {
   try {
-    const { ALL_COMMANDS } = require('../plugins/01-info');
+    const { ALL_COMMANDS } = require('../plugins/whatsapp/01-info');
     return ALL_COMMANDS ? ALL_COMMANDS.length : 0;
   } catch {
     return 0;

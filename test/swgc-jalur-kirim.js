@@ -74,7 +74,10 @@ cek('tidak mengirim customNodes di relayStatusGrup', !/customNodes/.test(b),
   'customNodes mengubah stanza yang terbukti jalan');
 
 console.log('\n=== 5. Pemanggil: kirim ISI-nya, jangan bungkus sendiri ===');
-const plugin = fs.readFileSync(path.join(__dirname, '..', 'plugins', '02-group.js'), 'utf8');
+const pFile = fs.existsSync(path.join(__dirname, '..', 'plugins', 'whatsapp', '02-group.js'))
+  ? path.join(__dirname, '..', 'plugins', 'whatsapp', '02-group.js')
+  : path.join(__dirname, '..', 'plugins', '02-group.js');
+const plugin = fs.readFileSync(pFile, 'utf8');
 const pKode = plugin.split('\n').filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l)).join('\n');
 
 cek('memanggil client.message.relayStatusGrup',

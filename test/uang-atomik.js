@@ -27,7 +27,10 @@ const fs = require('fs');
 const path = require('path');
 
 const base = path.join(__dirname, '..');
-const src = fs.readFileSync(path.join(base, 'plugins/03-fun-rpg.js'), 'utf8');
+const srcPath = fs.existsSync(path.join(base, 'plugins/whatsapp/03-fun-rpg.js'))
+  ? path.join(base, 'plugins/whatsapp/03-fun-rpg.js')
+  : path.join(base, 'plugins/03-fun-rpg.js');
+const src = fs.readFileSync(srcPath, 'utf8');
 
 // ── 1. Helper ada ────────────────────────────────────────────────────────────
 console.log('=== 1. Helper atomic tersedia ===');

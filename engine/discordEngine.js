@@ -24,7 +24,7 @@ const activeDiscordBots = new Map();
 
 let _plugins = null;
 function getPlugins() {
-  if (!_plugins) _plugins = loadPlugins();
+  if (!_plugins) _plugins = loadPlugins('discord');
   return _plugins;
 }
 

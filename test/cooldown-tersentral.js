@@ -32,7 +32,10 @@ const base = path.join(__dirname, '..');
 const tabel       = require('../config/cooldown');
 const waEngine    = fs.readFileSync(path.join(base, 'engine/whatsappEngine.js'), 'utf8');
 const tgEngine    = fs.readFileSync(path.join(base, 'engine/telegramEngine.js'), 'utf8');
-const tools       = fs.readFileSync(path.join(base, 'plugins/04-tools.js'), 'utf8');
+const toolsPath = fs.existsSync(path.join(base, 'plugins/whatsapp/04-tools.js'))
+  ? path.join(base, 'plugins/whatsapp/04-tools.js')
+  : path.join(base, 'plugins/04-tools.js');
+const tools = fs.readFileSync(toolsPath, 'utf8');
 
 // ── 1. Tabel & kelompok ──────────────────────────────────────────────────────
 console.log('=== 1. config/cooldown.js: 6 kelompok ===');

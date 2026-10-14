@@ -20,7 +20,7 @@
  * memang dijual sebagai fitur, baru bikin tabel `bot_commands` + PATCH di sini.
  */
 
-const info = require('../plugins/01-info');
+const info = require('../plugins/whatsapp/01-info');
 const { DESKRIPSI, ALIAS } = require('../config/commandInfo');
 
 const SEMUA = info.ALL_COMMANDS;

@@ -27,7 +27,9 @@ const cek = (nama, syarat, info = '') => {
   else { gagal++; console.log(`❌ ${nama}${info ? ' — ' + info : ''}`); }
 };
 
-const SUMBER = path.join(__dirname, '..', 'plugins', '02-group.js');
+const SUMBER = fs.existsSync(path.join(__dirname, '..', 'plugins', 'whatsapp', '02-group.js'))
+  ? path.join(__dirname, '..', 'plugins', 'whatsapp', '02-group.js')
+  : path.join(__dirname, '..', 'plugins', '02-group.js');
 const src = fs.readFileSync(SUMBER, 'utf8');
 
 // Ambil blok `case 'swgc':` ... sampai `case ` berikutnya.

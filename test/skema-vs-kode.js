@@ -83,7 +83,8 @@ function tanpaKomentar(src) {
     .replace(/^\s*\/\/.*$/gm, '');       // komentar baris
 }
 
-const rpg = tanpaKomentar(baca('plugins/03-fun-rpg.js'));
+const rpgPath = fs.existsSync('plugins/whatsapp/03-fun-rpg.js') ? 'plugins/whatsapp/03-fun-rpg.js' : 'plugins/03-fun-rpg.js';
+const rpg = tanpaKomentar(baca(rpgPath));
 
 /** Ambil teks argumen ke-3 updateMember(...) dengan kurung berimbang. */
 function argumenUpdateMember(src) {

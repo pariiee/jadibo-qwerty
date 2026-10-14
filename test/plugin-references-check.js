@@ -9,7 +9,8 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 
-const pluginsDir = path.join(__dirname, '..', 'plugins');
+const baseDir = path.join(__dirname, '..', 'plugins');
+const pluginsDir = fs.existsSync(path.join(baseDir, 'whatsapp')) ? path.join(baseDir, 'whatsapp') : baseDir;
 const files = fs.readdirSync(pluginsDir).filter(f => f.endsWith('.js'));
 
 files.forEach(f => {

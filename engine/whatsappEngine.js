@@ -173,8 +173,15 @@ function buildStore(dbPath) {
 }
 
 // ─── Load plugins ─────────────────────────────────────────────────────────────
-function loadPlugins() {
-  const pluginsDir = path.resolve('./plugins');
+function loadPlugins(platform = 'whatsapp') {
+  let pluginsDir;
+  if (platform && fs.existsSync(path.resolve('./plugins', platform))) {
+    pluginsDir = path.resolve('./plugins', platform);
+  } else if (platform && fs.existsSync(path.resolve(platform))) {
+    pluginsDir = path.resolve(platform);
+  } else {
+    pluginsDir = path.resolve('./plugins');
+  }
   const handlers   = [];
   if (!fs.existsSync(pluginsDir)) return handlers;
   const files = fs.readdirSync(pluginsDir).filter(f => f.endsWith('.js')).sort();
@@ -191,8 +198,9 @@ function loadPlugins() {
 }
 
 // Kumpulkan semua limitedCmds dari tiap plugin jadi satu Set
-function buildLimitedCmds() {
-  const pluginsDir = path.resolve('./plugins');
+function buildLimitedCmds(platform = 'whatsapp') {
+  const targetDir = path.resolve('./plugins', platform);
+  const pluginsDir = fs.existsSync(targetDir) ? targetDir : path.resolve('./plugins');
   const result = new Set();
   if (!fs.existsSync(pluginsDir)) return result;
   const files = fs.readdirSync(pluginsDir).filter(f => f.endsWith('.js')).sort();

@@ -69,7 +69,10 @@ function pindai(dir) {
   return { aliasKe, aliasDari, grupSemua };
 }
 
-const { aliasKe, aliasDari, grupSemua } = pindai(path.join(__dirname, '..', 'plugins'));
+const targetDir = fs.existsSync(path.join(__dirname, '..', 'plugins/whatsapp'))
+  ? path.join(__dirname, '..', 'plugins/whatsapp')
+  : path.join(__dirname, '..', 'plugins');
+const { aliasKe, aliasDari, grupSemua } = pindai(targetDir);
 console.log('grup case (multi-label) :', grupSemua.length);
 console.log('  bercabang (BUKAN alias):', grupSemua.filter((g) => g.bercabang).length);
 console.log('  alias asli             :', grupSemua.filter((g) => !g.bercabang).length);

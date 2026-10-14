@@ -14,7 +14,8 @@ const path = require('path');
 const A = require('../engine/zapo/client');
 
 // ── 1. Kumpulkan tiap `sock.X.Y` / `client.X.Y` yang plugin panggil ──────────
-const dir = path.resolve(__dirname, '../plugins');
+const baseDir = path.resolve(__dirname, '../plugins');
+const dir = fs.existsSync(path.join(baseDir, 'whatsapp')) ? path.join(baseDir, 'whatsapp') : baseDir;
 const files = fs.readdirSync(dir).filter((f) => f.endsWith('.js')).sort();
 
 const dipakai = new Map(); // 'message.send' -> [file, ...]

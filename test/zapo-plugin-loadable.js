@@ -11,7 +11,8 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 
-const dir = path.resolve(__dirname, '../plugins');
+const baseDir = path.resolve(__dirname, '../plugins');
+const dir = fs.existsSync(path.join(baseDir, 'whatsapp')) ? path.join(baseDir, 'whatsapp') : baseDir;
 const files = fs.readdirSync(dir).filter((f) => f.endsWith('.js')).sort();
 
 const gagal = [];

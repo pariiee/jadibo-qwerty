@@ -32,7 +32,8 @@ const cek = (nama, syarat, info = '') => {
 };
 
 // ─── Replika PERSIS loadPlugins() dari engine/whatsappEngine.js ───────────────
-const dir = path.resolve(__dirname, '../plugins');
+const baseDir = path.resolve(__dirname, '../plugins');
+const dir = fs.existsSync(path.join(baseDir, 'whatsapp')) ? path.join(baseDir, 'whatsapp') : baseDir;
 
 // SATU berkas di folder itu sengaja BUKAN plugin: `07-button-helpers.js`
 // mengeskpor objek `{ sendCategoryDropdown }` dan dipakai lewat

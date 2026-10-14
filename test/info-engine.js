@@ -6,7 +6,8 @@ const cek = (nama, ok) => { console.log((ok ? '[OK]   ' : '[FAIL] ') + nama); if
 
 // 1. engine WA yang beneran di-require di file ini — bukan tebakan
 // Cuma zapo-js yang boleh; kalau ada library lain nyempil, tes ini merah.
-const info = fs.readFileSync('plugins/01-info.js', 'utf8');
+const infoPath = fs.existsSync('plugins/whatsapp/01-info.js') ? 'plugins/whatsapp/01-info.js' : 'plugins/01-info.js';
+const info = fs.readFileSync(infoPath, 'utf8');
 const paketEngine = (info.match(/require\('(zapo-js)'\)/) || [])[1];
 cek('plugins/01-info.js require engine: ' + paketEngine, !!paketEngine);
 
