@@ -265,7 +265,7 @@ function reqRes(body, userId = 42) {
   }
 
   console.log('\n=== 5. Kunci sah panjang & karakternya ===');
-  for (const bagus of ['a1b2c3d4-1111-2222-3333-444455556666', 'perpanjang_2026-10-14.abc', 'x'.repeat(80)]) {
+  for (const bagus of ['a1b2c3d4-1111-2222-3333-444455556666', 'perpanjang_2026-10-14_abc', 'x'.repeat(64)]) {
     saldo = 100000; refTerlihat.clear(); catat.insert = 0;
     const rg = reqRes({ plan: 'basic', idempotency_key: bagus });
     await wallet.perpanjang(rg.req, rg.res);

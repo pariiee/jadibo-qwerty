@@ -387,6 +387,88 @@ const HARGA_BASIC = 25000;
     cek('endpoint konsistensi tersedia & melaporkan saldo beredar',
       typeof konsist?.saldo_beredar === 'number', JSON.stringify(konsist));
 
+    // ═══ 11. ER_DUP_ENTRY rollback eksplisit ══════════════════════════════════
+    console.log('\n=== 11. ER_DUP_ENTRY perpanjangDariSaldo: rollback() terbukti di MySQL ===');
+    await pool.execute('UPDATE users SET saldo = 50000, plan = ?, plan_expired_at = NULL WHERE id = ?', ['user', USER_ID]);
+    await pool.execute('DELETE FROM wallet_ledger WHERE user_id = ?', [USER_ID]);
+
+    const refKunciTes = `perpanjang:${USER_ID}:basic:kunci-dup-unit-1`;
+    const resPerp1 = await wallet.perpanjangDariSaldo(USER_ID, 'basic', { ref: refKunciTes });
+    cek('perpanjang-1 berhasil', resPerp1.ok === true, JSON.stringify(resPerp1));
+
+    const [u1Rows] = await pool.execute('SELECT saldo, plan, plan_expired_at FROM users WHERE id = ?', [USER_ID]);
+    const u1 = u1Rows[0];
+    const exp1 = new Date(u1.plan_expired_at).getTime();
+    cek('saldo terpotong 25000 jadi 25000', Number(u1.saldo) === 25000, `${u1.saldo}`);
+    cek('plan jadi basic', u1.plan === 'basic', u1.plan);
+
+    // Panggilan kedua dengan KUNCI SAMA -> menabrak ER_DUP_ENTRY di INSERT wallet_ledger
+    const resPerp2 = await wallet.perpanjangDariSaldo(USER_ID, 'basic', { ref: refKunciTes });
+    cek('perpanjang-2 ditolak (sudah_diperpanjang)', resPerp2.ok === false && resPerp2.reason === 'sudah_diperpanjang', JSON.stringify(resPerp2));
+
+    const [u2Rows] = await pool.execute('SELECT saldo, plan, plan_expired_at FROM users WHERE id = ?', [USER_ID]);
+    const u2 = u2Rows[0];
+    const exp2 = new Date(u2.plan_expired_at).getTime();
+
+    cek('ROLLBACK: saldo TIDAK berubah di percobaan duplikat', Number(u2.saldo) === 25000, `${u2.saldo} (harus tetap 25000, bukan 0)`);
+    cek('ROLLBACK: plan_expired_at TIDAK bertambah', exp2 === exp1, `${exp2} vs ${exp1}`);
+
+    const [j11] = await pool.execute('SELECT COUNT(*) AS n FROM wallet_ledger WHERE user_id = ?', [USER_ID]);
+    cek('jurnal tetap 1 baris', Number(j11[0].n) === 1, `${j11[0].n} baris`);
+
+    // ═══ 12. Mismatch nominal & order di-adjust -> webhook paid aman ═══════════
+    console.log('\n=== 12. Order di-adjust -> webhook/konfirmasi TIDAK dobel kredit ===');
+    const orderMismatchId = `TEST_MISMATCH_${Date.now()}`;
+    await pool.execute(
+      `INSERT INTO orders (user_id, plan, amount, order_id, status, created_at, note)
+       VALUES (?, 'topup', 50000, ?, 'pending', NOW(), 'NOMINAL MISMATCH 45000')`,
+      [USER_ID, orderMismatchId]
+    );
+
+    const reqAdjust = {
+      params: { userId: USER_ID },
+      user: { username: 'king_admin' },
+      body: {
+        jumlah: 45000,
+        alasan: 'Selesaikan selisih transfer bank',
+        order_id: orderMismatchId,
+      },
+    };
+    const resAdjust = await new Promise((resolve) => {
+      wallet.adminAdjust(reqAdjust, {
+        json: resolve,
+        status: (code) => ({ json: (d) => resolve({ statusCode: code, ...d }) }),
+      });
+    });
+    cek('adminAdjust dengan order_id sukses', resAdjust.ok === true, JSON.stringify(resAdjust));
+
+    const [oAdjRows] = await pool.execute('SELECT status, note FROM orders WHERE order_id = ?', [orderMismatchId]);
+    cek('order berubah jadi paid sesudah adjust', oAdjRows[0].status === 'paid', oAdjRows[0].status);
+
+    const [uAdjRows] = await pool.execute('SELECT saldo FROM users WHERE id = ?', [USER_ID]);
+    const saldoPascaAdjust = Number(uAdjRows[0].saldo);
+    cek('saldo bertambah sesuai adjust (25000 + 45000 = 70000)', saldoPascaAdjust === 70000, `${saldoPascaAdjust}`);
+
+    // Sekarang simulasikan webhook QRISku paid datang terlambat untuk order ini
+    const hasilWebhookTelat = await billing.tandaiLunas(orderMismatchId, { payment_reference_id: 'qris_late_123' });
+    cek('webhook paid pada order yang sudah di-adjust ditandai sudah lunas',
+      hasilWebhookTelat.sudah === true || hasilWebhookTelat.status === 'paid', JSON.stringify(hasilWebhookTelat));
+
+    const [uPascaWebhook] = await pool.execute('SELECT saldo FROM users WHERE id = ?', [USER_ID]);
+    cek('SALDO TIDAK BERTAMBAH LAGI (tetap 70000)', Number(uPascaWebhook[0].saldo) === 70000, `${uPascaWebhook[0].saldo}`);
+
+    // Coba juga adminKonfirmasi pada order tersebut
+    const resKonfirm = await new Promise((resolve) => {
+      billing.adminKonfirmasi(
+        { params: { orderId: orderMismatchId }, user: { username: 'king_admin' } },
+        { json: resolve, status: (code) => ({ json: (d) => resolve({ statusCode: code, ...d }) }) }
+      );
+    });
+    cek('adminKonfirmasi mendeteksi sudah lunas', resKonfirm.message === 'Sudah lunas', JSON.stringify(resKonfirm));
+
+    const [uPascaKonfirm] = await pool.execute('SELECT saldo FROM users WHERE id = ?', [USER_ID]);
+    cek('SALDO TETAP 70000 setelah adminKonfirmasi', Number(uPascaKonfirm[0].saldo) === 70000, `${uPascaKonfirm[0].saldo}`);
+
   } finally {
     try { await bersihkan(); } catch {}
     try { await pool.end(); } catch {}

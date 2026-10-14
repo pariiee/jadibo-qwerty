@@ -397,11 +397,14 @@ async function perpanjang(req, res) {
     let ref = null;
     const kunci = req.body?.idempotency_key;
     if (kunci !== undefined && kunci !== null && kunci !== '') {
-      const k = String(kunci).trim();
-      if (!/^[A-Za-z0-9._:-]{8,80}$/.test(k)) {
+      if (typeof kunci !== 'string') {
         return sendError(res, 400, 'idempotency_key tidak valid');
       }
-      ref = `perpanjang:${req.user.id}:k:${k}`;
+      const k = kunci.trim();
+      if (!/^[A-Za-z0-9_-]{8,64}$/.test(k)) {
+        return sendError(res, 400, 'idempotency_key tidak valid');
+      }
+      ref = `perpanjang:${req.user.id}:${k}`;
     }
 
     // Lapis 1: jeda. Ditaruh SEBELUM validasi paket supaya percobaan beruntun
@@ -778,9 +781,33 @@ async function adminAdjust(req, res) {
     if (!alasan) return sendError(res, 400, 'Alasan wajib diisi');
     if (alasan.length > 200) return sendError(res, 400, 'Alasan maksimal 200 karakter');
 
+    const orderId = req.body?.order_id ? String(req.body.order_id).trim() : null;
+
     const conn = await pool.getConnection();
     try {
       await conn.beginTransaction();
+
+      let orderTerkait = null;
+      if (orderId) {
+        const [oRows] = await conn.execute(
+          'SELECT id, order_id, user_id, status, amount FROM orders WHERE order_id = ? FOR UPDATE',
+          [orderId]
+        );
+        if (!oRows[0]) {
+          await conn.rollback();
+          return sendError(res, 404, 'Order tidak ditemukan');
+        }
+        if (Number(oRows[0].user_id) !== userId) {
+          await conn.rollback();
+          return sendError(res, 400, 'Order bukan milik user ini');
+        }
+        if (oRows[0].status === 'paid') {
+          await conn.rollback();
+          return sendError(res, 400, 'Order ini sudah berstatus paid (sudah dikredit)');
+        }
+        orderTerkait = oRows[0];
+      }
+
       const [rows] = await conn.execute('SELECT saldo FROM users WHERE id = ? FOR UPDATE', [userId]);
       if (!rows[0]) { await conn.rollback(); return sendError(res, 404, 'User tidak ditemukan'); }
 
@@ -791,11 +818,27 @@ async function adminAdjust(req, res) {
           `Saldo tidak boleh minus (saldo sekarang ${rupiah(rows[0].saldo)}, penyesuaian ${rupiah(jumlah)})`);
       }
 
+      if (orderTerkait) {
+        let noteText = `Disesuaikan manual oleh ${req.user.username}: ${alasan}`;
+        const selisihNominal = jumlah - Number(orderTerkait.amount);
+        if (selisihNominal !== 0) {
+          noteText += ` (selisih nominal: ${selisihNominal > 0 ? '+' : ''}${selisihNominal})`;
+        }
+        await conn.execute(
+          "UPDATE orders SET status = 'paid', paid_at = NOW(), note = ? WHERE order_id = ? AND status IN ('pending','expired')",
+          [noteText.slice(0, 250), orderTerkait.order_id]
+        );
+      }
+
+      const refAdjust = orderTerkait
+        ? `adjust:order:${orderTerkait.order_id}`
+        : `adjust:${userId}:${Date.now()}:${crypto.randomBytes(4).toString('hex')}`;
+
       await conn.execute('UPDATE users SET saldo = ? WHERE id = ?', [saldoBaru, userId]);
       await conn.execute(
         `INSERT INTO wallet_ledger (user_id, tipe, jumlah, saldo_sesudah, ref, alasan)
          VALUES (?, 'adjust', ?, ?, ?, ?)`,
-        [userId, jumlah, saldoBaru, `adjust:${userId}:${Date.now()}:${crypto.randomBytes(3).toString('hex')}`,
+        [userId, jumlah, saldoBaru, refAdjust,
          `Diubah oleh ${req.user.username}: ${alasan}`.slice(0, 255)]
       );
       await conn.commit();

@@ -225,13 +225,24 @@
     });
   }
 
+  // Kunci idempotensi per niat beli. Dibuat saat konfirmasi dibuka, dipakai ulang
+  // untuk semua klik/retry sampai sukses, baru dibuang sesudahnya.
+  const kunciNiat = {};
+
   async function perpanjang(planId, tombol) {
-    await kunci(tombol, async () => {
-      // Kunci idempotensi dibuat SEKALI per klik. Kalau request ini terkirim dua
-      // kali (retry jaringan, klik ganda yang lolos), kuncinya SAMA dan server
-      // menolak yang kedua — saldo tidak terpotong dua kali.
-      const idempotency_key = (crypto.randomUUID && crypto.randomUUID()) ||
+    const p = data?.plans?.find((x) => x.id === planId);
+    const namaPaket = p?.name || planId;
+    const hargaPaket = p?.price_text || rupiah(p?.price || 0);
+
+    if (!kunciNiat[planId]) {
+      kunciNiat[planId] = (window.crypto?.randomUUID && window.crypto.randomUUID()) ||
         (Date.now().toString(36) + Math.random().toString(36).slice(2));
+    }
+
+    if (!confirm(`Perpanjang paket ${namaPaket} seharga ${hargaPaket} dari saldo?`)) return;
+
+    await kunci(tombol, async () => {
+      const idempotency_key = kunciNiat[planId];
       const d = await api('/api/wallet/perpanjang', {
         method: 'POST',
         body: JSON.stringify({ plan: planId, idempotency_key }),
@@ -241,6 +252,7 @@
         if (d && d.reason === 'saldo_kurang') muat();
         return;
       }
+      delete kunciNiat[planId];
       alert(d.message || 'Paket diperpanjang.');
       await muat(); await muatLedger();
     });

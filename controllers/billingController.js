@@ -461,7 +461,11 @@ async function tandaiLunas(orderId, data) {
 
   // Validasi paket DULU, sebelum status diubah.
   if (!pricingStore.plans().some((p) => p.id === order.plan)) {
-    console.error(`[Billing] ${orderId} DITOLAK: plan '${order.plan}' tidak dikenal — order TIDAK ditandai lunas`);
+    console.error(`[Billing] ${orderId} DITOLAK: plan '${order.plan}' tidak dikenal — order ditandai error paket`);
+    await pool.execute(
+      "UPDATE orders SET note = ? WHERE order_id = ?",
+      [`paket gagal diterapkan: paket '${order.plan}' tidak dikenal`.slice(0, 250), orderId]
+    );
     return { status: order.status, sudah: false, error: `paket '${order.plan}' tidak dikenal` };
   }
 
@@ -471,9 +475,18 @@ async function tandaiLunas(orderId, data) {
   );
   if (upd.affectedRows !== 1) return { status: 'paid', sudah: true };
 
-  const hasil = await terapkanPaket(order.user_id, order.plan);
-  console.log(`[Billing] ${orderId} lunas → user ${order.user_id} paket ${hasil.plan}`);
-  return hasil;
+  try {
+    const hasil = await terapkanPaket(order.user_id, order.plan);
+    console.log(`[Billing] ${orderId} lunas → user ${order.user_id} paket ${hasil.plan}`);
+    return hasil;
+  } catch (err) {
+    console.error(`[Billing] ${orderId} terapkanPaket GAGAL: ${err.message}`);
+    await pool.execute(
+      "UPDATE orders SET note = CONCAT(COALESCE(note, ''), ' | paket gagal diterapkan: ', ?) WHERE order_id = ?",
+      [err.message.slice(0, 150), orderId]
+    );
+    throw err;
+  }
 }
 
 // ─── POST /api/payment/webhook (QRISku) ───────────────────────────────────────
