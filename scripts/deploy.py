@@ -73,19 +73,27 @@ def main():
     c.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     c.connect(HOST, port=PORT, username=USER, password=_password(), timeout=30)
 
-    def run(cmd, show=True, timeout=600):
+    def run(cmd, show=True, timeout=600, check=False):
         _, o, e = c.exec_command(cmd, timeout=timeout)
         out = (o.read().decode(errors="replace") + e.read().decode(errors="replace")).strip()
+        code = o.channel.recv_exit_status()
         if show:
             print(out[-1200:])
+        if check and code != 0:
+            print(f"GAGAL (exit {code}): {cmd}")
+            c.close()
+            sys.exit(code)
         return out
 
     if MODE == "--log":
         run("cd %s && pm2 logs %s --lines 40 --nostream" % (DIR, APP))
         return c.close()
 
+    # Catat HEAD lama sebelum pull
+    old_head = run("cd %s && git rev-parse HEAD" % DIR, show=False).strip()
+
     print("-- git pull --")
-    r = run("cd %s && git pull --ff-only origin main" % DIR)
+    r = run("cd %s && git pull --ff-only origin main" % DIR, check=False)
     KORUP = ("bad object", "reference broken", "unterminated line", "index file corrupt",
              "invalid sha1 pointer", "bad signature", "packed-refs",
              "unable to unpack", "data stream error", "loose object", "is corrupt")
@@ -94,7 +102,7 @@ def main():
         run("cd %s/.git && rm -f packed-refs ORIG_HEAD FETCH_HEAD MERGE_HEAD && "
             "find refs -type f -size -2c -delete && rm -rf logs && rm -f index && "
             "git fetch origin main && git reset --hard FETCH_HEAD && git remote set-head origin main 2>/dev/null"
-            % DIR)
+            % DIR, check=True)
     print("-- verifikasi HEAD --")
 
     def _sha(cmd):
@@ -110,7 +118,7 @@ def main():
             run("cd %s && rm -rf .git && git init -q && "
                 "git config user.email deploy@local && git config user.name deploy && "
                 "git remote add origin '%s' && git fetch origin main && git reset --hard FETCH_HEAD"
-                % (DIR, origin_url))
+                % (DIR, origin_url), check=True)
             head, remote = _sha("git rev-parse HEAD"), _sha("git ls-remote origin main")
         else:
             print("URL remote nggak kebaca (%r), .git lama dibiarin." % origin_url[:60])
@@ -119,6 +127,15 @@ def main():
               % (head[:7] or "?", remote[:7] or "?"))
         return c.close() or sys.exit(1)
     print("HEAD server = GitHub = %s" % head[:7])
+
+    # Jalankan npm ci hanya jika package-lock.json berubah antara HEAD lama dan baru
+    if old_head and re.match(r"^[0-9a-f]{40}$", old_head) and old_head != head:
+        diff_lock = run("cd %s && git diff --name-only %s %s -- package-lock.json" % (DIR, old_head, head), show=False).strip()
+        if "package-lock.json" in diff_lock:
+            print("-- package-lock.json berubah, menjalankan npm ci --omit=dev --")
+            run("cd %s && npm ci --omit=dev" % DIR, check=True)
+        else:
+            print("-- package-lock.json tidak berubah, npm ci dilewati --")
 
     # ── Backup DB SEBELUM sync-schema ────────────────────────────────────────
     # sync-schema.js menjalankan ALTER TABLE ke DB produksi. Tanpa backup, satu
@@ -151,13 +168,13 @@ def main():
         'test -s "$f" || {{ echo "BACKUP 0 BYTE"; rm -f "$f"; exit 1; }}; '
         'ls -l "$f"; echo "BACKUP OK: $f"; echo "PERM: $(stat -c %a "$f")"'
     ).format(dir=DIR, bdir=BDIR)
-    bak = run(bcmd)
+    bak = run(bcmd, check=True)
     if "BACKUP OK:" not in bak:
         print("GAGAL: backup DB tidak berhasil - sync-schema DIBATALKAN (DB tidak disentuh).")
         return c.close() or sys.exit(1)
 
     print("-- sync schema --")
-    run("cd %s && [ -f scripts/sync-schema.js ] && node scripts/sync-schema.js || true" % DIR)
+    run("cd %s && [ -f scripts/sync-schema.js ] && node scripts/sync-schema.js" % DIR, check=True)
     print("-- restart --")
     # WORKER sengaja TIDAK di-restart bareng: di VPS ini cuma ada SATU proses PM2
     # (`jadibot`). Proses `yaparbots-worker` nggak pernah ada di main, jadi
@@ -166,7 +183,7 @@ def main():
     # bikin orang nggak percaya hasil deploy. Worker tetap didukung: set
     # WORKER_NAME kalau suatu hari prosesnya beneran ada.
     if os.environ.get("WORKER_NAME"):
-        run("pm2 restart %s %s --update-env" % (APP, WORKER))
+        run("pm2 restart %s %s --update-env" % (APP, WORKER), check=True)
     else:
         # `--update-env` WAJIB, bukan hiasan. PM2 menyimpan salinan environment
         # saat proses pertama kali start; `pm2 restart` biasa memakai salinan
@@ -174,14 +191,10 @@ def main():
         # QRISKU_API_KEY) lalu deploy ulang membuat kodenya tetap membaca nilai
         # lama — gejalanya "kunci sudah diisi tapi masih bilang belum diisi",
         # dan orang menghabiskan waktu mencurigai kodenya, bukan PM2-nya.
-        run("pm2 restart %s --update-env" % APP)
-    run("cd %s && [ -x ./post-deploy.sh ] && ./post-deploy.sh || true" % DIR)
-    run(
-        "sleep 12; pm2 jlist | node -e \"let s='';process.stdin.on('data',d=>s+=d)\""
-        ".on('end',()=>{const a=JSON.parse(s).filter(x=>/[Bb]ot/.test(x.name));"
-        "a.forEach(x=>console.log(x.name,'|',x.pm2_env.status,'| restart:',x.pm2_env.restart_time,"
-        "'| uptime:',Math.round((Date.now()-x.pm2_env.pm_uptime)/1000)+'s'))})\""
-    )
+        run("pm2 restart %s --update-env" % APP, check=True)
+    run("cd %s && [ -x ./post-deploy.sh ] && ./post-deploy.sh" % DIR, check=False)
+    print("-- verifikasi PM2 describe jadibot --")
+    run("pm2 describe %s" % APP, check=True)
     c.close()
 
 
