@@ -82,6 +82,8 @@
     // paket aktif (masih ada sisa hari) vs paket sudah lewat.
     const akhir = tanggal(data.plan_expired_at);
     const namaPaket = (data.plans.find((p) => p.id === data.paket) || {}).name || data.paket || 'Gratis';
+    const namaEl = document.getElementById('saldo-paket-nama');
+    if (namaEl) namaEl.textContent = esc(namaPaket);
     document.getElementById('saldo-paket').innerHTML = akhir
       ? `Paket <b>${esc(namaPaket)}</b> — ${data.paket_aktif ? 'aktif sampai' : 'sudah berakhir'} <b>${esc(akhir)}</b>`
       : 'Tidak ada paket aktif. Beli paket berbayar buat menyalakan bot.';
@@ -122,7 +124,7 @@
       `Min ${rupiah(batas.min)} · maks ${rupiah(batas.max)} · kelipatan ${rupiah(batas.kelipatan)}` +
       (batas.maks_pending ? ` · maksimal ${batas.maks_pending} tagihan belum dibayar` : '');
     document.getElementById('pilihan-cepat').innerHTML = batas.cepat
-      .map((n) => `<button class="btn btn-outline btn-sm" data-act="pilihNominal(${n})">${rupiah(n)}</button>`)
+      .map((n) => `<button type="button" class="btn btn-outline btn-sm chip-btn" data-act="pilihNominal(${n})">${rupiah(n)}</button>`)
       .join('');
     document.getElementById('blok-topup').style.display = '';
 
@@ -195,6 +197,10 @@
       // aturannya berubah di server, UI ini tidak bisa jadi lubang.
       const d = await api('/api/wallet/topup', { method: 'POST', body: JSON.stringify({ nominal }) });
       if (!d || !d.ok) { alert(d?.message || 'Gagal membuat tagihan.'); return; }
+      if (d.order_id) {
+        location.href = '/invoice/' + encodeURIComponent(d.order_id);
+        return;
+      }
       tampilkanQris(d);
       muatLedger();
     });

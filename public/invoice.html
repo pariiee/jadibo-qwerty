@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Invoice Pembayaran — qwertygate</title>
+<!-- @include head.html -->
+<style>
+  .invoice-card {
+    max-width: 520px;
+    margin: 0 auto;
+    background: var(--card, #14161b);
+    border: 1px solid var(--border, rgba(255,255,255,0.08));
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  }
+  .invoice-qr-wrap {
+    background: #ffffff;
+    padding: 16px;
+    border-radius: 12px;
+    display: inline-block;
+    margin: 16px auto;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+  }
+  .invoice-qr-wrap img {
+    display: block;
+    max-width: 240px;
+    width: 100%;
+    height: auto;
+    border-radius: 6px;
+  }
+  .badge-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .badge-pending {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+  }
+  .badge-paid {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+  }
+  .badge-expired {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+  }
+  .countdown-box {
+    background: rgba(255,255,255,0.03);
+    border: 1px dashed var(--border, rgba(255,255,255,0.12));
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 14px 0;
+  }
+  .row-detail {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border, rgba(255,255,255,0.06));
+    font-size: 13px;
+  }
+  .row-detail:last-child {
+    border-bottom: none;
+  }
+</style>
+</head>
+<body class="page-invoice">
+<div class="app">
+
+  <!-- @include sidebar.html -->
+
+  <main>
+    <!-- @include topbar.html -->
+
+    <div class="content">
+      <div class="cmd-head" style="text-align:center;margin-bottom:20px">
+        <h2>Invoice Tagihan</h2>
+        <p class="m-sub">Selesaikan pembayaran QRIS agar saldo / paket otomatis masuk ke akun kamu.</p>
+      </div>
+
+      <div class="invoice-card" id="invoice-box">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <div>
+            <span class="m-sub" style="font-size:12px;display:block">KODE TAGIHAN</span>
+            <b id="inv-order-id" style="font-size:16px;letter-spacing:0.5px">—</b>
+          </div>
+          <div id="inv-status-badge">
+            <span class="badge-status badge-pending">Memuat…</span>
+          </div>
+        </div>
+
+        <div style="text-align:center;margin:16px 0">
+          <div class="m-sub" style="font-size:12px;margin-bottom:4px">TOTAL PEMBAYARAN</div>
+          <div id="inv-amount" style="font-size:34px;font-weight:800;color:#10b981;line-height:1.1">—</div>
+        </div>
+
+        <div class="countdown-box" id="inv-countdown-box">
+          <span class="m-sub">Batas Pembayaran:</span>
+          <b id="inv-timer" style="color:#f59e0b">05:00</b>
+        </div>
+
+        <div style="text-align:center" id="inv-qr-container">
+          <div class="invoice-qr-wrap">
+            <img id="inv-qr-img" src="" alt="QRIS Code" />
+          </div>
+          <p class="m-sub" style="font-size:12px;margin:8px auto;max-width:320px">
+            Pindai QR di atas menggunakan GoPay, OVO, Dana, ShopeePay, BCA, atau m-Banking apa saja.
+          </p>
+        </div>
+
+        <div style="margin:20px 0 10px;background:rgba(255,255,255,0.02);border-radius:10px;padding:12px 14px">
+          <div class="row-detail">
+            <span class="m-sub">Item</span>
+            <b id="inv-plan-name">Top up Saldo</b>
+          </div>
+          <div class="row-detail">
+            <span class="m-sub">Metode</span>
+            <span>QRIS Otomatis</span>
+          </div>
+          <div class="row-detail">
+            <span class="m-sub">Waktu Order</span>
+            <span id="inv-created-at">—</span>
+          </div>
+        </div>
+
+        <div id="inv-actions" style="display:flex;flex-direction:column;gap:10px;margin-top:18px">
+          <button class="btn btn-primary" id="btn-cek-status" data-act="cekStatusManual" style="width:100%;background:#10b981;color:#000;font-weight:700">
+            🔄 Cek Status Pembayaran
+          </button>
+          <a class="btn btn-outline" id="btn-pay-link" href="#" target="_blank" rel="noopener" style="display:none;text-align:center;width:100%">
+            🔗 Buka Aplikasi Pembayaran
+          </a>
+          <a class="btn btn-outline" href="/saldo" style="text-align:center;width:100%">
+            ← Kembali ke Halaman Saldo
+          </a>
+        </div>
+
+        <div id="inv-success-box" style="display:none;text-align:center;padding:20px 0">
+          <div style="font-size:48px;line-height:1;margin-bottom:12px">✅</div>
+          <h3 style="color:#10b981;margin-bottom:6px">Pembayaran Berhasil!</h3>
+          <p class="m-sub" style="margin-bottom:16px">Saldo sudah masuk ke wallet kamu. Mengalihkan ke saldo…</p>
+          <a class="btn btn-primary" href="/saldo" style="background:#10b981;color:#000;font-weight:700">Buka Saldo Sekarang</a>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="/js/head.js"></script>
+<script src="/js/invoice.js"></script>
+</body>
+</html>

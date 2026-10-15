@@ -262,6 +262,12 @@
         '<div class="row" style="margin-top:2px;font-size:13px;color:var(--mute)">' + (bot.description ? esc(bot.description) : 'Tidak ada deskripsi') + '</div>' +
         kuotaHtml +
         '<div class="row" style="margin-top:14px"><span>Prefix: <b style="color:var(--ink)">' + esc(bot.prefix) + '</b></span><span>' + esc(new Date(bot.created_at).toLocaleDateString('id-ID')) + '</span></div>' +
+        '<div class="bot-auto-renew-row" style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding:8px 12px;border-radius:8px;background:rgba(255,255,255,0.03);border:1px solid var(--border)">' +
+          '<span style="font-size:12px;display:flex;align-items:center;gap:6px"><span>🔄</span> <b>Auto-perpanjang</b></span>' +
+          '<button type="button" data-toggle-autorenew class="btn btn-sm ' + (me?.auto_renew ? 'btn-primary' : 'btn-outline') + '" style="font-size:11px;padding:3px 10px;border-radius:999px;' + (me?.auto_renew ? 'background:#10b981;color:#000;border:none;' : '') + '">' +
+            (me?.auto_renew ? 'Aktif' : 'Mati') +
+          '</button>' +
+        '</div>' +
         '<div class="btns">' +
           '<button data-cfg>Config</button>' +
           '<button data-stat>Statistik</button>' +
@@ -269,6 +275,30 @@
       grid.appendChild(card);
       card.querySelector('[data-cfg]').addEventListener('click', (e) => { e.stopPropagation(); location.href = '/config/' + botHref(bot); });
       card.querySelector('[data-stat]').addEventListener('click', (e) => { e.stopPropagation(); location.href = '/bot/' + botHref(bot); });
+      const btnAuto = card.querySelector('[data-toggle-autorenew]');
+      if (btnAuto) {
+        btnAuto.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const targetState = !me?.auto_renew;
+          btnAuto.disabled = true;
+          btnAuto.textContent = '…';
+          try {
+            const res = await api('/api/wallet/auto-renew', {
+              method: 'POST',
+              body: JSON.stringify({ aktif: targetState })
+            });
+            if (res?.ok) {
+              me.auto_renew = targetState;
+              renderBots();
+            } else {
+              alert(res?.message || 'Gagal mengubah status auto-perpanjang');
+              renderBots();
+            }
+          } catch {
+            renderBots();
+          }
+        });
+      }
     });
 
     // Selalu tampilkan card Tambah Bot

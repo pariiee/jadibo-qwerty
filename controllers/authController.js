@@ -222,7 +222,7 @@ function logout(req, res) {
 async function me(req, res) {
   try {
     const [rows] = await pool.execute(
-      'SELECT id, username, role, plan, plan_expired_at, plan_slots, trial_used_at, phone, email, created_at FROM users WHERE id = ?',
+      'SELECT id, username, role, plan, plan_expired_at, plan_slots, trial_used_at, phone, email, saldo, auto_renew, auto_renew_status, created_at FROM users WHERE id = ?',
       [req.user.id]
     );
     if (rows.length === 0) return sendError(res, 404, 'User tidak ditemukan');
@@ -271,6 +271,9 @@ async function me(req, res) {
         // menang atas paket). Urutannya: jatah paket dulu, baru override admin.
         slots_beli: (paketOf(u.plan, pricingStore.plans())?.slots ?? Number(u.plan_slots)) || 0,
         daily_limit: plan.daily_limit,
+        saldo: Number(u.saldo || 0),
+        auto_renew: !!u.auto_renew,
+        auto_renew_status: u.auto_renew_status || null,
         created_at: u.created_at,
       },
     });

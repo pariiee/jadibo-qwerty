@@ -276,6 +276,7 @@ app.post('/api/auth/email',            authLimiter, auth.requireAuth, auth.simpa
 app.post('/api/billing/checkout',    apiLimiter, auth.requireAuth, billing.checkout);
 app.post('/api/billing/trial',       apiLimiter, auth.requireAuth, billing.klaimTrialSendiri);
 app.get('/api/billing/orders',       apiLimiter, auth.requireAuth, billing.daftarOrder);
+app.get('/api/billing/orders/:orderId', apiLimiter, auth.requireAuth, billing.detailOrder);
 // "Cek status" manual — bukan polling. Dijatah 20 detik per transaksi di
 // config/qrisku.js supaya akun QRISku tidak kena ban.
 app.post('/api/billing/orders/:orderId/check', apiLimiter, auth.requireAuth, billing.cekOrder);
@@ -390,6 +391,7 @@ app.get('/billing',    halaman('billing.html'));
 app.get('/kuota',      halaman('kuota.html'));
 // Dompet: saldo, top up, perpanjang, riwayat, auto-perpanjang.
 app.get('/saldo',      halaman('saldo.html'));
+app.get('/invoice/:orderId', halaman('invoice.html'));
 app.get('/log',        halaman('log.html'));
 app.get('/panduan',    halaman('panduan.html'));
 app.get('/profil',     halaman('profil.html'));

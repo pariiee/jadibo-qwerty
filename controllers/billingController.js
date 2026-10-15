@@ -383,6 +383,24 @@ async function daftarOrder(req, res) {
   return res.json({ ok: true, orders: rows });
 }
 
+// ─── GET /api/billing/orders/:orderId (detail order milik sendiri) ───────────
+
+async function detailOrder(req, res) {
+  try {
+    const { orderId } = req.params;
+    const [rows] = await pool.execute(
+      `SELECT order_id, plan, amount, method, status, qr_image, proof_url AS pay_url, expired_at, paid_at, created_at
+       FROM orders WHERE order_id = ? AND user_id = ?`,
+      [orderId, req.user.id]
+    );
+    if (rows.length === 0) return sendError(res, 404, 'Order tidak ditemukan');
+    return res.json({ ok: true, order: rows[0] });
+  } catch (err) {
+    console.error('[Billing] detailOrder error:', err.message);
+    return sendError(res, 500, 'Gagal mengambil detail order');
+  }
+}
+
 // ─── POST /api/billing/orders/:orderId/check ──────────────────────────────────
 // Satu permintaan ke QRISku, dijatah 20 detik per order. Dipakai kalau user
 // tidak sabar menunggu webhook — BUKAN polling berkala.
@@ -835,7 +853,7 @@ async function adminResetKuota(req, res) {
 }
 
 module.exports = {
-  daftarPaket, checkout, daftarOrder, cekOrder, webhook, kuota, pengumuman,
+  daftarPaket, checkout, daftarOrder, detailOrder, cekOrder, webhook, kuota, pengumuman,
   adminOrders, adminKonfirmasi, adminTolak, adminSettings, adminSetPlans, adminSetSettings,
   adminTopupKuota, adminResetKuota,
   klaimTrial, klaimTrialSendiri, terapkanPaket, tandaiLunas,
