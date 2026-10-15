@@ -17,7 +17,20 @@ const { activeBots, activeGroupsPerBot, activeChannelsPerBot } = require('../eng
 // engine-nya di proses mana (di panel zapo: proses ini juga).
 const engineBus = require('../config/engineBus');
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+const os = require('os');
+
+function cekKapasitasServer() {
+  const freeMemMb = os.freemem() / (1024 * 1024);
+  const totalMemMb = os.totalmem() / (1024 * 1024);
+  // ponytail: guard RAM sederhana, buffer 150MB OS/DB
+  const maxBots = Math.max(1, Math.floor((totalMemMb - 150) / 100));
+  return {
+    cukup: freeMemMb > 150,
+    freeMemMb: Math.round(freeMemMb),
+    totalMemMb: Math.round(totalMemMb),
+    maxBots,
+  };
+}
 
 function sendError(res, status, message) {
   return res.status(status).json({ ok: false, message });
@@ -166,6 +179,11 @@ async function getBot(req, res) {
 
 async function createBot(req, res) {
   try {
+    const cap = cekKapasitasServer();
+    if (!cap.cukup && req.user.role !== ADMIN_ROLE) {
+      return sendError(res, 503, `Kapasitas server VPS sedang penuh (RAM sisa ${cap.freeMemMb}MB). Hubungi admin.`);
+    }
+
     // Slot check — bolehnya berapa bot ditentukan paket langganan user.
     const [me] = await pool.execute(
       'SELECT role, plan, plan_expired_at, plan_slots FROM users WHERE id = ?',
@@ -334,6 +352,11 @@ async function deleteBot(req, res) {
 
 async function startBot(req, res) {
   try {
+    const cap = cekKapasitasServer();
+    if (!cap.cukup && req.user.role !== ADMIN_ROLE) {
+      return sendError(res, 503, `Kapasitas server VPS sedang penuh (RAM sisa ${cap.freeMemMb}MB). Tunggu beberapa saat.`);
+    }
+
     const bot = await assertOwnership(req, res, req.params.id);
     if (!bot) return;
 
@@ -605,6 +628,11 @@ async function getBotStats(req, res) {
 
     return res.json({
       ok: true,
+      bot: {
+        id: bot.id,
+        receive_limit: Number(bot.receive_limit || 0),
+        receive_count: Number(bot.receive_count || 0),
+      },
       ringkas: {
         cmd_total:   Number(ringkas.cmd_total || 0),
         cmd_unik:    Number(ringkas.cmd_unik || 0),
@@ -700,10 +728,65 @@ async function resolveInvite(req, res) {
   }
 }
 
+async function beliRespon(req, res) {
+  const conn = await pool.getConnection();
+  try {
+    const bot = await assertOwnership(req, res, req.params.id);
+    if (!bot) { conn.release(); return; }
+
+    const BIAYA = 500;
+    const TAMBAHAN_RESPON = 1000;
+
+    await conn.beginTransaction();
+    const [w] = await conn.execute(
+      'SELECT saldo FROM wallets WHERE user_id = ? FOR UPDATE',
+      [req.user.id]
+    );
+    const saldo = Number(w[0]?.saldo || 0);
+    if (saldo < BIAYA) {
+      await conn.rollback();
+      conn.release();
+      return sendError(res, 400,
+        `Saldo tidak cukup (butuh Rp 500, saldo kamu Rp ${saldo.toLocaleString('id-ID')}). Top up saldo dulu.`);
+    }
+
+    const saldoBaru = saldo - BIAYA;
+    await conn.execute('UPDATE wallets SET saldo = ? WHERE user_id = ?', [saldoBaru, req.user.id]);
+    
+    const ref = `addon-respon:${req.user.id}:${bot.id}:${Date.now()}`;
+    await conn.execute(
+      `INSERT INTO wallet_ledger (user_id, tipe, jumlah, saldo_akhir, ref, catatan)
+       VALUES (?, 'perpanjang', ?, ?, ?, ?)`,
+      [req.user.id, -BIAYA, saldoBaru, ref, `Tambah 1.000 respon bot #${bot.id}`]
+    );
+
+    await conn.execute(
+      'UPDATE bots SET receive_limit = receive_limit + ? WHERE id = ?',
+      [TAMBAHAN_RESPON, bot.id]
+    );
+
+    await conn.commit();
+    conn.release();
+
+    const [b] = await pool.execute('SELECT receive_limit FROM bots WHERE id = ?', [bot.id]);
+    return res.json({
+      ok: true,
+      message: 'Berhasil menambah 1.000 kuota respon!',
+      receive_limit: b[0]?.receive_limit || 0,
+      saldo: saldoBaru,
+    });
+  } catch (err) {
+    await conn.rollback();
+    conn.release();
+    console.error('[Bot] beliRespon error:', err);
+    return sendError(res, 500, 'Gagal menambah kuota respon');
+  }
+}
+
 module.exports = {
   listBots, getBot, createBot, updateBot, deleteBot,
   startBot, stopBot, restartBot, clearSession, getBotLogs, getBotStats, exportConfig,
-  resolveInvite,
+  resolveInvite, beliRespon,
   // State runtime — dibaca engine (whatsappEngine/telegramEngine) & plugin.
   activeBots, activeGroupsPerBot, activeChannelsPerBot,
 };

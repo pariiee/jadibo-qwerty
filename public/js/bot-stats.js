@@ -47,6 +47,15 @@
     document.getElementById('st-err').textContent = n(r.err_total);
     document.getElementById('st-lim').textContent = n(r.limit_total);
 
+    const stRes = document.getElementById('st-res');
+    if (stRes && d.bot) {
+      const terpakai = Number(d.bot.receive_count || 0);
+      const total = Number(d.bot.receive_limit || 0);
+      stRes.textContent = total > 0 ? (n(Math.max(0, total - terpakai)) + ' sisa') : 'Tanpa batas';
+      const sub = document.getElementById('st-res-sub');
+      if (sub && total > 0) sub.textContent = 'dari total ' + n(total) + ' respon';
+    }
+
     isiTabel(document.querySelector('#tbl-cmd tbody'),
       d.cmd.map((c, i) => '<tr><td class="muted">' + (i + 1) + '</td><td><code>' + esc(c.cmd) +
         '</code></td><td style="text-align:right"><b>' + n(c.n) + '</b>' +
@@ -224,4 +233,28 @@
 
     load();
   })();
+
+  window.tambahRespon = async function () {
+    if (!confirm('Beli 1.000 kuota respon seharga Rp 500 dari saldo dompet?')) return;
+    const btn = document.getElementById('btn-tambah-respon');
+    if (btn) btn.disabled = true;
+    try {
+      const res = await fetch('/api/bots/' + botId + '/tambah-respon', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const d = await res.json();
+      if (!d?.ok) {
+        alert(d?.message || 'Gagal menambah kuota respon');
+        return;
+      }
+      alert(d.message);
+      load();
+    } catch {
+      alert('Terjadi kesalahan koneksi');
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  };
 })();

@@ -35,7 +35,7 @@
   }
 
   function renderStatus() {
-    document.getElementById('plan-badge').textContent = me.plan_name || 'Gratis';
+    document.getElementById('plan-badge').textContent = me.plan_name ? me.plan_name : (me.slots ? me.slots + ' Slot' : 'Belum Ada Slot');
     document.getElementById('plan-until').textContent =
       me.plan_aktif ? 'aktif sampai ' + tanggal(me.plan_expired_at) : 'tanpa masa aktif';
 

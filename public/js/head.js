@@ -177,7 +177,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (topAv && u.username) topAv.textContent = u.username[0].toUpperCase();
       if (pName) pName.textContent = u.username || 'User';
       if (pEmail) pEmail.textContent = u.email || (u.username + '@gmail.com');
-      if (pRole) pRole.textContent = u.role_label || u.role || 'Basic';
+      if (pRole) pRole.textContent = u.is_admin ? 'Admin' : (u.slots ? u.slots + ' Slot' : 'User');
     }
   }).catch(function () {});
 

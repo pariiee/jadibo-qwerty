@@ -181,10 +181,10 @@
       el.className = 'val' + (cls ? ' ' + cls : '');
     };
 
-    txt('st-role', me.role_label || me.role || '\u2014');
+    txt('st-role', me.is_admin ? 'Admin' : (me.plan_aktif ? (me.slots || 1) + ' Slot' : '0 Slot'));
     document.getElementById('st-role-sub').textContent = me.is_admin
-      ? 'Akses penuh ke panel Administrator'
-      : (me.plan_name ? `Paket ${me.plan_name}` : 'Paket Gratis');
+      ? 'Akses penuh Administrator'
+      : (me.plan_aktif ? 'Slot bot aktif' : 'Belum ada slot aktif');
 
     const exp = me.plan_expired_at ? new Date(me.plan_expired_at) : null;
     const hari = exp ? Math.ceil((exp - Date.now()) / 86400000) : null;

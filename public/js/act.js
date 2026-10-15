@@ -52,15 +52,13 @@ window.showToast = function (msg, tipe) {
 window.daftarPaket = function (p, fitur) {
   const angka = (n) => Number(n || 0).toLocaleString('id-ID');
   return {
-    // Yang dijual cuma ini: kuota, masa aktif, owner. `max_fitur` sudah
-    // dibuang dari paket — angkanya dulu pajangan (nol penegakan).
     baris: [
-      'Online 24 jam',
-      fitur + ' fitur',
+      (p.slots || 1) + ' Slot Bot Aktif',
+      angka(p.receive_limit) + ' Kuota Respon',
       p.owner_max + ' Owner Bot',
-      angka(p.receive_limit) + ' Received Limit',
       'Masa aktif ' + p.days + ' hari',
+      'Online 24 Jam',
     ],
-    extra: 'Customize Bot',
+    extra: 'Custom Bot (Nama & Prefix)',
   };
 };

@@ -249,6 +249,7 @@ app.get('/api/bots/:id/logs',           apiLimiter, auth.requireAuth, bot.getBot
 app.get('/api/bots/:id/stats',         apiLimiter, auth.requireAuth, bot.getBotStats);
 app.get('/api/bots/:id/config',        apiLimiter, auth.requireAuth, bot.exportConfig);
 app.post('/api/bots/:id/resolve-invite', apiLimiter, auth.requireAuth, bot.resolveInvite);
+app.post('/api/bots/:id/tambah-respon',  apiLimiter, auth.requireAuth, bot.beliRespon);
 
 // ─── Kesehatan sistem ─────────────────────────────────────────────────────────
 // Publik dan TANPA limiter: uptime monitor dari luar harus bisa memanggilnya
