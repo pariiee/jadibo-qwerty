@@ -23,21 +23,35 @@ const { pool } = require('../config/database');
 // (lihat ingatkanSekali) supaya tidak gagal senyap.
 const API_URL = process.env.MAIL_API_URL || '';   // mis. https://api.resend.com/emails
 const API_KEY = process.env.MAIL_API_KEY || '';
-const DARI = process.env.MAIL_FROM || '';         // mis. "YaaParBot <kabar@yapari.web.id>"
+const SMTP_USER = process.env.SMTP_USER || '';
+const SMTP_PASS = process.env.SMTP_PASS || '';
+const DARI = process.env.MAIL_FROM || (SMTP_USER ? `"labs.yaparlabs" <${SMTP_USER}>` : '');
+
+let transporter = null;
+function getTransporter() {
+  if (!transporter && SMTP_USER && SMTP_PASS) {
+    const nodemailer = require('nodemailer');
+    transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      port: Number(process.env.SMTP_PORT || 465),
+      secure: true,
+      auth: { user: SMTP_USER, pass: SMTP_PASS },
+    });
+  }
+  return transporter;
+}
 
 /** Email dikonfigurasi? Kalau tidak, semua fungsi di sini jadi no-op. */
 function siap() {
-  return Boolean(API_URL && API_KEY && DARI);
+  return Boolean((SMTP_USER && SMTP_PASS) || (API_URL && API_KEY && DARI));
 }
 
 // Sudah pernah bilang "belum dikonfigurasi"? Sekali per proses cukup.
-// SENGAJA ada: tanpa ini, email yang tidak dikonfigurasi gagal DIAM-DIAM dan
-// hilang tanpa jejak — persis pola kegagalan senyap yang sedang diberantas.
 let sudahBilang = false;
 function ingatkanSekali() {
   if (sudahBilang) return;
   sudahBilang = true;
-  console.warn('[Email] MAIL_API_URL / MAIL_API_KEY / MAIL_FROM belum lengkap — email TIDAK akan terkirim (notif cuma lewat WhatsApp)');
+  console.warn('[Email] SMTP / API_KEY belum lengkap — email TIDAK akan terkirim (notif cuma lewat WhatsApp)');
 }
 
 /**
@@ -70,11 +84,24 @@ async function emailUser(userId) {
  * Kirim satu email.
  * @returns {Promise<boolean>} true kalau penyedia menerimanya
  */
-async function kirimEmail(ke, subjek, isi) {
+async function kirimEmail(ke, subjek, isi, html) {
   if (!siap()) { ingatkanSekali(); return false; }
   if (!emailValid(ke) || !subjek || !isi) return false;
 
   try {
+    if (SMTP_USER && SMTP_PASS) {
+      const t = getTransporter();
+      await t.sendMail({
+        from: DARI,
+        to: ke,
+        subject: String(subjek).slice(0, 200),
+        text: String(isi),
+        html: html || String(isi),
+      });
+      console.log(`[Email] terkirim via SMTP ke ${ke}: ${subjek}`);
+      return true;
+    }
+
     const axios = require('axios');
     await axios.post(
       API_URL,
@@ -84,8 +111,6 @@ async function kirimEmail(ke, subjek, isi) {
     console.log(`[Email] terkirim ke ${ke}: ${subjek}`);
     return true;
   } catch (e) {
-    // Termasuk 4xx (domain pengirim belum diverifikasi, kuota habis). Jejaknya
-    // harus ADA — email yang gagal tanpa log itu cara termahal kehilangan user.
     const detail = e?.response?.status ? `HTTP ${e.response.status}` : e?.message;
     console.error(`[Email] gagal ke ${ke}: ${detail}`);
     return false;
