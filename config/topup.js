@@ -13,15 +13,14 @@
  * dia bisa top up Rp1 dan menguras gateway.
  */
 
-// Batas & bentuk nominal. Semua kelipatan 1000 supaya tidak ada sisa receh
-// yang bikin saldo berakhir .500 dan susah dicocokkan dengan ledger.
-const TOPUP_MIN = 5000;
+// Batas & bentuk nominal. Kelipatan 100 agar fleksibel untuk pengujian & receh.
+const TOPUP_MIN = 100;
 const TOPUP_MAX = 500000;
-const TOPUP_KELIPATAN = 1000;
+const TOPUP_KELIPATAN = 100;
 
 // Pilihan cepat di UI. Bukan sumber kebenaran — cuma pintasan; angkanya tetap
 // divalidasi ulang di server seperti nominal yang diketik manual.
-const TOPUP_CEPAT = [5000, 10000, 20000, 50000, 100000];
+const TOPUP_CEPAT = [100, 1000, 5000, 10000, 50000];
 
 // Batas order top up yang boleh menggantung. Dihitung HANYA dari order yang
 // belum lewat masa berlaku QRIS (5 menit — lihat MASA_QRIS_MS dan catatan di
