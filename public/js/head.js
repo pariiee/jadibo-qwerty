@@ -193,11 +193,11 @@ document.addEventListener('DOMContentLoaded', function () {
       var buka = navAdminGroup.classList.toggle('open');
       btnNavManage.setAttribute('aria-expanded', buka ? 'true' : 'false');
     });
-    if (kini === '/kountole') {
+    if (location.pathname.indexOf('/kountole') === 0) {
       navAdminGroup.classList.add('open');
       btnNavManage.setAttribute('aria-expanded', 'true');
-      var hash = location.hash ? location.hash.replace('#', '') : 'user';
-      var activeSub = document.getElementById('sub-manage-' + hash);
+      var seg = location.pathname.split('/').filter(Boolean)[1] || 'users';
+      var activeSub = document.getElementById('sub-manage-' + seg);
       if (activeSub) activeSub.classList.add('active');
     }
   }

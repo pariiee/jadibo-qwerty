@@ -38,25 +38,44 @@
     return isNaN(d) ? String(v) : d.toLocaleTimeString('id-ID', { hour12: false });
   }
 
-  // ── Navigasi tab ───────────────────────────────────────────────
+  // ── Navigasi halaman per-page ─────────────────────────────────────
+  const PAGE_MAP = {
+    'user': { key: 'user', subId: 'sub-manage-users', title: 'Manajemen User', desc: 'Kelola akun pengguna, hak akses, dan paket langganan bot.' },
+    'users': { key: 'user', subId: 'sub-manage-users', title: 'Manajemen User', desc: 'Kelola akun pengguna, hak akses, dan paket langganan bot.' },
+    'bot': { key: 'bot', subId: 'sub-manage-bots', title: 'Manajemen Bot', desc: 'Pantau seluruh instans bot pengguna, status koneksi, dan kuota pesan.' },
+    'bots': { key: 'bot', subId: 'sub-manage-bots', title: 'Manajemen Bot', desc: 'Pantau seluruh instans bot pengguna, status koneksi, dan kuota pesan.' },
+    'order': { key: 'order', subId: 'sub-manage-orders', title: 'Pesanan & Pembayaran', desc: 'Daftar invoice, riwayat transaksi QRIS, dan rekap pendapatan sistem.' },
+    'orders': { key: 'order', subId: 'sub-manage-orders', title: 'Pesanan & Pembayaran', desc: 'Daftar invoice, riwayat transaksi QRIS, dan rekap pendapatan sistem.' },
+    'saldo': { key: 'saldo', subId: 'sub-manage-saldo', title: 'Saldo & Dompet User', desc: 'Kelola saldo member, mutasi dompet, dan rekonsiliasi buku besar.' },
+    'harga': { key: 'harga', subId: 'sub-manage-harga', title: 'Harga & Benefit Paket', desc: 'Atur harga sewa slot bot, durasi paket, dan batasan kuota pesan.' },
+    'sistem': { key: 'sistem', subId: 'sub-manage-sistem', title: 'Sistem & Broadcast', desc: 'Broadcast pengumuman ke seluruh bot member dan log audit platform.' }
+  };
+
   function tab(nama) {
+    const info = PAGE_MAP[nama] || PAGE_MAP['users'];
+    const key = info.key;
+
     ['user', 'bot', 'order', 'harga', 'saldo', 'sistem'].forEach((t) => {
-      document.getElementById('pane-' + t).style.display = t === nama ? '' : 'none';
+      const el = document.getElementById('pane-' + t);
+      if (el) el.style.display = t === key ? '' : 'none';
     });
-    document.querySelectorAll('#tabs .tab').forEach((b) => {
-      b.classList.toggle('active', b.dataset.act === "tab('" + nama + "')");
-    });
+
+    const titleEl = document.getElementById('admin-page-title');
+    const descEl = document.getElementById('admin-page-desc');
+    if (titleEl) titleEl.textContent = info.title;
+    if (descEl) descEl.textContent = info.desc;
+    document.title = info.title + ' — Administrator';
+
     document.querySelectorAll('.nav-sub-item').forEach((a) => {
-      a.classList.toggle('active', a.id === 'sub-manage-' + nama);
+      a.classList.toggle('active', a.id === info.subId);
     });
-    if (location.hash.replace('#', '') !== nama) {
-      history.replaceState(null, '', '#' + nama);
-    }
-    if (nama === 'bot') muatBot();
-    if (nama === 'order') { muatPendapatan(); muatOrder(); }
-    if (nama === 'harga') muatSetelan();
-    if (nama === 'saldo') muatSaldo();
-    if (nama === 'sistem') { muatSistem(); muatAudit(); }
+
+    if (key === 'user') muatUser();
+    if (key === 'bot') muatBot();
+    if (key === 'order') { muatPendapatan(); muatOrder(); }
+    if (key === 'harga') muatSetelan();
+    if (key === 'saldo') muatSaldo();
+    if (key === 'sistem') { muatSistem(); muatAudit(); }
   }
 
   // ── Bot semua user + log ───────────────────────────────────────
@@ -705,20 +724,9 @@
     const pl = await api('/api/plans');
     if (pl?.ok) paket = pl.plans;
 
-    const hashAwal = (location.hash || '').replace('#', '');
-    if (['user', 'bot', 'order', 'harga', 'saldo', 'sistem'].includes(hashAwal) && hashAwal !== 'user') {
-      tab(hashAwal);
-    } else {
-      await muatUser();
-    }
+    const segmen = location.pathname.split('/').filter(Boolean)[1] || (location.hash || '').replace('#', '') || 'users';
+    tab(segmen);
     muatSetelan();
-
-    window.addEventListener('hashchange', () => {
-      const h = (location.hash || '').replace('#', '') || 'user';
-      if (['user', 'bot', 'order', 'harga', 'saldo', 'sistem'].includes(h)) {
-        tab(h);
-      }
-    });
   });
 
   window.tab = tab;

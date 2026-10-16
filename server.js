@@ -466,7 +466,15 @@ const halamanError = (kode = 500, customMsg = null) => (_, res) => {
   }
 };
 
-app.get('/kountole',     halaman('admin.html'));
+app.get([
+  '/kountole',
+  '/kountole/users',
+  '/kountole/bots',
+  '/kountole/orders',
+  '/kountole/saldo',
+  '/kountole/harga',
+  '/kountole/sistem'
+], halaman('admin.html'));
 app.get('/login',           halaman('login.html'));
 app.get('/register',        halaman('login.html'));
 app.get('/register/pending', halaman('register-pending.html'));
