@@ -209,6 +209,8 @@ app.post('/api/auth/register', authLimiter, auth.register);
 app.post('/api/auth/login',    authLimiter, auth.login);
 app.post('/api/auth/logout',   auth.logout);
 app.get('/verify-email',       auth.verifyEmail);
+app.get('/api/auth/verify-info', auth.getVerifyInfo);
+app.post('/api/auth/verify-confirm', resendLimiter, auth.verifyConfirm);
 app.post('/api/auth/resend-verification', resendLimiter, auth.resendVerification);
 app.post('/api/auth/forgot-password', authLimiter, auth.forgotPassword);
 app.post('/api/auth/reset-password',  authLimiter, auth.resetPassword);
@@ -467,6 +469,9 @@ const halamanError = (kode = 500, customMsg = null) => (_, res) => {
 app.get('/kountole',     halaman('admin.html'));
 app.get('/login',           halaman('login.html'));
 app.get('/register',        halaman('login.html'));
+app.get('/register/pending', halaman('register-pending.html'));
+app.get('/register/verify',  halaman('register-verify.html'));
+app.get('/register/success', halaman('register-success.html'));
 app.get('/forgot-password', halaman('login.html'));
 app.get('/reset-password',  halaman('login.html'));
 app.get('/',             halaman('index.html'));

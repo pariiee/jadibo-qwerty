@@ -216,6 +216,10 @@
         password: pass
       });
       if (data.ok) {
+        if (data.redirect) {
+          location.href = data.redirect;
+          return;
+        }
         if (data.need_verification) {
           if (ok) {
             ok.innerHTML = `<strong>Tautan Verifikasi Terkirim!</strong><br>${data.message}`;

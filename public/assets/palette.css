@@ -1859,6 +1859,47 @@ body.page-auth .switch-line a{
   font-weight:700;color:var(--ink);text-decoration:underline;text-underline-offset:3px;
 }
 
+body.page-auth .auth-page-icon{
+  width:52px;height:52px;border-radius:16px;
+  background:rgba(18,20,43,.05);border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 16px;color:var(--ink);
+}
+:root[data-theme="dark"] body.page-auth .auth-page-icon{
+  background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.1);
+}
+body.page-auth .auth-page-icon.ic-success{
+  background:rgba(16,185,129,.1);border-color:rgba(16,185,129,.25);color:var(--green);
+}
+body.page-auth .auth-info-box{
+  background:rgba(18,20,43,.03);border:1px solid var(--line);
+  border-radius:14px;padding:14px 16px;margin:18px 0;
+}
+:root[data-theme="dark"] body.page-auth .auth-info-box{
+  background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.08);
+}
+body.page-auth .auth-info-row{display:flex;align-items:center;gap:12px;text-align:left}
+body.page-auth .auth-info-avatar{
+  width:38px;height:38px;border-radius:11px;
+  background:rgba(18,20,43,.06);border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--mute);
+}
+:root[data-theme="dark"] body.page-auth .auth-info-avatar{
+  background:rgba(255,255,255,.06);
+}
+body.page-auth .auth-info-name{font-size:14.5px;font-weight:700;color:var(--ink);margin:0 0 2px}
+body.page-auth .auth-info-email{font-size:12.5px;color:var(--mute);margin:0}
+body.page-auth .auth-page-desc{
+  font-size:13.5px;color:var(--mute);line-height:1.6;margin-bottom:20px;text-align:center;
+}
+body.page-auth .auth-ghost-btn{
+  display:block;width:100%;box-sizing:border-box;text-align:center;
+  background:transparent;border:1px solid var(--line);border-radius:13px;
+  padding:12px 16px;font-size:13.5px;font-weight:600;color:var(--mute);
+  cursor:pointer;text-decoration:none;transition:all .15s ease;margin-top:10px;
+}
+body.page-auth .auth-ghost-btn:hover{border-color:var(--mute);color:var(--ink)}
+
 /* ══ 12. Halaman Error (404, 500) ══════════════════════════════════ */
 body.page-error .modal.auth-card{
   text-align:center;

@@ -194,14 +194,14 @@ async function register(req, res) {
     );
 
     const baseUrl = process.env.BASE_URL || (req.protocol + '://' + req.get('host'));
-    const verifyUrl = `${baseUrl}/verify-email?token=${token}`;
-    const subjek = 'Verifikasi Email Akun qwertygate';
-    const teks = `Halo ${username},\n\nTerima kasih telah mendaftar di qwertygate.\n\nKlik tautan berikut untuk memverifikasi email kamu dan mengaktifkan akun (berlaku 24 jam):\n${verifyUrl}\n\nJika kamu tidak merasa mendaftar di qwertygate, abaikan email ini.\n\nSalam,\nTim qwertygate`;
+    const verifyUrl = `${baseUrl}/register/verify?token=${token}`;
+    const subjek = 'Verifikasi Email Akun Yapari Bots';
+    const teks = `Halo ${username},\n\nTerima kasih telah mendaftar di Yapari Bots.\n\nKlik tautan berikut untuk memverifikasi email kamu dan mengaktifkan akun (berlaku 24 jam):\n${verifyUrl}\n\nJika kamu tidak merasa mendaftar di Yapari Bots, abaikan email ini.\n\nSalam,\nTim Yapari Bots`;
     const html = `
       <div style="font-family:'Plus Jakarta Sans',sans-serif,Arial,sans-serif;max-width:540px;margin:0 auto;padding:28px 24px;background:#ffffff;border:1px solid #e2e8f0;border-radius:20px;">
         <h2 style="color:#0f172a;margin-top:0;font-size:20px;font-weight:800;">Verifikasi Alamat Email</h2>
         <p style="color:#475569;font-size:14px;line-height:1.6;">Halo <strong>${username}</strong>,</p>
-        <p style="color:#475569;font-size:14px;line-height:1.6;">Terima kasih sudah mendaftar di <strong>qwertygate</strong>. Klik tombol di bawah ini untuk mengaktifkan akunmu:</p>
+        <p style="color:#475569;font-size:14px;line-height:1.6;">Terima kasih sudah mendaftar di <strong>Yapari Bots</strong>. Klik tombol di bawah ini untuk mengaktifkan akunmu:</p>
         <div style="margin:26px 0;text-align:center;">
           <a href="${verifyUrl}" style="display:inline-block;padding:12px 30px;background:#0f172a;color:#ffffff;text-decoration:none;font-weight:700;border-radius:999px;font-size:14px;">Aktifkan Akun Saya</a>
         </div>
@@ -215,9 +215,10 @@ async function register(req, res) {
 
     return res.status(201).json({
       ok: true,
-      message: 'Pendaftaran berhasil! Tautan verifikasi telah dikirimkan ke Gmail (' + bersihEmail + '). Silakan cek kotak masuk atau folder spam untuk mengaktifkan akun.',
+      message: 'Pendaftaran berhasil! Tautan verifikasi telah dikirimkan ke Gmail (' + bersihEmail + ').',
       email: bersihEmail,
-      need_verification: true
+      need_verification: true,
+      redirect: '/register/pending?email=' + encodeURIComponent(bersihEmail)
     });
   } catch (err) {
     console.error('[Auth] register error:', err);
@@ -281,41 +282,102 @@ async function login(req, res) {
   }
 }
 
-// ─── GET /verify-email ────────────────────────────────────────────────────────
-
+// ─── GET /verify-email (backward compat) ──────────────────────────────────────
 async function verifyEmail(req, res) {
+  const { token } = req.query;
+  if (!token) return res.redirect('/login');
+  return res.redirect('/register/verify?token=' + encodeURIComponent(token));
+}
+
+// ─── GET /api/auth/verify-info ────────────────────────────────────────────────
+async function getVerifyInfo(req, res) {
   try {
     const { token } = req.query;
-    if (!token) {
-      return res.redirect('/login?err=' + encodeURIComponent('Token verifikasi tidak ditemukan'));
-    }
+    if (!token) return sendError(res, 400, 'Token verifikasi tidak ditemukan');
 
     const [rows] = await pool.execute(
-      'SELECT id, user_id, expires_at, used_at FROM email_verifications WHERE token = ? LIMIT 1',
+      `SELECT ev.id, ev.expires_at, ev.used_at, u.username, u.email, u.is_active
+       FROM email_verifications ev
+       JOIN users u ON u.id = ev.user_id
+       WHERE ev.token = ? LIMIT 1`,
       [token]
     );
 
     if (rows.length === 0) {
-      return res.redirect('/login?err=' + encodeURIComponent('Tautan verifikasi tidak valid atau tidak ditemukan'));
+      return sendError(res, 404, 'Link verifikasi tidak valid atau sudah tidak tersedia');
     }
 
     const item = rows[0];
-    if (item.used_at) {
-      return res.redirect('/login?verified=1');
+    if (item.used_at || item.is_active) {
+      return res.json({ ok: true, already_active: true, username: item.username, email: item.email });
     }
 
     if (new Date(item.expires_at) < new Date()) {
-      return res.redirect('/login?err=' + encodeURIComponent('Tautan verifikasi sudah kedaluwarsa. Silakan minta tautan baru.'));
+      return sendError(res, 410, 'Link verifikasi sudah kedaluwarsa. Silakan daftar ulang atau minta tautan baru.');
+    }
+
+    return res.json({
+      ok: true,
+      username: item.username,
+      email: item.email
+    });
+  } catch (err) {
+    console.error('[Auth] getVerifyInfo error:', err);
+    return sendError(res, 500, 'Terjadi kesalahan server');
+  }
+}
+
+// ─── POST /api/auth/verify-confirm ───────────────────────────────────────────
+async function verifyConfirm(req, res) {
+  try {
+    const { token } = req.body;
+    if (!token) return sendError(res, 400, 'Token verifikasi tidak ditemukan');
+
+    const [rows] = await pool.execute(
+      `SELECT ev.id, ev.user_id, ev.expires_at, ev.used_at, u.username, u.email, u.role, u.token_version, u.is_active
+       FROM email_verifications ev
+       JOIN users u ON u.id = ev.user_id
+       WHERE ev.token = ? LIMIT 1`,
+      [token]
+    );
+
+    if (rows.length === 0) {
+      return sendError(res, 404, 'Link verifikasi tidak valid atau tidak ditemukan');
+    }
+
+    const item = rows[0];
+    if (new Date(item.expires_at) < new Date()) {
+      return sendError(res, 410, 'Link verifikasi sudah kedaluwarsa. Silakan daftar ulang.');
     }
 
     // Aktifkan user dan tandai token terpakai
     await pool.execute('UPDATE users SET is_active = 1 WHERE id = ?', [item.user_id]);
     await pool.execute('UPDATE email_verifications SET used_at = NOW() WHERE id = ?', [item.id]);
 
-    return res.redirect('/login?verified=1');
+    // Otomatis login (set cookie JWT)
+    const tokenJwt = signToken({
+      id: item.user_id,
+      username: item.username,
+      role: item.role,
+      tv: Number(item.token_version || 0)
+    });
+
+    res.cookie('token', tokenJwt, {
+      httpOnly: true,
+      secure: req.protocol === 'https',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    return res.json({
+      ok: true,
+      message: 'Akun berhasil diverifikasi!',
+      user: { id: item.user_id, username: item.username, email: item.email },
+      redirect: '/register/success'
+    });
   } catch (err) {
-    console.error('[Auth] verifyEmail error:', err);
-    return res.redirect('/login?err=' + encodeURIComponent('Terjadi kesalahan saat memverifikasi email'));
+    console.error('[Auth] verifyConfirm error:', err);
+    return sendError(res, 500, 'Terjadi kesalahan saat memverifikasi akun');
   }
 }
 
@@ -890,7 +952,7 @@ async function resetPassword(req, res) {
 
 module.exports = {
   register, login, logout, me, gantiPassword, simpanPhone, simpanEmail,
-  verifyEmail, resendVerification,
+  verifyEmail, resendVerification, getVerifyInfo, verifyConfirm,
   forgotPassword, resetPassword,
   googleRedirect, googleCallback,
   listUsers, updateUser, deleteUser,
