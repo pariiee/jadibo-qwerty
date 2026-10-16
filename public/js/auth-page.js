@@ -114,7 +114,9 @@
   document.getElementById('login-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const err = document.getElementById('login-error');
+    const ok = document.getElementById('login-ok');
     err.classList.remove('show');
+    if (ok) ok.style.display = 'none';
     try {
       const data = await kirim('/api/auth/login', {
         username: document.getElementById('login-username').value.trim(),
@@ -137,6 +139,12 @@
     const phone = document.getElementById('reg-phone')?.value.trim();
     const email = document.getElementById('reg-email').value.trim();
     const pass = document.getElementById('reg-password').value;
+
+    if (!phone || phone.replace(/\D/g, '').length < 9) {
+      err.textContent = 'Nomor WhatsApp tidak valid (minimal 9 digit)';
+      err.classList.add('show');
+      return;
+    }
 
     if (!email.toLowerCase().endsWith('@gmail.com') && !email.toLowerCase().endsWith('@googlemail.com')) {
       err.textContent = 'Pendaftaran akun wajib menggunakan email @gmail.com';

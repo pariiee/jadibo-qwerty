@@ -11,6 +11,7 @@ body.page-auth .modal{background:var(--surf1);border:1px solid var(--border2);bo
 body.page-auth .modal h3{font-size:20px;font-weight:800;margin-bottom:4px}
 body.page-auth .field{margin-bottom:14px}
 body.page-auth .err{color:var(--errTxt);font-size:12px;margin:4px 2px 10px;display:none}
+body.page-auth .err.show{display:block!important}
 body.page-auth .modal .btn{width:100%;justify-content:center}
 body.page-auth .switch-line a{color:var(--acc);font-weight:700}
 
