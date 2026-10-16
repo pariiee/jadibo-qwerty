@@ -107,10 +107,16 @@ body.page-bot-stats .ttl {
   min-width: 0 !important;
 }
 body.page-bot-stats .ttl #hdr-icon {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 12px !important;
+  background: rgba(37, 211, 102, 0.12) !important;
+  border: 1px solid rgba(37, 211, 102, 0.3) !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
   flex-shrink: 0 !important;
+  color: #25d366 !important;
 }
 body.page-bot-stats .ttl h1 {
   font-size: 18px !important;
@@ -211,7 +217,7 @@ body.page-bot-stats .stats-wrap {
 
 body.page-bot-stats .stats {
   display: grid !important;
-  grid-template-columns: repeat(4, 1fr) !important;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
   gap: 16px !important;
   width: 100% !important;
   margin: 0 !important;

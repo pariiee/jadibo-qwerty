@@ -164,39 +164,24 @@
         return { x, y, n: Number(h.n || 0), tgl: h.tgl };
       });
 
-      // Smooth Line Chart + Area Fill: tension .35 + polaritas monoton, meniru
-      // Chart.js `tension`. Tanpa ini spline overshoot (naik-turun palsu) saat
-      // nilai naik-turun tajam — apalagi kalau ada dua titik bernilai sama.
-      const tension = 0.35;
-      function spline(p, polarity) {
-        if (p.length < 2) return p.length === 1 ? `M ${p[0].x} ${p[0].y}` : '';
-        let s = `M ${p[0].x.toFixed(1)} ${p[0].y.toFixed(1)}`;
+      // Smooth Line Chart + Area Fill: cubic bezier terkontrol tanpa overshoot
+      function spline(p) {
+        if (p.length < 2) return p.length === 1 ? 'M ' + p[0].x.toFixed(1) + ' ' + p[0].y.toFixed(1) : '';
+        let s = 'M ' + p[0].x.toFixed(1) + ' ' + p[0].y.toFixed(1);
         for (let i = 0; i < p.length - 1; i++) {
-          const p0 = p[i > 0 ? i - 1 : i];
           const p1 = p[i];
           const p2 = p[i + 1];
-          const p3 = p[i + 2 < p.length ? i + 2 : i + 1];
-          const d = [p1.x - p0.x, p1.y - p0.y, p2.x - p1.x, p2.y - p1.y, p3.x - p2.x, p3.y - p2.y];
-          for (let k = 0; k < polarity.length; k++) {
-            if (polarity[k] === 0) d[2 * k + 1] = d[2 * k + 3] = 0;
-          }
-          const cp1x = p1.x + (d[2] - d[0]) * tension / 3;
-          const cp1y = p1.y + (d[3] - d[1]) * tension / 3;
-          const cp2x = p2.x + (d[4] - d[2]) * tension / 3;
-          const cp2y = p2.y + (d[5] - d[3]) * tension / 3;
-          s += ` C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
+          const dx = (p2.x - p1.x) * 0.4;
+          const cp1x = p1.x + dx;
+          const cp1y = p1.y;
+          const cp2x = p2.x - dx;
+          const cp2y = p2.y;
+          s += ' C ' + cp1x.toFixed(1) + ' ' + cp1y.toFixed(1) + ', ' + cp2x.toFixed(1) + ' ' + cp2y.toFixed(1) + ', ' + p2.x.toFixed(1) + ' ' + p2.y.toFixed(1);
         }
         return s;
       }
 
-      // Polaritas tiap titik (sign perubahan nilai) — dipakai spline.
-      const polarity = pts.map((p, i) => {
-        if (i === 0) return pts.length > 1 ? Math.sign(pts[1].n - p.n) : 0;
-        if (i === pts.length - 1) return Math.sign(p.n - pts[i - 1].n);
-        return Math.sign(p.n - pts[i - 1].n) || Math.sign(pts[i + 1].n - p.n);
-      });
-
-      const linePath = spline(pts, polarity);
+      const linePath = spline(pts);
       const areaPath = pts.length > 1
         ? `${linePath} L ${pts[pts.length - 1].x.toFixed(1)} ${bottomY} L ${pts[0].x.toFixed(1)} ${bottomY} Z`
         : '';
