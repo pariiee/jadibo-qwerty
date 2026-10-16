@@ -14,6 +14,20 @@
     <a href="/saldo" id="nav-saldo"><svg class="i" viewBox="0 0 24 24"><path d="M12 3v18M17 7.5c0-1.9-2.2-3-5-3s-5 1.1-5 3 2.2 2.7 5 3.2 5 1.3 5 3.3-2.2 3-5 3-5-1.1-5-3"/></svg><span>Saldo</span></a>
     <a href="/pricing" id="nav-pricing"><svg class="i" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.2 8-8 9-4.8-1-8-4.5-8-9V6zM9 12l2 2 4-4"/></svg><span>Pricing</span></a>
     <a href="/profil" id="nav-profil"><svg class="i" viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg><span>Profil</span></a>
-    <a href="/kountole" id="nav-admin" style="display:none"><svg class="i" viewBox="0 0 24 24"><path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM2 21c0-3.5 3-6 7-6s7 2.5 7 6M17 4a4 4 0 0 1 0 7M22 21c0-3-2-5-5-5.7"/></svg><span>Manajemen User</span></a>
+    <div class="nav-group" id="nav-admin" style="display:none">
+      <button type="button" class="nav-parent" id="btn-nav-manage" aria-expanded="false">
+        <svg class="i" viewBox="0 0 24 24"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>Manage</span>
+        <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="nav-sub" id="nav-manage-sub">
+        <a href="/kountole#user" class="nav-sub-item" id="sub-manage-user"><span>Manage User</span></a>
+        <a href="/kountole#bot" class="nav-sub-item" id="sub-manage-bot"><span>Manage Bot</span></a>
+        <a href="/kountole#order" class="nav-sub-item" id="sub-manage-order"><span>Pesanan</span></a>
+        <a href="/kountole#saldo" class="nav-sub-item" id="sub-manage-saldo"><span>Saldo User</span></a>
+        <a href="/kountole#harga" class="nav-sub-item" id="sub-manage-harga"><span>Harga &amp; Benefit</span></a>
+        <a href="/kountole#sistem" class="nav-sub-item" id="sub-manage-sistem"><span>Sistem</span></a>
+      </div>
+    </div>
   </nav>
 </aside>

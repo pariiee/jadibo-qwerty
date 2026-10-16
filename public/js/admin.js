@@ -46,6 +46,12 @@
     document.querySelectorAll('#tabs .tab').forEach((b) => {
       b.classList.toggle('active', b.dataset.act === "tab('" + nama + "')");
     });
+    document.querySelectorAll('.nav-sub-item').forEach((a) => {
+      a.classList.toggle('active', a.id === 'sub-manage-' + nama);
+    });
+    if (location.hash.replace('#', '') !== nama) {
+      history.replaceState(null, '', '#' + nama);
+    }
     if (nama === 'bot') muatBot();
     if (nama === 'order') { muatPendapatan(); muatOrder(); }
     if (nama === 'harga') muatSetelan();
@@ -698,8 +704,21 @@
 
     const pl = await api('/api/plans');
     if (pl?.ok) paket = pl.plans;
-    await muatUser();
+
+    const hashAwal = (location.hash || '').replace('#', '');
+    if (['user', 'bot', 'order', 'harga', 'saldo', 'sistem'].includes(hashAwal) && hashAwal !== 'user') {
+      tab(hashAwal);
+    } else {
+      await muatUser();
+    }
     muatSetelan();
+
+    window.addEventListener('hashchange', () => {
+      const h = (location.hash || '').replace('#', '') || 'user';
+      if (['user', 'bot', 'order', 'harga', 'saldo', 'sistem'].includes(h)) {
+        tab(h);
+      }
+    });
   });
 
   window.tab = tab;

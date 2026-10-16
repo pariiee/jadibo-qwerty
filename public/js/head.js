@@ -177,8 +177,30 @@ document.addEventListener('DOMContentLoaded', function () {
       if (pName) pName.textContent = u.username || 'User';
       if (pEmail) pEmail.textContent = u.email || (u.username + '@gmail.com');
       if (pRole) pRole.textContent = u.is_admin ? 'Admin' : (u.slots ? u.slots + ' Slot' : 'User');
+      if (u.is_admin) {
+        var elNav = document.getElementById('nav-admin');
+        if (elNav) elNav.style.display = '';
+      }
     }
   }).catch(function () {});
+
+  // Dropdown Accordion Manage di Sidebar
+  var navAdminGroup = document.getElementById('nav-admin');
+  var btnNavManage = document.getElementById('btn-nav-manage');
+  if (btnNavManage && navAdminGroup) {
+    btnNavManage.addEventListener('click', function (e) {
+      e.preventDefault();
+      var buka = navAdminGroup.classList.toggle('open');
+      btnNavManage.setAttribute('aria-expanded', buka ? 'true' : 'false');
+    });
+    if (kini === '/kountole') {
+      navAdminGroup.classList.add('open');
+      btnNavManage.setAttribute('aria-expanded', 'true');
+      var hash = location.hash ? location.hash.replace('#', '') : 'user';
+      var activeSub = document.getElementById('sub-manage-' + hash);
+      if (activeSub) activeSub.classList.add('active');
+    }
+  }
 
   function toggleUserMenu() {
     var pop = document.getElementById('user-popover');

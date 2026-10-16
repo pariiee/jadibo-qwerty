@@ -500,6 +500,38 @@ body.page-dashboard nav.nav a,body.page-admin nav.nav a,body.page-pricing nav.na
 body.page-command nav.nav a,body.page-billing nav.nav a,body.page-profil nav.nav a,
 body.page-kuota nav.nav a,body.page-log nav.nav a,body.page-panduan nav.nav a,
 body.page-bot nav.nav a{border-radius:999px}
+
+/* Nav Sub / Accordion Manage */
+.nav-group{position:relative;display:flex;flex-direction:column}
+.nav-parent{
+  position:relative;display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:999px;font-size:14px;
+  color:var(--mute);border:1px solid transparent;background:transparent;width:100%;text-align:left;cursor:pointer;
+  font-family:inherit;transition:background .16s ease,color .16s ease,border-color .16s ease;
+}
+.nav-parent:hover{background:rgba(18,20,43,.04);color:var(--ink)}
+:root[data-theme="dark"] .nav-parent:hover{background:rgba(255,255,255,.05)}
+.nav-parent .chevron{margin-left:auto;transition:transform .2s ease;color:var(--mute)}
+.nav-group.open .nav-parent .chevron{transform:rotate(180deg)}
+.nav-group.open .nav-parent{color:var(--ink);font-weight:600}
+.nav-sub{
+  display:none;flex-direction:column;gap:3px;padding:4px 0 6px 12px;margin:2px 0 6px 18px;
+  border-left:1.5px solid var(--line);
+}
+.nav-group.open .nav-sub{display:flex}
+.nav-sub-item{
+  display:block;padding:7px 12px;border-radius:10px;font-size:13px;font-weight:500;
+  color:var(--mute);text-decoration:none;transition:all .15s ease;
+}
+.nav-sub-item:hover{color:var(--ink);background:rgba(18,20,43,.04)}
+:root[data-theme="dark"] .nav-sub-item:hover{background:rgba(255,255,255,.05)}
+.nav-sub-item.active{
+  color:var(--accent2,#2563eb)!important;font-weight:700!important;background:rgba(37,99,235,.08)!important;
+}
+.app.mini .nav-sub{display:none!important}
+.app.mini .nav-parent .chevron{display:none}
+.app.mini .nav-parent span{display:none}
+.app.mini .nav-parent{justify-content:center;padding:11px}
+
 body.page-dashboard nav.nav a.active,body.page-admin nav.nav a.active,
 body.page-pricing nav.nav a.active,body.page-command nav.nav a.active,
 body.page-billing nav.nav a.active,body.page-profil nav.nav a.active,
