@@ -195,12 +195,21 @@ const topupLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Limiter kirim ulang verifikasi email: maks 3x per IP per jam agar tidak spam SMTP
+const resendLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 3,
+  message: { ok: false, message: 'Batas kirim ulang email tercapai (maksimal 3 kali per jam). Silakan periksa folder spam atau coba lagi nanti.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // ─── Auth Routes ──────────────────────────────────────────────────────────────
 app.post('/api/auth/register', authLimiter, auth.register);
 app.post('/api/auth/login',    authLimiter, auth.login);
 app.post('/api/auth/logout',   auth.logout);
 app.get('/verify-email',       auth.verifyEmail);
-app.post('/api/auth/resend-verification', authLimiter, auth.resendVerification);
+app.post('/api/auth/resend-verification', resendLimiter, auth.resendVerification);
 app.post('/api/auth/forgot-password', authLimiter, auth.forgotPassword);
 app.post('/api/auth/reset-password',  authLimiter, auth.resetPassword);
 app.get('/api/auth/me',        auth.requireAuth, auth.me);
