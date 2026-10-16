@@ -289,10 +289,12 @@
   }
 
   async function hapusUser(id, username) {
-    if (!confirm('Hapus permanen akun "' + username + '" beserta semua bot dan datanya?\\n\\nTindakan ini tidak bisa dibatalkan!')) return;
+    const u = cacheUser.find((x) => x.id === Number(id));
+    const name = (typeof username === 'string' && username ? username : null) || u?.username || ('User #' + id);
+    if (!confirm('Hapus permanen akun "' + name + '" beserta semua bot dan datanya?\n\nTindakan ini tidak bisa dibatalkan!')) return;
     const d = await api('/api/admin/users/' + id, { method: 'DELETE' });
     if (!d?.ok) return showToast(d?.message || 'Gagal menghapus user', 'error');
-    showToast('User ' + username + ' berhasil dihapus', 'success');
+    showToast('User ' + name + ' berhasil dihapus', 'success');
     muatUser();
   }
 

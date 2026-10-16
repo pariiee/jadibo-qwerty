@@ -15,6 +15,28 @@ function bacaArg(teks) {
   return Number.isNaN(Number(t)) ? t : Number(t);
 }
 
+function parseArgs(raw) {
+  if (raw === undefined || !raw.trim()) return [];
+  const args = [];
+  let cur = '';
+  let inQuote = null;
+  for (let i = 0; i < raw.length; i++) {
+    const c = raw[i];
+    if ((c === "'" || c === '"') && (i === 0 || raw[i - 1] !== '\\')) {
+      if (inQuote === c) inQuote = null;
+      else if (!inQuote) inQuote = c;
+    }
+    if (c === ',' && !inQuote) {
+      args.push(bacaArg(cur));
+      cur = '';
+    } else {
+      cur += c;
+    }
+  }
+  if (cur.trim()) args.push(bacaArg(cur));
+  return args;
+}
+
 document.addEventListener('click', (e) => {
   const el = e.target.closest('[data-act]');
   if (!el) return;
@@ -23,7 +45,9 @@ document.addEventListener('click', (e) => {
   const fn = window[cocok[1]];
   if (typeof fn !== 'function') { console.warn('[act] nggak ada fungsinya:', el.dataset.act); return; }
   e.preventDefault();
-  fn(cocok[2] === undefined ? undefined : bacaArg(cocok[2]), el, e);
+  const args = parseArgs(cocok[2]);
+  args.push(el, e);
+  fn(...args);
 });
 
 window.showToast = function (msg, tipe) {
