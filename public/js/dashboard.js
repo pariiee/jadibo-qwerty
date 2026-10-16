@@ -263,7 +263,7 @@
         kuotaHtml +
         '<div class="row" style="margin-top:14px"><span>Prefix: <b style="color:var(--ink)">' + esc(bot.prefix) + '</b></span><span>' + esc(new Date(bot.created_at).toLocaleDateString('id-ID')) + '</span></div>' +
         '<div class="bot-auto-renew-row" style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding:8px 12px;border-radius:8px;background:rgba(255,255,255,0.03);border:1px solid var(--border)">' +
-          '<span style="font-size:12px;display:flex;align-items:center;gap:6px"><span>🔄</span> <b>Auto-perpanjang</b></span>' +
+          '<span style="font-size:12px;display:flex;align-items:center;gap:6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg> <b>Auto-perpanjang</b></span>' +
           '<button type="button" data-toggle-autorenew class="btn btn-sm ' + (me?.auto_renew ? 'btn-primary' : 'btn-outline') + '" style="font-size:11px;padding:3px 10px;border-radius:999px;' + (me?.auto_renew ? 'background:#10b981;color:#000;border:none;' : '') + '">' +
             (me?.auto_renew ? 'Aktif' : 'Mati') +
           '</button>' +
