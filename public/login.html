@@ -23,6 +23,7 @@
     <p class="auth-desc">Please enter your login details.</p>
 
     <form id="login-form">
+      <div class="ok-msg" id="login-ok" style="display:none;color:#10b981;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);padding:14px 16px;border-radius:14px;font-size:13.5px;margin-bottom:14px;font-weight:600;line-height:1.5"></div>
       <div class="field">
         <label for="login-username">Email or Username</label>
         <input class="inp" id="login-username" type="text" placeholder="johnwick123@gmail.com" autocomplete="username" required />
@@ -70,8 +71,12 @@
         <input class="inp" id="reg-username" type="text" placeholder="Pilih username unik" autocomplete="username" required />
       </div>
       <div class="field">
-        <label for="reg-email">Email</label>
-        <input class="inp" id="reg-email" type="email" placeholder="nama@email.com" autocomplete="email" required />
+        <label for="reg-phone">Nomor WhatsApp</label>
+        <input class="inp" id="reg-phone" type="tel" placeholder="08xxxxxxxxxx" autocomplete="tel" required />
+      </div>
+      <div class="field">
+        <label for="reg-email">Alamat Email (Wajib @gmail.com)</label>
+        <input class="inp" id="reg-email" type="email" placeholder="nama@gmail.com" autocomplete="email" required />
       </div>
       <div class="field">
         <label for="reg-password">Password</label>
@@ -90,7 +95,8 @@
         </div>
       </div>
       <div class="err" id="reg-error"></div>
-      <button class="btn btn-dark btn-auth-submit" id="reg-submit-btn" type="submit">Sign Up</button>
+      <div class="ok-msg" id="reg-ok" style="display:none;color:#10b981;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);padding:14px 16px;border-radius:14px;font-size:13.5px;margin-bottom:14px;font-weight:600;line-height:1.5"></div>
+      <button class="btn btn-dark btn-auth-submit" id="reg-submit-btn" type="submit">Daftar Akun</button>
     </form>
 
     <div class="auth-divider"><span>OR</span></div>

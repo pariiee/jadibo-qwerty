@@ -248,6 +248,19 @@ const CREATE_TABLES = [
     INDEX idx_user (user_id),
     INDEX idx_expires (expires_at)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+
+  // email_verifications — token verifikasi email Gmail (expired 24 jam)
+  `CREATE TABLE IF NOT EXISTS email_verifications (
+    id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id    INT UNSIGNED NOT NULL,
+    token      VARCHAR(128) NOT NULL,
+    expires_at DATETIME NOT NULL,
+    used_at    DATETIME DEFAULT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_token (token),
+    INDEX idx_user (user_id),
+    INDEX idx_expires (expires_at)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
   // wallet_ledger — jurnal dompet. Lihat schema.sql untuk penjelasan lengkap.
   //
   // Dibuat lewat CREATE_TABLES (bukan TABLES) karena ini tabel BARU: TABLES

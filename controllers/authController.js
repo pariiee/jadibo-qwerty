@@ -96,10 +96,16 @@ async function register(req, res) {
     if (process.env.ALLOW_REGISTER !== '1')
       return sendError(res, 403, 'Registrasi ditutup. Hubungi admin.');
 
-    const { username, password, email } = req.body;
+    const { username, password, phone, email } = req.body;
 
     if (!username || !password)
       return sendError(res, 400, 'Username dan password wajib diisi');
+
+    if (!phone)
+      return sendError(res, 400, 'Nomor WhatsApp wajib diisi');
+
+    if (!email)
+      return sendError(res, 400, 'Alamat email Gmail wajib diisi');
 
     if (username.length < 3 || username.length > 50)
       return sendError(res, 400, 'Username harus 3-50 karakter');
@@ -110,49 +116,108 @@ async function register(req, res) {
     if (!/^[a-zA-Z0-9_]+$/.test(username))
       return sendError(res, 400, 'Username hanya boleh huruf, angka, dan underscore');
 
-    let bersihEmail = null;
-    if (email) {
-      const { emailValid } = require('../engine/email');
-      bersihEmail = String(email).trim().toLowerCase();
-      if (!emailValid(bersihEmail))
-        return sendError(res, 400, 'Format email tidak valid');
+    // Bersihkan & validasi nomor WhatsApp
+    const bersihPhone = String(phone).replace(/[^0-9]/g, '');
+    if (bersihPhone.length < 9 || bersihPhone.length > 16) {
+      return sendError(res, 400, 'Nomor WhatsApp tidak valid (minimal 9 digit)');
     }
 
+    // Bersihkan & validasi email: WAJIB @gmail.com
+    const { emailValid, kirimEmail } = require('../engine/email');
+    const bersihEmail = String(email).trim().toLowerCase();
+    if (!emailValid(bersihEmail)) {
+      return sendError(res, 400, 'Format email tidak valid');
+    }
+    if (!/@gmail\.com$/i.test(bersihEmail) && !/@googlemail\.com$/i.test(bersihEmail)) {
+      return sendError(res, 400, 'Pendaftaran akun wajib menggunakan email @gmail.com');
+    }
+
+    // Cek username
     const [existing] = await pool.execute(
-      'SELECT id FROM users WHERE username = ?',
+      'SELECT id, is_active FROM users WHERE username = ?',
       [username]
     );
-    if (existing.length > 0)
-      return sendError(res, 409, 'Username sudah digunakan');
+    if (existing.length > 0) {
+      if (existing[0].is_active) {
+        return sendError(res, 409, 'Username sudah digunakan');
+      }
+    }
+
+    // Cek email
+    const [existingEmail] = await pool.execute(
+      'SELECT id, is_active FROM users WHERE email = ?',
+      [bersihEmail]
+    );
+    if (existingEmail.length > 0) {
+      if (existingEmail[0].is_active) {
+        return sendError(res, 409, 'Email Gmail ini sudah terdaftar. Silakan login atau gunakan fitur Lupa Password.');
+      } else {
+        // Hapus akun belum aktif lama agar bisa daftar ulang
+        await pool.execute('DELETE FROM users WHERE id = ?', [existingEmail[0].id]);
+      }
+    }
+
+    if (existing.length > 0 && !existing[0].is_active) {
+      await pool.execute('DELETE FROM users WHERE id = ?', [existing[0].id]);
+    }
 
     const hashed = await bcrypt.hash(password, 12);
+    // User dibuat dengan is_active = 0 sampai verifikasi email diklik
     const [result] = await pool.execute(
-      'INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)',
-      [username, bersihEmail, hashed, 'user']
+      'INSERT INTO users (username, phone, email, password, role, is_active) VALUES (?, ?, ?, ?, ?, 0)',
+      [username, bersihPhone, bersihEmail, hashed, 'user']
     );
 
+    const userId = result.insertId;
 
-    // Trial TIDAK auto-aktif — user harus buka /pricing dan klik klaim sendiri
-    // (POST /api/billing/trial). Auto-di sini bikin akun baru langsung nyala
-    // tanpa diminta dan bikin tombol klaimnya jadi mubazir.
+    // Pastikan tabel email_verifications ada
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS email_verifications (
+        id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        user_id    INT UNSIGNED NOT NULL,
+        token      VARCHAR(128) NOT NULL,
+        expires_at DATETIME NOT NULL,
+        used_at    DATETIME DEFAULT NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY uq_token (token),
+        INDEX idx_user (user_id),
+        INDEX idx_expires (expires_at)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `).catch(() => {});
 
-    const token = signToken({ id: result.insertId, username, role: 'user', tv: 0 });
+    // Buat token verifikasi 32 bytes (24 jam)
+    const crypto = require('crypto');
+    const token = crypto.randomBytes(32).toString('hex');
+    await pool.execute(
+      'INSERT INTO email_verifications (user_id, token, expires_at) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 24 HOUR))',
+      [userId, token]
+    );
 
-    res.cookie('token', token, {
-      httpOnly: true,
-      // req.protocol (bukan NODE_ENV): produksi diakses via HTTPS tunnel DAN
-      // HTTP :3000. Cookie Secure di jalur HTTP dibuang browser -> login sukses
-      // tapi /dashboard selalu 401 dan balik ke '/'.
-      secure: req.protocol === 'https',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    const baseUrl = process.env.BASE_URL || (req.protocol + '://' + req.get('host'));
+    const verifyUrl = `${baseUrl}/verify-email?token=${token}`;
+    const subjek = 'Verifikasi Email Akun qwertygate';
+    const teks = `Halo ${username},\n\nTerima kasih telah mendaftar di qwertygate.\n\nKlik tautan berikut untuk memverifikasi email kamu dan mengaktifkan akun (berlaku 24 jam):\n${verifyUrl}\n\nJika kamu tidak merasa mendaftar di qwertygate, abaikan email ini.\n\nSalam,\nTim qwertygate`;
+    const html = `
+      <div style="font-family:'Plus Jakarta Sans',sans-serif,Arial,sans-serif;max-width:540px;margin:0 auto;padding:28px 24px;background:#ffffff;border:1px solid #e2e8f0;border-radius:20px;">
+        <h2 style="color:#0f172a;margin-top:0;font-size:20px;font-weight:800;">Verifikasi Alamat Email</h2>
+        <p style="color:#475569;font-size:14px;line-height:1.6;">Halo <strong>${username}</strong>,</p>
+        <p style="color:#475569;font-size:14px;line-height:1.6;">Terima kasih sudah mendaftar di <strong>qwertygate</strong>. Klik tombol di bawah ini untuk mengaktifkan akunmu:</p>
+        <div style="margin:26px 0;text-align:center;">
+          <a href="${verifyUrl}" style="display:inline-block;padding:12px 30px;background:#0f172a;color:#ffffff;text-decoration:none;font-weight:700;border-radius:999px;font-size:14px;">Aktifkan Akun Saya</a>
+        </div>
+        <p style="color:#64748b;font-size:12.5px;line-height:1.5;">Atau salin tautan berikut ke browser:<br><a href="${verifyUrl}" style="color:#2563eb;word-break:break-all;">${verifyUrl}</a></p>
+        <hr style="border:none;border-top:1px solid #f1f5f9;margin:22px 0;">
+        <p style="color:#94a3b8;font-size:11.5px;margin:0;">Tautan ini berlaku selama 24 jam. Jika kamu tidak merasa mendaftar, abaikan email ini.</p>
+      </div>
+    `;
+
+    kirimEmail(bersihEmail, subjek, teks, html).catch(e => console.error('[Auth] Gagal kirim email verifikasi:', e));
 
     return res.status(201).json({
       ok: true,
-      message: 'Registrasi berhasil',
-      user: { id: result.insertId, username, role: 'user' },
-      token,
+      message: 'Pendaftaran berhasil! Tautan verifikasi telah dikirimkan ke Gmail (' + bersihEmail + '). Silakan cek kotak masuk atau folder spam untuk mengaktifkan akun.',
+      email: bersihEmail,
+      need_verification: true
     });
   } catch (err) {
     console.error('[Auth] register error:', err);
@@ -170,8 +235,8 @@ async function login(req, res) {
       return sendError(res, 400, 'Username dan password wajib diisi');
 
     const [rows] = await pool.execute(
-      'SELECT id, username, password, role, is_active, token_version FROM users WHERE username = ?',
-      [username]
+      'SELECT id, username, password, role, is_active, token_version FROM users WHERE username = ? OR email = ?',
+      [username, username]
     );
 
     if (rows.length === 0)
@@ -179,20 +244,26 @@ async function login(req, res) {
 
     const user = rows[0];
 
-    if (!user.is_active)
-      return sendError(res, 403, 'Akun dinonaktifkan. Hubungi admin');
-
     const match = await bcrypt.compare(password, user.password);
     if (!match)
       return sendError(res, 401, 'Username atau password salah');
+
+    if (!user.is_active) {
+      // Cek apakah ada token pending verifikasi email
+      const [verRows] = await pool.execute(
+        'SELECT id FROM email_verifications WHERE user_id = ? AND used_at IS NULL AND expires_at > NOW() LIMIT 1',
+        [user.id]
+      ).catch(() => [[]]);
+      if (verRows.length > 0) {
+        return sendError(res, 403, 'Akun kamu belum aktif. Silakan buka Gmail kamu dan klik link verifikasi yang telah kami kirimkan.');
+      }
+      return sendError(res, 403, 'Akun dinonaktifkan. Hubungi admin');
+    }
 
     const token = signToken({ id: user.id, username: user.username, role: user.role, tv: Number(user.token_version || 0) });
 
     res.cookie('token', token, {
       httpOnly: true,
-      // req.protocol (bukan NODE_ENV): produksi diakses via HTTPS tunnel DAN
-      // HTTP :3000. Cookie Secure di jalur HTTP dibuang browser -> login sukses
-      // tapi /dashboard selalu 401 dan balik ke '/'.
       secure: req.protocol === 'https',
       sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000,
@@ -206,6 +277,105 @@ async function login(req, res) {
     });
   } catch (err) {
     console.error('[Auth] login error:', err);
+    return sendError(res, 500, 'Terjadi kesalahan server');
+  }
+}
+
+// ─── GET /verify-email ────────────────────────────────────────────────────────
+
+async function verifyEmail(req, res) {
+  try {
+    const { token } = req.query;
+    if (!token) {
+      return res.redirect('/login?err=' + encodeURIComponent('Token verifikasi tidak ditemukan'));
+    }
+
+    const [rows] = await pool.execute(
+      'SELECT id, user_id, expires_at, used_at FROM email_verifications WHERE token = ? LIMIT 1',
+      [token]
+    );
+
+    if (rows.length === 0) {
+      return res.redirect('/login?err=' + encodeURIComponent('Tautan verifikasi tidak valid atau tidak ditemukan'));
+    }
+
+    const item = rows[0];
+    if (item.used_at) {
+      return res.redirect('/login?verified=1');
+    }
+
+    if (new Date(item.expires_at) < new Date()) {
+      return res.redirect('/login?err=' + encodeURIComponent('Tautan verifikasi sudah kedaluwarsa. Silakan minta tautan baru.'));
+    }
+
+    // Aktifkan user dan tandai token terpakai
+    await pool.execute('UPDATE users SET is_active = 1 WHERE id = ?', [item.user_id]);
+    await pool.execute('UPDATE email_verifications SET used_at = NOW() WHERE id = ?', [item.id]);
+
+    return res.redirect('/login?verified=1');
+  } catch (err) {
+    console.error('[Auth] verifyEmail error:', err);
+    return res.redirect('/login?err=' + encodeURIComponent('Terjadi kesalahan saat memverifikasi email'));
+  }
+}
+
+// ─── POST /api/auth/resend-verification ──────────────────────────────────────
+
+async function resendVerification(req, res) {
+  try {
+    const { email } = req.body;
+    if (!email) return sendError(res, 400, 'Alamat email wajib diisi');
+
+    const bersihEmail = String(email).trim().toLowerCase();
+    const [rows] = await pool.execute(
+      'SELECT id, username, is_active FROM users WHERE email = ? LIMIT 1',
+      [bersihEmail]
+    );
+
+    if (rows.length === 0 || rows[0].is_active) {
+      return res.json({ ok: true, message: 'Jika email terdaftar dan belum aktif, tautan verifikasi baru telah dikirimkan ke Gmail kamu.' });
+    }
+
+    const user = rows[0];
+    const crypto = require('crypto');
+    const token = crypto.randomBytes(32).toString('hex');
+
+    await pool.execute(
+      'UPDATE email_verifications SET used_at = NOW() WHERE user_id = ? AND used_at IS NULL',
+      [user.id]
+    );
+    await pool.execute(
+      'INSERT INTO email_verifications (user_id, token, expires_at) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 24 HOUR))',
+      [user.id, token]
+    );
+
+    const baseUrl = process.env.BASE_URL || (req.protocol + '://' + req.get('host'));
+    const verifyUrl = `${baseUrl}/verify-email?token=${token}`;
+    const { kirimEmail } = require('../engine/email');
+    const subjek = 'Kirim Ulang Verifikasi Email Akun qwertygate';
+    const teks = `Halo ${user.username},\n\nBerikut tautan verifikasi baru untuk akun qwertygate kamu (berlaku 24 jam):\n${verifyUrl}\n\nSalam,\nTim qwertygate`;
+    const html = `
+      <div style="font-family:'Plus Jakarta Sans',sans-serif,Arial;max-width:540px;margin:0 auto;padding:28px 24px;background:#ffffff;border:1px solid #e2e8f0;border-radius:20px;">
+        <h2 style="color:#0f172a;margin-top:0;font-size:20px;font-weight:800;">Verifikasi Alamat Email</h2>
+        <p style="color:#475569;font-size:14px;line-height:1.6;">Halo <strong>${user.username}</strong>,</p>
+        <p style="color:#475569;font-size:14px;line-height:1.6;">Berikut tautan verifikasi baru untuk mengaktifkan akunmu di <strong>qwertygate</strong>:</p>
+        <div style="margin:26px 0;text-align:center;">
+          <a href="${verifyUrl}" style="display:inline-block;padding:12px 30px;background:#0f172a;color:#ffffff;text-decoration:none;font-weight:700;border-radius:999px;font-size:14px;">Aktifkan Akun Saya</a>
+        </div>
+        <p style="color:#64748b;font-size:12.5px;line-height:1.5;">Atau salin tautan berikut ke browser:<br><a href="${verifyUrl}" style="color:#2563eb;word-break:break-all;">${verifyUrl}</a></p>
+        <hr style="border:none;border-top:1px solid #f1f5f9;margin:22px 0;">
+        <p style="color:#94a3b8;font-size:11.5px;margin:0;">Tautan berlaku selama 24 jam.</p>
+      </div>
+    `;
+
+    kirimEmail(bersihEmail, subjek, teks, html).catch(e => console.error('[Auth] Gagal kirim email resend:', e));
+
+    return res.json({
+      ok: true,
+      message: 'Jika email terdaftar dan belum aktif, tautan verifikasi baru telah dikirimkan ke Gmail kamu.'
+    });
+  } catch (err) {
+    console.error('[Auth] resendVerification error:', err);
     return sendError(res, 500, 'Terjadi kesalahan server');
   }
 }
@@ -720,6 +890,7 @@ async function resetPassword(req, res) {
 
 module.exports = {
   register, login, logout, me, gantiPassword, simpanPhone, simpanEmail,
+  verifyEmail, resendVerification,
   forgotPassword, resetPassword,
   googleRedirect, googleCallback,
   listUsers, updateUser, deleteUser,

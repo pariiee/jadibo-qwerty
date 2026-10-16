@@ -26,6 +26,15 @@
     }
   }
 
+  // Notifikasi sukses verifikasi email (?verified=1)
+  if (params.get('verified') === '1') {
+    const loginOk = document.getElementById('login-ok');
+    if (loginOk) {
+      loginOk.textContent = 'Email kamu berhasil diverifikasi! Akunmu sudah aktif, silakan login.';
+      loginOk.style.display = 'block';
+    }
+  }
+
   // Token reset password dari URL
   const resetToken = params.get('token');
   if (isReset) {
@@ -119,9 +128,22 @@
   document.getElementById('register-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const err = document.getElementById('reg-error');
+    const ok = document.getElementById('reg-ok');
+    const btn = document.getElementById('reg-submit-btn');
     err.classList.remove('show');
+    if (ok) ok.style.display = 'none';
 
+    const username = document.getElementById('reg-username').value.trim();
+    const phone = document.getElementById('reg-phone')?.value.trim();
+    const email = document.getElementById('reg-email').value.trim();
     const pass = document.getElementById('reg-password').value;
+
+    if (!email.toLowerCase().endsWith('@gmail.com') && !email.toLowerCase().endsWith('@googlemail.com')) {
+      err.textContent = 'Pendaftaran akun wajib menggunakan email @gmail.com';
+      err.classList.add('show');
+      return;
+    }
+
     const { level } = cekKekuatan(pass);
     if (level !== 'strong') {
       err.textContent = 'Password harus berstatus Kuat (min. 8 karakter, kombinasi huruf besar, kecil & angka)';
@@ -129,15 +151,39 @@
       return;
     }
 
+    btn.disabled = true;
+    btn.textContent = 'Mendaftarkan...';
+
     try {
       const data = await kirim('/api/auth/register', {
-        username: document.getElementById('reg-username').value.trim(),
-        email: document.getElementById('reg-email').value.trim(),
+        username,
+        phone,
+        email,
         password: pass
       });
-      if (data.ok) location.href = '/dashboard';
-      else { err.textContent = data.message; err.classList.add('show'); }
-    } catch { err.textContent = 'Gagal terhubung ke server'; err.classList.add('show'); }
+      if (data.ok) {
+        if (data.need_verification) {
+          if (ok) {
+            ok.innerHTML = `<strong>Tautan Verifikasi Terkirim!</strong><br>${data.message}`;
+            ok.style.display = 'block';
+          }
+          document.getElementById('register-form').reset();
+          btn.textContent = 'Tautan Terkirim';
+        } else {
+          location.href = '/dashboard';
+        }
+      } else {
+        err.textContent = data.message;
+        err.classList.add('show');
+        btn.disabled = false;
+        btn.textContent = 'Daftar Akun';
+      }
+    } catch {
+      err.textContent = 'Gagal terhubung ke server';
+      err.classList.add('show');
+      btn.disabled = false;
+      btn.textContent = 'Daftar Akun';
+    }
   });
 
   // Forgot password handler

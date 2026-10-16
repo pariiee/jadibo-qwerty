@@ -136,18 +136,9 @@
     } catch { err.textContent = 'Gagal terhubung ke server'; err.classList.add('show'); }
   });
 
-  document.getElementById('register-form').addEventListener('submit', async (e) => {
+  document.getElementById('register-form').addEventListener('submit', (e) => {
     e.preventDefault();
-    const err = document.getElementById('reg-error');
-    err.classList.remove('show');
-    try {
-      const data = await authFetch('/api/auth/register', {
-        username: document.getElementById('reg-username').value.trim(),
-        password: document.getElementById('reg-password').value
-      });
-      if (data.ok) location.href = '/dashboard';
-      else { err.textContent = data.message; err.classList.add('show'); }
-    } catch { err.textContent = 'Gagal terhubung ke server'; err.classList.add('show'); }
+    location.href = '/register';
   });
 
   // Cek sesi via cookie — kalau sudah login, langsung ke dashboard

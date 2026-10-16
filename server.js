@@ -199,6 +199,8 @@ const topupLimiter = rateLimit({
 app.post('/api/auth/register', authLimiter, auth.register);
 app.post('/api/auth/login',    authLimiter, auth.login);
 app.post('/api/auth/logout',   auth.logout);
+app.get('/verify-email',       auth.verifyEmail);
+app.post('/api/auth/resend-verification', authLimiter, auth.resendVerification);
 app.post('/api/auth/forgot-password', authLimiter, auth.forgotPassword);
 app.post('/api/auth/reset-password',  authLimiter, auth.resetPassword);
 app.get('/api/auth/me',        auth.requireAuth, auth.me);
