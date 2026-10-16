@@ -2,42 +2,9 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>Saldo & Top up — qwertygate</title>
 <!-- @include head.html -->
-<style>
-  .chip-btn {
-    border-radius: 999px !important;
-    padding: 7px 16px !important;
-    font-size: 13px !important;
-    font-weight: 600 !important;
-    transition: all .15s ease !important;
-  }
-  .chip-btn:hover, .chip-btn.active {
-    border-color: var(--green, #10b981) !important;
-    color: var(--green, #10b981) !important;
-    background: var(--greenbg, rgba(16, 185, 129, 0.1)) !important;
-  }
-  .method-tab {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 16px;
-    border-radius: 8px;
-    border: 1px solid var(--border, rgba(255,255,255,0.1));
-    background: transparent;
-    color: var(--muted, #94a3b8);
-    cursor: pointer;
-    font-size: 13px;
-    font-weight: 600;
-    transition: all .15s ease;
-  }
-  .method-tab.active {
-    border-color: var(--green, #10b981) !important;
-    color: var(--green, #10b981) !important;
-    background: var(--greenbg, rgba(16, 185, 129, 0.08)) !important;
-  }
-</style>
 </head>
 <body class="page-saldo">
 <div class="app">
@@ -49,98 +16,78 @@
 
     <div class="content">
       <!-- Header -->
-      <div class="cmd-head" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:20px">
+      <header class="cmd-head">
         <div>
-          <h2 style="margin:0 0 4px">Top up saldo</h2>
-          <p class="m-sub" style="margin:0">Isi saldo wallet untuk sewa bot dan perpanjang paket otomatis.</p>
+          <h2>Top up saldo</h2>
+          <p class="m-sub">Isi saldo wallet untuk sewa bot dan perpanjang paket otomatis.</p>
         </div>
         <div>
-          <button class="btn btn-outline" data-act="scrollRiwayat" style="border-radius:999px;font-size:13px;display:flex;align-items:center;gap:6px">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Riwayat top up
+          <button class="btn btn-outline" data-act="scrollRiwayat" type="button">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Riwayat top up
           </button>
         </div>
-      </div>
+      </header>
 
-      <!-- Banner auto-perpanjang -->
-      <div id="banner-auto" class="card" style="display:none;margin-bottom:16px"></div>
+      <div class="sd-stack">
+        <!-- Banner auto-perpanjang -->
+        <div id="banner-auto" class="card" style="display:none"></div>
 
-      <!-- Kartu Ringkasan Saldo -->
-      <div style="margin-bottom:20px">
-        <!-- Card: Saldo Wallet -->
-        <div class="card" style="position:relative;overflow:hidden">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start">
-            <div>
-              <div class="m-sub" style="font-size:11px;font-weight:700;letter-spacing:0.06em;color:var(--muted)">SALDO WALLET</div>
-              <div id="saldo-angka" style="font-size:32px;font-weight:800;color:#10b981;line-height:1.1;margin-top:6px">—</div>
-              <div class="m-sub" style="font-size:12px;margin-top:6px">Saldo aktif di wallet kamu</div>
-            </div>
-            <div style="width:42px;height:42px;border-radius:10px;background:rgba(16,185,129,0.12);display:flex;align-items:center;justify-content:center;color:#10b981">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
-            </div>
+        <!-- Saldo wallet -->
+        <section class="card sd-bal" aria-label="Saldo wallet">
+          <div>
+            <div class="lbl">Saldo wallet</div>
+            <div id="saldo-angka">—</div>
+            <p class="m-sub">Saldo aktif di wallet kamu</p>
           </div>
-        </div>
-      </div>
+          <div class="sd-ic" aria-hidden="true">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+          </div>
+        </section>
 
-      <!-- Main Form Card: Top Up Saldo -->
-      <div id="blok-topup" class="card" style="margin-bottom:20px;display:none">
-        <!-- Tabs Metode -->
-        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
+        <!-- Form top up -->
+        <div id="blok-topup" class="card sd-form" style="display:none">
           <div class="method-tab active">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:text-bottom;margin-right:4px"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> Bayar via QRIS (otomatis)
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            Bayar via QRIS (otomatis)
           </div>
+
+          <h3>Pembayaran otomatis via QRIS</h3>
+          <p class="m-sub">Bayar via QRIS, GoPay, OVO, Dana, ShopeePay, atau BCA. Saldo otomatis ditambahkan setelah pembayaran dikonfirmasi gateway.</p>
+
+          <div class="sd-field">
+            <label for="nominal">Nominal top up</label>
+            <input class="inp" id="nominal" inputmode="numeric" autocomplete="off" placeholder="Nominal top up (min Rp 100)" />
+            <div id="petunjuk-nominal"></div>
+          </div>
+
+          <div class="sd-field">
+            <label>Pilih nominal</label>
+            <div id="pilihan-cepat"></div>
+          </div>
+
+          <button class="btn btn-dark s-pay" id="btn-topup" data-act="topup" type="button">Bayar sekarang</button>
         </div>
 
-        <div style="margin-bottom:16px">
-          <b style="font-size:15px;display:block;margin-bottom:4px">Pembayaran otomatis via QRIS</b>
-          <p class="m-sub" style="margin:0;font-size:13px;line-height:1.4">
-            Bayar via QRIS, GoPay, OVO, Dana, ShopeePay, atau BCA. Saldo otomatis ditambahkan setelah pembayaran dikonfirmasi gateway.
-          </p>
-        </div>
-
-        <!-- Input Nominal -->
-        <div style="margin-bottom:16px">
-          <label class="m-sub" for="nominal" style="font-size:13px;font-weight:600;display:block;margin-bottom:6px">Nominal top up</label>
-          <input class="inp" id="nominal" inputmode="numeric" autocomplete="off" placeholder="Nominal top up (min Rp 100)" style="width:100%;font-size:15px;padding:12px;border-radius:8px" />
-          <div class="m-sub" id="petunjuk-nominal" style="margin:6px 0 0;font-size:12px"></div>
-        </div>
-
-        <!-- Pilihan Cepat -->
-        <div style="margin-bottom:18px">
-          <label class="m-sub" style="font-size:12px;font-weight:600;display:block;margin-bottom:8px">Pilih nominal:</label>
-          <div id="pilihan-cepat" style="display:flex;flex-wrap:wrap;gap:8px"></div>
-        </div>
-
-        <!-- Tombol Bayar Sekarang / Buat QRIS -->
-        <button class="btn btn-primary" id="btn-topup" data-act="topup" style="width:100%;padding:14px;font-size:15px;font-weight:700;border-radius:8px;background:#10b981;color:#000;border:none;cursor:pointer">
-          Bayar sekarang
-        </button>
+        <!-- Tagihan QRIS yang sedang menunggu (fallback jika tidak redirect) -->
+        <div id="blok-qris" class="card" style="display:none"></div>
       </div>
 
-      <!-- Tagihan QRIS yang sedang menunggu (fallback jika tidak redirect) -->
-      <div id="blok-qris" class="card" style="margin-bottom:24px;display:none"></div>
-
-      <!-- Riwayat Saldo -->
-      <div id="riwayat-section" style="margin-top:32px">
-        <div class="cmd-head" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+      <!-- Riwayat saldo -->
+      <div id="riwayat-section">
+        <div class="cmd-head">
           <div>
-            <h2 style="font-size:18px;margin:0 0 4px">Riwayat Saldo</h2>
-            <p class="m-sub" style="margin:0">Semua pergerakan saldo: top up, perpanjang, auto-perpanjang, dan penyesuaian admin.</p>
+            <h2>Riwayat saldo</h2>
+            <p class="m-sub">Semua pergerakan saldo: top up, perpanjang, auto-perpanjang, dan penyesuaian admin.</p>
           </div>
-          <div>
-            <a class="m-sub" href="/billing" style="color:#f59e0b;text-decoration:none;font-weight:600;font-size:13px">
-              Lihat riwayat pembayaran lengkap →
-            </a>
-          </div>
+          <a class="sd-link" href="/billing">Lihat riwayat pembayaran lengkap →</a>
         </div>
 
-        <div class="tbl-wrap" style="margin-top:14px">
+        <div class="tbl-wrap">
           <table class="tbl" id="tbl-ledger">
             <thead>
               <tr>
-                <th>Waktu</th><th>Jenis</th>
-                <th style="text-align:right">Jumlah</th>
-                <th style="text-align:right">Saldo Sesudah</th>
-                <th>Keterangan</th>
+                <th>Waktu</th><th>Jenis</th><th>Jumlah</th><th>Saldo sesudah</th><th>Keterangan</th>
               </tr>
             </thead>
             <tbody><tr><td colspan="5" class="kosong">Memuat…</td></tr></tbody>
@@ -148,7 +95,7 @@
         </div>
 
         <div class="card" id="ledger-kosong" style="display:none;margin-top:14px">
-          <p class="m-sub" style="margin:0">Belum ada pergerakan saldo. Top up dulu buat mulai.</p>
+          <p class="m-sub">Belum ada pergerakan saldo. Top up dulu buat mulai.</p>
         </div>
       </div>
     </div>
