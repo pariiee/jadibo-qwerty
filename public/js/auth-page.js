@@ -127,12 +127,61 @@
     } catch { err.textContent = 'Gagal terhubung ke server'; err.classList.add('show'); }
   });
 
+  // Input live error reset
+  ['username', 'phone', 'email', 'password'].forEach(f => {
+    const inp = document.getElementById('reg-' + f);
+    if (inp) {
+      inp.addEventListener('input', () => {
+        inp.classList.remove('is-invalid');
+        const el = document.getElementById('reg-err-' + f);
+        if (el) { el.textContent = ''; el.classList.remove('show'); }
+      });
+    }
+  });
+
+  function bersihkanErrorReg() {
+    ['username', 'phone', 'email', 'password'].forEach(f => {
+      const inp = document.getElementById('reg-' + f);
+      const el = document.getElementById('reg-err-' + f);
+      if (inp) inp.classList.remove('is-invalid');
+      if (el) { el.textContent = ''; el.classList.remove('show'); }
+    });
+    const err = document.getElementById('reg-error');
+    if (err) { err.textContent = ''; err.classList.remove('show'); }
+  }
+
+  function tampilkanErrorReg(msg) {
+    bersihkanErrorReg();
+    const s = String(msg || '');
+    if (/whatsapp|nomor|digit/i.test(s)) {
+      const el = document.getElementById('reg-err-phone');
+      const inp = document.getElementById('reg-phone');
+      if (el && inp) { el.textContent = s; el.classList.add('show'); inp.classList.add('is-invalid'); inp.focus(); return; }
+    }
+    if (/email|gmail/i.test(s)) {
+      const el = document.getElementById('reg-err-email');
+      const inp = document.getElementById('reg-email');
+      if (el && inp) { el.textContent = s; el.classList.add('show'); inp.classList.add('is-invalid'); inp.focus(); return; }
+    }
+    if (/username/i.test(s)) {
+      const el = document.getElementById('reg-err-username');
+      const inp = document.getElementById('reg-username');
+      if (el && inp) { el.textContent = s; el.classList.add('show'); inp.classList.add('is-invalid'); inp.focus(); return; }
+    }
+    if (/password/i.test(s)) {
+      const el = document.getElementById('reg-err-password');
+      const inp = document.getElementById('reg-password');
+      if (el && inp) { el.textContent = s; el.classList.add('show'); inp.classList.add('is-invalid'); inp.focus(); return; }
+    }
+    const err = document.getElementById('reg-error');
+    if (err) { err.textContent = s; err.classList.add('show'); }
+  }
+
   document.getElementById('register-form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const err = document.getElementById('reg-error');
     const ok = document.getElementById('reg-ok');
     const btn = document.getElementById('reg-submit-btn');
-    err.classList.remove('show');
+    bersihkanErrorReg();
     if (ok) ok.style.display = 'none';
 
     const username = document.getElementById('reg-username').value.trim();
@@ -141,21 +190,18 @@
     const pass = document.getElementById('reg-password').value;
 
     if (!phone || phone.replace(/\D/g, '').length < 9) {
-      err.textContent = 'Nomor WhatsApp tidak valid (minimal 9 digit)';
-      err.classList.add('show');
+      tampilkanErrorReg('Nomor WhatsApp tidak valid (minimal 9 digit)');
       return;
     }
 
     if (!email.toLowerCase().endsWith('@gmail.com') && !email.toLowerCase().endsWith('@googlemail.com')) {
-      err.textContent = 'Pendaftaran akun wajib menggunakan email @gmail.com';
-      err.classList.add('show');
+      tampilkanErrorReg('Pendaftaran akun wajib menggunakan email @gmail.com');
       return;
     }
 
     const { level } = cekKekuatan(pass);
     if (level !== 'strong') {
-      err.textContent = 'Password harus berstatus Kuat (min. 8 karakter, kombinasi huruf besar, kecil & angka)';
-      err.classList.add('show');
+      tampilkanErrorReg('Password harus berstatus Kuat (min. 8 karakter, kombinasi huruf besar, kecil & angka)');
       return;
     }
 
@@ -181,14 +227,12 @@
           location.href = '/dashboard';
         }
       } else {
-        err.textContent = data.message;
-        err.classList.add('show');
+        tampilkanErrorReg(data.message);
         btn.disabled = false;
         btn.textContent = 'Daftar Akun';
       }
     } catch {
-      err.textContent = 'Gagal terhubung ke server';
-      err.classList.add('show');
+      tampilkanErrorReg('Gagal terhubung ke server');
       btn.disabled = false;
       btn.textContent = 'Daftar Akun';
     }

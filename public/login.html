@@ -69,14 +69,17 @@
       <div class="field">
         <label for="reg-username">Username</label>
         <input class="inp" id="reg-username" name="username" type="text" placeholder="Pilih username unik" autocomplete="username" spellcheck="false" autocapitalize="none" data-lpignore="true" required />
+        <span class="field-err" id="reg-err-username"></span>
       </div>
       <div class="field">
         <label for="reg-phone">Nomor WhatsApp</label>
         <input class="inp" id="reg-phone" name="phone" type="tel" placeholder="08xxxxxxxxxx" autocomplete="tel" required />
+        <span class="field-err" id="reg-err-phone"></span>
       </div>
       <div class="field">
         <label for="reg-email">Alamat Email (Wajib @gmail.com)</label>
         <input class="inp" id="reg-email" name="email" type="email" placeholder="nama@gmail.com" autocomplete="email" required />
+        <span class="field-err" id="reg-err-email"></span>
       </div>
       <div class="field">
         <label for="reg-password">Password</label>
@@ -93,6 +96,7 @@
           </div>
           <span class="strength-txt" id="reg-strength-txt">Belum diisi</span>
         </div>
+        <span class="field-err" id="reg-err-password"></span>
       </div>
       <div class="err" id="reg-error"></div>
       <div class="ok-msg" id="reg-ok" style="display:none;color:#10b981;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);padding:14px 16px;border-radius:14px;font-size:13.5px;margin-bottom:14px;font-weight:600;line-height:1.5"></div>
