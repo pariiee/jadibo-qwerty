@@ -37,18 +37,21 @@ function parseArgs(raw) {
   return args;
 }
 
-document.addEventListener('click', (e) => {
-  const el = e.target.closest('[data-act]');
-  if (!el) return;
-  const cocok = /^([A-Za-z_$][\w$]*)(?:\((.*)\))?$/.exec(el.dataset.act.trim());
-  if (!cocok) return;
-  const fn = window[cocok[1]];
-  if (typeof fn !== 'function') { console.warn('[act] nggak ada fungsinya:', el.dataset.act); return; }
-  e.preventDefault();
-  const args = parseArgs(cocok[2]);
-  args.push(el, e);
-  fn(...args);
-});
+if (!window.__actInit) {
+  window.__actInit = true;
+  document.addEventListener('click', (e) => {
+    const el = e.target.closest('[data-act]');
+    if (!el) return;
+    const cocok = /^([A-Za-z_$][\w$]*)(?:\((.*)\))?$/.exec(el.dataset.act.trim());
+    if (!cocok) return;
+    const fn = window[cocok[1]];
+    if (typeof fn !== 'function') { console.warn('[act] nggak ada fungsinya:', el.dataset.act); return; }
+    e.preventDefault();
+    const args = parseArgs(cocok[2]);
+    args.push(el, e);
+    fn(...args);
+  });
+}
 
 window.showToast = function (msg, tipe) {
   let t = document.getElementById('toast');
