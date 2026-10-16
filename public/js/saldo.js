@@ -78,15 +78,17 @@
     batas = data.topup;
     document.getElementById('saldo-angka').textContent = data.saldo_text;
 
-    // Baris paket: nama + sampai kapan. Dua keadaan yang HARUS dibedakan:
-    // paket aktif (masih ada sisa hari) vs paket sudah lewat.
+    // Baris paket: nama + sampai kapan (jika ada elemennya di DOM)
     const akhir = tanggal(data.plan_expired_at);
     const namaPaket = (data.plans.find((p) => p.id === data.paket) || {}).name || data.paket || 'Gratis';
     const namaEl = document.getElementById('saldo-paket-nama');
     if (namaEl) namaEl.textContent = esc(namaPaket);
-    document.getElementById('saldo-paket').innerHTML = akhir
-      ? `Paket <b>${esc(namaPaket)}</b> — ${data.paket_aktif ? 'aktif sampai' : 'sudah berakhir'} <b>${esc(akhir)}</b>`
-      : 'Tidak ada paket aktif. Beli paket berbayar buat menyalakan bot.';
+    const paketEl = document.getElementById('saldo-paket');
+    if (paketEl) {
+      paketEl.innerHTML = akhir
+        ? `Paket <b>${esc(namaPaket)}</b> — ${data.paket_aktif ? 'aktif sampai' : 'sudah berakhir'} <b>${esc(akhir)}</b>`
+        : 'Tidak ada paket aktif. Beli paket berbayar buat menyalakan bot.';
+    }
 
     // Banner auto-perpanjang.
     const banner = document.getElementById('banner-auto');
