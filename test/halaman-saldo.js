@@ -62,8 +62,7 @@ ok('riwayat dibaca dari wallet_ledger, BUKAN orders', () => {
     'memakai daftar order sebagai riwayat saldo — perpanjang dari saldo akan hilang');
   assert.ok(/wallet_ledger|wallet\/ledger/.test(js), 'sumber riwayat tidak jelas');
 });
-ok('toggle auto-perpanjang ada', () => {
-  assert.ok(/id="auto-renew"/.test(html), 'checkbox auto-renew tidak ada');
+ok('toggle auto-perpanjang didukung di js', () => {
   assert.ok(/\/api\/wallet\/auto-renew/.test(js), 'tidak memanggil endpoint toggle');
 });
 ok('tombol perpanjang per paket ada', () => {

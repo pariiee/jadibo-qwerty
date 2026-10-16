@@ -70,8 +70,9 @@
 
     if (!data || !data.ok) {
       document.getElementById('saldo-angka').textContent = '—';
-      document.getElementById('saldo-paket').textContent = 'Gagal memuat saldo. Muat ulang halaman.';
-      daftar.innerHTML = '<p class="m-sub" style="margin:0">Gagal memuat paket.</p>';
+      const sp = document.getElementById('saldo-paket');
+      if (sp) sp.textContent = 'Gagal memuat saldo. Muat ulang halaman.';
+      if (daftar) daftar.innerHTML = '<p class="m-sub" style="margin:0">Gagal memuat paket.</p>';
       return;
     }
 
@@ -110,13 +111,19 @@
       banner.style.display = 'none';
     }
 
-    // Toggle auto-renew + keterangan percobaan terakhir.
-    document.getElementById('auto-renew').checked = !!data.auto_renew;
-    document.getElementById('auto-status').textContent = data.auto_renew_status === 'sukses'
-      ? `Terakhir berhasil: ${waktu(data.auto_renew_status_at)}`
-      : data.auto_renew
-        ? 'Aktif. Belum ada perpanjangan otomatis yang dijalankan.'
-        : 'Mati. Paket tidak akan diperpanjang otomatis.';
+    // Toggle auto-renew + keterangan percobaan terakhir (jika ada elemennya di DOM)
+    const ar = document.getElementById('auto-renew');
+    if (ar) {
+      ar.checked = !!data.auto_renew;
+      const as = document.getElementById('auto-status');
+      if (as) {
+        as.textContent = data.auto_renew_status === 'sukses'
+          ? `Terakhir berhasil: ${waktu(data.auto_renew_status_at)}`
+          : data.auto_renew
+            ? 'Aktif. Belum ada perpanjangan otomatis yang dijalankan.'
+            : 'Mati. Paket tidak akan diperpanjang otomatis.';
+      }
+    }
 
     // Nominal top up: batas & pilihan cepat SELALU dari server, tidak dihitung
     // ulang di sini. Kalau dihitung di sini, dua sumber angka bisa berbeda.
@@ -130,19 +137,21 @@
       .join('');
     document.getElementById('blok-topup').style.display = '';
 
-    // Tombol perpanjang per paket.
-    daftar.innerHTML = data.plans.length
-      ? data.plans.map((p) => {
-          const cukup = data.saldo >= p.price;
-          return '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line,#e5e7eb)">' +
-            '<span><b>' + esc(p.name) + '</b><span class="m-sub" style="display:block;margin-top:2px">' +
-              p.days + ' hari · ' + rupiah(p.price) + '</span></span>' +
-            '<button class="btn btn-sm' + (cukup ? '' : ' btn-outline') + '" ' +
-              'data-act="perpanjang(\'' + esc(p.id) + '\')"' + (cukup ? '' : ' disabled') + '>' +
-              (cukup ? 'Perpanjang' : 'Saldo kurang') + '</button>' +
-          '</div>';
-        }).join('')
-      : '<p class="m-sub" style="margin:0">Belum ada paket berbayar. Hubungi admin.</p>';
+    // Tombol perpanjang per paket (jika ada elemennya di DOM)
+    if (daftar) {
+      daftar.innerHTML = data.plans.length
+        ? data.plans.map((p) => {
+            const cukup = data.saldo >= p.price;
+            return '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line,#e5e7eb)">' +
+              '<span><b>' + esc(p.name) + '</b><span class="m-sub" style="display:block;margin-top:2px">' +
+                p.days + ' hari · ' + rupiah(p.price) + '</span></span>' +
+              '<button class="btn btn-sm' + (cukup ? '' : ' btn-outline') + '" ' +
+                'data-act="perpanjang(\'' + esc(p.id) + '\')"' + (cukup ? '' : ' disabled') + '>' +
+                (cukup ? 'Perpanjang' : 'Saldo kurang') + '</button>' +
+            '</div>';
+          }).join('')
+        : '<p class="m-sub" style="margin:0">Belum ada paket berbayar. Hubungi admin.</p>';
+    }
   }
 
   async function muatLedger() {

@@ -110,38 +110,10 @@
           <div id="pilihan-cepat" style="display:flex;flex-wrap:wrap;gap:8px"></div>
         </div>
 
-        <!-- Kode Voucher (Opsional) -->
-        <div style="margin-bottom:20px">
-          <label class="m-sub" for="voucher" style="font-size:12px;font-weight:600;display:block;margin-bottom:6px">Kode voucher (opsional — otomatis dicek)</label>
-          <input class="inp" id="voucher" autocomplete="off" placeholder="Masukkan kode voucher" style="width:100%;font-size:14px;padding:10px 12px;border-radius:8px" />
-        </div>
-
         <!-- Tombol Bayar Sekarang / Buat QRIS -->
         <button class="btn btn-primary" id="btn-topup" data-act="topup" style="width:100%;padding:14px;font-size:15px;font-weight:700;border-radius:8px;background:#10b981;color:#000;border:none;cursor:pointer">
           Bayar sekarang
         </button>
-      </div>
-
-      <!-- Kartu Perpanjang Paket dari Saldo -->
-      <div class="card" style="margin-bottom:20px">
-        <div class="m-sub" style="margin:0 0 8px;font-weight:700;font-size:14px;color:var(--txt)">Perpanjang paket dari saldo</div>
-        <p class="m-sub" style="margin:0 0 12px;font-size:13px">Gunakan saldo yang sudah ada untuk memperpanjang paket tanpa perlu scan QRIS lagi.</p>
-        <div id="tabel-paket"></div>
-      </div>
-
-      <!-- Auto-perpanjang -->
-      <div class="card" style="margin-bottom:24px">
-        <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer">
-          <input type="checkbox" id="auto-renew" data-act="autoRenew" style="margin-top:3px" />
-          <span>
-            <b>Auto-perpanjang otomatis</b>
-            <span class="m-sub" style="display:block;margin-top:4px;font-size:13px">
-              Kalau aktif, paket diperpanjang otomatis dari saldo <b>24 jam sebelum habis</b>.
-              Kalau saldo kurang: <b>tidak dipotong sebagian</b> — kamu dapat kabar lewat WA/email dan banner peringatan.
-            </span>
-          </span>
-        </label>
-        <div class="m-sub" id="auto-status" style="margin:10px 0 0;font-size:12px"></div>
       </div>
 
       <!-- Tagihan QRIS yang sedang menunggu (fallback jika tidak redirect) -->
