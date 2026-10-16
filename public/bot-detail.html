@@ -441,13 +441,19 @@ body.page-bot-stats .chart-point:focus .chart-tip {
 
     <div class="two">
       <div class="panel">
-        <h2>Command Paling Sering</h2>
-        <div class="tbl-wrap">
-          <table class="tbl" id="tbl-cmd">
-            <thead><tr><th>#</th><th>Command</th><th style="text-align:right">Dipakai</th></tr></thead>
-            <tbody><tr><td colspan="3" class="muted">Memuat…</td></tr></tbody>
-          </table>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+          <h2 style="margin:0;font-size:18px;border-bottom:2px solid var(--ink);padding-bottom:2px">Command Paling Sering</h2>
+          <span style="width:22px;height:22px;border-radius:50%;border:1px solid var(--border);display:grid;place-items:center;font-size:11px;font-weight:700;color:var(--mute);cursor:default" title="5 command paling sering dipakai">i</span>
         </div>
+        <div id="cmd-donut-container" style="display:flex;align-items:center;justify-content:space-around;gap:24px;flex-wrap:wrap;padding:10px 0">
+          <div id="cmd-donut-graphic" style="position:relative;width:150px;height:150px;flex:none;display:grid;place-items:center">
+            <!-- Donut Chart -->
+          </div>
+          <div id="cmd-donut-legend" style="display:flex;flex-direction:column;gap:12px;flex:1;min-width:160px">
+            <span class="muted">Memuat…</span>
+          </div>
+        </div>
+        <table id="tbl-cmd" style="display:none"><tbody></tbody></table>
       </div>
 
       <div class="panel">

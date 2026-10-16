@@ -56,11 +56,55 @@
       if (sub && total > 0) sub.textContent = 'dari total ' + n(total) + ' respon';
     }
 
-    isiTabel(document.querySelector('#tbl-cmd tbody'),
-      d.cmd.map((c, i) => '<tr><td class="muted">' + (i + 1) + '</td><td><code>' + esc(c.cmd) +
-        '</code></td><td style="text-align:right"><b>' + n(c.n) + '</b>' +
-        (c.ms ? '<br><small class="muted">' + n(c.ms) + ' ms</small>' : '') + '</td></tr>'),
-      3, 'Belum ada command yang tercatat.');
+    // Render 5 Command Paling Sering (Donut Chart & Legend seperti mockup)
+    const WARNA_CMD = ['#f97316', '#3b82f6', '#a855f7', '#10b981', '#eab308'];
+    const top5 = (d.cmd || []).slice(0, 5);
+    const totalCmd = top5.reduce((acc, c) => acc + (c.n || 0), 0);
+    const donutGraphic = document.getElementById('cmd-donut-graphic');
+    const donutLegend = document.getElementById('cmd-donut-legend');
+
+    if (donutGraphic && donutLegend) {
+      if (!top5.length || totalCmd === 0) {
+        donutGraphic.innerHTML = '<svg width="140" height="140" viewBox="0 0 140 140"><circle cx="70" cy="70" r="50" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="16"/><circle cx="70" cy="70" r="34" fill="rgba(0,0,0,0.1)"/></svg>';
+        donutLegend.innerHTML = '<span class="muted" style="font-size:13px">Belum ada command yang tercatat.</span>';
+      } else {
+        const C = 2 * Math.PI * 50; // 314.16
+        let offset = 0;
+        let svgCircles = '';
+        let legendHtml = '';
+
+        top5.forEach((c, idx) => {
+          const color = WARNA_CMD[idx % WARNA_CMD.length];
+          const pct = Math.max(1, Math.round((c.n / totalCmd) * 100));
+          const dash = (pct / 100) * C;
+          const strokeWidth = idx === 0 ? 19 : 15; // segmen teratas menonjol tebal
+
+          svgCircles += '<circle cx="70" cy="70" r="50" fill="none" stroke="' + color + '" stroke-width="' + strokeWidth + '" ' +
+            'stroke-dasharray="' + dash + ' ' + C + '" stroke-dashoffset="' + (-offset) + '" ' +
+            'transform="rotate(-90 70 70)" stroke-linecap="round" />';
+          offset += dash;
+
+          legendHtml += '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13.5px">' +
+            '<div style="display:flex;align-items:center;gap:10px;min-width:0;overflow:hidden">' +
+            '<span style="width:10px;height:10px;border-radius:50%;background:' + color + ';flex:none"></span>' +
+            '<span style="font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(c.cmd) + '</span>' +
+            '</div>' +
+            '<div style="flex:none;color:var(--mute)">– <b style="color:var(--ink);font-weight:700">' + pct + '%</b></div>' +
+            '</div>';
+        });
+
+        donutGraphic.innerHTML = '<svg width="140" height="140" viewBox="0 0 140 140" style="overflow:visible">' +
+          '<circle cx="70" cy="70" r="50" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="15"/>' +
+          '<circle cx="70" cy="70" r="34" fill="rgba(0,0,0,0.18)" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>' +
+          svgCircles + '</svg>';
+        donutLegend.innerHTML = legendHtml;
+      }
+    }
+
+    const tblCmd = document.querySelector('#tbl-cmd tbody');
+    if (tblCmd) {
+      isiTabel(tblCmd, top5.map((c, i) => '<tr><td>' + (i + 1) + '</td><td>' + esc(c.cmd) + '</td><td>' + n(c.n) + '</td></tr>'), 3, '');
+    }
 
     isiTabel(document.querySelector('#tbl-usr tbody'),
       d.user.map((u, i) => '<tr><td class="muted">' + (i + 1) + '</td><td>' + esc(u.nama) +

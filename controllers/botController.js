@@ -577,7 +577,7 @@ async function getBotStats(req, res) {
          FROM bot_logs
         WHERE bot_id = ? AND level = 'cmd' AND ${ADA_KOLOM}
         GROUP BY cmd HAVING ${CMD_OK}
-        ORDER BY n DESC, cmd LIMIT 12`,
+        ORDER BY n DESC, cmd LIMIT 5`,
       [bot.id]
     );
 
