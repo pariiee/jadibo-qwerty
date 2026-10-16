@@ -212,9 +212,13 @@
         '<td>' + (u.bot_count ?? u.slots_used ?? 0) + '</td>' +
         '<td>' + (u.is_active ? '<span class="dot on"></span> Aktif' : '<span class="dot off"></span> Nonaktif') + '</td>' +
         '<td class="aksi">' +
-          '<button class="btn btn-sm btn-outline" data-act="bukaUser(' + u.id + ')" title="Atur paket & masa aktif">Paket</button>' +
-          '<button class="btn btn-sm btn-outline" data-act="toggleAktif(' + u.id + ',' + (u.is_active ? 0 : 1) + ')">' +
-            (u.is_active ? 'Matikan' : 'Aktifkan') + '</button>' +
+          '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">' +
+            '<button class="btn btn-sm btn-outline" data-act="bukaUser(' + u.id + ')" title="Edit user, role, slot & password">Edit</button>' +
+            '<button class="btn btn-sm btn-outline" data-act="bukaSaldo(' + u.id + ',\'' + esc(u.username) + '\')" title="Atur saldo dompet">Saldo</button>' +
+            '<button class="btn btn-sm btn-outline" data-act="toggleAktif(' + u.id + ',' + (u.is_active ? 0 : 1) + ')">' +
+              (u.is_active ? 'Matikan' : 'Aktifkan') + '</button>' +
+            '<button class="btn btn-sm btn-danger" data-act="hapusUser(' + u.id + ',\'' + esc(u.username) + '\')" title="Hapus akun permanen">Hapus</button>' +
+          '</div>' +
         '</td>';
       tb.appendChild(tr);
     });
@@ -235,12 +239,11 @@
     const u = cacheUser.find((x) => x.id === id);
     if (!u) return;
     userAktif = u;
-    document.getElementById('mu-judul').textContent = 'Paket: ' + u.username;
+    document.getElementById('mu-judul').textContent = 'Edit User: ' + u.username;
+    document.getElementById('mu-role').value = u.role || 'user';
 
     const sel = document.getElementById('mu-plan');
-    // value tetap id paket (`user` = paket gratis, ikut enum DB) — cuma
-    // tulisannya yang ikut label role yang sekarang ("Basic").
-    sel.innerHTML = '<option value="user">Gratis (turun jadi Basic)</option>';
+    sel.innerHTML = '<option value="user">Gratis (Basic)</option>';
     paket.forEach((p) => {
       const o = document.createElement('option');
       o.value = p.id;
@@ -251,6 +254,7 @@
     document.getElementById('mu-exp').value = u.plan_expired_at
       ? new Date(u.plan_expired_at).toISOString().slice(0, 10) : '';
     document.getElementById('mu-slot').value = u.plan_slots ?? '';
+    document.getElementById('mu-pass').value = '';
     document.getElementById('mu-error').textContent = '';
     document.getElementById('modal-user').classList.add('show');
   }
@@ -262,21 +266,33 @@
 
   async function simpanUser() {
     if (!userAktif) return;
+    const role = document.getElementById('mu-role').value;
     const plan = document.getElementById('mu-plan').value;
     const exp = document.getElementById('mu-exp').value;
     const slot = document.getElementById('mu-slot').value;
+    const pass = document.getElementById('mu-pass').value.trim();
     const err = document.getElementById('mu-error');
 
-    // Paket gratis = cabut langganan. Server juga memaksa ini, tapi lebih
-    // enak kalau UI tidak mengirim nilai yang bakal ditolak.
-    const body = plan === 'user'
-      ? { plan: 'user', plan_expired_at: null, plan_slots: null }
-      : { plan, plan_expired_at: exp ? exp + ' 23:59:59' : null, plan_slots: slot === '' ? null : Number(slot) };
+    const body = {
+      role,
+      plan,
+      plan_expired_at: plan === 'user' ? null : (exp ? exp + ' 23:59:59' : null),
+      plan_slots: plan === 'user' ? null : (slot === '' ? null : Number(slot))
+    };
+    if (pass) body.password = pass;
 
     const d = await api('/api/admin/users/' + userAktif.id, { method: 'PATCH', body: JSON.stringify(body) });
-    if (!d?.ok) { err.textContent = d?.message || 'Gagal menyimpan'; return; }
+    if (!d?.ok) { err.textContent = d?.message || 'Gagal menyimpan'; err.classList.add('show'); return; }
     tutupUser();
-    showToast('Paket diperbarui', 'success');
+    showToast('Data user ' + userAktif.username + ' berhasil diperbarui', 'success');
+    muatUser();
+  }
+
+  async function hapusUser(id, username) {
+    if (!confirm('Hapus permanen akun "' + username + '" beserta semua bot dan datanya?\\n\\nTindakan ini tidak bisa dibatalkan!')) return;
+    const d = await api('/api/admin/users/' + id, { method: 'DELETE' });
+    if (!d?.ok) return showToast(d?.message || 'Gagal menghapus user', 'error');
+    showToast('User ' + username + ' berhasil dihapus', 'success');
     muatUser();
   }
 
@@ -735,6 +751,8 @@
   window.bukaUser = bukaUser;
   window.tutupUser = tutupUser;
   window.simpanUser = simpanUser;
+  window.hapusUser = hapusUser;
+  window.bukaSaldo = bukaSaldo;
   window.muatBot = muatBot;
   window.aturKuota = aturKuota;
   window.resetKuota = resetKuota;
