@@ -2,417 +2,9 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>Statistik Bot — qwertygate</title>
 <!-- @include head.html -->
-<style>
-/* Scoped styling khusus statistik bot (/bot/:id) agar rapi, simetris, dan kontras tinggi */
-:root {
-  --inner-bg: rgba(0,0,0,.18);
-  --th-bg: #12141c;
-}
-:root[data-theme="light"] {
-  --bg3: #f0f3fa;
-  --shell: rgba(255,255,255,.8);
-  --panel: rgba(255,255,255,.9);
-  --card: #ffffff;
-  --edge: rgba(0,0,0,.08);
-  --hl: inset 0 1px 0 rgba(255,255,255,1);
-  --ink: #0f172a;
-  --mute: #475569;
-  --line: rgba(0,0,0,.06);
-  --inner-bg: rgba(241,245,249,.8);
-  --th-bg: #f8fafc;
-  --green: #16a34a;
-  --shadow: 0 4px 20px rgba(0,0,0,.05);
-}
-
-html {
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  height: auto !important;
-}
-
-html body:not(.page-index):not(.page-auth).page-bot-stats,
-body.page-bot.page-bot-stats {
-  margin: 0 !important;
-  height: auto !important;
-  min-height: 100vh !important;
-  max-height: none !important;
-  padding: 24px 20px 48px !important;
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  overflow: visible !important;
-  overflow-y: visible !important;
-  overflow-x: hidden !important;
-}
-
-@media (min-width: 761px) {
-  html body:not(.page-index):not(.page-auth).page-bot-stats,
-  body.page-bot.page-bot-stats {
-    height: auto !important;
-    min-height: 100vh !important;
-    max-height: none !important;
-    overflow: visible !important;
-    overflow-y: visible !important;
-    overflow-x: hidden !important;
-  }
-}
-
-body.page-bot-stats .topbar {
-  width: 100% !important;
-  max-width: 1200px !important;
-  margin: 0 auto 20px !important;
-  padding: 14px 24px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  gap: 16px !important;
-  height: auto !important;
-  min-height: 64px !important;
-  background: var(--shell) !important;
-  border: 1px solid var(--edge) !important;
-  border-radius: 24px !important;
-  backdrop-filter: blur(28px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
-  box-shadow: var(--shadow), var(--hl) !important;
-  box-sizing: border-box !important;
-}
-
-body.page-bot-stats .back-link {
-  width: 38px !important;
-  height: 38px !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  border-radius: 12px !important;
-  background: var(--card) !important;
-  border: 1px solid var(--edge) !important;
-  color: var(--ink) !important;
-  flex-shrink: 0 !important;
-  text-decoration: none !important;
-  transition: all .2s cubic-bezier(.16,1,.3,1) !important;
-}
-body.page-bot-stats .back-link:hover {
-  background: var(--panel) !important;
-  transform: translateX(-2px) !important;
-}
-
-body.page-bot-stats .ttl {
-  display: flex !important;
-  align-items: center !important;
-  gap: 12px !important;
-  flex: 1 1 auto !important;
-  min-width: 0 !important;
-}
-body.page-bot-stats .ttl #hdr-icon {
-  width: 36px !important;
-  height: 36px !important;
-  border-radius: 12px !important;
-  background: rgba(37, 211, 102, 0.12) !important;
-  border: 1px solid rgba(37, 211, 102, 0.3) !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  flex-shrink: 0 !important;
-  color: #25d366 !important;
-}
-body.page-bot-stats .ttl h1 {
-  font-size: 18px !important;
-  font-weight: 700 !important;
-  color: var(--ink) !important;
-  margin: 0 !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-}
-body.page-bot-stats .st {
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 7px !important;
-  padding: 4px 12px !important;
-  border-radius: 999px !important;
-  background: var(--card) !important;
-  border: 1px solid var(--edge) !important;
-  font-size: 12px !important;
-  font-weight: 600 !important;
-  color: var(--ink) !important;
-  flex-shrink: 0 !important;
-}
-body.page-bot-stats .dot {
-  width: 8px !important;
-  height: 8px !important;
-  border-radius: 50% !important;
-  background: #ef4444 !important;
-  flex-shrink: 0 !important;
-}
-body.page-bot-stats .dot.on {
-  background: var(--green) !important;
-  box-shadow: 0 0 10px rgba(52,211,153,.5) !important;
-}
-body.page-bot-stats .dot.wait {
-  background: #f59e0b !important;
-  box-shadow: 0 0 10px rgba(245,158,11,.5) !important;
-}
-
-body.page-bot-stats .top-actions {
-  display: flex !important;
-  align-items: center !important;
-  gap: 10px !important;
-  flex-shrink: 0 !important;
-}
-body.page-bot-stats .top-actions .btn {
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  padding: 8px 16px !important;
-  border-radius: 12px !important;
-  font-size: 13px !important;
-  font-weight: 600 !important;
-  background: var(--card) !important;
-  border: 1px solid var(--edge) !important;
-  color: var(--ink) !important;
-  text-decoration: none !important;
-  cursor: pointer !important;
-  transition: all .2s ease !important;
-}
-body.page-bot-stats .top-actions .btn:hover {
-  background: var(--panel) !important;
-}
-
-body.page-bot-stats .theme-btn {
-  width: 38px !important;
-  height: 38px !important;
-  border-radius: 12px !important;
-  background: var(--card) !important;
-  border: 1px solid var(--edge) !important;
-  color: var(--ink) !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  cursor: pointer !important;
-  transition: all .2s ease !important;
-}
-body.page-bot-stats .theme-btn:hover {
-  background: var(--panel) !important;
-}
-
-body.page-bot-stats .layout {
-  width: 100% !important;
-  max-width: 1200px !important;
-  margin: 0 auto !important;
-  display: block !important;
-  border: none !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-}
-body.page-bot-stats .stats-wrap {
-  width: 100% !important;
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 20px !important;
-}
-
-body.page-bot-stats .stats {
-  display: grid !important;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
-  gap: 16px !important;
-  width: 100% !important;
-  margin: 0 !important;
-}
-@media (max-width: 960px) {
-  body.page-bot-stats .stats { grid-template-columns: repeat(2, 1fr) !important; }
-}
-@media (max-width: 520px) {
-  body.page-bot-stats .stats { grid-template-columns: 1fr !important; }
-}
-
-body.page-bot-stats .stat {
-  background: var(--card) !important;
-  border: 1px solid var(--edge) !important;
-  border-radius: 20px !important;
-  padding: 20px 22px !important;
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 6px !important;
-  backdrop-filter: blur(24px) !important;
-  -webkit-backdrop-filter: blur(24px) !important;
-  box-shadow: var(--shadow), var(--hl) !important;
-  transition: transform .2s ease, border-color .2s ease !important;
-}
-body.page-bot-stats .stat:hover {
-  transform: translateY(-2px) !important;
-}
-body.page-bot-stats .stat .k {
-  font-size: 11px !important;
-  font-weight: 700 !important;
-  letter-spacing: .08em !important;
-  text-transform: uppercase !important;
-  color: var(--mute) !important;
-}
-body.page-bot-stats .stat b {
-  font-size: 32px !important;
-  font-weight: 800 !important;
-  color: var(--ink) !important;
-  font-variant-numeric: tabular-nums !important;
-  line-height: 1.1 !important;
-  margin: 2px 0 !important;
-}
-body.page-bot-stats .stat small {
-  font-size: 12px !important;
-  color: var(--mute) !important;
-  line-height: 1.4 !important;
-}
-
-body.page-bot-stats .two {
-  display: grid !important;
-  grid-template-columns: 1fr 1fr !important;
-  gap: 20px !important;
-  width: 100% !important;
-}
-@media (max-width: 960px) {
-  body.page-bot-stats .two { grid-template-columns: 1fr !important; }
-}
-
-body.page-bot-stats .panel {
-  background: var(--panel) !important;
-  border: 1px solid var(--edge) !important;
-  border-radius: 24px !important;
-  padding: 24px !important;
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 16px !important;
-  backdrop-filter: blur(28px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
-  box-shadow: var(--shadow), var(--hl) !important;
-  overflow: hidden !important;
-}
-body.page-bot-stats .panel h2 {
-  font-size: 16px !important;
-  font-weight: 700 !important;
-  color: var(--ink) !important;
-  margin: 0 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  white-space: nowrap !important;
-}
-
-body.page-bot-stats .tbl-wrap {
-  overflow-x: auto !important;
-  overflow-y: auto !important;
-  max-height: 380px !important;
-  border-radius: 16px !important;
-  border: 1px solid var(--line) !important;
-  background: var(--inner-bg) !important;
-}
-body.page-bot-stats .tbl {
-  width: 100% !important;
-  border-collapse: collapse !important;
-  font-size: 13px !important;
-  text-align: left !important;
-}
-body.page-bot-stats .tbl th {
-  position: sticky !important;
-  top: 0 !important;
-  background: var(--th-bg) !important;
-  z-index: 2 !important;
-  padding: 12px 16px !important;
-  font-size: 11px !important;
-  font-weight: 700 !important;
-  letter-spacing: .08em !important;
-  text-transform: uppercase !important;
-  color: var(--mute) !important;
-  border-bottom: 1px solid var(--edge) !important;
-  white-space: nowrap !important;
-}
-body.page-bot-stats .tbl td {
-  padding: 12px 16px !important;
-  border-bottom: 1px solid var(--line) !important;
-  color: var(--ink) !important;
-  vertical-align: middle !important;
-  font-size: 13px !important;
-}
-body.page-bot-stats .tbl tr:last-child td {
-  border-bottom: none !important;
-}
-body.page-bot-stats .tbl tbody tr:hover {
-  background: rgba(255,255,255,.03) !important;
-}
-:root[data-theme="light"] body.page-bot-stats .tbl tbody tr:hover {
-  background: rgba(0,0,0,.02) !important;
-}
-body.page-bot-stats .tbl code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
-  background: rgba(99,102,241,.12) !important;
-  color: #818cf8 !important;
-  border: 1px solid rgba(99,102,241,.24) !important;
-  padding: 3px 8px !important;
-  border-radius: 6px !important;
-  font-size: 12.5px !important;
-  font-weight: 600 !important;
-}
-:root[data-theme="light"] body.page-bot-stats .tbl code {
-  color: #4f46e5 !important;
-}
-body.page-bot-stats .muted {
-  color: var(--mute) !important;
-}
-
-body.page-bot-stats .chart-summary {
-  font-size: 12px !important;
-  font-weight: 600 !important;
-  color: var(--mute) !important;
-  background: var(--inner-bg) !important;
-  border: 1px solid var(--line) !important;
-  padding: 4px 12px !important;
-  border-radius: 999px !important;
-  font-variant-numeric: tabular-nums !important;
-}
-
-body.page-bot-stats .chart {
-  display: block !important;
-  width: 100% !important;
-  height: 360px !important;
-  padding: 14px 10px 6px !important;
-  border-radius: 16px !important;
-  background: var(--inner-bg) !important;
-  border: 1px solid var(--line) !important;
-  box-sizing: border-box !important;
-  position: relative !important;
-  overflow: visible !important;
-}
-
-body.page-bot-stats .chart-svg {
-  width: 100% !important;
-  height: 100% !important;
-  overflow: visible !important;
-}
-
-body.page-bot-stats .chart-point {
-  cursor: pointer !important;
-  outline: none !important;
-}
-body.page-bot-stats .chart-point circle {
-  transition: r .15s ease, fill .15s ease !important;
-}
-body.page-bot-stats .chart-point:hover circle,
-body.page-bot-stats .chart-point:focus circle {
-  r: 8 !important;
-}
-
-body.page-bot-stats .chart-tip {
-  opacity: 0 !important;
-  pointer-events: none !important;
-  transition: opacity .15s ease !important;
-}
-body.page-bot-stats .chart-point:hover .chart-tip,
-body.page-bot-stats .chart-point:focus .chart-tip {
-  opacity: 1 !important;
-}
-</style>
 </head>
 <body class="page-bot page-bot-stats">
 
@@ -438,24 +30,24 @@ body.page-bot-stats .chart-point:focus .chart-tip {
   <div class="stats-wrap">
 
     <div class="stats" id="stats-cards">
-      <div class="stat"><span class="k">Command Dipakai</span><b id="st-cmd">—</b><small>total, sejak bot dibuat</small></div>
-      <div class="stat"><span class="k">User Aktif</span><b id="st-usr">—</b><small>nomor unik yang pernah nge-command</small></div>
-      <div class="stat"><span class="k">Command Error</span><b id="st-err">—</b><small>gagal / dibatalkan</small></div>
-      <div class="stat"><span class="k">Hits Limit</span><b id="st-lim">—</b><small>kena limit harian</small></div>
-      <div class="stat"><span class="k">Kuota Respon</span><b id="st-res">—</b><small id="st-res-sub">limit total pesan</small><button class="btn btn-outline" id="btn-tambah-respon" data-act="tambahRespon" style="margin-top:6px;font-size:11px;padding:4px 8px;width:100%">+ 1.000 Respon (Rp 500)</button></div>
+      <div class="stat"><span class="k">Command dipakai</span><b id="st-cmd">—</b><small>total, sejak bot dibuat</small></div>
+      <div class="stat"><span class="k">User aktif</span><b id="st-usr">—</b><small>nomor unik yang pernah nge-command</small></div>
+      <div class="stat"><span class="k">Command error</span><b id="st-err">—</b><small>gagal / dibatalkan</small></div>
+      <div class="stat"><span class="k">Hits limit</span><b id="st-lim">—</b><small>kena limit harian</small></div>
+      <div class="stat"><span class="k">Kuota respon</span><b id="st-res">—</b><small id="st-res-sub">limit total pesan</small><button class="btn btn-outline btn-mini" id="btn-tambah-respon" data-act="tambahRespon">+ 1.000 Respon (Rp 500)</button></div>
     </div>
 
     <div class="two">
       <div class="panel">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
-          <h2 style="margin:0;font-size:18px;border-bottom:2px solid var(--ink);padding-bottom:2px">Command Paling Sering</h2>
-          <span style="width:22px;height:22px;border-radius:50%;border:1px solid var(--border);display:grid;place-items:center;font-size:11px;font-weight:700;color:var(--mute);cursor:default" title="5 command paling sering dipakai">i</span>
+        <div class="panel-head">
+          <h2>Command paling sering</h2>
+          <span class="info-dot" title="5 command paling sering dipakai">i</span>
         </div>
-        <div id="cmd-donut-container" style="display:flex;align-items:center;justify-content:space-around;gap:24px;flex-wrap:wrap;padding:10px 0">
-          <div id="cmd-donut-graphic" style="position:relative;width:150px;height:150px;flex:none;display:grid;place-items:center">
+        <div class="donut-wrap" id="cmd-donut-container">
+          <div class="donut-graphic" id="cmd-donut-graphic">
             <!-- Donut Chart -->
           </div>
-          <div id="cmd-donut-legend" style="display:flex;flex-direction:column;gap:12px;flex:1;min-width:160px">
+          <div class="donut-legend" id="cmd-donut-legend">
             <span class="muted">Memuat…</span>
           </div>
         </div>
@@ -463,7 +55,7 @@ body.page-bot-stats .chart-point:focus .chart-tip {
       </div>
 
       <div class="panel">
-        <h2>User Paling Aktif</h2>
+        <h2>User paling aktif</h2>
         <div class="tbl-wrap">
           <table class="tbl" id="tbl-usr">
             <thead><tr><th>#</th><th>User</th><th>Grup</th><th style="text-align:right">Aktivitas</th><th style="text-align:right">Terakhir</th></tr></thead>
@@ -475,7 +67,7 @@ body.page-bot-stats .chart-point:focus .chart-tip {
 
     <div class="panel">
       <h2>
-        <span>Aktivitas Harian</span>
+        <span>Aktivitas harian</span>
         <span class="chart-summary" id="chart-sum"></span>
       </h2>
       <div class="chart" id="chart"></div>
