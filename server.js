@@ -874,6 +874,20 @@ cronAman.schedule('0 * * * *', async () => {
   }
 }, { timezone: 'Asia/Jakarta' });
 
+// ─── Auto-cleanup: email_verifications kadaluarsa & terpakai (tiap jam) ─────────
+cronAman.schedule('30 * * * *', async () => {
+  try {
+    const [res] = await pool.execute(
+      'DELETE FROM email_verifications WHERE expires_at < NOW() OR used_at IS NOT NULL'
+    );
+    if (res.affectedRows > 0) {
+      console.log(`[Cron] email_verifications: ${res.affectedRows} token kedaluwarsa/terpakai dibersihkan.`);
+    }
+  } catch (e) {
+    console.error('[Cron] Cleanup email_verifications error:', e.message);
+  }
+}, { timezone: 'Asia/Jakarta' });
+
 // ─── Graceful Shutdown ────────────────────────────────────────────────────────
 async function shutdown() {
   console.log('[Shutdown] Resetting bot statuses...');

@@ -185,18 +185,18 @@ async function register(req, res) {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     `).catch(() => {});
 
-    // Buat token verifikasi 32 bytes (24 jam)
+    // Buat token verifikasi 32 bytes (5 jam)
     const crypto = require('crypto');
     const token = crypto.randomBytes(32).toString('hex');
     await pool.execute(
-      'INSERT INTO email_verifications (user_id, token, expires_at) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 24 HOUR))',
+      'INSERT INTO email_verifications (user_id, token, expires_at) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 5 HOUR))',
       [userId, token]
     );
 
     const baseUrl = process.env.BASE_URL || (req.protocol + '://' + req.get('host'));
     const verifyUrl = `${baseUrl}/register/verify?token=${token}`;
     const subjek = 'Verifikasi Email Akun Yapari Bots';
-    const teks = `Halo ${username},\n\nTerima kasih telah mendaftar di Yapari Bots.\n\nKlik tautan berikut untuk memverifikasi email kamu dan mengaktifkan akun (berlaku 24 jam):\n${verifyUrl}\n\nJika kamu tidak merasa mendaftar di Yapari Bots, abaikan email ini.\n\nSalam,\nTim Yapari Bots`;
+    const teks = `Halo ${username},\n\nTerima kasih telah mendaftar di Yapari Bots.\n\nKlik tautan berikut untuk memverifikasi email kamu dan mengaktifkan akun (berlaku 5 jam):\n${verifyUrl}\n\nJika kamu tidak merasa mendaftar di Yapari Bots, abaikan email ini.\n\nSalam,\nTim Yapari Bots`;
     const html = `
       <div style="font-family:'Plus Jakarta Sans',sans-serif,Arial,sans-serif;max-width:540px;margin:0 auto;padding:28px 24px;background:#ffffff;border:1px solid #e2e8f0;border-radius:20px;">
         <h2 style="color:#0f172a;margin-top:0;font-size:20px;font-weight:800;">Verifikasi Alamat Email</h2>
@@ -207,7 +207,7 @@ async function register(req, res) {
         </div>
         <p style="color:#64748b;font-size:12.5px;line-height:1.5;">Atau salin tautan berikut ke browser:<br><a href="${verifyUrl}" style="color:#2563eb;word-break:break-all;">${verifyUrl}</a></p>
         <hr style="border:none;border-top:1px solid #f1f5f9;margin:22px 0;">
-        <p style="color:#94a3b8;font-size:11.5px;margin:0;">Tautan ini berlaku selama 24 jam. Jika kamu tidak merasa mendaftar, abaikan email ini.</p>
+        <p style="color:#94a3b8;font-size:11.5px;margin:0;">Tautan ini berlaku selama 5 jam. Jika kamu tidak merasa mendaftar, abaikan email ini.</p>
       </div>
     `;
 
@@ -425,26 +425,26 @@ async function resendVerification(req, res) {
       [user.id]
     );
     await pool.execute(
-      'INSERT INTO email_verifications (user_id, token, expires_at) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 24 HOUR))',
+      'INSERT INTO email_verifications (user_id, token, expires_at) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 5 HOUR))',
       [user.id, token]
     );
 
     const baseUrl = process.env.BASE_URL || (req.protocol + '://' + req.get('host'));
-    const verifyUrl = `${baseUrl}/verify-email?token=${token}`;
+    const verifyUrl = `${baseUrl}/register/verify?token=${token}`;
     const { kirimEmail } = require('../engine/email');
-    const subjek = 'Kirim Ulang Verifikasi Email Akun qwertygate';
-    const teks = `Halo ${user.username},\n\nBerikut tautan verifikasi baru untuk akun qwertygate kamu (berlaku 24 jam):\n${verifyUrl}\n\nSalam,\nTim qwertygate`;
+    const subjek = 'Kirim Ulang Verifikasi Email Akun Yapari Bots';
+    const teks = `Halo ${user.username},\n\nBerikut tautan verifikasi baru untuk akun Yapari Bots kamu (berlaku 5 jam):\n${verifyUrl}\n\nSalam,\nTim Yapari Bots`;
     const html = `
       <div style="font-family:'Plus Jakarta Sans',sans-serif,Arial;max-width:540px;margin:0 auto;padding:28px 24px;background:#ffffff;border:1px solid #e2e8f0;border-radius:20px;">
         <h2 style="color:#0f172a;margin-top:0;font-size:20px;font-weight:800;">Verifikasi Alamat Email</h2>
         <p style="color:#475569;font-size:14px;line-height:1.6;">Halo <strong>${user.username}</strong>,</p>
-        <p style="color:#475569;font-size:14px;line-height:1.6;">Berikut tautan verifikasi baru untuk mengaktifkan akunmu di <strong>qwertygate</strong>:</p>
+        <p style="color:#475569;font-size:14px;line-height:1.6;">Berikut tautan verifikasi baru untuk mengaktifkan akunmu di <strong>Yapari Bots</strong>:</p>
         <div style="margin:26px 0;text-align:center;">
           <a href="${verifyUrl}" style="display:inline-block;padding:12px 30px;background:#0f172a;color:#ffffff;text-decoration:none;font-weight:700;border-radius:999px;font-size:14px;">Aktifkan Akun Saya</a>
         </div>
         <p style="color:#64748b;font-size:12.5px;line-height:1.5;">Atau salin tautan berikut ke browser:<br><a href="${verifyUrl}" style="color:#2563eb;word-break:break-all;">${verifyUrl}</a></p>
         <hr style="border:none;border-top:1px solid #f1f5f9;margin:22px 0;">
-        <p style="color:#94a3b8;font-size:11.5px;margin:0;">Tautan berlaku selama 24 jam.</p>
+        <p style="color:#94a3b8;font-size:11.5px;margin:0;">Tautan berlaku selama 5 jam.</p>
       </div>
     `;
 
