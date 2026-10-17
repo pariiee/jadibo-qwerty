@@ -48,14 +48,15 @@
     'orders': { key: 'order', subId: 'sub-manage-orders', title: 'Pesanan & Pembayaran', desc: 'Daftar invoice, riwayat transaksi QRIS, dan rekap pendapatan sistem.' },
     'saldo': { key: 'saldo', subId: 'sub-manage-saldo', title: 'Saldo & Dompet User', desc: 'Kelola saldo member, mutasi dompet, dan rekonsiliasi buku besar.' },
     'harga': { key: 'harga', subId: 'sub-manage-harga', title: 'Harga & Benefit Paket', desc: 'Atur harga sewa slot bot, durasi paket, dan batasan kuota pesan.' },
-    'sistem': { key: 'sistem', subId: 'sub-manage-sistem', title: 'Log Sistem & Server', desc: 'Pemantauan kesehatan server, broadcast pengumuman, dan log aktivitas menyeluruh platform.' }
+    'sistem': { key: 'sistem', subId: 'sub-manage-sistem', title: 'Sistem & Server', desc: 'Pemantauan kesehatan server, resource CPU/RAM, dan broadcast pengumuman.' },
+    'logs': { key: 'logs', navId: 'nav-syslogs', title: 'Log Aktivitas Sistem', desc: 'Rekam jejak seluruh operasi sistem: autentikasi, aksi admin, cron otomatis, dan bot.' }
   };
 
   function tab(nama) {
     const info = PAGE_MAP[nama] || PAGE_MAP['users'];
     const key = info.key;
 
-    ['user', 'bot', 'order', 'harga', 'saldo', 'sistem'].forEach((t) => {
+    ['user', 'bot', 'order', 'harga', 'saldo', 'sistem', 'logs'].forEach((t) => {
       const el = document.getElementById('pane-' + t);
       if (el) el.style.display = t === key ? '' : 'none';
     });
@@ -70,12 +71,16 @@
       a.classList.toggle('active', a.id === info.subId);
     });
 
+    const sysLink = document.getElementById('nav-syslogs');
+    if (sysLink) sysLink.classList.toggle('active', key === 'logs');
+
     if (key === 'user') muatUser();
     if (key === 'bot') muatBot();
     if (key === 'order') { muatPendapatan(); muatOrder(); }
     if (key === 'harga') muatSetelan();
     if (key === 'saldo') muatSaldo();
-    if (key === 'sistem') { muatSistem(); muatAudit(); muatLogSistem(); }
+    if (key === 'sistem') { muatSistem(); muatAudit(); }
+    if (key === 'logs') muatLogSistem();
   }
 
   // ── Bot semua user + log ───────────────────────────────────────

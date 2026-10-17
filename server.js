@@ -475,7 +475,8 @@ app.get([
   '/kountole/orders',
   '/kountole/saldo',
   '/kountole/harga',
-  '/kountole/sistem'
+  '/kountole/sistem',
+  '/kountole/logs'
 ], halaman('admin.html'));
 app.get('/login',           halaman('login.html'));
 app.get('/register',        halaman('login.html'));

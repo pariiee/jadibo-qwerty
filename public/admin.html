@@ -124,7 +124,26 @@
           </div>
         </div>
 
-        <!-- Log Sistem Menyeluruh -->
+        <!-- Jejak aktivitas admin -->
+        <div class="card" style="margin-top:20px;">
+          <div class="adm-bar">
+            <h4 style="margin:0">HTTP Request Admin (/api/admin/*)</h4>
+            <button class="btn btn-outline btn-sm" data-act="muatAudit">Muat Ulang</button>
+          </div>
+          <p class="hint" id="audit-catatan"></p>
+          <div class="tbl-wrap">
+            <table class="tbl" id="tbl-audit">
+              <thead>
+                <tr><th>Waktu</th><th>Admin</th><th>Aksi</th><th>Endpoint</th><th>Status</th><th>IP</th></tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Log Sistem (Dedicated Page /kountole/logs) ─────────── -->
+      <section id="pane-logs" style="display:none">
         <div class="card">
           <div class="adm-bar" style="margin-bottom:14px;">
             <div>
@@ -165,23 +184,6 @@
                   <th>Keterangan</th>
                   <th>IP</th>
                 </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Jejak aktivitas admin -->
-        <div class="card" style="margin-top:20px;">
-          <div class="adm-bar">
-            <h4 style="margin:0">HTTP Request Admin (/api/admin/*)</h4>
-            <button class="btn btn-outline btn-sm" data-act="muatAudit">Muat Ulang</button>
-          </div>
-          <p class="hint" id="audit-catatan"></p>
-          <div class="tbl-wrap">
-            <table class="tbl" id="tbl-audit">
-              <thead>
-                <tr><th>Waktu</th><th>Admin</th><th>Aksi</th><th>Endpoint</th><th>Status</th><th>IP</th></tr>
               </thead>
               <tbody></tbody>
             </table>
