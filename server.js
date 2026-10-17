@@ -888,6 +888,29 @@ cronAman.schedule('30 * * * *', async () => {
   }
 }, { timezone: 'Asia/Jakarta' });
 
+// ─── Auto-purge: akun is_active = 0 yang terbengkalai > 3 hari (tiap hari jam 04:00 WIB)
+cronAman.schedule('0 4 * * *', async () => {
+  try {
+    const [staleUsers] = await pool.execute(
+      `SELECT id FROM users 
+       WHERE is_active = 0 
+         AND role != ? 
+         AND created_at < DATE_SUB(NOW(), INTERVAL 3 DAY)`,
+      [ADMIN_ROLE]
+    );
+
+    if (staleUsers.length > 0) {
+      const ids = staleUsers.map((u) => u.id);
+      const ph = ids.map(() => '?').join(',');
+      await pool.execute(`DELETE FROM email_verifications WHERE user_id IN (${ph})`, ids).catch(() => {});
+      const [delRes] = await pool.execute(`DELETE FROM users WHERE id IN (${ph})`, ids);
+      console.log(`[Cron] Auto-purge: ${delRes.affectedRows} akun nonaktif > 3 hari dibersihkan.`);
+    }
+  } catch (e) {
+    console.error('[Cron] Auto-purge akun gagal:', e.message);
+  }
+}, { timezone: 'Asia/Jakarta' });
+
 // ─── Graceful Shutdown ────────────────────────────────────────────────────────
 async function shutdown() {
   console.log('[Shutdown] Resetting bot statuses...');
