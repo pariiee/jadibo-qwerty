@@ -400,7 +400,8 @@ body.page-panduan,body.page-bot{
 }
 body.page-dashboard .app,body.page-admin .app,body.page-pricing .app,
 body.page-command .app,body.page-billing .app,body.page-profil .app,
-body.page-kuota .app,body.page-log .app,body.page-panduan .app{
+body.page-kuota .app,body.page-log .app,body.page-panduan .app,
+body.page-saldo .app{
   display:grid;
   grid-template-columns:230px minmax(0,1fr);
   width:100%;
@@ -408,11 +409,11 @@ body.page-kuota .app,body.page-log .app,body.page-panduan .app{
   margin:0 auto;
   min-height:calc(100vh - 40px);
   border-radius:var(--r-shell);
-  border:1px solid var(--edge);
-  background:var(--shell);
-  backdrop-filter:blur(34px) saturate(170%);
-  -webkit-backdrop-filter:blur(34px) saturate(170%);
-  box-shadow:var(--shadow),var(--hl);
+  border:none!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
   transition:grid-template-columns .25s ease;
 }
 /* §8.1 mini: ikon saja, label disembunyikan (butuh <span> di sidebar.html) */
@@ -2011,7 +2012,7 @@ body:is(.page-dashboard,.page-admin,.page-pricing,.page-command,.page-billing,.p
 html:not(.dark):not([data-theme="dark"]) body:is(.page-dashboard,.page-admin,.page-pricing,.page-command,.page-billing,.page-profil,.page-kuota,.page-log,.page-panduan,.page-bot,.page-saldo){
   --bg:#dde3f1;--ink:#12142b;--mute:#5d6384;--accent:#4338ca;--accent2:#4f46e5;
   --dark:#13152b;--darkink:#ffffff;--green:#16a34a;--greenbg:#e6f4ec;
-  --shell:rgba(255,255,255,.4);--panel:rgba(255,255,255,.55);--card:rgba(255,255,255,.6);
+  --shell:transparent;--panel:rgba(255,255,255,.55);--card:rgba(255,255,255,.6);
   --edge:rgba(255,255,255,.75);--hl:inset 0 1px 0 rgba(255,255,255,.9);
   --line:rgba(18,20,43,.09);--shadow:0 2px 8px rgba(30,40,90,.08);--ovBg:rgba(10,15,40,.35);
 }
