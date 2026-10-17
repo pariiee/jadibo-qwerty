@@ -452,22 +452,20 @@ body.page-bot .layout>*,body.page-bot .layout .stats-wrap,body.page-bot .layout 
 /* aside berhenti `fixed` (dulu `inset:0 auto 0 0` → nempel tepi viewport). */
 body.page-dashboard aside,body.page-admin aside,body.page-pricing aside,
 body.page-command aside,body.page-billing aside,body.page-profil aside,
-body.page-kuota aside,body.page-log aside,body.page-panduan aside{
+body.page-kuota aside,body.page-log aside,body.page-panduan aside,
+body.page-saldo aside{
   position:static;
   inset:auto;
   width:auto;
-  border-right:none;
-  background:transparent;
-  backdrop-filter:none;
-  -webkit-backdrop-filter:none;
+  margin:10px 0 10px 10px;
+  border-radius:var(--r-panel);
+  background:var(--panel);
+  border:1px solid var(--edge);
+  backdrop-filter:blur(22px);
+  -webkit-backdrop-filter:blur(22px);
+  box-shadow:var(--shadow),var(--hl);
   overflow:hidden;
   padding:22px 14px;
-  /* page.css menyembunyikan sidebar dengan `transform:translateX(-100%)` di
-     `@media(max-width:768px)`. Itu harus dimatikan di SEMUA lebar, bukan cuma
-     di breakpoint mobile kita (760px): di 761–768px transform-nya masih hidup
-     dan sidebar terdorong keluar layar (terukur: x=-209 di 768px). Media query
-     tidak menambah spesifisitas, jadi aturan 0,2,1 di sini menang di lebar
-     mana pun. */
   transform:none;
 }
 body.page-dashboard main,body.page-admin main,body.page-pricing main,
