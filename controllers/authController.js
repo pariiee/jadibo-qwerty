@@ -508,6 +508,7 @@ async function me(req, res) {
         is_admin: admin,
         plan_id: plan.id,
         plan_name: plan.name,
+        email: u.email || '',
         phone: u.phone || '',
         plan_expired_at: u.plan_expired_at,
         plan_aktif: !!u.plan_expired_at && new Date(u.plan_expired_at) > new Date(),

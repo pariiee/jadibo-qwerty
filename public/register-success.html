@@ -20,20 +20,29 @@
         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
       </svg>
     </div>
-    <h2>Akun berhasil dibuat!</h2>
-    <p class="auth-desc" style="margin-bottom:16px;">Selamat datang di Yapari Bots.</p>
+    <h2 style="font-size:23px;font-weight:800;letter-spacing:-.02em;margin:0 0 6px;color:var(--ink);">Akun Berhasil Dibuat!</h2>
+    <p class="auth-desc" style="font-size:14px;color:var(--mute);margin:0 0 20px;">Selamat datang di Yapari Bots.</p>
 
-    <div class="auth-info-box">
-      <div style="font-size:12px;color:var(--mute);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;">Login sebagai</div>
-      <div class="auth-info-name" id="succ-username" style="font-size:16px;font-weight:700;">Pengguna</div>
-      <div class="auth-info-email" id="succ-email" style="font-size:13px;color:var(--mute);margin-top:2px;"></div>
+    <div class="auth-info-box" style="margin:0 0 20px;text-align:left;">
+      <div class="auth-info-row">
+        <div class="auth-info-avatar" style="width:40px;height:40px;border-radius:12px;">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+          </svg>
+        </div>
+        <div style="min-width:0;flex:1;">
+          <div style="font-size:11px;font-weight:700;color:var(--mute);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">Akun Terverifikasi</div>
+          <div id="succ-username" style="font-size:15px;font-weight:700;color:var(--ink);line-height:1.2;">Memuat...</div>
+          <div id="succ-email" style="font-size:12.5px;color:var(--mute);margin-top:2px;word-break:break-all;"></div>
+        </div>
+      </div>
     </div>
 
-    <p class="auth-page-desc">
-      Email kamu sudah terverifikasi. Akun aktif dan siap digunakan.
+    <p class="auth-page-desc" style="font-size:13.5px;line-height:1.6;color:var(--mute);margin:0 0 22px;padding:0 4px;">
+      Email kamu sudah aktif dan terverifikasi. Akun siap digunakan untuk mulai mengelola dan menjalankan bot WhatsApp.
     </p>
 
-    <a href="/dashboard" class="btn-auth-submit" style="display:inline-flex;align-items:center;justify-content:center;text-decoration:none;">
+    <a href="/dashboard" class="btn-auth-submit" style="display:inline-flex;align-items:center;justify-content:center;text-decoration:none;font-size:14.5px;font-weight:700;">
       Pergi ke Dashboard →
     </a>
   </div>
