@@ -2017,28 +2017,33 @@ html:not(.dark):not([data-theme="dark"]) body:is(.page-dashboard,.page-admin,.pa
   --line:rgba(18,20,43,.09);--shadow:0 2px 8px rgba(30,40,90,.08);--ovBg:rgba(10,15,40,.35);
 }
 
-/* ── 3. Warna · gelap (hitam glass). Tiga pemicu, sama seperti palette.css ── */
+/* ── 3. Warna · gelap (hitam legit). Tiga pemicu, sama seperti palette.css ── */
 @media (prefers-color-scheme:dark){
   html:not(.dark):not([data-theme]) body:is(.page-dashboard,.page-admin,.page-pricing,.page-command,.page-billing,.page-profil,.page-kuota,.page-log,.page-panduan,.page-bot,.page-saldo){
-    --bg:#0c0d12;--ink:#f2f3f8;--mute:#9ca0b5;--accent:#a5b4fc;--accent2:#6366f1;
-    --dark:#f2f3f8;--darkink:#0b0c14;--green:#34d399;--greenbg:rgba(52,211,153,.14);
-    --shell:rgba(255,255,255,.03);--panel:rgba(255,255,255,.04);--card:rgba(255,255,255,.06);
-    --edge:rgba(255,255,255,.14);--hl:inset 0 1px 0 rgba(255,255,255,.12);
-    --line:rgba(255,255,255,.09);--shadow:0 2px 8px rgba(0,0,0,.3);--ovBg:rgba(0,0,0,.55);
+    --bg:#08090c;--ink:#f2f3f8;--mute:#9ca0b5;--accent:#a5b4fc;--accent2:#6366f1;
+    --dark:#f2f3f8;--darkink:#08090c;--green:#34d399;--greenbg:rgba(52,211,153,.14);
+    --shell:#0c0d12;--panel:#12141a;--card:#161822;
+    --edge:#222533;--hl:none;
+    --line:#1c1e28;--shadow:0 4px 20px rgba(0,0,0,.5);--ovBg:rgba(0,0,0,.7);
   }
 }
 html.dark body:is(.page-dashboard,.page-admin,.page-pricing,.page-command,.page-billing,.page-profil,.page-kuota,.page-log,.page-panduan,.page-bot,.page-saldo),
 :root[data-theme="dark"] body:is(.page-dashboard,.page-admin,.page-pricing,.page-command,.page-billing,.page-profil,.page-kuota,.page-log,.page-panduan,.page-bot,.page-saldo){
-  --bg:#0c0d12;--ink:#f2f3f8;--mute:#9ca0b5;--accent:#a5b4fc;--accent2:#6366f1;
-  --dark:#f2f3f8;--darkink:#0b0c14;--green:#34d399;--greenbg:rgba(52,211,153,.14);
-  --shell:rgba(255,255,255,.03);--panel:rgba(255,255,255,.04);--card:rgba(255,255,255,.06);
-  --edge:rgba(255,255,255,.14);--hl:inset 0 1px 0 rgba(255,255,255,.12);
-  --line:rgba(255,255,255,.09);--shadow:0 2px 8px rgba(0,0,0,.3);--ovBg:rgba(0,0,0,.55);
+  --bg:#08090c;--ink:#f2f3f8;--mute:#9ca0b5;--accent:#a5b4fc;--accent2:#6366f1;
+  --dark:#f2f3f8;--darkink:#08090c;--green:#34d399;--greenbg:rgba(52,211,153,.14);
+  --shell:#0c0d12;--panel:#12141a;--card:#161822;
+  --edge:#222533;--hl:none;
+  --line:#1c1e28;--shadow:0 4px 20px rgba(0,0,0,.5);--ovBg:rgba(0,0,0,.7);
 }
 
-/* ── 4. Desktop: blur lebih ringan, tanpa saturate ───────────────── */
-body:is(.page-dashboard,.page-admin,.page-pricing,.page-command,.page-billing,.page-profil,.page-kuota,.page-log,.page-panduan,.page-bot,.page-saldo) .app{
-  backdrop-filter:blur(26px);-webkit-backdrop-filter:blur(26px);
+/* ── 4. Desktop: solid hitam legit tanpa blur berkabut ───────────── */
+html.dark body:is(.page-dashboard,.page-admin,.page-pricing,.page-command,.page-billing,.page-profil,.page-kuota,.page-log,.page-panduan,.page-bot,.page-saldo) .app,
+:root[data-theme="dark"] body:is(.page-dashboard,.page-admin,.page-pricing,.page-command,.page-billing,.page-profil,.page-kuota,.page-log,.page-panduan,.page-bot,.page-saldo) .app{
+  backdrop-filter:none;-webkit-backdrop-filter:none;
+}
+html.dark body:is(.page-dashboard,.page-admin,.page-pricing,.page-command,.page-billing,.page-profil,.page-kuota,.page-log,.page-panduan,.page-bot,.page-saldo) main,
+:root[data-theme="dark"] body:is(.page-dashboard,.page-admin,.page-pricing,.page-command,.page-billing,.page-profil,.page-kuota,.page-log,.page-panduan,.page-bot,.page-saldo) main{
+  backdrop-filter:none;-webkit-backdrop-filter:none;
 }
 
 /* ── 5. Mobile ≤760px: tanpa cangkang & sidebar, navigasi di bawah ── */
