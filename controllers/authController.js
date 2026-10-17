@@ -226,7 +226,7 @@ async function register(req, res) {
       message: 'Pendaftaran berhasil! Tautan verifikasi telah dikirimkan ke Gmail (' + bersihEmail + ').',
       email: bersihEmail,
       need_verification: true,
-      redirect: '/register/pending'
+      redirect: '/login?registered=1'
     });
   } catch (err) {
     console.error('[Auth] register error:', err);

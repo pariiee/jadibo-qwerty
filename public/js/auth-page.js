@@ -26,11 +26,41 @@
     }
   }
 
-  // Notifikasi sukses verifikasi email (?verified=1)
+  // Notifikasi sukses verifikasi email (?verified=1) atau sukses daftar (?registered=1)
   if (params.get('verified') === '1') {
     const loginOk = document.getElementById('login-ok');
     if (loginOk) {
-      loginOk.textContent = 'Email kamu berhasil diverifikasi! Akunmu sudah aktif, silakan login.';
+      loginOk.innerHTML = `
+        <div style="display:flex;align-items:flex-start;gap:10px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:2px;">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+          <div>
+            <div style="font-weight:700;margin-bottom:2px;">Email Berhasil Diverifikasi!</div>
+            <div style="font-size:12.5px;font-weight:500;opacity:.9;">Akunmu sudah aktif. Silakan masuk menggunakan username dan password kamu.</div>
+          </div>
+        </div>
+      `;
+      loginOk.style.display = 'block';
+    }
+  }
+
+  if (params.get('registered') === '1') {
+    const loginOk = document.getElementById('login-ok');
+    if (loginOk) {
+      loginOk.innerHTML = `
+        <div style="display:flex;align-items:flex-start;gap:10px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:2px;">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+          <div>
+            <div style="font-weight:700;margin-bottom:2px;">Tautan Verifikasi Terkirim!</div>
+            <div style="font-size:12.5px;font-weight:500;opacity:.9;">Kami telah mengirim tautan verifikasi ke Gmail kamu. Silakan periksa kotak masuk atau spam sebelum masuk.</div>
+          </div>
+        </div>
+      `;
       loginOk.style.display = 'block';
     }
   }
