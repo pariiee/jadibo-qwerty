@@ -124,10 +124,57 @@
           </div>
         </div>
 
-        <!-- Jejak aktivitas admin -->
+        <!-- Log Sistem Menyeluruh -->
         <div class="card">
+          <div class="adm-bar" style="margin-bottom:14px;">
+            <div>
+              <h3 style="margin:0 0 4px">Log Aktivitas Sistem</h3>
+              <p class="m-sub" style="margin:0">Rekam jejak seluruh operasi sistem: autentikasi, aksi admin, cron otomatis, dan bot.</p>
+            </div>
+            <button class="btn btn-outline btn-sm" data-act="muatLogSistem">Muat Ulang</button>
+          </div>
+
+          <div class="adm-bar" style="flex-wrap:wrap;gap:8px;margin-bottom:14px;">
+            <input class="inp" id="cari-syslog" placeholder="Cari aksi, pesan, atau aktor…" style="flex:1;min-width:200px;" />
+            <select class="inp" id="filter-syslog-cat" data-act="muatLogSistem" style="width:auto;">
+              <option value="">Semua Kategori</option>
+              <option value="auth">Autentikasi (User)</option>
+              <option value="admin">Aksi Administrator</option>
+              <option value="cron">Cron & Otomatis</option>
+              <option value="billing">Billing & Saldo</option>
+              <option value="bot">Bot Engine</option>
+            </select>
+            <select class="inp" id="filter-syslog-lvl" data-act="muatLogSistem" style="width:auto;">
+              <option value="">Semua Level</option>
+              <option value="info">Info</option>
+              <option value="success">Sukses</option>
+              <option value="warn">Peringatan</option>
+              <option value="error">Error</option>
+            </select>
+          </div>
+
+          <div class="tbl-wrap">
+            <table class="tbl" id="tbl-syslog">
+              <thead>
+                <tr>
+                  <th>Waktu</th>
+                  <th>Kategori</th>
+                  <th>Level</th>
+                  <th>Aktor</th>
+                  <th>Aksi</th>
+                  <th>Keterangan</th>
+                  <th>IP</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Jejak aktivitas admin -->
+        <div class="card" style="margin-top:20px;">
           <div class="adm-bar">
-            <h4 style="margin:0">Aktivitas Admin</h4>
+            <h4 style="margin:0">HTTP Request Admin (/api/admin/*)</h4>
             <button class="btn btn-outline btn-sm" data-act="muatAudit">Muat Ulang</button>
           </div>
           <p class="hint" id="audit-catatan"></p>

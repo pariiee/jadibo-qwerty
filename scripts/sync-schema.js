@@ -261,6 +261,21 @@ const CREATE_TABLES = [
     INDEX idx_user (user_id),
     INDEX idx_expires (expires_at)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+
+  // system_logs — log aktivitas sistem menyeluruh (auth, cron, admin, bot, billing)
+  `CREATE TABLE IF NOT EXISTS system_logs (
+    id         BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    category   VARCHAR(32) NOT NULL DEFAULT 'system',
+    level      VARCHAR(16) NOT NULL DEFAULT 'info',
+    actor      VARCHAR(64) DEFAULT 'system',
+    action     VARCHAR(64) NOT NULL,
+    message    TEXT NOT NULL,
+    ip         VARCHAR(64) DEFAULT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_created (created_at),
+    INDEX idx_category (category),
+    INDEX idx_level (level)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
   // wallet_ledger — jurnal dompet. Lihat schema.sql untuk penjelasan lengkap.
   //
   // Dibuat lewat CREATE_TABLES (bukan TABLES) karena ini tabel BARU: TABLES

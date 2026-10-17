@@ -364,6 +364,7 @@ app.get('/api/admin/wallet/pendapatan',               auth.requireAuth, auth.req
 // ─── Tab "Sistem" (kesehatan, resource, audit, pendapatan, broadcast) ─────────
 app.get('/api/admin/sistem',      auth.requireAuth, auth.requireKing, sistem.status);
 app.get('/api/admin/audit',       auth.requireAuth, auth.requireKing, sistem.audit);
+app.get('/api/admin/system-logs', auth.requireAuth, auth.requireKing, sistem.getSystemLogs);
 app.get('/api/admin/pendapatan',  auth.requireAuth, auth.requireKing, sistem.pendapatan);
 app.post('/api/admin/broadcast',  auth.requireAuth, auth.requireKing, sistem.broadcast);
 
@@ -882,6 +883,13 @@ cronAman.schedule('30 * * * *', async () => {
     );
     if (res.affectedRows > 0) {
       console.log(`[Cron] email_verifications: ${res.affectedRows} token kedaluwarsa/terpakai dibersihkan.`);
+      sistem.catatLogSistem({
+        category: 'cron',
+        level: 'info',
+        actor: 'cron',
+        action: 'CLEANUP_TOKENS',
+        message: `Pembersihan rutin: ${res.affectedRows} token verifikasi kedaluwarsa dibersihkan.`
+      });
     }
   } catch (e) {
     console.error('[Cron] Cleanup email_verifications error:', e.message);
@@ -905,6 +913,13 @@ cronAman.schedule('0 4 * * *', async () => {
       await pool.execute(`DELETE FROM email_verifications WHERE user_id IN (${ph})`, ids).catch(() => {});
       const [delRes] = await pool.execute(`DELETE FROM users WHERE id IN (${ph})`, ids);
       console.log(`[Cron] Auto-purge: ${delRes.affectedRows} akun nonaktif > 3 hari dibersihkan.`);
+      sistem.catatLogSistem({
+        category: 'cron',
+        level: 'warn',
+        actor: 'cron',
+        action: 'PURGE_USERS',
+        message: `Auto-purge akun bodong: ${delRes.affectedRows} akun nonaktif > 3 hari dibersihkan.`
+      });
     }
   } catch (e) {
     console.error('[Cron] Auto-purge akun gagal:', e.message);

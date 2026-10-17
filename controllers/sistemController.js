@@ -256,4 +256,53 @@ async function broadcast(req, res) {
   });
 }
 
-module.exports = { status, audit, pendapatan, broadcast, catatAudit };
+/**
+ * Catat log sistem secara menyeluruh (auth, admin, cron, bot, billing).
+ */
+function catatLogSistem({ category = 'system', level = 'info', actor = 'system', action, message, ip = null }) {
+  pool.execute(
+    'INSERT INTO system_logs (category, level, actor, action, message, ip) VALUES (?, ?, ?, ?, ?, ?)',
+    [
+      String(category).slice(0, 32),
+      String(level).slice(0, 16),
+      String(actor || 'system').slice(0, 64),
+      String(action || 'UNKNOWN').slice(0, 64),
+      String(message || ''),
+      ip ? String(ip).slice(0, 64) : null,
+    ]
+  ).catch((e) => {
+    console.error(`[SystemLog] gagal catat: ${e.message}`);
+  });
+}
+
+/** API untuk membaca log sistem dengan filter kategori, level, dan search */
+async function getSystemLogs(req, res) {
+  try {
+    const { category, level, q } = req.query;
+    const conds = [];
+    const vals = [];
+
+    if (category) { conds.push('category = ?'); vals.push(category); }
+    if (level) { conds.push('level = ?'); vals.push(level); }
+    if (q) {
+      conds.push('(message LIKE ? OR actor LIKE ? OR action LIKE ?)');
+      const like = `%${q}%`;
+      vals.push(like, like, like);
+    }
+
+    const where = conds.length ? 'WHERE ' + conds.join(' AND ') : '';
+    const [rows] = await pool.execute(
+      `SELECT id, category, level, actor, action, message, ip, created_at
+       FROM system_logs
+       ${where}
+       ORDER BY id DESC LIMIT 150`,
+      vals
+    );
+    return res.json({ ok: true, logs: rows });
+  } catch (e) {
+    console.error('[SystemLog] gagal baca:', e.message);
+    return res.json({ ok: true, logs: [] });
+  }
+}
+
+module.exports = { status, audit, pendapatan, broadcast, catatAudit, catatLogSistem, getSystemLogs };

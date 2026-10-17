@@ -48,7 +48,7 @@
     'orders': { key: 'order', subId: 'sub-manage-orders', title: 'Pesanan & Pembayaran', desc: 'Daftar invoice, riwayat transaksi QRIS, dan rekap pendapatan sistem.' },
     'saldo': { key: 'saldo', subId: 'sub-manage-saldo', title: 'Saldo & Dompet User', desc: 'Kelola saldo member, mutasi dompet, dan rekonsiliasi buku besar.' },
     'harga': { key: 'harga', subId: 'sub-manage-harga', title: 'Harga & Benefit Paket', desc: 'Atur harga sewa slot bot, durasi paket, dan batasan kuota pesan.' },
-    'sistem': { key: 'sistem', subId: 'sub-manage-sistem', title: 'Sistem & Broadcast', desc: 'Broadcast pengumuman ke seluruh bot member dan log audit platform.' }
+    'sistem': { key: 'sistem', subId: 'sub-manage-sistem', title: 'Log Sistem & Server', desc: 'Pemantauan kesehatan server, broadcast pengumuman, dan log aktivitas menyeluruh platform.' }
   };
 
   function tab(nama) {
@@ -75,7 +75,7 @@
     if (key === 'order') { muatPendapatan(); muatOrder(); }
     if (key === 'harga') muatSetelan();
     if (key === 'saldo') muatSaldo();
-    if (key === 'sistem') { muatSistem(); muatAudit(); }
+    if (key === 'sistem') { muatSistem(); muatAudit(); muatLogSistem(); }
   }
 
   // ── Bot semua user + log ───────────────────────────────────────
@@ -525,6 +525,57 @@
     }).join('');
   }
 
+  async function muatLogSistem() {
+    const tb = document.querySelector('#tbl-syslog tbody');
+    if (!tb) return;
+    const cat = document.getElementById('filter-syslog-cat')?.value || '';
+    const lvl = document.getElementById('filter-syslog-lvl')?.value || '';
+    const q = (document.getElementById('cari-syslog')?.value || '').trim();
+
+    const qs = new URLSearchParams();
+    if (cat) qs.set('category', cat);
+    if (lvl) qs.set('level', lvl);
+    if (q) qs.set('q', q);
+
+    const d = await api('/api/admin/system-logs?' + qs.toString());
+    const logs = d?.logs || [];
+    tb.innerHTML = '';
+    if (!logs.length) {
+      tb.innerHTML = '<tr><td colspan="7" class="kosong">Belum ada catatan log sistem.</td></tr>';
+      return;
+    }
+
+    const catBadge = {
+      auth: 'style="background:rgba(59,130,246,.12);color:#3b82f6;"',
+      admin: 'style="background:rgba(245,158,11,.12);color:#f59e0b;"',
+      cron: 'style="background:rgba(168,85,247,.12);color:#a855f7;"',
+      billing: 'style="background:rgba(16,185,129,.12);color:#10b981;"',
+      bot: 'style="background:rgba(6,182,212,.12);color:#06b6d4;"'
+    };
+
+    const lvlBadge = {
+      info: 'style="background:rgba(148,163,184,.12);color:#94a3b8;"',
+      success: 'style="background:rgba(16,185,129,.15);color:#10b981;font-weight:700;"',
+      warn: 'style="background:rgba(245,158,11,.15);color:#f59e0b;font-weight:700;"',
+      error: 'style="background:rgba(239,68,68,.15);color:#ef4444;font-weight:700;"'
+    };
+
+    logs.forEach((l) => {
+      const tr = document.createElement('tr');
+      const cStyle = catBadge[l.category] || '';
+      const lStyle = lvlBadge[l.level] || '';
+      tr.innerHTML =
+        '<td style="white-space:nowrap;font-size:12px;color:var(--mute);">' + tanggal(l.created_at) + ' ' + logTime(l.created_at) + '</td>' +
+        '<td><span class="badge" ' + cStyle + '>' + esc(l.category.toUpperCase()) + '</span></td>' +
+        '<td><span class="badge" ' + lStyle + '>' + esc(l.level.toUpperCase()) + '</span></td>' +
+        '<td><b>' + esc(l.actor || 'system') + '</b></td>' +
+        '<td><code>' + esc(l.action) + '</code></td>' +
+        '<td style="font-size:13px;line-height:1.45;">' + esc(l.message) + '</td>' +
+        '<td><small style="color:var(--mute);">' + esc(l.ip || '—') + '</small></td>';
+      tb.appendChild(tr);
+    });
+  }
+
   async function muatPendapatan() {
     const d = await api('/api/admin/pendapatan');
     if (!d?.ok) return;
@@ -745,6 +796,12 @@
     const segmen = location.pathname.split('/').filter(Boolean)[1] || (location.hash || '').replace('#', '') || 'users';
     tab(segmen);
     muatSetelan();
+
+    let syslogDebounce = null;
+    document.getElementById('cari-syslog')?.addEventListener('input', () => {
+      clearTimeout(syslogDebounce);
+      syslogDebounce = setTimeout(muatLogSistem, 350);
+    });
   });
 
   window.tab = tab;
@@ -772,6 +829,7 @@
   window.hapusBot = hapusBot;
   window.muatSistem = muatSistem;
   window.muatAudit = muatAudit;
+  window.muatLogSistem = muatLogSistem;
   window.muatPendapatan = muatPendapatan;
   window.muatSaldo = muatSaldo;
   window.bukaSaldo = bukaSaldo;

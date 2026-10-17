@@ -221,6 +221,11 @@ async function register(req, res) {
       maxAge: 2 * 60 * 60 * 1000,
     });
 
+    try {
+      const { catatLogSistem } = require('./sistemController');
+      catatLogSistem({ category: 'auth', level: 'info', actor: username, action: 'REGISTER', message: `Pendaftaran akun baru: ${username} (WA: ${bersihPhone}, Gmail: ${bersihEmail})`, ip: req.ip });
+    } catch {}
+
     return res.status(201).json({
       ok: true,
       message: 'Pendaftaran berhasil! Tautan verifikasi telah dikirimkan ke Gmail (' + bersihEmail + ').',
@@ -377,6 +382,11 @@ async function verifyConfirm(req, res) {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
     res.clearCookie('pending_reg_email');
+
+    try {
+      const { catatLogSistem } = require('./sistemController');
+      catatLogSistem({ category: 'auth', level: 'success', actor: item.username, action: 'VERIFY_EMAIL', message: `Verifikasi email berhasil untuk akun: ${item.username} (${item.email})`, ip: req.ip });
+    } catch {}
 
     return res.json({
       ok: true,
@@ -627,8 +637,10 @@ async function deleteUser(req, res) {
       return sendError(res, 400, 'Tidak bisa menghapus akun sendiri');
 
     await pool.execute('DELETE FROM users WHERE id = ?', [id]);
-    // `total_users` dihitung dari tabel users saat dibaca (getStats) —
-    // counter-nya dulu sempat tampil 5 padahal usernya 2.
+    try {
+      const { catatLogSistem } = require('./sistemController');
+      catatLogSistem({ category: 'admin', level: 'warn', actor: req.user.username, action: 'DELETE_USER', message: `Admin ${req.user.username} menghapus akun user ID: ${id}`, ip: req.ip });
+    } catch {}
 
     return res.json({ ok: true, message: 'User dihapus' });
   } catch (err) {
