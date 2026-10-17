@@ -1,6 +1,6 @@
 :root{
   --bg3:#0c0d12;
-  --shell:rgba(255,255,255,.03);
+  --shell:#0c0d12;
   --panel:rgba(255,255,255,.04);
   --card:rgba(255,255,255,.06);
   --edge:rgba(255,255,255,.14);
@@ -83,7 +83,7 @@ aside{
   display:flex!important;
   flex-direction:column!important;
   gap:6px!important;
-  background:#0c0d12!important;
+  background:transparent!important;
   border:none!important;
   box-shadow:none!important;
   position:static!important;

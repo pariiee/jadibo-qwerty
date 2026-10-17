@@ -2022,7 +2022,7 @@ html:not(.dark):not([data-theme="dark"]) body:is(.page-dashboard,.page-admin,.pa
   html:not(.dark):not([data-theme]) body:is(.page-dashboard,.page-admin,.page-pricing,.page-command,.page-billing,.page-profil,.page-kuota,.page-log,.page-panduan,.page-bot,.page-saldo){
     --bg:#0c0d12;--ink:#f2f3f8;--mute:#9ca0b5;--accent:#a5b4fc;--accent2:#6366f1;
     --dark:#f2f3f8;--darkink:#0b0c14;--green:#34d399;--greenbg:rgba(52,211,153,.14);
-    --shell:rgba(255,255,255,.03);--panel:rgba(255,255,255,.04);--card:rgba(255,255,255,.06);
+    --shell:#0c0d12;--panel:rgba(255,255,255,.04);--card:rgba(255,255,255,.06);
     --edge:rgba(255,255,255,.14);--hl:inset 0 1px 0 rgba(255,255,255,.12);
     --line:rgba(255,255,255,.09);--shadow:0 2px 8px rgba(0,0,0,.3);--ovBg:rgba(0,0,0,.55);
   }
@@ -2031,7 +2031,7 @@ html.dark body:is(.page-dashboard,.page-admin,.page-pricing,.page-command,.page-
 :root[data-theme="dark"] body:is(.page-dashboard,.page-admin,.page-pricing,.page-command,.page-billing,.page-profil,.page-kuota,.page-log,.page-panduan,.page-bot,.page-saldo){
   --bg:#0c0d12;--ink:#f2f3f8;--mute:#9ca0b5;--accent:#a5b4fc;--accent2:#6366f1;
   --dark:#f2f3f8;--darkink:#0b0c14;--green:#34d399;--greenbg:rgba(52,211,153,.14);
-  --shell:rgba(255,255,255,.03);--panel:rgba(255,255,255,.04);--card:rgba(255,255,255,.06);
+  --shell:#0c0d12;--panel:rgba(255,255,255,.04);--card:rgba(255,255,255,.06);
   --edge:rgba(255,255,255,.14);--hl:inset 0 1px 0 rgba(255,255,255,.12);
   --line:rgba(255,255,255,.09);--shadow:0 2px 8px rgba(0,0,0,.3);--ovBg:rgba(0,0,0,.55);
 }
