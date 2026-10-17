@@ -409,11 +409,13 @@ body.page-saldo .app{
   margin:0 auto;
   min-height:calc(100vh - 40px);
   border-radius:var(--r-shell);
-  border:none!important;
-  background:transparent!important;
-  box-shadow:none!important;
-  backdrop-filter:none!important;
-  -webkit-backdrop-filter:none!important;
+  border:1px solid var(--edge);
+  background:var(--shell);
+  backdrop-filter:blur(26px);
+  -webkit-backdrop-filter:blur(34px);
+  box-shadow:var(--shadow),var(--hl);
+  overflow:hidden;
+  position:relative;
   transition:grid-template-columns .25s ease;
 }
 /* §8.1 mini: ikon saja, label disembunyikan (butuh <span> di sidebar.html) */
@@ -457,13 +459,13 @@ body.page-saldo aside{
   position:static;
   inset:auto;
   width:auto;
-  margin:10px 0 10px 10px;
-  border-radius:var(--r-panel);
-  background:var(--panel);
-  border:1px solid var(--edge);
-  backdrop-filter:blur(22px);
-  -webkit-backdrop-filter:blur(22px);
-  box-shadow:var(--shadow),var(--hl);
+  margin:0;
+  border-radius:0;
+  border:none;
+  background:none;
+  box-shadow:none;
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
   overflow:hidden;
   padding:22px 14px;
   transform:none;
@@ -2010,7 +2012,7 @@ body:is(.page-dashboard,.page-admin,.page-pricing,.page-command,.page-billing,.p
 html:not(.dark):not([data-theme="dark"]) body:is(.page-dashboard,.page-admin,.page-pricing,.page-command,.page-billing,.page-profil,.page-kuota,.page-log,.page-panduan,.page-bot,.page-saldo){
   --bg:#dde3f1;--ink:#12142b;--mute:#5d6384;--accent:#4338ca;--accent2:#4f46e5;
   --dark:#13152b;--darkink:#ffffff;--green:#16a34a;--greenbg:#e6f4ec;
-  --shell:transparent;--panel:rgba(255,255,255,.55);--card:rgba(255,255,255,.6);
+  --shell:rgba(255,255,255,.45);--panel:rgba(255,255,255,.7);--card:rgba(255,255,255,.6);
   --edge:rgba(255,255,255,.75);--hl:inset 0 1px 0 rgba(255,255,255,.9);
   --line:rgba(18,20,43,.09);--shadow:0 2px 8px rgba(30,40,90,.08);--ovBg:rgba(10,15,40,.35);
 }
@@ -2020,23 +2022,23 @@ html:not(.dark):not([data-theme="dark"]) body:is(.page-dashboard,.page-admin,.pa
   html:not(.dark):not([data-theme]) body:is(.page-dashboard,.page-admin,.page-pricing,.page-command,.page-billing,.page-profil,.page-kuota,.page-log,.page-panduan,.page-bot,.page-saldo){
     --bg:#0c0d12;--ink:#f2f3f8;--mute:#9ca0b5;--accent:#a5b4fc;--accent2:#6366f1;
     --dark:#f2f3f8;--darkink:#0b0c14;--green:#34d399;--greenbg:rgba(52,211,153,.14);
-    --shell:transparent;--panel:rgba(255,255,255,.04);--card:rgba(255,255,255,.07);
-    --edge:rgba(255,255,255,.12);--hl:none;
-    --line:rgba(255,255,255,.08);--shadow:none;--ovBg:rgba(0,0,0,.55);
+    --shell:rgba(255,255,255,.03);--panel:rgba(255,255,255,.04);--card:rgba(255,255,255,.06);
+    --edge:rgba(255,255,255,.14);--hl:inset 0 1px 0 rgba(255,255,255,.12);
+    --line:rgba(255,255,255,.09);--shadow:0 2px 8px rgba(0,0,0,.3);--ovBg:rgba(0,0,0,.55);
   }
 }
 html.dark body:is(.page-dashboard,.page-admin,.page-pricing,.page-command,.page-billing,.page-profil,.page-kuota,.page-log,.page-panduan,.page-bot,.page-saldo),
 :root[data-theme="dark"] body:is(.page-dashboard,.page-admin,.page-pricing,.page-command,.page-billing,.page-profil,.page-kuota,.page-log,.page-panduan,.page-bot,.page-saldo){
   --bg:#0c0d12;--ink:#f2f3f8;--mute:#9ca0b5;--accent:#a5b4fc;--accent2:#6366f1;
   --dark:#f2f3f8;--darkink:#0b0c14;--green:#34d399;--greenbg:rgba(52,211,153,.14);
-  --shell:transparent;--panel:rgba(255,255,255,.04);--card:rgba(255,255,255,.07);
-  --edge:rgba(255,255,255,.12);--hl:none;
-  --line:rgba(255,255,255,.08);--shadow:none;--ovBg:rgba(0,0,0,.55);
+  --shell:rgba(255,255,255,.03);--panel:rgba(255,255,255,.04);--card:rgba(255,255,255,.06);
+  --edge:rgba(255,255,255,.14);--hl:inset 0 1px 0 rgba(255,255,255,.12);
+  --line:rgba(255,255,255,.09);--shadow:0 2px 8px rgba(0,0,0,.3);--ovBg:rgba(0,0,0,.55);
 }
 
-/* ── 4. Desktop: shell rata tanpa kotak terpotong ───────────────── */
+/* ── 4. Desktop: blur lebih ringan, tanpa saturate ───────────────── */
 body:is(.page-dashboard,.page-admin,.page-pricing,.page-command,.page-billing,.page-profil,.page-kuota,.page-log,.page-panduan,.page-bot,.page-saldo) .app{
-  border:none;box-shadow:none;background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;
+  backdrop-filter:blur(26px);-webkit-backdrop-filter:blur(26px);
 }
 
 /* ── 5. Mobile ≤760px: tanpa cangkang & sidebar, navigasi di bawah ── */

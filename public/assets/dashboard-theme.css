@@ -63,9 +63,12 @@ button{font:inherit;color:inherit;cursor:pointer}
   margin:0 auto!important;
   display:grid!important;
   grid-template-columns:230px 1fr!important;
-  background:transparent!important;
-  border:none!important;
-  box-shadow:none!important;
+  background:var(--shell)!important;
+  border:1px solid var(--edge)!important;
+  border-radius:32px!important;
+  backdrop-filter:blur(26px)!important;
+  -webkit-backdrop-filter:blur(34px)!important;
+  box-shadow:var(--shadow),var(--hl)!important;
   overflow:hidden!important;
   position:relative!important;
   transition:grid-template-columns .25s ease!important;
@@ -80,16 +83,14 @@ aside{
   display:flex!important;
   flex-direction:column!important;
   gap:6px!important;
-  margin:10px 0 10px 10px!important;
-  border-radius:26px!important;
-  background:var(--panel)!important;
-  border:1px solid var(--edge)!important;
-  backdrop-filter:blur(22px)!important;
-  -webkit-backdrop-filter:blur(22px)!important;
-  box-shadow:var(--shadow),var(--hl)!important;
+  background:none!important;
+  border:none!important;
+  box-shadow:none!important;
   position:static!important;
   inset:auto!important;
   width:auto!important;
+  margin:0!important;
+  border-radius:0!important;
   transform:none!important;
 }
 aside .brand{height:auto!important;border:none!important;padding:0 10px 18px!important;display:flex!important;align-items:center!important;gap:10px!important;font-weight:700!important;font-size:18px!important;color:var(--ink)!important}
