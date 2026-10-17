@@ -1,18 +1,18 @@
 :root{
-  --bg3:#08090c;
-  --shell:#0c0d12;
-  --panel:#12141a;
-  --card:#161822;
-  --edge:#222533;
-  --hl:none;
+  --bg3:#0c0d12;
+  --shell:rgba(255,255,255,.03);
+  --panel:rgba(255,255,255,.04);
+  --card:rgba(255,255,255,.06);
+  --edge:rgba(255,255,255,.14);
+  --hl:inset 0 1px 0 rgba(255,255,255,.12);
   --ink:#f2f3f8;
   --mute:#9ca0b5;
-  --line:#1c1e28;
+  --line:rgba(255,255,255,.09);
   --dark:#f2f3f8;
-  --darkink:#08090c;
+  --darkink:#0b0c14;
   --green:#34d399;
   --greenbg:rgba(52,211,153,.14);
-  --shadow:0 4px 20px rgba(0,0,0,.5);
+  --shadow:0 2px 8px rgba(0,0,0,.3);
   box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
 }
 :root[data-theme="light"]{
@@ -83,7 +83,7 @@ aside{
   display:flex!important;
   flex-direction:column!important;
   gap:6px!important;
-  background:none!important;
+  background:#0c0d12!important;
   border:none!important;
   box-shadow:none!important;
   position:static!important;
@@ -92,6 +92,9 @@ aside{
   margin:0!important;
   border-radius:0!important;
   transform:none!important;
+}
+:root[data-theme="light"] aside{
+  background:transparent!important;
 }
 aside .brand{height:auto!important;border:none!important;padding:0 10px 18px!important;display:flex!important;align-items:center!important;gap:10px!important;font-weight:700!important;font-size:18px!important;color:var(--ink)!important}
 aside .logo{width:34px!important;height:34px!important;min-height:34px!important;max-height:34px!important;border-radius:12px!important;background:var(--dark)!important;color:var(--darkink)!important;display:grid!important;place-items:center!important;overflow:hidden!important;flex:none!important;border:none!important;padding:0!important;margin:0!important}
