@@ -210,6 +210,7 @@ app.post('/api/auth/login',    authLimiter, auth.login);
 app.post('/api/auth/logout',   auth.logout);
 app.get('/verify-email',       auth.verifyEmail);
 app.get('/api/auth/verify-info', auth.getVerifyInfo);
+app.get('/api/auth/pending-info', auth.getPendingInfo);
 app.post('/api/auth/verify-confirm', resendLimiter, auth.verifyConfirm);
 app.post('/api/auth/resend-verification', resendLimiter, auth.resendVerification);
 app.post('/api/auth/forgot-password', authLimiter, auth.forgotPassword);

@@ -213,12 +213,20 @@ async function register(req, res) {
 
     kirimEmail(bersihEmail, subjek, teks, html).catch(e => console.error('[Auth] Gagal kirim email verifikasi:', e));
 
+    // Simpan email pending di cookie httpOnly sementara (2 jam) — anti-tampering attacker
+    res.cookie('pending_reg_email', bersihEmail, {
+      httpOnly: true,
+      secure: req.protocol === 'https',
+      sameSite: 'lax',
+      maxAge: 2 * 60 * 60 * 1000,
+    });
+
     return res.status(201).json({
       ok: true,
       message: 'Pendaftaran berhasil! Tautan verifikasi telah dikirimkan ke Gmail (' + bersihEmail + ').',
       email: bersihEmail,
       need_verification: true,
-      redirect: '/register/pending?email=' + encodeURIComponent(bersihEmail)
+      redirect: '/register/pending'
     });
   } catch (err) {
     console.error('[Auth] register error:', err);
@@ -368,6 +376,7 @@ async function verifyConfirm(req, res) {
       sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
+    res.clearCookie('pending_reg_email');
 
     return res.json({
       ok: true,
@@ -381,12 +390,21 @@ async function verifyConfirm(req, res) {
   }
 }
 
+// ─── GET /api/auth/pending-info ───────────────────────────────────────────────
+async function getPendingInfo(req, res) {
+  const email = req.cookies?.pending_reg_email;
+  if (!email) {
+    return sendError(res, 404, 'Sesi pendaftaran tidak ditemukan');
+  }
+  return res.json({ ok: true, email });
+}
+
 // ─── POST /api/auth/resend-verification ──────────────────────────────────────
 
 async function resendVerification(req, res) {
   try {
-    const { email } = req.body;
-    if (!email) return sendError(res, 400, 'Alamat email wajib diisi');
+    const email = req.cookies?.pending_reg_email || req.body?.email;
+    if (!email) return sendError(res, 400, 'Sesi pendaftaran tidak ditemukan. Silakan daftar ulang.');
 
     const bersihEmail = String(email).trim().toLowerCase();
     const [rows] = await pool.execute(
@@ -952,7 +970,7 @@ async function resetPassword(req, res) {
 
 module.exports = {
   register, login, logout, me, gantiPassword, simpanPhone, simpanEmail,
-  verifyEmail, resendVerification, getVerifyInfo, verifyConfirm,
+  verifyEmail, resendVerification, getVerifyInfo, verifyConfirm, getPendingInfo,
   forgotPassword, resetPassword,
   googleRedirect, googleCallback,
   listUsers, updateUser, deleteUser,

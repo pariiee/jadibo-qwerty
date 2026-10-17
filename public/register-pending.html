@@ -55,23 +55,27 @@
 
 <script>
 (() => {
-  const params = new URLSearchParams(location.search);
-  const email = params.get('email') || '';
   const boxEmail = document.getElementById('box-email');
   const elEmail = document.getElementById('pending-email');
   const btnResend = document.getElementById('btn-resend');
   const statusEl = document.getElementById('resend-status');
 
-  if (email) {
-    elEmail.textContent = email;
-    boxEmail.style.display = 'block';
-  }
+  // Ambil email dari cookie session yang aman (anti-tampering attacker via query string)
+  fetch('/api/auth/pending-info')
+    .then(r => r.json())
+    .then(data => {
+      if (!data.ok || !data.email) {
+        location.href = '/register';
+        return;
+      }
+      elEmail.textContent = data.email;
+      boxEmail.style.display = 'block';
+    })
+    .catch(() => {
+      location.href = '/register';
+    });
 
   btnResend.addEventListener('click', async () => {
-    if (!email) {
-      location.href = '/register';
-      return;
-    }
     btnResend.disabled = true;
     btnResend.textContent = 'Mengirim...';
     statusEl.style.display = 'none';
@@ -79,8 +83,7 @@
     try {
       const res = await fetch('/api/auth/resend-verification', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
+        headers: { 'Content-Type': 'application/json' }
       });
       const data = await res.json();
       if (res.ok) {
