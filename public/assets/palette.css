@@ -1970,7 +1970,7 @@ body.page-error .error-actions button{
    ══════════════════════════════════════════════════════════════════════ */
 
 /* ── 1. Struktur & alias (berlaku di terang maupun gelap) ─────────── */
-body:is(.page-dashboard,.page-saldo){
+body:is(.page-dashboard,.page-admin,.page-pricing,.page-command,.page-billing,.page-profil,.page-kuota,.page-log,.page-panduan,.page-bot,.page-saldo){
   --blur:blur(18px);
   --r-shell:32px;--r-panel:26px;--r-card:22px;
   /* alias lama dihitung ulang di sini, kalau tidak masih membawa nilai :root */
@@ -1983,7 +1983,7 @@ body:is(.page-dashboard,.page-saldo){
 }
 
 /* ── 2. Warna · terang ───────────────────────────────────────────── */
-html:not(.dark):not([data-theme="dark"]) body:is(.page-dashboard,.page-saldo){
+html:not(.dark):not([data-theme="dark"]) body:is(.page-dashboard,.page-admin,.page-pricing,.page-command,.page-billing,.page-profil,.page-kuota,.page-log,.page-panduan,.page-bot,.page-saldo){
   --bg:#dde3f1;--ink:#12142b;--mute:#5d6384;--accent:#4338ca;--accent2:#4f46e5;
   --dark:#13152b;--darkink:#ffffff;--green:#16a34a;--greenbg:#e6f4ec;
   --shell:rgba(255,255,255,.4);--panel:rgba(255,255,255,.55);--card:rgba(255,255,255,.6);
@@ -1993,7 +1993,7 @@ html:not(.dark):not([data-theme="dark"]) body:is(.page-dashboard,.page-saldo){
 
 /* ── 3. Warna · gelap (hitam glass). Tiga pemicu, sama seperti palette.css ── */
 @media (prefers-color-scheme:dark){
-  html:not(.dark):not([data-theme]) body:is(.page-dashboard,.page-saldo){
+  html:not(.dark):not([data-theme]) body:is(.page-dashboard,.page-admin,.page-pricing,.page-command,.page-billing,.page-profil,.page-kuota,.page-log,.page-panduan,.page-bot,.page-saldo){
     --bg:#0c0d12;--ink:#f2f3f8;--mute:#9ca0b5;--accent:#a5b4fc;--accent2:#6366f1;
     --dark:#f2f3f8;--darkink:#0b0c14;--green:#34d399;--greenbg:rgba(52,211,153,.14);
     --shell:rgba(255,255,255,.03);--panel:rgba(255,255,255,.04);--card:rgba(255,255,255,.07);
@@ -2001,8 +2001,8 @@ html:not(.dark):not([data-theme="dark"]) body:is(.page-dashboard,.page-saldo){
     --line:rgba(255,255,255,.09);--shadow:0 2px 8px rgba(0,0,0,.3);--ovBg:rgba(0,0,0,.55);
   }
 }
-html.dark body:is(.page-dashboard,.page-saldo),
-:root[data-theme="dark"] body:is(.page-dashboard,.page-saldo){
+html.dark body:is(.page-dashboard,.page-admin,.page-pricing,.page-command,.page-billing,.page-profil,.page-kuota,.page-log,.page-panduan,.page-bot,.page-saldo),
+:root[data-theme="dark"] body:is(.page-dashboard,.page-admin,.page-pricing,.page-command,.page-billing,.page-profil,.page-kuota,.page-log,.page-panduan,.page-bot,.page-saldo){
   --bg:#0c0d12;--ink:#f2f3f8;--mute:#9ca0b5;--accent:#a5b4fc;--accent2:#6366f1;
   --dark:#f2f3f8;--darkink:#0b0c14;--green:#34d399;--greenbg:rgba(52,211,153,.14);
   --shell:rgba(255,255,255,.03);--panel:rgba(255,255,255,.04);--card:rgba(255,255,255,.07);
@@ -2011,7 +2011,7 @@ html.dark body:is(.page-dashboard,.page-saldo),
 }
 
 /* ── 4. Desktop: blur lebih ringan, tanpa saturate ───────────────── */
-body:is(.page-dashboard,.page-saldo) .app{
+body:is(.page-dashboard,.page-admin,.page-pricing,.page-command,.page-billing,.page-profil,.page-kuota,.page-log,.page-panduan,.page-bot,.page-saldo) .app{
   backdrop-filter:blur(26px);-webkit-backdrop-filter:blur(26px);
 }
 
