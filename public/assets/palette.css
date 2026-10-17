@@ -88,7 +88,7 @@
   --surf3:#ffffff;
   --panelA:#ffffff;
   --panelB:#ffffff;
-  --sideBg:#ffffff;
+  --sideBg:transparent;
   --barBg:#ffffff;
   --off:#cbd5e1;
   --off2:#94a3b8;
@@ -2012,9 +2012,10 @@ body:is(.page-dashboard,.page-admin,.page-pricing,.page-command,.page-billing,.p
 html:not(.dark):not([data-theme="dark"]) body:is(.page-dashboard,.page-admin,.page-pricing,.page-command,.page-billing,.page-profil,.page-kuota,.page-log,.page-panduan,.page-bot,.page-saldo){
   --bg:#dde3f1;--ink:#12142b;--mute:#5d6384;--accent:#4338ca;--accent2:#4f46e5;
   --dark:#13152b;--darkink:#ffffff;--green:#16a34a;--greenbg:#e6f4ec;
-  --shell:rgba(255,255,255,.45);--panel:rgba(255,255,255,.7);--card:rgba(255,255,255,.6);
-  --edge:rgba(255,255,255,.75);--hl:inset 0 1px 0 rgba(255,255,255,.9);
-  --line:rgba(18,20,43,.09);--shadow:0 2px 8px rgba(30,40,90,.08);--ovBg:rgba(10,15,40,.35);
+  --shell:#dde3f1;--panel:#ffffff;--card:#f8fafc;
+  --edge:rgba(0,0,0,.08);--hl:none;
+  --line:rgba(18,20,43,.08);--shadow:0 4px 20px rgba(0,0,0,.05);--ovBg:rgba(10,15,40,.35);
+  --sideBg:transparent;
 }
 
 /* ── 3. Warna · gelap (hitam glass). Tiga pemicu, sama seperti palette.css ── */

@@ -17,11 +17,11 @@
 }
 :root[data-theme="light"]{
   --bg3:#dde3f1;
-  --shell:rgba(255,255,255,.45);
-  --panel:rgba(255,255,255,.7);
-  --card:rgba(255,255,255,.6);
-  --edge:rgba(255,255,255,.75);
-  --hl:inset 0 1px 0 rgba(255,255,255,.9);
+  --shell:#dde3f1;
+  --panel:#ffffff;
+  --card:#f8fafc;
+  --edge:rgba(0,0,0,.08);
+  --hl:none;
   --ink:#111426;
   --mute:#6b7085;
   --line:rgba(17,20,38,.08);
@@ -29,7 +29,7 @@
   --darkink:#fff;
   --green:#16a34a;
   --greenbg:#e6f4ec;
-  --shadow:0 2px 8px rgba(30,40,90,.08);
+  --shadow:0 4px 20px rgba(0,0,0,.05);
 }
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box}
