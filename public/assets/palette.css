@@ -2430,94 +2430,70 @@ body.page-profil .pf-actions .btn{min-width:160px}
   body.page-profil .stats>.stat:nth-child(n+3){border-top:1px solid var(--line)!important}
 }
 
-/* ─── Halaman Pricing Modern (4 Cards) ─────────────────────────────────── */
-  body.page-pricing #plan-grid, body.page-pricing .plan-grid {
-    display: grid !important;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)) !important;
-    gap: 18px !important;
-    align-items: start !important;
-  }
-  body.page-pricing .plan-card {
-    background: var(--card) !important;
-    border: 1px solid var(--line) !important;
-    border-radius: 20px !important;
-    padding: 24px !important;
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 16px !important;
-    height: auto !important;
-    align-self: start !important;
-    box-sizing: border-box !important;
-    transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease !important;
-  }
-  body.page-pricing .plan-card:hover {
-    border-color: var(--accent) !important;
-    transform: translateY(-2px) !important;
-  }
-  body.page-pricing .plan-card.aktif {
-    border-color: var(--accent) !important;
-    box-shadow: 0 0 0 1px var(--accent) !important;
-  }
-  body.page-pricing .pc-head {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    gap: 8px !important;
-  }
-  body.page-pricing .pc-name {
-    font-size: 17px !important;
-    font-weight: 800 !important;
-    letter-spacing: -0.02em !important;
-    color: var(--ink) !important;
-  }
-  body.page-pricing .pc-tag {
-    font-size: 11px !important;
-    font-weight: 700 !important;
-    padding: 3px 10px !important;
-    border-radius: 999px !important;
-    background: var(--greenbg) !important;
-    color: var(--green) !important;
-  }
-  body.page-pricing .pc-price {
-    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
-    font-size: 28px !important;
-    font-weight: 800 !important;
-    letter-spacing: -0.03em !important;
-    font-variant-numeric: tabular-nums !important;
-    color: var(--ink) !important;
-  }
-  body.page-pricing .pc-price small {
-    font-size: 13px !important;
-    font-weight: 500 !important;
-    color: var(--mute) !important;
-    letter-spacing: normal !important;
-  }
-  body.page-pricing .pc-list {
-    list-style: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 10px !important;
-    font-size: 13px !important;
-    color: var(--mute) !important;
-  }
-  body.page-pricing .pc-list li {
-    display: flex !important;
-    align-items: center !important;
-    gap: 8px !important;
-  }
-  body.page-pricing .pc-list li::before {
-    content: '✓' !important;
-    color: var(--green) !important;
-    font-weight: 800 !important;
-  }
-  body.page-pricing .plan-card .btn {
-    margin-top: 8px !important;
-    width: 100% !important;
-    justify-content: center !important;
-    height: 44px !important;
-    border-radius: 12px !important;
-    font-weight: 700 !important;
-  }
+/* ══════════════════════════════════════════════════════════════════════
+   PRICING — kaca. 4 kartu paket sama tinggi (tombol selalu di dasar),
+   kolom mengikuti lebar area kartu (container query), modal di luar <main>.
+   Id/kelas yang dipakai pricing.js tidak berubah: #plan-grid .plan-card(.aktif)
+   .pc-head .pc-name .pc-tag .pc-price(small) .pc-list #plan-badge #plan-until
+   #btn-trial #trial-note #bayar-* #step-metode #step-bayar .plat-btn
+   ══════════════════════════════════════════════════════════════════════ */
+body.page-pricing .cmd-head{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:14px;margin:0 0 22px}
+body.page-pricing .cmd-head h2{margin:0 0 4px;font-size:clamp(24px,3.4vw,32px);letter-spacing:-.03em;font-weight:700}
+body.page-pricing .m-sub{margin:0;color:var(--mute);font-size:14px;line-height:1.55}
+
+/* status slot */
+body.page-pricing .slot-head{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin:0 0 16px;padding:22px 26px;border-radius:var(--r-card)}
+body.page-pricing .slot-head .lbl{margin-bottom:8px;font-size:13px;font-weight:500;color:var(--mute)}
+body.page-pricing .slot-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+body.page-pricing .plan-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:999px;background:var(--panel);border:1px solid var(--edge);box-shadow:var(--hl);font-size:14px;font-weight:700}
+body.page-pricing .slot-txt{color:var(--mute);font-size:13.5px}
+body.page-pricing .note{margin:0 0 16px;padding:14px 18px;border-radius:16px;background:var(--amberbg);border:1px solid var(--edge);font-size:14px;line-height:1.5}
+
+/* grid kartu: kolom ikut lebar area ini (bukan lebar layar) */
+body.page-pricing .plan-wrap{container-type:inline-size}
+
+body.page-pricing #plan-grid,body.page-pricing .plan-grid{display:grid !important;grid-template-columns:minmax(0,1fr) !important;gap:16px !important;align-items:stretch !important}
+@container (min-width:520px){
+  body.page-pricing #plan-grid,body.page-pricing .plan-grid{grid-template-columns:repeat(2,minmax(0,1fr)) !important}
+}
+@container (min-width:860px){
+  body.page-pricing #plan-grid,body.page-pricing .plan-grid{grid-template-columns:repeat(auto-fit,minmax(200px,1fr)) !important}
+}
+body.page-pricing .plan-card{display:flex !important;flex-direction:column !important;gap:18px !important;height:auto !important;align-self:stretch !important;box-sizing:border-box !important;padding:24px !important;background:var(--card) !important;border:1px solid var(--edge) !important;border-radius:var(--r-card) !important;box-shadow:var(--shadow),var(--hl) !important;backdrop-filter:blur(18px) !important;-webkit-backdrop-filter:blur(18px) !important;transition:border-color .2s ease !important}
+body.page-pricing .plan-card:hover{border-color:var(--mute) !important;transform:none !important}
+body.page-pricing .plan-card.aktif{border-color:var(--accent2) !important;box-shadow:0 0 0 1px var(--accent2),var(--shadow),var(--hl) !important}
+body.page-pricing .pc-head{display:flex !important;align-items:center !important;justify-content:space-between !important;gap:8px !important}
+body.page-pricing .pc-name{font-size:17px !important;font-weight:800 !important;letter-spacing:-.02em !important;color:var(--ink) !important}
+body.page-pricing .pc-tag{padding:4px 11px !important;border-radius:999px !important;background:var(--dark) !important;color:var(--darkink) !important;font-size:11.5px !important;font-weight:700 !important;white-space:nowrap !important}
+body.page-pricing .pc-price{font-size:clamp(26px,3vw,32px) !important;font-weight:800 !important;letter-spacing:-.03em !important;line-height:1.1 !important;font-variant-numeric:tabular-nums !important;color:var(--ink) !important}
+body.page-pricing .pc-price small{font-size:13px !important;font-weight:500 !important;letter-spacing:normal !important;color:var(--mute) !important}
+body.page-pricing .pc-list{list-style:none !important;margin:0 !important;padding:18px 0 0 !important;border-top:1px solid var(--line) !important;display:flex !important;flex-direction:column !important;gap:12px !important;flex:1 !important;font-size:13.5px !important;color:var(--mute) !important}
+body.page-pricing .pc-list li{display:flex !important;align-items:flex-start !important;gap:10px !important;line-height:1.4 !important}
+body.page-pricing .pc-list li::before{content:"✓" !important;flex:none !important;width:18px !important;height:18px !important;margin-top:1px !important;border-radius:50% !important;display:grid !important;place-items:center !important;background:var(--greenbg) !important;color:var(--green) !important;font-size:11px !important;font-weight:800 !important}
+body.page-pricing .plan-card .btn{margin-top:auto !important;width:100% !important;min-height:46px !important;justify-content:center !important;border-radius:999px !important;font-weight:700 !important;height:auto !important}
+
+
+/* modal pembayaran */
+body.page-pricing .modal{position:relative;padding:28px;border-radius:var(--r-panel)}
+body.page-pricing .modal h3{margin:0 0 6px;padding-right:40px;font-size:19px;letter-spacing:-.02em}
+body.page-pricing .modal .m-sub{margin:0 0 18px}
+body.page-pricing .modal-close{position:absolute;top:16px;right:16px;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;padding:0;background:var(--card);border:1px solid var(--edge);box-shadow:var(--hl);color:var(--ink)}
+body.page-pricing .plat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+body.page-pricing .plat-btn{display:flex;flex-direction:column;align-items:center;gap:8px;padding:22px 14px;border-radius:20px;background:var(--card);border:1px solid var(--edge);box-shadow:var(--hl);color:var(--ink);text-align:center;cursor:pointer;transition:border-color .15s}
+body.page-pricing .plat-btn:hover{border-color:var(--accent2)}
+body.page-pricing .plat-btn span{font-size:14px;font-weight:700}
+body.page-pricing .plat-btn small{font-size:12px;line-height:1.35;color:var(--mute)}
+body.page-pricing .qr-wrap{margin:18px 0;text-align:center}
+body.page-pricing .qr-wrap img{width:240px;max-width:100%;padding:10px;border-radius:16px;background:#fff;border:1px solid var(--edge)}
+body.page-pricing .bayar-actions{display:grid;gap:10px;margin-top:14px}
+body.page-pricing .bayar-actions .btn{width:100%}
+
+@media (max-width:760px){
+  body.page-pricing .slot-head{padding:20px}
+  body.page-pricing .modal{padding:22px 20px}
+}
+@media (max-width:560px){
+  body.page-pricing #btn-trial{width:100%}
+  body.page-pricing .plat-grid{grid-template-columns:1fr}
+}
 
