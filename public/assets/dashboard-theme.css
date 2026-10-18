@@ -351,7 +351,7 @@ h1 span{color:var(--mute)!important;font-weight:600!important}
 
 /* Hero Animated Greeting */
 .hero-sub{
-  display:inline-block!important;
+  display:block!important;
   color:var(--mute)!important;
   font-weight:600!important;
   opacity:0;
@@ -359,7 +359,7 @@ h1 span{color:var(--mute)!important;font-weight:600!important}
   animation:heroFade .6s cubic-bezier(.16,1,.3,1) forwards;
 }
 .hero-user{
-  display:inline-block!important;
+  display:block!important;
   color:var(--ink)!important;
   font-weight:700!important;
   opacity:0;
