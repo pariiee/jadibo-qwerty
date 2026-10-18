@@ -2374,6 +2374,64 @@ body.page-bot-stats .chart-point:hover .chart-tip,body.page-bot-stats .chart-poi
 }
 body.page-bot-stats #cmd-donut-graphic circle,body.page-bot-stats #cmd-donut-graphic path{stroke-linecap:butt !important}
 
+/* ══════════════════════════════════════════════════════════════════════
+   PROFIL — kaca. Desktop: kiri = Nomor HP + Email, kanan = Password.
+   HP: satu kolom. Id yang dipakai profil.js tidak berubah:
+   #pf-user #pf-sejak #pf-role #pf-paket #pf-exp #pf-exp-sub #pf-bot #pf-bot-sub
+   #hp-form #hp-nomor #hp-error #hp-ok #hp-btn  #em-form #em-alamat #em-error #em-ok #em-btn
+   #pw-form #pw-lama #pw-baru #pw-ulang #pw-error
+   ══════════════════════════════════════════════════════════════════════ */
+body.page-profil .content{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:start}
+body.page-profil .content>.cmd-head,body.page-profil .content>.span-all{grid-column:1/-1}
+body.page-profil .cmd-head{margin:0 0 4px}
+body.page-profil .cmd-head h2{margin:0 0 4px;font-size:clamp(24px,3.4vw,32px);letter-spacing:-.03em;font-weight:700}
+body.page-profil .m-sub{margin:0;color:var(--mute);font-size:13.5px;line-height:1.55}
+body.page-profil .m-sub b{color:var(--ink);font-weight:600}
+body.page-profil .stats .val{overflow-wrap:anywhere}
+
+/* penempatan kartu */
+body.page-profil .pf-hp{grid-column:1;grid-row:3}
+body.page-profil .pf-em{grid-column:1;grid-row:4}
+body.page-profil .pf-pw{grid-column:2;grid-row:3 / span 2}
+
+/* kartu */
+body.page-profil .pf-card{margin:0;padding:26px 28px;border-radius:var(--r-card)}
+body.page-profil .pf-head{display:flex;gap:14px;align-items:flex-start;margin:0 0 22px}
+body.page-profil .pf-ic{
+  width:44px;height:44px;border-radius:14px;flex:none;display:grid;place-items:center;
+  background:var(--panel);border:1px solid var(--edge);box-shadow:var(--hl);color:var(--ink);
+}
+body.page-profil .pf-ic svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+body.page-profil .pf-head h3{margin:2px 0 4px;font-size:16px;font-weight:700;letter-spacing:-.01em}
+
+/* form */
+body.page-profil .field{margin:0 0 16px}
+body.page-profil .field>label{display:block;margin-bottom:8px;font-size:13px;font-weight:600;color:var(--ink)}
+body.page-profil .field .inp{width:100%}
+body.page-profil .err,body.page-profil .ok{display:none;margin:0 0 14px;padding:10px 14px;border-radius:12px;font-size:13px;line-height:1.45}
+body.page-profil .err.show,body.page-profil .ok.show{display:block}
+body.page-profil .err{background:var(--redbg,rgba(239,68,68,.1));color:var(--red,#ef4444)}
+body.page-profil .ok{background:var(--greenbg);color:var(--green)}
+body.page-profil .pf-actions{display:flex;justify-content:flex-end;margin-top:4px}
+body.page-profil .pf-actions .btn{min-width:160px}
+
+/* satu kolom di tablet/HP */
+@media (max-width:1000px){
+  body.page-profil .content{grid-template-columns:minmax(0,1fr)}
+  body.page-profil .pf-hp,body.page-profil .pf-em,body.page-profil .pf-pw{grid-column:1;grid-row:auto}
+}
+@media (max-width:760px){
+  body.page-profil .pf-card{padding:20px}
+  body.page-profil .pf-head{margin-bottom:18px}
+  body.page-profil .pf-actions .btn{width:100%}
+  /* ringkasan akun: panel 2x2, bukan 1 kolom */
+  body.page-profil .stats{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  body.page-profil .stats>.stat{min-height:0!important;padding:18px!important;border-left:0!important;border-top:0!important}
+  body.page-profil .stats>.stat:nth-child(even){border-left:1px solid var(--line)!important}
+  body.page-profil .stats>.stat:nth-child(n+3){border-top:1px solid var(--line)!important}
+}
+
+
 
 
 

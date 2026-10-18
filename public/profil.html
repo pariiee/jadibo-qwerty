@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>Profil Saya — qwertygate</title>
 <!-- @include head.html -->
 </head>
@@ -15,11 +15,13 @@
     <!-- @include topbar.html -->
 
     <div class="content">
-      <div class="cmd-head">
-        <h2>Profil Saya</h2>
-      </div>
+      <header class="cmd-head">
+        <h2>Profil saya</h2>
+        <p class="m-sub">Kelola kontak, email, dan keamanan akunmu.</p>
+      </header>
 
-      <div class="stats span-all">
+      <!-- Ringkasan akun -->
+      <section class="stats span-all" aria-label="Ringkasan akun">
         <div class="stat">
           <div class="lbl">Username</div>
           <div class="val" id="pf-user">—</div>
@@ -31,24 +33,26 @@
           <div class="sub" id="pf-paket"></div>
         </div>
         <div class="stat">
-          <div class="lbl">Masa Aktif</div>
+          <div class="lbl">Masa aktif</div>
           <div class="val" id="pf-exp">—</div>
           <div class="sub" id="pf-exp-sub"></div>
         </div>
         <div class="stat">
-          <div class="lbl">Bot Kamu</div>
+          <div class="lbl">Bot kamu</div>
           <div class="val" id="pf-bot">0</div>
           <div class="sub" id="pf-bot-sub"></div>
         </div>
-      </div>
+      </section>
 
-      <!-- Dua kartu berjajar (grid 2 kolom dari page.css) supaya 3 form isian
-           tidak menumpuk jadi halaman panjang. Form pendek (HP + Email)
-           digabung di kiri, Password di kanan. -->
-      <div class="card">
-        <h3>Kontak & Keamanan</h3>
-        <p class="m-sub">Nomor HP dipakai bot mengirim kabar pembayaran & saat bot mati
-          — kalau bot kamu putus, nomor inilah jalurnya.</p>
+      <!-- Nomor HP -->
+      <section class="card pf-card pf-hp">
+        <div class="pf-head">
+          <div class="pf-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg></div>
+          <div>
+            <h3>Nomor HP</h3>
+            <p class="m-sub">Dipakai bot mengirim kabar pembayaran &amp; saat bot mati. Kalau bot kamu putus, nomor inilah jalurnya.</p>
+          </div>
+        </div>
         <form id="hp-form">
           <div class="field">
             <label for="hp-nomor">Nomor HP</label>
@@ -56,50 +60,56 @@
           </div>
           <div class="err" id="hp-error"></div>
           <div class="ok" id="hp-ok"></div>
-          <button class="btn btn-dark submit" id="hp-btn" type="submit">Simpan Nomor</button>
+          <div class="pf-actions"><button class="btn btn-dark submit" id="hp-btn" type="submit">Simpan Nomor</button></div>
         </form>
+      </section>
 
-        <hr class="pisah" />
-
-        <!-- Email — jalur kabar yang TIDAK lewat bot.
-             Nomor HP & nomor owner dua-duanya dikirim lewat bot MILIK USER, jadi
-             saat botnya yang rusak, kabarnya ikut hilang. Email tidak. -->
-        <h3>Email</h3>
-        <p class="m-sub">Kalau bot kamu mati, kabarnya dikirim lewat WhatsApp —
-          <b>dari bot itu sendiri</b>, jadi kalau botnya yang bermasalah, kabarnya tidak sampai.
-          Email ini jalur yang tetap jalan.</p>
+      <!-- Email -->
+      <section class="card pf-card pf-em">
+        <div class="pf-head">
+          <div class="pf-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></div>
+          <div>
+            <h3>Email</h3>
+            <p class="m-sub">Kabar bot mati dikirim lewat WhatsApp — <b>dari bot itu sendiri</b>, jadi kalau botnya yang bermasalah, kabarnya tidak sampai. Email ini jalur yang tetap jalan.</p>
+          </div>
+        </div>
         <form id="em-form">
           <div class="field">
-            <label for="em-alamat">Alamat Email</label>
+            <label for="em-alamat">Alamat email</label>
             <input class="inp" id="em-alamat" type="email" placeholder="nama@gmail.com" autocomplete="email" />
           </div>
           <div class="err" id="em-error"></div>
           <div class="ok" id="em-ok"></div>
-          <button class="btn btn-dark submit" id="em-btn" type="submit">Simpan Email</button>
+          <div class="pf-actions"><button class="btn btn-dark submit" id="em-btn" type="submit">Simpan Email</button></div>
         </form>
-      </div>
+      </section>
 
-      <div class="card">
-        <h3>Ganti Password</h3>
-        <p class="m-sub">Masukkan password lama dulu — supaya orang lain yang kebetulan
-          masih login di perangkatmu nggak bisa mengunci kamu dari akun sendiri.</p>
+      <!-- Password -->
+      <section class="card pf-card pf-pw">
+        <div class="pf-head">
+          <div class="pf-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div>
+          <div>
+            <h3>Ganti password</h3>
+            <p class="m-sub">Masukkan password lama dulu, supaya orang lain yang kebetulan masih login di perangkatmu nggak bisa mengunci kamu dari akun sendiri.</p>
+          </div>
+        </div>
         <form id="pw-form">
           <div class="field">
-            <label for="pw-lama">Password Lama</label>
+            <label for="pw-lama">Password lama</label>
             <input class="inp" id="pw-lama" type="password" autocomplete="current-password" required />
           </div>
           <div class="field">
-            <label for="pw-baru">Password Baru</label>
+            <label for="pw-baru">Password baru</label>
             <input class="inp" id="pw-baru" type="password" placeholder="Min. 6 karakter" autocomplete="new-password" required />
           </div>
           <div class="field">
-            <label for="pw-ulang">Ulangi Password Baru</label>
+            <label for="pw-ulang">Ulangi password baru</label>
             <input class="inp" id="pw-ulang" type="password" autocomplete="new-password" required />
           </div>
           <div class="err" id="pw-error"></div>
-          <button class="btn btn-dark submit" type="submit">Simpan Password Baru</button>
+          <div class="pf-actions"><button class="btn btn-dark submit" type="submit">Simpan Password Baru</button></div>
         </form>
-      </div>
+      </section>
     </div>
   </main>
 </div>
