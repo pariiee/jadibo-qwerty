@@ -542,18 +542,28 @@ details[open] .cmd-panah{transform:rotate(180deg)!important;color:var(--ink)!imp
 .custom-select-wrap{position:relative;display:inline-block;vertical-align:middle}
 .cs-trigger{
   display:inline-flex;align-items:center;justify-content:space-between;gap:10px;
-  background:rgba(255,255,255,0.05)!important;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
-  border:1px solid var(--edge)!important;box-shadow:var(--hl)!important;border-radius:14px!important;padding:0 16px!important;
-  font-family:inherit;font-size:13.5px;font-weight:500;color:var(--ink)!important;
-  cursor:pointer;transition:all .2s ease;user-select:none;height:42px!important;min-height:42px!important;box-sizing:border-box;width:100%;
+  background:var(--card)!important;border:1px solid var(--edge)!important;border-radius:999px!important;padding:0 18px!important;
+  font-family:inherit;font-size:13px;font-weight:600;color:var(--ink)!important;
+  box-shadow:var(--hl)!important;cursor:pointer;transition:all .2s ease;user-select:none;height:38px!important;min-height:38px!important;box-sizing:border-box;width:100%;
 }
 .cs-trigger:hover{
-  background:rgba(255,255,255,0.09)!important;
+  background:var(--panel)!important;
   border-color:rgba(255,255,255,0.24)!important;
 }
 .cs-trigger.open{
-  border-color:rgba(255,255,255,0.32)!important;background:rgba(255,255,255,0.1)!important;
+  border-color:rgba(255,255,255,0.32)!important;background:var(--panel)!important;
   box-shadow:0 8px 24px rgba(0,0,0,0.4), var(--hl)!important;
+}
+:root[data-theme="light"] .cs-trigger{
+  background:#f1f5f9!important;border:1px solid rgba(0,0,0,0.14)!important;
+  color:#111426!important;box-shadow:0 1px 2px rgba(0,0,0,0.04)!important;
+}
+:root[data-theme="light"] .cs-trigger:hover{
+  background:#e2e8f0!important;border-color:rgba(0,0,0,0.22)!important;
+}
+:root[data-theme="light"] .cs-trigger.open{
+  background:#e2e8f0!important;border-color:rgba(0,0,0,0.28)!important;
+  box-shadow:0 6px 16px rgba(0,0,0,0.08)!important;
 }
 .cs-label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left}
 .cs-arrow{width:14px;height:14px;stroke:var(--mute);transition:transform .2s ease;flex-shrink:0}
@@ -577,6 +587,16 @@ details[open] .cmd-panah{transform:rotate(180deg)!important;color:var(--ink)!imp
 .cs-option:hover{background:rgba(255,255,255,0.08);color:var(--ink)}
 .cs-option.on{background:rgba(255,255,255,0.12);color:#fff;font-weight:600}
 .cs-option.on::after{content:'';display:inline-block;width:5px;height:5px;border-radius:50%;background:#fff;box-shadow:0 0 8px rgba(255,255,255,0.8)}
+
+:root[data-theme="light"] .cs-menu{
+  background:#ffffff!important;border:1px solid rgba(0,0,0,0.12)!important;
+  box-shadow:0 12px 32px rgba(15,23,42,0.12)!important;
+}
+:root[data-theme="light"] .cs-menu::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.15)}
+:root[data-theme="light"] .cs-option{color:#475569!important}
+:root[data-theme="light"] .cs-option:hover{background:#f1f5f9!important;color:#0f172a!important}
+:root[data-theme="light"] .cs-option.on{background:#e2e8f0!important;color:#0f172a!important;font-weight:600!important}
+:root[data-theme="light"] .cs-option.on::after{background:#0f172a!important;box-shadow:none!important}
 
 /* Fallback styling bila select asli masih sempat render */
 select.inp,select{background-color:rgba(255,255,255,0.05)!important;color:var(--ink)!important;border:1px solid var(--edge)!important;border-radius:14px!important}

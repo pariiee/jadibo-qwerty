@@ -280,18 +280,26 @@ document.addEventListener('DOMContentLoaded', function () {
       for (var i = 0; i < opts.length; i++) {
         (function (idx) {
           var o = opts[idx];
+          if (o.hidden) return;
           var item = document.createElement('div');
           item.className = 'cs-option' + (idx === curIdx ? ' on' : '');
           item.textContent = o.textContent;
           item.dataset.val = o.value;
           item.addEventListener('click', function (e) {
             e.stopPropagation();
-            sel.selectedIndex = idx;
-            sel.value = o.value;
-            label.textContent = o.textContent;
-            menu.querySelectorAll('.cs-option').forEach(function (el, j) {
-              el.classList.toggle('on', j === idx);
-            });
+            if (sel.selectedIndex === idx && sel.options[0] && sel.options[0].hidden) {
+              sel.selectedIndex = 0;
+              sel.value = sel.options[0].value;
+              label.textContent = sel.options[0].textContent;
+              menu.querySelectorAll('.cs-option').forEach(function (el) { el.classList.remove('on'); });
+            } else {
+              sel.selectedIndex = idx;
+              sel.value = o.value;
+              label.textContent = o.textContent;
+              menu.querySelectorAll('.cs-option').forEach(function (el) {
+                el.classList.toggle('on', el.dataset.val === o.value);
+              });
+            }
             close();
             sel.dispatchEvent(new Event('change', { bubbles: true }));
             if (typeof sel.onchange === 'function') sel.onchange();
