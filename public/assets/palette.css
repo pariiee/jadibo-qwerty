@@ -2506,10 +2506,10 @@ body.page-pricing .bayar-actions .btn{width:100%}
    ══════════════════════════════════════════════════════════════════════ */
 
 /* hero */
-body.page-dashboard .hero{display:block;margin:6px 0 22px}
+body.page-dashboard .hero{display:block;margin:8px 0 28px}
 body.page-dashboard .hero h1{margin:0;line-height:1.1;letter-spacing:-.03em}
-body.page-dashboard .hero h1 .hero-sub{display:block;margin-bottom:6px;font-size:clamp(15px,2vw,18px);font-weight:600;letter-spacing:-.01em;color:var(--mute)}
-body.page-dashboard .hero h1 .hero-user{display:block;font-size:clamp(30px,5.2vw,46px);font-weight:700;color:var(--ink);overflow-wrap:anywhere}
+body.page-dashboard .hero h1 .hero-sub{display:block;margin-bottom:2px;font-size:clamp(24px,4.6vw,58px);font-weight:600;letter-spacing:-.03em;line-height:1.08;color:var(--mute);text-wrap:balance}
+body.page-dashboard .hero h1 .hero-user{display:block;font-size:clamp(28px,4.2vw,54px);font-weight:700;letter-spacing:-.03em;line-height:1.08;color:var(--ink);overflow-wrap:anywhere}
 
 /* pemberitahuan di atas konten */
 body.page-dashboard #kuota-alert,body.page-dashboard #pengumuman{
