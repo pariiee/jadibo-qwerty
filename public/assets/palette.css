@@ -2150,79 +2150,123 @@ body.page-dashboard .faq .ans code{font-family:ui-monospace,Menlo,Consolas,monos
    Token & cangkang aplikasi datang dari blok 13 dan daftar §7.
    id/kelas yang dipakai saldo.js (chip-btn, active, kosong, #...) tidak diubah.
    ══════════════════════════════════════════════════════════════════════ */
-body.page-saldo .cmd-head{
-  display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:14px;margin:0 0 22px;
+/* ── 14. Saldo & Top up (/saldo) ────────────────────────────────── */
+@keyframes sdFadeUp{
+  from{opacity:0;transform:translateY(16px)}
+  to{opacity:1;transform:translateY(0)}
 }
-body.page-saldo .cmd-head h2{margin:0 0 4px;font-size:clamp(24px,3.4vw,32px);letter-spacing:-.03em;font-weight:700}
-body.page-saldo .m-sub{margin:0;color:var(--mute);font-size:14px;line-height:1.5}
-body.page-saldo .sd-stack{max-width:1040px;display:grid;gap:16px}
-/* desktop: form di kiri, saldo di kanan (di HP tetap saldo dulu, satu kolom) */
-@media (min-width:1000px){
-  body.page-saldo .sd-stack{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);align-items:start}
+body.page-saldo .cmd-head{animation:sdFadeUp .5s cubic-bezier(0.16,1,0.3,1) forwards}
+body.page-saldo .sd-stack{animation:sdFadeUp .5s cubic-bezier(0.16,1,0.3,1) .08s forwards;opacity:0}
+body.page-saldo #riwayat-section{animation:sdFadeUp .5s cubic-bezier(0.16,1,0.3,1) .16s forwards;opacity:0}
+
+body.page-saldo .cmd-head{
+  display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px;margin:0 0 26px;
+}
+body.page-saldo .cmd-head h2{margin:0 0 4px;font-size:clamp(24px,3.4vw,32px);letter-spacing:-.03em;font-weight:800}
+body.page-saldo .m-sub{margin:0;color:var(--mute);font-size:14px;line-height:1.55}
+body.page-saldo .sd-stack{max-width:1040px;display:grid;gap:18px}
+@media (min-width:900px){
+  body.page-saldo .sd-stack{grid-template-columns:1fr 1.5fr;align-items:start}
   body.page-saldo .sd-stack>#banner-auto,body.page-saldo .sd-stack>#blok-qris{grid-column:1/-1}
-  body.page-saldo .sd-form{grid-column:1;grid-row:2}
-  body.page-saldo .sd-bal{grid-column:2;grid-row:2}
-  /* form disembunyikan (belum boleh top up) -> saldo selebar baris */
+  body.page-saldo .sd-bal{grid-column:1;grid-row:1}
+  body.page-saldo .sd-form{grid-column:2;grid-row:1}
   body.page-saldo .sd-stack:has(#blok-topup[style*="none"]) .sd-bal{grid-column:1/-1}
 }
-body.page-saldo .sd-stack>.card,body.page-saldo .tbl-wrap{border-radius:var(--r-card)}
+
+body.page-saldo .card{
+  background:var(--card);border:1px solid var(--edge);border-radius:var(--r-card,22px);
+  box-shadow:var(--hl);transition:box-shadow .3s ease;
+}
+body.page-saldo .card:hover{box-shadow:0 12px 32px -8px rgba(0,0,0,.08)}
 body.page-saldo #banner-auto{padding:16px 20px}
 
 /* kartu saldo */
-body.page-saldo .sd-bal{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:26px 28px}
-body.page-saldo .sd-bal .lbl{font-size:13px;font-weight:500;color:var(--mute)}
+body.page-saldo .sd-bal{
+  display:flex;flex-direction:column;justify-content:center;gap:16px;padding:32px;
+  position:relative;height:100%;box-sizing:border-box;
+}
+body.page-saldo .sd-bal .lbl{font-size:13px;font-weight:600;color:var(--mute);text-transform:uppercase;letter-spacing:.05em}
 body.page-saldo #saldo-angka{
-  margin:8px 0 6px;font-size:clamp(34px,7vw,46px);font-weight:800;letter-spacing:-.03em;line-height:1.1;
-  color:var(--green);overflow-wrap:anywhere;
+  margin:4px 0 6px;font-size:clamp(34px,6vw,46px);font-weight:800;letter-spacing:-.03em;line-height:1.1;
+  color:var(--green);overflow-wrap:anywhere;font-family:Consolas,Menlo,monospace;
 }
 body.page-saldo .sd-ic{
-  width:52px;height:52px;border-radius:16px;flex:none;display:grid;place-items:center;
-  background:var(--panel);border:1px solid var(--edge);box-shadow:var(--hl);color:var(--ink);
+  width:48px;height:48px;border-radius:14px;display:grid;place-items:center;
+  background:var(--panel);border:1px solid var(--edge);color:var(--ink);
+  position:absolute;top:32px;right:32px;transition:transform .3s cubic-bezier(0.34,1.56,0.64,1);
 }
+body.page-saldo .sd-bal:hover .sd-ic{transform:scale(1.1) rotate(5deg)}
 
 /* form top up */
-body.page-saldo .sd-form{padding:24px 28px}
+body.page-saldo .sd-form{padding:30px}
 body.page-saldo .method-tab{
-  display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:999px;
+  display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:999px;
   border:1px solid var(--edge);background:var(--card);box-shadow:var(--hl);
-  color:var(--mute);font-size:13px;font-weight:600;cursor:pointer;
+  color:var(--mute);font-size:13.5px;font-weight:600;cursor:pointer;transition:all .2s ease;
 }
+body.page-saldo .method-tab:hover:not(.active){background:var(--panel);color:var(--ink)}
 body.page-saldo .method-tab.active{background:var(--dark);color:var(--darkink);border-color:transparent}
-body.page-saldo .sd-form h3{margin:18px 0 4px;font-size:16px;font-weight:700}
-body.page-saldo .sd-field{margin:20px 0 0}
-body.page-saldo .sd-field>label{display:block;margin-bottom:8px;font-size:13px;font-weight:600;color:var(--ink)}
-body.page-saldo #nominal{width:100%;height:54px;padding:0 18px;border-radius:16px;font-size:16px;font-weight:600}
-body.page-saldo #petunjuk-nominal{margin:8px 2px 0;font-size:12.5px;color:var(--mute)}
-body.page-saldo #pilihan-cepat{display:flex;flex-wrap:wrap;gap:8px}
-body.page-saldo .chip-btn{
-  border-radius:999px!important;padding:9px 18px!important;min-height:40px;font-size:13px!important;font-weight:600!important;
-  background:var(--card);border:1px solid var(--edge);box-shadow:var(--hl);color:var(--ink);
-  transition:background .15s,color .15s,border-color .15s;
+body.page-saldo .sd-form h3{margin:22px 0 6px;font-size:17px;font-weight:700;letter-spacing:-.02em}
+body.page-saldo .sd-field{margin:22px 0 0}
+body.page-saldo .sd-field>label{display:block;margin-bottom:8px;font-size:13.5px;font-weight:700;color:var(--ink)}
+body.page-saldo .inp{
+  width:100%;height:54px;padding:0 18px;border-radius:14px;border:1.5px solid var(--edge);
+  font-family:inherit;font-size:16px;font-weight:600;background:var(--panel);outline:none;
+  transition:all .2s ease;box-sizing:border-box;
 }
-body.page-saldo .chip-btn:hover{background:var(--panel)!important}
-body.page-saldo .chip-btn.active{background:var(--dark)!important;color:var(--darkink)!important;border-color:transparent!important}
-body.page-saldo .s-pay{width:100%;min-height:54px;margin-top:24px;font-size:15px;font-weight:700}
+body.page-saldo .inp:hover{border-color:var(--mute)}
+body.page-saldo .inp:focus{border-color:var(--ink);background:var(--card);box-shadow:0 0 0 3px rgba(99,102,241,.18)}
+body.page-saldo #petunjuk-nominal{margin:8px 4px 0;font-size:12.5px;color:var(--mute)}
+body.page-saldo #pilihan-cepat{display:flex;flex-wrap:wrap;gap:10px}
+body.page-saldo .chip-btn{
+  border-radius:12px!important;padding:10px 18px!important;min-height:42px;font-size:13.5px!important;
+  font-weight:600!important;font-family:Consolas,Menlo,monospace;background:var(--card);
+  border:1px solid var(--edge);color:var(--ink);cursor:pointer;transition:all .2s ease;
+}
+body.page-saldo .chip-btn:hover{background:var(--panel)!important;border-color:var(--mute);transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.06)}
+body.page-saldo .chip-btn:active{transform:translateY(0)}
+body.page-saldo .chip-btn.active{background:var(--dark)!important;color:var(--darkink)!important;border-color:transparent!important;transform:none;box-shadow:none}
+
+body.page-saldo .s-pay{
+  width:100%;height:54px;margin-top:28px;background:var(--dark)!important;color:var(--darkink)!important;
+  border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;
+  box-shadow:0 8px 16px -4px rgba(0,0,0,.2);transition:all .25s ease;
+}
+body.page-saldo .s-pay:hover{opacity:.95;transform:translateY(-2px);box-shadow:0 12px 24px -6px rgba(0,0,0,.25)}
+body.page-saldo .s-pay:active{transform:translateY(0)}
 body.page-saldo #blok-qris{padding:22px 24px}
 
-/* riwayat */
-body.page-saldo #riwayat-section{margin-top:36px}
-body.page-saldo #riwayat-section .cmd-head{margin-bottom:14px}
+/* riwayat saldo */
+body.page-saldo #riwayat-section{margin-top:42px}
+body.page-saldo #riwayat-section .cmd-head{margin-bottom:18px}
 body.page-saldo #riwayat-section h2{font-size:18px}
-body.page-saldo .sd-link{color:var(--accent);font-weight:600;font-size:13px;text-decoration:none;white-space:nowrap}
+body.page-saldo .sd-link{color:var(--accent);font-weight:600;font-size:13.5px;text-decoration:none;transition:color .2s}
 body.page-saldo .sd-link:hover{text-decoration:underline}
-body.page-saldo #tbl-ledger th:nth-child(3),body.page-saldo #tbl-ledger th:nth-child(4),
-body.page-saldo #tbl-ledger td:nth-child(3),body.page-saldo #tbl-ledger td:nth-child(4){text-align:right;white-space:nowrap}
-body.page-saldo #tbl-ledger tbody tr:hover{background:var(--card)}
-body.page-saldo #tbl-ledger td.kosong{text-align:center!important;color:var(--mute);padding:32px 16px}
+body.page-saldo .tbl-wrap{
+  background:var(--card);border:1px solid var(--edge);border-radius:var(--r-card,22px);
+  overflow:hidden;box-shadow:var(--hl);
+}
+body.page-saldo .tbl{width:100%;border-collapse:collapse;text-align:left}
+body.page-saldo .tbl th{
+  background:var(--panel);padding:14px 18px;font-size:12px;font-weight:700;color:var(--mute);
+  text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--edge);
+}
+body.page-saldo .tbl td{padding:14px 18px;font-size:13.5px;font-weight:500;border-bottom:1px solid var(--edge);transition:background .15s ease}
+body.page-saldo .tbl tr:last-child td{border-bottom:none}
+body.page-saldo .tbl tbody tr:hover td{background:var(--panel)}
+body.page-saldo .tbl th:nth-child(3),body.page-saldo .tbl th:nth-child(4),
+body.page-saldo .tbl td:nth-child(3),body.page-saldo .tbl td:nth-child(4){text-align:right;font-family:Consolas,Menlo,monospace}
+body.page-saldo .tbl td.kosong{text-align:center!important;color:var(--mute);padding:36px 16px}
 body.page-saldo #ledger-kosong{padding:20px 22px}
 
 @media (max-width:760px){
-  body.page-saldo .sd-bal,body.page-saldo .sd-form{padding:20px}
+  body.page-saldo .sd-bal,body.page-saldo .sd-form{padding:22px}
   body.page-saldo .cmd-head{align-items:flex-start}
   body.page-saldo .cmd-head>div:last-child{width:100%}
   body.page-saldo .cmd-head .btn{width:100%}
-  body.page-saldo .chip-btn{flex:1 1 calc(50% - 8px)}
-  body.page-saldo #tbl-ledger{min-width:560px}
+  body.page-saldo .chip-btn{flex:1 1 calc(50% - 10px);text-align:center}
+  body.page-saldo .tbl-wrap{overflow-x:auto}
+  body.page-saldo .tbl{min-width:580px}
 }
 
 /* ══════════════════════════════════════════════════════════════════════

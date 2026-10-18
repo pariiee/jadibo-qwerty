@@ -23,7 +23,7 @@
         </div>
         <div>
           <button class="btn btn-outline" data-act="scrollRiwayat" type="button">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             Riwayat top up
           </button>
         </div>
@@ -36,19 +36,19 @@
         <!-- Saldo wallet -->
         <section class="card sd-bal" aria-label="Saldo wallet">
           <div>
-            <div class="lbl">Saldo wallet</div>
+            <div class="lbl">Saldo Saat Ini</div>
             <div id="saldo-angka">—</div>
             <p class="m-sub">Saldo aktif di wallet kamu</p>
           </div>
           <div class="sd-ic" aria-hidden="true">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
           </div>
         </section>
 
         <!-- Form top up -->
         <div id="blok-topup" class="card sd-form" style="display:none">
           <div class="method-tab active">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
             Bayar via QRIS (otomatis)
           </div>
 
@@ -66,10 +66,10 @@
             <div id="pilihan-cepat"></div>
           </div>
 
-          <button class="btn btn-dark s-pay" id="btn-topup" data-act="topup" type="button">Bayar sekarang</button>
+          <button class="btn s-pay" id="btn-topup" data-act="topup" type="button">Bayar sekarang</button>
         </div>
 
-        <!-- Tagihan QRIS yang sedang menunggu (fallback jika tidak redirect) -->
+        <!-- Tagihan QRIS yang sedang menunggu -->
         <div id="blok-qris" class="card" style="display:none"></div>
       </div>
 
@@ -77,10 +77,10 @@
       <div id="riwayat-section">
         <div class="cmd-head">
           <div>
-            <h2>Riwayat saldo</h2>
+            <h2>Riwayat transaksi</h2>
             <p class="m-sub">Semua pergerakan saldo: top up, perpanjang, auto-perpanjang, dan penyesuaian admin.</p>
           </div>
-          <a class="sd-link" href="/billing">Lihat riwayat pembayaran lengkap →</a>
+          <a class="sd-link" href="/billing">Lihat riwayat pembayaran lengkap &rarr;</a>
         </div>
 
         <div class="tbl-wrap">
@@ -94,8 +94,8 @@
           </table>
         </div>
 
-        <div class="card" id="ledger-kosong" style="display:none;margin-top:14px">
-          <p class="m-sub">Belum ada pergerakan saldo. Top up dulu buat mulai.</p>
+        <div class="card" id="ledger-kosong" style="display:none;margin-top:20px">
+          <p class="m-sub" style="padding: 20px;">Belum ada pergerakan saldo. Top up dulu buat mulai.</p>
         </div>
       </div>
     </div>
