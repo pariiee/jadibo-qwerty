@@ -268,6 +268,10 @@
             (me?.auto_renew ? 'Aktif' : 'Mati') +
           '</button>' +
         '</div>' +
+        '<div class="bot-addon-row" style="display:flex;gap:8px;margin-top:10px;">' +
+          '<button type="button" class="btn btn-sm btn-outline" data-addon-owner style="flex:1;font-size:11px;padding:6px 8px;border-radius:8px;">+1 Slot Owner</button>' +
+          '<button type="button" class="btn btn-sm btn-outline" data-addon-quota style="flex:1;font-size:11px;padding:6px 8px;border-radius:8px;">+1.000 Kuota</button>' +
+        '</div>' +
         '<div class="btns">' +
           '<button data-cfg>Config</button>' +
           '<button data-stat>Statistik</button>' +
@@ -296,6 +300,56 @@
             }
           } catch {
             renderBots();
+          }
+        });
+      }
+
+      const btnAddOwner = card.querySelector('[data-addon-owner]');
+      if (btnAddOwner) {
+        btnAddOwner.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          if (!confirm('Beli +1 Slot Owner Bot langsung potong saldo dompet kamu?')) return;
+          btnAddOwner.disabled = true;
+          try {
+            const res = await api('/api/billing/addon', {
+              method: 'POST',
+              body: JSON.stringify({ type: 'owner' })
+            });
+            if (res?.ok) {
+              showToast(res.message || 'Berhasil tambah slot owner!', 'success');
+              init();
+            } else {
+              showToast(res?.message || 'Gagal membeli addon', 'error');
+            }
+          } catch {
+            showToast('Terjadi kesalahan jaringan', 'error');
+          } finally {
+            btnAddOwner.disabled = false;
+          }
+        });
+      }
+
+      const btnAddQuota = card.querySelector('[data-addon-quota]');
+      if (btnAddQuota) {
+        btnAddQuota.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          if (!confirm('Beli +1.000 Kuota Respon langsung potong saldo dompet kamu?')) return;
+          btnAddQuota.disabled = true;
+          try {
+            const res = await api('/api/billing/addon', {
+              method: 'POST',
+              body: JSON.stringify({ type: 'quota' })
+            });
+            if (res?.ok) {
+              showToast(res.message || 'Berhasil tambah kuota!', 'success');
+              init();
+            } else {
+              showToast(res?.message || 'Gagal membeli addon', 'error');
+            }
+          } catch {
+            showToast('Terjadi kesalahan jaringan', 'error');
+          } finally {
+            btnAddQuota.disabled = false;
           }
         });
       }

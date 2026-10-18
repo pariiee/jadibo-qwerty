@@ -625,7 +625,12 @@ async function adminSettings(req, res) {
   return res.json({
     ok: true,
     plans: s.plans,
-    trial_days: s.trial_days,
+    trial_days: s.trial_days || 5,
+    trial_slots: s.trial_slots || 1,
+    trial_owner_max: s.trial_owner_max || 1,
+    trial_receive_limit: s.trial_receive_limit || 5000,
+    price_per_owner: s.price_per_owner || 2500,
+    price_per_1k_quota: s.price_per_1k_quota || 5000,
     qris_static_url: s.qris_static_url,
     pay_mode: s.pay_mode,
     gateway_enabled: s.gateway_enabled,
@@ -686,13 +691,17 @@ async function adminSetPlans(req, res) {
   }
 }
 
-/** PUT /api/admin/billing/settings — QRIS manual & mode bayar. */
+/** PUT /api/admin/billing/settings — QRIS manual, mode bayar, trial, & addon. */
 async function adminSetSettings(req, res) {
   try {
-    const { qris_static_url, pay_mode, gateway_enabled, trial_days, pengumuman } = req.body || {};
+    const {
+      qris_static_url, pay_mode, gateway_enabled,
+      trial_days, trial_slots, trial_owner_max, trial_receive_limit,
+      price_per_owner, price_per_1k_quota,
+      pengumuman
+    } = req.body || {};
     if (qris_static_url !== undefined) {
       const url = String(qris_static_url).trim();
-      // Cuma http(s) — biar tidak ada yang menempelkan javascript: di <img src>.
       if (url && !/^https?:\/\//i.test(url)) return sendError(res, 400, 'URL QRIS harus http/https');
       await pricingStore.set('qris_static_url', url);
     }
@@ -706,6 +715,21 @@ async function adminSetSettings(req, res) {
       const d = parseInt(trial_days, 10);
       if (!(d >= 1 && d <= 30)) return sendError(res, 400, 'Trial 1-30 hari');
       await pricingStore.set('trial_days', d);
+    }
+    if (trial_slots !== undefined) {
+      await pricingStore.set('trial_slots', Math.max(1, parseInt(trial_slots, 10) || 1));
+    }
+    if (trial_owner_max !== undefined) {
+      await pricingStore.set('trial_owner_max', Math.max(1, parseInt(trial_owner_max, 10) || 1));
+    }
+    if (trial_receive_limit !== undefined) {
+      await pricingStore.set('trial_receive_limit', Math.max(100, parseInt(trial_receive_limit, 10) || 5000));
+    }
+    if (price_per_owner !== undefined) {
+      await pricingStore.set('price_per_owner', Math.max(0, parseInt(price_per_owner, 10) || 0));
+    }
+    if (price_per_1k_quota !== undefined) {
+      await pricingStore.set('price_per_1k_quota', Math.max(0, parseInt(price_per_1k_quota, 10) || 0));
     }
     if (pengumuman !== undefined) {
       // Tiga field saja. `isi` boleh kosong = pengumuman dimatikan, jadi admin
@@ -852,13 +876,60 @@ async function adminResetKuota(req, res) {
   }
 }
 
+/**
+ * POST /api/billing/addon — beli ekstra owner (+1) atau kuota (+1.000) potong saldo.
+ */
+async function beliAddon(req, res) {
+  try {
+    const { type } = req.body || {};
+    if (!['owner', 'quota'].includes(type)) {
+      return sendError(res, 400, 'Tipe addon tidak valid (harus owner atau quota)');
+    }
+    const s = pricingStore.all();
+    const harga = type === 'owner' ? (Number(s.price_per_owner) || 2500) : (Number(s.price_per_1k_quota) || 5000);
+
+    const [uRows] = await pool.execute('SELECT id, saldo, extra_owners, extra_quota FROM users WHERE id = ?', [req.user.id]);
+    const u = uRows[0];
+    if (!u) return sendError(res, 404, 'User tidak ditemukan');
+    if (Number(u.saldo || 0) < harga) {
+      return sendError(res, 400, `Saldo tidak cukup (Rp ${Number(u.saldo || 0).toLocaleString('id-ID')}). Harga Rp ${harga.toLocaleString('id-ID')}. Silakan top up di menu Saldo.`);
+    }
+
+    const deskripsi = type === 'owner' ? 'Beli Add-on +1 Owner Bot' : 'Beli Add-on +1.000 Kuota Respon';
+    const tambahOwner = type === 'owner' ? 1 : 0;
+    const tambahQuota = type === 'quota' ? 1000 : 0;
+
+    await pool.execute(
+      'UPDATE users SET saldo = saldo - ?, extra_owners = extra_owners + ?, extra_quota = extra_quota + ? WHERE id = ?',
+      [harga, tambahOwner, tambahQuota, req.user.id]
+    );
+
+    try {
+      const ref = 'addon-' + type + '-' + req.user.id + '-' + Date.now();
+      await pool.execute(
+        'INSERT INTO wallet_ledger (user_id, tipe, jumlah, saldo_akhir, ref, catatan) VALUES (?, ?, ?, ?, ?, ?)',
+        [req.user.id, 'debit', -harga, Number(u.saldo) - harga, ref, deskripsi]
+      );
+    } catch { /* ledger opsional */ }
+
+    const [updated] = await pool.execute('SELECT saldo, extra_owners, extra_quota FROM users WHERE id = ?', [req.user.id]);
+    return res.json({
+      ok: true,
+      message: `Berhasil membeli ${deskripsi}!`,
+      saldo: Number(updated[0].saldo || 0),
+      extra_owners: Number(updated[0].extra_owners || 0),
+      extra_quota: Number(updated[0].extra_quota || 0),
+    });
+  } catch (err) {
+    console.error('[Billing] beliAddon error:', err.message);
+    return sendError(res, 500, 'Terjadi kesalahan saat memproses pembelian addon');
+  }
+}
+
 module.exports = {
-  daftarPaket, checkout, daftarOrder, detailOrder, cekOrder, webhook, kuota, pengumuman,
+  daftarPaket, checkout, beliAddon, daftarOrder, detailOrder, cekOrder, webhook, kuota, pengumuman,
   adminOrders, adminKonfirmasi, adminTolak, adminSettings, adminSetPlans, adminSetSettings,
   adminTopupKuota, adminResetKuota,
   klaimTrial, klaimTrialSendiri, terapkanPaket, tandaiLunas,
-  // Dipakai `walletController.perpanjangDariSaldo`: `terapkanPaket(..., conn)`
-  // mengembalikan efek samping yang BELUM dijalankan, dan pemanggil yang
-  // bertransaksi harus menjalankannya sendiri SETELAH commit.
   jalankanEfekSamping,
 };

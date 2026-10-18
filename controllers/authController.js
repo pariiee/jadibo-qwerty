@@ -4,7 +4,7 @@ const crypto    = require('crypto');
 const bcrypt    = require('bcryptjs');
 const jwt       = require('jsonwebtoken');
 const { pool } = require('../config/database');
-const { ADMIN_ROLE, roleOf, slotsOf, paketOf } = require('../config/plan');
+const { ADMIN_ROLE, SUBADMIN_ROLE, roleOf, slotsOf, paketOf } = require('../config/plan');
 const pricingStore = require('../config/pricingStore');
 
 // Tanpa fallback: kalau .env bolong, server nolak boot (guard di server.js).
@@ -77,13 +77,31 @@ async function requireKing(req, res, next) {
       [req.user?.id]
     );
     const u = rows[0];
-    if (!u || !u.is_active || u.role !== ADMIN_ROLE)
+    if (!u || !u.is_active || ![ADMIN_ROLE, SUBADMIN_ROLE].includes(u.role))
       return sendError(res, 403, 'Akses ditolak — akun ini bukan administrator');
 
     req.user.role = u.role;
     next();
   } catch (err) {
     console.error('[Auth] requireKing error:', err);
+    return sendError(res, 403, 'Akses ditolak');
+  }
+}
+
+async function requireSuperAdmin(req, res, next) {
+  try {
+    const [rows] = await pool.execute(
+      'SELECT role, is_active FROM users WHERE id = ?',
+      [req.user?.id]
+    );
+    const u = rows[0];
+    if (!u || !u.is_active || u.role !== ADMIN_ROLE)
+      return sendError(res, 403, 'Akses ditolak — hanya untuk Administrator');
+
+    req.user.role = u.role;
+    next();
+  } catch (err) {
+    console.error('[Auth] requireSuperAdmin error:', err);
     return sendError(res, 403, 'Akses ditolak');
   }
 }
@@ -500,8 +518,9 @@ async function me(req, res) {
     );
 
     const u = rows[0];
-    const admin = u.role === ADMIN_ROLE;
-    const paketId = admin ? 'ultra' : (roleOf(u) === 'premium' ? u.plan : 'user');
+    const superadmin = u.role === ADMIN_ROLE;
+    const admin = [ADMIN_ROLE, SUBADMIN_ROLE].includes(u.role);
+    const paketId = superadmin ? 'ultra' : (roleOf(u) === 'premium' ? u.plan : 'user');
     const plan = pricingStore.getPlan(paketId);
 
     return res.json({
@@ -514,8 +533,10 @@ async function me(req, res) {
         // Label untuk tampilan. Dashboard TIDAK boleh menulis nama role mentah,
         // biar nama internal admin tidak muncul di UI.
         role_label: u.role === ADMIN_ROLE ? 'Administrator'
-                  : roleOf(u) === 'premium' ? 'Unreal' : 'Basic',
+                  : u.role === SUBADMIN_ROLE ? 'Staff'
+                  : roleOf(u) === 'premium' ? 'Premium' : 'Member',
         is_admin: admin,
+        is_superadmin: superadmin,
         plan_id: plan.id,
         plan_name: plan.name,
         email: u.email || '',
@@ -532,6 +553,8 @@ async function me(req, res) {
         // menang atas paket). Urutannya: jatah paket dulu, baru override admin.
         slots_beli: (paketOf(u.plan, pricingStore.plans())?.slots ?? Number(u.plan_slots)) || 0,
         daily_limit: plan.daily_limit,
+        extra_owners: Number(u.extra_owners || 0),
+        extra_quota: Number(u.extra_quota || 0),
         saldo: Number(u.saldo || 0),
         auto_renew: !!u.auto_renew,
         auto_renew_status: u.auto_renew_status || null,
@@ -987,5 +1010,5 @@ module.exports = {
   forgotPassword, resetPassword,
   googleRedirect, googleCallback,
   listUsers, updateUser, deleteUser,
-  requireAuth, requireKing,
+  requireAuth, requireKing, requireSuperAdmin,
 };

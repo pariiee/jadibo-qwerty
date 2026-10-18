@@ -360,9 +360,19 @@
     if (!d?.ok) return showToast(d?.message || 'Gagal memuat setelan', 'error');
     paket = d.plans || [];
     renderPaket();
-    document.getElementById('f-mode').value = d.settings?.pay_mode || 'both';
-    document.getElementById('f-qris').value = d.settings?.qris_static_url || '';
-    document.getElementById('f-trial').value = d.settings?.trial_days ?? 5;
+    document.getElementById('f-mode').value = d.pay_mode || d.settings?.pay_mode || 'both';
+    document.getElementById('f-qris').value = d.qris_static_url || d.settings?.qris_static_url || '';
+    document.getElementById('f-trial').value = d.trial_days ?? 5;
+    const elSlots = document.getElementById('f-trial-slots');
+    if (elSlots) elSlots.value = d.trial_slots ?? 1;
+    const elOwner = document.getElementById('f-trial-owner');
+    if (elOwner) elOwner.value = d.trial_owner_max ?? 1;
+    const elQuota = document.getElementById('f-trial-quota');
+    if (elQuota) elQuota.value = d.trial_receive_limit ?? 5000;
+    const elAdOwner = document.getElementById('f-addon-owner');
+    if (elAdOwner) elAdOwner.value = d.price_per_owner ?? 2500;
+    const elAdQuota = document.getElementById('f-addon-quota');
+    if (elAdQuota) elAdQuota.value = d.price_per_1k_quota ?? 5000;
     const p = d.pengumuman || {};
     document.getElementById('f-peng-judul').value = p.judul || '';
     document.getElementById('f-peng-isi').value = p.isi || '';
@@ -433,7 +443,12 @@
     const body = {
       pay_mode: document.getElementById('f-mode').value,
       qris_static_url: document.getElementById('f-qris').value.trim(),
-      trial_days: Number(document.getElementById('f-trial').value || 5)
+      trial_days: Number(document.getElementById('f-trial').value || 5),
+      trial_slots: Number(document.getElementById('f-trial-slots')?.value || 1),
+      trial_owner_max: Number(document.getElementById('f-trial-owner')?.value || 1),
+      trial_receive_limit: Number(document.getElementById('f-trial-quota')?.value || 5000),
+      price_per_owner: Number(document.getElementById('f-addon-owner')?.value || 2500),
+      price_per_1k_quota: Number(document.getElementById('f-addon-quota')?.value || 5000)
     };
     const d = await api('/api/admin/billing/settings', { method: 'PUT', body: JSON.stringify(body) });
     if (!d?.ok) { err.textContent = d?.message || 'Gagal menyimpan setelan'; return; }

@@ -1,13 +1,12 @@
 'use strict';
 
 /**
- * config/roles.js — satu sumber nama role admin panel.
+ * config/roles.js — satu sumber nama role panel.
  *
- * `kawula` = admin tertinggi. Namanya sengaja tidak umum (bukan admin/root/
- * superadmin) supaya menebak role dari luar tidak ada gunanya. Ini role yang
- * sama dipakai panel engine lama — dua panel berbagi tabel `users`, jadi nama role
- * WAJIB sepakat. Jangan tulis string role langsung di file lain.
+ * `kawula` = Super Admin (tertinggi, full access).
+ * `kontul` = Sub-admin (terbatas, pantau user & bot).
  */
 const ADMIN_ROLE = 'kawula';
+const SUBADMIN_ROLE = 'kontul';
 
-module.exports = { ADMIN_ROLE };
+module.exports = { ADMIN_ROLE, SUBADMIN_ROLE };

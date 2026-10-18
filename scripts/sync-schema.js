@@ -30,6 +30,8 @@ const TABLES = {
     ['plan_expired_at', "DATETIME DEFAULT NULL"],
     ['plan_slots',      "INT NOT NULL DEFAULT 2"],
     ['trial_used_at',   "DATETIME DEFAULT NULL"],
+    ['extra_owners',    "INT NOT NULL DEFAULT 0"],
+    ['extra_quota',     "INT NOT NULL DEFAULT 0"],
     // Dompet. `saldo` SIGNED (bukan UNSIGNED): dengan UNSIGNED, `saldo - ?`
     // yang melewati nol tidak ditolak MySQL — dia wrap-around jadi nilai
     // raksasa, dan user tiba-tiba punya saldo miliaran rupiah. BIGINT karena

@@ -289,6 +289,7 @@ app.post('/api/auth/password',         authLimiter, auth.requireAuth, auth.ganti
 app.post('/api/auth/phone',            authLimiter, auth.requireAuth, auth.simpanPhone);
 app.post('/api/auth/email',            authLimiter, auth.requireAuth, auth.simpanEmail);
 app.post('/api/billing/checkout',    apiLimiter, auth.requireAuth, billing.checkout);
+app.post('/api/billing/addon',       moneyLimiter, auth.requireAuth, billing.beliAddon);
 app.post('/api/billing/trial',       apiLimiter, auth.requireAuth, billing.klaimTrialSendiri);
 app.get('/api/billing/orders',       apiLimiter, auth.requireAuth, billing.daftarOrder);
 app.get('/api/billing/orders/:orderId', apiLimiter, auth.requireAuth, billing.detailOrder);

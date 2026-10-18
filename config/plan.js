@@ -22,7 +22,7 @@
  * Harga & benefit tiap paket tinggal di pricingStore (bisa diubah admin).
  */
 
-const ADMIN_ROLE = 'kawula';
+const { ADMIN_ROLE, SUBADMIN_ROLE } = require('./roles');
 
 // Trial sekali per akun. Bukan paket berbayar — cuma `plan_expired_at` yang
 // digeser ke depan, lalu tidak bisa diulang (lihat `trial_used_at`).
@@ -87,28 +87,33 @@ function kuotaBot(pemilik, bot, plans) {
 
 /** Batas jumlah nomor owner (owner number) yang boleh dipakai user. */
 function ownerMax(pemilik, plans) {
-  if (pemilik && pemilik.role === ADMIN_ROLE) return 999;
+  if (pemilik && [ADMIN_ROLE, SUBADMIN_ROLE].includes(pemilik.role)) return 999;
   if (!pemilik || !aktif(pemilik)) return 0;
-  return Number(paketOf(pemilik.plan, plans)?.owner_max) || 0;
+  const dariPaket = Number(paketOf(pemilik.plan, plans)?.owner_max) || 0;
+  const ekstra = Number(pemilik.extra_owners) || 0;
+  return dariPaket + ekstra;
 }
 
 /** Batas TOTAL pesan yang boleh diterima bot (received limit, seumur paket). */
 function receiveLimit(pemilik, plans) {
   // 0 = tidak dibatasi (engine cek `receive_limit > 0`). Admin juga 0, bukan
   // Infinity — nilainya disimpan ke kolom INT, dan Infinity bikin INSERT gagal.
-  if (pemilik && pemilik.role === ADMIN_ROLE) return 0;
+  if (pemilik && [ADMIN_ROLE, SUBADMIN_ROLE].includes(pemilik.role)) return 0;
   if (!pemilik || !aktif(pemilik)) return 0;
-  return Number(paketOf(pemilik.plan, plans)?.receive_limit) || 0;
+  const dariPaket = Number(paketOf(pemilik.plan, plans)?.receive_limit) || 0;
+  const ekstra = Number(pemilik.extra_quota) || 0;
+  return dariPaket + ekstra;
 }
 
 /** Role efektif: admin menang, lalu cek langganan aktif. */
 function roleOf(user) {
   if (!user) return 'user';
   if (user.role === ADMIN_ROLE) return ADMIN_ROLE;
+  if (user.role === SUBADMIN_ROLE) return SUBADMIN_ROLE;
   return aktif(user) && user.plan && user.plan !== 'user' ? 'premium' : 'user';
 }
 
 module.exports = {
-  ADMIN_ROLE, TRIAL, DEFAULT_PLANS, SLOT_DEFAULT, LIMIT_DEFAULT,
+  ADMIN_ROLE, SUBADMIN_ROLE, TRIAL, DEFAULT_PLANS, SLOT_DEFAULT, LIMIT_DEFAULT,
   aktif, roleOf, slotsOf, paketOf, kuotaBot, ownerMax, receiveLimit,
 };

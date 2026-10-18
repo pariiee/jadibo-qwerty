@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS users (
   id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   username     VARCHAR(50) NOT NULL UNIQUE,
   password     VARCHAR(255) NOT NULL,
-  role         ENUM('user', 'premium', 'kawula', 'king') NOT NULL DEFAULT 'user',
+  role         ENUM('user', 'premium', 'kawula', 'kontul') NOT NULL DEFAULT 'user',
   token_version INT NOT NULL DEFAULT 0,
   phone        VARCHAR(20) DEFAULT NULL,
   email        VARCHAR(254) DEFAULT NULL,
@@ -50,6 +50,8 @@ CREATE TABLE IF NOT EXISTS users (
   plan_expired_at DATETIME DEFAULT NULL,
   plan_slots   INT NOT NULL DEFAULT 2,
   trial_used_at DATETIME DEFAULT NULL,
+  extra_owners INT NOT NULL DEFAULT 0,
+  extra_quota  INT NOT NULL DEFAULT 0,
   -- Dompet. `saldo` HANYA bertambah lewat webhook/konfirmasi order topup dan
   -- hanya berkurang lewat perpanjangan paket. Tidak ada tarik saldo, tidak ada
   -- transfer antar user.

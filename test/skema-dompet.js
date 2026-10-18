@@ -49,6 +49,7 @@ const WAJIB = [
   'id', 'username', 'password', 'role', 'token_version', 'phone', 'email',
   // langganan — SEMPAT hilang, ini yang dijaga
   'plan', 'plan_expired_at', 'plan_slots', 'trial_used_at',
+  'extra_owners', 'extra_quota',
   // dompet
   'saldo', 'auto_renew', 'auto_renew_status', 'auto_renew_status_at',
   'is_active',
