@@ -460,6 +460,12 @@ h2 small{color:var(--mute)!important;font-weight:500!important;font-size:14px!im
 }
 
 .card{background:var(--card)!important;border-radius:22px!important;padding:20px!important;box-shadow:var(--shadow),var(--hl)!important;border:1px solid var(--edge)!important;backdrop-filter:blur(18px)!important;-webkit-backdrop-filter:blur(18px)!important;color:var(--ink)!important}
+/* Aturan global: card di semua page content-fit & align-self: start agar tidak stretch */
+.card:not(.stats .card), .kuota-card, .panduan-card, .bill-row, .log-row, .pricing-card, .sd-bal, .sd-form{
+  height:auto!important;
+  align-self:start!important;
+  box-sizing:border-box!important;
+}
 
 /* form controls */
 .inp, select.inp, input[type="search"], input[type="text"], input[type="password"]{
