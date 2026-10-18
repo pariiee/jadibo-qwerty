@@ -2497,3 +2497,103 @@ body.page-pricing .bayar-actions .btn{width:100%}
   body.page-pricing .plat-grid{grid-template-columns:1fr}
 }
 
+/* ══════════════════════════════════════════════════════════════════════
+   DASHBOARD — kaca, responsif desktop / tablet / HP.
+   Id & kelas yang dipakai dashboard.js tidak berubah: #hero-name #st-* #slot-text
+   #bot-grid .card.bc .add-card #empty-state #kuota-alert #pengumuman #add-overlay
+   #step-platform #step-form #add-form #f-* #add-error #toast .bot-kuota-*
+   Sidebar di HP memakai pola yang sudah ada (rel ikon 64px + panel overlay, burger).
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* hero */
+body.page-dashboard .hero{display:block;margin:6px 0 22px}
+body.page-dashboard .hero h1{margin:0;line-height:1.1;letter-spacing:-.03em}
+body.page-dashboard .hero h1 .hero-sub{display:block;margin-bottom:6px;font-size:clamp(15px,2vw,18px);font-weight:600;letter-spacing:-.01em;color:var(--mute)}
+body.page-dashboard .hero h1 .hero-user{display:block;font-size:clamp(30px,5.2vw,46px);font-weight:700;color:var(--ink);overflow-wrap:anywhere}
+
+/* pemberitahuan di atas konten */
+body.page-dashboard #kuota-alert,body.page-dashboard #pengumuman{
+  margin:0 0 16px;padding:16px 20px;border-radius:20px;border:1px solid var(--edge);
+  box-shadow:var(--shadow),var(--hl);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+}
+body.page-dashboard #kuota-alert{background:var(--redbg,rgba(239,68,68,.1))}
+body.page-dashboard #pengumuman{background:var(--card)}
+body.page-dashboard #pengumuman strong{display:block;margin-bottom:4px}
+body.page-dashboard #pengumuman p{margin:0;color:var(--mute);font-size:14px;line-height:1.55}
+body.page-dashboard .kuota-alert-baris{display:flex;align-items:flex-start;gap:10px;font-size:13.5px;line-height:1.5}
+body.page-dashboard .kuota-alert-aksi{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+
+/* ringkasan: satu panel berpembatas. 4 kolom -> 2 (tablet) -> 2x2 (HP).
+   !important karena aturan stats di §10 juga !important. */
+@media (max-width:1000px){
+  body.page-dashboard .stats>.stat:nth-child(even){border-left:1px solid var(--line)!important}
+}
+@media (max-width:760px){
+  body.page-dashboard .stats{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  body.page-dashboard .stats>.stat{min-height:0!important;padding:18px!important}
+  body.page-dashboard .stats>.stat:nth-child(n+3){border-top:1px solid var(--line)!important}
+  body.page-dashboard .stats>.stat:nth-child(-n+2){border-top:0!important}
+  body.page-dashboard .stat .val{font-size:19px;overflow-wrap:anywhere}
+  body.page-dashboard .stat .lbl,body.page-dashboard .stat .sub{font-size:12px}
+}
+
+/* judul bagian */
+body.page-dashboard .sec-head{display:flex;align-items:baseline;gap:10px;margin:34px 2px 14px}
+body.page-dashboard .sec-head h2{margin:0;font-size:18px;letter-spacing:-.02em}
+body.page-dashboard .sec-head small{color:var(--mute);font-weight:500;font-size:14px}
+
+/* slot bot */
+body.page-dashboard .grid,body.page-dashboard .bots{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:16px}
+body.page-dashboard .card.bc,body.page-dashboard .bot-card{gap:8px;padding:22px;border-radius:24px;cursor:pointer;transition:border-color .18s ease}
+body.page-dashboard .card.bc:hover{border-color:var(--mute);transform:none}
+body.page-dashboard .card.bc .row{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13px;color:var(--mute)}
+body.page-dashboard .card.bc h3{margin:6px 0 0;font-size:20px;font-weight:700;letter-spacing:-.01em;color:var(--ink)}
+body.page-dashboard .card.bc .meta{margin-top:10px;padding-top:12px;border-top:1px solid var(--line)}
+body.page-dashboard .card.bc .meta b{color:var(--ink)}
+body.page-dashboard .btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+body.page-dashboard .btns button{min-height:44px;border-radius:999px;background:var(--card);border:1px solid var(--edge);box-shadow:var(--hl);font-weight:600;color:var(--ink);cursor:pointer}
+body.page-dashboard .btns button:hover{background:var(--dark);color:var(--darkink)}
+body.page-dashboard .add-card,body.page-dashboard .add{
+  min-height:200px;border:2px dashed var(--edge);border-radius:24px;background:var(--greenbg);
+  display:grid;place-items:center;align-content:center;gap:10px;font-weight:600;color:var(--ink);cursor:pointer;
+}
+body.page-dashboard .add-card:hover,body.page-dashboard .add:hover{border-color:var(--accent2)}
+body.page-dashboard .bot-kuota-sec{margin-top:8px}
+body.page-dashboard .bot-kuota-info{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:6px}
+body.page-dashboard .bot-kuota-bar{height:6px;border-radius:999px;background:var(--line);overflow:hidden}
+body.page-dashboard .bot-kuota-fill{height:100%;border-radius:999px;transition:width .3s ease}
+body.page-dashboard .bot-kuota-sub{margin-top:6px;font-size:11.5px;color:var(--mute)}
+@media (max-width:560px){
+  body.page-dashboard .grid,body.page-dashboard .bots{grid-template-columns:minmax(0,1fr)}
+  body.page-dashboard .add-card,body.page-dashboard .add{min-height:84px;grid-auto-flow:column;justify-content:center}
+}
+
+/* modal tambah bot (form tidak lagi memakai tampilan bawaan browser) */
+body.page-dashboard .modal{position:relative;padding:28px;border-radius:var(--r-panel)}
+body.page-dashboard .modal h3{margin:0 0 6px;padding-right:40px;font-size:19px;letter-spacing:-.02em}
+body.page-dashboard .modal .m-sub{margin:0 0 18px;color:var(--mute);font-size:14px}
+body.page-dashboard .modal svg.i{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+body.page-dashboard .modal-close,body.page-dashboard .back-btn{
+  width:36px;height:36px;border-radius:50%;display:grid;place-items:center;padding:0;flex:none;
+  background:var(--card);border:1px solid var(--edge);box-shadow:var(--hl);color:var(--ink);cursor:pointer;
+}
+body.page-dashboard .modal-close{position:absolute;top:16px;right:16px}
+body.page-dashboard .back-row{display:flex;align-items:center;gap:12px;margin:0 0 18px}
+body.page-dashboard .back-row h3{margin:0;padding:0}
+body.page-dashboard .plat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+body.page-dashboard .plat-btn{display:flex;flex-direction:column;align-items:center;gap:10px;padding:22px 14px;border-radius:20px;background:var(--card);border:1px solid var(--edge);box-shadow:var(--hl);color:var(--ink);cursor:pointer;transition:border-color .15s}
+body.page-dashboard .plat-btn:hover{border-color:var(--accent2)}
+body.page-dashboard .plat-btn span{font-size:14px;font-weight:700}
+body.page-dashboard .field{margin:0 0 16px}
+body.page-dashboard .field>label{display:block;margin-bottom:8px;font-size:13px;font-weight:600;color:var(--ink)}
+body.page-dashboard .field .inp{width:100%}
+body.page-dashboard .hint{margin-top:6px;font-size:12.5px;color:var(--mute)}
+body.page-dashboard .form-error{margin:0 0 12px;padding:10px 14px;border-radius:12px;background:var(--redbg,rgba(239,68,68,.1));color:var(--red,#ef4444);font-size:13px;line-height:1.45}
+body.page-dashboard .form-error:empty{display:none}
+body.page-dashboard .submit-btn{width:100%;min-height:50px;margin-top:6px;font-size:15px;font-weight:700}
+body.page-dashboard #toast.show{opacity:1;transform:translate(-50%,0)}
+@media (max-width:560px){
+  body.page-dashboard .modal{padding:22px 20px}
+  body.page-dashboard .plat-grid{grid-template-columns:1fr}
+}
+

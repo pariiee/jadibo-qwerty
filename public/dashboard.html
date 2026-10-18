@@ -19,28 +19,28 @@
       <h1 id="greeting" style="display:none"></h1>
       <div class="empty" id="empty-state" style="display:none"></div>
       <section class="hero">
-        <h1 id="hero-greeting"><span class="hero-sub" style="font-size:14px;display:block;margin-bottom:4px">Selamat Datang Kembali,</span><span class="hero-user" id="hero-name"></span></h1>
+        <h1 id="hero-greeting"><span class="hero-sub">Selamat datang kembali,</span><span class="hero-user" id="hero-name"></span></h1>
       </section>
 
-      <section class="stats">
-        <div class="stat"><div class="sic"><svg class="i" viewBox="0 0 24 24"><path d="M12 3l8 4-8 4-8-4 8-4zM4 12l8 4 8-4M4 17l8 4 8-4"/></svg></div><span class="lbl">Status Slot</span><div class="val" id="st-role">—</div><div class="sub" id="st-role-sub">Kapasitas slot bot</div></div>
+      <section class="stats" aria-label="Ringkasan akun">
+        <div class="stat"><div class="sic"><svg class="i" viewBox="0 0 24 24"><path d="M12 3l8 4-8 4-8-4 8-4zM4 12l8 4 8-4M4 17l8 4 8-4"/></svg></div><span class="lbl">Status slot</span><div class="val" id="st-role">—</div><div class="sub" id="st-role-sub">Kapasitas slot bot</div></div>
         <div class="stat"><div class="sic"><svg class="i" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4"/></svg></div><span class="lbl">Kedaluwarsa</span><div class="val" id="st-exp">Tidak ada</div><div class="sub" id="st-exp-sub">Masa aktif langganan</div></div>
-        <div class="stat"><div class="sic"><svg class="i" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg></div><span class="lbl">Bot Online</span><div class="val" id="st-online">0</div><div class="sub" id="st-online-sub">dari 0 bot kamu</div></div>
-        <div class="stat"><div class="sic"><svg class="i" viewBox="0 0 24 24"><path d="M3 7h18v10H3zM3 11h18"/></svg></div><span class="lbl">Slot Dibeli</span><div class="val" id="st-slot">0</div><div class="sub" id="st-slot-sub">Kapasitas slot akun</div></div>
+        <div class="stat"><div class="sic"><svg class="i" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg></div><span class="lbl">Bot online</span><div class="val" id="st-online">0</div><div class="sub" id="st-online-sub">dari 0 bot kamu</div></div>
+        <div class="stat"><div class="sic"><svg class="i" viewBox="0 0 24 24"><path d="M3 7h18v10H3zM3 11h18"/></svg></div><span class="lbl">Slot dibeli</span><div class="val" id="st-slot">0</div><div class="sub" id="st-slot-sub">Kapasitas slot akun</div></div>
       </section>
 
-      <h2 style="font-size:18px;margin:32px 0 16px;display:flex;align-items:baseline;gap:10px">Slot bot kamu <small id="slot-text" style="color:var(--mute);font-weight:500;font-size:14px">0 / 0</small></h2>
+      <div class="sec-head"><h2>Slot bot kamu</h2><small id="slot-text">0 / 0</small></div>
       <div class="grid" id="bot-grid"></div>
     </div>
   </main>
 </div>
 
-<!-- Add Bot Modal -->
+<!-- Add Bot Modal (di luar <main>: <main> ber-backdrop-filter, position:fixed di dalamnya ikut terkurung) -->
 <div class="overlay" id="add-overlay">
   <div class="modal">
-    <button class="modal-close" data-act="closeAdd" aria-label="Tutup"><svg class="i" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <button class="modal-close" data-act="closeAdd" aria-label="Tutup" type="button"><svg class="i" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <div id="step-platform">
-      <h3>Tambah Bot Baru</h3>
+      <h3>Tambah bot baru</h3>
       <p class="m-sub">Pilih platform bot kamu</p>
       <div class="plat-grid">
         <button class="plat-btn" id="plat-wa" data-act="pickPlatform('whatsapp')" type="button">
@@ -55,23 +55,23 @@
     </div>
     <div id="step-form" style="display:none">
       <div class="back-row">
-        <button class="back-btn" data-act="backStep" type="button"><svg class="i" viewBox="0 0 24 24"><path d="M19 12H5m7-7-7 7 7 7"/></svg></button>
-        <h3 id="form-badge">Konfigurasi Bot</h3>
+        <button class="back-btn" data-act="backStep" aria-label="Kembali" type="button"><svg class="i" viewBox="0 0 24 24"><path d="M19 12H5m7-7-7 7 7 7"/></svg></button>
+        <h3 id="form-badge">Konfigurasi bot</h3>
       </div>
       <form id="add-form">
-        <div class="field"><label for="f-name">Nama Bot *</label><input id="f-name" required placeholder="Contoh: Bot Saya"></div>
-        <div class="field" id="wrap-botnum"><label id="lbl-owner" for="f-botnum">Nomor Bot WA</label><input id="f-botnum" placeholder="628xxxxxxxxxx"><div class="hint" id="hint-owner">Nomor yang di-pair ke bot</div></div>
-        <div class="field" id="wrap-token" style="display:none"><label for="f-token">Token Telegram Bot *</label><input id="f-token" placeholder="123456:ABC-DEF..." type="password"></div>
-        <div class="field"><label for="f-owner">Nomor Owner</label><input id="f-owner" placeholder="628xxxxxxxxxx"></div>
-        <div class="field"><label for="f-prefix">Prefix</label><input id="f-prefix" value="." maxlength="3"></div>
+        <div class="field"><label for="f-name">Nama bot *</label><input class="inp" id="f-name" required placeholder="Contoh: Bot Saya"></div>
+        <div class="field" id="wrap-botnum"><label id="lbl-owner" for="f-botnum">Nomor bot WA</label><input class="inp" id="f-botnum" inputmode="tel" placeholder="628xxxxxxxxxx"><div class="hint" id="hint-owner">Nomor yang di-pair ke bot</div></div>
+        <div class="field" id="wrap-token" style="display:none"><label for="f-token">Token Telegram bot *</label><input class="inp" id="f-token" placeholder="123456:ABC-DEF..." type="password" autocomplete="off"></div>
+        <div class="field"><label for="f-owner">Nomor owner</label><input class="inp" id="f-owner" inputmode="tel" placeholder="628xxxxxxxxxx"></div>
+        <div class="field"><label for="f-prefix">Prefix</label><input class="inp" id="f-prefix" value="." maxlength="3"></div>
         <input id="f-footer" type="hidden" value="Powered by qwertygate">
-        <div id="add-error" style="color:#ef4444;font-size:12.5px;margin-bottom:8px"></div>
-        <button class="submit-btn" type="submit">Buat Bot Sekarang</button>
+        <div class="form-error" id="add-error" role="alert"></div>
+        <button class="btn btn-dark submit-btn" type="submit">Buat bot sekarang</button>
       </form>
     </div>
   </div>
 </div>
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status"></div>
 <script src="/js/dashboard.js"></script>
 </body>
 </html>
