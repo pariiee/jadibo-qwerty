@@ -49,7 +49,7 @@
     'saldo': { key: 'saldo', subId: 'sub-manage-saldo', title: 'Saldo & Dompet User', desc: 'Kelola saldo member, mutasi dompet, dan rekonsiliasi buku besar.' },
     'harga': { key: 'harga', subId: 'sub-manage-harga', title: 'Harga & Benefit Paket', desc: 'Atur harga sewa slot bot, durasi paket, dan batasan kuota pesan.' },
     'sistem': { key: 'sistem', subId: 'sub-manage-sistem', title: 'Sistem & Server', desc: 'Pemantauan kesehatan server, resource CPU/RAM, dan broadcast pengumuman.' },
-    'logs': { key: 'logs', navId: 'nav-syslogs', title: 'Log Aktivitas Sistem', desc: 'Rekam jejak seluruh operasi sistem: autentikasi, aksi admin, cron otomatis, dan bot.' }
+    'logs': { key: 'logs', subId: 'sub-manage-logs', title: 'Log Aktivitas Sistem', desc: 'Rekam jejak seluruh operasi sistem: autentikasi, aksi admin, cron otomatis, dan bot.' }
   };
 
   function tab(nama) {

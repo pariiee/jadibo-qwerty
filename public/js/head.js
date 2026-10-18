@@ -180,8 +180,6 @@ document.addEventListener('DOMContentLoaded', function () {
       if (u.is_admin) {
         var elNav = document.getElementById('nav-admin');
         if (elNav) elNav.style.display = '';
-        var elSyslogs = document.getElementById('nav-syslogs');
-        if (elSyslogs) elSyslogs.style.display = '';
       }
     }
   }).catch(function () {});

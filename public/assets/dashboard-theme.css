@@ -466,6 +466,10 @@ h2 small{color:var(--mute)!important;font-weight:500!important;font-size:14px!im
   align-self:start!important;
   box-sizing:border-box!important;
 }
+/* Safety: elemen tersembunyi tidak boleh ditembus rule !important nav */
+[hidden], [style*="display:none"], [style*="display: none"]{
+  display:none!important;
+}
 
 /* form controls */
 .inp, select.inp, input[type="search"], input[type="text"], input[type="password"]{
