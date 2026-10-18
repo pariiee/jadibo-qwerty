@@ -277,7 +277,7 @@ async function daftarPaket(req, res) {
   return res.json({
     ok: true,
     plans: pricingStore.plans().filter((p) => p.id !== 'user' && p.price > 0),
-    trial: { days: s.trial_days || TRIAL.days, slots: TRIAL.slots },
+    trial: { days: s.trial_days || TRIAL.days, slots: TRIAL.slots || 1, owner_max: TRIAL.owner_max || 1, receive_limit: TRIAL.receive_limit || 5000 },
     pay_mode: s.pay_mode,
     qris_static_url: s.qris_static_url || null,
     // Jumlah command yang tersedia — buat kartu paket. Ikut di sini karena

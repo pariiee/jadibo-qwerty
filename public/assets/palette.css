@@ -2427,12 +2427,97 @@ body.page-profil .pf-actions .btn{min-width:160px}
   /* ringkasan akun: panel 2x2, bukan 1 kolom */
   body.page-profil .stats{grid-template-columns:repeat(2,minmax(0,1fr))!important}
   body.page-profil .stats>.stat{min-height:0!important;padding:18px!important;border-left:0!important;border-top:0!important}
-  body.page-profil .stats>.stat:nth-child(even){border-left:1px solid var(--line)!important}
   body.page-profil .stats>.stat:nth-child(n+3){border-top:1px solid var(--line)!important}
 }
 
-
-
-
-
+/* ─── Halaman Pricing Modern (4 Cards) ─────────────────────────────────── */
+  body.page-pricing #plan-grid, body.page-pricing .plan-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)) !important;
+    gap: 18px !important;
+    align-items: start !important;
+  }
+  body.page-pricing .plan-card {
+    background: var(--card) !important;
+    border: 1px solid var(--line) !important;
+    border-radius: 20px !important;
+    padding: 24px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px !important;
+    height: auto !important;
+    align-self: start !important;
+    box-sizing: border-box !important;
+    transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease !important;
+  }
+  body.page-pricing .plan-card:hover {
+    border-color: var(--accent) !important;
+    transform: translateY(-2px) !important;
+  }
+  body.page-pricing .plan-card.aktif {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 1px var(--accent) !important;
+  }
+  body.page-pricing .pc-head {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+  }
+  body.page-pricing .pc-name {
+    font-size: 17px !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.02em !important;
+    color: var(--ink) !important;
+  }
+  body.page-pricing .pc-tag {
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    padding: 3px 10px !important;
+    border-radius: 999px !important;
+    background: var(--greenbg) !important;
+    color: var(--green) !important;
+  }
+  body.page-pricing .pc-price {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+    font-size: 28px !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.03em !important;
+    font-variant-numeric: tabular-nums !important;
+    color: var(--ink) !important;
+  }
+  body.page-pricing .pc-price small {
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: var(--mute) !important;
+    letter-spacing: normal !important;
+  }
+  body.page-pricing .pc-list {
+    list-style: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    font-size: 13px !important;
+    color: var(--mute) !important;
+  }
+  body.page-pricing .pc-list li {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+  body.page-pricing .pc-list li::before {
+    content: '✓' !important;
+    color: var(--green) !important;
+    font-weight: 800 !important;
+  }
+  body.page-pricing .plan-card .btn {
+    margin-top: 8px !important;
+    width: 100% !important;
+    justify-content: center !important;
+    height: 44px !important;
+    border-radius: 12px !important;
+    font-weight: 700 !important;
+  }
 

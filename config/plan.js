@@ -33,14 +33,16 @@ const TRIAL = {
   owner_max: 1, receive_limit: 5000,
 };
 
-// Slot Bot yang dijual. 1 Slot Bot Bulanan = 10k, 15k respon, 2 owner.
+// Slot Bot yang dijual.
 const DEFAULT_PLANS = [
   { id: 'user',    name: 'Gratis',     price: 0,     slots: 0, days: 0,   daily_limit: 10,  owner_max: 0, receive_limit: 0 },
-  { id: 'basic',   name: '1 Slot Bot', price: 10000, slots: 1, days: 30,  daily_limit: 100, owner_max: 2, receive_limit: 15000 },
+  { id: 'basic',   name: 'Basic',      price: 10000, slots: 1, days: 30,  daily_limit: 100, owner_max: 2, receive_limit: 15000 },
+  { id: 'juragan', name: 'Juragan',    price: 25000, slots: 5, days: 30,  daily_limit: 200, owner_max: 5, receive_limit: 50000 },
+  { id: 'sultan',  name: 'Sultan',     price: 50000, slots: 10, days: 30, daily_limit: 500, owner_max: 10, receive_limit: 150000 },
 ];
 
 // Dipakai kalau paket dari tabel `settings` tidak ketemu (mis. id paket lama).
-const SLOT_DEFAULT = { user: 0, basic: 1, premium: 1, ultra: 1, trial: 1 };
+const SLOT_DEFAULT = { user: 0, basic: 1, juragan: 5, sultan: 10, premium: 1, ultra: 1, trial: 1 };
 const LIMIT_DEFAULT = 20;
 
 /** Langganan user masih berlaku? */

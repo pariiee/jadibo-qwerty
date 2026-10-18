@@ -61,10 +61,44 @@
   async function loadPaket() {
     const d = await api('/api/plans');
     if (!d?.ok) return;
-    paket = d.plans;
+    paket = d.plans || [];
     const jumlahFitur = d.fitur || 0;
     const grid = document.getElementById('plan-grid');
     grid.innerHTML = '';
+
+    // Card 1: Free Trial
+    const trialData = d.trial || { days: 5, slots: 1, owner_max: 1, receive_limit: 5000 };
+    const kTrial = daftarPaket({
+      name: 'Free Trial',
+      slots: trialData.slots || 1,
+      receive_limit: trialData.receive_limit || 5000,
+      owner_max: trialData.owner_max || 1,
+      days: trialData.days || 5,
+    }, jumlahFitur);
+
+    const isCurrentTrial = me.plan_id === 'trial' && me.plan_aktif;
+    const elTrial = document.createElement('div');
+    elTrial.className = 'plan-card' + (isCurrentTrial ? ' aktif' : '');
+    
+    let trialBtnHtml = '';
+    if (!me.trial_used_at) {
+      trialBtnHtml = '<button class="btn btn-dark" data-act="klaimTrial">Klaim Trial Gratis</button>';
+    } else if (isCurrentTrial) {
+      trialBtnHtml = '<button class="btn btn-outline" disabled style="opacity:0.85;cursor:default">Trial Sedang Aktif</button>';
+    } else {
+      trialBtnHtml = '<button class="btn btn-outline" disabled style="opacity:0.5;cursor:not-allowed">Sudah Pernah Klaim</button>';
+    }
+
+    elTrial.innerHTML =
+      '<div class="pc-head"><span class="pc-name">Free Trial</span>' +
+      (isCurrentTrial ? '<span class="pc-tag">Paket kamu</span>' : '<span class="pc-tag" style="background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.3)">Gratis</span>') + '</div>' +
+      '<div class="pc-price">Rp 0<small> / ' + (trialData.days || 5) + ' hari</small></div>' +
+      '<ul class="pc-list">' + kTrial.baris.map((t) => '<li>' + t + '</li>').join('') + '</ul>' +
+      '<div class="muted small">' + kTrial.extra + '</div>' +
+      trialBtnHtml;
+    grid.appendChild(elTrial);
+
+    // Cards 2..N: Paid Plans
     paket.forEach((p) => {
       // Isi kartu dari `daftarPaket()` (act.js) — SATU sumber dengan landing `/`.
       // Dulu dua halaman menulis daftarnya sendiri dan isinya jadi beda.
