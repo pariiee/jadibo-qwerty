@@ -41,7 +41,7 @@
     document.getElementById('greeting').textContent   = 'Selamat Datang Kembali, ' + me.username;
     const hg = document.getElementById('hero-greeting');
     if (hg) {
-      hg.innerHTML = '<span class="hero-sub">Selamat Datang Kembali,</span><br><span class="hero-user" id="hero-name"></span>';
+      hg.innerHTML = '<span class="hero-sub">Selamat datang kembali,</span><span class="hero-user" id="hero-name"></span>';
       typeWriter(document.getElementById('hero-name'), me.username);
     }
     if (me.is_admin) document.getElementById('nav-admin').style.display = '';
