@@ -70,11 +70,9 @@
     // Tabel kosong + kartu kosong sekaligus = dua pesan yang sama. Yang bicara
     // kartunya, tabelnya disembunyikan.
     document.querySelector('.tbl-wrap').style.display = belumPernah ? 'none' : '';
-    if (belumPernah && aku) {
-      document.getElementById('btn-trial').style.display = aku.trial_used ? 'none' : 'inline-flex';
-      document.getElementById('kosong-teks').textContent = aku.trial_used
-        ? 'Kamu sudah pernah pakai trial. Pilih paket buat mengaktifkan bot lagi.'
-        : 'Kamu belum pernah berlangganan. Coba trial ' + (aku.trial_hari || 5) + ' hari dulu — gratis.';
+    if (belumPernah) {
+      const kt = document.getElementById('kosong-teks');
+      if (kt) kt.textContent = 'Anda belum pernah berlangganan.';
     }
 
     // Catatan di bawah tabel.
