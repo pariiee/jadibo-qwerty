@@ -34,18 +34,18 @@ const url = (path) => `${base()}/${String(path || '').replace(/^\/+/, '')}`;
  * Upload buffer media -> URL publik YaPari.
  *
  * DUA endpoint, beda umur URL (dan beda bentuk response!):
- *   v1  `api/tools/upload`     → cepat, `expires`: "24 jam"      → untuk yang URL-nya dipakai SEKARANG
- *                                (stiker, topng/tomp4, decode-qr, ocr, upscale, hasil maker)
- *   v2  `api/tools/upload-v2`  → lambat dikit, `expires`: "Permanen" → untuk URL yang DISIMPAN
- *                                (setqris, banner, apa pun yang ditulis ke DB/web)
+ *   v1  `api/upload/uguu`     → cepat, `expires`: "24 jam"      → untuk yang URL-nya dipakai SEKARANG
+ *                                (tourl, stiker, topng/tomp4, decode-qr, ocr, upscale, hasil maker)
+ *   v2  `api/upload/top4top`  → `expires`: "Permanen"           → untuk URL yang DISIMPAN
+ *                                (tourl2, setqris, banner, apa pun yang ditulis ke DB/web)
  *
- * Bentuk response beda dan itu sumber bug: v1 = `results.file_url`, v2 = `result.url`.
+ * Bentuk response beda: v1 = `results.file_url`, v2 = `result.url`.
  * Helper ini yang menyeragamkan; jangan baca `results.file_url` mentah-mentah untuk v2.
  *
  * @param  {Buffer} buffer
  * @param  {string} filename   'foto.jpg'
  * @param  {string} mimetype   'image/jpeg'
- * @param  {{ v2?: boolean, timeout?: number }} [opts] v2 = endpoint permanen
+ * @param  {{ v2?: boolean, timeout?: number, endpoint?: string }} [opts] v2 = endpoint permanen
  * @return {Promise<string>}   URL-nya saja
  */
 async function upload(buffer, filename, mimetype, opts = {}) {
@@ -58,7 +58,7 @@ async function upload(buffer, filename, mimetype, opts = {}) {
  * @return {Promise<{url:string, expires:string|null, size:number|null, provider:string|null}>}
  */
 async function uploadInfo(buffer, filename, mimetype, opts = {}) {
-  const endpoint = opts.v2 ? 'api/tools/upload-v2' : 'api/tools/upload';
+  const endpoint = opts.endpoint || (opts.v2 ? 'api/upload/top4top' : 'api/upload/uguu');
   const form = new FormData();
   form.append('file', buffer, { filename, contentType: mimetype });
 

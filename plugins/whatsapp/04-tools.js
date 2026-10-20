@@ -3373,9 +3373,10 @@ ${rapikanError(e)}`);
           filename = namaFileAman(content.fileName, mime);
         }
 
-        // Cek ukuran file max 5MB
-        if (buffer.length > 5 * 1024 * 1024) {
-          await reply('Ukuran media tidak boleh melebihi 5MB');
+        // Cek ukuran file max 50MB (uguu.se max 100MB)
+        const MAX_TOURL_MB = 50;
+        if (buffer.length > MAX_TOURL_MB * 1024 * 1024) {
+          await reply(`Ukuran media tidak boleh melebihi ${MAX_TOURL_MB}MB`);
           return true;
         }
 
@@ -4857,15 +4858,15 @@ ${rapikanError(e)}`);
         const { data } = await axios.get(`${process.env.BASE_API}api/download/tiktok`, {
           params: { url },
           headers: { 'X-API-Key': process.env.KEY_API },
-          timeout: 13000,
+          timeout: 20000,
         });
         const res     = data?.results || {};
         // BE udah ngasih alasan yang manusiawi ("linknya udah nggak ada", "ini post
         // foto, bukan video"). Dulu alasan itu dibuang dan diganti kalimat generik,
         // jadi member nggak pernah tahu kenapa gagalnya.
         const alasanBe = data?.message || '';
-        const title   = res.title  || '';
-        const author  = res.author?.nickname || '';
+        const title   = res.title  || res.description || '';
+        const author  = res.author?.nickname || res.author?.uniqueId || '';
         const caption = `🎵 *TikTok*${title ? `\n${title}` : ''}${author ? `\n👤 ${author}` : ''}`;
 
         // ── Photomode (slide foto) → kirim tiap gambar ────────────────────────
@@ -4873,8 +4874,19 @@ ${rapikanError(e)}`);
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
           'Referer': 'https://www.tiktok.com/',
         };
-        const isPhoto = res.type === 'image' || (Array.isArray(res.images) && res.images.length > 0);
-        const images = isPhoto ? (res.images?.length ? res.images : res.download || []).filter(Boolean) : [];
+        const isPhoto = res.postType === 'photo' || res.type === 'image' || Boolean(res.download?.photo?.length) || (Array.isArray(res.images) && res.images.length > 0);
+        let images = [];
+        if (Array.isArray(res.download?.photo)) {
+          images = res.download.photo;
+        } else if (typeof res.download?.photo === 'string') {
+          images = [res.download.photo];
+        } else if (Array.isArray(res.images)) {
+          images = res.images;
+        } else if (Array.isArray(res.download)) {
+          images = res.download;
+        }
+        images = images.filter(Boolean);
+
         if (images.length) {
           await react(mess.reactSuccess);
           for (let i = 0; i < Math.min(images.length, 10); i++) {
@@ -4892,16 +4904,25 @@ ${rapikanError(e)}`);
         }
 
         // ── Video biasa ───────────────────────────────────────────────────────
+        const variantUrls = Array.isArray(res.download?.variants)
+          ? res.download.variants.map(v => v?.url).filter(Boolean)
+          : [];
         const candidateUrls = [
+          res.download?.hd,
+          res.download?.default,
+          ...variantUrls,
+          res.download?.wm,
           res.video?.no_watermark,
           ...(Array.isArray(res.video?.list) ? res.video.list : []),
           ...(Array.isArray(res.download) ? res.download : []),
+          (typeof res.download === 'string' ? res.download : null),
         ].filter(Boolean);
-        if (!candidateUrls.length) throw new Error(alasanBe || 'Media tidak ditemukan di response API');
+        const uniqueCandidateUrls = [...new Set(candidateUrls)];
+        if (!uniqueCandidateUrls.length) throw new Error(alasanBe || 'Media tidak ditemukan di response API');
 
         let vbuf = null;
         let lastErr = null;
-        for (const dlUrl of candidateUrls) {
+        for (const dlUrl of uniqueCandidateUrls) {
           try {
             const vidRes = await axios.get(dlUrl, { headers: ttHeaders, responseType: 'arraybuffer', timeout: 90000 });
             if (vidRes.data && vidRes.data.length > 1000) {
