@@ -4869,25 +4869,40 @@ ${rapikanError(e)}`);
         const author  = res.author?.nickname || res.author?.uniqueId || '';
         const caption = `🎵 *TikTok*${title ? `\n${title}` : ''}${author ? `\n👤 ${author}` : ''}`;
 
-        // ── Photomode (slide foto) → kirim tiap gambar ────────────────────────
+        // ── Header download TikTok (CDN TikTok wajib Referer & User-Agent) ──
         const ttHeaders = {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
           'Referer': 'https://www.tiktok.com/',
         };
-        const isPhoto = res.postType === 'photo' || res.type === 'image' || Boolean(res.download?.photo?.length) || (Array.isArray(res.images) && res.images.length > 0);
-        let images = [];
-        if (Array.isArray(res.download?.photo)) {
-          images = res.download.photo;
-        } else if (typeof res.download?.photo === 'string') {
-          images = [res.download.photo];
-        } else if (Array.isArray(res.images)) {
-          images = res.images;
-        } else if (Array.isArray(res.download)) {
-          images = res.download;
-        }
-        images = images.filter(Boolean);
 
-        if (images.length) {
+        // Siapkan kandidat URL video
+        const variantUrls = Array.isArray(res.download?.variants)
+          ? res.download.variants.map(v => v?.url).filter(Boolean)
+          : [];
+        const candidateUrls = [
+          res.download?.hd,
+          res.download?.default,
+          ...variantUrls,
+          res.download?.wm,
+          res.video?.no_watermark,
+          ...(Array.isArray(res.video?.list) ? res.video.list : []),
+          ...(Array.isArray(res.download) ? res.download : []),
+          (typeof res.download === 'string' ? res.download : null),
+        ].filter(Boolean);
+        const uniqueCandidateUrls = [...new Set(candidateUrls)];
+
+        // Siapkan kandidat gambar (slide foto) — dukung bentuk object { url, thumb } maupun string
+        const extractImgUrl = (item) => (typeof item === 'string' ? item : (item?.url || item?.thumb || item?.animated || ''));
+        const rawImages = Array.isArray(res.download?.photo)
+          ? res.download.photo
+          : (Array.isArray(res.images) ? res.images : (Array.isArray(res.download) ? res.download : [res.download?.photo].filter(Boolean)));
+        const images = rawImages.map(extractImgUrl).filter(Boolean);
+
+        // live_photo & video punya stream mp4 berdurasi -> prioritas kirim video
+        const isPhoto = (res.postType === 'photo' || res.type === 'image' || (!uniqueCandidateUrls.length && images.length > 0)) && res.postType !== 'video' && res.postType !== 'live_photo';
+
+        // ── Photomode (slide foto) → kirim tiap gambar ────────────────────────
+        if (isPhoto && images.length) {
           await react(mess.reactSuccess);
           for (let i = 0; i < Math.min(images.length, 10); i++) {
             const imgUrl = images[i];
@@ -4903,21 +4918,7 @@ ${rapikanError(e)}`);
           return true;
         }
 
-        // ── Video biasa ───────────────────────────────────────────────────────
-        const variantUrls = Array.isArray(res.download?.variants)
-          ? res.download.variants.map(v => v?.url).filter(Boolean)
-          : [];
-        const candidateUrls = [
-          res.download?.hd,
-          res.download?.default,
-          ...variantUrls,
-          res.download?.wm,
-          res.video?.no_watermark,
-          ...(Array.isArray(res.video?.list) ? res.video.list : []),
-          ...(Array.isArray(res.download) ? res.download : []),
-          (typeof res.download === 'string' ? res.download : null),
-        ].filter(Boolean);
-        const uniqueCandidateUrls = [...new Set(candidateUrls)];
+        // ── Video (video biasa & live_photo) ──────────────────────────────────
         if (!uniqueCandidateUrls.length) throw new Error(alasanBe || 'Media tidak ditemukan di response API');
 
         let vbuf = null;
