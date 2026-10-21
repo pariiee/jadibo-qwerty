@@ -5246,7 +5246,7 @@ ${rapikanError(e)}`);
         }
         items = items.filter(it => it.url);
         if (!items.length) throw new Error('Tidak ada media dari API');
-        await react(mess.reactSuccess);
+
         // CDN Instagram (scontent) kadang nolak connect sesaat (ETIMEDOUT), dan VPS ini
         // nggak punya rute IPv6 (ENETUNREACH) -> kunci IPv4 + ulang sekali.
         const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
@@ -5272,27 +5272,35 @@ ${rapikanError(e)}`);
           catch (e) { gagal.push(`#${n} unduh ${e.message}`); continue; }
           const ct  = res.headers['content-type'] || (it.isVideo ? 'video/mp4' : 'image/jpeg');
           const isVid = ct.startsWith('video/') || it.isVideo;
-          const thumb = await genThumbnail(Buffer.from(res.data), isVid ? 'video/mp4' : ct);
+          let sendBuf = Buffer.from(res.data);
+          let sendCt  = ct;
+          if (!isVid) {
+            const converted = await jpegkan(sendBuf, ct);
+            sendBuf = converted.buf;
+            sendCt  = converted.ct;
+          }
+          const thumb = await genThumbnail(sendBuf, isVid ? 'video/mp4' : sendCt);
           const cap = n === 1
-            ? `\u{1F4F7} *Instagram*` + (metaTxt ? `\n\n${metaTxt}` : '') + (total > 1 ? `\n${'\u{1F4F7}'} 1 / ${total}` : '') + (caption ? `\n\n${caption}` : '')
-            : `\u{1F4F7} ${n} / ${total}`;
+            ? `📷 *Instagram*` + (metaTxt ? `\n\n${metaTxt}` : '') + (total > 1 ? `\n📷 1 / ${total}` : '') + (caption ? `\n\n${caption}` : '')
+            : `📷 ${n} / ${total}`;
           try {
             await client.message.send(jid, {
               type: isVid ? 'video' : 'image',
-              media: Buffer.from(res.data),
-              mimetype: isVid ? (ct.startsWith('video/') ? ct : 'video/mp4') : ct,
+              media: sendBuf,
+              mimetype: isVid ? (sendCt.startsWith('video/') ? sendCt : 'video/mp4') : sendCt,
               caption: cap,
               ...(thumb ? { jpegThumbnail: thumb } : {}),
             });
             terkirim++;
           } catch (e) { gagal.push(`#${n} kirim ${e.message}`); }
         }
-        // Jangan pernah "centang tapi sepi": kalau SEMUA media gagal, user harus tau
-        // alasannya. Dulu `catch { continue; }` bikin media ilang tanpa jejak sama sekali.
         console.log(`[ig] ${terkirim}/${total} terkirim${gagal.length ? ' — ' + gagal.join('; ') : ''}`);
-        if (!terkirim) {
+        if (terkirim > 0) {
+          await react(mess.reactSuccess);
+        } else {
+          await react(mess.reactError);
           const uniq = [...new Set(gagal.map(g => g.replace(/^#\d+ /, '')))];
-          await reply(`❌ Gagal Instagram (${total} media):\n${uniq.join('\n')}`);
+          await reply(`❌ Gagal download Instagram (${total} media):\n${uniq.join('\n')}`);
         }
       } catch (e) {
         await react(mess.reactError);
