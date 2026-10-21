@@ -747,7 +747,7 @@ ${rapikanError(e)}`);
         // upload foto → dapat URL publik
         const form = new FormData();
         form.append('file', imgBuffer, { filename: `fakech_${Date.now()}.jpg`, contentType: 'image/jpeg' });
-        const uploadRes = await axios.post(`${process.env.BASE_API}api/tools/upload`, form, {
+        const uploadRes = await axios.post(`${process.env.BASE_API}api/upload/uguu`, form, {
           headers: { ...form.getHeaders(), 'X-API-Key': process.env.KEY_API },
           timeout: 20000,
         });
@@ -830,7 +830,7 @@ ${rapikanError(e)}`);
         // upload foto → dapat URL publik
         const form2 = new FormData();
         form2.append('file', imgBuffer, { filename: `fakecall_${Date.now()}.jpg`, contentType: 'image/jpeg' });
-        const uploadRes2 = await axios.post(`${process.env.BASE_API}api/tools/upload`, form2, {
+        const uploadRes2 = await axios.post(`${process.env.BASE_API}api/upload/uguu`, form2, {
           headers: { ...form2.getHeaders(), 'X-API-Key': process.env.KEY_API },
           timeout: 20000,
         });
@@ -911,7 +911,7 @@ ${rapikanError(e)}`);
 
         const form3 = new FormData();
         form3.append('file', imgBuffer, { filename: `fakecallip_${Date.now()}.jpg`, contentType: 'image/jpeg' });
-        const uploadRes3 = await axios.post(`${process.env.BASE_API}api/tools/upload`, form3, {
+        const uploadRes3 = await axios.post(`${process.env.BASE_API}api/upload/uguu`, form3, {
           headers: { ...form3.getHeaders(), 'X-API-Key': process.env.KEY_API },
           timeout: 20000,
         });
@@ -1052,7 +1052,7 @@ ${rapikanError(e)}`);
 
         const formGc = new FormData();
         formGc.append('file', imgBuffer, { filename: `fakegcios_${Date.now()}.jpg`, contentType: 'image/jpeg' });
-        const uploadResGc = await axios.post(`${process.env.BASE_API}api/tools/upload`, formGc, {
+        const uploadResGc = await axios.post(`${process.env.BASE_API}api/upload/uguu`, formGc, {
           headers: { ...formGc.getHeaders(), 'X-API-Key': process.env.KEY_API },
           timeout: 20000,
         });
@@ -1137,7 +1137,7 @@ ${rapikanError(e)}`);
 
         const formTele = new FormData();
         formTele.append('file', imgBuffer, { filename: `fakepptele_${Date.now()}.jpg`, contentType: 'image/jpeg' });
-        const uploadResTele = await axios.post(`${process.env.BASE_API}api/tools/upload`, formTele, {
+        const uploadResTele = await axios.post(`${process.env.BASE_API}api/upload/uguu`, formTele, {
           headers: { ...formTele.getHeaders(), 'X-API-Key': process.env.KEY_API },
           timeout: 20000,
         });
@@ -1204,7 +1204,7 @@ ${rapikanError(e)}`);
           const imgBuffer = Buffer.from(await client.message.downloadBytes({ imageMessage: fixed }));
           const formIg = new FormData();
           formIg.append('file', imgBuffer, { filename: `igqc_${Date.now()}.jpg`, contentType: 'image/jpeg' });
-          const uploadResIg = await axios.post(`${process.env.BASE_API}api/tools/upload`, formIg, {
+          const uploadResIg = await axios.post(`${process.env.BASE_API}api/upload/uguu`, formIg, {
             headers: { ...formIg.getHeaders(), 'X-API-Key': process.env.KEY_API },
             timeout: 20000,
           });
@@ -1286,7 +1286,7 @@ ${rapikanError(e)}`);
 
         const formIs = new FormData();
         formIs.append('file', imgBuffer, { filename: `igstory_${Date.now()}.jpg`, contentType: 'image/jpeg' });
-        const uploadResIs = await axios.post(`${process.env.BASE_API}api/tools/upload`, formIs, {
+        const uploadResIs = await axios.post(`${process.env.BASE_API}api/upload/uguu`, formIs, {
           headers: { ...formIs.getHeaders(), 'X-API-Key': process.env.KEY_API },
           timeout: 20000,
         });
@@ -1368,7 +1368,7 @@ ${rapikanError(e)}`);
           }
           const formIqc = new FormData();
           formIqc.append('file', imgBuffer, { filename: `iqc_${Date.now()}.jpg`, contentType: 'image/jpeg' });
-          const uploadResIqc = await axios.post(`${process.env.BASE_API}api/tools/upload`, formIqc, {
+          const uploadResIqc = await axios.post(`${process.env.BASE_API}api/upload/uguu`, formIqc, {
             headers: { ...formIqc.getHeaders(), 'X-API-Key': process.env.KEY_API },
             timeout: 20000,
           });
@@ -1995,7 +1995,7 @@ ${rapikanError(e)}`); }
         const FormData = require('form-data');
         const form = new FormData();
         form.append('file', media.buffer, { filename: 'qr.png', contentType: media.mime || 'image/png' });
-        const upload = await axios.post(`${process.env.BASE_API}api/tools/upload`, form, {
+        const upload = await axios.post(`${process.env.BASE_API}api/upload/uguu`, form, {
           headers: { ...form.getHeaders(), 'X-API-Key': process.env.KEY_API }, timeout: 30000,
         });
         const imgUrl = upload.data?.results?.file_url;
@@ -2026,7 +2026,7 @@ ${rapikanError(e)}`); }
           const FormData = require('form-data');
           const form = new FormData();
           form.append('file', media.buffer, { filename: 'ocr.jpg', contentType: media.mime || 'image/jpeg' });
-          const upload = await axios.post(`${process.env.BASE_API}api/tools/upload`, form, {
+          const upload = await axios.post(`${process.env.BASE_API}api/upload/uguu`, form, {
             headers: { ...form.getHeaders(), 'X-API-Key': process.env.KEY_API }, timeout: 30000,
           });
           imgUrl = upload.data?.results?.file_url;
@@ -2059,7 +2059,7 @@ ${rapikanError(e)}`); }
           const FormData = require('form-data');
           const form = new FormData();
           form.append('file', media.buffer, { filename: 'img.jpg', contentType: media.mime || 'image/jpeg' });
-          const upload = await axios.post(`${process.env.BASE_API}api/tools/upload`, form, {
+          const upload = await axios.post(`${process.env.BASE_API}api/upload/uguu`, form, {
             headers: { ...form.getHeaders(), 'X-API-Key': process.env.KEY_API }, timeout: 30000,
           });
           imgUrl = upload.data?.results?.file_url;
@@ -4155,7 +4155,7 @@ ${rapikanError(e)}`);
         // Upload gambar ke YaPari untuk dapat URL publik
         const form = new FormData();
         form.append('file', buffer, { filename, contentType: mime });
-        const uploadRes = await axios.post(`${process.env.BASE_API}api/tools/upload`, form, {
+        const uploadRes = await axios.post(`${process.env.BASE_API}api/upload/uguu`, form, {
           headers: { ...form.getHeaders(), 'X-API-Key': process.env.KEY_API },
           timeout: 20000,
         });
@@ -4331,7 +4331,7 @@ ${rapikanError(e)}`);
         // Upload gambar ke YaPari untuk dapat URL publik
         const form = new FormData();
         form.append('file', buffer, { filename, contentType: mime });
-        const uploadRes = await axios.post(`${process.env.BASE_API}api/tools/upload`, form, {
+        const uploadRes = await axios.post(`${process.env.BASE_API}api/upload/uguu`, form, {
           headers: { ...form.getHeaders(), 'X-API-Key': process.env.KEY_API },
           timeout: 20000,
         });
