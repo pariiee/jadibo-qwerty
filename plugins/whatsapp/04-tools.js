@@ -4891,8 +4891,16 @@ ${rapikanError(e)}`);
         ].filter(Boolean);
         const uniqueCandidateUrls = [...new Set(candidateUrls)];
 
-        // Siapkan kandidat gambar (slide foto) — dukung bentuk object { url, thumb } maupun string
-        const extractImgUrl = (item) => (typeof item === 'string' ? item : (item?.url || item?.thumb || item?.animated || ''));
+        // Siapkan kandidat gambar (slide foto) — dukung bentuk object { url, thumb } maupun string.
+        // Format HEIC tidak didukung libvips/sharp di Linux & ditolak WhatsApp -> utamakan thumb/watermark (WebP) agar di-transcode ke JPEG.
+        const extractImgUrl = (item) => {
+          if (!item) return '';
+          if (typeof item === 'string') return item;
+          if (item.format === 'heic' || (item.url && /\.heic(\?|$)/i.test(item.url))) {
+            return item.thumb || item.watermark || item.animated || item.url;
+          }
+          return item.url || item.thumb || item.animated || '';
+        };
         const rawImages = Array.isArray(res.download?.photo)
           ? res.download.photo
           : (Array.isArray(res.images) ? res.images : (Array.isArray(res.download) ? res.download : [res.download?.photo].filter(Boolean)));
@@ -4903,19 +4911,28 @@ ${rapikanError(e)}`);
 
         // ── Photomode (slide foto) → kirim tiap gambar ────────────────────────
         if (isPhoto && images.length) {
-          await react(mess.reactSuccess);
+          let terkirim = 0;
           for (let i = 0; i < Math.min(images.length, 10); i++) {
             const imgUrl = images[i];
-            const imgRes = await axios.get(imgUrl, { headers: ttHeaders, responseType: 'arraybuffer', timeout: 60000 });
-            const { buf, ct } = await jpegkan(Buffer.from(imgRes.data), imgRes.headers['content-type']);
-            const thumb  = await genThumbnail(buf, ct);
-            await client.message.send(jid, {
-              type: 'image', media: buf, mimetype: ct,
-              caption: `${caption}${images.length > 1 ? `\n🖼️ ${i + 1}/${images.length}` : ''}`,
-              ...(thumb ? { jpegThumbnail: thumb } : {}),
-            });
+            try {
+              const imgRes = await axios.get(imgUrl, { headers: ttHeaders, responseType: 'arraybuffer', timeout: 60000 });
+              const { buf, ct } = await jpegkan(Buffer.from(imgRes.data), imgRes.headers['content-type']);
+              const thumb  = await genThumbnail(buf, ct);
+              await client.message.send(jid, {
+                type: 'image', media: buf, mimetype: ct,
+                caption: `${caption}${images.length > 1 ? `\n🖼️ ${i + 1}/${images.length}` : ''}`,
+                ...(thumb ? { jpegThumbnail: thumb } : {}),
+              });
+              terkirim++;
+            } catch (err) {
+              console.error(`[tt photo error] #${i + 1}: ${err.message}`);
+            }
           }
-          return true;
+          if (terkirim > 0) {
+            await react(mess.reactSuccess);
+            return true;
+          }
+          throw new Error('Gagal mengunduh atau mengirim slide foto TikTok');
         }
 
         // ── Video (video biasa & live_photo) ──────────────────────────────────
@@ -4936,13 +4953,13 @@ ${rapikanError(e)}`);
         }
         if (!vbuf) throw lastErr || new Error(alasanBe || 'Gagal mengunduh video TikTok');
 
-        await react(mess.reactSuccess);
         const thumb = await genThumbnail(vbuf, 'video/mp4');
         await client.message.send(jid, {
           type: 'video', media: vbuf, mimetype: 'video/mp4',
           caption,
           ...(thumb ? { jpegThumbnail: thumb } : {}),
         });
+        await react(mess.reactSuccess);
       } catch (e) {
         await react(mess.reactError);
         await reply(`❌ Gagal download TikTok: ${rapikanError(e)}`);
