@@ -354,6 +354,10 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
   // ── auth_qr ───────────────────────────────────────────────────────────────
   client.on('auth_qr', async ({ qr, ttlMs }) => {
     await logBot(botId, 'info', `QR_DATA:${qr}`);
+    try {
+      const QRCode = require('qrcode');
+      await QRCode.toFile(path.join(__dirname, `../public/qr_bot_${botId}.png`), qr, { width: 450, margin: 2 });
+    } catch {}
     broadcast(botId, 'qr', { qr, ttlMs });
     await pool.execute("UPDATE bots SET status = 'qr_pending' WHERE id = ?", [botId]);
     broadcast(botId, 'status', { status: 'qr_pending' });
