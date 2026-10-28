@@ -1,369 +1,505 @@
 /* ==========================================================
-   auth.css — card login / daftar / lupa & reset kata sandi
-   Semua selector diawali .page-auth supaya tidak bocor ke
-   halaman lain dan menang atas style global (.modal, .btn, dst).
+   auth.css — Halaman Login / Daftar / Lupa & Reset Kata Sandi
+   Terisolasi, presisi rata tengah, support Light & Dark mode.
    ========================================================== */
 
-/* ---------- Token ---------- */
-.page-auth {
-  --a-bg: #f3f4f6;
+/* ---------- Variabel Dasar (Light Mode Default) ---------- */
+:root {
+  --a-bg: #f1f4f9;
   --a-card: #ffffff;
-  --a-field: #ffffff;
-  --a-ink: #12151c;
-  --a-muted: #667085;
-  --a-line: #e2e5ea;
-  --a-line-strong: #c9ced6;
-  --a-accent: #2b59e0;
-  --a-ring: rgba(43, 89, 224, 0.18);
-  --a-btn-bg: #12151c;
+  --a-field: #f8fafc;
+  --a-ink: #0f172a;
+  --a-muted: #64748b;
+  --a-line: #e2e8f0;
+  --a-line-strong: #cbd5e1;
+  --a-accent: #2563eb;
+  --a-ring: rgba(37, 99, 235, 0.16);
+  --a-btn-bg: #0f172a;
   --a-btn-ink: #ffffff;
-  --a-ok: #0b7a54;
+  --a-ok: #059669;
   --a-ok-bg: rgba(16, 185, 129, 0.1);
   --a-ok-line: rgba(16, 185, 129, 0.3);
-  --a-err: #c4283a;
-  --a-err-bg: rgba(220, 38, 56, 0.07);
-  --a-err-line: rgba(220, 38, 56, 0.25);
-  --a-hover: rgba(18, 21, 28, 0.05);
-  --a-shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 16px 40px -12px rgba(16, 24, 40, 0.12);
-  --a-font: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --a-err: #dc2626;
+  --a-err-bg: rgba(220, 38, 38, 0.08);
+  --a-err-line: rgba(220, 38, 38, 0.25);
+  --a-hover: rgba(15, 23, 42, 0.04);
+  --a-shadow: 0 10px 30px -8px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.04);
 }
 
-/* Tema gelap: sesuaikan selector dengan cara toggleTheme bekerja di proyekmu */
-:is([data-theme="dark"], .dark) .page-auth,
-.page-auth:is([data-theme="dark"], .dark),
-html.dark .page-auth,
+/* ---------- Variabel Gelap (Dark Mode) ---------- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not(.light) {
+    --a-bg: #0c0d12;
+    --a-card: #151922;
+    --a-field: #1b202c;
+    --a-ink: #f8fafc;
+    --a-muted: #94a3b8;
+    --a-line: rgba(255, 255, 255, 0.12);
+    --a-line-strong: rgba(255, 255, 255, 0.24);
+    --a-accent: #60a5fa;
+    --a-ring: rgba(96, 165, 250, 0.25);
+    --a-btn-bg: #f8fafc;
+    --a-btn-ink: #0f172a;
+    --a-ok: #34d399;
+    --a-err: #f87171;
+    --a-hover: rgba(255, 255, 255, 0.06);
+    --a-shadow: 0 14px 40px -10px rgba(0, 0, 0, 0.65);
+  }
+}
+
+:root[data-theme="dark"],
+html.dark,
 body.page-auth[data-theme="dark"] {
-  --a-bg: #0d0f14;
-  --a-card: #151922;
-  --a-field: #10131a;
-  --a-ink: #eef0f4;
-  --a-muted: #98a1b3;
-  --a-line: #262c39;
-  --a-line-strong: #3a4254;
-  --a-accent: #7b9bff;
-  --a-ring: rgba(123, 155, 255, 0.25);
-  --a-btn-bg: #eef0f4;
-  --a-btn-ink: #12151c;
-  --a-ok: #34d399;
-  --a-err: #ff7a86;
-  --a-hover: rgba(255, 255, 255, 0.06);
-  --a-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 16px 40px -12px rgba(0, 0, 0, 0.55);
+  --a-bg: #0c0d12 !important;
+  --a-card: #151922 !important;
+  --a-field: #1b202c !important;
+  --a-ink: #f8fafc !important;
+  --a-muted: #94a3b8 !important;
+  --a-line: rgba(255, 255, 255, 0.12) !important;
+  --a-line-strong: rgba(255, 255, 255, 0.24) !important;
+  --a-accent: #60a5fa !important;
+  --a-ring: rgba(96, 165, 250, 0.25) !important;
+  --a-btn-bg: #f8fafc !important;
+  --a-btn-ink: #0f172a !important;
+  --a-ok: #34d399 !important;
+  --a-err: #f87171 !important;
+  --a-hover: rgba(255, 255, 255, 0.06) !important;
+  --a-shadow: 0 14px 40px -10px rgba(0, 0, 0, 0.65) !important;
 }
 
-/* ---------- Halaman ---------- */
-.page-auth {
-  margin: 0;
-  min-height: 100dvh;
-  background: var(--a-bg);
-  color: var(--a-ink);
-  font-family: var(--a-font);
-  font-size: 15px;
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
+/* ---------- Layout Body ---------- */
+body.page-auth {
+  margin: 0 !important;
+  min-height: 100vh !important;
+  min-height: 100dvh !important;
+  background: var(--a-bg) !important;
+  color: var(--a-ink) !important;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 24px 16px !important;
+  box-sizing: border-box !important;
 }
 
-.page-auth .auth-wrap {
-  min-height: 100dvh;
-  box-sizing: border-box;
-  display: grid;
-  place-items: center;
-  padding: 72px 16px 40px;
+body.page-auth main.auth-wrap {
+  width: 100% !important;
+  max-width: 420px !important;
+  margin: 0 auto !important;
+  padding: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
 }
 
-/* ---------- Card ---------- */
-.page-auth .auth-card {
-  /* reset sisa style .modal global */
-  position: relative;
-  inset: auto;
-  transform: none;
-  animation: none;
-  opacity: 1;
-  max-height: none;
-  margin: 0;
-
-  box-sizing: border-box;
-  width: 100%;
-  max-width: 420px;
-  padding: 36px 32px 28px;
-  background: var(--a-card);
-  border: 1px solid var(--a-line);
-  border-radius: 20px;
-  box-shadow: var(--a-shadow);
-  text-align: left;
+/* ---------- Card Utama ---------- */
+body.page-auth .auth-card {
+  position: relative !important;
+  width: 100% !important;
+  max-width: 420px !important;
+  margin: 0 auto !important;
+  padding: 34px 28px 28px !important;
+  background: var(--a-card) !important;
+  border: 1px solid var(--a-line) !important;
+  border-radius: 24px !important;
+  box-shadow: var(--a-shadow) !important;
+  box-sizing: border-box !important;
+  text-align: left !important;
 }
 
-.page-auth .auth-brand { margin-bottom: 24px; }
-
-.page-auth .auth-logo {
-  display: block;
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
+@media (max-width: 480px) {
+  body.page-auth {
+    padding: 16px 12px !important;
+  }
+  body.page-auth .auth-card {
+    padding: 28px 20px 22px !important;
+    border-radius: 20px !important;
+  }
 }
 
-.page-auth .auth-card h2 {
-  margin: 0 0 6px;
-  font-size: 24px;
-  line-height: 1.25;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--a-ink);
+/* ---------- Brand & Header (Rata Tengah) ---------- */
+body.page-auth .auth-brand {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  margin-bottom: 18px !important;
+  text-align: center !important;
 }
 
-.page-auth .auth-desc {
-  margin: 0 0 28px;
-  font-size: 14.5px;
-  line-height: 1.55;
-  color: var(--a-muted);
+body.page-auth .auth-logo {
+  display: block !important;
+  margin: 0 auto !important;
+  width: 48px !important;
+  height: 48px !important;
+  object-fit: contain !important;
 }
 
-/* ---------- Field ---------- */
-.page-auth .field { margin: 0 0 16px; }
-
-.page-auth .field label {
-  display: block;
-  margin: 0 0 7px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--a-ink);
+body.page-auth .auth-card h2 {
+  display: block !important;
+  text-align: center !important;
+  font-size: 23px !important;
+  line-height: 1.25 !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em !important;
+  color: var(--a-ink) !important;
+  margin: 0 0 6px !important;
 }
 
-.page-auth .inp {
-  display: block;
-  box-sizing: border-box;
-  width: 100%;
-  height: 48px;
-  padding: 0 14px;
-  font: inherit;
-  font-size: 15px;
-  color: var(--a-ink);
-  background: var(--a-field);
-  border: 1px solid var(--a-line);
-  border-radius: 12px;
-  outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
+body.page-auth .auth-desc {
+  display: block !important;
+  text-align: center !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  color: var(--a-muted) !important;
+  margin: 0 0 24px !important;
 }
 
-.page-auth .inp::placeholder { color: var(--a-muted); opacity: 0.7; }
-.page-auth .inp:hover { border-color: var(--a-line-strong); }
-.page-auth .inp:focus {
-  border-color: var(--a-accent);
-  box-shadow: 0 0 0 4px var(--a-ring);
-}
-.page-auth .inp:is(.invalid, .is-invalid, .error, [aria-invalid="true"]) {
-  border-color: var(--a-err);
+/* ---------- Form & Field ---------- */
+body.page-auth .field {
+  margin: 0 0 15px !important;
+  text-align: left !important;
 }
 
-/* Input kata sandi + tombol mata */
-.page-auth .inp-pass-wrap { position: relative; }
-.page-auth .inp-pass-wrap .inp { padding-right: 48px; }
-
-.page-auth .btn-toggle-pass {
-  position: absolute;
-  top: 50%;
-  right: 6px;
-  transform: translateY(-50%);
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  color: var(--a-muted);
-  background: transparent;
-  border: 0;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: color 0.15s, background 0.15s;
-}
-.page-auth .btn-toggle-pass:hover { color: var(--a-ink); background: var(--a-hover); }
-
-/* Ikon garis (mata, bulan, matahari) */
-.page-auth .ico {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+body.page-auth .field label {
+  display: block !important;
+  margin: 0 0 6px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: var(--a-ink) !important;
+  text-align: left !important;
 }
 
-/* Hint & pesan error per field */
-.page-auth .field-hint,
-.page-auth .field-err {
-  display: block;
-  margin-top: 6px;
-  font-size: 12.5px;
-  line-height: 1.45;
-}
-.page-auth .field-hint { color: var(--a-muted); }
-.page-auth .field-err { color: var(--a-err); }
-.page-auth .field-err:empty { display: none; }
-
-/* ---------- Indikator kekuatan sandi ---------- */
-.page-auth .pass-strength {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 10px;
-}
-.page-auth .strength-bars { display: flex; gap: 4px; }
-.page-auth .s-bar {
-  width: 28px;
-  height: 4px;
-  border-radius: 2px;
-  background: var(--a-line);
-  transition: background 0.2s;
-}
-.page-auth .strength-txt { font-size: 12.5px; color: var(--a-muted); }
-
-/* Warna mengikuti class yang dipasang JS (sesuaikan bila nama class berbeda) */
-.page-auth .pass-strength:is(.weak, .lemah) .s-bar:nth-child(1),
-.page-auth .s-bar:is(.on, .active, .filled).weak { background: var(--a-err); }
-.page-auth .pass-strength:is(.medium, .sedang) .s-bar:nth-child(-n + 2) { background: #e0a100; }
-.page-auth .pass-strength:is(.strong, .kuat) .s-bar { background: var(--a-ok); }
-
-/* ---------- Link lupa sandi ---------- */
-.page-auth .auth-aux {
-  display: flex;
-  justify-content: flex-end;
-  margin: -4px 0 18px;
-}
-.page-auth .auth-link-sub {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--a-accent);
-  text-decoration: none;
-}
-.page-auth .auth-link-sub:hover { text-decoration: underline; text-underline-offset: 3px; }
-
-/* ---------- Pesan error & sukses ---------- */
-.page-auth .err,
-.page-auth .ok-msg {
-  box-sizing: border-box;
-  margin: 0 0 14px;
-  padding: 11px 14px;
-  font-size: 13.5px;
-  line-height: 1.5;
-  border-radius: 12px;
-}
-.page-auth .err {
-  color: var(--a-err);
-  background: var(--a-err-bg);
-  border: 1px solid var(--a-err-line);
-}
-.page-auth .err:empty { display: none; }
-.page-auth .ok-msg {
-  font-weight: 600;
-  color: var(--a-ok);
-  background: var(--a-ok-bg);
-  border: 1px solid var(--a-ok-line);
+body.page-auth .inp {
+  display: block !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  height: 46px !important;
+  padding: 0 14px !important;
+  font: inherit !important;
+  font-size: 14.5px !important;
+  color: var(--a-ink) !important;
+  background: var(--a-field) !important;
+  border: 1.5px solid var(--a-line) !important;
+  border-radius: 12px !important;
+  outline: none !important;
+  box-shadow: none !important;
+  transition: border-color 0.15s, box-shadow 0.15s !important;
+  text-align: left !important;
 }
 
-/* ---------- Tombol ---------- */
-.page-auth .btn-auth-submit,
-.page-auth .btn-social {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  box-sizing: border-box;
-  width: 100%;
-  height: 48px;
-  margin: 0;
-  padding: 0 16px;
-  font: inherit;
-  font-size: 15px;
-  font-weight: 600;
-  text-decoration: none;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: opacity 0.15s, background 0.15s, border-color 0.15s, transform 0.08s;
+body.page-auth .inp::placeholder {
+  color: var(--a-muted) !important;
+  opacity: 0.75 !important;
 }
 
-.page-auth .btn-auth-submit {
-  color: var(--a-btn-ink);
-  background: var(--a-btn-bg);
-  border: 0;
+body.page-auth .inp:hover {
+  border-color: var(--a-line-strong) !important;
 }
-.page-auth .btn-auth-submit:hover { opacity: 0.9; }
-.page-auth .btn-auth-submit:active { transform: scale(0.99); }
-.page-auth .btn-auth-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
-.page-auth .btn-social {
-  color: var(--a-ink);
-  background: transparent;
-  border: 1px solid var(--a-line);
+body.page-auth .inp:focus {
+  border-color: var(--a-accent) !important;
+  box-shadow: 0 0 0 3.5px var(--a-ring) !important;
+  background: var(--a-card) !important;
 }
-.page-auth .btn-social:hover { background: var(--a-hover); border-color: var(--a-line-strong); }
-.page-auth .social-ic { flex: none; }
+
+body.page-auth .inp.is-invalid,
+body.page-auth .inp.invalid {
+  border-color: var(--a-err) !important;
+}
+
+/* Input Password + Tombol Mata */
+body.page-auth .inp-pass-wrap {
+  position: relative !important;
+  width: 100% !important;
+}
+
+body.page-auth .inp-pass-wrap .inp {
+  padding-right: 46px !important;
+}
+
+body.page-auth .btn-toggle-pass {
+  position: absolute !important;
+  top: 50% !important;
+  right: 6px !important;
+  transform: translateY(-50%) !important;
+  display: grid !important;
+  place-items: center !important;
+  width: 34px !important;
+  height: 34px !important;
+  padding: 0 !important;
+  color: var(--a-muted) !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  transition: color 0.15s, background 0.15s !important;
+}
+
+body.page-auth .btn-toggle-pass:hover {
+  color: var(--a-ink) !important;
+  background: var(--a-hover) !important;
+}
+
+body.page-auth .ico {
+  fill: none !important;
+  stroke: currentColor !important;
+  stroke-width: 2 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+}
+
+/* Hint & Pesan Error Per Field */
+body.page-auth .field-hint,
+body.page-auth .field-err {
+  display: block !important;
+  margin-top: 5px !important;
+  font-size: 12px !important;
+  line-height: 1.4 !important;
+  text-align: left !important;
+}
+
+body.page-auth .field-hint {
+  color: var(--a-muted) !important;
+}
+
+body.page-auth .field-err {
+  color: var(--a-err) !important;
+  font-weight: 600 !important;
+}
+
+body.page-auth .field-err:empty {
+  display: none !important;
+}
+
+/* Indikator Kekuatan Password */
+body.page-auth .pass-strength {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  margin-top: 8px !important;
+}
+
+body.page-auth .strength-bars {
+  display: flex !important;
+  gap: 4px !important;
+}
+
+body.page-auth .s-bar {
+  width: 28px !important;
+  height: 4px !important;
+  border-radius: 2px !important;
+  background: var(--a-line) !important;
+  transition: background 0.2s !important;
+}
+
+body.page-auth .strength-txt {
+  font-size: 12px !important;
+  color: var(--a-muted) !important;
+  font-weight: 600 !important;
+}
+
+body.page-auth .pass-strength:is(.weak, .lemah) .s-bar:nth-child(1) { background: var(--a-err) !important; }
+body.page-auth .pass-strength:is(.medium, .sedang) .s-bar:nth-child(-n + 2) { background: #e0a100 !important; }
+body.page-auth .pass-strength:is(.strong, .kuat) .s-bar { background: var(--a-ok) !important; }
+
+/* Link Lupa Password */
+body.page-auth .auth-aux {
+  display: flex !important;
+  justify-content: flex-end !important;
+  margin: -2px 0 16px !important;
+}
+
+body.page-auth .auth-link-sub {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: var(--a-accent) !important;
+  text-decoration: none !important;
+}
+
+body.page-auth .auth-link-sub:hover {
+  text-decoration: underline !important;
+}
+
+/* Pesan Error & Sukses Alert */
+body.page-auth .err,
+body.page-auth .ok-msg {
+  box-sizing: border-box !important;
+  margin: 0 0 14px !important;
+  padding: 11px 14px !important;
+  font-size: 13.5px !important;
+  line-height: 1.45 !important;
+  border-radius: 12px !important;
+  text-align: left !important;
+}
+
+body.page-auth .err {
+  color: var(--a-err) !important;
+  background: var(--a-err-bg) !important;
+  border: 1px solid var(--a-err-line) !important;
+  font-weight: 600 !important;
+}
+
+body.page-auth .err:empty {
+  display: none !important;
+}
+
+body.page-auth .ok-msg {
+  color: var(--a-ok) !important;
+  background: var(--a-ok-bg) !important;
+  border: 1px solid var(--a-ok-line) !important;
+  font-weight: 600 !important;
+}
+
+/* ---------- Tombol Submit & Sosial ---------- */
+body.page-auth .btn-auth-submit,
+body.page-auth .btn-social {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 10px !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  height: 46px !important;
+  margin: 0 !important;
+  padding: 0 16px !important;
+  font: inherit !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  border-radius: 12px !important;
+  cursor: pointer !important;
+  transition: opacity 0.15s, background 0.15s, border-color 0.15s, transform 0.08s !important;
+  text-align: center !important;
+}
+
+body.page-auth .btn-auth-submit {
+  color: var(--a-btn-ink) !important;
+  background: var(--a-btn-bg) !important;
+  border: 0 !important;
+  box-shadow: 0 4px 14px -2px rgba(0, 0, 0, 0.18) !important;
+}
+
+body.page-auth .btn-auth-submit:hover {
+  opacity: 0.92 !important;
+  transform: translateY(-1px) !important;
+}
+
+body.page-auth .btn-auth-submit:active {
+  transform: translateY(0) !important;
+}
+
+body.page-auth .btn-auth-submit:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+}
+
+body.page-auth .btn-social {
+  color: var(--a-ink) !important;
+  background: var(--a-card) !important;
+  border: 1.5px solid var(--a-line) !important;
+  font-weight: 600 !important;
+}
+
+body.page-auth .btn-social:hover {
+  background: var(--a-hover) !important;
+  border-color: var(--a-line-strong) !important;
+}
+
+body.page-auth .social-ic {
+  flex: none !important;
+}
 
 /* ---------- Pemisah "atau" ---------- */
-.page-auth .auth-divider {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin: 22px 0;
-  font-size: 13px;
-  color: var(--a-muted);
-}
-.page-auth .auth-divider::before,
-.page-auth .auth-divider::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: var(--a-line);
+body.page-auth .auth-divider {
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+  margin: 20px 0 !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: var(--a-muted) !important;
+  text-align: center !important;
 }
 
-/* ---------- Link ganti mode ---------- */
-.page-auth .switch-line {
-  margin: 24px 0 0;
-  font-size: 14px;
-  text-align: center;
-  color: var(--a-muted);
-}
-.page-auth .switch-line a {
-  font-weight: 600;
-  color: var(--a-ink);
-  text-decoration: underline;
-  text-decoration-color: var(--a-line-strong);
-  text-underline-offset: 3px;
-  transition: color 0.15s, text-decoration-color 0.15s;
-}
-.page-auth .switch-line a:hover { color: var(--a-accent); text-decoration-color: currentColor; }
-
-/* ---------- Tombol tema ---------- */
-.page-auth .theme-btn-auth {
-  position: fixed;
-  top: max(16px, env(safe-area-inset-top));
-  right: 16px;
-  z-index: 10;
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  padding: 0;
-  color: var(--a-ink);
-  background: var(--a-card);
-  border: 1px solid var(--a-line);
-  border-radius: 12px;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
-}
-.page-auth .theme-btn-auth:hover { background: var(--a-hover); border-color: var(--a-line-strong); }
-
-/* ---------- Fokus keyboard ---------- */
-.page-auth :is(a, button):focus-visible {
-  outline: 2px solid var(--a-accent);
-  outline-offset: 2px;
+body.page-auth .auth-divider::before,
+body.page-auth .auth-divider::after {
+  content: "" !important;
+  flex: 1 !important;
+  height: 1px !important;
+  background: var(--a-line) !important;
 }
 
-/* ---------- Responsif ---------- */
-@media (max-width: 480px) {
-  .page-auth .auth-wrap { place-items: start center; padding: 64px 16px 24px; }
-  .page-auth .auth-card { padding: 28px 20px 22px; border-radius: 18px; }
-  .page-auth .auth-card h2 { font-size: 22px; }
-  .page-auth .inp { font-size: 16px; } /* cegah zoom otomatis di iOS */
+/* ---------- Switch Link (Rata Tengah Bawah) ---------- */
+body.page-auth .switch-line {
+  margin: 20px 0 0 !important;
+  font-size: 14px !important;
+  text-align: center !important;
+  color: var(--a-muted) !important;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .page-auth * { transition: none !important; }
+body.page-auth .switch-line a {
+  font-weight: 700 !important;
+  color: var(--a-ink) !important;
+  text-decoration: underline !important;
+  text-decoration-color: var(--a-line-strong) !important;
+  text-underline-offset: 3px !important;
+  transition: color 0.15s !important;
 }
+
+body.page-auth .switch-line a:hover {
+  color: var(--a-accent) !important;
+}
+
+/* ---------- Tombol Toggle Tema ---------- */
+body.page-auth .theme-btn-auth {
+  position: fixed !important;
+  top: max(16px, env(safe-area-inset-top)) !important;
+  right: 16px !important;
+  z-index: 20 !important;
+  display: grid !important;
+  place-items: center !important;
+  width: 40px !important;
+  height: 40px !important;
+  padding: 0 !important;
+  color: var(--a-ink) !important;
+  background: var(--a-card) !important;
+  border: 1.5px solid var(--a-line) !important;
+  border-radius: 12px !important;
+  box-shadow: var(--a-shadow) !important;
+  cursor: pointer !important;
+  transition: background 0.15s, border-color 0.15s !important;
+}
+
+body.page-auth .theme-btn-auth:hover {
+  background: var(--a-hover) !important;
+  border-color: var(--a-line-strong) !important;
+}
+
+/* Toggle Sun/Moon Icon State */
+body.page-auth .theme-btn-auth .ic-moon { display: block !important; }
+body.page-auth .theme-btn-auth .ic-sun { display: none !important; }
+
+html.dark body.page-auth .theme-btn-auth .ic-moon,
+html[data-theme="dark"] body.page-auth .theme-btn-auth .ic-moon,
+body.page-auth[data-theme="dark"] .theme-btn-auth .ic-moon {
+  display: none !important;
+}
+
+html.dark body.page-auth .theme-btn-auth .ic-sun,
+html[data-theme="dark"] body.page-auth .theme-btn-auth .ic-sun,
+body.page-auth[data-theme="dark"] .theme-btn-auth .ic-sun {
+  display: block !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]):not(.light) body.page-auth .theme-btn-auth .ic-moon {
+    display: none !important;
+  }
+  html:not([data-theme="light"]):not(.light) body.page-auth .theme-btn-auth .ic-sun {
+    display: block !important;
+  }
+}
+
