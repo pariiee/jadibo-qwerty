@@ -1,0 +1,369 @@
+/* ==========================================================
+   auth.css — card login / daftar / lupa & reset kata sandi
+   Semua selector diawali .page-auth supaya tidak bocor ke
+   halaman lain dan menang atas style global (.modal, .btn, dst).
+   ========================================================== */
+
+/* ---------- Token ---------- */
+.page-auth {
+  --a-bg: #f3f4f6;
+  --a-card: #ffffff;
+  --a-field: #ffffff;
+  --a-ink: #12151c;
+  --a-muted: #667085;
+  --a-line: #e2e5ea;
+  --a-line-strong: #c9ced6;
+  --a-accent: #2b59e0;
+  --a-ring: rgba(43, 89, 224, 0.18);
+  --a-btn-bg: #12151c;
+  --a-btn-ink: #ffffff;
+  --a-ok: #0b7a54;
+  --a-ok-bg: rgba(16, 185, 129, 0.1);
+  --a-ok-line: rgba(16, 185, 129, 0.3);
+  --a-err: #c4283a;
+  --a-err-bg: rgba(220, 38, 56, 0.07);
+  --a-err-line: rgba(220, 38, 56, 0.25);
+  --a-hover: rgba(18, 21, 28, 0.05);
+  --a-shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 16px 40px -12px rgba(16, 24, 40, 0.12);
+  --a-font: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Tema gelap: sesuaikan selector dengan cara toggleTheme bekerja di proyekmu */
+:is([data-theme="dark"], .dark) .page-auth,
+.page-auth:is([data-theme="dark"], .dark),
+html.dark .page-auth,
+body.page-auth[data-theme="dark"] {
+  --a-bg: #0d0f14;
+  --a-card: #151922;
+  --a-field: #10131a;
+  --a-ink: #eef0f4;
+  --a-muted: #98a1b3;
+  --a-line: #262c39;
+  --a-line-strong: #3a4254;
+  --a-accent: #7b9bff;
+  --a-ring: rgba(123, 155, 255, 0.25);
+  --a-btn-bg: #eef0f4;
+  --a-btn-ink: #12151c;
+  --a-ok: #34d399;
+  --a-err: #ff7a86;
+  --a-hover: rgba(255, 255, 255, 0.06);
+  --a-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 16px 40px -12px rgba(0, 0, 0, 0.55);
+}
+
+/* ---------- Halaman ---------- */
+.page-auth {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--a-bg);
+  color: var(--a-ink);
+  font-family: var(--a-font);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.page-auth .auth-wrap {
+  min-height: 100dvh;
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  padding: 72px 16px 40px;
+}
+
+/* ---------- Card ---------- */
+.page-auth .auth-card {
+  /* reset sisa style .modal global */
+  position: relative;
+  inset: auto;
+  transform: none;
+  animation: none;
+  opacity: 1;
+  max-height: none;
+  margin: 0;
+
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 420px;
+  padding: 36px 32px 28px;
+  background: var(--a-card);
+  border: 1px solid var(--a-line);
+  border-radius: 20px;
+  box-shadow: var(--a-shadow);
+  text-align: left;
+}
+
+.page-auth .auth-brand { margin-bottom: 24px; }
+
+.page-auth .auth-logo {
+  display: block;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+}
+
+.page-auth .auth-card h2 {
+  margin: 0 0 6px;
+  font-size: 24px;
+  line-height: 1.25;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--a-ink);
+}
+
+.page-auth .auth-desc {
+  margin: 0 0 28px;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--a-muted);
+}
+
+/* ---------- Field ---------- */
+.page-auth .field { margin: 0 0 16px; }
+
+.page-auth .field label {
+  display: block;
+  margin: 0 0 7px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--a-ink);
+}
+
+.page-auth .inp {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  height: 48px;
+  padding: 0 14px;
+  font: inherit;
+  font-size: 15px;
+  color: var(--a-ink);
+  background: var(--a-field);
+  border: 1px solid var(--a-line);
+  border-radius: 12px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.page-auth .inp::placeholder { color: var(--a-muted); opacity: 0.7; }
+.page-auth .inp:hover { border-color: var(--a-line-strong); }
+.page-auth .inp:focus {
+  border-color: var(--a-accent);
+  box-shadow: 0 0 0 4px var(--a-ring);
+}
+.page-auth .inp:is(.invalid, .is-invalid, .error, [aria-invalid="true"]) {
+  border-color: var(--a-err);
+}
+
+/* Input kata sandi + tombol mata */
+.page-auth .inp-pass-wrap { position: relative; }
+.page-auth .inp-pass-wrap .inp { padding-right: 48px; }
+
+.page-auth .btn-toggle-pass {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  color: var(--a-muted);
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+.page-auth .btn-toggle-pass:hover { color: var(--a-ink); background: var(--a-hover); }
+
+/* Ikon garis (mata, bulan, matahari) */
+.page-auth .ico {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Hint & pesan error per field */
+.page-auth .field-hint,
+.page-auth .field-err {
+  display: block;
+  margin-top: 6px;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+.page-auth .field-hint { color: var(--a-muted); }
+.page-auth .field-err { color: var(--a-err); }
+.page-auth .field-err:empty { display: none; }
+
+/* ---------- Indikator kekuatan sandi ---------- */
+.page-auth .pass-strength {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+.page-auth .strength-bars { display: flex; gap: 4px; }
+.page-auth .s-bar {
+  width: 28px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--a-line);
+  transition: background 0.2s;
+}
+.page-auth .strength-txt { font-size: 12.5px; color: var(--a-muted); }
+
+/* Warna mengikuti class yang dipasang JS (sesuaikan bila nama class berbeda) */
+.page-auth .pass-strength:is(.weak, .lemah) .s-bar:nth-child(1),
+.page-auth .s-bar:is(.on, .active, .filled).weak { background: var(--a-err); }
+.page-auth .pass-strength:is(.medium, .sedang) .s-bar:nth-child(-n + 2) { background: #e0a100; }
+.page-auth .pass-strength:is(.strong, .kuat) .s-bar { background: var(--a-ok); }
+
+/* ---------- Link lupa sandi ---------- */
+.page-auth .auth-aux {
+  display: flex;
+  justify-content: flex-end;
+  margin: -4px 0 18px;
+}
+.page-auth .auth-link-sub {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--a-accent);
+  text-decoration: none;
+}
+.page-auth .auth-link-sub:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* ---------- Pesan error & sukses ---------- */
+.page-auth .err,
+.page-auth .ok-msg {
+  box-sizing: border-box;
+  margin: 0 0 14px;
+  padding: 11px 14px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  border-radius: 12px;
+}
+.page-auth .err {
+  color: var(--a-err);
+  background: var(--a-err-bg);
+  border: 1px solid var(--a-err-line);
+}
+.page-auth .err:empty { display: none; }
+.page-auth .ok-msg {
+  font-weight: 600;
+  color: var(--a-ok);
+  background: var(--a-ok-bg);
+  border: 1px solid var(--a-ok-line);
+}
+
+/* ---------- Tombol ---------- */
+.page-auth .btn-auth-submit,
+.page-auth .btn-social {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-sizing: border-box;
+  width: 100%;
+  height: 48px;
+  margin: 0;
+  padding: 0 16px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: opacity 0.15s, background 0.15s, border-color 0.15s, transform 0.08s;
+}
+
+.page-auth .btn-auth-submit {
+  color: var(--a-btn-ink);
+  background: var(--a-btn-bg);
+  border: 0;
+}
+.page-auth .btn-auth-submit:hover { opacity: 0.9; }
+.page-auth .btn-auth-submit:active { transform: scale(0.99); }
+.page-auth .btn-auth-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+.page-auth .btn-social {
+  color: var(--a-ink);
+  background: transparent;
+  border: 1px solid var(--a-line);
+}
+.page-auth .btn-social:hover { background: var(--a-hover); border-color: var(--a-line-strong); }
+.page-auth .social-ic { flex: none; }
+
+/* ---------- Pemisah "atau" ---------- */
+.page-auth .auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 22px 0;
+  font-size: 13px;
+  color: var(--a-muted);
+}
+.page-auth .auth-divider::before,
+.page-auth .auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--a-line);
+}
+
+/* ---------- Link ganti mode ---------- */
+.page-auth .switch-line {
+  margin: 24px 0 0;
+  font-size: 14px;
+  text-align: center;
+  color: var(--a-muted);
+}
+.page-auth .switch-line a {
+  font-weight: 600;
+  color: var(--a-ink);
+  text-decoration: underline;
+  text-decoration-color: var(--a-line-strong);
+  text-underline-offset: 3px;
+  transition: color 0.15s, text-decoration-color 0.15s;
+}
+.page-auth .switch-line a:hover { color: var(--a-accent); text-decoration-color: currentColor; }
+
+/* ---------- Tombol tema ---------- */
+.page-auth .theme-btn-auth {
+  position: fixed;
+  top: max(16px, env(safe-area-inset-top));
+  right: 16px;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  color: var(--a-ink);
+  background: var(--a-card);
+  border: 1px solid var(--a-line);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.page-auth .theme-btn-auth:hover { background: var(--a-hover); border-color: var(--a-line-strong); }
+
+/* ---------- Fokus keyboard ---------- */
+.page-auth :is(a, button):focus-visible {
+  outline: 2px solid var(--a-accent);
+  outline-offset: 2px;
+}
+
+/* ---------- Responsif ---------- */
+@media (max-width: 480px) {
+  .page-auth .auth-wrap { place-items: start center; padding: 64px 16px 24px; }
+  .page-auth .auth-card { padding: 28px 20px 22px; border-radius: 18px; }
+  .page-auth .auth-card h2 { font-size: 22px; }
+  .page-auth .inp { font-size: 16px; } /* cegah zoom otomatis di iOS */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-auth * { transition: none !important; }
+}
