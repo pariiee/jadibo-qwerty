@@ -17,10 +17,10 @@
   <!-- PANE LOGIN -->
   <div class="modal auth-card" id="auth-login">
     <div class="auth-brand">
-      <img src="/assets/parigate.svg" alt="parigate" class="auth-logo" width="60" height="60" />
+      <img src="/assets/parigate.svg" alt="qwertygate" class="auth-logo" width="60" height="60" />
     </div>
-    <h2>Welcome Back!</h2>
-    <p class="auth-desc">Please enter your login details.</p>
+    <h2>Selamat Datang Kembali</h2>
+    <p class="auth-desc">Silakan masukkan detail akun Anda.</p>
 
     <form id="login-form">
       <div class="ok-msg" id="login-ok" style="display:none;color:#10b981;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);padding:14px 16px;border-radius:14px;font-size:13.5px;margin-bottom:14px;font-weight:600;line-height:1.5"></div>
@@ -29,41 +29,41 @@
         <input class="inp" id="login-username" type="text" placeholder="Username / nama@gmail.com" autocomplete="username" required />
       </div>
       <div class="field">
-        <label for="login-password">Password</label>
+        <label for="login-password">Kata Sandi</label>
         <div class="inp-pass-wrap">
           <input class="inp" id="login-password" type="password" placeholder="••••••••" autocomplete="current-password" required />
-          <button type="button" class="btn-toggle-pass" data-target="login-password" aria-label="Toggle password" title="Toggle password">
+          <button type="button" class="btn-toggle-pass" data-target="login-password" aria-label="Lihat kata sandi" title="Lihat kata sandi">
             <svg class="eye-off" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
             <svg class="eye-on" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
           </button>
         </div>
       </div>
       <div class="auth-aux">
-        <a href="/forgot-password" class="auth-link-sub">Forgot Password?</a>
+        <a href="/forgot-password" class="auth-link-sub">Lupa Kata Sandi?</a>
       </div>
       <div class="err" id="login-error"></div>
-      <button class="btn btn-dark btn-auth-submit" type="submit">Login</button>
+      <button class="btn btn-dark btn-auth-submit" type="submit">Masuk</button>
     </form>
 
-    <div class="auth-divider"><span>OR</span></div>
+    <div class="auth-divider"><span>ATAU</span></div>
 
     <div class="auth-social">
       <a href="/api/auth/google" class="btn btn-social">
         <svg class="social-ic" width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.05h3.87c2.26-2.09 3.675-5.17 3.675-9.15z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.87-3.05c-1.08.72-2.45 1.16-4.06 1.16-3.13 0-5.78-2.11-6.73-4.96H1.27v3.15C3.26 21.36 7.36 24 12 24z"/><path fill="#FBBC05" d="M5.27 14.24A7.18 7.18 0 0 1 4.9 12c0-.78.14-1.54.37-2.24V6.61H1.27A11.97 11.97 0 0 0 0 12c0 1.92.45 3.74 1.27 5.39l4-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.36 0 3.26 2.64 1.27 6.61l4 3.15c.95-2.85 3.6-4.96 6.73-4.96z"/></svg>
-        <span>Continue with Google</span>
+        <span>Lanjutkan dengan Google</span>
       </a>
     </div>
 
-    <p class="switch-line">Don't have an account? <a href="/register">Register now</a></p>
+    <p class="switch-line">Belum punya akun? <a href="/register">Daftar sekarang</a></p>
   </div>
 
   <!-- PANE REGISTER -->
   <div class="modal auth-card" id="auth-register" style="display:none">
     <div class="auth-brand">
-      <img src="/assets/parigate.svg" alt="parigate" class="auth-logo" width="60" height="60" />
+      <img src="/assets/parigate.svg" alt="qwertygate" class="auth-logo" width="60" height="60" />
     </div>
-    <h2>Create an Account</h2>
-    <p class="auth-desc">Please enter your details to sign up.</p>
+    <h2>Buat Akun Baru</h2>
+    <p class="auth-desc">Lengkapi data di bawah untuk membuat akun Anda.</p>
 
     <form id="register-form" autocomplete="on">
       <div class="field">
@@ -82,10 +82,10 @@
         <span class="field-err" id="reg-err-email"></span>
       </div>
       <div class="field">
-        <label for="reg-password">Password</label>
+        <label for="reg-password">Kata Sandi</label>
         <div class="inp-pass-wrap">
           <input class="inp" id="reg-password" name="password" type="password" placeholder="Min. 8 karakter kuat" autocomplete="new-password" required />
-          <button type="button" class="btn-toggle-pass" data-target="reg-password" aria-label="Lihat password" title="Lihat password">
+          <button type="button" class="btn-toggle-pass" data-target="reg-password" aria-label="Lihat kata sandi" title="Lihat kata sandi">
             <svg class="eye-off" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
             <svg class="eye-on" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
           </button>
@@ -103,54 +103,54 @@
       <button class="btn btn-dark btn-auth-submit" id="reg-submit-btn" type="submit">Daftar Akun</button>
     </form>
 
-    <div class="auth-divider"><span>OR</span></div>
+    <div class="auth-divider"><span>ATAU</span></div>
 
     <div class="auth-social">
       <a href="/api/auth/google" class="btn btn-social">
         <svg class="social-ic" width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.05h3.87c2.26-2.09 3.675-5.17 3.675-9.15z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.87-3.05c-1.08.72-2.45 1.16-4.06 1.16-3.13 0-5.78-2.11-6.73-4.96H1.27v3.15C3.26 21.36 7.36 24 12 24z"/><path fill="#FBBC05" d="M5.27 14.24A7.18 7.18 0 0 1 4.9 12c0-.78.14-1.54.37-2.24V6.61H1.27A11.97 11.97 0 0 0 0 12c0 1.92.45 3.74 1.27 5.39l4-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.36 0 3.26 2.64 1.27 6.61l4 3.15c.95-2.85 3.6-4.96 6.73-4.96z"/></svg>
-        <span>Continue with Google</span>
+        <span>Lanjutkan dengan Google</span>
       </a>
     </div>
 
-    <p class="switch-line">Already have an account? <a href="/login">Log in</a></p>
+    <p class="switch-line">Sudah punya akun? <a href="/login">Masuk di sini</a></p>
   </div>
 
   <!-- PANE FORGOT PASSWORD -->
   <div class="modal auth-card" id="auth-forgot" style="display:none">
     <div class="auth-brand">
-      <img src="/assets/parigate.svg" alt="parigate" class="auth-logo" width="60" height="60" />
+      <img src="/assets/parigate.svg" alt="qwertygate" class="auth-logo" width="60" height="60" />
     </div>
-    <h2>Forgot Password?</h2>
-    <p class="auth-desc">Enter your registered email address to receive a secure reset link.</p>
+    <h2>Lupa Kata Sandi</h2>
+    <p class="auth-desc">Masukkan alamat email terdaftar untuk menerima tautan pemulihan.</p>
 
     <form id="forgot-form">
       <div class="field">
-        <label for="forgot-email">Email Address</label>
-        <input class="inp" id="forgot-email" type="email" placeholder="nama@email.com" autocomplete="email" required />
+        <label for="forgot-email">Alamat Email</label>
+        <input class="inp" id="forgot-email" type="email" placeholder="nama@gmail.com" autocomplete="email" required />
       </div>
       <div class="err" id="forgot-error"></div>
       <div class="ok-msg" id="forgot-ok" style="display:none;color:#10b981;font-size:13.5px;margin-bottom:14px;font-weight:600;line-height:1.4"></div>
-      <button class="btn btn-dark btn-auth-submit" id="forgot-submit-btn" type="submit">Send Reset Link</button>
+      <button class="btn btn-dark btn-auth-submit" id="forgot-submit-btn" type="submit">Kirim Tautan Pemulihan</button>
     </form>
 
-    <p class="switch-line" style="margin-top:22px"><a href="/login">&larr; Back to Login</a></p>
+    <p class="switch-line" style="margin-top:22px"><a href="/login">&larr; Kembali ke halaman Masuk</a></p>
   </div>
 
   <!-- PANE RESET PASSWORD -->
   <div class="modal auth-card" id="auth-reset" style="display:none">
     <div class="auth-brand">
-      <img src="/assets/parigate.svg" alt="parigate" class="auth-logo" width="60" height="60" />
+      <img src="/assets/parigate.svg" alt="qwertygate" class="auth-logo" width="60" height="60" />
     </div>
-    <h2>Set New Password</h2>
-    <p class="auth-desc">Please choose a new, strong password.</p>
+    <h2>Atur Kata Sandi Baru</h2>
+    <p class="auth-desc">Pilih kata sandi baru yang aman dan kuat.</p>
 
     <form id="reset-form">
       <input type="hidden" id="reset-token" />
       <div class="field">
-        <label for="reset-pass">New Password</label>
+        <label for="reset-pass">Kata Sandi Baru</label>
         <div class="inp-pass-wrap">
           <input class="inp" id="reset-pass" type="password" placeholder="Min. 8 karakter kuat" autocomplete="new-password" required />
-          <button type="button" class="btn-toggle-pass" data-target="reset-pass" aria-label="Toggle password" title="Toggle password">
+          <button type="button" class="btn-toggle-pass" data-target="reset-pass" aria-label="Lihat kata sandi" title="Lihat kata sandi">
             <svg class="eye-off" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
             <svg class="eye-on" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
           </button>
@@ -158,10 +158,10 @@
       </div>
       <div class="err" id="reset-error"></div>
       <div class="ok-msg" id="reset-ok" style="display:none;color:#10b981;font-size:13.5px;margin-bottom:14px;font-weight:600;line-height:1.4"></div>
-      <button class="btn btn-dark btn-auth-submit" id="reset-submit-btn" type="submit">Update Password</button>
+      <button class="btn btn-dark btn-auth-submit" id="reset-submit-btn" type="submit">Simpan Kata Sandi</button>
     </form>
 
-    <p class="switch-line" style="margin-top:22px"><a href="/login">&larr; Back to Login</a></p>
+    <p class="switch-line" style="margin-top:22px"><a href="/login">&larr; Kembali ke halaman Masuk</a></p>
   </div>
 </div>
 

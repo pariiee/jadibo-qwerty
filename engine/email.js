@@ -65,6 +65,7 @@ function emailValid(alamat) {
   const s = String(alamat || '').trim();
   if (s.length < 6 || s.length > 254) return false;
   if (/\s/.test(s)) return false;
+  if (s.includes('+')) return false; // Tolak plus addressing (+ alias)
   return /^[^@]+@[^@.]+(\.[^@.]+)+$/.test(s);
 }
 

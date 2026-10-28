@@ -224,6 +224,11 @@
       return;
     }
 
+    if (email.includes('+')) {
+      tampilkanErrorReg('Alamat email tidak boleh menggunakan tanda tambah (+). Gunakan email utama Anda.');
+      return;
+    }
+
     if (!email.toLowerCase().endsWith('@gmail.com') && !email.toLowerCase().endsWith('@googlemail.com')) {
       tampilkanErrorReg('Pendaftaran akun wajib menggunakan email @gmail.com');
       return;

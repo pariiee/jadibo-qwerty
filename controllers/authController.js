@@ -143,6 +143,9 @@ async function register(req, res) {
     // Bersihkan & validasi email: WAJIB @gmail.com
     const { emailValid, kirimEmail } = require('../engine/email');
     const bersihEmail = String(email).trim().toLowerCase();
+    if (bersihEmail.includes('+')) {
+      return sendError(res, 400, 'Alamat email tidak boleh menggunakan tanda tambah (+). Gunakan email utama Anda.');
+    }
     if (!emailValid(bersihEmail)) {
       return sendError(res, 400, 'Format email tidak valid');
     }
@@ -767,6 +770,9 @@ async function simpanEmail(req, res) {
     if (!alamat) {
       await pool.execute('UPDATE users SET email = NULL WHERE id = ?', [req.user.id]);
       return res.json({ ok: true, message: 'Email dihapus.' });
+    }
+    if (alamat.includes('+')) {
+      return sendError(res, 400, 'Alamat email tidak boleh menggunakan tanda tambah (+). Gunakan email utama Anda.');
     }
     if (!emailValid(alamat)) {
       return sendError(res, 400, 'Email tidak valid. Contoh: nama@email.com');
