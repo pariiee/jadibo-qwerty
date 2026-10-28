@@ -82,9 +82,12 @@ body.page-auth {
   box-sizing: border-box !important;
 }
 
+body.page-auth .auth-wrap,
 body.page-auth main.auth-wrap {
   width: 100% !important;
-  max-width: 420px !important;
+  max-width: 410px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
   margin: 0 auto !important;
   padding: 0 !important;
   display: flex !important;
@@ -98,24 +101,21 @@ body.page-auth main.auth-wrap {
 body.page-auth .auth-card {
   position: relative !important;
   width: 100% !important;
-  max-width: 420px !important;
+  max-width: 410px !important;
   margin: 0 auto !important;
-  padding: 34px 28px 28px !important;
+  padding: clamp(26px, 5vw, 36px) clamp(18px, 4.5vw, 28px) !important;
   background: var(--a-card) !important;
   border: 1px solid var(--a-line) !important;
-  border-radius: 24px !important;
+  border-radius: clamp(18px, 4vw, 24px) !important;
   box-shadow: var(--a-shadow) !important;
   box-sizing: border-box !important;
   text-align: left !important;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease !important;
 }
 
 @media (max-width: 480px) {
   body.page-auth {
     padding: 16px 12px !important;
-  }
-  body.page-auth .auth-card {
-    padding: 28px 20px 22px !important;
-    border-radius: 20px !important;
   }
 }
 
