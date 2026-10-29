@@ -21,6 +21,11 @@ const pricingStore = require('../config/pricingStore');
 const { TRIAL } = require('../config/plan');
 const alpay = require('../config/alpay');
 
+const defaultQris = () => {
+  const d = process.env.QRIS_DEFAULT || '/assets/qris.jpg';
+  return d.startsWith('http') || d.startsWith('/') ? d : '/' + d;
+};
+
 function sendError(res, status, message) {
   return res.status(status).json({ ok: false, message });
 }
@@ -279,7 +284,7 @@ async function daftarPaket(req, res) {
     plans: pricingStore.plans().filter((p) => p.id !== 'user' && p.price > 0),
     trial: { days: s.trial_days || TRIAL.days, slots: TRIAL.slots || 1, owner_max: TRIAL.owner_max || 1, receive_limit: TRIAL.receive_limit || 5000 },
     pay_mode: s.pay_mode,
-    qris_static_url: s.qris_static_url || null,
+    qris_static_url: s.qris_static_url || defaultQris(),
     // Jumlah command yang tersedia — buat kartu paket. Ikut di sini karena
     // landing `/` belum login dan nggak boleh nyentuh `/api/command`.
     // Paket TIDAK membatasi fitur, jadi angkanya sama untuk tiap paket.
@@ -315,13 +320,11 @@ async function checkout(req, res) {
     const orderId = buatOrderId();
 
     if (method === 'manual') {
-      if (!s.qris_static_url)
-        return sendError(res, 400, 'QRIS manual belum diatur admin. Hubungi admin.');
-
+      const qrisUrl = s.qris_static_url || defaultQris();
       await pool.execute(
         `INSERT INTO orders (order_id, user_id, plan, amount, method, status, qr_image)
          VALUES (?, ?, ?, ?, 'manual', 'pending', ?)`,
-        [orderId, req.user.id, plan.id, plan.price, s.qris_static_url]
+        [orderId, req.user.id, plan.id, plan.price, qrisUrl]
       );
 
       return res.status(201).json({
@@ -332,7 +335,7 @@ async function checkout(req, res) {
         amount_text: rupiah(plan.price),
         plan: plan.id,
         plan_name: plan.name,
-        qris_image: s.qris_static_url,
+        qris_image: qrisUrl,
         instruksi: [
           `Scan QRIS di atas, bayar ${rupiah(plan.price)} (nominal harus PERSIS).`,
           `Simpan bukti bayar, lalu kirim ke admin.`,
@@ -707,7 +710,9 @@ async function adminSetSettings(req, res) {
     } = req.body || {};
     if (qris_static_url !== undefined) {
       const url = String(qris_static_url).trim();
-      if (url && !/^https?:\/\//i.test(url)) return sendError(res, 400, 'URL QRIS harus http/https');
+      if (url && !/^https?:\/\//i.test(url) && !url.startsWith('/')) {
+        return sendError(res, 400, 'URL QRIS harus diawali http/https atau / (contoh: /assets/qris.jpg)');
+      }
       await pricingStore.set('qris_static_url', url);
     }
     if (pay_mode !== undefined) {
