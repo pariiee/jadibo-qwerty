@@ -39,6 +39,8 @@
     document.title = b.bot_name + ' — qwertygate';
     document.getElementById('hdr-name').textContent = b.bot_name;
     document.getElementById('hdr-icon').innerHTML = platIcon(b.platform, 18);
+    const btnStats = document.getElementById('btn-stats');
+    if (btnStats) btnStats.href = '/bot/' + botHref(b);
     document.getElementById('cfg-panel').classList.toggle('tg', b.platform === 'telegram');
 
     if (b.platform === 'telegram') {
@@ -417,7 +419,6 @@
   document.getElementById('btn-export').href = '/api/bots/' + botId + '/config';
   document.getElementById('btn-export2').onclick = () => { location.href = '/api/bots/' + botId + '/config'; };
   document.getElementById('cfg-file').onchange = (e) => { if (e.target.files[0]) doImport(e.target.files[0]); };
-  document.getElementById('btn-stats').href = '/bot/' + botHref(b);
   document.getElementById('btn-del').onclick = confirmDelete;
   // Pemilih bot: id-nya ada di URL, jadi pindah bot = pindah URL (reload).
   // Nol state baru, nol risiko "setengah ter-render".
@@ -425,8 +426,11 @@
     const d = await api('/api/bots');
     if (!d?.ok) return;
     const sel = document.getElementById('bot-pick');
-    sel.innerHTML = d.bots.map(b => '<option value="' + botHref(b) + '">' + esc(b.bot_name) + '</option>').join('');
-    sel.value = botHref(bot);
+    if (!sel) return;
+    const list = d.bots || [];
+    sel.innerHTML = list.map(x => '<option value="' + botHref(x) + '">' + esc(x.bot_name) + '</option>').join('');
+    const cur = list.find(x => String(x.id) === String(botId) || x.slug === botId);
+    if (cur) sel.value = botHref(cur);
     sel.onchange = (e) => { location.href = '/config/' + e.target.value; };   // value = slug
   })();
 
