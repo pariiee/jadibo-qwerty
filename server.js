@@ -583,6 +583,8 @@ wss.on('connection', (ws, req) => {
         }
         botSubscribers.get(subscribedBotId).add(ws);
         ws.send(JSON.stringify({ type: 'subscribed', botId: subscribedBotId }));
+      } else if (data.type === 'clear_terminal' && data.botId) {
+        broadcastFn({ botId: parseInt(data.botId, 10), type: 'clear_terminal', ts: Date.now() });
       }
     } catch { /* ignore malformed messages */ }
   });
@@ -611,8 +613,11 @@ const heartbeat = setInterval(() => {
 
 wss.on('close', () => clearInterval(heartbeat));
 
-// ── Inject broadcast function into both engines ──────────────────────────────
-const broadcastFn = (data) => {
+// ── Inject broadcast function into both engines + Redis Pub/Sub ─────────────
+const redisBus = require('./config/redisBus');
+const INSTANCE_ID = Math.random().toString(36).slice(2);
+
+const broadcastLokal = (data) => {
   const subs = botSubscribers.get(data.botId);
   if (!subs || subs.size === 0) return;
   const payload = JSON.stringify(data);
@@ -620,6 +625,18 @@ const broadcastFn = (data) => {
     if (ws.readyState === WebSocket.OPEN) ws.send(payload);
   });
 };
+
+const broadcastFn = (data) => {
+  broadcastLokal(data);
+  redisBus.publishEvent({ ...data, _sender: INSTANCE_ID });
+};
+
+// Event dari browser/instance lain via Redis Pub/Sub diteruskan ke WS lokal
+redisBus.onEvent((data) => {
+  if (data._sender === INSTANCE_ID) return;
+  broadcastLokal(data);
+});
+
 setWsBroadcastWa(broadcastFn);
 setWsBroadcastTg(broadcastFn);
 

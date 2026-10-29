@@ -160,7 +160,12 @@
     p.className = 'log-line term-hint';
     p.textContent = '// Terminal dibersihkan';
     t.appendChild(p);
-    if (notify) broadcast({ type: 'clear_term' });
+    if (notify) {
+      broadcast({ type: 'clear_term' });
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        try { ws.send(JSON.stringify({ type: 'clear_terminal', botId: parseInt(botId, 10) })); } catch {}
+      }
+    }
   }
 
   // ── WebSocket (auth: cookie httpOnly) ────────────────────────────
@@ -176,6 +181,7 @@
       try {
         const d = JSON.parse(e.data);
         if (d.type === 'error') { setWs(false); return; }
+        if (d.type === 'clear_terminal') { clearTerminal(false); return; }
         if (d.type === 'log') appendLog(d.payload.level, d.payload.message);
         if (d.type === 'status') {
           const s = d.payload.status;

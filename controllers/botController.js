@@ -16,6 +16,7 @@ const { activeBots, activeGroupsPerBot, activeChannelsPerBot } = require('../eng
 // Perintah nyala/matiin bot tetap lewat bus — biar controller nggak perlu tahu
 // engine-nya di proses mana (di panel zapo: proses ini juga).
 const engineBus = require('../config/engineBus');
+const redisBus = require('../config/redisBus');
 
 const os = require('os');
 
@@ -385,6 +386,7 @@ async function startBot(req, res) {
     // Jawaban diambil dari worker, bukan dari cermin lokal — cermin bisa basi,
     // dan guard "bot sudah berjalan" yang salah bikin bot nggak bisa dinyalain.
     const out = await engineBus.start(bot.id, usePairingCode);
+    redisBus.publishEvent({ botId: bot.id, type: 'status', payload: { status: 'connecting' }, ts: Date.now() });
     return res.json({ ok: true, message: out.message });
   } catch (err) {
     console.error('[Bot] startBot error:', err);
@@ -403,6 +405,7 @@ async function stopBot(req, res) {
     // yang jawab. Guard lokal cuma bisa salah (cermin ke-isi 'running' dari
     // auto-start saat worker belum selesai baca DB) -> tombol stop mati.
     const out = await engineBus.stop(bot.id);
+    redisBus.publishEvent({ botId: bot.id, type: 'status', payload: { status: 'disconnected' }, ts: Date.now() });
 
     return res.json({ ok: true, message: out.message });
   } catch (err) {
@@ -421,6 +424,7 @@ async function restartBot(req, res) {
     // Satu jalur restart, di worker: command WA .restart dan tombol ini
     // nggak boleh punya logika masing-masing (dulu pernah, hasilnya beda).
     const out = await engineBus.restart(bot.id);
+    redisBus.publishEvent({ botId: bot.id, type: 'status', payload: { status: 'connecting' }, ts: Date.now() });
     return res.json({ ok: true, message: out.message });
   } catch (err) {
     console.error('[Bot] restartBot error:', err);
@@ -436,6 +440,8 @@ async function clearSession(req, res) {
     if (!bot) return;
 
     await engineBus.stopIfRunning(bot.id);
+    redisBus.publishEvent({ botId: bot.id, type: 'status', payload: { status: 'disconnected' }, ts: Date.now() });
+    redisBus.publishEvent({ botId: bot.id, type: 'clear_terminal', ts: Date.now() });
 
     // Hapus sesi — retry karena Windows bisa hold file SQLite walau socket udah tutup
     const dir = getBotDir(bot.id);
