@@ -53,18 +53,18 @@
       const promptHtml = isPrompt ? `
         <div style="margin:16px 0 18px;">
           <input class="inp" id="dlg-inp" value="${esc(defaultValue)}" placeholder="${esc(placeholder)}" style="width:100%;height:44px;font-size:14px;box-sizing:border-box;" autocomplete="off" />
-          ${hint ? `<div style="margin-top:6px;font-size:12px;color:var(--mute);line-height:1.4;">${hint}</div>` : ''}
+          ${hint ? `<div class="hint" style="margin-top:6px;font-size:12px;line-height:1.4;">${hint}</div>` : ''}
         </div>
       ` : '';
 
       overlay.innerHTML = `
-        <div class="modal" style="width:100%;max-width:390px;padding:26px 22px;border-radius:20px;box-shadow:var(--shadow),0 20px 48px -12px rgba(0,0,0,0.5);text-align:left;">
-          <h3 style="margin:0 0 8px;font-size:18px;font-weight:700;color:var(--ink);letter-spacing:-.01em;">${esc(title)}</h3>
-          <p style="margin:0;font-size:13.5px;color:var(--mute);line-height:1.55;white-space:pre-line;">${esc(message)}</p>
+        <div class="modal">
+          <h3 style="margin:0 0 8px;font-size:18px;font-weight:700;letter-spacing:-.01em;">${esc(title)}</h3>
+          <p style="margin:0;font-size:13.5px;line-height:1.55;white-space:pre-line;">${esc(message)}</p>
           ${promptHtml}
           <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:${isPrompt ? '0' : '22px'};">
-            ${!isAlert ? `<button type="button" class="btn btn-outline btn-sm" id="dlg-cancel" style="height:36px;padding:0 16px;border-radius:9px;font-size:13px;">${esc(cancelText)}</button>` : ''}
-            <button type="button" class="${okBtnCls}" id="dlg-ok" style="height:36px;padding:0 18px;border-radius:9px;font-size:13px;font-weight:700;">${esc(okText)}</button>
+            ${!isAlert ? `<button type="button" class="btn btn-outline" id="dlg-cancel">${esc(cancelText)}</button>` : ''}
+            <button type="button" class="${okBtnCls}" id="dlg-ok">${esc(okText)}</button>
           </div>
         </div>
       `;

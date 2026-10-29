@@ -945,19 +945,182 @@ body.page-admin .tbl tbody tr:hover,body.page-billing .tbl tbody tr:hover,
    (terukur: #add-overlay & #bayar-overlay tampil tanpa diklik).
    Yang benar: `none` sebagai default, `flex` HANYA saat `.show`. */
 .overlay{
-  position:fixed;inset:0;z-index:80;
-  display:none;align-items:center;justify-content:center;padding:18px;
-  background:var(--ovBg);
-  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  position:fixed!important;inset:0!important;z-index:99999!important;
+  display:none;align-items:center!important;justify-content:center!important;padding:16px!important;
+  background:var(--ovBg, rgba(10,15,30,.5))!important;
+  backdrop-filter:blur(8px)!important;-webkit-backdrop-filter:blur(8px)!important;
+  box-sizing:border-box!important;
 }
-.overlay.show{display:flex}
-.overlay .modal,body.page-dashboard .overlay .modal,body.page-admin .overlay .modal{
-  width:min(480px,calc(100% - 32px));margin:0;
+.overlay.show,.overlay.open,.overlay[style*="display:flex"],.overlay[style*="display: flex"]{
+  display:flex!important;
 }
+.overlay .modal,body.page-dashboard .overlay .modal,body.page-admin .overlay .modal,
+body.page-admin .modal,body.page-dashboard .modal,body.page-pricing .modal,.modal{
+  position:relative!important;
+  width:min(440px,calc(100vw - 32px))!important;
+  max-width:440px!important;
+  margin:auto!important;
+  border-radius:22px!important;
+  padding:clamp(22px,4.5vw,30px)!important;
+  box-sizing:border-box!important;
+  max-height:90vh!important;
+  overflow-y:auto!important;
+  transition:transform .2s cubic-bezier(.16,1,.3,1),opacity .2s ease!important;
+}
+
+/* Modal Light Mode */
+:root:not([data-theme="dark"]) .overlay .modal,
+html:not(.dark):not([data-theme="dark"]) .overlay .modal,
+html:not(.dark):not([data-theme="dark"]) .modal,
+html:not(.dark):not([data-theme="dark"]) body.page-admin .modal{
+  background:#ffffff!important;
+  color:#0f172a!important;
+  border:1px solid rgba(0,0,0,.09)!important;
+  box-shadow:0 20px 48px -12px rgba(15,23,42,.25),0 4px 12px rgba(0,0,0,.05)!important;
+}
+html:not(.dark):not([data-theme="dark"]) .overlay .modal h2,
+html:not(.dark):not([data-theme="dark"]) .overlay .modal h3,
+html:not(.dark):not([data-theme="dark"]) .overlay .modal h4{
+  color:#0f172a!important;
+}
+html:not(.dark):not([data-theme="dark"]) .overlay .modal p,
+html:not(.dark):not([data-theme="dark"]) .overlay .modal .hint,
+html:not(.dark):not([data-theme="dark"]) .overlay .modal .m-sub{
+  color:#64748b!important;
+}
+html:not(.dark):not([data-theme="dark"]) .overlay .modal .inp{
+  background:#f8fafc!important;
+  border:1.5px solid #cbd5e1!important;
+  color:#0f172a!important;
+  border-radius:11px!important;
+}
+html:not(.dark):not([data-theme="dark"]) .overlay .modal .inp:focus{
+  background:#ffffff!important;
+  border-color:#2563eb!important;
+  box-shadow:0 0 0 3px rgba(37,99,235,.15)!important;
+}
+
+/* Modal Dark Mode */
+html.dark .overlay .modal,
+html[data-theme="dark"] .overlay .modal,
+body.page-admin.dark .overlay .modal,
+body[data-theme="dark"] .overlay .modal{
+  background:#151822!important;
+  color:#f8fafc!important;
+  border:1px solid rgba(255,255,255,.12)!important;
+  box-shadow:0 24px 60px -12px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.1)!important;
+}
+html.dark .overlay .modal h2,
+html.dark .overlay .modal h3,
+html.dark .overlay .modal h4,
+html[data-theme="dark"] .overlay .modal h2,
+html[data-theme="dark"] .overlay .modal h3,
+html[data-theme="dark"] .overlay .modal h4{
+  color:#f8fafc!important;
+}
+html.dark .overlay .modal p,
+html.dark .overlay .modal .hint,
+html.dark .overlay .modal .m-sub,
+html[data-theme="dark"] .overlay .modal p,
+html[data-theme="dark"] .overlay .modal .hint,
+html[data-theme="dark"] .overlay .modal .m-sub{
+  color:#94a3b8!important;
+}
+html.dark .overlay .modal .inp,
+html[data-theme="dark"] .overlay .modal .inp{
+  background:#1c2130!important;
+  border:1.5px solid rgba(255,255,255,.14)!important;
+  color:#f8fafc!important;
+  border-radius:11px!important;
+}
+html.dark .overlay .modal .inp:focus,
+html[data-theme="dark"] .overlay .modal .inp:focus{
+  border-color:#60a5fa!important;
+  box-shadow:0 0 0 3px rgba(96,165,250,.25)!important;
+}
+
+@media(prefers-color-scheme:dark){
+  html:not([data-theme="light"]):not(.light) .overlay .modal{
+    background:#151822!important;
+    color:#f8fafc!important;
+    border:1px solid rgba(255,255,255,.12)!important;
+    box-shadow:0 24px 60px -12px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.1)!important;
+  }
+  html:not([data-theme="light"]):not(.light) .overlay .modal h2,
+  html:not([data-theme="light"]):not(.light) .overlay .modal h3,
+  html:not([data-theme="light"]):not(.light) .overlay .modal h4{
+    color:#f8fafc!important;
+  }
+  html:not([data-theme="light"]):not(.light) .overlay .modal p,
+  html:not([data-theme="light"]):not(.light) .overlay .modal .hint,
+  html:not([data-theme="light"]):not(.light) .overlay .modal .m-sub{
+    color:#94a3b8!important;
+  }
+  html:not([data-theme="light"]):not(.light) .overlay .modal .inp{
+    background:#1c2130!important;
+    border:1.5px solid rgba(255,255,255,.14)!important;
+    color:#f8fafc!important;
+    border-radius:11px!important;
+  }
+  html:not([data-theme="light"]):not(.light) .overlay .modal .inp:focus{
+    border-color:#60a5fa!important;
+    box-shadow:0 0 0 3px rgba(96,165,250,.25)!important;
+  }
+}
+
+/* Modal Action Buttons */
+.overlay .modal .btn,.overlay .modal button.btn{
+  height:38px!important;
+  min-height:38px!important;
+  padding:0 18px!important;
+  border-radius:10px!important;
+  font-size:13px!important;
+  font-weight:600!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  cursor:pointer!important;
+  transition:all .15s ease!important;
+}
+html:not(.dark):not([data-theme="dark"]) .overlay .modal .btn-dark,
+html:not(.dark):not([data-theme="dark"]) .overlay .modal .btn-primary{
+  background:#0f172a!important;color:#ffffff!important;border:none!important;font-weight:700!important;
+}
+html.dark .overlay .modal .btn-dark,
+html.dark .overlay .modal .btn-primary,
+html[data-theme="dark"] .overlay .modal .btn-dark,
+html[data-theme="dark"] .overlay .modal .btn-primary{
+  background:#f8fafc!important;color:#0f172a!important;border:none!important;font-weight:700!important;
+}
+@media(prefers-color-scheme:dark){
+  html:not([data-theme="light"]):not(.light) .overlay .modal .btn-dark,
+  html:not([data-theme="light"]):not(.light) .overlay .modal .btn-primary{
+    background:#f8fafc!important;color:#0f172a!important;border:none!important;font-weight:700!important;
+  }
+}
+html:not(.dark):not([data-theme="dark"]) .overlay .modal .btn-outline{
+  background:#ffffff!important;color:#0f172a!important;border:1.5px solid #cbd5e1!important;
+}
+html:not(.dark):not([data-theme="dark"]) .overlay .modal .btn-outline:hover{
+  background:#f1f5f9!important;
+}
+html.dark .overlay .modal .btn-outline,
+html[data-theme="dark"] .overlay .modal .btn-outline{
+  background:rgba(255,255,255,.05)!important;color:#f8fafc!important;border:1.5px solid rgba(255,255,255,.14)!important;
+}
+@media(prefers-color-scheme:dark){
+  html:not([data-theme="light"]):not(.light) .overlay .modal .btn-outline{
+    background:rgba(255,255,255,.05)!important;color:#f8fafc!important;border:1.5px solid rgba(255,255,255,.14)!important;
+  }
+}
+.overlay .modal .btn-danger{
+  background:#ef4444!important;color:#ffffff!important;border:none!important;font-weight:700!important;
+}
+.overlay .modal .btn-danger:hover{opacity:.9!important}
 @media(max-width:560px){
-  .overlay{align-items:flex-end}
+  .overlay{align-items:center!important;padding:12px!important;}
   .overlay .modal,body.page-dashboard .overlay .modal,body.page-admin .overlay .modal{
-    width:100%;max-width:100%;border-radius:28px 28px 0 0;
+    width:100%!important;max-width:100%!important;border-radius:20px!important;
   }
 }
 
