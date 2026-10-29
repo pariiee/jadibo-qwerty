@@ -819,6 +819,101 @@ td.aksi .btn-danger:hover,
   color:#ffffff!important;
   border-color:#ef4444!important;
 }
+
+/* Floating Action Popover Menu (3-dots ⋮) */
+.action-popover {
+  position: absolute !important;
+  z-index: 9999 !important;
+  min-width: 175px !important;
+  background: var(--card) !important;
+  border: 1px solid var(--edge) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 10px 30px -4px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.08), var(--hl) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  padding: 6px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+  animation: actPopIn 0.14s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+@keyframes actPopIn {
+  from { opacity: 0; transform: translateY(-4px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.action-popover .act-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 9px !important;
+  width: 100% !important;
+  padding: 8px 12px !important;
+  border-radius: 9px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: var(--ink) !important;
+  background: transparent !important;
+  border: none !important;
+  cursor: pointer !important;
+  text-decoration: none !important;
+  text-align: left !important;
+  box-sizing: border-box !important;
+  transition: background 0.12s ease, color 0.12s ease !important;
+}
+.action-popover .act-item:hover {
+  background: rgba(18, 20, 43, 0.06) !important;
+  color: var(--ink) !important;
+}
+:root[data-theme="dark"] .action-popover .act-item:hover,
+html.dark .action-popover .act-item:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+.action-popover .act-item svg {
+  flex-shrink: 0 !important;
+  color: var(--mute) !important;
+}
+.action-popover .act-item:hover svg {
+  color: var(--ink) !important;
+}
+.action-popover .act-divider {
+  height: 1px !important;
+  background: var(--line) !important;
+  margin: 4px 0 !important;
+}
+.action-popover .act-danger {
+  color: #ef4444 !important;
+}
+.action-popover .act-danger svg {
+  color: #ef4444 !important;
+}
+.action-popover .act-danger:hover {
+  background: rgba(239, 68, 68, 0.1) !important;
+  color: #ef4444 !important;
+}
+
+/* 3-Dots Button in Table */
+.btn-more {
+  width: 32px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  border-radius: 9px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  background: var(--card) !important;
+  border: 1px solid var(--edge) !important;
+  color: var(--mute) !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  box-shadow: none !important;
+}
+.btn-more:hover,
+.btn-more.active {
+  background: var(--dark) !important;
+  color: var(--darkink) !important;
+  border-color: var(--dark) !important;
+  transform: translateY(-1px) !important;
+}
 body.page-admin .tbl tr:last-child td,body.page-billing .tbl tr:last-child td,
 body.page-bot .tbl tr:last-child td,.tbl-wrap tr:last-child td{border-bottom:0}
 body.page-admin .tbl tbody tr:hover,body.page-billing .tbl tbody tr:hover,

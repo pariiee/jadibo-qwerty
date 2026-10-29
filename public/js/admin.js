@@ -38,6 +38,86 @@
     return isNaN(d) ? String(v) : d.toLocaleTimeString('id-ID', { hour12: false });
   }
 
+  // ── Floating Action Popover Menu (3-dots ⋮) ─────────────────────────
+  let menuAktif = null;
+  function tutupAksiMenu() {
+    if (menuAktif) {
+      menuAktif.remove();
+      menuAktif = null;
+    }
+    document.querySelectorAll('.btn-more.active').forEach(b => b.classList.remove('active'));
+  }
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.action-popover') && !e.target.closest('.btn-more')) {
+      tutupAksiMenu();
+    }
+  });
+  window.addEventListener('scroll', tutupAksiMenu, { passive: true });
+  window.addEventListener('resize', tutupAksiMenu, { passive: true });
+
+  function bukaMenuAksi(e, items) {
+    e.stopPropagation();
+    const btn = e.currentTarget;
+    if (btn.classList.contains('active')) {
+      tutupAksiMenu();
+      return;
+    }
+    tutupAksiMenu();
+    btn.classList.add('active');
+
+    const pop = document.createElement('div');
+    pop.className = 'action-popover';
+    pop.innerHTML = items.map(it => {
+      if (it.divider) return '<div class="act-divider"></div>';
+      const cls = 'act-item' + (it.danger ? ' act-danger' : '');
+      const ic = it.icon ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${it.icon}</svg>` : '';
+      if (it.href) {
+        return `<a href="${it.href}" class="${cls}">${ic}<span>${it.label}</span></a>`;
+      }
+      return `<button type="button" class="${cls}" data-act="${it.act}">${ic}<span>${it.label}</span></button>`;
+    }).join('');
+
+    document.body.appendChild(pop);
+    menuAktif = pop;
+
+    const rect = btn.getBoundingClientRect();
+    const popWidth = 175;
+    let left = rect.right + window.scrollX - popWidth;
+    if (left < 10) left = 10;
+    let top = rect.bottom + window.scrollY + 6;
+    pop.style.top = top + 'px';
+    pop.style.left = left + 'px';
+
+    pop.querySelectorAll('.act-item').forEach(el => {
+      el.addEventListener('click', () => {
+        setTimeout(tutupAksiMenu, 60);
+      });
+    });
+  }
+
+  window.menuUser = function (e, id, username, isActive) {
+    const uName = esc(username);
+    bukaMenuAksi(e, [
+      { label: 'Edit Akun', act: `bukaUser(${id})`, icon: '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>' },
+      { label: 'Atur Saldo', act: `bukaSaldo(${id}, '${uName}')`, icon: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 12h12"/>' },
+      { label: isActive ? 'Matikan Akun' : 'Aktifkan Akun', act: `toggleAktif(${id}, ${isActive ? 0 : 1})`, icon: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>' },
+      { divider: true },
+      { label: 'Hapus User', act: `hapusUser(${id}, '${uName}')`, danger: true, icon: '<path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>' }
+    ]);
+  };
+
+  window.menuBot = function (e, id, slug) {
+    bukaMenuAksi(e, [
+      { label: 'Kontrol & Pairing', href: '/config/' + slug, icon: '<path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>' },
+      { label: 'Statistik Bot', href: '/bot/' + slug, icon: '<path d="M18 20V10M12 20V4M6 20v-6"/>' },
+      { label: 'Lihat Log', act: `bukaLog(${id})`, icon: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>' },
+      { label: 'Tambah Kuota', act: `aturKuota(${id})`, icon: '<circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/>' },
+      { label: 'Reset Kuota', act: `resetKuota(${id})`, icon: '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>' },
+      { divider: true },
+      { label: 'Hapus Bot', act: `hapusBot(${id})`, danger: true, icon: '<path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>' }
+    ]);
+  };
+
   // ── Navigasi halaman per-page ─────────────────────────────────────
   const PAGE_MAP = {
     'user': { key: 'user', subId: 'sub-manage-users', title: 'Manajemen User', desc: 'Kelola akun pengguna, hak akses, dan paket langganan bot.' },
@@ -106,22 +186,9 @@
         '<td>' + (b.bonus_kuota > 0 ? '+' + b.bonus_kuota : '<small style="color:var(--mute)">0</small>') + '</td>' +
         '<td>' + (b.cmd_count ?? 0) + '</td>' +
         '<td class="aksi">' +
-          '<div class="aksi-group">' +
-            '<a class="btn btn-outline btn-sm" href="/config/' + botHref(b) + '" title="Kontrol & pairing bot">' +
-              '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Kontrol' +
-            '</a>' +
-            '<a class="btn btn-outline btn-sm" href="/bot/' + botHref(b) + '" title="Statistik telemetri">' +
-              '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg> Statistik' +
-            '</a>' +
-            '<button class="btn btn-outline btn-sm" data-act="bukaLog(' + b.id + ')" title="Lihat log bot">' +
-              '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Log' +
-            '</button>' +
-            '<button class="btn btn-outline btn-sm" data-act="aturKuota(' + b.id + ')" title="Tambah kuota bonus">+ Kuota</button>' +
-            '<button class="btn btn-outline btn-sm" data-act="resetKuota(' + b.id + ')" title="Reset kuota ke nol">Reset</button>' +
-            '<button class="btn btn-danger btn-sm" data-act="hapusBot(' + b.id + ')" title="Hapus bot permanen">' +
-              '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Hapus' +
-            '</button>' +
-          '</div>' +
+          '<button type="button" class="btn-more" onclick="menuBot(event, ' + b.id + ', \'' + botHref(b) + '\')" title="Pilihan aksi">' +
+            '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2.2"/><circle cx="12" cy="12" r="2.2"/><circle cx="12" cy="19" r="2.2"/></svg>' +
+          '</button>' +
         '</td>';
       tb.appendChild(tr);
     });
@@ -222,20 +289,9 @@
         '<td>' + (u.bot_count ?? u.slots_used ?? 0) + '</td>' +
         '<td>' + (u.is_active ? '<span class="dot on"></span> Aktif' : '<span class="dot off"></span> Nonaktif') + '</td>' +
         '<td class="aksi">' +
-          '<div class="aksi-group">' +
-            '<button class="btn btn-sm btn-outline" data-act="bukaUser(' + u.id + ')" title="Edit user, role, slot & password">' +
-              '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Edit' +
-            '</button>' +
-            '<button class="btn btn-sm btn-outline" data-act="bukaSaldo(' + u.id + ',\'' + esc(u.username) + '\')" title="Atur saldo dompet">' +
-              '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 12h12"/></svg> Saldo' +
-            '</button>' +
-            '<button class="btn btn-sm btn-outline" data-act="toggleAktif(' + u.id + ',' + (u.is_active ? 0 : 1) + ')" title="' + (u.is_active ? 'Nonaktifkan akun' : 'Aktifkan akun') + '">' +
-              (u.is_active ? 'Matikan' : 'Aktifkan') +
-            '</button>' +
-            '<button class="btn btn-sm btn-danger" data-act="hapusUser(' + u.id + ',\'' + esc(u.username) + '\')" title="Hapus akun permanen">' +
-              '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Hapus' +
-            '</button>' +
-          '</div>' +
+          '<button type="button" class="btn-more" onclick="menuUser(event, ' + u.id + ', \'' + esc(u.username) + '\', ' + (u.is_active ? 1 : 0) + ')" title="Pilihan aksi">' +
+            '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2.2"/><circle cx="12" cy="12" r="2.2"/><circle cx="12" cy="19" r="2.2"/></svg>' +
+          '</button>' +
         '</td>';
       tb.appendChild(tr);
     });
