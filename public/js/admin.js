@@ -831,13 +831,13 @@
       const cStyle = catBadge[l.category] || '';
       const lStyle = lvlBadge[l.level] || '';
       tr.innerHTML =
-        '<td style="white-space:nowrap;font-size:12px;color:var(--mute);">' + tanggal(l.created_at) + ' ' + logTime(l.created_at) + '</td>' +
-        '<td><span class="badge" ' + cStyle + '>' + esc(l.category.toUpperCase()) + '</span></td>' +
-        '<td><span class="badge" ' + lStyle + '>' + esc(l.level.toUpperCase()) + '</span></td>' +
+        '<td style="white-space:nowrap;font-size:12px;color:var(--mute);font-family:monospace;">' + esc(logTime(l.created_at)) + '<br><span style="font-size:11px;font-family:inherit;">' + esc(tanggal(l.created_at)) + '</span></td>' +
+        '<td><span class="badge" ' + cStyle + '>' + esc((l.category || '').toUpperCase()) + '</span></td>' +
+        '<td><span class="badge" ' + lStyle + '>' + esc((l.level || '').toUpperCase()) + '</span></td>' +
         '<td><b>' + esc(l.actor || 'system') + '</b></td>' +
-        '<td><code>' + esc(l.action) + '</code></td>' +
-        '<td style="font-size:13px;line-height:1.45;">' + esc(l.message) + '</td>' +
-        '<td><small style="color:var(--mute);">' + esc(l.ip || '—') + '</small></td>';
+        '<td><code style="font-size:11.5px;">' + esc(l.action) + '</code></td>' +
+        '<td style="font-size:13px;line-height:1.45;color:var(--ink);">' + esc(l.message) + '</td>' +
+        '<td style="text-align:right;"><code style="font-size:11.5px;color:var(--mute);">' + esc(l.ip || '—') + '</code></td>';
       tb.appendChild(tr);
     });
   }
