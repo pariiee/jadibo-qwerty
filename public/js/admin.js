@@ -486,7 +486,17 @@
         '<td class="aksi">' + tombol + '</td>';
       tb.appendChild(tr);
     });
-    if (!d.orders?.length) tb.innerHTML = '<tr><td colspan="8" class="kosong">Belum ada pesanan.</td></tr>';
+    if (!d.orders?.length) {
+      tb.innerHTML = '<tr><td colspan="8" class="kosong" style="padding:48px 16px;text-align:center;">' +
+        '<div style="display:flex;flex-direction:column;align-items:center;gap:10px;">' +
+          '<div style="width:44px;height:44px;border-radius:12px;background:rgba(18,20,43,.04);display:grid;place-items:center;color:var(--mute)">' +
+            '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="7" y1="8" x2="17" y2="8"/><line x1="7" y1="12" x2="13" y2="12"/></svg>' +
+          '</div>' +
+          '<div style="font-weight:700;color:var(--ink);font-size:14.5px;">Belum Ada Riwayat Pesanan</div>' +
+          '<div style="font-size:13px;color:var(--mute);max-width:320px;line-height:1.45;">Setiap transaksi pembelian paket langganan atau top-up otomatis masuk ke sini.</div>' +
+        '</div>' +
+      '</td></tr>';
+    }
   }
 
   async function konfirmasi(orderId) {

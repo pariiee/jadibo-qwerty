@@ -172,7 +172,8 @@ async function pendapatan(req, res) {
       `SELECT
          COALESCE(SUM(CASE WHEN status = 'paid'    THEN amount END), 0) AS total_lunas,
          COUNT(CASE WHEN status = 'paid'    THEN 1 END)                AS jumlah_lunas,
-         COUNT(CASE WHEN status = 'pending' THEN 1 END)                AS jumlah_pending`
+         COUNT(CASE WHEN status = 'pending' THEN 1 END)                AS jumlah_pending
+        FROM orders`
     );
 
     // Isi hari yang tidak punya order dengan nol — grafik harus punya 14 batang,
