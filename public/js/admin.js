@@ -712,12 +712,13 @@
 
   /** Satu kotak angka: label, nilai besar, keterangan kecil, plus bar progres opsional. */
   const kotak = (label, nilai, sub = '', progress = null) =>
-    `<div class="sys-item"><div class="lbl">${esc(label)}</div>` +
-    `<div class="val">${esc(nilai)}</div>` +
+    `<div class="sys-item" style="padding:12px 14px;background:var(--subtle);border:1px solid var(--edge);border-radius:14px;min-width:0;overflow:hidden;">` +
+    `<div class="lbl" style="font-size:11px;font-weight:700;color:var(--mute);letter-spacing:0.5px;text-transform:uppercase;margin-bottom:6px;">${esc(label)}</div>` +
+    `<div class="val" style="font-size:16px;font-weight:700;color:var(--ink);line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(nilai)}</div>` +
     (progress !== null
-      ? `<div style="width:100%;height:4px;background:rgba(255,255,255,0.08);border-radius:99px;margin-top:6px;overflow:hidden;"><div style="width:${Math.min(100, Math.max(0, progress))}%;height:100%;background:${progress > 85 ? '#ef4444' : '#6366f1'};border-radius:99px;"></div></div>`
+      ? `<div style="width:100%;height:4px;background:rgba(255,255,255,0.08);border-radius:99px;margin-top:8px;overflow:hidden;"><div style="width:${Math.min(100, Math.max(0, progress))}%;height:100%;background:${progress > 85 ? '#ef4444' : '#6366f1'};border-radius:99px;"></div></div>`
       : '') +
-    (sub ? `<div class="sub">${esc(sub)}</div>` : '') + `</div>`;
+    (sub ? `<div class="sub" style="font-size:11px;color:var(--mute);margin-top:6px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(sub)}</div>` : '') + `</div>`;
 
   async function muatSistem() {
     const el = document.getElementById('sys-sehat');

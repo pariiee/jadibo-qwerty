@@ -139,7 +139,7 @@
                 <h4 style="margin:0;font-size:15px;font-weight:700;color:var(--ink);">Kesehatan Aplikasi</h4>
                 <span id="sys-status-badge" class="badge" style="background:rgba(16,185,129,.12);color:#059669;border:1px solid rgba(16,185,129,.25);font-size:11px;font-weight:600;">Aktif</span>
               </div>
-              <div id="sys-sehat" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;"></div>
+              <div id="sys-sehat" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"></div>
             </div>
             <p class="hint" id="sys-alasan" style="margin:12px 0 0;font-size:11.5px;color:var(--mute);border-top:1px solid var(--edge);padding-top:10px;"></p>
           </div>
@@ -151,7 +151,7 @@
                 <h4 style="margin:0;font-size:15px;font-weight:700;color:var(--ink);">Penggunaan Sumber Daya</h4>
                 <span class="badge" style="background:rgba(99,102,241,.12);color:#818cf8;border:1px solid rgba(99,102,241,.25);font-size:11px;font-weight:600;">Node.js</span>
               </div>
-              <div id="sys-resource" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;"></div>
+              <div id="sys-resource" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"></div>
             </div>
             <p class="hint" id="sys-load-catatan" style="margin:12px 0 0;font-size:11.5px;color:var(--mute);border-top:1px solid var(--edge);padding-top:10px;"></p>
           </div>
@@ -199,16 +199,13 @@
       <!-- ── Log Sistem (Dedicated Page /kountole/logs) ─────────── -->
       <section id="pane-logs" style="display:none">
         <div class="card">
-          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
-            <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:240px;">
-              <div style="position:relative;flex:1;">
-                <input class="inp" id="cari-syslog" placeholder="Cari aksi, pesan, atau aktor…" style="height:38px;padding-left:36px;" />
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--mute);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              </div>
+          <div class="syslog-toolbar" style="display:grid;grid-template-columns:1fr 180px 150px auto;gap:10px;align-items:center;margin-bottom:16px;">
+            <div style="position:relative;width:100%;">
+              <input class="inp" id="cari-syslog" placeholder="Cari aksi, pesan, atau aktor…" style="height:38px;padding-left:40px !important;" />
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--mute);pointer-events:none;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             </div>
-
-            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-              <select class="inp" id="filter-syslog-cat" data-act="muatLogSistem" style="width:170px;height:38px;">
+            <div>
+              <select class="inp" id="filter-syslog-cat" data-act="muatLogSistem" style="width:100%;height:38px;">
                 <option value="">Semua Kategori</option>
                 <option value="auth">Autentikasi (User)</option>
                 <option value="admin">Aksi Administrator</option>
@@ -216,18 +213,20 @@
                 <option value="billing">Billing &amp; Saldo</option>
                 <option value="bot">Bot Engine</option>
               </select>
-              <select class="inp" id="filter-syslog-lvl" data-act="muatLogSistem" style="width:140px;height:38px;">
+            </div>
+            <div>
+              <select class="inp" id="filter-syslog-lvl" data-act="muatLogSistem" style="width:100%;height:38px;">
                 <option value="">Semua Level</option>
                 <option value="info">Info</option>
                 <option value="success">Sukses</option>
                 <option value="warn">Peringatan</option>
                 <option value="error">Error</option>
               </select>
-              <button class="btn btn-outline" data-act="muatLogSistem" style="height:38px;padding:0 14px;border-radius:10px;display:inline-flex;align-items:center;gap:6px;font-weight:600;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-                Muat Ulang
-              </button>
             </div>
+            <button class="btn btn-outline" data-act="muatLogSistem" style="height:38px;padding:0 16px;border-radius:10px;display:inline-flex;align-items:center;gap:6px;font-weight:600;white-space:nowrap;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              Muat Ulang
+            </button>
           </div>
 
           <div class="tbl-wrap" style="max-height:600px;overflow-y:auto;">

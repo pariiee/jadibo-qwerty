@@ -686,6 +686,21 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   filter: invert(0.2);
 }
 
+/* ── Syslog Toolbar Responsiveness ─────────────────────────────────── */
+#cari-syslog {
+  padding-left: 40px !important;
+}
+@media (max-width: 860px) {
+  .syslog-toolbar {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+@media (max-width: 540px) {
+  .syslog-toolbar {
+    grid-template-columns: 1fr !important;
+  }
+}
+
 /* ── Add Bot Card & Quota Progress in Dashboard ───────────────────── */
 .add-card{
   border:2px dashed var(--edge)!important;background:rgba(255,255,255,0.03)!important;
