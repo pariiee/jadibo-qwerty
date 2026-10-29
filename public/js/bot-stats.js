@@ -56,47 +56,54 @@
       if (sub && total > 0) sub.textContent = 'dari total ' + n(total) + ' respon';
     }
 
-    // Render 5 Command Paling Sering (Donut Chart & Legend seperti mockup)
+    // Render 5 Command Paling Sering (Donut Chart & Legend: hitungan kali, bukan persen)
     const WARNA_CMD = ['#f97316', '#3b82f6', '#a855f7', '#10b981', '#eab308'];
     const top5 = (d.cmd || []).slice(0, 5);
-    const totalCmd = top5.reduce((acc, c) => acc + (c.n || 0), 0);
+    const totalCmd = top5.reduce((acc, c) => acc + Number(c.n || 0), 0);
     const donutGraphic = document.getElementById('cmd-donut-graphic');
     const donutLegend = document.getElementById('cmd-donut-legend');
 
     if (donutGraphic && donutLegend) {
       if (!top5.length || totalCmd === 0) {
-        donutGraphic.innerHTML = '<svg width="140" height="140" viewBox="0 0 140 140"><circle cx="70" cy="70" r="50" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="16"/><circle cx="70" cy="70" r="34" fill="rgba(0,0,0,0.1)"/></svg>';
+        donutGraphic.innerHTML = '<svg width="140" height="140" viewBox="0 0 140 140"><circle cx="70" cy="70" r="50" fill="none" stroke="var(--line)" stroke-width="14"/><circle cx="70" cy="70" r="38" fill="var(--inner-bg)"/><text x="70" y="74" text-anchor="middle" font-size="11" fill="var(--mute)">Kosong</text></svg>';
         donutLegend.innerHTML = '<span class="muted" style="font-size:13px">Belum ada command yang tercatat.</span>';
       } else {
-        const C = 2 * Math.PI * 50; // 314.16
+        const C = 2 * Math.PI * 50; // ~314.16
         let offset = 0;
         let svgCircles = '';
         let legendHtml = '';
 
         top5.forEach((c, idx) => {
           const color = WARNA_CMD[idx % WARNA_CMD.length];
-          const pct = Math.max(1, Math.round((c.n / totalCmd) * 100));
-          const dash = (pct / 100) * C;
-          const strokeWidth = idx === 0 ? 19 : 15; // segmen teratas menonjol tebal
+          const hitung = Number(c.n || 0);
+          const proporsi = totalCmd > 0 ? (hitung / totalCmd) : 0;
+          const dash = Math.max(2, proporsi * C);
+          const strokeWidth = idx === 0 ? 17 : 14;
 
           svgCircles += '<circle cx="70" cy="70" r="50" fill="none" stroke="' + color + '" stroke-width="' + strokeWidth + '" ' +
-            'stroke-dasharray="' + dash + ' ' + C + '" stroke-dashoffset="' + (-offset) + '" ' +
+            'stroke-dasharray="' + dash + ' ' + (C - dash) + '" stroke-dashoffset="' + (-offset) + '" ' +
             'transform="rotate(-90 70 70)" stroke-linecap="round" />';
           offset += dash;
 
-          legendHtml += '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13.5px">' +
+          legendHtml += '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:3px 0">' +
             '<div style="display:flex;align-items:center;gap:10px;min-width:0;overflow:hidden">' +
-            '<span style="width:10px;height:10px;border-radius:50%;background:' + color + ';flex:none"></span>' +
-            '<span style="font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(c.cmd) + '</span>' +
+              '<span style="width:10px;height:10px;border-radius:50%;background:' + color + ';flex:none;box-shadow:0 0 6px ' + color + '66"></span>' +
+              '<code style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;font-weight:700;color:var(--ink);background:var(--inner-bg);border:1px solid var(--line);padding:2px 7px;border-radius:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(c.cmd) + '</code>' +
             '</div>' +
-            '<div style="flex:none;color:var(--mute)">– <b style="color:var(--ink);font-weight:700">' + pct + '%</b></div>' +
-            '</div>';
+            '<div style="flex:none;display:inline-flex;align-items:baseline;gap:4px">' +
+              '<span style="font-size:14px;font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums">' + n(hitung) + '</span>' +
+              '<span style="font-size:11.5px;font-weight:600;color:var(--mute)">kali</span>' +
+            '</div>' +
+          '</div>';
         });
 
         donutGraphic.innerHTML = '<svg width="140" height="140" viewBox="0 0 140 140" style="overflow:visible">' +
-          '<circle cx="70" cy="70" r="50" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="15"/>' +
-          '<circle cx="70" cy="70" r="34" fill="rgba(0,0,0,0.18)" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>' +
-          svgCircles + '</svg>';
+          '<circle cx="70" cy="70" r="50" fill="none" stroke="var(--line)" stroke-width="14" opacity="0.6"/>' +
+          '<circle cx="70" cy="70" r="38" fill="var(--inner-bg)" stroke="var(--line)" stroke-width="1"/>' +
+          '<text x="70" y="66" text-anchor="middle" font-size="15" font-weight="800" fill="var(--ink)" font-family="system-ui,sans-serif">' + n(totalCmd) + '</text>' +
+          '<text x="70" y="79" text-anchor="middle" font-size="9" font-weight="700" fill="var(--mute)" letter-spacing="0.6" font-family="system-ui,sans-serif">TOTAL</text>' +
+          svgCircles +
+        '</svg>';
         donutLegend.innerHTML = legendHtml;
       }
     }
