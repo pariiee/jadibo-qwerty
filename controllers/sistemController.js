@@ -53,13 +53,21 @@ function catatAudit({ userId, username, method, path: jalur, status, ip }) {
   });
 }
 
-/** Daftar aksi admin terakhir. */
+/** Daftar aksi admin terakhir dengan filter tanggal. */
 async function audit(req, res) {
   try {
-    const [rows] = await pool.execute(
-      `SELECT id, username, method, path, status, ip, created_at
-         FROM admin_log ORDER BY id DESC LIMIT 100`
-    );
+    const { date } = req.query;
+    let query = `SELECT id, username, method, path, status, ip, created_at FROM admin_log`;
+    const params = [];
+
+    if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      query += ` WHERE created_at >= ? AND created_at <= CONCAT(?, ' 23:59:59')`;
+      params.push(date, date);
+    }
+
+    query += ` ORDER BY id DESC LIMIT 50`;
+
+    const [rows] = await pool.execute(query, params);
     return res.json({ ok: true, logs: rows });
   } catch (e) {
     // 1146 = tabel belum ada. Deployment yang belum menjalankan sync-schema

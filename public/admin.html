@@ -122,46 +122,70 @@
 
       <!-- ── Sistem ─────────────────────────────────────────────── -->
       <section id="pane-sistem" style="display:none">
-        <div class="adm-bar">
-          <button class="btn btn-outline" data-act="muatSistem">Muat Ulang</button>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:10px;">
+          <div>
+            <h3 style="margin:0 0 4px;font-size:16px;font-weight:700;color:var(--ink);">Pemantauan Sistem &amp; Infrastruktur</h3>
+            <p class="m-sub" style="margin:0;">Status bot, telemetri resource server, broadcast pengguna, dan log aktivitas admin.</p>
+          </div>
+          <button class="btn btn-outline btn-sm" data-act="muatSistem" style="height:34px;padding:0 14px;border-radius:10px;font-weight:600;">Muat Ulang</button>
         </div>
 
-        <!-- Kesehatan + beban server -->
-        <div class="card">
-          <h3>Kesehatan</h3>
-          <div id="sys-sehat" class="sys-grid"></div>
-          <p class="hint" id="sys-alasan"></p>
-        </div>
+        <!-- 2 Kolom Seimbang: Kesehatan Aplikasi (Kiri) & Telemetri Server (Kanan) -->
+        <div class="grid-2" style="display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));margin-bottom:20px;">
+          <!-- Card 1: Kesehatan Bot & DB -->
+          <div class="card" style="margin:0;display:flex;flex-direction:column;justify-content:space-between;">
+            <div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+                <h4 style="margin:0;font-size:15px;font-weight:700;color:var(--ink);">Kesehatan Aplikasi</h4>
+                <span id="sys-status-badge" class="badge" style="background:rgba(16,185,129,.12);color:#059669;border:1px solid rgba(16,185,129,.25);font-size:11px;font-weight:600;">Aktif</span>
+              </div>
+              <div id="sys-sehat" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;"></div>
+            </div>
+            <p class="hint" id="sys-alasan" style="margin:12px 0 0;font-size:11.5px;color:var(--mute);border-top:1px solid var(--edge);padding-top:10px;"></p>
+          </div>
 
-        <div class="card">
-          <h3>Server</h3>
-          <div id="sys-resource" class="sys-grid"></div>
-          <p class="hint" id="sys-load-catatan"></p>
-        </div>
-
-        <!-- Broadcast: satu pesan ke semua user, lewat bot masing-masing -->
-        <div class="card">
-          <h3>Broadcast ke Semua User</h3>
-          <textarea class="inp" id="bc-teks" rows="4"
-                    placeholder="Pesan yang dikirim ke tiap user lewat bot miliknya sendiri…"></textarea>
-          <p class="hint">
-            Dikirim lewat bot milik TIAP USER. Kalau botnya sedang mati, pesannya
-            tidak sampai — dan itu dilaporkan di bawah, bukan disembunyikan.
-          </p>
-          <div class="adm-bar">
-            <button class="btn btn-dark" data-act="kirimBroadcast">Kirim</button>
-            <span class="hint" id="bc-hasil"></span>
+          <!-- Card 2: Resource Server -->
+          <div class="card" style="margin:0;display:flex;flex-direction:column;justify-content:space-between;">
+            <div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+                <h4 style="margin:0;font-size:15px;font-weight:700;color:var(--ink);">Penggunaan Sumber Daya</h4>
+                <span class="badge" style="background:rgba(99,102,241,.12);color:#818cf8;border:1px solid rgba(99,102,241,.25);font-size:11px;font-weight:600;">Node.js</span>
+              </div>
+              <div id="sys-resource" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;"></div>
+            </div>
+            <p class="hint" id="sys-load-catatan" style="margin:12px 0 0;font-size:11.5px;color:var(--mute);border-top:1px solid var(--edge);padding-top:10px;"></p>
           </div>
         </div>
 
-        <!-- Jejak aktivitas admin -->
-        <div class="card" style="margin-top:20px;">
-          <div class="adm-bar">
-            <h4 style="margin:0">HTTP Request Admin (/api/admin/*)</h4>
-            <button class="btn btn-outline btn-sm" data-act="muatAudit">Muat Ulang</button>
+        <!-- Card Broadcast Pengumuman -->
+        <div class="card" style="margin-bottom:20px;">
+          <div style="margin-bottom:12px;">
+            <h4 style="margin:0 0 4px;font-size:15px;font-weight:700;color:var(--ink);">Broadcast Pesan ke Semua Pengguna</h4>
+            <p class="m-sub" style="margin:0;">Kirim pesan serentak ke tiap user lewat bot miliknya masing-masing.</p>
           </div>
-          <p class="hint" id="audit-catatan"></p>
-          <div class="tbl-wrap">
+          <textarea class="inp" id="bc-teks" rows="3" placeholder="Tulis pesan broadcast yang akan dikirim ke seluruh user…" style="resize:vertical;"></textarea>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;flex-wrap:wrap;gap:10px;">
+            <span class="hint" id="bc-hasil" style="font-size:12px;color:var(--mute);">Hanya bot online yang dapat mengirimkan pesan.</span>
+            <button class="btn btn-dark" data-act="kirimBroadcast" style="height:36px;padding:0 20px;border-radius:10px;font-weight:700;">Kirim Broadcast</button>
+          </div>
+        </div>
+
+        <!-- Card HTTP Request Admin dengan Filter Tanggal -->
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+            <div>
+              <h4 style="margin:0 0 4px;font-size:15px;font-weight:700;color:var(--ink);">Log Aktivitas Admin (/api/admin/*)</h4>
+              <p class="m-sub" style="margin:0;">Audit trail setiap request sensitif panel admin.</p>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <span style="font-size:12px;color:var(--mute);font-weight:600;">Filter Tanggal:</span>
+              <input type="date" class="inp" id="audit-tgl" style="width:135px;height:34px;padding:0 8px;font-size:12px;" />
+              <button class="btn btn-dark btn-sm" id="btn-filter-audit" style="height:34px;padding:0 12px;font-size:12px;">Filter</button>
+              <button class="btn btn-outline btn-sm" id="btn-reset-audit" style="height:34px;padding:0 10px;font-size:12px;">Hari Ini</button>
+            </div>
+          </div>
+          <p class="hint" id="audit-catatan" style="margin-bottom:10px;"></p>
+          <div class="tbl-wrap" style="max-height:420px;overflow-y:auto;">
             <table class="tbl" id="tbl-audit">
               <thead>
                 <tr><th>Waktu</th><th>Admin</th><th>Aksi</th><th>Endpoint</th><th>Status</th><th>IP</th></tr>

@@ -238,7 +238,18 @@
     if (key === 'order') { muatPendapatan(); muatOrder(); }
     if (key === 'harga') muatSetelan();
     if (key === 'saldo') muatSaldo();
-    if (key === 'sistem') { muatSistem(); muatAudit(); }
+    if (key === 'sistem') {
+      const inp = document.getElementById('audit-tgl');
+      if (inp && !inp.value) {
+        const today = new Date();
+        const y = today.getFullYear();
+        const m = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        inp.value = `${y}-${m}-${day}`;
+      }
+      muatSistem();
+      muatAudit();
+    }
     if (key === 'logs') muatLogSistem();
   }
 
@@ -687,7 +698,11 @@
   // ── Tab "Sistem" ───────────────────────────────────────────────
   // Kesehatan, beban server, jejak aktivitas admin, pendapatan, broadcast.
 
-  const mb = (n) => (Number(n || 0) / 1024 / 1024).toFixed(0) + ' MB';
+  const fmtBytes = (bytes) => {
+    const mbVal = Number(bytes || 0) / (1024 * 1024);
+    if (mbVal >= 1024) return (mbVal / 1024).toFixed(1) + ' GB';
+    return Math.round(mbVal) + ' MB';
+  };
   const jam = (detik) => {
     const d = Math.floor(Number(detik || 0) / 86400);
     const j = Math.floor((Number(detik || 0) % 86400) / 3600);
@@ -695,10 +710,13 @@
     return d ? `${d}h ${j}j` : j ? `${j}j ${m}m` : `${m}m`;
   };
 
-  /** Satu kotak angka: label, nilai besar, keterangan kecil. */
-  const kotak = (label, nilai, sub = '') =>
+  /** Satu kotak angka: label, nilai besar, keterangan kecil, plus bar progres opsional. */
+  const kotak = (label, nilai, sub = '', progress = null) =>
     `<div class="sys-item"><div class="lbl">${esc(label)}</div>` +
     `<div class="val">${esc(nilai)}</div>` +
+    (progress !== null
+      ? `<div style="width:100%;height:4px;background:rgba(255,255,255,0.08);border-radius:99px;margin-top:6px;overflow:hidden;"><div style="width:${Math.min(100, Math.max(0, progress))}%;height:100%;background:${progress > 85 ? '#ef4444' : '#6366f1'};border-radius:99px;"></div></div>`
+      : '') +
     (sub ? `<div class="sub">${esc(sub)}</div>` : '') + `</div>`;
 
   async function muatSistem() {
@@ -708,37 +726,54 @@
     if (!d?.ok) { el.innerHTML = kotak('Gagal memuat', '—'); return; }
 
     const h = d.kesehatan || {};
+    const dServer = new Date(d.waktuServer);
+    const jamServer = dServer.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(/\./g, ':');
+    const tglServer = dServer.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+
+    const badge = document.getElementById('sys-status-badge');
+    if (badge) {
+      badge.textContent = h.ok ? 'Normal' : 'Bermasalah';
+      badge.style.color = h.ok ? '#059669' : '#ef4444';
+      badge.style.background = h.ok ? 'rgba(16,185,129,.12)' : 'rgba(239,68,68,.12)';
+      badge.style.borderColor = h.ok ? 'rgba(16,185,129,.25)' : 'rgba(239,68,68,.25)';
+    }
+
     el.innerHTML =
-      kotak('Status', h.ok ? 'SEHAT' : 'BERMASALAH', h.db ? 'DB tersambung' : 'DB TIDAK tersambung') +
-      kotak('Bot online', String(h.bots_online ?? 0), `dari ${h.bots_harus_jalan ?? 0} yang harus jalan`) +
-      kotak('Versi', d.versi || '—') +
-      kotak('Waktu server', new Date(d.waktuServer).toLocaleString('id-ID'));
+      kotak('Status', h.ok ? '✓ Sehat' : '⚠ Bermasalah', h.db ? 'DB tersambung' : 'DB TIDAK tersambung') +
+      kotak('Bot online', String(h.bots_online ?? 0), `dari ${h.bots_harus_jalan ?? 0} slot`) +
+      kotak('Versi', d.versi || '—', 'node runtime') +
+      kotak('Waktu server', jamServer, tglServer);
 
     const alasan = document.getElementById('sys-alasan');
-    alasan.textContent = (h.alasan || []).length ? h.alasan.join(' • ') : '';
+    alasan.textContent = (h.alasan || []).length ? h.alasan.join(' • ') : 'Semua modul backend & database beroperasi normal.';
 
     const r = d.resource || {};
     const ram = r.ram || {};
     const pakaiRam = ram.total ? Math.round((ram.terpakai / ram.total) * 100) : 0;
+    const pakaiDisk = r.disk && r.disk.total ? Math.round((r.disk.terpakai / r.disk.total) * 100) : 0;
+
     document.getElementById('sys-resource').innerHTML =
-      kotak('RAM', `${mb(ram.terpakai)} / ${mb(ram.total)}`, `${pakaiRam}% terpakai`) +
+      kotak('RAM', `${fmtBytes(ram.terpakai)} / ${fmtBytes(ram.total)}`, `${pakaiRam}% terpakai`, pakaiRam) +
       (r.disk
-        ? kotak('Disk', `${mb(r.disk.terpakai)} / ${mb(r.disk.total)}`,
-            `${Math.round((r.disk.terpakai / r.disk.total) * 100)}% terpakai`)
+        ? kotak('Disk', `${fmtBytes(r.disk.terpakai)} / ${fmtBytes(r.disk.total)}`, `${pakaiDisk}% terpakai`, pakaiDisk)
         : kotak('Disk', '—', 'tidak terbaca')) +
       kotak('CPU', `${r.cpu?.inti ?? 0} inti`, (r.cpu?.load || []).map((n) => Number(n).toFixed(2)).join(' / ')) +
-      kotak('Uptime proses', jam(r.uptimeProses), `sistem: ${jam(r.uptimeSistem)}`) +
-      kotak('Node', r.node || '—', r.platform || '');
-    document.getElementById('sys-load-catatan').textContent = r.cpu?.loadCatatan || '';
+      kotak('Uptime proses', jam(r.uptimeProses), `sistem: ${jam(r.uptimeSistem)}`);
+    document.getElementById('sys-load-catatan').textContent = r.cpu?.loadCatatan || 'Beban CPU & proses termonitor secara real-time.';
   }
 
   async function muatAudit() {
     const tb = document.querySelector('#tbl-audit tbody');
     tb.innerHTML = '<tr><td colspan="6" class="kosong">Memuat…</td></tr>';
-    const d = await api('/api/admin/audit');
+    const tgl = document.getElementById('audit-tgl')?.value;
+    let url = '/api/admin/audit';
+    if (tgl) {
+      url += '?date=' + encodeURIComponent(tgl);
+    }
+    const d = await api(url);
     document.getElementById('audit-catatan').textContent = d?.catatan || '';
     if (!d?.logs?.length) {
-      tb.innerHTML = '<tr><td colspan="6" class="kosong">Belum ada aktivitas admin.</td></tr>';
+      tb.innerHTML = '<tr><td colspan="6" class="kosong">Belum ada aktivitas admin' + (tgl ? ' pada tanggal ' + tgl : '') + '.</td></tr>';
       return;
     }
     tb.innerHTML = d.logs.map((l) => {
@@ -1058,12 +1093,28 @@
     document.getElementById('cari-saldo')?.addEventListener('input', () => {
       muatSaldo();
     });
+
+    document.getElementById('btn-filter-audit')?.addEventListener('click', () => {
+      muatAudit();
+    });
+    document.getElementById('btn-reset-audit')?.addEventListener('click', () => {
+      const inp = document.getElementById('audit-tgl');
+      if (inp) {
+        const today = new Date();
+        const y = today.getFullYear();
+        const m = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        inp.value = `${y}-${m}-${day}`;
+      }
+      muatAudit();
+    });
   });
 
   window.tab = tab;
   window.muatUser = muatUser;
   window.muatPendapatan = muatPendapatan;
   window.muatSaldo = muatSaldo;
+  window.muatAudit = muatAudit;
   window.toggleAktif = toggleAktif;
   window.bukaUser = bukaUser;
   window.tutupUser = tutupUser;
