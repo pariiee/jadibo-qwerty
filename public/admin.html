@@ -82,10 +82,18 @@
 
       <!-- ── Pesanan ────────────────────────────────────────────── -->
       <section id="pane-order" style="display:none">
-        <!-- Pendapatan: angkanya NYATA dari tabel orders. Kalau masih nol,
-             tampil nol — bukan dikosongkan supaya kelihatan ramai. -->
-        <div class="card">
-          <h3>Pendapatan</h3>
+        <div class="card" style="margin-bottom:20px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+            <h3 style="margin:0;font-size:16px;font-weight:700;color:var(--ink);">Rekap Pendapatan</h3>
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+              <span style="font-size:12px;color:var(--mute);font-weight:600;">Periode:</span>
+              <input type="date" class="inp" id="rp-tgl-dari" style="width:130px;height:34px;padding:0 8px;font-size:12px;" />
+              <span style="font-size:12px;color:var(--mute);">-</span>
+              <input type="date" class="inp" id="rp-tgl-sampai" style="width:130px;height:34px;padding:0 8px;font-size:12px;" />
+              <button class="btn btn-dark btn-sm" id="btn-filter-rp" style="height:34px;padding:0 12px;font-size:12px;">Filter</button>
+              <button class="btn btn-outline btn-sm" id="btn-reset-rp" style="height:34px;padding:0 10px;font-size:12px;" title="Reset 14 hari terakhir">Reset</button>
+            </div>
+          </div>
           <div id="rp-ringkas" class="sys-grid"></div>
           <div id="grafik-pendapatan" class="chart"></div>
         </div>
@@ -310,10 +318,9 @@
         </div>
 
         <div class="card" style="margin-top:16px">
-          <h3 style="margin:0 0 6px;font-size:15px">Konsistensi Jurnal</h3>
+          <h3 style="margin:0 0 6px;font-size:15px;color:var(--ink);">Audit &amp; Rekonsiliasi Saldo</h3>
           <p class="m-sub" style="margin:0 0 10px">
-            Setiap perubahan saldo wajib meninggalkan satu baris jurnal. Kalau daftar ini tidak kosong,
-            ada yang menyentuh <code>users.saldo</code> tanpa lewat <code>wallet_ledger</code>.
+            Setiap transaksi saldo tercatat otomatis dalam buku besar digital. Jika terdeteksi selisih antara saldo akun dan riwayat mutasi, sistem akan menampilkan peringatan di bawah ini.
           </p>
           <div id="saldo-konsistensi"><p class="m-sub" style="margin:0">Memuat…</p></div>
         </div>
@@ -327,10 +334,10 @@
             <thead>
               <tr>
                 <th>User</th><th>Paket</th>
-                <th style="text-align:right">Saldo</th>
-                <th style="text-align:right">Jurnal</th>
+                <th style="text-align:right">Saldo Akun</th>
+                <th style="text-align:right">Total Mutasi</th>
                 <th style="text-align:right">Selisih</th>
-                <th>Auto</th><th>Aksi</th>
+                <th>Auto</th><th style="text-align:right">Aksi</th>
               </tr>
             </thead>
             <tbody></tbody>

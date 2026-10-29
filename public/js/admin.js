@@ -360,9 +360,14 @@
     const tb = document.getElementById('tbl-user').querySelector('tbody');
     tb.innerHTML = '';
     rows.forEach((u) => {
+      const emailBadge = u.email ? (
+        u.email_verified
+          ? ' <span class="badge" style="background:rgba(16,185,129,.12);color:#059669;border:1px solid rgba(16,185,129,.25);font-size:10px;padding:1px 6px;margin-left:4px;font-weight:600;">Terverifikasi</span>'
+          : ' <span class="badge" style="background:rgba(245,158,11,.12);color:#d97706;border:1px solid rgba(245,158,11,.25);font-size:10px;padding:1px 6px;margin-left:4px;font-weight:600;">Belum Verifikasi</span>'
+      ) : '';
       const tr = document.createElement('tr');
       tr.innerHTML =
-        '<td><b>' + u.username + '</b>' + (u.email ? '<br><small>' + esc(u.email) + '</small>' : '') + '</td>' +
+        '<td><b>' + u.username + '</b>' + (u.email ? '<br><small style="display:inline-flex;align-items:center;flex-wrap:wrap;gap:4px;margin-top:2px;">' + esc(u.email) + emailBadge + '</small>' : '') + '</td>' +
         '<td><span class="badge role-' + (u.role_efektif || u.role) + '">' + (u.role_label || u.role) + '</span></td>' +
         '<td>' + (u.plan_name || u.plan || 'Gratis') + '</td>' +
         '<td>' + tanggal(u.plan_expired_at) + '</td>' +
@@ -771,7 +776,13 @@
   }
 
   async function muatPendapatan() {
-    const d = await api('/api/admin/pendapatan');
+    const dari = document.getElementById('rp-tgl-dari')?.value;
+    const sampai = document.getElementById('rp-tgl-sampai')?.value;
+    let url = '/api/admin/pendapatan';
+    if (dari && sampai) {
+      url += `?from=${encodeURIComponent(dari)}&to=${encodeURIComponent(sampai)}`;
+    }
+    const d = await api(url);
     if (!d?.ok) return;
     const r = d.ringkas || {};
     document.getElementById('rp-ringkas').innerHTML =
@@ -779,8 +790,7 @@
       kotak('Menunggu', String(r.jumlah_pending ?? 0), 'belum dibayar') +
       kotak('Rata-rata', r.jumlah_lunas ? rupiah(Math.round(r.total_lunas / r.jumlah_lunas)) : rupiah(0), 'per pesanan');
 
-    // Grafik batang CSS, 14 hari terakhir. Tinggi relatif terhadap hari
-    // terbesar; kalau semua nol, semua batang nol — bukan dipalsukan.
+    // Grafik batang CSS
     const seri = d.seri || [];
     const puncak = Math.max(1, ...seri.map((s) => s.total));
     document.getElementById('grafik-pendapatan').innerHTML = seri.map((s) => {
@@ -793,16 +803,7 @@
     }).join('');
   }
 
-  // ── Tab Saldo ─────────────────────────────────────────────────
-  //
-  // TIGA hal yang ditampilkan, dan pemisahannya sengaja:
-  //   1. Rincian pendapatan (top up vs paket langsung) — PEMECAHAN dari angka
-  //      yang sudah ada di tab Sistem. Rumus di sana tidak diubah.
-  //   2. Saldo beredar = kewajiban platform ke user. BUKAN pendapatan: uangnya
-  //      sudah masuk waktu top up, sebagian masih akan dipakai perpanjang.
-  //   3. Konsistensi jurnal. Kalau ada selisih, ada yang menyentuh
-  //      users.saldo tanpa lewat wallet_ledger — dan angka saldo berhenti
-  //      bisa dipercaya.
+  // ── Tab Saldo & Dompet ─────────────────────────────────────────
   async function muatSaldo() {
     const cari = (document.getElementById('cari-saldo')?.value || '').trim();
     const [d, k, p] = await Promise.all([
@@ -826,23 +827,20 @@
     // ── Saldo beredar ──
     if (k?.ok) {
       document.getElementById('saldo-beredar').innerHTML =
-        `<div style="font-size:26px;font-weight:800">${esc(k.saldo_beredar_text || rupiah(k.saldo_beredar))}</div>` +
-        '<p class="m-sub" style="margin:8px 0 0">Total saldo semua user — kewajiban platform, bukan pendapatan. ' +
-        'Uangnya sudah dihitung sebagai pendapatan waktu top up.</p>';
+        `<div style="font-size:26px;font-weight:800;color:var(--ink);">${esc(k.saldo_beredar_text || rupiah(k.saldo_beredar))}</div>` +
+        '<p class="m-sub" style="margin:8px 0 0">Total saldo semua pengguna — merupakan kewajiban saldo aktif platform.</p>';
 
       const kk = document.getElementById('saldo-konsistensi');
       if (k.konsisten) {
-        kk.innerHTML = '<p style="margin:0;color:#059669;font-weight:600">✓ Semua saldo cocok dengan jurnalnya.</p>';
+        kk.innerHTML = '<p style="margin:0;color:#059669;font-weight:600">✓ Semua saldo pengguna cocok dengan riwayat mutasi.</p>';
       } else {
-        // SENGAJA ditampilkan mencolok. Selisih = saldo yang tidak bisa
-        // dipertanggungjawabkan, dan itu perlu ditindak, bukan disembunyikan.
         kk.innerHTML = '<p style="margin:0 0 8px;color:#b91c1c;font-weight:700">' +
-          `⚠ ${k.menyimpang.length} user punya selisih saldo vs jurnal</p>` +
+          `⚠ Terdeteksi ${k.menyimpang.length} pengguna dengan selisih saldo vs mutasi</p>` +
           '<div class="tbl-wrap"><table class="tbl"><thead><tr>' +
-          '<th>User</th><th style="text-align:right">Saldo</th><th style="text-align:right">Jurnal</th>' +
+          '<th>User</th><th style="text-align:right">Saldo Akun</th><th style="text-align:right">Total Mutasi</th>' +
           '<th style="text-align:right">Selisih</th></tr></thead><tbody>' +
           k.menyimpang.map((u) => '<tr>' +
-            `<td>${esc(u.username)}</td>` +
+            `<td><b>${esc(u.username)}</b></td>` +
             `<td style="text-align:right">${rupiah(u.saldo)}</td>` +
             `<td style="text-align:right">${rupiah(u.jurnal_total)}</td>` +
             `<td style="text-align:right;color:#b91c1c;font-weight:700">${rupiah(u.selisih)}</td>` +
@@ -872,7 +870,7 @@
         `<td style="text-align:right" class="muted">${rupiah(u.jurnal_total)}<br><span style="font-size:11px">${u.jurnal_baris} baris</span></td>` +
         `<td style="text-align:right;color:${selisih === 0 ? '#059669' : '#b91c1c'};font-weight:700">${selisih === 0 ? '✓' : rupiah(selisih)}</td>` +
         `<td>${auto}</td>` +
-        `<td class="aksi"><button class="btn btn-outline btn-sm" data-act="bukaSaldo(${u.id}, '${esc(u.username)}')">Atur</button></td>` +
+        `<td class="aksi" style="text-align:right;"><button type="button" class="btn btn-outline btn-sm" onclick="bukaSaldo(${u.id}, '${esc(u.username)}')" style="height:28px;padding:0 12px;font-size:12px;border-radius:8px;">Atur Saldo</button></td>` +
         '</tr>';
     }).join('');
   }
@@ -1009,10 +1007,26 @@
       clearTimeout(syslogDebounce);
       syslogDebounce = setTimeout(muatLogSistem, 350);
     });
+
+    document.getElementById('btn-filter-rp')?.addEventListener('click', () => {
+      muatPendapatan();
+    });
+    document.getElementById('btn-reset-rp')?.addEventListener('click', () => {
+      const d1 = document.getElementById('rp-tgl-dari');
+      const d2 = document.getElementById('rp-tgl-sampai');
+      if (d1) d1.value = '';
+      if (d2) d2.value = '';
+      muatPendapatan();
+    });
+    document.getElementById('cari-saldo')?.addEventListener('input', () => {
+      muatSaldo();
+    });
   });
 
   window.tab = tab;
   window.muatUser = muatUser;
+  window.muatPendapatan = muatPendapatan;
+  window.muatSaldo = muatSaldo;
   window.toggleAktif = toggleAktif;
   window.bukaUser = bukaUser;
   window.tutupUser = tutupUser;

@@ -575,8 +575,9 @@ async function me(req, res) {
 async function listUsers(req, res) {
   try {
     const [users] = await pool.execute(
-      `SELECT u.id, u.username, u.role, u.plan, u.plan_expired_at, u.plan_slots,
+      `SELECT u.id, u.username, u.email, u.role, u.plan, u.plan_expired_at, u.plan_slots,
               u.trial_used_at, u.is_active, u.created_at,
+              (SELECT COUNT(*) FROM email_verifications ev WHERE ev.user_id = u.id AND ev.used_at IS NOT NULL) AS email_verified,
               COUNT(b.id) AS bot_count
        FROM users u
        LEFT JOIN bots b ON b.user_id = u.id
@@ -590,6 +591,7 @@ async function listUsers(req, res) {
       ok: true,
       users: users.map((u) => ({
         ...u,
+        email_verified: Number(u.email_verified || 0) > 0,
         role_efektif: roleOf(u),
         plan_name: pricingStore.getPlan(u.plan).name,
         langganan_aktif: !!u.plan_expired_at && new Date(u.plan_expired_at) > new Date(),

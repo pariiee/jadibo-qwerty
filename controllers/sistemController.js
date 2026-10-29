@@ -157,35 +157,59 @@ async function status(req, res) {
  */
 async function pendapatan(req, res) {
   try {
-    const [harian] = await pool.execute(
-      `SELECT DATE_FORMAT(created_at, '%Y-%m-%d') AS tgl,
+    const { from, to } = req.query;
+    const isCustom = from && to;
+
+    if (isCustom && (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to))) {
+      return sendError(res, 400, 'Format tanggal tidak valid (gunakan YYYY-MM-DD)');
+    }
+
+    let harianQuery = `SELECT DATE_FORMAT(created_at, '%Y-%m-%d') AS tgl,
               COUNT(*) AS jumlah,
               COALESCE(SUM(amount), 0) AS total
          FROM orders
-        WHERE status = 'paid'
-          AND created_at >= DATE_SUB(CURDATE(), INTERVAL 13 DAY)
-        GROUP BY tgl
-        ORDER BY tgl`
-    );
-
-    const [ringkas] = await pool.execute(
-      `SELECT
+        WHERE status = 'paid'`;
+    let ringkasQuery = `SELECT
          COALESCE(SUM(CASE WHEN status = 'paid'    THEN amount END), 0) AS total_lunas,
          COUNT(CASE WHEN status = 'paid'    THEN 1 END)                AS jumlah_lunas,
          COUNT(CASE WHEN status = 'pending' THEN 1 END)                AS jumlah_pending
-        FROM orders`
-    );
+        FROM orders`;
+    const harianParams = [];
+    const ringkasParams = [];
 
-    // Isi hari yang tidak punya order dengan nol — grafik harus punya 14 batang,
-    // bukan cuma hari yang kebetulan ada transaksi.
+    if (isCustom) {
+      harianQuery += ` AND created_at >= ? AND created_at <= CONCAT(?, ' 23:59:59') GROUP BY tgl ORDER BY tgl`;
+      harianParams.push(from, to);
+      ringkasQuery += ` WHERE created_at >= ? AND created_at <= CONCAT(?, ' 23:59:59')`;
+      ringkasParams.push(from, to);
+    } else {
+      harianQuery += ` AND created_at >= DATE_SUB(CURDATE(), INTERVAL 13 DAY) GROUP BY tgl ORDER BY tgl`;
+    }
+
+    const [harian] = await pool.execute(harianQuery, harianParams);
+    const [ringkas] = await pool.execute(ringkasQuery, ringkasParams);
+
     const peta = new Map(harian.map((r) => [String(r.tgl), r]));
     const seri = [];
-    for (let i = 13; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const kunci = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      const r = peta.get(kunci);
-      seri.push({ tgl: kunci, jumlah: Number(r?.jumlah || 0), total: Number(r?.total || 0) });
+
+    if (isCustom) {
+      const cur = new Date(from + 'T00:00:00Z');
+      const akhir = new Date(to + 'T00:00:00Z');
+      const diffDays = Math.min(90, Math.max(0, Math.round((akhir - cur) / 86400000)));
+      for (let i = 0; i <= diffDays; i++) {
+        const d = new Date(cur.getTime() + i * 86400000);
+        const kunci = d.toISOString().slice(0, 10);
+        const r = peta.get(kunci);
+        seri.push({ tgl: kunci, jumlah: Number(r?.jumlah || 0), total: Number(r?.total || 0) });
+      }
+    } else {
+      for (let i = 13; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const kunci = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        const r = peta.get(kunci);
+        seri.push({ tgl: kunci, jumlah: Number(r?.jumlah || 0), total: Number(r?.total || 0) });
+      }
     }
 
     return res.json({
