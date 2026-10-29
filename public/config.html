@@ -362,7 +362,8 @@ body.page-bot-config .term-panel {
   padding: 0 !important;
   overflow: hidden !important;
   background: #090a0f !important;
-  border: 1px solid var(--edge) !important;
+  border: 1px solid rgba(255,255,255,.1) !important;
+  border-radius: 16px !important;
 }
 body.page-bot-config .term-head {
   display: flex !important;
@@ -370,34 +371,39 @@ body.page-bot-config .term-head {
   justify-content: space-between !important;
   padding: 12px 18px !important;
   background: rgba(255,255,255,.03) !important;
-  border-bottom: 1px solid var(--line) !important;
+  border-bottom: 1px solid rgba(255,255,255,.08) !important;
 }
 body.page-bot-config .term-dots {
   display: flex !important;
   align-items: center !important;
   gap: 6px !important;
+  min-width: 0 !important;
 }
 body.page-bot-config .term-dots span:not(.lb) {
   width: 10px !important;
   height: 10px !important;
   border-radius: 50% !important;
+  flex-shrink: 0 !important;
 }
 body.page-bot-config .term-dots .lb {
   font-size: 12px !important;
   font-weight: 700 !important;
-  color: var(--ink) !important;
-  margin-left: 6px !important;
+  color: #f1f5f9 !important;
+  margin-left: 8px !important;
+  white-space: nowrap !important;
 }
 body.page-bot-config .term-right {
   display: flex !important;
   align-items: center !important;
   gap: 10px !important;
+  flex-shrink: 0 !important;
 }
 body.page-bot-config .term-right .state {
   width: 8px !important;
   height: 8px !important;
   border-radius: 50% !important;
   background: #ef4444 !important;
+  flex-shrink: 0 !important;
 }
 body.page-bot-config .term-right .state.live {
   background: #22c55e !important;
@@ -406,21 +412,22 @@ body.page-bot-config .term-right .state.live {
 body.page-bot-config .term-right .lbl {
   font-size: 11px !important;
   font-weight: 600 !important;
-  color: var(--mute) !important;
+  color: #94a3b8 !important;
+  white-space: nowrap !important;
 }
 body.page-bot-config .clear-btn {
   background: rgba(255,255,255,.06) !important;
-  border: 1px solid var(--line) !important;
+  border: 1px solid rgba(255,255,255,.12) !important;
   border-radius: 8px !important;
   padding: 3px 9px !important;
   font-size: 11px !important;
-  color: var(--mute) !important;
+  color: #cbd5e1 !important;
   cursor: pointer !important;
   transition: all .2s ease !important;
 }
 body.page-bot-config .clear-btn:hover {
-  background: rgba(255,255,255,.12) !important;
-  color: var(--ink) !important;
+  background: rgba(255,255,255,.15) !important;
+  color: #ffffff !important;
 }
 body.page-bot-config #terminal {
   height: 400px !important;
@@ -430,6 +437,55 @@ body.page-bot-config #terminal {
   font-size: 12px !important;
   line-height: 1.7 !important;
   color: #e2e8f0 !important;
+  background: transparent !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(255,255,255,.2) transparent !important;
+}
+body.page-bot-config #terminal::-webkit-scrollbar {
+  width: 6px !important;
+}
+body.page-bot-config #terminal::-webkit-scrollbar-track {
+  background: transparent !important;
+  margin-top: 6px !important;
+  margin-bottom: 8px !important;
+}
+body.page-bot-config #terminal::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,.2) !important;
+  border-radius: 999px !important;
+}
+body.page-bot-config #terminal::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,.35) !important;
+}
+
+/* Isolasi kontras teks log terminal dari CSS tema luar */
+body.page-bot-config #terminal .log-line {
+  border-left: 2px solid transparent !important;
+  padding-left: 8px !important;
+  margin-bottom: 3px !important;
+}
+body.page-bot-config #terminal .log-info {
+  border-color: #38bdf8 !important;
+  color: #e2e8f0 !important;
+}
+body.page-bot-config #terminal .log-cmd {
+  border-color: #22c55e !important;
+  color: #4ade80 !important;
+}
+body.page-bot-config #terminal .log-warn {
+  border-color: #f59e0b !important;
+  color: #fcd34d !important;
+}
+body.page-bot-config #terminal .log-error,
+body.page-bot-config #terminal .log-cmderr {
+  border-color: #ef4444 !important;
+  color: #f87171 !important;
+}
+body.page-bot-config #terminal .log-debug {
+  border-color: #64748b !important;
+  color: #94a3b8 !important;
+}
+body.page-bot-config #terminal .term-hint {
+  color: #64748b !important;
 }
 
 /* Modals */

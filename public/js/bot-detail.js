@@ -24,6 +24,28 @@
     } catch { return null; }
   }
 
+  // ── Multi-tab sync via BroadcastChannel ──────────────────────────
+  const bc = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('qwertygate_bot') : null;
+  function broadcast(payload) {
+    if (!bc || !botId) return;
+    try { bc.postMessage({ botId: String(botId), ...payload }); } catch {}
+  }
+  if (bc) {
+    bc.onmessage = (e) => {
+      const msg = e.data;
+      if (!msg || String(msg.botId) !== String(botId)) return;
+      if (msg.type === 'status') {
+        updateStatus(msg.status);
+        isRunning = !!msg.isRunning;
+        if (botData) { botData.status = msg.status; botData.is_running = isRunning ? 1 : 0; }
+        syncBtns();
+        if (msg.status === 'connected') dismissQr();
+      } else if (msg.type === 'clear_term') {
+        clearTerminal(false);
+      }
+    };
+  }
+
   // ── Load bot ─────────────────────────────────────────────────────
   async function loadBot() {
     const d = await api('/api/bots/' + botId);
@@ -124,13 +146,14 @@
     if (scroll) scrollTerm();
   }
   function scrollTerm() { const t = document.getElementById('terminal'); t.scrollTop = t.scrollHeight; }
-  function clearTerminal() {
+  function clearTerminal(notify = true) {
     const t = document.getElementById('terminal');
     t.innerHTML = '';
     const p = document.createElement('p');
     p.className = 'log-line term-hint';
     p.textContent = '// Terminal dibersihkan';
     t.appendChild(p);
+    if (notify) broadcast({ type: 'clear_term' });
   }
 
   // ── WebSocket (auth: cookie httpOnly) ────────────────────────────
@@ -149,12 +172,13 @@
         if (d.type === 'log') appendLog(d.payload.level, d.payload.message);
         if (d.type === 'status') {
           const s = d.payload.status;
-          if (s === 'connecting') clearTerminal();
+          if (s === 'connecting') clearTerminal(false);
           updateStatus(s);
           isRunning = (s === 'connected');
           if (botData) botData.status = s;
           syncBtns();
           if (s === 'connected') { dismissQr(); }
+          broadcast({ type: 'status', status: s, isRunning });
         }
         if (d.type === 'qr') showQr(d.payload.qr);
         if (d.type === 'pairing_code') {
@@ -273,21 +297,30 @@
   async function stopBot() {
     const d = await api('/api/bots/' + botId + '/stop', { method: 'POST' });
     if (!d) return;
-    if (d.ok) { isRunning = false; syncBtns(); updateStatus('disconnected'); ctrlMsg('Bot dihentikan'); }
+    if (d.ok) {
+      isRunning = false; syncBtns(); updateStatus('disconnected'); ctrlMsg('Bot dihentikan');
+      broadcast({ type: 'status', status: 'disconnected', isRunning: false });
+    }
     else ctrlMsg(d.message, 'error');
   }
   async function restartBot() {
     ctrlMsg('Merestart bot...');
     const d = await api('/api/bots/' + botId + '/restart', { method: 'POST' });
     if (!d) return;
-    if (d.ok) ctrlMsg('Bot di-restart');
+    if (d.ok) {
+      ctrlMsg('Bot di-restart');
+      broadcast({ type: 'status', status: 'connecting', isRunning: false });
+    }
     else ctrlMsg(d.message, 'error');
   }
   async function clearSession() {
     if (!confirm('Hapus sesi? Bot perlu scan QR ulang setelah ini.')) return;
     const d = await api('/api/bots/' + botId + '/clear-session', { method: 'POST' });
     if (!d) return;
-    if (d.ok) { dismissQr(); clearTerminal(); updateStatus('disconnected'); isRunning = false; syncBtns(); ctrlMsg(d.message); }
+    if (d.ok) {
+      dismissQr(); clearTerminal(); updateStatus('disconnected'); isRunning = false; syncBtns(); ctrlMsg(d.message);
+      broadcast({ type: 'status', status: 'disconnected', isRunning: false });
+    }
     else ctrlMsg(d.message, 'error');
   }
   function startPolling() {
@@ -301,9 +334,11 @@
       if (st === 'connected') {
         const was = isRunning;
         isRunning = true; updateStatus('connected'); syncBtns();
+        broadcast({ type: 'status', status: 'connected', isRunning: true });
         if (!was) { dismissQr(); ctrlMsg('Bot berhasil terhubung!'); stopPolling(); }
       } else if (st === 'disconnected') {
         isRunning = false; syncBtns();
+        broadcast({ type: 'status', status: 'disconnected', isRunning: false });
       }
     }, 2000);
   }

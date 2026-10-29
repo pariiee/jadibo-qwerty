@@ -417,6 +417,21 @@
     else { err.textContent = d.message; err.classList.add('show'); }
   });
 
+  // ── Multi-tab sync via BroadcastChannel ──────────────────────────
+  const bc = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('qwertygate_bot') : null;
+  if (bc) {
+    bc.onmessage = (e) => {
+      if (e.data?.type === 'status') {
+        const b = bots.find(x => String(x.id) === String(e.data.botId));
+        if (b) {
+          b.is_running = e.data.isRunning ? 1 : 0;
+          b.status = e.data.status;
+          renderBots();
+        }
+      }
+    };
+  }
+
   // ── Live stats ──────────────────────────────────────────────────
   // Socket dashboard dibuang bareng indikator "bot online" di topbar — satu-satunya
   // yang dia dengerin cuma pesan `stats`. Log live tetap jalan di /bot/:id
