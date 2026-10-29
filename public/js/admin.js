@@ -563,26 +563,58 @@
     box.innerHTML = '';
     paket.forEach((p, i) => {
       const el = document.createElement('div');
-      el.className = 'plan-row';
+      el.className = 'plan-card';
+      el.style.cssText = 'background:var(--card);border:1px solid var(--edge);border-radius:18px;padding:20px;margin-bottom:16px;box-shadow:var(--shadow);';
       const tetap = p.id === 'user';
       el.innerHTML =
-        '<div class="field"><label>Nama</label>' +
-          '<input class="inp" data-f="name" data-i="' + i + '" value="' + (p.name || '') + '"' + (tetap ? ' readonly' : '') + ' /></div>' +
-        '<div class="field"><label>ID</label>' +
-          '<input class="inp" data-f="id" data-i="' + i + '" value="' + (p.id || '') + '"' + (tetap ? ' readonly' : '') + ' /></div>' +
-        '<div class="field"><label>Harga (Rp)</label>' +
-          '<input class="inp" type="number" min="0" data-f="price" data-i="' + i + '" value="' + (p.price || 0) + '"' + (tetap ? ' readonly' : '') + ' /></div>' +
-        '<div class="field"><label>Slot bot</label>' +
-          '<input class="inp" type="number" min="0" data-f="slots" data-i="' + i + '" value="' + (p.slots ?? 1) + '" /></div>' +
-        '<div class="field"><label>Masa aktif (hari)</label>' +
-          '<input class="inp" type="number" min="0" data-f="days" data-i="' + i + '" value="' + (p.days ?? 30) + '" /></div>' +
-        '<div class="field"><label>Pesan / hari</label>' +
-          '<input class="inp" type="number" min="1" data-f="daily_limit" data-i="' + i + '" value="' + (p.daily_limit || 20) + '" /></div>' +
-        '<div class="field"><label>Owner number</label>' +
-          '<input class="inp" type="number" min="0" data-f="owner_max" data-i="' + i + '" value="' + (p.owner_max || 0) + '" /></div>' +
-        '<div class="field"><label>Total pesan diterima</label>' +
-          '<input class="inp" type="number" min="0" data-f="receive_limit" data-i="' + i + '" value="' + (p.receive_limit || 0) + '" /></div>' +
-        (tetap ? '' : '<button class="btn btn-sm btn-outline" data-act="hapusPaket(' + i + ')">Hapus</button>');
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--edge);">' +
+          '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">' +
+            '<span style="font-size:15px;font-weight:700;color:var(--ink);">' + esc(p.name || ('Paket ' + (i + 1))) + '</span>' +
+            (tetap
+              ? '<span class="badge" style="background:rgba(107,114,128,.15);color:var(--mute);font-size:11px;">Default (Wajib)</span>'
+              : '<span class="badge" style="background:rgba(37,99,235,.12);color:var(--acc);font-size:11px;">Paket Langganan</span>') +
+            '<code style="font-size:11.5px;color:var(--mute);background:var(--subtle);padding:2px 6px;border-radius:6px;">' + esc(p.id) + '</code>' +
+          '</div>' +
+          (tetap ? '' :
+            '<button type="button" class="btn btn-outline btn-sm" onclick="hapusPaket(' + i + ')" style="color:var(--errTxt);border-color:rgba(239,68,68,.3);height:30px;padding:0 12px;font-size:12px;border-radius:8px;display:inline-flex;align-items:center;gap:5px;">' +
+              '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>' +
+              'Hapus Paket' +
+            '</button>') +
+        '</div>' +
+        '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;">' +
+          '<div class="field" style="margin:0;">' +
+            '<label style="font-size:11.5px;font-weight:600;color:var(--mute);margin-bottom:6px;display:block;">Nama Paket</label>' +
+            '<input class="inp" data-f="name" data-i="' + i + '" value="' + esc(p.name || '') + '"' + (tetap ? ' readonly' : '') + ' style="height:38px;" />' +
+          '</div>' +
+          '<div class="field" style="margin:0;">' +
+            '<label style="font-size:11.5px;font-weight:600;color:var(--mute);margin-bottom:6px;display:block;">ID Paket (Slug)</label>' +
+            '<input class="inp" data-f="id" data-i="' + i + '" value="' + esc(p.id || '') + '"' + (tetap ? ' readonly' : '') + ' style="height:38px;" />' +
+          '</div>' +
+          '<div class="field" style="margin:0;">' +
+            '<label style="font-size:11.5px;font-weight:600;color:var(--mute);margin-bottom:6px;display:block;">Harga Sewa (Rp)</label>' +
+            '<input class="inp" type="number" min="0" data-f="price" data-i="' + i + '" value="' + (p.price || 0) + '"' + (tetap ? ' readonly' : '') + ' style="height:38px;" />' +
+          '</div>' +
+          '<div class="field" style="margin:0;">' +
+            '<label style="font-size:11.5px;font-weight:600;color:var(--mute);margin-bottom:6px;display:block;">Masa Aktif (Hari)</label>' +
+            '<input class="inp" type="number" min="0" data-f="days" data-i="' + i + '" value="' + (p.days ?? 30) + '" style="height:38px;" />' +
+          '</div>' +
+          '<div class="field" style="margin:0;">' +
+            '<label style="font-size:11.5px;font-weight:600;color:var(--mute);margin-bottom:6px;display:block;">Slot Bot</label>' +
+            '<input class="inp" type="number" min="0" data-f="slots" data-i="' + i + '" value="' + (p.slots ?? 1) + '" style="height:38px;" />' +
+          '</div>' +
+          '<div class="field" style="margin:0;">' +
+            '<label style="font-size:11.5px;font-weight:600;color:var(--mute);margin-bottom:6px;display:block;">Pesan / Hari</label>' +
+            '<input class="inp" type="number" min="1" data-f="daily_limit" data-i="' + i + '" value="' + (p.daily_limit || 20) + '" style="height:38px;" />' +
+          '</div>' +
+          '<div class="field" style="margin:0;">' +
+            '<label style="font-size:11.5px;font-weight:600;color:var(--mute);margin-bottom:6px;display:block;">Total Pesan Diterima</label>' +
+            '<input class="inp" type="number" min="0" data-f="receive_limit" data-i="' + i + '" value="' + (p.receive_limit || 0) + '" style="height:38px;" />' +
+          '</div>' +
+          '<div class="field" style="margin:0;">' +
+            '<label style="font-size:11.5px;font-weight:600;color:var(--mute);margin-bottom:6px;display:block;">Maks Owner Number</label>' +
+            '<input class="inp" type="number" min="0" data-f="owner_max" data-i="' + i + '" value="' + (p.owner_max || 0) + '" style="height:38px;" />' +
+          '</div>' +
+        '</div>';
       box.appendChild(el);
     });
   }

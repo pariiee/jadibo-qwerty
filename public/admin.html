@@ -224,56 +224,74 @@
       <!-- ── Harga & Benefit ────────────────────────────────────── -->
       <section id="pane-harga" style="display:none">
         <div class="card">
-          <h3>Paket & Harga</h3>
-          <p class="m-sub">Harga per slot dan benefit tiap harga. Paket <b>Gratis</b> tidak bisa dihapus —
-            dia titik jatuh semua akun.</p>
-          <div id="daftar-paket"></div>
-          <button class="btn btn-outline" data-act="tambahPaket">+ Tambah Paket</button>
-          <button class="btn btn-dark" data-act="simpanPaket">Simpan Paket</button>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+            <div>
+              <h3 style="margin:0 0 4px;font-size:16px;font-weight:700;color:var(--ink);">Paket &amp; Benefit Pelanggan</h3>
+              <p class="m-sub" style="margin:0;">Atur harga sewa slot bot, durasi paket, dan batasan kuota pesan. Paket <b>Gratis</b> adalah baseline permanen sistem.</p>
+            </div>
+            <button class="btn btn-outline btn-sm" data-act="tambahPaket" style="height:34px;padding:0 14px;border-radius:10px;font-weight:600;">+ Tambah Paket Baru</button>
+          </div>
+          <div id="daftar-paket" style="margin-top:16px;"></div>
+          <div style="display:flex;justify-content:flex-end;margin-top:12px;">
+            <button class="btn btn-dark" data-act="simpanPaket" style="height:38px;padding:0 22px;border-radius:10px;font-weight:700;">Simpan Perubahan Paket</button>
+          </div>
         </div>
 
-        <div class="card">
-          <h3>Cara Bayar & QRIS Manual</h3>
-          <div class="field">
-            <label for="f-mode">Mode pembayaran</label>
-            <select class="inp" id="f-mode">
-              <option value="both">Dua-duanya (manual + otomatis)</option>
-              <option value="gateway">Otomatis saja (Alpay)</option>
-              <option value="manual">Manual saja (QRIS statis)</option>
-            </select>
+        <div class="card" style="margin-top:20px;">
+          <h3 style="margin:0 0 4px;font-size:16px;font-weight:700;color:var(--ink);">Konfigurasi Pembayaran, Trial &amp; Add-on</h3>
+          <p class="m-sub" style="margin:0 0 16px;">Kelola QRIS statis, durasi dan batas kuota trial, serta harga add-on akun.</p>
+
+          <div style="font-size:13px;font-weight:700;color:var(--ink);margin:14px 0 8px;text-transform:uppercase;letter-spacing:0.5px;">Metode Pembayaran</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-bottom:16px;">
+            <div class="field" style="margin:0;">
+              <label for="f-mode" style="font-size:12px;font-weight:600;color:var(--mute);margin-bottom:6px;display:block;">Mode Pembayaran</label>
+              <select class="inp" id="f-mode" style="height:38px;">
+                <option value="both">Dua-duanya (manual + otomatis)</option>
+                <option value="gateway">Otomatis saja (Alpay)</option>
+                <option value="manual">Manual saja (QRIS statis)</option>
+              </select>
+            </div>
+            <div class="field" style="margin:0;">
+              <label for="f-qris" style="font-size:12px;font-weight:600;color:var(--mute);margin-bottom:6px;display:block;">URL Gambar QRIS Manual</label>
+              <input class="inp" id="f-qris" placeholder="https://…/qris.png" style="height:38px;" />
+              <div class="hint" style="font-size:11px;color:var(--mute);margin-top:4px;">Gambar QRIS milikmu yang dipajang ke user. Harus http/https.</div>
+            </div>
           </div>
-          <div class="field">
-            <label for="f-qris">URL gambar QRIS manual</label>
-            <input class="inp" id="f-qris" placeholder="https://…/qris.png" />
-            <div class="hint">Gambar QRIS milikmu yang dipajang ke user. Harus http/https.</div>
+
+          <div style="font-size:13px;font-weight:700;color:var(--ink);margin:18px 0 8px;text-transform:uppercase;letter-spacing:0.5px;border-top:1px solid var(--edge);padding-top:14px;">Batas Kuota Trial (Sekali Pakai)</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:16px;">
+            <div class="field" style="margin:0;">
+              <label for="f-trial" style="font-size:12px;font-weight:600;color:var(--mute);margin-bottom:6px;display:block;">Lama Trial (Hari)</label>
+              <input class="inp" id="f-trial" type="number" min="1" max="30" style="height:38px;" />
+            </div>
+            <div class="field" style="margin:0;">
+              <label for="f-trial-slots" style="font-size:12px;font-weight:600;color:var(--mute);margin-bottom:6px;display:block;">Slot Bot Trial</label>
+              <input class="inp" id="f-trial-slots" type="number" min="1" style="height:38px;" />
+            </div>
+            <div class="field" style="margin:0;">
+              <label for="f-trial-owner" style="font-size:12px;font-weight:600;color:var(--mute);margin-bottom:6px;display:block;">Maks Owner Trial</label>
+              <input class="inp" id="f-trial-owner" type="number" min="1" style="height:38px;" />
+            </div>
+            <div class="field" style="margin:0;">
+              <label for="f-trial-quota" style="font-size:12px;font-weight:600;color:var(--mute);margin-bottom:6px;display:block;">Kuota Respon Trial</label>
+              <input class="inp" id="f-trial-quota" type="number" min="100" style="height:38px;" />
+            </div>
           </div>
-          <div class="field">
-            <label for="f-trial">Lama Trial (hari)</label>
-            <input class="inp" id="f-trial" type="number" min="1" max="30" />
-            <div class="hint">Trial cuma bisa diklaim sekali per akun.</div>
+
+          <div style="font-size:13px;font-weight:700;color:var(--ink);margin:18px 0 8px;text-transform:uppercase;letter-spacing:0.5px;border-top:1px solid var(--edge);padding-top:14px;">Harga Add-on Ekstra</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-bottom:16px;">
+            <div class="field" style="margin:0;">
+              <label for="f-addon-owner" style="font-size:12px;font-weight:600;color:var(--mute);margin-bottom:6px;display:block;">Harga +1 Slot Owner (Rp)</label>
+              <input class="inp" id="f-addon-owner" type="number" min="0" placeholder="2500" style="height:38px;" />
+            </div>
+            <div class="field" style="margin:0;">
+              <label for="f-addon-quota" style="font-size:12px;font-weight:600;color:var(--mute);margin-bottom:6px;display:block;">Harga +1.000 Kuota Respon (Rp)</label>
+              <input class="inp" id="f-addon-quota" type="number" min="0" placeholder="5000" style="height:38px;" />
+            </div>
           </div>
-          <div class="field">
-            <label for="f-trial-slots">Slot Bot Trial</label>
-            <input class="inp" id="f-trial-slots" type="number" min="1" />
-          </div>
-          <div class="field">
-            <label for="f-trial-owner">Maks Owner Trial</label>
-            <input class="inp" id="f-trial-owner" type="number" min="1" />
-          </div>
-          <div class="field">
-            <label for="f-trial-quota">Kuota Respon Trial</label>
-            <input class="inp" id="f-trial-quota" type="number" min="100" />
-          </div>
-          <div class="field">
-            <label for="f-addon-owner">Harga Add-on (+1 Slot Owner Rp)</label>
-            <input class="inp" id="f-addon-owner" type="number" min="0" placeholder="2500" />
-          </div>
-          <div class="field">
-            <label for="f-addon-quota">Harga Add-on (+1.000 Kuota Pesan Rp)</label>
-            <input class="inp" id="f-addon-quota" type="number" min="0" placeholder="5000" />
-          </div>
-          <div class="err" id="harga-error"></div>
-          <button class="btn btn-dark" data-act="simpanSetelan">Simpan Setelan</button>
+
+          <div class="err" id="harga-error" style="margin-bottom:12px;"></div>
+          <button class="btn btn-dark" data-act="simpanSetelan" style="height:38px;padding:0 22px;border-radius:10px;font-weight:700;">Simpan Setelan</button>
         </div>
 
         <div class="card">
