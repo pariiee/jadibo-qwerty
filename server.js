@@ -580,6 +580,7 @@ wss.on('connection', (ws, req) => {
         subscribedBotId = botIdNum;
         if (!botSubscribers.has(subscribedBotId)) {
           botSubscribers.set(subscribedBotId, new Set());
+          redisBus.subscribeBot(subscribedBotId);
         }
         botSubscribers.get(subscribedBotId).add(ws);
         ws.send(JSON.stringify({ type: 'subscribed', botId: subscribedBotId }));
@@ -591,7 +592,12 @@ wss.on('connection', (ws, req) => {
 
   ws.on('close', () => {
     if (subscribedBotId && botSubscribers.has(subscribedBotId)) {
-      botSubscribers.get(subscribedBotId).delete(ws);
+      const set = botSubscribers.get(subscribedBotId);
+      set.delete(ws);
+      if (set.size === 0) {
+        botSubscribers.delete(subscribedBotId);
+        redisBus.unsubscribeBot(subscribedBotId);
+      }
     }
   });
 
