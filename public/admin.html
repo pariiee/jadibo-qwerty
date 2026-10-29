@@ -98,14 +98,16 @@
           <div id="grafik-pendapatan" class="chart"></div>
         </div>
 
-        <div class="adm-bar">
-          <select class="inp" id="filter-order" data-act="muatOrder">
-            <option value="">Semua status</option>
-            <option value="pending">Menunggu</option>
-            <option value="paid">Lunas</option>
-            <option value="rejected">Ditolak</option>
-          </select>
-          <button class="btn btn-outline" data-act="muatOrder">Muat Ulang</button>
+        <div class="adm-bar" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+          <div style="flex:0 1 200px;min-width:160px;max-width:240px;">
+            <select class="inp" id="filter-order" data-act="muatOrder" style="width:100%;height:38px;">
+              <option value="">Semua status</option>
+              <option value="pending">Menunggu</option>
+              <option value="paid">Lunas</option>
+              <option value="rejected">Ditolak</option>
+            </select>
+          </div>
+          <button class="btn btn-outline" data-act="muatOrder" style="height:38px;white-space:nowrap;">Muat Ulang</button>
         </div>
         <div class="tbl-wrap">
           <table class="tbl" id="tbl-order">
