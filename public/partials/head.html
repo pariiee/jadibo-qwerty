@@ -1,5 +1,16 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script>
+  (function () {
+    try {
+      var s = localStorage.getItem('yb-theme');
+      var t = (s === 'dark' || s === 'light') ? s : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.dataset.theme = t;
+      if (t === 'dark') document.documentElement.classList.add('dark');
+      else document.documentElement.classList.remove('dark');
+    } catch (e) {}
+  })();
+</script>
 <link rel="icon" type="image/x-icon" href="/favicon.ico" />
 <link rel="icon" type="image/svg+xml" href="/assets/parigate.svg" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -16,7 +27,7 @@
      Palet cuma boleh punya SATU sumber — kalau disebar ke theme.css dan
      glass.css, keduanya bisa saling bertentangan dan yang menang cuma
      ditentukan urutan muat. Lihat bagian 4 di page.css untuk radius permukaan. -->
-<link rel="stylesheet" href="/assets/palette.css?v=5.2" />
-<link rel="stylesheet" href="/assets/dashboard-theme.css?v=5.2" />
-<script src="/js/head.js?v=5.2" defer></script>
+<link rel="stylesheet" href="/assets/palette.css?v=5.3" />
+<link rel="stylesheet" href="/assets/dashboard-theme.css?v=5.3" />
+<script src="/js/head.js?v=5.3" defer></script>
 <script src="/js/act.js"></script>
