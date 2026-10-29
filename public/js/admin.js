@@ -38,6 +38,85 @@
     return isNaN(d) ? String(v) : d.toLocaleTimeString('id-ID', { hour12: false });
   }
 
+  // ── Custom Glassmorphic Dialog System (ganti prompt/confirm/alert bawaan) ──
+  function customDialog({ title, message, hint = '', placeholder = '', defaultValue = '', okText = 'Oke', cancelText = 'Batal', isPrompt = false, isAlert = false, danger = false }) {
+    return new Promise((resolve) => {
+      const existing = document.getElementById('admin-dialog-overlay');
+      if (existing) existing.remove();
+
+      const overlay = document.createElement('div');
+      overlay.id = 'admin-dialog-overlay';
+      overlay.className = 'overlay';
+      overlay.style.cssText = 'display:flex;align-items:center;justify-content:center;z-index:999999;';
+
+      const okBtnCls = danger ? 'btn btn-danger btn-sm' : 'btn btn-dark btn-sm';
+      const promptHtml = isPrompt ? `
+        <div style="margin:16px 0 18px;">
+          <input class="inp" id="dlg-inp" value="${esc(defaultValue)}" placeholder="${esc(placeholder)}" style="width:100%;height:44px;font-size:14px;box-sizing:border-box;" autocomplete="off" />
+          ${hint ? `<div style="margin-top:6px;font-size:12px;color:var(--mute);line-height:1.4;">${hint}</div>` : ''}
+        </div>
+      ` : '';
+
+      overlay.innerHTML = `
+        <div class="modal" style="width:100%;max-width:390px;padding:26px 22px;border-radius:20px;box-shadow:var(--shadow),0 20px 48px -12px rgba(0,0,0,0.5);text-align:left;">
+          <h3 style="margin:0 0 8px;font-size:18px;font-weight:700;color:var(--ink);letter-spacing:-.01em;">${esc(title)}</h3>
+          <p style="margin:0;font-size:13.5px;color:var(--mute);line-height:1.55;white-space:pre-line;">${esc(message)}</p>
+          ${promptHtml}
+          <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:${isPrompt ? '0' : '22px'};">
+            ${!isAlert ? `<button type="button" class="btn btn-outline btn-sm" id="dlg-cancel" style="height:36px;padding:0 16px;border-radius:9px;font-size:13px;">${esc(cancelText)}</button>` : ''}
+            <button type="button" class="${okBtnCls}" id="dlg-ok" style="height:36px;padding:0 18px;border-radius:9px;font-size:13px;font-weight:700;">${esc(okText)}</button>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(overlay);
+
+      const inp = overlay.querySelector('#dlg-inp');
+      const btnOk = overlay.querySelector('#dlg-ok');
+      const btnCancel = overlay.querySelector('#dlg-cancel');
+
+      function close(val) {
+        overlay.remove();
+        resolve(val);
+      }
+
+      if (btnCancel) {
+        btnCancel.addEventListener('click', () => close(isPrompt ? null : false));
+      }
+      btnOk.addEventListener('click', () => {
+        close(isPrompt ? (inp ? inp.value : '') : true);
+      });
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) close(isPrompt ? null : false);
+      });
+
+      if (inp) {
+        inp.focus();
+        inp.select();
+        inp.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            btnOk.click();
+          } else if (e.key === 'Escape') {
+            e.preventDefault();
+            if (btnCancel) btnCancel.click();
+            else close(null);
+          }
+        });
+      } else {
+        btnOk.focus();
+      }
+    });
+  }
+
+  function customConfirm({ title = 'Konfirmasi', message, okText = 'Lanjutkan', cancelText = 'Batal', danger = false }) {
+    return customDialog({ title, message, okText, cancelText, danger, isPrompt: false });
+  }
+
+  function customPrompt({ title, message, hint = '', placeholder = '', defaultValue = '', okText = 'Simpan', cancelText = 'Batal' }) {
+    return customDialog({ title, message, hint, placeholder, defaultValue, okText, cancelText, isPrompt: true });
+  }
+
   // ── Floating Action Popover Menu (3-dots ⋮) ─────────────────────────
   let menuAktif = null;
   function tutupAksiMenu() {
@@ -70,7 +149,7 @@
     pop.innerHTML = items.map(it => {
       if (it.divider) return '<div class="act-divider"></div>';
       const cls = 'act-item' + (it.danger ? ' act-danger' : '');
-      const ic = it.icon ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${it.icon}</svg>` : '';
+      const ic = it.icon ? `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${it.icon}</svg>` : '';
       if (it.href) {
         return `<a href="${it.href}" class="${cls}">${ic}<span>${it.label}</span></a>`;
       }
@@ -99,22 +178,22 @@
     const uName = esc(username);
     bukaMenuAksi(e, [
       { label: 'Edit Akun', act: `bukaUser(${id})`, icon: '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>' },
-      { label: 'Atur Saldo', act: `bukaSaldo(${id}, '${uName}')`, icon: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 12h12"/>' },
-      { label: isActive ? 'Matikan Akun' : 'Aktifkan Akun', act: `toggleAktif(${id}, ${isActive ? 0 : 1})`, icon: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>' },
+      { label: 'Atur Saldo', act: `bukaSaldo(${id}, '${uName}')`, icon: '<rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>' },
+      { label: isActive ? 'Matikan Akun' : 'Aktifkan Akun', act: `toggleAktif(${id}, ${isActive ? 0 : 1})`, icon: '<path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/>' },
       { divider: true },
-      { label: 'Hapus User', act: `hapusUser(${id}, '${uName}')`, danger: true, icon: '<path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>' }
+      { label: 'Hapus User', act: `hapusUser(${id}, '${uName}')`, danger: true, icon: '<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>' }
     ]);
   };
 
   window.menuBot = function (e, id, slug) {
     bukaMenuAksi(e, [
-      { label: 'Kontrol & Pairing', href: '/config/' + slug, icon: '<path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>' },
-      { label: 'Statistik Bot', href: '/bot/' + slug, icon: '<path d="M18 20V10M12 20V4M6 20v-6"/>' },
-      { label: 'Lihat Log', act: `bukaLog(${id})`, icon: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>' },
-      { label: 'Tambah Kuota', act: `aturKuota(${id})`, icon: '<circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/>' },
-      { label: 'Reset Kuota', act: `resetKuota(${id})`, icon: '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>' },
+      { label: 'Kontrol & Pairing', href: '/config/' + slug, icon: '<line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>' },
+      { label: 'Statistik Bot', href: '/bot/' + slug, icon: '<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>' },
+      { label: 'Lihat Log', act: `bukaLog(${id})`, icon: '<polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/>' },
+      { label: 'Tambah Kuota', act: `aturKuota(${id})`, icon: '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>' },
+      { label: 'Reset Kuota', act: `resetKuota(${id})`, icon: '<polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>' },
       { divider: true },
-      { label: 'Hapus Bot', act: `hapusBot(${id})`, danger: true, icon: '<path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>' }
+      { label: 'Hapus Bot', act: `hapusBot(${id})`, danger: true, icon: '<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>' }
     ]);
   };
 
@@ -208,14 +287,12 @@
    */
   async function aturKuota(id) {
     const nama = namaBot(id);
-    const jawab = prompt(
-      'Kuota tambahan untuk "' + nama + '" (dalam pesan).\n\n' +
-      '• Isi angka  → set kuota bonus sebanyak itu (di ATAS jatah paket)\n' +
-      '• Isi 0      → hapus kuota bonus\n' +
-      '• Kosongkan  → batal\n\n' +
-      'Catatan: ini TIDAK mengubah jatah paket dan tidak menghapus pemakaian.',
-      ''
-    );
+    const jawab = await customPrompt({
+      title: 'Atur Kuota Bonus',
+      message: `Atur kuota pesan tambahan untuk "${nama}".\nKuota ini ditambahkan di atas jatah paket bawaan.`,
+      placeholder: 'mis. 5000 (atau 0 untuk hapus)',
+      hint: 'Ketik angka bonus (mis. 5000) atau ketik 0 untuk menghapus bonus.'
+    });
     if (jawab === null || jawab.trim() === '') return;
 
     const jumlah = parseInt(jawab, 10);
@@ -225,18 +302,22 @@
       method: 'POST',
       body: JSON.stringify({ jumlah }),
     });
-    showToast(d?.message || 'Gagal', d?.ok ? 'success' : 'error');
+    showToast(d?.message || (d?.ok ? 'Kuota berhasil diperbarui' : 'Gagal'), d?.ok ? 'success' : 'error');
     if (d?.ok) muatBot();
   }
 
   /** Nolkan pemakaian kuota tanpa mengubah jatah paket maupun bonus. */
   async function resetKuota(id) {
     const nama = namaBot(id);
-    if (!confirm('Reset pemakaian kuota "' + nama + '"?\n\n' +
-      'Pesan yang sudah terpakai dianggap 0 lagi. Jatah paket & bonus tidak berubah.')) return;
+    const ok = await customConfirm({
+      title: 'Reset Pemakaian Kuota',
+      message: `Reset pemakaian kuota "${nama}" ke nol?\n\nPesan yang sudah terpakai akan dianggap 0 lagi. Jatah paket & bonus tidak berubah.`,
+      okText: 'Reset Sekarang'
+    });
+    if (!ok) return;
 
     const d = await api('/api/admin/bots/' + id + '/reset-kuota', { method: 'POST' });
-    showToast(d?.message || 'Gagal', d?.ok ? 'success' : 'error');
+    showToast(d?.message || (d?.ok ? 'Pemakaian kuota di-reset ke nol' : 'Gagal'), d?.ok ? 'success' : 'error');
     if (d?.ok) muatBot();
   }
 
@@ -364,7 +445,13 @@
   async function hapusUser(id, username) {
     const u = cacheUser.find((x) => x.id === Number(id));
     const name = (typeof username === 'string' && username ? username : null) || u?.username || ('User #' + id);
-    if (!confirm('Hapus permanen akun "' + name + '" beserta semua bot dan datanya?\n\nTindakan ini tidak bisa dibatalkan!')) return;
+    const ok = await customConfirm({
+      title: 'Hapus Akun Pengguna',
+      message: `Hapus permanen akun "${name}" beserta seluruh bot dan data terkait?\n\nTindakan ini permanen dan tidak bisa dibatalkan!`,
+      okText: 'Hapus Akun',
+      danger: true
+    });
+    if (!ok) return;
     const d = await api('/api/admin/users/' + id, { method: 'DELETE' });
     if (!d?.ok) return showToast(d?.message || 'Gagal menghapus user', 'error');
     showToast('User ' + name + ' berhasil dihapus', 'success');
@@ -403,7 +490,12 @@
   }
 
   async function konfirmasi(orderId) {
-    if (!confirm('Konfirmasi pembayaran ' + orderId + '? Paket langsung aktif.')) return;
+    const ok = await customConfirm({
+      title: 'Konfirmasi Pembayaran',
+      message: `Konfirmasi pembayaran pesanan "${orderId}"?\nPaket langganan user akan langsung diaktifkan.`,
+      okText: 'Konfirmasi'
+    });
+    if (!ok) return;
     const d = await api('/api/admin/billing/orders/' + orderId + '/confirm', { method: 'POST' });
     if (!d?.ok) return showToast(d?.message || 'Gagal konfirmasi', 'error');
     showToast('Pembayaran dikonfirmasi', 'success');
@@ -411,7 +503,11 @@
   }
 
   async function tolak(orderId) {
-    const alasan = prompt('Alasan penolakan (opsional):') ?? null;
+    const alasan = await customPrompt({
+      title: 'Tolak Pesanan',
+      message: `Tolak pesanan "${orderId}"? Masukkan alasan penolakan jika diperlukan.`,
+      placeholder: 'mis. Bukti transfer tidak valid / belum masuk'
+    });
     if (alasan === null) return;
     const d = await api('/api/admin/billing/orders/' + orderId + '/reject', {
       method: 'POST',
@@ -813,17 +909,26 @@
     const jumlah = parseInt(String(document.getElementById('f-adj-jumlah').value || '').replace(/[^\d-]/g, ''), 10);
     const alasan = (document.getElementById('f-adj-alasan').value || '').trim();
 
-    if (!Number.isInteger(jumlah) || jumlah === 0) { alert('Jumlah harus bilangan bulat dan tidak nol.'); return; }
-    // Divalidasi di UI cuma buat pesan cepat; server tetap wajib. Kalau aturannya
-    // berubah di server, UI ini tidak bisa jadi lubang.
-    if (!alasan) { alert('Alasan wajib diisi — tanpa itu, penyesuaian tidak bisa dipertanggungjawabkan.'); return; }
-    if (!confirm(`Ubah saldo user ini sebesar ${jumlah > 0 ? '+' : ''}${rupiah(jumlah)}?\n\nAlasan: ${alasan}`)) return;
+    if (!Number.isInteger(jumlah) || jumlah === 0) {
+      showToast('Jumlah harus bilangan bulat dan tidak nol.', 'error');
+      return;
+    }
+    if (!alasan) {
+      showToast('Alasan penyesuaian wajib diisi.', 'error');
+      return;
+    }
+    const ok = await customConfirm({
+      title: 'Sesuaikan Saldo',
+      message: `Ubah saldo user ini sebesar ${jumlah > 0 ? '+' : ''}${rupiah(jumlah)}?\n\nAlasan: ${alasan}`,
+      okText: 'Simpan Saldo'
+    });
+    if (!ok) return;
 
     const d = await api('/api/admin/wallet/users/' + saldoAktif + '/adjust', {
       method: 'POST', body: JSON.stringify({ jumlah, alasan }),
     });
-    if (!d?.ok) { alert(d?.message || 'Gagal menyimpan.'); return; }
-    alert(d.message || 'Saldo disesuaikan.');
+    if (!d?.ok) { showToast(d?.message || 'Gagal menyimpan saldo.', 'error'); return; }
+    showToast(d.message || 'Saldo berhasil disesuaikan.', 'success');
     document.getElementById('f-adj-jumlah').value = '';
     document.getElementById('f-adj-alasan').value = '';
     await muatLedgerSaldo();
@@ -834,7 +939,12 @@
     const teks = (document.getElementById('bc-teks').value || '').trim();
     const hasil = document.getElementById('bc-hasil');
     if (!teks) { hasil.textContent = 'Pesan masih kosong.'; return; }
-    if (!confirm('Kirim pesan ini ke SEMUA user aktif?')) return;
+    const ok = await customConfirm({
+      title: 'Kirim Pesan Siaran',
+      message: 'Kirim pesan siaran ini ke SEMUA pengguna aktif?',
+      okText: 'Kirim Sekarang'
+    });
+    if (!ok) return;
 
     hasil.textContent = 'Mengirim…';
     const d = await api('/api/admin/broadcast', {
@@ -842,26 +952,24 @@
       body: JSON.stringify({ teks }),
     });
     if (!d?.ok) { hasil.textContent = d?.message || 'Gagal mengirim.'; return; }
-    // Laporkan apa adanya — termasuk yang TIDAK sampai, dan alasannya.
     hasil.textContent = d.message;
     if (d.gagal === 0) document.getElementById('bc-teks').value = '';
-    muatAudit(); // aksi ini ikut terekam; tampilkan segera
+    muatAudit();
   }
 
-  // ── Hapus bot (admin) ──────────────────────────────────────────
-  // Endpoint-nya sudah ada sejak dulu (`DELETE /api/bots/:id`) dan
-  // `assertOwnership` di botController SUDAH admin-aware; yang hilang cuma
-  // tombolnya.
   async function hapusBot(id) {
     const nama = namaBot(id);
-    if (!confirm(
-      `Hapus bot "${nama}"?\n\n` +
-      `Folder sesinya ikut dihapus — bot ini harus scan QR ulang kalau dibuat lagi.\n` +
-      `Tindakan ini tidak bisa dibatalkan.`
-    )) return;
+    const ok = await customConfirm({
+      title: 'Hapus Bot',
+      message: `Hapus bot "${nama}" secara permanen?\n\nFolder sesi ikut dihapus dan bot harus scan QR ulang jika dibuat lagi. Tindakan ini tidak bisa dibatalkan.`,
+      okText: 'Hapus Bot',
+      danger: true
+    });
+    if (!ok) return;
 
     const d = await api('/api/bots/' + id, { method: 'DELETE' });
-    if (!d?.ok) { alert(d?.message || 'Gagal menghapus bot'); return; }
+    if (!d?.ok) return showToast(d?.message || 'Gagal menghapus bot', 'error');
+    showToast('Bot berhasil dihapus', 'success');
     muatBot();
   }
 
