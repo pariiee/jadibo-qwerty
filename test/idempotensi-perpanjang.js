@@ -117,7 +117,7 @@ palsukan('config/database.js', {
   incrementStat: async () => {},
 });
 palsukan('config/pricingStore.js', { plans: () => PAKET, getPlan: (id) => PAKET.find((p) => p.id === id) || PAKET[0] });
-palsukan('config/qrisku.js', {});
+palsukan('config/alpay.js', {});
 palsukan('engine/gatePaket.js', { segarkan: () => {} });
 palsukan('engine/kuota.js', { lupakanPeringatan: () => {}, sisaKuota: async () => 0 });
 palsukan('config/engineBus.js', { start: async () => {} });

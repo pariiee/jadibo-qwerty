@@ -87,7 +87,7 @@ palsukan('config/pricingStore.js', {
   getPlan: (id) => PAKET.find((p) => p.id === id) || PAKET[0],
   all: () => ({ plans: PAKET }),
 });
-palsukan('config/qrisku.js', {});
+palsukan('config/alpay.js', {});
 palsukan('engine/gatePaket.js', { segarkan: () => {}, kuotaHarian: () => 30, kuotaHabis: async () => false });
 palsukan('engine/kuota.js', {
   lupakanPeringatan: (id) => dilupakan.push(id),

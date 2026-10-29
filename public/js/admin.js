@@ -485,7 +485,7 @@
         '<td>' + (o.username || '—') + '</td>' +
         '<td>' + (o.plan_name || o.plan) + '</td>' +
         '<td>' + rupiah(o.amount) + '</td>' +
-        '<td>' + (o.method === 'manual' ? 'Manual' : 'QRISku') + '</td>' +
+        '<td>' + (o.method === 'manual' ? 'Manual' : 'Alpay') + '</td>' +
         '<td><span class="badge st-' + o.status + '">' + o.status + '</span>' + badgeGagal + '</td>' +
         '<td>' + tanggal(o.created_at) + '</td>' +
         '<td class="aksi">' + tombol + '</td>';

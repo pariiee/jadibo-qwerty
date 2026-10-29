@@ -5,11 +5,11 @@
  *
  * DUA opsi bayar, dipilih user:
  *   1. manual  — tampil QRIS statis, user scan sendiri, admin yang konfirmasi.
- *   2. gateway — QRISku bikin tagihan; status masuk sendiri lewat webhook.
+ *   2. gateway — Alpay bikin tagihan; status masuk sendiri lewat webhook.
  *
  * Status TIDAK di-polling. Sumber kebenaran = webhook (gateway) atau konfirmasi
- * admin (manual). Tersedia satu tombol "Cek status" yang dijatah 20 detik per
- * transaksi (config/qrisku.js) supaya akun QRISku tidak kena ban.
+ * admin (manual). Tersedia satu tombol "Cek status" yang dijatah 15 detik per
+ * transaksi (config/alpay.js).
  *
  * Idempotensi: penerapan paket hanya jalan saat status berpindah dari 'pending'.
  * UPDATE ... WHERE status = 'pending' + affectedRows === 1 — webhook ganda,
@@ -19,7 +19,7 @@ const crypto = require('crypto');
 const { pool } = require('../config/database');
 const pricingStore = require('../config/pricingStore');
 const { TRIAL } = require('../config/plan');
-const qrisku = require('../config/qrisku');
+const alpay = require('../config/alpay');
 
 function sendError(res, status, message) {
   return res.status(status).json({ ok: false, message });
@@ -342,8 +342,12 @@ async function checkout(req, res) {
       });
     }
 
-    // Gateway QRISku
-    const tagihan = await qrisku.buatTagihan({ amount: plan.price, method: 'shoppee' });
+    // Gateway Alpay QRIS Dinamis
+    const tagihan = await alpay.buatTagihan({
+      amount: plan.price,
+      customer_name: req.user.username,
+      note: 'Paket ' + plan.name,
+    });
     const kedaluwarsa = tagihan.expired_at ? new Date(tagihan.expired_at * 1000) : null;
 
     await pool.execute(
@@ -420,11 +424,11 @@ async function cekOrder(req, res) {
     if (order.method !== 'gateway' || !order.gateway_ref)
       return res.json({ ok: true, status: order.status, message: 'Menunggu konfirmasi admin' });
 
-    if (!qrisku.bolehCek(orderId))
+    if (!alpay.bolehCek(orderId))
       return res.json({ ok: true, status: order.status, message: 'Baru saja dicek. Tunggu sebentar lagi.' });
 
-    const data = await qrisku.status(order.gateway_ref);
-    if (String(data.status).toLowerCase() === 'paid') {
+    const data = await alpay.status(order.gateway_ref);
+    if (String(data.status).toLowerCase() === 'paid' || data.paid) {
       const hasil = await tandaiLunas(order.order_id, data);
       return res.json({ ok: true, status: 'paid', message: 'Pembayaran diterima', ...hasil });
     }
@@ -534,25 +538,26 @@ async function tandaiLunas(orderId, data) {
   return { plan: hasilPenerapan.plan, sampai: hasilPenerapan.sampai, kuota: hasilPenerapan.kuota };
 }
 
-// ─── POST /api/payment/webhook (QRISku) ───────────────────────────────────────
+// ─── POST /api/payment/webhook (Alpay Gateway) ────────────────────────────────
 // Badan mentah wajib utuh: tanda tangan dihitung dari byte asli, bukan JSON
 // yang sudah diparse ulang. Raw body dipasang di server.js (express.raw).
 
 async function webhook(req, res) {
   try {
     const raw = Buffer.isBuffer(req.body) ? req.body : Buffer.from(JSON.stringify(req.body || {}));
-    if (!qrisku.tandaTanganValid(raw, req.get('x-webhook-signature'))) {
+    if (!alpay.tandaTanganValid(raw, req.get('x-webhook-signature'))) {
       console.warn('[Billing] webhook: tanda tangan tidak cocok');
       return res.status(401).json({ ok: false, message: 'invalid signature' });
     }
 
     const p = JSON.parse(raw.toString('utf8'));
+    console.log('[Billing] Webhook verified:', p.event, p.data);
     const d = p.data || p;                       // bentuk payload: { event, data } atau datar
     const ref = d.id || d.payment_id || d.trxid || d.transaction_id;
     const status = String(d.status || p.event || '').toLowerCase();
 
     if (!ref) return res.json({ ok: true, ignored: 'tanpa id tagihan' });
-    if (!['paid', 'settlement', 'success', 'payment.paid', 'payment.success'].includes(status))
+    if (!['paid', 'settlement', 'success', 'payment.paid', 'payment.success'].includes(status) && !d.paid)
       return res.json({ ok: true, ignored: `event ${p.event || status}` });
 
     const [rows] = await pool.execute(
@@ -565,7 +570,7 @@ async function webhook(req, res) {
     return res.json({ ok: true });
   } catch (err) {
     console.error('[Billing] webhook error:', err.message);
-    // 200 supaya QRISku tidak mengulang terus; masalahnya sudah tercatat di log.
+    // 200 supaya gateway tidak mengulang terus; masalahnya sudah tercatat di log.
     return res.json({ ok: true });
   }
 }
@@ -635,7 +640,7 @@ async function adminSettings(req, res) {
     pay_mode: s.pay_mode,
     gateway_enabled: s.gateway_enabled,
     pengumuman: s.pengumuman || null,
-    gateway_configured: !!process.env.QRISKU_API_KEY && !!process.env.QRISKU_WEBHOOK_SECRET,
+    gateway_configured: !!process.env.ALPAY_API_KEY,
   });
 }
 

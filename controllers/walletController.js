@@ -30,7 +30,7 @@ const crypto = require('crypto');
 const { pool } = require('../config/database');
 const pricingStore = require('../config/pricingStore');
 const topup = require('../config/topup');
-const qrisku = require('../config/qrisku');
+const alpay = require('../config/alpay');
 
 const rupiah = (n) => 'Rp' + Number(n || 0).toLocaleString('id-ID');
 
@@ -216,7 +216,11 @@ async function buatOrderTopup(req, res) {
     }
 
     const orderId = buatOrderId();
-    const tagihan = await qrisku.buatTagihan({ amount: nominal, method: 'shoppee' });
+    const tagihan = await alpay.buatTagihan({
+      amount: nominal,
+      customer_name: req.user.username,
+      note: 'Top Up Saldo ' + nominal,
+    });
     const kedaluwarsa = tagihan.expired_at
       ? new Date(tagihan.expired_at * 1000)
       // Cadangan kalau gateway tidak mengirim `expired_at`: pakai masa QRIS dari

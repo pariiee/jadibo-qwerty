@@ -127,11 +127,11 @@ app.use(cors({
 
 app.use(cookieParser());
 
-// Webhook QRISku HARUS dapat badan mentah: tanda tangan dihitung dari byte asli.
+// Webhook Alpay HARUS dapat badan mentah: tanda tangan dihitung dari byte asli.
 // Jadi rute ini dipasang SEBELUM express.json — kalau tidak, JSON sudah diparse
 // dan byte aslinya hilang, verifikasi tidak akan pernah cocok.
 app.post(
-  '/api/payment/webhook',
+  ['/api/payment/webhook', '/webhook'],
   express.raw({ type: '*/*', limit: '256kb' }),
   billing.webhook
 );
