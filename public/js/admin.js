@@ -178,7 +178,7 @@
     rows.forEach((b) => {
       const tr = document.createElement('tr');
       tr.innerHTML =
-        '<td><b>' + esc(b.bot_name || '—') + '</b><br><small style="color:var(--mute)">' + esc(b.prefix || '.') + 'cmd</small></td>' +
+        '<td><b>' + esc(b.bot_name || '—') + '</b></td>' +
         '<td><b>' + esc(b.username || 'user#' + b.user_id) + '</b></td>' +
         '<td><span class="badge">' + esc(b.platform || 'whatsapp') + '</span></td>' +
         '<td>' + (b.is_running ? '<span class="dot on"></span> Online' : '<span class="dot off"></span> Offline') + '</td>' +
