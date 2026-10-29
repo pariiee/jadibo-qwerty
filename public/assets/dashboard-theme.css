@@ -549,10 +549,10 @@ details[open] .cmd-panah{transform:rotate(180deg)!important;color:var(--ink)!imp
 }
 
 /* ── Custom Select Glassmorphic (§Obsidian Glass) ──────────────────── */
-.custom-select-wrap{position:relative;display:inline-block;vertical-align:middle}
+.custom-select-wrap{position:relative;display:inline-block;vertical-align:middle;width:100%}
 .cs-trigger{
   display:inline-flex;align-items:center;justify-content:space-between;gap:10px;
-  background:var(--card)!important;border:1px solid var(--edge)!important;border-radius:999px!important;padding:0 18px!important;
+  background:var(--card)!important;border:1px solid var(--edge)!important;border-radius:12px!important;padding:0 14px!important;
   font-family:inherit;font-size:13px;font-weight:600;color:var(--ink)!important;
   box-shadow:var(--hl)!important;cursor:pointer;transition:all .2s ease;user-select:none;height:38px!important;min-height:38px!important;box-sizing:border-box;width:100%;
 }
@@ -561,28 +561,28 @@ details[open] .cmd-panah{transform:rotate(180deg)!important;color:var(--ink)!imp
   border-color:rgba(255,255,255,0.24)!important;
 }
 .cs-trigger.open{
-  border-color:rgba(255,255,255,0.32)!important;background:var(--panel)!important;
-  box-shadow:0 8px 24px rgba(0,0,0,0.4), var(--hl)!important;
+  border-color:#6366f1!important;background:var(--panel)!important;
+  box-shadow:0 0 0 2px rgba(99,102,241,.25), 0 8px 24px rgba(0,0,0,0.4)!important;
 }
 :root[data-theme="light"] .cs-trigger{
-  background:#f1f5f9!important;border:1px solid rgba(0,0,0,0.14)!important;
+  background:#ffffff!important;border:1px solid rgba(0,0,0,0.14)!important;
   color:#111426!important;box-shadow:0 1px 2px rgba(0,0,0,0.04)!important;
 }
 :root[data-theme="light"] .cs-trigger:hover{
-  background:#e2e8f0!important;border-color:rgba(0,0,0,0.22)!important;
+  background:#f8fafc!important;border-color:rgba(0,0,0,0.24)!important;
 }
 :root[data-theme="light"] .cs-trigger.open{
-  background:#e2e8f0!important;border-color:rgba(0,0,0,0.28)!important;
-  box-shadow:0 6px 16px rgba(0,0,0,0.08)!important;
+  background:#ffffff!important;border-color:#2563eb!important;
+  box-shadow:0 0 0 2px rgba(37,99,235,.2), 0 6px 16px rgba(0,0,0,0.08)!important;
 }
 .cs-label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left}
 .cs-arrow{width:14px;height:14px;stroke:var(--mute);transition:transform .2s ease;flex-shrink:0}
 .cs-trigger.open .cs-arrow{transform:rotate(180deg);stroke:var(--ink)}
 .cs-menu{
-  position:absolute;top:calc(100% + 6px);left:0;min-width:100%;width:max-content;max-width:320px;max-height:240px;
-  overflow-y:auto;background:rgba(20,22,30,0.82)!important;backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);
-  border:1px solid var(--edge)!important;border-radius:16px!important;padding:6px;
-  box-shadow:0 16px 40px rgba(0,0,0,0.55), var(--hl)!important;
+  position:absolute;top:calc(100% + 6px);left:0;min-width:100%;width:100%;max-width:100%;max-height:260px;
+  overflow-y:auto;background:#151824!important;
+  border:1px solid rgba(255,255,255,0.12)!important;border-radius:14px!important;padding:6px;
+  box-shadow:0 18px 45px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.06)!important;
   z-index:9999;display:none;flex-direction:column;gap:3px;box-sizing:border-box;
 }
 .cs-menu::-webkit-scrollbar{width:5px}
@@ -590,27 +590,101 @@ details[open] .cmd-panah{transform:rotate(180deg)!important;color:var(--ink)!imp
 .cs-menu.open{display:flex;animation:csFade .15s cubic-bezier(0.16,1,0.3,1)}
 @keyframes csFade{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
 .cs-option{
-  padding:8px 12px;border-radius:10px;font-size:13px;font-weight:500;color:var(--mute);
+  padding:9px 14px;border-radius:8px;font-size:13px;font-weight:500;color:var(--mute);
   cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;
-  transition:all .15s ease;user-select:none;white-space:nowrap;
+  transition:all .15s ease;user-select:none;
 }
 .cs-option:hover{background:rgba(255,255,255,0.08);color:var(--ink)}
-.cs-option.on{background:rgba(255,255,255,0.12);color:#fff;font-weight:600}
-.cs-option.on::after{content:'';display:inline-block;width:5px;height:5px;border-radius:50%;background:#fff;box-shadow:0 0 8px rgba(255,255,255,0.8)}
+.cs-option.on{background:rgba(99,102,241,0.15)!important;color:#818cf8!important;font-weight:600}
+.cs-option.on::after{
+  content:'';display:inline-block;width:14px;height:14px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23818cf8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
+  background-size:contain;background-repeat:no-repeat;background-position:center;
+}
 
 :root[data-theme="light"] .cs-menu{
   background:#ffffff!important;border:1px solid rgba(0,0,0,0.12)!important;
-  box-shadow:0 12px 32px rgba(15,23,42,0.12)!important;
+  box-shadow:0 14px 36px rgba(15,23,42,0.14), 0 0 0 1px rgba(0,0,0,0.05)!important;
 }
 :root[data-theme="light"] .cs-menu::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.15)}
 :root[data-theme="light"] .cs-option{color:#475569!important}
 :root[data-theme="light"] .cs-option:hover{background:#f1f5f9!important;color:#0f172a!important}
-:root[data-theme="light"] .cs-option.on{background:#e2e8f0!important;color:#0f172a!important;font-weight:600!important}
-:root[data-theme="light"] .cs-option.on::after{background:#0f172a!important;box-shadow:none!important}
+:root[data-theme="light"] .cs-option.on{background:rgba(37,99,235,0.1)!important;color:#2563eb!important;font-weight:600!important}
+:root[data-theme="light"] .cs-option.on::after{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
+}
 
 /* Fallback styling bila select asli masih sempat render */
-select.inp,select{background-color:rgba(255,255,255,0.05)!important;color:var(--ink)!important;border:1px solid var(--edge)!important;border-radius:14px!important}
-select.inp option,select option{background-color:#12141c!important;color:var(--ink)!important;padding:8px 12px!important}
+select.inp,select{
+  appearance:none;-webkit-appearance:none;
+  background-color:var(--card)!important;color:var(--ink)!important;
+  border:1px solid var(--edge)!important;border-radius:12px!important;
+  padding:0 36px 0 14px!important;height:38px!important;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")!important;
+  background-repeat:no-repeat!important;background-position:right 12px center!important;background-size:14px!important;
+}
+select.inp option,select option{background-color:#151824!important;color:#f1f5f9!important;padding:10px 14px!important}
+:root[data-theme="light"] select.inp,:root[data-theme="light"] select{background-color:#ffffff!important;color:#0f172a!important;border:1px solid rgba(0,0,0,0.14)!important}
+:root[data-theme="light"] select.inp option,:root[data-theme="light"] select option{background-color:#ffffff!important;color:#0f172a!important}
+
+/* ── Custom Styled Checkbox ────────────────────────────────────────── */
+input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 19px;
+  height: 19px;
+  border-radius: 6px;
+  border: 1.5px solid var(--edge) !important;
+  background: var(--card) !important;
+  cursor: pointer;
+  display: inline-grid;
+  place-content: center;
+  vertical-align: middle;
+  margin: 0;
+  transition: all 0.16s ease;
+  flex-shrink: 0;
+}
+input[type="checkbox"]:hover {
+  border-color: #6366f1 !important;
+}
+input[type="checkbox"]:checked {
+  background: #6366f1 !important;
+  border-color: #6366f1 !important;
+}
+input[type="checkbox"]:checked::before {
+  content: "";
+  width: 10px;
+  height: 6px;
+  border-left: 2px solid #ffffff;
+  border-bottom: 2px solid #ffffff;
+  transform: rotate(-45deg) translate(1px, -1px);
+}
+input[type="checkbox"]:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+}
+:root[data-theme="light"] input[type="checkbox"] {
+  background: #ffffff !important;
+  border: 1.5px solid rgba(0,0,0,0.2) !important;
+}
+:root[data-theme="light"] input[type="checkbox"]:checked {
+  background: #2563eb !important;
+  border-color: #2563eb !important;
+}
+
+/* ── Custom Styled Date Picker ─────────────────────────────────────── */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.8);
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity .15s;
+}
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+:root[data-theme="light"] input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.2);
+}
 
 /* ── Add Bot Card & Quota Progress in Dashboard ───────────────────── */
 .add-card{
