@@ -818,8 +818,9 @@
       const l = p.paket_langsung || { jumlah: 0, total: 0 };
       document.getElementById('saldo-pendapatan').innerHTML =
         kotak('Dari top up saldo', rupiah(t.total), `${t.jumlah} transaksi`) +
-        kotak('Dari paket langsung', rupiah(l.total), `${l.jumlah} transaksi`) +
-        `<p class="m-sub" style="margin:10px 0 0">${esc(p.catatan || '')}</p>`;
+        kotak('Dari paket langsung', rupiah(l.total), `${l.jumlah} transaksi`);
+      const noteEl = document.getElementById('saldo-pendapatan-note');
+      if (noteEl && p.catatan) noteEl.textContent = p.catatan;
     } else {
       document.getElementById('saldo-pendapatan').innerHTML = '<p class="m-sub" style="margin:0">Gagal memuat.</p>';
     }
@@ -827,12 +828,13 @@
     // ── Saldo beredar ──
     if (k?.ok) {
       document.getElementById('saldo-beredar').innerHTML =
-        `<div style="font-size:26px;font-weight:800;color:var(--ink);">${esc(k.saldo_beredar_text || rupiah(k.saldo_beredar))}</div>` +
-        '<p class="m-sub" style="margin:8px 0 0">Total saldo semua pengguna — merupakan kewajiban saldo aktif platform.</p>';
+        `<div style="font-size:28px;font-weight:800;color:var(--ink);letter-spacing:-0.5px;margin:8px 0;">${esc(k.saldo_beredar_text || rupiah(k.saldo_beredar))}</div>`;
 
       const kk = document.getElementById('saldo-konsistensi');
       if (k.konsisten) {
-        kk.innerHTML = '<p style="margin:0;color:#059669;font-weight:600">✓ Semua saldo pengguna cocok dengan riwayat mutasi.</p>';
+        kk.innerHTML = '<p style="margin:0;color:#059669;font-weight:600;display:flex;align-items:center;gap:6px;">' +
+          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>' +
+          'Semua saldo pengguna cocok dengan riwayat mutasi.</p>';
       } else {
         kk.innerHTML = '<p style="margin:0 0 8px;color:#b91c1c;font-weight:700">' +
           `⚠ Terdeteksi ${k.menyimpang.length} pengguna dengan selisih saldo vs mutasi</p>` +
@@ -862,13 +864,16 @@
               ? '<span class="badge st-paid">sukses</span>'
               : '<span class="badge">aktif</span>')
         : '<span class="muted">mati</span>';
-      const selisih = Number(u.selisih);
+      const selisih = Number(u.selisih || 0);
+      const selisihBadge = selisih === 0
+        ? '<span class="badge" style="background:rgba(16,185,129,.12);color:#059669;border:1px solid rgba(16,185,129,.25);font-size:11px;padding:2px 8px;font-weight:600;">Rp0 (Cocok)</span>'
+        : `<span class="badge" style="background:rgba(239,68,68,.12);color:#ef4444;border:1px solid rgba(239,68,68,.25);font-size:11px;padding:2px 8px;font-weight:700;">Selisih ${rupiah(selisih)}</span>`;
       return '<tr>' +
         `<td><b>${esc(u.username)}</b></td>` +
         `<td>${esc(u.plan || '—')}</td>` +
         `<td style="text-align:right;font-weight:700">${rupiah(u.saldo)}</td>` +
         `<td style="text-align:right" class="muted">${rupiah(u.jurnal_total)}<br><span style="font-size:11px">${u.jurnal_baris} baris</span></td>` +
-        `<td style="text-align:right;color:${selisih === 0 ? '#059669' : '#b91c1c'};font-weight:700">${selisih === 0 ? '✓' : rupiah(selisih)}</td>` +
+        `<td style="text-align:right">${selisihBadge}</td>` +
         `<td>${auto}</td>` +
         `<td class="aksi" style="text-align:right;"><button type="button" class="btn btn-outline btn-sm" onclick="bukaSaldo(${u.id}, '${esc(u.username)}')" style="height:28px;padding:0 12px;font-size:12px;border-radius:8px;">Atur Saldo</button></td>` +
         '</tr>';
