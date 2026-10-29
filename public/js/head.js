@@ -1,8 +1,9 @@
 // ── Tema (§10) ───────────────────────────────────────────────────────
-// Spec: mengikuti `prefers-color-scheme`, tombol tema menimpa lewat
-// `data-theme="light|dark"` di <html>. Kelas `dark` IKUT di-set karena
-// page.css/theme.css/motion.css masih punya 24 selector `html.dark ...`;
-// kalau cuma atributnya yang di-set, aturan-aturan itu berhenti jalan.
+if (window.__HEAD_JS_LOADED__) {
+  // Cegah binding listener ganda jika dimuat ulang
+} else {
+  window.__HEAD_JS_LOADED__ = true;
+}
 (function () {
   try {
     var simpan = localStorage.getItem('yb-theme');
@@ -130,6 +131,9 @@ window.botIdDariPath = function (pathname) {
 // Dulu `active` ditulis mati di sidebar.html (selalu "Dashboard"), jadi di
 // /pricing & /admin salah nyala.
 document.addEventListener('DOMContentLoaded', function () {
+  if (window.__SIDEBAR_BOUND__) return;
+  window.__SIDEBAR_BOUND__ = true;
+
   siapkanDrawer();
 
   // §8.1: keadaan awal sidebar. Di HP mulai mini; di desktop mulai penuh.
