@@ -180,7 +180,7 @@
       tr.innerHTML =
         '<td><b>' + esc(b.bot_name || '—') + '</b></td>' +
         '<td><b>' + esc(b.username || 'user#' + b.user_id) + '</b></td>' +
-        '<td><span class="badge">' + esc(b.platform || 'whatsapp') + '</span></td>' +
+        '<td><span class="badge">' + esc(b.platform === 'zapo' ? 'whatsapp' : (b.platform || 'whatsapp')) + '</span></td>' +
         '<td>' + (b.is_running ? '<span class="dot on"></span> Online' : '<span class="dot off"></span> Offline') + '</td>' +
         '<td>' + (b.received_count ?? 0) + ' / ' + (b.receive_limit || '∞') + (b.bonus_kuota > 0 ? ' <small style="color:var(--green,#10b981)">(+' + b.bonus_kuota + ')</small>' : '') + '</td>' +
         '<td><code style="background:rgba(18,20,43,.06);padding:3px 7px;border-radius:6px;font-weight:700">' + esc(b.prefix || '.') + '</code></td>' +

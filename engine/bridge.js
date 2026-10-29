@@ -9,7 +9,7 @@
  * tetap milik panel labs.
  *
  * Alur:
- *   1. User klik Start di panel labs (bot platform `zapo`).
+ *   1. User klik Start di panel labs (bot platform `whatsapp`).
  *   2. Worker panel labs nggak nyalain sendiri (lihat workers/botWorker.js:
  *      dia nolak bot platform lain), tapi nembak POST /internal/op di sini.
  *   3. App ini nyalain bot pakai engine zapo, lalu SEMUA event (log/QR/status)
@@ -26,7 +26,7 @@ const { rapikanError } = require('./pesanError');
 
 const WEB_URL = process.env.ENGINE_WEB_URL || 'http://127.0.0.1:3000';
 const KUNCI = process.env.INTERNAL_KEY;
-const PLATFORM_SINI = process.env.BRIDGE_PLATFORM || 'zapo';
+const PLATFORM_SINI = process.env.BRIDGE_PLATFORM || 'whatsapp';
 
 /**
  * Teruskan satu event engine ke panel labs. Kegagalan kirim cuma dicatat
