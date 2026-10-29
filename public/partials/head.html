@@ -8,6 +8,10 @@
       document.documentElement.dataset.theme = t;
       if (t === 'dark') document.documentElement.classList.add('dark');
       else document.documentElement.classList.remove('dark');
+
+      if (localStorage.getItem('yb-is-admin') === '1') {
+        document.documentElement.classList.add('is-admin');
+      }
     } catch (e) {}
   })();
 </script>
@@ -27,7 +31,7 @@
      Palet cuma boleh punya SATU sumber — kalau disebar ke theme.css dan
      glass.css, keduanya bisa saling bertentangan dan yang menang cuma
      ditentukan urutan muat. Lihat bagian 4 di page.css untuk radius permukaan. -->
-<link rel="stylesheet" href="/assets/palette.css?v=6.6" />
-<link rel="stylesheet" href="/assets/dashboard-theme.css?v=6.6" />
-<script src="/js/head.js?v=6.6" defer></script>
+<link rel="stylesheet" href="/assets/palette.css?v=6.7" />
+<link rel="stylesheet" href="/assets/dashboard-theme.css?v=6.7" />
+<script src="/js/head.js?v=6.7" defer></script>
 <script src="/js/act.js"></script>

@@ -533,6 +533,13 @@ body.page-bot nav.nav a{border-radius:999px}
 .app.mini .nav-parent span{display:none}
 .app.mini .nav-parent{justify-content:center;padding:11px}
 
+/* Sembunyikan navigasi user/konsumen untuk Admin */
+html.is-admin #nav-saldo,
+html.is-admin #nav-pricing,
+html.is-admin #nav-billing {
+  display: none !important;
+}
+
 body.page-dashboard nav.nav a.active,body.page-admin nav.nav a.active,
 body.page-pricing nav.nav a.active,body.page-command nav.nav a.active,
 body.page-billing nav.nav a.active,body.page-profil nav.nav a.active,

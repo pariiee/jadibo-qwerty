@@ -182,11 +182,46 @@ document.addEventListener('DOMContentLoaded', function () {
       if (pEmail) pEmail.textContent = u.email || (u.username + '@gmail.com');
       if (pRole) pRole.textContent = u.is_admin ? 'Admin' : (u.slots ? u.slots + ' Slot' : 'User');
       if (u.is_admin) {
+        localStorage.setItem('yb-is-admin', '1');
+        document.documentElement.classList.add('is-admin');
         var elNav = document.getElementById('nav-admin');
         if (elNav) elNav.style.display = '';
+
+        // Sembunyikan menu transaksi/saldo/pricing user dari sidebar admin
+        ['nav-saldo', 'nav-pricing', 'nav-billing'].forEach(function (id) {
+          var el = document.getElementById(id);
+          if (el) el.style.display = 'none';
+        });
+
+        // Alihkan admin jika membuka langsung halaman konsumen
+        var cp = location.pathname;
+        if (cp === '/saldo' || cp.indexOf('/saldo/') === 0) {
+          location.replace('/kountole/saldo');
+          return;
+        }
+        if (cp === '/pricing' || cp.indexOf('/pricing/') === 0) {
+          location.replace('/kountole/harga');
+          return;
+        }
+        if (cp === '/billing' || cp.indexOf('/billing/') === 0 || cp === '/invoice' || cp.indexOf('/invoice/') === 0) {
+          location.replace('/kountole/orders');
+          return;
+        }
+      } else {
+        localStorage.removeItem('yb-is-admin');
+        document.documentElement.classList.remove('is-admin');
       }
     }
   }).catch(function () {});
+
+  if (!window.logout) {
+    window.logout = function () {
+      localStorage.removeItem('yb-is-admin');
+      fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).finally(function () {
+        location.href = '/login';
+      });
+    };
+  }
 
   // Dropdown Accordion Manage di Sidebar
   var navAdminGroup = document.getElementById('nav-admin');
