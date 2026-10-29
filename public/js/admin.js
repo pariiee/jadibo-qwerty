@@ -209,7 +209,7 @@
     rows.forEach((u) => {
       const tr = document.createElement('tr');
       tr.innerHTML =
-        '<td><b>' + u.username + '</b><br><small>' + (u.email || '—') + '</small></td>' +
+        '<td><b>' + u.username + '</b>' + (u.email ? '<br><small>' + esc(u.email) + '</small>' : '') + '</td>' +
         '<td><span class="badge role-' + (u.role_efektif || u.role) + '">' + (u.role_label || u.role) + '</span></td>' +
         '<td>' + (u.plan_name || u.plan || 'Gratis') + '</td>' +
         '<td>' + tanggal(u.plan_expired_at) + '</td>' +
