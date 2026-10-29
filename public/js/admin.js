@@ -217,12 +217,19 @@
         '<td>' + (u.bot_count ?? u.slots_used ?? 0) + '</td>' +
         '<td>' + (u.is_active ? '<span class="dot on"></span> Aktif' : '<span class="dot off"></span> Nonaktif') + '</td>' +
         '<td class="aksi">' +
-          '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">' +
-            '<button class="btn btn-sm btn-outline" data-act="bukaUser(' + u.id + ')" title="Edit user, role, slot & password">Edit</button>' +
-            '<button class="btn btn-sm btn-outline" data-act="bukaSaldo(' + u.id + ',\'' + esc(u.username) + '\')" title="Atur saldo dompet">Saldo</button>' +
-            '<button class="btn btn-sm btn-outline" data-act="toggleAktif(' + u.id + ',' + (u.is_active ? 0 : 1) + ')">' +
-              (u.is_active ? 'Matikan' : 'Aktifkan') + '</button>' +
-            '<button class="btn btn-sm btn-danger" data-act="hapusUser(' + u.id + ',\'' + esc(u.username) + '\')" title="Hapus akun permanen">Hapus</button>' +
+          '<div class="aksi-group">' +
+            '<button class="btn btn-sm btn-outline" data-act="bukaUser(' + u.id + ')" title="Edit user, role, slot & password">' +
+              '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Edit' +
+            '</button>' +
+            '<button class="btn btn-sm btn-outline" data-act="bukaSaldo(' + u.id + ',\'' + esc(u.username) + '\')" title="Atur saldo dompet">' +
+              '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 12h12"/></svg> Saldo' +
+            '</button>' +
+            '<button class="btn btn-sm btn-outline" data-act="toggleAktif(' + u.id + ',' + (u.is_active ? 0 : 1) + ')" title="' + (u.is_active ? 'Nonaktifkan akun' : 'Aktifkan akun') + '">' +
+              (u.is_active ? 'Matikan' : 'Aktifkan') +
+            '</button>' +
+            '<button class="btn btn-sm btn-danger" data-act="hapusUser(' + u.id + ',\'' + esc(u.username) + '\')" title="Hapus akun permanen">' +
+              '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Hapus' +
+            '</button>' +
           '</div>' +
         '</td>';
       tb.appendChild(tr);
