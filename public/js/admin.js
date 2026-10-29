@@ -866,6 +866,9 @@
   }
 
   document.addEventListener('DOMContentLoaded', async () => {
+    const segmen = location.pathname.split('/').filter(Boolean)[1] || (location.hash || '').replace('#', '') || 'users';
+    tab(segmen);
+
     const d = await api('/api/auth/me');
     if (!d?.ok) { location.href = '/'; return; }
     if (!d.user.is_admin) {
@@ -881,8 +884,6 @@
     const pl = await api('/api/plans');
     if (pl?.ok) paket = pl.plans;
 
-    const segmen = location.pathname.split('/').filter(Boolean)[1] || (location.hash || '').replace('#', '') || 'users';
-    tab(segmen);
     muatSetelan();
 
     let syslogDebounce = null;
