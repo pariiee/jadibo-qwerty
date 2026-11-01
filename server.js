@@ -7,6 +7,15 @@
 
 require('dotenv').config();
 
+// Isolasi crash proses utama dari async error pustaka WhatsApp/DB pihak ketiga
+process.on('unhandledRejection', (reason) => {
+  console.error('[Process] Unhandled Rejection:', reason?.message || reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('[Process] Uncaught Exception:', err?.message || err);
+  if (err?.code === 'EADDRINUSE') process.exit(1);
+});
+
 // Guard boot: JWT_SECRET kosong = token siapa pun bisa ditandatangani sendiri.
 // Lebih baik gagal start daripada jalan dengan pintu kebuka.
 if (!process.env.JWT_SECRET) {
@@ -195,6 +204,15 @@ const topupLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Limiter registrasi: maks 5 akun per jam per IP untuk mencegah bot/spam akun fake
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  message: { ok: false, message: 'Batas pendaftaran akun tercapai (maksimal 5 akun per jam). Silakan coba lagi nanti.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Limiter kirim ulang verifikasi email: maks 3x per IP per jam agar tidak spam SMTP
 const resendLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
@@ -205,7 +223,7 @@ const resendLimiter = rateLimit({
 });
 
 // ─── Auth Routes ──────────────────────────────────────────────────────────────
-app.post('/api/auth/register', authLimiter, auth.register);
+app.post('/api/auth/register', registerLimiter, auth.register);
 app.post('/api/auth/login',    authLimiter, auth.login);
 app.post('/api/auth/logout',   auth.logout);
 app.get('/verify-email',       auth.verifyEmail);

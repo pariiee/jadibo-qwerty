@@ -23,12 +23,18 @@ const os = require('os');
 function cekKapasitasServer() {
   const freeMemMb = os.freemem() / (1024 * 1024);
   const totalMemMb = os.totalmem() / (1024 * 1024);
-  // ponytail: guard RAM sederhana, buffer 150MB OS/DB
-  const maxBots = Math.max(1, Math.floor((totalMemMb - 150) / 100));
+  const running = (typeof activeBots !== 'undefined' && activeBots) ? activeBots.size : 0;
+  const maxConfig = parseInt(process.env.MAX_RUNNING_BOTS, 10);
+  // ponytail: buffer 300MB untuk OS + MySQL + Redis, estimasi ~120MB per instans bot WA
+  const maxBots = Number.isInteger(maxConfig) && maxConfig > 0
+    ? maxConfig
+    : Math.max(1, Math.floor((totalMemMb - 300) / 120));
+
   return {
-    cukup: freeMemMb > 150,
+    cukup: freeMemMb > 200 && running < maxBots,
     freeMemMb: Math.round(freeMemMb),
     totalMemMb: Math.round(totalMemMb),
+    running,
     maxBots,
   };
 }
@@ -355,7 +361,10 @@ async function startBot(req, res) {
   try {
     const cap = cekKapasitasServer();
     if (!cap.cukup && req.user.role !== ADMIN_ROLE) {
-      return sendError(res, 503, `Kapasitas server VPS sedang penuh (RAM sisa ${cap.freeMemMb}MB). Tunggu beberapa saat.`);
+      if (cap.freeMemMb <= 200) {
+        return sendError(res, 503, `Kapasitas server sedang penuh (RAM sisa ${cap.freeMemMb}MB). Tunggu beberapa saat.`);
+      }
+      return sendError(res, 503, `Slot bot aktif di server sedang penuh (${cap.running}/${cap.maxBots} bot berjalan). Silakan coba beberapa saat lagi.`);
     }
 
     const bot = await assertOwnership(req, res, req.params.id);

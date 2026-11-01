@@ -106,35 +106,22 @@ function bolehCek(id) {
 }
 
 /**
- * Verifikasi tanda tangan webhook Alpay (HMAC-SHA256).
- * Header: x-webhook-signature (atau fallback x-signature, x-callback-signature)
+ * Verifikasi tanda tangan webhook Alpay (HMAC-SHA256 menggunakan API Key).
+ * Sesuai dokumentasi Alpay:
+ * const expected = crypto.createHmac('sha256', process.env.ALPAY_API_KEY).update(req.body).digest('hex');
  */
 function tandaTanganValid(rawBody, header) {
-  const secret = process.env.ALPAY_WEBHOOK_SECRET || KEY || process.env.ALPAY_API_KEY;
-  if (!secret || !header) return false;
+  const key = process.env.ALPAY_API_KEY || KEY || '';
+  if (!key || !header) return false;
 
-  const terima = String(header).replace(/^sha256=/i, '').trim();
-  if (!terima) return false;
+  const received = String(header).trim().toLowerCase();
+  const expected = crypto.createHmac('sha256', key).update(rawBody).digest('hex').toLowerCase();
 
-  const secrets = [secret, KEY, process.env.ALPAY_API_KEY].filter(Boolean);
-  const uniqueSecrets = [...new Set(secrets)];
-
-  for (const sec of uniqueSecrets) {
-    try {
-      const harapHex = crypto.createHmac('sha256', sec).update(rawBody).digest('hex');
-      const harapB64 = crypto.createHmac('sha256', sec).update(rawBody).digest('base64');
-
-      if (/^[0-9a-f]{64}$/i.test(terima)) {
-        if (crypto.timingSafeEqual(Buffer.from(terima.toLowerCase(), 'hex'), Buffer.from(harapHex, 'hex'))) {
-          return true;
-        }
-      }
-      if (terima === harapB64 || terima === harapHex) {
-        return true;
-      }
-    } catch {}
+  try {
+    return crypto.timingSafeEqual(Buffer.from(received, 'hex'), Buffer.from(expected, 'hex'));
+  } catch {
+    return received === expected;
   }
-  return false;
 }
 
 module.exports = { buatTagihan, status, cancel, bolehCek, tandaTanganValid, JEDA_CEK_MS };
