@@ -126,6 +126,11 @@ const DISCORD_SLASH_COMMANDS = [
         desc: 'Ubah prefix command bot',
         options: [{ name: 'prefix', desc: 'Prefix baru (misal !, ., $)', type: 3, required: true }],
       },
+      {
+        name: 'setautorole',
+        desc: 'Atur role default yang otomatis diberikan ke anggota baru',
+        options: [{ name: 'role', desc: 'Nama role (misal Member) atau ID Role', type: 3, required: true }],
+      },
     ],
   },
   {
@@ -214,6 +219,7 @@ async function handleDiscordInteraction(client, interaction, botData, botId) {
           { name: 'Prefix', value: `\`${botData.prefix || '!'}\``, inline: true },
           { name: 'Platform', value: 'Discord', inline: true },
           { name: 'Daily Limit', value: String(botData.daily_limit || 20), inline: true },
+          { name: 'Auto-Role', value: `\`${botData.discord_autorole || botData.main_groups || 'Member'}\``, inline: true },
           { name: 'Footer Text', value: botData.footer_text || 'Powered by qwertygate', inline: false },
         ],
       });
@@ -224,6 +230,14 @@ async function handleDiscordInteraction(client, interaction, botData, botId) {
         botData.prefix = newP;
         await pool.execute('UPDATE bots SET prefix = ? WHERE id = ?', [newP, botId]).catch(() => {});
         return ctx.reply(`✅ Prefix berhasil diubah menjadi: \`${newP}\``);
+      }
+    }
+    if (subCmd === 'setautorole') {
+      const r = interaction.options.getString('role');
+      if (r) {
+        botData.discord_autorole = r;
+        await pool.execute('UPDATE bots SET main_groups = ? WHERE id = ?', [r, botId]).catch(() => {});
+        return ctx.reply(`✅ Auto-Role default untuk anggota baru diatur ke: **${r}**`);
       }
     }
   }
@@ -291,6 +305,7 @@ async function startDiscordBot(botData) {
   }
 
   await logBot(botId, 'info', `Memulai bot Discord "${botData.bot_name}"...`);
+  botData.discord_autorole = botData.main_groups || 'Member';
 
   const client = new Client({
     intents: [
@@ -298,6 +313,7 @@ async function startDiscordBot(botData) {
       GatewayIntentBits.GuildMessages,
       GatewayIntentBits.MessageContent,
       GatewayIntentBits.DirectMessages,
+      GatewayIntentBits.GuildMembers,
     ],
   });
 
@@ -319,6 +335,55 @@ async function startDiscordBot(botData) {
     broadcast(botId, 'status', { status: 'connected', username: client.user.tag });
   });
 
+  // Auto-Role & Welcome Notification saat member baru bergabung
+  client.on('guildMemberAdd', async (member) => {
+    try {
+      const targetRole = botData.discord_autorole || botData.main_groups || 'Member';
+      const role = member.guild.roles.cache.find(
+        (r) => r.name.toLowerCase() === targetRole.toLowerCase() || r.id === targetRole
+      );
+      if (role && member.guild.members.me?.permissions.has('ManageRoles')) {
+        await member.roles.add(role).catch(() => {});
+        await logBot(botId, 'info', `[Auto-Role] Role "${role.name}" diberikan ke ${member.user.tag}`);
+      }
+
+      const welcomeChannel = member.guild.systemChannel || member.guild.channels.cache.find(
+        (c) => c.isTextBased() && (c.name.includes('welcome') || c.name.includes('selamat-datang') || c.name.includes('general') || c.name.includes('chat'))
+      );
+      if (welcomeChannel && welcomeChannel.permissionsFor(member.guild.members.me)?.has('SendMessages')) {
+        await welcomeChannel.send({
+          embeds: [{
+            title: `👋 Selamat Datang di ${member.guild.name}!`,
+            description: `Halo <@${member.id}>, selamat bergabung di server!\nKamu adalah member ke-**${member.guild.memberCount}**. Ketik \`/help\` untuk panduan bot.`,
+            color: 0x5865F2,
+            thumbnail: member.user.displayAvatarURL ? { url: member.user.displayAvatarURL({ dynamic: true }) } : undefined,
+            footer: { text: botData.footer_text || 'Powered by qwertygate' },
+            timestamp: new Date().toISOString(),
+          }],
+        }).catch(() => {});
+      }
+    } catch (err) {
+      console.warn(`[Bot ${botId}] guildMemberAdd error:`, err?.message || err);
+    }
+  });
+
+  // Goodbye notification saat member keluar
+  client.on('guildMemberRemove', async (member) => {
+    try {
+      const channel = member.guild.systemChannel || member.guild.channels.cache.find(
+        (c) => c.isTextBased() && (c.name.includes('goodbye') || c.name.includes('welcome') || c.name.includes('leave'))
+      );
+      if (channel && channel.permissionsFor(member.guild.members.me)?.has('SendMessages')) {
+        await channel.send({
+          embeds: [{
+            description: `👋 **${member.user.tag}** telah meninggalkan server. Total member sekarang: **${member.guild.memberCount}**.`,
+            color: 0xED4245,
+          }],
+        }).catch(() => {});
+      }
+    } catch {}
+  });
+
   client.on('messageCreate', (message) => {
     handleDiscordMessage(client, message, botData, botId).catch((err) => {
       logBot(botId, 'cmderr', `[error] ${err.message}`);
@@ -329,6 +394,13 @@ async function startDiscordBot(botData) {
     handleDiscordInteraction(client, interaction, botData, botId).catch((err) => {
       logBot(botId, 'cmderr', `[slash-err] ${err.message}`);
     });
+  });
+
+  client.on('shardDisconnect', () => {
+    logBot(botId, 'warn', 'Koneksi Discord Gateway terputus, mencoba rekoneksi...');
+  });
+  client.on('shardReconnecting', () => {
+    logBot(botId, 'info', 'Menghubungkan kembali ke Discord Gateway...');
   });
 
   client.on('error', (err) => {
