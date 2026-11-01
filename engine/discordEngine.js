@@ -139,6 +139,7 @@ const DISCORD_SLASH_COMMANDS = [
     subcommands: [
       { name: 'info', desc: 'Lihat jumlah member, owner, dan statistik server' },
       { name: 'roles', desc: 'Lihat daftar role yang ada di server' },
+      { name: 'verify_panel', desc: 'Kirim panel tombol verifikasi role anggota di channel ini' },
     ],
   },
 ];
@@ -267,6 +268,32 @@ async function handleDiscordInteraction(client, interaction, botData, botId) {
         color: 0x5865F2,
       });
     }
+    if (subCmd === 'verify_panel') {
+      const channel = interaction.channel;
+      const targetRole = botData.discord_autorole || botData.main_groups || 'Member';
+      if (!channel) return ctx.reply('Channel tidak valid.');
+      await channel.send({
+        embeds: [{
+          title: '🛡️ Verifikasi Anggota Server',
+          description: `Selamat datang di **${guild.name}**!\n\nUntuk membuka akses seluruh channel dan mendapatkan role **${targetRole}**, silakan klik tombol verifikasi di bawah ini.`,
+          color: 0x5865F2,
+          footer: { text: botData.footer_text || 'Powered by qwertygate' },
+        }],
+        components: [{
+          type: 1, // ActionRow
+          components: [{
+            type: 2, // Button
+            style: 3, // Success (Green)
+            label: 'Verifikasi Diri',
+            custom_id: 'verify_member',
+            emoji: { name: '✅' },
+          }],
+        }],
+      }).catch((e) => {
+        return ctx.reply(`Gagal mengirim panel: ${e.message}`);
+      });
+      return ctx.reply('✅ Panel verifikasi anggota berhasil dikirim ke channel ini.');
+    }
   }
 
   if (ctx.command === 'ping') return ctx.reply('🏓 Pong! (Discord Engine)');
@@ -390,10 +417,47 @@ async function startDiscordBot(botData) {
     });
   });
 
-  client.on('interactionCreate', (interaction) => {
-    handleDiscordInteraction(client, interaction, botData, botId).catch((err) => {
-      logBot(botId, 'cmderr', `[slash-err] ${err.message}`);
-    });
+  client.on('interactionCreate', async (interaction) => {
+    // 1. Handle Klik Tombol Verifikasi Server
+    if (interaction.isButton() && interaction.customId === 'verify_member') {
+      try {
+        const member = interaction.member;
+        const targetRole = botData.discord_autorole || botData.main_groups || 'Member';
+        const role = interaction.guild?.roles.cache.find(
+          (r) => r.name.toLowerCase() === targetRole.toLowerCase() || r.id === targetRole
+        );
+        if (!role) {
+          return interaction.reply({
+            content: `⚠️ Role verifikasi **"${targetRole}"** belum tersedia di server ini. Hubungi admin.`,
+            ephemeral: true,
+          });
+        }
+        if (member.roles.cache.has(role.id)) {
+          return interaction.reply({
+            content: `ℹ️ Kamu sudah terverifikasi dengan role **${role.name}**.`,
+            ephemeral: true,
+          });
+        }
+        await member.roles.add(role);
+        await logBot(botId, 'info', `[Verifikasi] ${member.user.tag} berhasil verifikasi -> role "${role.name}"`);
+        return interaction.reply({
+          content: `✅ Verifikasi sukses! Role **${role.name}** telah diberikan. Selamat datang di ${interaction.guild.name}!`,
+          ephemeral: true,
+        });
+      } catch (err) {
+        return interaction.reply({
+          content: `❌ Gagal membagikan role: ${err.message}. Pastikan posisi role bot di atas role target.`,
+          ephemeral: true,
+        }).catch(() => {});
+      }
+    }
+
+    // 2. Handle Chat Input Slash Command
+    if (interaction.isChatInputCommand()) {
+      handleDiscordInteraction(client, interaction, botData, botId).catch((err) => {
+        logBot(botId, 'cmderr', `[slash-err] ${err.message}`);
+      });
+    }
   });
 
   client.on('shardDisconnect', () => {
