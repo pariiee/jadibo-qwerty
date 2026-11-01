@@ -94,7 +94,7 @@ async function handleDiscordMessage(client, message, botData, botId) {
   }
 }
 
-// Built-in list of native Discord Slash Commands
+// Built-in list of native Discord Slash Commands (termasuk hierarki Subcommands)
 const DISCORD_SLASH_COMMANDS = [
   { name: 'help', desc: 'Tampilkan menu dan panduan command bot' },
   { name: 'ping', desc: 'Cek kecepatan respon bot' },
@@ -116,29 +116,77 @@ const DISCORD_SLASH_COMMANDS = [
   { name: 'translate', desc: 'Terjemahkan teks ke berbagai bahasa' },
   { name: 'ssweb', desc: 'Screenshot halaman website' },
   { name: 'quotes', desc: 'Quotes bijak acak' },
+  {
+    name: 'config',
+    desc: 'Pengaturan bot di server ini',
+    subcommands: [
+      { name: 'show', desc: 'Lihat info konfigurasi dan batas kuota bot' },
+      {
+        name: 'setprefix',
+        desc: 'Ubah prefix command bot',
+        options: [{ name: 'prefix', desc: 'Prefix baru (misal !, ., $)', type: 3, required: true }],
+      },
+    ],
+  },
+  {
+    name: 'server',
+    desc: 'Informasi dan utilitas server Discord',
+    subcommands: [
+      { name: 'info', desc: 'Lihat jumlah member, owner, dan statistik server' },
+      { name: 'roles', desc: 'Lihat daftar role yang ada di server' },
+    ],
+  },
 ];
 
 async function registerSlashCommands(client) {
   if (!client?.application?.commands) return;
-  const payload = DISCORD_SLASH_COMMANDS.map((c) => ({
-    name: c.name,
-    description: c.desc.slice(0, 100),
-    options: [{
-      name: 'query',
-      description: 'Teks, link, atau parameter pencarian',
-      type: 3, // STRING
-      required: false,
-    }],
-  }));
+  const payload = DISCORD_SLASH_COMMANDS.map((c) => {
+    if (c.subcommands) {
+      return {
+        name: c.name,
+        description: c.desc.slice(0, 100),
+        options: c.subcommands.map((s) => ({
+          name: s.name,
+          description: s.desc.slice(0, 100),
+          type: 1, // ApplicationCommandOptionType.Subcommand
+          options: (s.options || []).map((o) => ({
+            name: o.name,
+            description: o.desc.slice(0, 100),
+            type: o.type || 3,
+            required: !!o.required,
+          })),
+        })),
+      };
+    }
+    return {
+      name: c.name,
+      description: c.desc.slice(0, 100),
+      options: [{
+        name: 'query',
+        description: 'Teks, link, atau parameter pencarian',
+        type: 3, // ApplicationCommandOptionType.String
+        required: false,
+      }],
+    };
+  });
   await client.application.commands.set(payload);
 }
 
 async function handleDiscordInteraction(client, interaction, botData, botId) {
   if (!interaction.isChatInputCommand()) return;
-  await interaction.deferReply().catch(() => {});
 
-  const query = interaction.options.getString('query') || '';
-  const text = `${botData.prefix || '!'}${interaction.commandName}${query ? ' ' + query : ''}`.trim();
+  const subCmd = interaction.options.getSubcommand(false);
+  const isPrivate = interaction.commandName === 'config';
+  await interaction.deferReply({ ephemeral: isPrivate }).catch(() => {});
+
+  let text = '';
+  if (subCmd) {
+    const optVal = interaction.options.getString('prefix') || interaction.options.getString('query') || '';
+    text = `${botData.prefix || '!'}${interaction.commandName} ${subCmd}${optVal ? ' ' + optVal : ''}`.trim();
+  } else {
+    const query = interaction.options.getString('query') || '';
+    text = `${botData.prefix || '!'}${interaction.commandName}${query ? ' ' + query : ''}`.trim();
+  }
 
   try {
     await pool.execute("UPDATE stats SET stat_value = stat_value + 1 WHERE stat_key = 'total_messages'");
@@ -155,6 +203,58 @@ async function handleDiscordInteraction(client, interaction, botData, botId) {
     botData,
   });
 
+  // Built-in commands & Subcommands
+  if (interaction.commandName === 'config') {
+    if (subCmd === 'show') {
+      return ctx.replyEmbed({
+        title: `⚙️ Konfigurasi Bot: ${botData.bot_name}`,
+        description: `Berikut pengaturan bot aktif saat ini di dashboard:`,
+        color: 0x5865F2,
+        fields: [
+          { name: 'Prefix', value: `\`${botData.prefix || '!'}\``, inline: true },
+          { name: 'Platform', value: 'Discord', inline: true },
+          { name: 'Daily Limit', value: String(botData.daily_limit || 20), inline: true },
+          { name: 'Footer Text', value: botData.footer_text || 'Powered by qwertygate', inline: false },
+        ],
+      });
+    }
+    if (subCmd === 'setprefix') {
+      const newP = interaction.options.getString('prefix');
+      if (newP) {
+        botData.prefix = newP;
+        await pool.execute('UPDATE bots SET prefix = ? WHERE id = ?', [newP, botId]).catch(() => {});
+        return ctx.reply(`✅ Prefix berhasil diubah menjadi: \`${newP}\``);
+      }
+    }
+  }
+
+  if (interaction.commandName === 'server') {
+    const guild = interaction.guild;
+    if (!guild) return ctx.reply('Perintah ini hanya bisa dijalankan di dalam server/guild Discord.');
+
+    if (subCmd === 'info') {
+      return ctx.replyEmbed({
+        title: `🏰 Info Server: ${guild.name}`,
+        color: 0x5865F2,
+        thumbnail: guild.iconURL({ dynamic: true }) ? { url: guild.iconURL({ dynamic: true }) } : undefined,
+        fields: [
+          { name: 'Server ID', value: `\`${guild.id}\``, inline: true },
+          { name: 'Owner ID', value: `<@${guild.ownerId}>`, inline: true },
+          { name: 'Total Member', value: `${guild.memberCount || 'N/A'} user`, inline: true },
+          { name: 'Dibuat Pada', value: guild.createdAt ? guild.createdAt.toLocaleDateString('id-ID') : 'N/A', inline: false },
+        ],
+      });
+    }
+    if (subCmd === 'roles') {
+      const rolesList = guild.roles.cache.map((r) => r.name).filter((n) => n !== '@everyone').slice(0, 25).join(', ');
+      return ctx.replyEmbed({
+        title: `🎭 Roles di ${guild.name}`,
+        description: rolesList || 'Tidak ada role kustom.',
+        color: 0x5865F2,
+      });
+    }
+  }
+
   if (ctx.command === 'ping') return ctx.reply('🏓 Pong! (Discord Engine)');
   if (ctx.command === 'uptime') {
     const s = Math.floor(process.uptime());
@@ -168,7 +268,7 @@ async function handleDiscordInteraction(client, interaction, botData, botId) {
     try {
       const handled = await handler(ctx);
       if (handled) {
-        await logBot(botId, 'cmd', `[slash-cmd] /${ctx.command}`);
+        await logBot(botId, 'cmd', `[slash-cmd] /${ctx.command}${subCmd ? ' ' + subCmd : ''}`);
         return;
       }
     } catch (e) {
