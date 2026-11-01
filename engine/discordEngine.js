@@ -19,8 +19,19 @@ try {
   console.warn('[DiscordEngine] discord.js tidak terinstall — Discord engine disabled');
 }
 
+let voice = null;
+let playDl = null;
+try {
+  voice = require('@discordjs/voice');
+  playDl = require('play-dl');
+} catch (e) {
+  console.warn('[DiscordVoice] @discordjs/voice atau play-dl tidak tersedia:', e?.message || e);
+}
+
 // Map botId -> Discord Client instance
 const activeDiscordBots = new Map();
+// Map botId -> Map(guildId -> { player, connection, song })
+const botVoiceSessions = new Map();
 
 let _plugins = null;
 function getPlugins() {
@@ -150,6 +161,20 @@ const DISCORD_SLASH_COMMANDS = [
         desc: 'Kirim pengumuman resmi dengan format embed di channel ini',
         options: [{ name: 'pesan', desc: 'Isi pengumuman', type: 3, required: true }],
       },
+    ],
+  },
+  {
+    name: 'music',
+    desc: 'Pemutar musik voice channel server',
+    subcommands: [
+      {
+        name: 'play',
+        desc: 'Putar lagu dari YouTube / judul lagu ke dalam voice channel',
+        options: [{ name: 'query', desc: 'Judul lagu atau link YouTube', type: 3, required: true }],
+      },
+      { name: 'stop', desc: 'Hentikan pemutaran musik dan keluarkan bot dari voice channel' },
+      { name: 'pause', desc: 'Jeda sementara pemutaran lagu saat ini' },
+      { name: 'resume', desc: 'Lanjutkan kembali lagu yang sedang dijeda' },
     ],
   },
 ];
@@ -331,6 +356,97 @@ async function handleDiscordInteraction(client, interaction, botData, botId) {
     }
   }
 
+  if (interaction.commandName === 'music') {
+    if (!voice || !playDl) {
+      return ctx.reply('Fitur Voice Music belum aktif karena dependensi audio belum siap di server.');
+    }
+    const guild = interaction.guild;
+    if (!guild) return ctx.reply('Perintah musik hanya bisa digunakan di dalam server.');
+
+    const memberVoice = interaction.member?.voice?.channel;
+    if (!memberVoice && subCmd === 'play') {
+      return ctx.reply('⚠️ Kamu harus masuk ke Voice Channel terlebih dahulu untuk memutar musik!');
+    }
+
+    if (!botVoiceSessions.has(botId)) botVoiceSessions.set(botId, new Map());
+    const guildSessions = botVoiceSessions.get(botId);
+    let session = guildSessions.get(guild.id);
+
+    if (subCmd === 'play') {
+      const q = interaction.options.getString('query');
+      if (!q) return ctx.reply('Masukkan judul lagu atau URL YouTube.');
+
+      try {
+        const searchResults = await playDl.search(q, { limit: 1 });
+        if (!searchResults || !searchResults.length) {
+          return ctx.reply(`❌ Lagu tidak ditemukan untuk pencarian: "${q}"`);
+        }
+        const video = searchResults[0];
+
+        if (!session || !session.connection) {
+          const connection = voice.joinVoiceChannel({
+            channelId: memberVoice.id,
+            guildId: guild.id,
+            adapterCreator: guild.voiceAdapterCreator,
+          });
+          const player = voice.createAudioPlayer();
+          connection.subscribe(player);
+          session = { connection, player, channelId: memberVoice.id, song: null };
+          guildSessions.set(guild.id, session);
+
+          player.on('error', (err) => {
+            console.error(`[Bot ${botId}] Audio player error:`, err.message);
+          });
+          player.on(voice.AudioPlayerStatus.Idle, () => {
+            session.song = null;
+          });
+        }
+
+        const audioStream = await playDl.stream(video.url);
+        const resource = voice.createAudioResource(audioStream.stream, { inputType: audioStream.type });
+        session.player.play(resource);
+        session.song = video;
+
+        return ctx.replyEmbed({
+          title: '🎶 Sedang Memutar Lagu di Voice Channel',
+          description: `[${video.title}](${video.url})`,
+          color: 0x1DB954,
+          thumbnail: video.thumbnails?.[0]?.url ? { url: video.thumbnails[0].url } : undefined,
+          fields: [
+            { name: 'Channel', value: `🔊 <#${memberVoice.id}>`, inline: true },
+            { name: 'Durasi', value: video.durationRaw || 'Live', inline: true },
+            { name: 'Pemohon', value: `<@${interaction.user.id}>`, inline: true },
+          ],
+          footer: { text: botData.footer_text || 'Powered by qwertygate' },
+        });
+      } catch (err) {
+        return ctx.reply(`❌ Gagal memutar musik: ${err.message}`);
+      }
+    }
+
+    if (subCmd === 'stop') {
+      if (!session) return ctx.reply('Bot sedang tidak memutar musik di server ini.');
+      try {
+        session.player.stop();
+        session.connection.destroy();
+      } catch {}
+      guildSessions.delete(guild.id);
+      return ctx.reply('⏹️ Musik dihentikan dan bot telah keluar dari voice channel.');
+    }
+
+    if (subCmd === 'pause') {
+      if (!session) return ctx.reply('Bot sedang tidak memutar musik.');
+      session.player.pause();
+      return ctx.reply('⏸️ Musik dijeda sementara.');
+    }
+
+    if (subCmd === 'resume') {
+      if (!session) return ctx.reply('Bot sedang tidak memutar musik.');
+      session.player.unpause();
+      return ctx.reply('▶️ Melanjutkan pemutaran musik.');
+    }
+  }
+
   if (ctx.command === 'ping') return ctx.reply('🏓 Pong! (Discord Engine)');
   if (ctx.command === 'uptime') {
     const s = Math.floor(process.uptime());
@@ -376,6 +492,7 @@ async function startDiscordBot(botData) {
       GatewayIntentBits.MessageContent,
       GatewayIntentBits.DirectMessages,
       GatewayIntentBits.GuildMembers,
+      GatewayIntentBits.GuildVoiceStates,
     ],
   });
 
@@ -511,6 +628,13 @@ async function startDiscordBot(botData) {
 }
 
 async function stopDiscordBot(botId) {
+  const sessions = botVoiceSessions.get(botId);
+  if (sessions) {
+    for (const session of sessions.values()) {
+      try { session.player?.stop(); session.connection?.destroy(); } catch {}
+    }
+    botVoiceSessions.delete(botId);
+  }
   const client = activeDiscordBots.get(botId);
   if (client) {
     try { client.destroy(); } catch {}
