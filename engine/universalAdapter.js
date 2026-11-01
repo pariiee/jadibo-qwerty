@@ -50,14 +50,23 @@ function createUniversalClient(platform, rawBot, chatId, rawMsg) {
         // 2. Kirim pesan Discord (discord.js)
         if (platform === 'discord') {
           const channel = rawMsg?.channel || (rawBot.channels?.cache?.get ? rawBot.channels.cache.get(destId) : null);
-          if (!channel) return null;
+          const isInteraction = !!(rawMsg?.isChatInputCommand && rawMsg.isChatInputCommand());
+          if (!channel && !isInteraction) return null;
+
+          const deliver = async (data) => {
+            if (isInteraction) {
+              if (rawMsg.deferred || rawMsg.replied) return rawMsg.editReply(data);
+              return rawMsg.reply(data);
+            }
+            return channel.send(data);
+          };
 
           const sendSafeText = async (txt) => {
             const str = String(txt || '');
-            if (str.length <= 1950) return channel.send(str);
+            if (str.length <= 1950) return deliver(str);
             let last;
             for (let i = 0; i < str.length; i += 1900) {
-              last = await channel.send(str.slice(i, i + 1900));
+              last = await deliver(str.slice(i, i + 1900));
             }
             return last;
           };
@@ -67,7 +76,7 @@ function createUniversalClient(platform, rawBot, chatId, rawMsg) {
           }
           if (content.embed || content.embeds) {
             const embeds = content.embeds || [content.embed];
-            return channel.send({ content: content.text ? String(content.text).slice(0, 1950) : undefined, embeds });
+            return deliver({ content: content.text ? String(content.text).slice(0, 1950) : undefined, embeds });
           }
           if (content.interactiveMessage?.body?.text) {
             return sendSafeText(content.interactiveMessage.body.text);
@@ -83,7 +92,7 @@ function createUniversalClient(platform, rawBot, chatId, rawMsg) {
 
           if (files.length) {
             const caption = content.caption || content.text || '';
-            return channel.send({ content: caption ? String(caption).slice(0, 1950) : undefined, files });
+            return deliver({ content: caption ? String(caption).slice(0, 1950) : undefined, files });
           }
           if (content.type === 'reaction' && rawMsg?.react) {
             return rawMsg.react(content.emoji).catch(() => {});

@@ -94,6 +94,90 @@ async function handleDiscordMessage(client, message, botData, botId) {
   }
 }
 
+// Built-in list of native Discord Slash Commands
+const DISCORD_SLASH_COMMANDS = [
+  { name: 'help', desc: 'Tampilkan menu dan panduan command bot' },
+  { name: 'ping', desc: 'Cek kecepatan respon bot' },
+  { name: 'uptime', desc: 'Lihat durasi aktif bot' },
+  { name: 'menu', desc: 'Daftar semua menu dan kategori command' },
+  { name: 'ai', desc: 'Tanya jawab kecerdasan buatan (AI)' },
+  { name: 'tiktok', desc: 'Download video/audio TikTok tanpa watermark' },
+  { name: 'youtube', desc: 'Download video atau lagu dari YouTube' },
+  { name: 'play', desc: 'Cari dan putar lagu audio' },
+  { name: 'tourl', desc: 'Upload file media menjadi URL publik' },
+  { name: 'sticker', desc: 'Buat stiker dari gambar' },
+  { name: 'chord', desc: 'Cari kunci gitar lagu' },
+  { name: 'lirik', desc: 'Cari lirik lagu' },
+  { name: 'cuaca', desc: 'Cek prakiraan cuaca kota' },
+  { name: 'gempa', desc: 'Info gempa terkini BMKG' },
+  { name: 'stats', desc: 'Statistik performa dan kuota bot' },
+  { name: 'ig', desc: 'Download konten Instagram (Post/Reels)' },
+  { name: 'twit', desc: 'Download media Twitter / X' },
+  { name: 'translate', desc: 'Terjemahkan teks ke berbagai bahasa' },
+  { name: 'ssweb', desc: 'Screenshot halaman website' },
+  { name: 'quotes', desc: 'Quotes bijak acak' },
+];
+
+async function registerSlashCommands(client) {
+  if (!client?.application?.commands) return;
+  const payload = DISCORD_SLASH_COMMANDS.map((c) => ({
+    name: c.name,
+    description: c.desc.slice(0, 100),
+    options: [{
+      name: 'query',
+      description: 'Teks, link, atau parameter pencarian',
+      type: 3, // STRING
+      required: false,
+    }],
+  }));
+  await client.application.commands.set(payload);
+}
+
+async function handleDiscordInteraction(client, interaction, botData, botId) {
+  if (!interaction.isChatInputCommand()) return;
+  await interaction.deferReply().catch(() => {});
+
+  const query = interaction.options.getString('query') || '';
+  const text = `${botData.prefix || '!'}${interaction.commandName}${query ? ' ' + query : ''}`.trim();
+
+  try {
+    await pool.execute("UPDATE stats SET stat_value = stat_value + 1 WHERE stat_key = 'total_messages'");
+  } catch {}
+
+  const ctx = buildUniversalContext({
+    platform: 'discord',
+    bot: client,
+    chatId: interaction.channelId,
+    senderId: interaction.user.id,
+    pushName: interaction.user.globalName || interaction.user.username || 'Discord User',
+    text,
+    rawMsg: interaction,
+    botData,
+  });
+
+  if (ctx.command === 'ping') return ctx.reply('🏓 Pong! (Discord Engine)');
+  if (ctx.command === 'uptime') {
+    const s = Math.floor(process.uptime());
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    return ctx.reply(`⏰ Uptime: ${h}j ${m}m ${s % 60}d`);
+  }
+
+  const plugins = getPlugins();
+  for (const handler of plugins) {
+    try {
+      const handled = await handler(ctx);
+      if (handled) {
+        await logBot(botId, 'cmd', `[slash-cmd] /${ctx.command}`);
+        return;
+      }
+    } catch (e) {
+      console.warn(`[DiscordSlash] ${ctx.command}:`, e.message);
+    }
+  }
+  await ctx.reply(`Perintah /${ctx.command} berhasil dijalankan.`);
+}
+
 async function startDiscordBot(botData) {
   if (!Client) throw new Error('discord.js tidak terinstall');
 
@@ -125,6 +209,12 @@ async function startDiscordBot(botData) {
         status: 'online',
       });
     } catch {}
+    try {
+      await registerSlashCommands(client);
+      await logBot(botId, 'info', 'Slash commands auto-complete aktif');
+    } catch (e) {
+      console.warn(`[Bot ${botId}] Gagal register slash commands:`, e.message);
+    }
     await pool.execute("UPDATE bots SET status = 'connected', is_running = 1 WHERE id = ?", [botId]);
     broadcast(botId, 'status', { status: 'connected', username: client.user.tag });
   });
@@ -132,6 +222,12 @@ async function startDiscordBot(botData) {
   client.on('messageCreate', (message) => {
     handleDiscordMessage(client, message, botData, botId).catch((err) => {
       logBot(botId, 'cmderr', `[error] ${err.message}`);
+    });
+  });
+
+  client.on('interactionCreate', (interaction) => {
+    handleDiscordInteraction(client, interaction, botData, botId).catch((err) => {
+      logBot(botId, 'cmderr', `[slash-err] ${err.message}`);
     });
   });
 
