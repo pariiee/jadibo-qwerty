@@ -140,6 +140,16 @@ const DISCORD_SLASH_COMMANDS = [
       { name: 'info', desc: 'Lihat jumlah member, owner, dan statistik server' },
       { name: 'roles', desc: 'Lihat daftar role yang ada di server' },
       { name: 'verify_panel', desc: 'Kirim panel tombol verifikasi role anggota di channel ini' },
+      {
+        name: 'purge',
+        desc: 'Hapus pesan spam massal di channel ini (1-100 pesan)',
+        options: [{ name: 'count', desc: 'Jumlah pesan yang dihapus (1-100)', type: 4, required: true }],
+      },
+      {
+        name: 'announce',
+        desc: 'Kirim pengumuman resmi dengan format embed di channel ini',
+        options: [{ name: 'pesan', desc: 'Isi pengumuman', type: 3, required: true }],
+      },
     ],
   },
 ];
@@ -293,6 +303,31 @@ async function handleDiscordInteraction(client, interaction, botData, botId) {
         return ctx.reply(`Gagal mengirim panel: ${e.message}`);
       });
       return ctx.reply('✅ Panel verifikasi anggota berhasil dikirim ke channel ini.');
+    }
+    if (subCmd === 'purge') {
+      const channel = interaction.channel;
+      const count = Math.min(100, Math.max(1, interaction.options.getInteger('count') || 10));
+      if (!channel?.bulkDelete) return ctx.reply('Tidak bisa menghapus pesan di channel ini.');
+      const deleted = await channel.bulkDelete(count, true).catch((e) => {
+        return ctx.reply(`Gagal menghapus pesan: ${e.message}`);
+      });
+      return ctx.reply(`🧹 Berhasil membersihkan **${deleted?.size || count}** pesan terakhir.`);
+    }
+    if (subCmd === 'announce') {
+      const pesan = interaction.options.getString('pesan');
+      if (!pesan) return ctx.reply('Teks pengumuman tidak boleh kosong.');
+      await interaction.channel.send({
+        embeds: [{
+          title: '📢 PENGUMUMAN RESMI',
+          description: pesan,
+          color: 0xFEE75C,
+          footer: { text: `Diumumkan oleh ${interaction.user.tag} · ${botData.footer_text || 'Powered by qwertygate'}` },
+          timestamp: new Date().toISOString(),
+        }],
+      }).catch((e) => {
+        return ctx.reply(`Gagal mengirim pengumuman: ${e.message}`);
+      });
+      return ctx.reply('✅ Pengumuman berhasil disiarkan.');
     }
   }
 
