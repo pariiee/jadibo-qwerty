@@ -104,13 +104,16 @@ function maskToken(token) {
   return `${parts[0]}:${masked}`;
 }
 
-function getDiscordInviteUrl(token) {
+function getDiscordInviteUrl(token, perms = 'standard') {
   if (!token) return null;
   try {
     const part = String(token).split('.')[0];
     const decoded = Buffer.from(part, 'base64').toString('utf8');
     if (/^\d{16,21}$/.test(decoded)) {
-      return `https://discord.com/oauth2/authorize?client_id=${decoded}&permissions=8&scope=bot%20applications.commands`;
+      // standard = 412317243456 (View, Send, Embeds, Attach Files, History, Reactions, Slash Cmds — tanpa bahaya Administrator)
+      // admin    = 8 (Administrator)
+      const p = perms === 'admin' ? '8' : '412317243456';
+      return `https://discord.com/oauth2/authorize?client_id=${decoded}&permissions=${p}&scope=bot%20applications.commands`;
     }
   } catch {}
   return null;
@@ -120,7 +123,8 @@ function publicBot(bot) {
   if (!bot) return bot;
   const { telegram_token, discord_token, ...rest } = bot;
   const rawToken = discord_token || (bot.platform === 'discord' ? telegram_token : null);
-  const discord_invite_url = bot.platform === 'discord' ? getDiscordInviteUrl(rawToken) : null;
+  const discord_invite_url = bot.platform === 'discord' ? getDiscordInviteUrl(rawToken, 'standard') : null;
+  const discord_invite_admin_url = bot.platform === 'discord' ? getDiscordInviteUrl(rawToken, 'admin') : null;
   // `public_id` diteruskan APA ADANYA (bisa null untuk bot lama) — UI memakai
   // `slug` yang sudah diisi di bawah, bukan kolom mentahnya.
   return {
@@ -128,6 +132,7 @@ function publicBot(bot) {
     telegram_token: maskToken(telegram_token),
     discord_token: maskToken(discord_token),
     discord_invite_url,
+    discord_invite_admin_url,
   };
 }
 

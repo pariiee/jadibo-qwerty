@@ -119,6 +119,12 @@ async function startDiscordBot(botData) {
 
   client.once('ready', async () => {
     await logBot(botId, 'info', `Terhubung sebagai ${client.user.tag}`);
+    try {
+      client.user.setPresence({
+        activities: [{ name: `${botData.prefix || '!'}help | ${botData.bot_name}`, type: 0 }],
+        status: 'online',
+      });
+    } catch {}
     await pool.execute("UPDATE bots SET status = 'connected', is_running = 1 WHERE id = ?", [botId]);
     broadcast(botId, 'status', { status: 'connected', username: client.user.tag });
   });

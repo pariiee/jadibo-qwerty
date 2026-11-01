@@ -64,12 +64,18 @@
     const btnStats = document.getElementById('btn-stats');
     if (btnStats) btnStats.href = '/bot/' + botHref(b);
     const btnInviteDc = document.getElementById('btn-invite-dc');
+    const btnInviteDcAdmin = document.getElementById('btn-invite-dc-admin');
     if (btnInviteDc) {
       if (b.platform === 'discord' && b.discord_invite_url) {
         btnInviteDc.href = b.discord_invite_url;
         btnInviteDc.style.display = 'inline-flex';
+        if (btnInviteDcAdmin && b.discord_invite_admin_url) {
+          btnInviteDcAdmin.href = b.discord_invite_admin_url;
+          btnInviteDcAdmin.style.display = 'inline-flex';
+        }
       } else {
         btnInviteDc.style.display = 'none';
+        if (btnInviteDcAdmin) btnInviteDcAdmin.style.display = 'none';
       }
     }
     const isTokenBot = b.platform === 'telegram' || b.platform === 'discord';

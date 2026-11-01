@@ -52,14 +52,28 @@ function createUniversalClient(platform, rawBot, chatId, rawMsg) {
           const channel = rawMsg?.channel || (rawBot.channels?.cache?.get ? rawBot.channels.cache.get(destId) : null);
           if (!channel) return null;
 
+          const sendSafeText = async (txt) => {
+            const str = String(txt || '');
+            if (str.length <= 1950) return channel.send(str);
+            let last;
+            for (let i = 0; i < str.length; i += 1900) {
+              last = await channel.send(str.slice(i, i + 1900));
+            }
+            return last;
+          };
+
           if (typeof content === 'string') {
-            return channel.send(content);
+            return sendSafeText(content);
+          }
+          if (content.embed || content.embeds) {
+            const embeds = content.embeds || [content.embed];
+            return channel.send({ content: content.text ? String(content.text).slice(0, 1950) : undefined, embeds });
           }
           if (content.interactiveMessage?.body?.text) {
-            return channel.send(content.interactiveMessage.body.text);
+            return sendSafeText(content.interactiveMessage.body.text);
           }
           if (content.text) {
-            return channel.send(content.text);
+            return sendSafeText(content.text);
           }
           const files = [];
           if (content.image) files.push({ attachment: content.image, name: 'image.jpg' });
@@ -68,12 +82,13 @@ function createUniversalClient(platform, rawBot, chatId, rawMsg) {
           if (content.document) files.push({ attachment: content.document, name: content.fileName || 'file.bin' });
 
           if (files.length) {
-            return channel.send({ content: content.caption || content.text || '', files });
+            const caption = content.caption || content.text || '';
+            return channel.send({ content: caption ? String(caption).slice(0, 1950) : undefined, files });
           }
           if (content.type === 'reaction' && rawMsg?.react) {
             return rawMsg.react(content.emoji).catch(() => {});
           }
-          return channel.send(String(content));
+          return sendSafeText(String(content));
         }
       },
       async downloadBytes() {
@@ -131,6 +146,20 @@ function buildUniversalContext({ platform, bot, chatId, senderId, pushName, text
     reply: async (replyText) => {
       const footer = botData?.footer_text ? `\n\n_${botData.footer_text}_` : '';
       return universalClient.message.send(jid, `${replyText}${footer}`.trim());
+    },
+    replyEmbed: async (embedData) => {
+      if (platform === 'discord') {
+        return universalClient.message.send(jid, { embed: embedData });
+      }
+      let txt = '';
+      if (embedData.title) txt += `*${embedData.title}*\n`;
+      if (embedData.description) txt += `${embedData.description}\n`;
+      if (Array.isArray(embedData.fields)) {
+        for (const f of embedData.fields) {
+          txt += `\n*${f.name}*: ${f.value}`;
+        }
+      }
+      return universalClient.message.send(jid, txt.trim());
     },
     react: async (emoji) => {
       if (platform === 'discord' && rawMsg?.react) {
