@@ -396,9 +396,11 @@
   }
 
   async function toggleAktif(id, aktif) {
+    id = parseInt(id, 10);
+    if (!id) return showToast('ID user tidak valid', 'error');
     const d = await api('/api/admin/users/' + id, {
       method: 'PATCH',
-      body: JSON.stringify({ is_active: aktif })
+      body: JSON.stringify({ is_active: !!aktif })
     });
     if (!d?.ok) return showToast(d?.message || 'Gagal ubah status', 'error');
     showToast(aktif ? 'User diaktifkan' : 'User dimatikan', 'success');

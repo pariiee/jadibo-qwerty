@@ -68,6 +68,14 @@ const TABLES = {
     // dimatikan cron tetap mati walau paketnya sudah dibayar.
     ['stop_reason',    "VARCHAR(32) DEFAULT NULL"],
   ],
+  admin_log: [
+    ['user_id',    "INT UNSIGNED DEFAULT NULL"],
+    ['username',   "VARCHAR(64) DEFAULT NULL"],
+    ['method',     "VARCHAR(8) NOT NULL"],
+    ['path',       "VARCHAR(255) NOT NULL"],
+    ['status',     "SMALLINT UNSIGNED DEFAULT NULL"],
+    ['ip',         "VARCHAR(64) DEFAULT NULL"],
+  ],
   rpg_members: [
     // tambahan RPG yang dipakai kode
     ['bank_money',     "BIGINT NOT NULL DEFAULT 0"],

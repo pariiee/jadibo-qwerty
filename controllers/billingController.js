@@ -548,15 +548,20 @@ async function tandaiLunas(orderId, data) {
 async function webhook(req, res) {
   try {
     const raw = Buffer.isBuffer(req.body) ? req.body : Buffer.from(JSON.stringify(req.body || {}));
-    if (!alpay.tandaTanganValid(raw, req.get('x-webhook-signature'))) {
+    const signature = req.get('x-webhook-signature')
+      || req.get('x-signature')
+      || req.get('x-callback-signature')
+      || req.get('signature');
+
+    if (!alpay.tandaTanganValid(raw, signature)) {
       console.warn('[Billing] webhook: tanda tangan tidak cocok');
       return res.status(401).json({ ok: false, message: 'invalid signature' });
     }
 
     const p = JSON.parse(raw.toString('utf8'));
-    console.log('[Billing] Webhook verified:', p.event, p.data);
+    console.log('[Billing] Webhook verified:', JSON.stringify(p));
     const d = p.data || p;                       // bentuk payload: { event, data } atau datar
-    const ref = d.id || d.payment_id || d.trxid || d.transaction_id;
+    const ref = d.id || d.payment_id || d.trxid || d.transaction_id || d.reference_id || d.merchant_ref || d.order_id;
     const status = String(d.status || p.event || '').toLowerCase();
 
     if (!ref) return res.json({ ok: true, ignored: 'tanpa id tagihan' });
@@ -564,8 +569,8 @@ async function webhook(req, res) {
       return res.json({ ok: true, ignored: `event ${p.event || status}` });
 
     const [rows] = await pool.execute(
-      'SELECT order_id FROM orders WHERE gateway_ref = ? LIMIT 1',
-      [String(ref)]
+      'SELECT order_id FROM orders WHERE gateway_ref = ? OR order_id = ? LIMIT 1',
+      [String(ref), String(ref)]
     );
     if (rows.length === 0) return res.json({ ok: true, ignored: 'order tidak dikenal' });
 

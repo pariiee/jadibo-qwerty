@@ -609,7 +609,8 @@ async function listUsers(req, res) {
 
 async function updateUser(req, res) {
   try {
-    const { id } = req.params;
+    const id = parseInt(req.params.id, 10);
+    if (!Number.isInteger(id) || id <= 0) return sendError(res, 400, 'ID user tidak valid');
     const { is_active, role, password, plan, plan_expired_at, plan_slots } = req.body;
     const sets = [];
     const vals = [];
@@ -619,12 +620,12 @@ async function updateUser(req, res) {
     // memberikannya lewat kolom role akan langsung hilang saat roleOf() jalan.
     if (role && ['user', ADMIN_ROLE].includes(role)) {
       // Jangan sampai admin mengunci dirinya sendiri keluar dari dashboard.
-      if (Number(id) === Number(req.user.id) && role !== ADMIN_ROLE)
+      if (id === Number(req.user.id) && role !== ADMIN_ROLE)
         return sendError(res, 400, 'Tidak bisa menurunkan akun sendiri');
       sets.push('role = ?'); vals.push(role);
     }
     if (is_active !== undefined) {
-      if (Number(id) === Number(req.user.id) && !is_active)
+      if (id === Number(req.user.id) && !is_active)
         return sendError(res, 400, 'Tidak bisa menonaktifkan akun sendiri');
       sets.push('is_active = ?'); vals.push(is_active ? 1 : 0);
     }

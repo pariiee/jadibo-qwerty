@@ -106,20 +106,40 @@ function bolehCek(id) {
 }
 
 /**
- * Verifikasi tanda tangan webhook (HMAC-SHA256 menggunakan API Key).
- * Header: x-webhook-signature
+ * Verifikasi tanda tangan webhook (HMAC-SHA256).
+ * Mendukung ALPAY_WEBHOOK_SECRET, QRISKU_WEBHOOK_SECRET, atau ALPAY_API_KEY.
+ * Header: x-webhook-signature, x-signature, x-callback-signature
  */
 function tandaTanganValid(rawBody, header) {
-  if (!KEY) return false;
-  const terima = String(header || '').replace(/^sha256=/i, '').trim().toLowerCase();
-  if (!/^[0-9a-f]{64}$/.test(terima)) return false;
+  const secret = process.env.ALPAY_WEBHOOK_SECRET
+    || process.env.QRISKU_WEBHOOK_SECRET
+    || KEY
+    || process.env.QRISKU_API_KEY;
+  if (!secret) return false;
+  if (!header) return false;
 
-  const harap = crypto.createHmac('sha256', KEY).update(rawBody).digest('hex');
-  try {
-    return crypto.timingSafeEqual(Buffer.from(terima, 'hex'), Buffer.from(harap, 'hex'));
-  } catch {
-    return false;
+  const terima = String(header).replace(/^sha256=/i, '').trim();
+  if (!terima) return false;
+
+  const secrets = [secret, KEY, process.env.ALPAY_API_KEY, process.env.QRISKU_API_KEY].filter(Boolean);
+  const uniqueSecrets = [...new Set(secrets)];
+
+  for (const sec of uniqueSecrets) {
+    try {
+      const harapHex = crypto.createHmac('sha256', sec).update(rawBody).digest('hex');
+      const harapB64 = crypto.createHmac('sha256', sec).update(rawBody).digest('base64');
+
+      if (/^[0-9a-f]{64}$/i.test(terima)) {
+        if (crypto.timingSafeEqual(Buffer.from(terima.toLowerCase(), 'hex'), Buffer.from(harapHex, 'hex'))) {
+          return true;
+        }
+      }
+      if (terima === harapB64 || terima === harapHex) {
+        return true;
+      }
+    } catch {}
   }
+  return false;
 }
 
 module.exports = { buatTagihan, status, cancel, bolehCek, tandaTanganValid, JEDA_CEK_MS };
