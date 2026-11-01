@@ -4909,6 +4909,23 @@ ${rapikanError(e)}`);
         // live_photo & video punya stream mp4 berdurasi -> prioritas kirim video
         const isPhoto = (res.postType === 'photo' || res.type === 'image' || (!uniqueCandidateUrls.length && images.length > 0)) && res.postType !== 'video' && res.postType !== 'live_photo';
 
+        const kirimAudioTt = async () => {
+          const audioUrl = res.download?.audio || res.music?.url || res.music?.play_url || res.audio;
+          if (!audioUrl) return;
+          try {
+            const aRes = await axios.get(audioUrl, { headers: ttHeaders, responseType: 'arraybuffer', timeout: 45000 });
+            if (aRes.data && aRes.data.length > 500) {
+              await client.message.send(jid, {
+                type: 'audio',
+                media: Buffer.from(aRes.data),
+                mimetype: 'audio/mpeg',
+              });
+            }
+          } catch (err) {
+            console.error(`[tt audio error]: ${err.message}`);
+          }
+        };
+
         // ── Photomode (slide foto) → kirim tiap gambar ────────────────────────
         if (isPhoto && images.length) {
           let terkirim = 0;
@@ -4929,6 +4946,7 @@ ${rapikanError(e)}`);
             }
           }
           if (terkirim > 0) {
+            await kirimAudioTt();
             await react(mess.reactSuccess);
             return true;
           }
@@ -4959,6 +4977,7 @@ ${rapikanError(e)}`);
           caption,
           ...(thumb ? { jpegThumbnail: thumb } : {}),
         });
+        await kirimAudioTt();
         await react(mess.reactSuccess);
       } catch (e) {
         await react(mess.reactError);
