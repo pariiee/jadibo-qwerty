@@ -169,10 +169,12 @@ const DISCORD_SLASH_COMMANDS = [
     subcommands: [
       {
         name: 'play',
-        desc: 'Putar lagu dari YouTube / judul lagu ke dalam voice channel',
+        desc: 'Putar lagu atau tambahkan ke antrean playlist',
         options: [{ name: 'query', desc: 'Judul lagu atau link YouTube', type: 3, required: true }],
       },
-      { name: 'stop', desc: 'Hentikan pemutaran musik dan keluarkan bot dari voice channel' },
+      { name: 'skip', desc: 'Lewati lagu saat ini dan putar antrean berikutnya' },
+      { name: 'queue', desc: 'Lihat daftar antrean lagu saat ini' },
+      { name: 'stop', desc: 'Hentikan musik, bersihkan antrean, dan keluar dari voice channel' },
       { name: 'pause', desc: 'Jeda sementara pemutaran lagu saat ini' },
       { name: 'resume', desc: 'Lanjutkan kembali lagu yang sedang dijeda' },
     ],
@@ -372,6 +374,13 @@ async function handleDiscordInteraction(client, interaction, botData, botId) {
     const guildSessions = botVoiceSessions.get(botId);
     let session = guildSessions.get(guild.id);
 
+    const playSongStream = async (targetSession, videoInfo) => {
+      targetSession.song = videoInfo;
+      const audioStream = await playDl.stream(videoInfo.url);
+      const resource = voice.createAudioResource(audioStream.stream, { inputType: audioStream.type });
+      targetSession.player.play(resource);
+    };
+
     if (subCmd === 'play') {
       const q = interaction.options.getString('query');
       if (!q) return ctx.reply('Masukkan judul lagu atau URL YouTube.');
@@ -391,21 +400,58 @@ async function handleDiscordInteraction(client, interaction, botData, botId) {
           });
           const player = voice.createAudioPlayer();
           connection.subscribe(player);
-          session = { connection, player, channelId: memberVoice.id, song: null };
+          session = { connection, player, channelId: memberVoice.id, song: null, queue: [], textChannel: interaction.channel };
           guildSessions.set(guild.id, session);
 
           player.on('error', (err) => {
             console.error(`[Bot ${botId}] Audio player error:`, err.message);
           });
-          player.on(voice.AudioPlayerStatus.Idle, () => {
+          player.on(voice.AudioPlayerStatus.Idle, async () => {
             session.song = null;
+            if (session.queue.length > 0) {
+              const nextSong = session.queue.shift();
+              try {
+                await playSongStream(session, nextSong);
+                if (session.textChannel?.send) {
+                  session.textChannel.send({
+                    embeds: [{
+                      title: '▶️ Memutar Lagu Berikutnya dari Playlist',
+                      description: `[${nextSong.title}](${nextSong.url})`,
+                      color: 0x1DB954,
+                      fields: [
+                        { name: 'Durasi', value: nextSong.durationRaw || 'N/A', inline: true },
+                        { name: 'Sisa Antrean', value: `${session.queue.length} lagu`, inline: true },
+                      ],
+                    }],
+                  }).catch(() => {});
+                }
+              } catch (e) {
+                console.error(`[Bot ${botId}] Gagal memutar next song:`, e.message);
+              }
+            }
           });
         }
 
-        const audioStream = await playDl.stream(video.url);
-        const resource = voice.createAudioResource(audioStream.stream, { inputType: audioStream.type });
-        session.player.play(resource);
-        session.song = video;
+        session.textChannel = interaction.channel;
+
+        // Jika sedang ada lagu yang diputar, tambahkan ke antrean
+        if (session.song) {
+          session.queue.push(video);
+          return ctx.replyEmbed({
+            title: '📋 Ditambahkan ke Playlist Antrean',
+            description: `[${video.title}](${video.url})`,
+            color: 0x5865F2,
+            fields: [
+              { name: 'Posisi Antrean', value: `#${session.queue.length}`, inline: true },
+              { name: 'Durasi', value: video.durationRaw || 'Live', inline: true },
+              { name: 'Pemohon', value: `<@${interaction.user.id}>`, inline: true },
+            ],
+            footer: { text: `Total antrean: ${session.queue.length} lagu` },
+          });
+        }
+
+        // Putar langsung jika idle
+        await playSongStream(session, video);
 
         return ctx.replyEmbed({
           title: '🎶 Sedang Memutar Lagu di Voice Channel',
@@ -424,14 +470,40 @@ async function handleDiscordInteraction(client, interaction, botData, botId) {
       }
     }
 
+    if (subCmd === 'skip') {
+      if (!session || !session.song) return ctx.reply('Tidak ada lagu yang sedang diputar untuk di-skip.');
+      session.player.stop();
+      return ctx.reply('⏭️ Lagu berhasil dilewati (Skip).');
+    }
+
+    if (subCmd === 'queue') {
+      if (!session || (!session.song && session.queue.length === 0)) {
+        return ctx.reply('Antrean musik kosong.');
+      }
+      let desc = `**Sedang Diputar:**\n▶️ [${session.song?.title || 'None'}](${session.song?.url || ''}) (\`${session.song?.durationRaw || 'N/A'}\`)\n\n**Playlist Antrean:**\n`;
+      if (session.queue.length === 0) {
+        desc += '_Tidak ada lagu di antrean berikutnya._';
+      } else {
+        desc += session.queue.slice(0, 10).map((v, i) => `${i + 1}. [${v.title}](${v.url}) (\`${v.durationRaw || 'N/A'}\`)`).join('\n');
+        if (session.queue.length > 10) desc += `\n_...dan ${session.queue.length - 10} lagu lainnya._`;
+      }
+      return ctx.replyEmbed({
+        title: '🎵 Playlist Antrean Musik Server',
+        description: desc,
+        color: 0x5865F2,
+        footer: { text: `Total: ${session.queue.length + (session.song ? 1 : 0)} lagu` },
+      });
+    }
+
     if (subCmd === 'stop') {
       if (!session) return ctx.reply('Bot sedang tidak memutar musik di server ini.');
+      session.queue = [];
       try {
         session.player.stop();
         session.connection.destroy();
       } catch {}
       guildSessions.delete(guild.id);
-      return ctx.reply('⏹️ Musik dihentikan dan bot telah keluar dari voice channel.');
+      return ctx.reply('⏹️ Musik dihentikan, antrean dibersihkan, dan bot telah keluar dari voice channel.');
     }
 
     if (subCmd === 'pause') {
