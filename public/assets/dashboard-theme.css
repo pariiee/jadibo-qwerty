@@ -500,6 +500,7 @@ summary::-webkit-details-marker{display:none!important}
 .engine-badge.eb-wa{background:rgba(37,211,102,.12)!important;color:#25d366!important;border-color:rgba(37,211,102,.28)!important}
 .engine-badge.eb-tg{background:rgba(34,158,217,.12)!important;color:#229ed9!important;border-color:rgba(34,158,217,.28)!important}
 .engine-badge.eb-dc{background:rgba(88,101,242,.12)!important;color:#5865f2!important;border-color:rgba(88,101,242,.28)!important}
+.engine-badge.eb-dc{background:rgba(88,101,242,.12)!important;color:#5865f2!important;border-color:rgba(88,101,242,.28)!important}
 .cmd-panah{color:var(--mute)!important;display:inline-flex!important;align-items:center!important;transition:transform .2s ease!important}
 details[open] .cmd-panah{transform:rotate(180deg)!important;color:var(--ink)!important}
 .cmd-isi{border-top:1px solid var(--line)!important;padding-top:10px!important;margin-top:10px!important}

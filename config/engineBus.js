@@ -46,6 +46,9 @@ async function start(botId, usePairingCode = false) {
   if (botData.platform === 'telegram') {
     const { startTelegramBot } = require('../engine/telegramEngine');
     await startTelegramBot(botData);
+  } else if (botData.platform === 'discord') {
+    const { startDiscordBot } = require('../engine/discordEngine');
+    await startDiscordBot(botData);
   } else {
     const { startWhatsAppBot } = require('../engine/whatsappEngine');
     await startWhatsAppBot(botData, usePairingCode === true);
@@ -60,6 +63,9 @@ async function stop(botId) {
   if (botData.platform === 'telegram') {
     const { stopTelegramBot } = require('../engine/telegramEngine');
     await stopTelegramBot(botId);
+  } else if (botData.platform === 'discord') {
+    const { stopDiscordBot } = require('../engine/discordEngine');
+    await stopDiscordBot(botId);
   } else {
     const { stopWhatsAppBot } = require('../engine/whatsappEngine');
     await stopWhatsAppBot(botId);
@@ -75,6 +81,10 @@ async function restart(botId) {
     const { stopTelegramBot, startTelegramBot } = require('../engine/telegramEngine');
     await stopTelegramBot(botId);
     await startTelegramBot(botData);
+  } else if (botData.platform === 'discord') {
+    const { stopDiscordBot, startDiscordBot } = require('../engine/discordEngine');
+    await stopDiscordBot(botId);
+    await startDiscordBot(botData);
   } else {
     const { restartWhatsAppBot } = require('../engine/whatsappEngine');
     await restartWhatsAppBot(botId);

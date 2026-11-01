@@ -67,6 +67,7 @@ const TABLES = {
     // harus dinyalakan kembali sesudah user bayar — tanpa kolom ini, bot yang
     // dimatikan cron tetap mati walau paketnya sudah dibayar.
     ['stop_reason',    "VARCHAR(32) DEFAULT NULL"],
+    ['discord_token',  "TEXT DEFAULT NULL"],
   ],
   admin_log: [
     ['user_id',    "INT UNSIGNED DEFAULT NULL"],

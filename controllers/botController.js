@@ -106,10 +106,14 @@ function maskToken(token) {
 
 function publicBot(bot) {
   if (!bot) return bot;
-  const { telegram_token, ...rest } = bot;
+  const { telegram_token, discord_token, ...rest } = bot;
   // `public_id` diteruskan APA ADANYA (bisa null untuk bot lama) — UI memakai
   // `slug` yang sudah diisi di bawah, bukan kolom mentahnya.
-  return { ...rest, telegram_token: maskToken(telegram_token) };
+  return {
+    ...rest,
+    telegram_token: maskToken(telegram_token),
+    discord_token: maskToken(discord_token),
+  };
 }
 
 /**
@@ -214,14 +218,17 @@ async function createBot(req, res) {
       bot_number,
       owner_number,
       prefix = '!',
-      footer_text = 'Powered by YaaParBot',
+      footer_text = 'Powered by qwertygate',
       description = '',
       telegram_token = null,
+      discord_token = null,
     } = req.body;
 
     if (!bot_name) return sendError(res, 400, 'Nama bot wajib diisi');
     if (platform === 'telegram' && !telegram_token)
       return sendError(res, 400, 'Token Telegram wajib diisi untuk platform Telegram');
+    if (platform === 'discord' && !discord_token && !telegram_token)
+      return sendError(res, 400, 'Token Bot Discord wajib diisi untuk platform Discord');
 
     // Owner number = nomor yang dianggap owner bot. Jumlahnya dibatasi paket.
     const ownerMaxN = ownerMax(me[0], pricingStore.plans());
@@ -231,13 +238,16 @@ async function createBot(req, res) {
         ? 'Paket kamu belum bisa pakai Owner Number. Upgrade di halaman Pricing.'
         : `Paket kamu maksimal ${ownerMaxN} Owner Number.`);
 
+    const dcToken = discord_token || (platform === 'discord' ? telegram_token : null);
+    const tgToken = platform === 'telegram' ? telegram_token : null;
+
     const [result] = await pool.execute(
       `INSERT INTO bots
          (user_id, platform, bot_name, bot_number, owner_number, prefix, footer_text,
-          description, telegram_token, receive_limit, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'disconnected')`,
+          description, telegram_token, discord_token, receive_limit, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'disconnected')`,
       [req.user.id, platform, bot_name, bot_number || null, owner_number || null,
-       prefix, footer_text, description, telegram_token,
+       prefix, footer_text, description, tgToken, dcToken,
        receiveLimit(me[0], pricingStore.plans())]
     );
 
@@ -278,7 +288,7 @@ async function updateBot(req, res) {
     const bot = await assertOwnership(req, res, req.params.id);
     if (!bot) return;
 
-    const allowed = ['bot_name', 'bot_number', 'owner_number', 'owner_name', 'prefix', 'footer_text', 'description', 'telegram_token', 'channel_id', 'qris_url', 'banner_url', 'main_groups', 'daily_limit'];
+    const allowed = ['bot_name', 'bot_number', 'owner_number', 'owner_name', 'prefix', 'footer_text', 'description', 'telegram_token', 'discord_token', 'channel_id', 'qris_url', 'banner_url', 'main_groups', 'daily_limit'];
     const sets = [];
     const vals = [];
 
@@ -297,7 +307,7 @@ async function updateBot(req, res) {
     for (const key of allowed) {
       if (req.body[key] !== undefined) {
         // Token masked (•••) dari FE jangan ditimpa ke DB — pertahankan token asli
-        if (key === 'telegram_token' && String(req.body[key]).includes('•')) continue;
+        if ((key === 'telegram_token' || key === 'discord_token') && String(req.body[key]).includes('•')) continue;
         sets.push(`${key} = ?`);
         vals.push(req.body[key]);
       }

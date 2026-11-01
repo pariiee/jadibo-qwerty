@@ -253,9 +253,12 @@
         }
       }
 
+      const platCls = bot.platform === 'telegram' ? 'eb-tg' : (bot.platform === 'discord' ? 'eb-dc' : 'eb-wa');
+      const platName = bot.platform === 'telegram' ? 'Telegram' : (bot.platform === 'discord' ? 'Discord' : 'WhatsApp');
+
       card.innerHTML =
         '<div class="row">' +
-          '<span class="eb-label ' + (bot.platform === 'telegram' ? 'eb-tg' : 'eb-wa') + '">' + esc(bot.platform === 'telegram' ? 'Telegram' : 'WhatsApp') + '</span>' +
+          '<span class="eb-label ' + platCls + '">' + esc(platName) + '</span>' +
           '<span class="on-dot ' + (on ? '' : 'off') + '">' + stTxt + '</span>' +
         '</div>' +
         '<h3 style="margin:10px 0 4px">' + esc(bot.bot_name) + '</h3>' +
@@ -385,15 +388,31 @@
   function setPlatUI() {
     document.getElementById('plat-wa').classList.toggle('sel', platform === 'whatsapp');
     document.getElementById('plat-tg').classList.toggle('sel', platform === 'telegram');
+    const platDc = document.getElementById('plat-dc');
+    if (platDc) platDc.classList.toggle('sel', platform === 'discord');
     document.getElementById('form-badge').textContent = platform;
     const isTg = platform === 'telegram';
-    document.getElementById('wrap-token').style.display = isTg ? '' : 'none';
-    document.getElementById('wrap-botnum').style.display = isTg ? 'none' : '';
+    const isDc = platform === 'discord';
+    const isTokenBased = isTg || isDc;
+    document.getElementById('wrap-token').style.display = isTokenBased ? '' : 'none';
+    document.getElementById('wrap-botnum').style.display = isTokenBased ? 'none' : '';
     const lbl = document.getElementById('lbl-owner');
     const inp = document.getElementById('f-owner');
     const hint = document.getElementById('hint-owner');
-    if (isTg) { lbl.textContent = 'Owner Telegram ID'; inp.placeholder = 'Contoh: 123456789'; hint.textContent = 'Telegram user ID pemilik bot — untuk akses command owner-only'; }
-    else { lbl.textContent = 'Nomor Owner'; inp.placeholder = '628xxxxxxxxxx'; hint.textContent = 'Nomor pemilik bot — untuk akses command owner-only'; }
+    const tokenLbl = document.querySelector('label[for="f-token"]');
+    const tokenInp = document.getElementById('f-token');
+
+    if (isTg) {
+      if (tokenLbl) tokenLbl.textContent = 'Token Telegram Bot *';
+      if (tokenInp) tokenInp.placeholder = '123456:ABC-DEF...';
+      lbl.textContent = 'Owner Telegram ID'; inp.placeholder = 'Contoh: 123456789'; hint.textContent = 'Telegram user ID pemilik bot — untuk akses command owner-only';
+    } else if (isDc) {
+      if (tokenLbl) tokenLbl.textContent = 'Token Bot Discord *';
+      if (tokenInp) tokenInp.placeholder = 'Bot token dari Discord Developer Portal';
+      lbl.textContent = 'Owner Discord ID'; inp.placeholder = 'Contoh: 123456789012345678'; hint.textContent = 'Discord user ID pemilik bot — untuk akses command owner-only';
+    } else {
+      lbl.textContent = 'Nomor Owner'; inp.placeholder = '628xxxxxxxxxx'; hint.textContent = 'Nomor pemilik bot — untuk akses command owner-only';
+    }
   }
 
   document.getElementById('add-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeAdd(); });
@@ -409,7 +428,8 @@
       owner_number: document.getElementById('f-owner').value.trim() || undefined,
       prefix: document.getElementById('f-prefix').value.trim() || '!',
       footer_text: document.getElementById('f-footer').value.trim() || 'Powered by qwertygate',
-      telegram_token: document.getElementById('f-token').value.trim() || undefined
+      telegram_token: platform === 'telegram' ? (document.getElementById('f-token').value.trim() || undefined) : undefined,
+      discord_token: platform === 'discord' ? (document.getElementById('f-token').value.trim() || undefined) : undefined,
     };
     const d = await api('/api/bots', { method: 'POST', body: JSON.stringify(body) });
     if (!d) return;

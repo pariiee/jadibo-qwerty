@@ -61,10 +61,16 @@
     document.title = b.bot_name + ' — qwertygate';
     document.getElementById('hdr-name').textContent = b.bot_name;
     document.getElementById('hdr-icon').innerHTML = platIcon(b.platform, 18);
-    document.getElementById('cfg-panel').classList.toggle('tg', b.platform === 'telegram');
+    const isTokenBot = b.platform === 'telegram' || b.platform === 'discord';
+    document.getElementById('cfg-panel').classList.toggle('tg', isTokenBot);
 
-    if (b.platform === 'telegram') {
-      ['w-owner','w-ownername','w-botnum','w-channel','w-maingroups'].forEach(id => document.getElementById(id).style.display = 'none');
+    if (isTokenBot) {
+      ['w-owner','w-ownername','w-botnum','w-channel','w-maingroups'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+      });
+      const lblToken = document.querySelector('label[for="cfg-token"]');
+      if (lblToken) lblToken.textContent = b.platform === 'discord' ? 'Token Bot Discord' : 'Token Telegram';
     }
 
     // is_running = "user mau bot ini jalan", BUKAN "socket kebuka"
@@ -272,11 +278,19 @@
   }
 
   function startBot() {
-    if (botData?.platform === 'telegram') { confirmStart(false); return; }
+    if (botData?.platform === 'telegram' || botData?.platform === 'discord') { confirmStart(false); return; }
     document.getElementById('start-overlay').classList.add('show');
   }
   async function confirmStart(usePairing) {
     document.getElementById('start-overlay').classList.remove('show');
+    if (botData?.platform === 'telegram' || botData?.platform === 'discord') {
+      ctrlMsg('Menyalakan bot...');
+      const d = await api('/api/bots/' + botId + '/start', { method: 'POST', body: JSON.stringify({ use_pairing_code: false }) });
+      if (!d) return;
+      if (d.ok) { ctrlMsg(d.message); }
+      else { ctrlMsg(d.message, 'error'); }
+      return;
+    }
     if (usePairing && (!botData?.bot_number || !botData.bot_number.trim())) {
       ctrlMsg('Isi Nomor Bot WA dulu di form Konfigurasi sebelum pakai Pairing Code.', 'error');
       return;
@@ -372,7 +386,8 @@
       prefix: document.getElementById('cfg-prefix').value.trim(),
       footer_text: document.getElementById('cfg-footer').value.trim(),
       description: document.getElementById('cfg-desc').value.trim(),
-      telegram_token: document.getElementById('cfg-token').value.trim() || undefined,
+      telegram_token: botData?.platform === 'telegram' ? (document.getElementById('cfg-token').value.trim() || undefined) : undefined,
+      discord_token: botData?.platform === 'discord' ? (document.getElementById('cfg-token').value.trim() || undefined) : undefined,
       channel_id: document.getElementById('cfg-channel').value.trim() || null,
       qris_url: document.getElementById('cfg-qris').value.trim() || null,
       banner_url: document.getElementById('cfg-banner').value.trim() || null,

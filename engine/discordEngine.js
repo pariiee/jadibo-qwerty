@@ -98,7 +98,7 @@ async function startDiscordBot(botData) {
   if (!Client) throw new Error('discord.js tidak terinstall');
 
   const botId = botData.id;
-  const token = botData.discord_token;
+  const token = botData.discord_token || botData.telegram_token;
   if (!token) throw new Error('Token Discord tidak ditemukan');
 
   if (activeDiscordBots.has(botId)) {

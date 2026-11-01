@@ -93,6 +93,7 @@ const pricingStore = require('./config/pricingStore');
 const beban        = require('./config/beban');
 const { setWsBroadcast: setWsBroadcastWa, startWhatsAppBot } = require('./engine/whatsappEngine');
 const { setWsBroadcast: setWsBroadcastTg, startTelegramBot } = require('./engine/telegramEngine');
+const { setWsBroadcast: setWsBroadcastDc, startDiscordBot } = require('./engine/discordEngine');
 
 const app    = express();
 const server = http.createServer(app);
@@ -663,6 +664,7 @@ redisBus.onEvent((data) => {
 
 setWsBroadcastWa(broadcastFn);
 setWsBroadcastTg(broadcastFn);
+setWsBroadcastDc(broadcastFn);
 
 // Jalur lintas panel: user Start bot zapo dari panel labs, dan log/QR-nya
 // dibalikin ke sana. Dipasang di sini (setelah broadcastFn siap, sebelum
@@ -711,6 +713,8 @@ async function autoStartBots() {
       try {
         if (botData.platform === 'telegram') {
           await startTelegramBot(botData);
+        } else if (botData.platform === 'discord') {
+          await startDiscordBot(botData);
         } else {
           await startWhatsAppBot(botData, false);
         }
