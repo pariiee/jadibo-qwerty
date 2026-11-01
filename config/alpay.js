@@ -106,22 +106,17 @@ function bolehCek(id) {
 }
 
 /**
- * Verifikasi tanda tangan webhook (HMAC-SHA256).
- * Mendukung ALPAY_WEBHOOK_SECRET, QRISKU_WEBHOOK_SECRET, atau ALPAY_API_KEY.
- * Header: x-webhook-signature, x-signature, x-callback-signature
+ * Verifikasi tanda tangan webhook Alpay (HMAC-SHA256).
+ * Header: x-webhook-signature (atau fallback x-signature, x-callback-signature)
  */
 function tandaTanganValid(rawBody, header) {
-  const secret = process.env.ALPAY_WEBHOOK_SECRET
-    || process.env.QRISKU_WEBHOOK_SECRET
-    || KEY
-    || process.env.QRISKU_API_KEY;
-  if (!secret) return false;
-  if (!header) return false;
+  const secret = process.env.ALPAY_WEBHOOK_SECRET || KEY || process.env.ALPAY_API_KEY;
+  if (!secret || !header) return false;
 
   const terima = String(header).replace(/^sha256=/i, '').trim();
   if (!terima) return false;
 
-  const secrets = [secret, KEY, process.env.ALPAY_API_KEY, process.env.QRISKU_API_KEY].filter(Boolean);
+  const secrets = [secret, KEY, process.env.ALPAY_API_KEY].filter(Boolean);
   const uniqueSecrets = [...new Set(secrets)];
 
   for (const sec of uniqueSecrets) {

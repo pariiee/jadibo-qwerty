@@ -293,8 +293,8 @@ app.post('/api/billing/addon',       moneyLimiter, auth.requireAuth, billing.bel
 app.post('/api/billing/trial',       apiLimiter, auth.requireAuth, billing.klaimTrialSendiri);
 app.get('/api/billing/orders',       apiLimiter, auth.requireAuth, billing.daftarOrder);
 app.get('/api/billing/orders/:orderId', apiLimiter, auth.requireAuth, billing.detailOrder);
-// "Cek status" manual — bukan polling. Dijatah 20 detik per transaksi di
-// config/qrisku.js supaya akun QRISku tidak kena ban.
+// "Cek status" manual — bukan polling. Dijatah 15 detik per transaksi di
+// config/alpay.js supaya tidak flooding gateway.
 app.post('/api/billing/orders/:orderId/check', apiLimiter, auth.requireAuth, billing.cekOrder);
 
 // ─── Dompet (saldo) ──────────────────────────────────────────────────────────
