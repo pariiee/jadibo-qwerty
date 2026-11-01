@@ -62,6 +62,15 @@
     document.getElementById('hdr-name').textContent = b.bot_name;
     document.getElementById('hdr-icon').innerHTML = platIcon(b.platform, 18);
     const isTokenBot = b.platform === 'telegram' || b.platform === 'discord';
+    const btnInviteDc = document.getElementById('btn-invite-dc');
+    if (btnInviteDc) {
+      if (b.platform === 'discord' && b.discord_invite_url) {
+        btnInviteDc.href = b.discord_invite_url;
+        btnInviteDc.style.display = 'inline-flex';
+      } else {
+        btnInviteDc.style.display = 'none';
+      }
+    }
     document.getElementById('cfg-panel').classList.toggle('tg', isTokenBot);
 
     if (isTokenBot) {
