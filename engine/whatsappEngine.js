@@ -343,6 +343,13 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
   // Simpan ke activeBots
   activeBots.set(botId, client);
 
+  // Tangkap error socket agar tidak memicu unhandled exception di EventEmitter
+  if (typeof client.on === 'function') {
+    client.on('error', (err) => {
+      console.error(`[Bot ${botId}] Socket error:`, err?.message || err);
+    });
+  }
+
   // Cache nama grup supaya tidak fetch ulang setiap pesan
   const groupNameCache = new Map();
   // Cache daftar grup aktif untuk broadcast — load dari file dulu
@@ -496,7 +503,8 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
 
   // ── message ───────────────────────────────────────────────────────────────
   client.on('message', async (event) => {
-    const { key, message } = event;
+    try {
+      const { key, message } = event;
 
     // Skip pesan tanpa isi
     if (!message) return;
@@ -972,6 +980,9 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
     } else {
       await logBot(botId, 'info', logLineDisplay);
     }
+  } catch (err) {
+    console.error(`[Bot ${botId}] Message processing error:`, err?.message || err);
+  }
   });
 
   // ── Welcome / Bye hook ────────────────────────────────────────────────────
