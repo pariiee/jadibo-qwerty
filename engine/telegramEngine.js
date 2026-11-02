@@ -160,11 +160,11 @@ async function handleMessage(tgBot, msg, botData, botId) {
   // - prefix custom (!, ., dll) → strip prefix lalu prepend /
   let normalized;
   if (prefix === '' || prefix === '/') {
-    normalized = text.split(' ')[0].toLowerCase().replace(`@${tgBot.options?.username || ''}`, '');
+    normalized = text.split(' ')[0].toLowerCase().replace(/@\w+$/i, '');
   } else if (text.startsWith(prefix)) {
-    normalized = '/' + text.slice(prefix.length).split(' ')[0].toLowerCase();
+    normalized = '/' + text.slice(prefix.length).split(' ')[0].toLowerCase().replace(/@\w+$/i, '');
   } else if (text.startsWith('/')) {
-    normalized = text.split(' ')[0].toLowerCase().replace(`@${tgBot.options?.username || ''}`, '');
+    normalized = text.split(' ')[0].toLowerCase().replace(/@\w+$/i, '');
   } else {
     // Bukan command — abaikan
     return;

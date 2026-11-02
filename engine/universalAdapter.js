@@ -21,6 +21,22 @@ function createUniversalClient(platform, rawBot, chatId, rawMsg) {
             return rawBot.sendMessage(destId, content, { parse_mode: 'HTML' })
               .catch(() => rawBot.sendMessage(destId, content));
           }
+          const audioBuf = content.audio || (content.type === 'audio' ? content.media : null);
+          if (audioBuf) {
+            return rawBot.sendAudio(destId, audioBuf, { caption: content.caption || '' }).catch(() => rawBot.sendDocument(destId, audioBuf, {}, { filename: 'audio.mp3' }));
+          }
+          const imageBuf = content.image || (content.type === 'image' ? content.media : null);
+          if (imageBuf) {
+            return rawBot.sendPhoto(destId, imageBuf, { caption: content.caption || '' });
+          }
+          const videoBuf = content.video || (content.type === 'video' ? content.media : null);
+          if (videoBuf) {
+            return rawBot.sendVideo(destId, videoBuf, { caption: content.caption || '' });
+          }
+          const docBuf = content.document || (content.type === 'document' ? content.media : null);
+          if (docBuf) {
+            return rawBot.sendDocument(destId, docBuf, {}, { filename: content.fileName || 'file.bin' });
+          }
           if (content.interactiveMessage?.body?.text) {
             return rawBot.sendMessage(destId, content.interactiveMessage.body.text, { parse_mode: 'HTML' })
               .catch(() => rawBot.sendMessage(destId, content.interactiveMessage.body.text));
@@ -28,18 +44,6 @@ function createUniversalClient(platform, rawBot, chatId, rawMsg) {
           if (content.text) {
             return rawBot.sendMessage(destId, content.text, { parse_mode: 'HTML' })
               .catch(() => rawBot.sendMessage(destId, content.text));
-          }
-          if (content.image) {
-            return rawBot.sendPhoto(destId, content.image, { caption: content.caption || '' });
-          }
-          if (content.video) {
-            return rawBot.sendVideo(destId, content.video, { caption: content.caption || '' });
-          }
-          if (content.audio) {
-            return rawBot.sendAudio(destId, content.audio);
-          }
-          if (content.document) {
-            return rawBot.sendDocument(destId, content.document, {}, { filename: content.fileName || 'file.bin' });
           }
           if (content.type === 'reaction') {
             return true;
@@ -85,10 +89,14 @@ function createUniversalClient(platform, rawBot, chatId, rawMsg) {
             return sendSafeText(content.text);
           }
           const files = [];
-          if (content.image) files.push({ attachment: content.image, name: 'image.jpg' });
-          if (content.video) files.push({ attachment: content.video, name: 'video.mp4' });
-          if (content.audio) files.push({ attachment: content.audio, name: 'audio.mp3' });
-          if (content.document) files.push({ attachment: content.document, name: content.fileName || 'file.bin' });
+          const img = content.image || (content.type === 'image' ? content.media : null);
+          if (img) files.push({ attachment: img, name: 'image.jpg' });
+          const vid = content.video || (content.type === 'video' ? content.media : null);
+          if (vid) files.push({ attachment: vid, name: 'video.mp4' });
+          const aud = content.audio || (content.type === 'audio' ? content.media : null);
+          if (aud) files.push({ attachment: aud, name: 'audio.mp3' });
+          const doc = content.document || (content.type === 'document' ? content.media : null);
+          if (doc) files.push({ attachment: doc, name: content.fileName || 'file.bin' });
 
           if (files.length) {
             const caption = content.caption || content.text || '';
@@ -120,17 +128,17 @@ function buildUniversalContext({ platform, bot, chatId, senderId, pushName, text
   if (body.startsWith(prefix) && prefix !== '') {
     isCmd = true;
     const parts = body.slice(prefix.length).trim().split(/\s+/);
-    command = (parts[0] || '').toLowerCase();
+    command = (parts[0] || '').toLowerCase().replace(/@\w+$/i, '');
     args = parts.slice(1);
   } else if (body.startsWith('/')) {
     isCmd = true;
     const parts = body.slice(1).trim().split(/\s+/);
-    command = (parts[0] || '').toLowerCase();
+    command = (parts[0] || '').toLowerCase().replace(/@\w+$/i, '');
     args = parts.slice(1);
   } else if (body.startsWith('.')) {
     isCmd = true;
     const parts = body.slice(1).trim().split(/\s+/);
-    command = (parts[0] || '').toLowerCase();
+    command = (parts[0] || '').toLowerCase().replace(/@\w+$/i, '');
     args = parts.slice(1);
   }
 
