@@ -49,14 +49,31 @@ module.exports = async function telegramGeneral(ctx) {
           const cmds = (cats[k] || []).map(c => `/${c}`).join('  ');
           txt += `〔 <b>${infoMod.catLabel(k)}</b> 〕\n${cmds}\n\n`;
         }
-        await reply(txt, { parse_mode: 'HTML' });
+        await reply(txt, {
+          parse_mode: 'HTML',
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: '⬅️ Kembali ke Menu Utama', callback_data: 'menu' }],
+            ],
+          },
+        });
         return true;
       }
 
       if (sub && cats[sub]) {
         const label = sub === 'ai' ? 'ARTIFICIAL INTELLIGENCE' : infoMod.catLabel(sub);
         const cmds = cats[sub].map(c => `/${c}`).join('\n• ');
-        await reply(`〔 <b>Menu ${label}</b> 〕\n\n• ${cmds}\n\n<i>Ketik /menu all untuk melihat seluruh perintah</i>`, { parse_mode: 'HTML' });
+        await reply(`〔 <b>Menu ${label}</b> 〕\n\n• ${cmds}\n\n<i>Ketik /menu all untuk melihat seluruh perintah</i>`, {
+          parse_mode: 'HTML',
+          reply_markup: {
+            inline_keyboard: [
+              [
+                { text: '⬅️ Kembali ke Menu', callback_data: 'menu' },
+                { text: '📜 Tampilkan Semua', callback_data: 'menu_all' },
+              ],
+            ],
+          },
+        });
         return true;
       }
 
