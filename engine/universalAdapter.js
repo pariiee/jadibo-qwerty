@@ -7,6 +7,23 @@
  * yang dipakai oleh seluruh plugins yaparbots.
  */
 
+function extractTextFromPayload(content) {
+  if (!content) return '';
+  if (typeof content === 'string') return content;
+  return (
+    content.text ||
+    content.caption ||
+    content.buttonsMessage?.contentText ||
+    content.buttonsMessage?.caption ||
+    content.interactiveMessage?.body?.text ||
+    content.interactiveMessage?.header?.title ||
+    content.templateMessage?.hydratedTemplate?.hydratedContentText ||
+    content.extendedTextMessage?.text ||
+    content.conversation ||
+    ''
+  );
+}
+
 function createUniversalClient(platform, rawBot, chatId, rawMsg) {
   return {
     platform,
@@ -15,12 +32,13 @@ function createUniversalClient(platform, rawBot, chatId, rawMsg) {
       async send(targetJid, content) {
         const destId = targetJid || chatId;
 
+        // Voice note jingle menu WA jangan dikirim ke Telegram/Discord
+        if (content?.ptt && (platform === 'telegram' || platform === 'discord')) {
+          return true;
+        }
+
         // 1. Kirim pesan Telegram (node-telegram-bot-api)
         if (platform === 'telegram') {
-          if (typeof content === 'string') {
-            return rawBot.sendMessage(destId, content, { parse_mode: 'HTML' })
-              .catch(() => rawBot.sendMessage(destId, content));
-          }
           const audioBuf = content.audio || (content.type === 'audio' ? content.media : null);
           if (audioBuf) {
             return rawBot.sendAudio(destId, audioBuf, { caption: content.caption || '' }).catch(() => rawBot.sendDocument(destId, audioBuf, {}, { filename: 'audio.mp3' }));
@@ -37,16 +55,14 @@ function createUniversalClient(platform, rawBot, chatId, rawMsg) {
           if (docBuf) {
             return rawBot.sendDocument(destId, docBuf, {}, { filename: content.fileName || 'file.bin' });
           }
-          if (content.interactiveMessage?.body?.text) {
-            return rawBot.sendMessage(destId, content.interactiveMessage.body.text, { parse_mode: 'HTML' })
-              .catch(() => rawBot.sendMessage(destId, content.interactiveMessage.body.text));
-          }
-          if (content.text) {
-            return rawBot.sendMessage(destId, content.text, { parse_mode: 'HTML' })
-              .catch(() => rawBot.sendMessage(destId, content.text));
-          }
           if (content.type === 'reaction') {
             return true;
+          }
+
+          const textMsg = extractTextFromPayload(content);
+          if (textMsg) {
+            return rawBot.sendMessage(destId, textMsg, { parse_mode: 'HTML' })
+              .catch(() => rawBot.sendMessage(destId, textMsg));
           }
           return rawBot.sendMessage(destId, JSON.stringify(content));
         }
@@ -75,18 +91,9 @@ function createUniversalClient(platform, rawBot, chatId, rawMsg) {
             return last;
           };
 
-          if (typeof content === 'string') {
-            return sendSafeText(content);
-          }
           if (content.embed || content.embeds) {
             const embeds = content.embeds || [content.embed];
             return deliver({ content: content.text ? String(content.text).slice(0, 1950) : undefined, embeds });
-          }
-          if (content.interactiveMessage?.body?.text) {
-            return sendSafeText(content.interactiveMessage.body.text);
-          }
-          if (content.text) {
-            return sendSafeText(content.text);
           }
           const files = [];
           const img = content.image || (content.type === 'image' ? content.media : null);
@@ -98,14 +105,17 @@ function createUniversalClient(platform, rawBot, chatId, rawMsg) {
           const doc = content.document || (content.type === 'document' ? content.media : null);
           if (doc) files.push({ attachment: doc, name: content.fileName || 'file.bin' });
 
+          const extractedCaption = extractTextFromPayload(content);
           if (files.length) {
-            const caption = content.caption || content.text || '';
-            return deliver({ content: caption ? String(caption).slice(0, 1950) : undefined, files });
+            return deliver({ content: extractedCaption ? String(extractedCaption).slice(0, 1950) : undefined, files });
           }
           if (content.type === 'reaction' && rawMsg?.react) {
             return rawMsg.react(content.emoji).catch(() => {});
           }
-          return sendSafeText(String(content));
+          if (extractedCaption) {
+            return sendSafeText(extractedCaption);
+          }
+          return sendSafeText(JSON.stringify(content, null, 2));
         }
       },
       async downloadBytes() {

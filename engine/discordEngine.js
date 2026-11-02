@@ -56,6 +56,50 @@ async function logBot(botId, level, message) {
   } catch { /* non-critical */ }
 }
 
+async function renderDiscordMenu(ctx, botData) {
+  const infoMod = require('../plugins/whatsapp/01-info');
+  const cats = infoMod.CATS;
+  const catKeys = infoMod.CAT_KEYS;
+  const sub = (ctx.args[0] || '').toLowerCase();
+  const p = botData?.prefix || '!';
+
+  if (sub === 'all') {
+    let txt = `📋 **SELURUH FITUR ${botData.bot_name} (320+ Perintah)**\n\n`;
+    for (const k of catKeys) {
+      const cmds = (cats[k] || []).map(c => `\`${p}${c}\``).join('  ');
+      txt += `〔 **${infoMod.catLabel(k)}** 〕\n${cmds}\n\n`;
+    }
+    return ctx.reply(txt);
+  }
+
+  if (sub && cats[sub]) {
+    const cmds = (cats[sub] || []).map(c => `\`${p}${c}\``).join(', ');
+    return ctx.replyEmbed({
+      title: `〔 Menu ${infoMod.catLabel(sub)} 〕`,
+      description: cmds,
+      color: 0x5865F2,
+      footer: { text: `Ketik ${p}menu all untuk melihat seluruh perintah` },
+    });
+  }
+
+  const fields = [
+    { name: '🤖 AI (Kecerdasan Buatan)', value: `\`${p}ai\`, \`/ai\` (Tanya & Foto)`, inline: true },
+    { name: '🎵 Musik Voice Channel', value: `\`/music play\`, \`/music queue\`, \`/music skip\``, inline: true },
+    { name: '📥 Downloader (40+)', value: `\`${p}tiktok\`, \`${p}youtube\`, \`${p}ig\`, \`${p}twit\``, inline: true },
+    { name: '🛠️ Utilitas / Tools', value: `\`${p}tourl\`, \`${p}sticker\`, \`${p}cuaca\`, \`${p}gempa\``, inline: true },
+    { name: '🎮 Game & RPG', value: `\`${p}dice\`, \`${p}slot\`, \`${p}asahotak\``, inline: true },
+    { name: '🛡️ Server Moderasi', value: `\`/server purge\`, \`/server verify_panel\``, inline: true },
+  ];
+
+  return ctx.replyEmbed({
+    title: `⚡ MENU UTAMA ${botData.bot_name} (320+ Fitur Aktif)`,
+    description: `Gunakan prefix **\`${p}\`** atau Slash Command **\`/\`** untuk menjalankan perintah.\nKetik **\`${p}menu all\`** untuk melihat semua 320 perintah lengkap.`,
+    color: 0x5865F2,
+    fields,
+    footer: { text: botData.footer_text || 'Powered by qwertygate' },
+  });
+}
+
 async function handleDiscordMessage(client, message, botData, botId) {
   if (!message || message.author?.bot) return;
 
@@ -88,6 +132,9 @@ async function handleDiscordMessage(client, message, botData, botId) {
     const h = Math.floor(s / 3600);
     const m = Math.floor((s % 3600) / 60);
     return ctx.reply(`⏰ Uptime: ${h}j ${m}m ${s % 60}d`);
+  }
+  if (ctx.command === 'menu' || ctx.command === 'help') {
+    return renderDiscordMenu(ctx, botData);
   }
 
   // Universal plugins
@@ -553,6 +600,9 @@ async function handleDiscordInteraction(client, interaction, botData, botId) {
     const h = Math.floor(s / 3600);
     const m = Math.floor((s % 3600) / 60);
     return ctx.reply(`⏰ Uptime: ${h}j ${m}m ${s % 60}d`);
+  }
+  if (ctx.command === 'menu' || ctx.command === 'help') {
+    return renderDiscordMenu(ctx, botData);
   }
 
   const plugins = getPlugins();
