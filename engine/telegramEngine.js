@@ -49,22 +49,26 @@ const COMMANDS = {
 
   '/start': (bot, chatId, botData) =>
     bot.sendMessage(chatId,
-      `<b>${botData.bot_name}</b>\n\nBot Telegram aktif dan siap digunakan!\nGunakan menu di bawah atau ketik /menu untuk melihat daftar perintah.`,
+      `<b>${botData.bot_name}</b>\n\nBot Telegram aktif dan siap digunakan!\nBuka Dashboard WebApp langsung di Telegram atau gunakan menu perintah di bawah.`,
       {
         parse_mode: 'HTML',
         reply_markup: {
           inline_keyboard: [
             [
-              { text: '📖 Buka Menu', callback_data: 'menu' },
-              { text: '⚡ Cek Ping', callback_data: 'ping' },
+              { text: '📱 Buka Dashboard (WebApp)', web_app: { url: 'https://labs.yapari.web.id/dashboard' } },
             ],
             [
-              { text: '🌐 Dashboard Bot', url: 'https://labs.yapari.web.id/dashboard' },
+              { text: '📖 Buka Menu', callback_data: 'menu' },
+              { text: '⚡ Cek Ping', callback_data: 'ping' },
             ],
           ],
         },
       }
     ),
+
+  '/dice': (bot, chatId) => bot.sendDice(chatId, { emoji: '🎲' }),
+  '/slot': (bot, chatId) => bot.sendDice(chatId, { emoji: '🎰' }),
+  '/dart': (bot, chatId) => bot.sendDice(chatId, { emoji: '🎯' }),
 
   '/menu': (bot, chatId, botData) => {
     const p = botData.prefix || '/';
@@ -110,6 +114,9 @@ async function handleMessage(tgBot, msg, botData, botId) {
 
   // Hitung pesan masuk ke stats
   try { await pool.execute("UPDATE stats SET stat_value = stat_value + 1 WHERE stat_key = 'total_messages'"); } catch {}
+
+  // Berikan feedback visual typing ke user
+  tgBot.sendChatAction(chatId, 'typing').catch(() => {});
 
   // Normalize ke /command format
   // - prefix kosong atau '/' → pakai text langsung
@@ -367,8 +374,22 @@ async function startTelegramBot(botData) {
         { command: 'lirik', description: 'Cari lirik lagu' },
         { command: 'cuaca', description: 'Prakiraan cuaca kota' },
         { command: 'gempa', description: 'Info gempa terkini BMKG' },
+        { command: 'dice', description: 'Animasi dadu interaktif Telegram' },
+        { command: 'slot', description: 'Animasi mesin jackpot slot' },
       ]);
       await logBot(botId, 'info', 'Menu commands Telegram terdaftar');
+    } catch {}
+
+    // Pasang tombol WebApp resmi di sebelah kolom chat keyboard Telegram
+    try {
+      await tgBot.setChatMenuButton({
+        menu_button: {
+          type: 'web_app',
+          text: 'Dashboard',
+          web_app: { url: 'https://labs.yapari.web.id/dashboard' },
+        },
+      });
+      await logBot(botId, 'info', 'Telegram WebApp Menu Button aktif');
     } catch {}
 
     // Simpan username bot ke bot_number agar link t.me/username langsung aktif
