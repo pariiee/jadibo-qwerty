@@ -90,29 +90,84 @@ const COMMANDS = {
   '/slot': (bot, chatId) => bot.sendDice(chatId, { emoji: '🎰' }),
   '/dart': (bot, chatId) => bot.sendDice(chatId, { emoji: '🎯' }),
 
-  '/menu': (bot, chatId, botData) => {
-    const p = botData.prefix || '/';
+  '/menu': async (bot, chatId, botData, msg) => {
+    const text = (msg?.text || '').toLowerCase().trim();
+    const infoMod = require('../plugins/whatsapp/01-info');
+    const cats = infoMod.CATS;
+    const catKeys = infoMod.CAT_KEYS;
+
+    const sub = text.split(/\s+/)[1] || '';
+    if (sub === 'all') {
+      let txt = `📋 <b>SELURUH FITUR ${botData.bot_name} (320+ Perintah)</b>\n\n`;
+      for (const k of catKeys) {
+        const cmds = (cats[k] || []).map(c => `/${c}`).join('  ');
+        txt += `〔 <b>${infoMod.catLabel(k)}</b> 〕\n${cmds}\n\n`;
+      }
+      return bot.sendMessage(chatId, txt, { parse_mode: 'HTML' });
+    }
+
+    if (sub && cats[sub]) {
+      const cmds = (cats[sub] || []).map(c => `/${c}`).join('\n• ');
+      return bot.sendMessage(chatId, `〔 <b>Menu ${infoMod.catLabel(sub)}</b> 〕\n\n• ${cmds}\n\n<i>Ketik /menu all untuk melihat semua perintah</i>`, { parse_mode: 'HTML' });
+    }
+
+    let menuTxt = `<b>╔══════════════════════════╗\n` +
+      `║   MENU ${botData.bot_name} (320+ FITUR)   ║\n` +
+      `╚══════════════════════════╝</b>\n\n` +
+      `Halo! Bot dilengkapi lebih dari <b>320 fitur aktif</b>:\n` +
+      `• 🤖 <b>AI:</b> <code>/ai &lt;tanya / reply gambar&gt;</code>\n` +
+      `• 🎵 <b>Musik:</b> <code>/play &lt;judul lagu&gt;</code>\n` +
+      `• 📥 <b>Unduh:</b> <code>/tiktok</code>, <code>/youtube</code>, <code>/ig</code>, <code>/twit</code>\n` +
+      `• 🛠️ <b>Alat:</b> <code>/tourl</code>, <code>/sticker</code>, <code>/cuaca</code>, <code>/gempa</code>\n` +
+      `• 🎮 <b>Game:</b> <code>/dice</code>, <code>/slot</code>, <code>/asahotak</code>\n\n` +
+      `<b>Kategori Perintah:</b>\n`;
+
+    for (const k of catKeys) {
+      const count = (cats[k] || []).length;
+      menuTxt += `• <b>${infoMod.catLabel(k)}</b> (${count}): <code>/menu ${k}</code>\n`;
+    }
+
+    menuTxt += `\n<i>Ketik <code>/menu all</code> untuk melihat seluruh 320 perintah sekaligus atau klik tombol di bawah:</i>`;
+
+    const inline_keyboard = [
+      [
+        { text: '🤖 AI', callback_data: 'menu_tools' },
+        { text: '📥 Downloader', callback_data: 'menu_tools' },
+      ],
+      [
+        { text: '🎮 Game & RPG', callback_data: 'menu_game' },
+        { text: '🛠️ Semua Tools', callback_data: 'menu_tools' },
+      ],
+      [
+        { text: '📜 Tampilkan Semua (320+ Fitur)', callback_data: 'menu_all' },
+      ],
+      [
+        { text: '📱 Buka Dashboard WebApp', web_app: { url: 'https://labs.yapari.web.id/dashboard' } },
+      ],
+    ];
+
+    return bot.sendMessage(chatId, menuTxt, {
+      parse_mode: 'HTML',
+      reply_markup: { inline_keyboard },
+    });
+  },
+
+  '/info': (bot, chatId, botData) => {
+    const s = Math.floor(process.uptime());
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
     return bot.sendMessage(chatId,
-      `<b>Menu ${botData.bot_name}</b>\n\n` +
-      `${p}ping - Cek koneksi\n` +
-      `${p}info - Info bot\n` +
-      `${p}uptime - Waktu aktif\n` +
-      `${p}echo &lt;teks&gt; - Balas teks\n` +
-      `${p}menu - Menu ini`,
+      `<b>Info Bot ${botData.bot_name}</b>\n\n` +
+      `• Platform : Telegram\n` +
+      `• Total Fitur : <b>320+ Perintah Aktif</b>\n` +
+      `• Status : Connected & Online\n` +
+      `• Prefix : <code>${botData.prefix || '/'}</code>\n` +
+      `• Uptime : ${h}j ${m}m ${s % 60}d\n` +
+      `• Node.js : ${process.version}\n\n` +
+      `<i>${botData.footer_text || 'Powered by qwertygate'}</i>`,
       { parse_mode: 'HTML' }
     );
   },
-
-  '/info': (bot, chatId, botData) =>
-    bot.sendMessage(chatId,
-      `<b>Info Bot</b>\n\n` +
-      `Nama     : ${botData.bot_name}\n` +
-      `Platform : Telegram\n` +
-      `Node.js  : ${process.version}\n` +
-      `Uptime   : ${Math.floor(process.uptime())}s\n` +
-      `<i>${botData.footer_text || ''}</i>`,
-      { parse_mode: 'HTML' }
-    ),
 
   '/uptime': (bot, chatId) => {
     const s   = Math.floor(process.uptime());
