@@ -68,6 +68,7 @@ const TABLES = {
     // dimatikan cron tetap mati walau paketnya sudah dibayar.
     ['stop_reason',    "VARCHAR(32) DEFAULT NULL"],
     ['discord_token',  "TEXT DEFAULT NULL"],
+    ['platform',       "VARCHAR(32) NOT NULL DEFAULT 'whatsapp'"],
   ],
   admin_log: [
     ['user_id',    "INT UNSIGNED DEFAULT NULL"],
