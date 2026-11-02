@@ -146,6 +146,30 @@ module.exports = async function toolsHandler(ctx) {
           || list.find(e => e && e.id && Number.isFinite(e.duration) && e.duration <= 3600)
           || null;
     }
+
+    const CACHE_DIR = path.resolve(__dirname, '../../data/audio_cache');
+    if (!fs.existsSync(CACHE_DIR)) fs.mkdirSync(CACHE_DIR, { recursive: true });
+
+    // Cek cache lokal berdasarkan YouTube ID — hemat bandwidth & respon instan
+    if (pick?.id) {
+      const cacheAudio = path.join(CACHE_DIR, `${pick.id}.mp3`);
+      const cacheMeta  = path.join(CACHE_DIR, `${pick.id}.json`);
+      if (fs.existsSync(cacheAudio) && fs.existsSync(cacheMeta)) {
+        try {
+          const meta = JSON.parse(fs.readFileSync(cacheMeta, 'utf8'));
+          return {
+            ok: true,
+            buf: fs.readFileSync(cacheAudio),
+            mime: 'audio/mpeg',
+            title: meta.title || pick.title,
+            artist: meta.artist || pick.uploader,
+            dur: meta.dur || '',
+            cached: true,
+          };
+        } catch {}
+      }
+    }
+
     if (!pick) {
       // yt-dlp nggak ada (mis. lokal Windows) → jalur API lama (yt-search + ytmp3)
       const axios = require('axios');
@@ -195,9 +219,21 @@ module.exports = async function toolsHandler(ctx) {
       try { fs.unlinkSync(tmpOut); } catch {}
 
       const fmtDur = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+      const durStr = pick.duration_string || (pick.duration ? fmtDur(pick.duration) : '');
+
+      // Simpan ke cache disk lokal untuk pemanggilan berulang
+      if (pick?.id && finalBuf) {
+        try {
+          fs.writeFileSync(path.join(CACHE_DIR, `${pick.id}.mp3`), finalBuf);
+          fs.writeFileSync(path.join(CACHE_DIR, `${pick.id}.json`), JSON.stringify({
+            title: pick.title, artist: pick.uploader, dur: durStr, ts: Date.now()
+          }));
+        } catch {}
+      }
+
       return {
         ok: true, buf: finalBuf, mime: ffOk ? 'audio/mpeg' : 'audio/mp4',
-        title: pick.title, artist: pick.uploader, dur: pick.duration_string || (pick.duration ? fmtDur(pick.duration) : ''),
+        title: pick.title, artist: pick.uploader, dur: durStr,
       };
     } catch (eYt) {
       // yt-dlp lokal gagal (diblokir/rate-limit/format berubah) → jalur API lama,
@@ -2619,7 +2655,7 @@ ${rapikanError(e)}`); }
         if (!lagu.ok) throw new Error(lagu.alasan);
         await react(mess.reactSuccess);
         await client.message.send(jid, { type: 'audio', media: lagu.buf, mimetype: lagu.mime });
-        await reply(`🎵 *${lagu.title || qPlay}*${lagu.dur ? ` [${lagu.dur}]` : ''}\n👤 ${lagu.artist || '-'}`);
+        await reply(`🎵 *${lagu.title || qPlay}*${lagu.dur ? ` [${lagu.dur}]` : ''}\n👤 ${lagu.artist || '-'}${lagu.cached ? ' ⚡ _(cache)_' : ''}`);
       } catch (e) {
         await react(mess.reactError);
         const msgErr = rapikanError(e);
