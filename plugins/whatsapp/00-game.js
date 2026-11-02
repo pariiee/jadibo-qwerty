@@ -192,7 +192,7 @@ module.exports = async function gameHandler(ctx) {
   const { command, reply, react, client, jid, sender, msg, botData, isCmd } = ctx;
   const p = botData.prefix;
 
-  const rawMsg   = msg.message || {};
+  const rawMsg   = msg?.message || {};
   const teksUser = (
     rawMsg?.extendedTextMessage?.text ||
     rawMsg?.conversation ||

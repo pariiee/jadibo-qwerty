@@ -174,33 +174,47 @@ function buildStore(dbPath) {
 
 // ─── Load plugins ─────────────────────────────────────────────────────────────
 function loadPlugins(platform = 'whatsapp') {
-  let pluginsDir;
-  if (platform && fs.existsSync(path.resolve('./plugins', platform))) {
-    pluginsDir = path.resolve('./plugins', platform);
-  } else if (platform && fs.existsSync(path.resolve(platform))) {
-    pluginsDir = path.resolve(platform);
-  } else {
-    pluginsDir = path.resolve('./plugins');
-  }
-  const handlers   = [];
-  if (!fs.existsSync(pluginsDir)) return handlers;
-  const files = fs.readdirSync(pluginsDir).filter(f => f.endsWith('.js')).sort();
-  for (const file of files) {
-    try {
-      const mod = require(path.join(pluginsDir, file));
-      if (typeof mod === 'function') handlers.push(mod);
-      else if (typeof mod.handler === 'function') handlers.push(mod.handler);
-    } catch (e) {
-      console.warn(`[Engine] Failed to load plugin ${file}:`, e.message);
+  const handlers = [];
+  const baseDir = path.resolve(__dirname, '../plugins/whatsapp');
+  const fallbackDir = path.resolve(__dirname, '../plugins');
+  const mainDir = fs.existsSync(baseDir) ? baseDir : fallbackDir;
+
+  // 1. Load semua plugin fitur lengkap (00-game, 01-info, 03-sticker, 04-tools, 05-owner, dll)
+  if (fs.existsSync(mainDir)) {
+    const files = fs.readdirSync(mainDir).filter(f => f.endsWith('.js') && !f.includes('button')).sort();
+    for (const file of files) {
+      try {
+        const mod = require(path.join(mainDir, file));
+        if (typeof mod === 'function') handlers.push(mod);
+        else if (typeof mod.handler === 'function') handlers.push(mod.handler);
+      } catch (e) {
+        console.warn(`[Engine] Failed to load plugin ${file}:`, e.message);
+      }
     }
   }
+
+  // 2. Load plugin platform-spesifik jika ada (misal telegram/01-general.js atau discord)
+  if (platform !== 'whatsapp') {
+    const platDir = path.resolve(__dirname, '../plugins', platform);
+    if (fs.existsSync(platDir)) {
+      const files = fs.readdirSync(platDir).filter(f => f.endsWith('.js')).sort();
+      for (const file of files) {
+        try {
+          const mod = require(path.join(platDir, file));
+          if (typeof mod === 'function') handlers.unshift(mod);
+          else if (typeof mod.handler === 'function') handlers.unshift(mod.handler);
+        } catch {}
+      }
+    }
+  }
+
   return handlers;
 }
 
 // Kumpulkan semua limitedCmds dari tiap plugin jadi satu Set
 function buildLimitedCmds(platform = 'whatsapp') {
-  const targetDir = path.resolve('./plugins', platform);
-  const pluginsDir = fs.existsSync(targetDir) ? targetDir : path.resolve('./plugins');
+  const targetDir = path.resolve(__dirname, '../plugins/whatsapp');
+  const pluginsDir = fs.existsSync(targetDir) ? targetDir : path.resolve(__dirname, '../plugins');
   const result = new Set();
   if (!fs.existsSync(pluginsDir)) return result;
   const files = fs.readdirSync(pluginsDir).filter(f => f.endsWith('.js')).sort();

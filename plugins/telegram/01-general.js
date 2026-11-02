@@ -16,19 +16,7 @@ module.exports = async function telegramGeneral(ctx) {
 
     case 'start':
       await reply(
-        `<b>${botData?.bot_name || 'Bot'}</b>\n\nBot Telegram aktif!\nGunakan ${p}menu untuk melihat daftar perintah.`,
-        { parse_mode: 'HTML' }
-      );
-      return true;
-
-    case 'menu':
-      await reply(
-        `<b>Menu ${botData?.bot_name || 'Bot'}</b>\n\n` +
-        `${p}ping - Cek koneksi\n` +
-        `${p}info - Info bot\n` +
-        `${p}uptime - Waktu aktif\n` +
-        `${p}echo &lt;teks&gt; - Balas teks\n` +
-        `${p}menu - Menu ini`,
+        `<b>${botData?.bot_name || 'Bot'}</b>\n\nBot Telegram aktif!\nGunakan ${p}menu untuk melihat daftar perintah lengkap.`,
         { parse_mode: 'HTML' }
       );
       return true;
