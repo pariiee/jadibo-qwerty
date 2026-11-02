@@ -4080,11 +4080,75 @@ ${rapikanError(e)}`);
       return true;
     }
 
-    // ── ai — NoTrack AI ───────────────────────────────────────────────────────
+    // ── ai — NoTrack AI / AI Vision ───────────────────────────────────────────
     case 'ai': {
+      const rawMsg     = msg?.message || {};
+      const msgType    = Object.keys(rawMsg)[0] || '';
+      const quoted     = rawMsg?.extendedTextMessage?.contextInfo?.quotedMessage;
+      const quotedType = quoted ? Object.keys(quoted)[0] : null;
+      const isDirectImg = msgType === 'imageMessage';
+      const isQuotedImg = quotedType && quotedType === 'imageMessage';
+
+      // Jika ada gambar (direct atau reply), otomatis gunakan mode AI Vision
+      if (isDirectImg || isQuotedImg) {
+        try {
+          const axios    = require('axios');
+          const FormData = require('form-data');
+          const userPrompt = args.join(' ').trim() || 'Deskripsikan dan analisis gambar ini';
+          const prompt = `${userPrompt}. Jawab langsung dan ringkas.`;
+          await react(mess.reactLoading);
+
+          let buffer, mime, filename;
+          if (isDirectImg) {
+            const content = rawMsg[msgType];
+            const fixed = Object.assign({}, content);
+            for (const f of ['mediaKey','fileSha256','fileEncSha256']) {
+              if (typeof fixed[f] === 'string') fixed[f] = Buffer.from(fixed[f], 'base64');
+            }
+            buffer = Buffer.from(await client.message.downloadBytes({ [msgType]: fixed }));
+            mime = content.mimetype || 'image/jpeg';
+            filename = `img_${Date.now()}.${mimeToExt(mime)}`;
+          } else {
+            const content = quoted[quotedType];
+            const fixed = Object.assign({}, content);
+            for (const f of ['mediaKey','fileSha256','fileEncSha256']) {
+              if (typeof fixed[f] === 'string') fixed[f] = Buffer.from(fixed[f], 'base64');
+            }
+            buffer = Buffer.from(await client.message.downloadBytes({ [quotedType]: fixed }));
+            mime = content.mimetype || 'image/jpeg';
+            filename = `img_${Date.now()}.${mimeToExt(mime)}`;
+          }
+
+          const form = new FormData();
+          form.append('file', buffer, { filename, contentType: mime });
+          const uploadRes = await axios.post(`${process.env.BASE_API}api/upload/uguu`, form, {
+            headers: { ...form.getHeaders(), 'X-API-Key': process.env.KEY_API },
+            timeout: 20000,
+          });
+          const imageUrl = uploadRes.data?.results?.file_url || uploadRes.data?.results?.url || uploadRes.data?.url;
+          if (!imageUrl) throw new Error('Gagal upload gambar');
+
+          const aiRes = await axios.get(`${process.env.BASE_API}api/ai/ai-image-read`, {
+            params: { url: imageUrl, prompt },
+            headers: { 'X-API-Key': process.env.KEY_API },
+            timeout: 30000,
+          });
+          const answer = aiRes.data?.results?.answer;
+          if (!answer) throw new Error('Tidak ada respon dari AI Vision');
+
+          await react(mess.reactSuccess);
+          await reply(`🤖 *AI Vision*\n\n${answer}`);
+          return true;
+        } catch (err) {
+          await react(mess.reactError);
+          await reply(`❌ Gagal membaca gambar: ${rapikanError(err)}`);
+          return true;
+        }
+      }
+
       const message = args.join(' ').trim();
       if (!message) {
-        await reply(`Penggunaan: *${p}ai* <pesan>\n\nContoh:\n• ${p}ai halo, apa kabar?\n• ${p}ai jelaskan apa itu gravitasi`);
+        await reply(`Penggunaan: *${p}ai* <pesan / reply gambar>\n\nContoh:\n• ${p}ai jelaskan apa itu gravitasi\n• Kirim foto + caption *${p}ai apa ini?*`);
         return true;
       }
       try {

@@ -161,6 +161,11 @@ const DISCORD_SLASH_COMMANDS = [
         desc: 'Kirim pengumuman resmi dengan format embed di channel ini',
         options: [{ name: 'pesan', desc: 'Isi pengumuman', type: 3, required: true }],
       },
+      {
+        name: 'broadcast',
+        desc: 'Kirim siaran pengumuman ke seluruh server Discord tempat bot berada',
+        options: [{ name: 'pesan', desc: 'Teks broadcast', type: 3, required: true }],
+      },
     ],
   },
   {
@@ -355,6 +360,29 @@ async function handleDiscordInteraction(client, interaction, botData, botId) {
         return ctx.reply(`Gagal mengirim pengumuman: ${e.message}`);
       });
       return ctx.reply('✅ Pengumuman berhasil disiarkan.');
+    }
+    if (subCmd === 'broadcast') {
+      const isOwner = interaction.user.id === botData.owner_number || interaction.member?.permissions?.has('Administrator');
+      if (!isOwner) return ctx.reply('Perintah broadcast hanya bisa dijalankan oleh Admin atau Owner bot.');
+      const pesan = interaction.options.getString('pesan');
+      if (!pesan) return ctx.reply('Isi pesan broadcast tidak boleh kosong.');
+
+      let totalSent = 0;
+      for (const g of client.guilds.cache.values()) {
+        const ch = g.systemChannel || g.channels.cache.find(c => c.isTextBased() && c.permissionsFor(g.members.me)?.has('SendMessages'));
+        if (ch) {
+          await ch.send({
+            embeds: [{
+              title: `📢 Broadcast ${botData.bot_name}`,
+              description: pesan,
+              color: 0x5865F2,
+              footer: { text: botData.footer_text || 'Powered by qwertygate' },
+            }],
+          }).catch(() => {});
+          totalSent++;
+        }
+      }
+      return ctx.reply(`✅ Broadcast berhasil dikirim ke **${totalSent}** server Discord.`);
     }
   }
 
@@ -635,7 +663,19 @@ async function startDiscordBot(botData) {
     } catch {}
   });
 
-  client.on('messageCreate', (message) => {
+  // Anti-Link Guard: deteksi link grup / undangan / phishing di server
+  const DISCORD_LINK_PATTERN = /(?:https?:\/\/|www\.)[^\s]+|discord(?:\.gg|app\.com\/invite)\/[^\s]+|t\.me\/[^\s]+|chat\.whatsapp\.com\/[^\s]+/i;
+
+  client.on('messageCreate', async (message) => {
+    if (message.guild && !message.author?.bot && DISCORD_LINK_PATTERN.test(message.content)) {
+      const isOwnerOrAdmin = message.member?.permissions?.has('Administrator') || message.author.id === botData.owner_number;
+      if (!isOwnerOrAdmin) {
+        await message.delete().catch(() => {});
+        return message.channel.send({
+          content: `⚠️ <@${message.author.id}>, dilarang mengirim tautan atau link asing di server ini!`,
+        }).then(m => setTimeout(() => m.delete().catch(() => {}), 4000)).catch(() => {});
+      }
+    }
     handleDiscordMessage(client, message, botData, botId).catch((err) => {
       logBot(botId, 'cmderr', `[error] ${err.message}`);
     });

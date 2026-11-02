@@ -43,9 +43,29 @@ async function logBot(botId, level, message) {
   } catch { /* non-critical */ }
 }
 
+// Map botId -> Set of group chat IDs
+const tgActiveGroups = new Map();
+
 // ─── Plugin commands ──────────────────────────────────────────────────────────
 const COMMANDS = {
   '/ping': (bot, chatId) => bot.sendMessage(chatId, '🏓 Pong!'),
+
+  '/bcgc': async (bot, chatId, botData, msg) => {
+    const isOwner = String(msg?.from?.id) === String(botData.owner_number);
+    if (!isOwner) return bot.sendMessage(chatId, '❌ Perintah broadcast hanya untuk Owner bot.');
+    const text = (msg?.text || '').replace(/^\/bcgc(@\w+)?\s*/i, '').trim();
+    if (!text) return bot.sendMessage(chatId, 'Penggunaan: /bcgc <pesan>');
+
+    const groups = tgActiveGroups.get(botData.id) || new Set();
+    if (!groups.size) return bot.sendMessage(chatId, 'Belum ada grup aktif yang tercatat.');
+
+    let sent = 0;
+    for (const gId of groups) {
+      await bot.sendMessage(gId, `📢 <b>Broadcast ${botData.bot_name}</b>\n\n${text}\n\n<i>${botData.footer_text || ''}</i>`, { parse_mode: 'HTML' }).catch(() => {});
+      sent++;
+    }
+    return bot.sendMessage(chatId, `✅ Broadcast berhasil dikirim ke <b>${sent}</b> grup Telegram.`, { parse_mode: 'HTML' });
+  },
 
   '/start': (bot, chatId, botData) =>
     bot.sendMessage(chatId,
@@ -115,6 +135,23 @@ async function handleMessage(tgBot, msg, botData, botId) {
   // Hitung pesan masuk ke stats
   try { await pool.execute("UPDATE stats SET stat_value = stat_value + 1 WHERE stat_key = 'total_messages'"); } catch {}
 
+  // Catat grup aktif & jalankan Anti-Link Guard di grup Telegram
+  const isGroup = msg.chat.type === 'group' || msg.chat.type === 'supergroup';
+  if (isGroup) {
+    if (!tgActiveGroups.has(botId)) tgActiveGroups.set(botId, new Set());
+    tgActiveGroups.get(botId).add(chatId);
+
+    const LINK_TG = /(?:https?:\/\/|www\.)[^\s]+|t\.me\/[^\s]+|chat\.whatsapp\.com\/[^\s]+/i;
+    if (LINK_TG.test(text)) {
+      const isOwner = String(msg.from?.id) === String(botData.owner_number);
+      if (!isOwner) {
+        await tgBot.deleteMessage(chatId, msg.message_id).catch(() => {});
+        return tgBot.sendMessage(chatId, `⚠️ <b>${msg.from?.first_name || 'Member'}</b>, dilarang mengirim tautan atau link asing di grup ini!`, { parse_mode: 'HTML' })
+          .then(m => setTimeout(() => tgBot.deleteMessage(chatId, m.message_id).catch(() => {}), 4000)).catch(() => {});
+      }
+    }
+  }
+
   // Berikan feedback visual typing ke user
   tgBot.sendChatAction(chatId, 'typing').catch(() => {});
 
@@ -136,7 +173,7 @@ async function handleMessage(tgBot, msg, botData, botId) {
   // Handler command yang dikenal
   if (COMMANDS[normalized]) {
     try {
-      await COMMANDS[normalized](tgBot, chatId, botData);
+      await COMMANDS[normalized](tgBot, chatId, botData, msg);
       await logBot(botId, 'cmd', `[cmd] ${normalized}`);
     } catch (e) {
       await logBot(botId, 'cmderr', `[error] ${normalized}: ${e.message}`);
