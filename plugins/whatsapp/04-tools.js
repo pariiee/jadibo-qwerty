@@ -228,6 +228,13 @@ module.exports = async function toolsHandler(ctx) {
           fs.writeFileSync(path.join(CACHE_DIR, `${pick.id}.json`), JSON.stringify({
             title: pick.title, artist: pick.uploader, dur: durStr, ts: Date.now()
           }));
+          // Auto-clean: buang cache > 24 jam atau jika melebihi 50 lagu terbaru
+          const items = fs.readdirSync(CACHE_DIR).map(f => ({ p: path.join(CACHE_DIR, f), t: fs.statSync(path.join(CACHE_DIR, f)).mtimeMs }));
+          const now = Date.now();
+          items.forEach(it => { if (now - it.t > 86400000) { try { fs.unlinkSync(it.p); } catch {} } });
+          if (items.length > 100) {
+            items.sort((a, b) => a.t - b.t).slice(0, items.length - 100).forEach(it => { try { fs.unlinkSync(it.p); } catch {} });
+          }
         } catch {}
       }
 
