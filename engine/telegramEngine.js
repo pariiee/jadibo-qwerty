@@ -49,8 +49,21 @@ const COMMANDS = {
 
   '/start': (bot, chatId, botData) =>
     bot.sendMessage(chatId,
-      `<b>${botData.bot_name}</b>\n\nBot Telegram aktif!\nGunakan /menu untuk melihat daftar perintah.`,
-      { parse_mode: 'HTML' }
+      `<b>${botData.bot_name}</b>\n\nBot Telegram aktif dan siap digunakan!\nGunakan menu di bawah atau ketik /menu untuk melihat daftar perintah.`,
+      {
+        parse_mode: 'HTML',
+        reply_markup: {
+          inline_keyboard: [
+            [
+              { text: '📖 Buka Menu', callback_data: 'menu' },
+              { text: '⚡ Cek Ping', callback_data: 'ping' },
+            ],
+            [
+              { text: '🌐 Dashboard Bot', url: 'https://labs.yapari.web.id/dashboard' },
+            ],
+          ],
+        },
+      }
     ),
 
   '/menu': (bot, chatId, botData) => {
@@ -259,6 +272,77 @@ async function startTelegramBot(botData) {
     } catch (e) {
       await logBot(botId, 'error', `Message handler error: ${e.message}`);
     }
+  });
+
+  // ── Event: inline_query (Share bot command dari chat room manapun) ───────
+  tgBot.on('inline_query', async (iq) => {
+    try {
+      const q = String(iq.query || '').trim();
+      const results = [];
+
+      if (q) {
+        results.push({
+          type: 'article',
+          id: 'ai_' + iq.id,
+          title: `🤖 Tanya AI: "${q}"`,
+          description: `Kirim pertanyaan ini ke bot AI`,
+          input_message_content: {
+            message_text: `<b>🤖 Tanya AI:</b>\n<i>${q}</i>\n\nKetik <code>/ai ${q}</code> untuk jawaban langsung dari bot.`,
+            parse_mode: 'HTML',
+          },
+        });
+
+        results.push({
+          type: 'article',
+          id: 'yt_' + iq.id,
+          title: `🎵 Cari Lagu: "${q}"`,
+          description: `Cari dan unduh lagu via bot`,
+          input_message_content: {
+            message_text: `<b>🎵 Cari Lagu:</b>\nKetik <code>/play ${q}</code> di chat bot.`,
+            parse_mode: 'HTML',
+          },
+        });
+      }
+
+      results.push({
+        type: 'article',
+        id: 'menu_' + iq.id,
+        title: `📖 Buka Menu Bot (${botData.bot_name})`,
+        description: 'Tampilkan menu dan daftar perintah bot',
+        input_message_content: {
+          message_text: `<b>${botData.bot_name}</b>\nBot asisten multifungsi Telegram!\n\nKetik <code>/menu</code> untuk melihat seluruh fitur lengkap.`,
+          parse_mode: 'HTML',
+        },
+      });
+
+      results.push({
+        type: 'article',
+        id: 'ping_' + iq.id,
+        title: `⚡ Cek Status & Kecepatan Bot`,
+        description: `Status aktif bot ${botData.bot_name}`,
+        input_message_content: {
+          message_text: `🏓 <b>Pong!</b>\nBot <b>${botData.bot_name}</b> aktif dan online.`,
+          parse_mode: 'HTML',
+        },
+      });
+
+      await tgBot.answerInlineQuery(iq.id, results, { cache_time: 10 });
+    } catch (err) {
+      console.warn(`[TelegramInline] error:`, err?.message || err);
+    }
+  });
+
+  // ── Event: callback_query (Handle klik tombol inline keyboard) ────────────
+  tgBot.on('callback_query', async (cb) => {
+    try {
+      await tgBot.answerCallbackQuery(cb.id).catch(() => {});
+      const data = String(cb.data || '');
+      if (data === 'ping') {
+        await tgBot.sendMessage(cb.message.chat.id, '🏓 Pong! (Telegram Engine)');
+      } else if (data === 'menu') {
+        await COMMANDS['/menu']?.(tgBot, cb.message.chat.id, botData);
+      }
+    } catch {}
   });
 
   // ── Verifikasi token dengan getMe & daftarkan menu perintah ───────────────
