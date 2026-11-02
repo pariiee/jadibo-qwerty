@@ -67,10 +67,13 @@ async function executeDiscordVoiceAction({
   botData,
   botId,
 }) {
-  if (!voice || !playDl) {
+  if (!voice) {
     return ctx.reply('⚠️ Modul voice player Discord belum aktif di server.');
   }
   if (!guild) return ctx.reply('Perintah voice musik hanya berlaku di dalam server Discord.');
+
+  const { Readable } = require('stream');
+  const { ambilAudioLagu } = require('./audioHelper');
 
   if (!botVoiceSessions.has(botId)) botVoiceSessions.set(botId, new Map());
   const guildSessions = botVoiceSessions.get(botId);
@@ -78,8 +81,18 @@ async function executeDiscordVoiceAction({
 
   const playSongStream = async (targetSession, videoInfo) => {
     targetSession.song = videoInfo;
-    const audioStream = await playDl.stream(videoInfo.url);
-    const resource = voice.createAudioResource(audioStream.stream, { inputType: audioStream.type });
+    let streamSource;
+    if (videoInfo.filePath && fs.existsSync(videoInfo.filePath)) {
+      streamSource = fs.createReadStream(videoInfo.filePath);
+    } else if (videoInfo.buf) {
+      streamSource = Readable.from(videoInfo.buf);
+    } else if (playDl) {
+      const audioStream = await playDl.stream(videoInfo.url);
+      streamSource = audioStream.stream;
+    } else {
+      throw new Error('Sumber audio tidak dapat diputar.');
+    }
+    const resource = voice.createAudioResource(streamSource);
     targetSession.player.play(resource);
   };
 
@@ -91,11 +104,19 @@ async function executeDiscordVoiceAction({
     if (!q) return ctx.reply('Masukkan judul lagu atau URL YouTube yang ingin diputar.');
 
     try {
-      const searchResults = await playDl.search(q, { limit: 1 });
-      if (!searchResults || !searchResults.length) {
-        return ctx.reply(`❌ Lagu tidak ditemukan untuk pencarian: "${q}"`);
+      const audioResult = await ambilAudioLagu(q);
+      if (!audioResult.ok || (!audioResult.buf && !audioResult.filePath)) {
+        return ctx.reply(`❌ Lagu tidak ditemukan atau gagal diunduh: ${audioResult.alasan || q}`);
       }
-      const video = searchResults[0];
+
+      const video = {
+        title: audioResult.title || q,
+        url: audioResult.url || 'https://youtube.com',
+        durationRaw: audioResult.dur || 'Live',
+        filePath: audioResult.filePath,
+        buf: audioResult.buf,
+        artist: audioResult.artist,
+      };
 
       if (!session || !session.connection) {
         const connection = voice.joinVoiceChannel({
