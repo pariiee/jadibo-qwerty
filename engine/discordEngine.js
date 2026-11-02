@@ -6,6 +6,7 @@
  * Setiap bot punya instance Client tersendiri dengan token dari DB.
  */
 
+const fs = require('fs');
 const { pool } = require('../config/database');
 const { buildUniversalContext } = require('./universalAdapter');
 const { loadPlugins } = require('./whatsappEngine');
