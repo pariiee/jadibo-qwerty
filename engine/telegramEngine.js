@@ -93,8 +93,13 @@ const COMMANDS = {
   '/menu': async (bot, chatId, botData, msg) => {
     const text = (msg?.text || '').toLowerCase().trim();
     const infoMod = require('../plugins/whatsapp/01-info');
-    const cats = infoMod.CATS;
+    const baseCats = infoMod.CATS;
     const catKeys = infoMod.CAT_KEYS;
+
+    const cats = {
+      ...baseCats,
+      ai: ['ai', 'chatgpt', 'gemini', 'notrack', 'tanyaimg', 'toghibli', 'ailyrics'],
+    };
 
     const sub = text.split(/\s+/)[1] || '';
     if (sub === 'all') {
@@ -107,8 +112,9 @@ const COMMANDS = {
     }
 
     if (sub && cats[sub]) {
-      const cmds = (cats[sub] || []).map(c => `/${c}`).join('\n• ');
-      return bot.sendMessage(chatId, `〔 <b>Menu ${infoMod.catLabel(sub)}</b> 〕\n\n• ${cmds}\n\n<i>Ketik /menu all untuk melihat semua perintah</i>`, { parse_mode: 'HTML' });
+      const label = sub === 'ai' ? 'ARTIFICIAL INTELLIGENCE' : infoMod.catLabel(sub);
+      const cmds = cats[sub].map(c => `/${c}`).join('\n• ');
+      return bot.sendMessage(chatId, `〔 <b>Kategori ${label}</b> 〕\n\n• ${cmds}\n\n<i>Ketik /menu all untuk melihat semua perintah</i>`, { parse_mode: 'HTML' });
     }
 
     let menuTxt = `<b>╔══════════════════════════╗\n` +
@@ -120,7 +126,8 @@ const COMMANDS = {
       `• 📥 <b>Unduh:</b> <code>/tiktok</code>, <code>/youtube</code>, <code>/ig</code>, <code>/twit</code>\n` +
       `• 🛠️ <b>Alat:</b> <code>/tourl</code>, <code>/sticker</code>, <code>/cuaca</code>, <code>/gempa</code>\n` +
       `• 🎮 <b>Game:</b> <code>/dice</code>, <code>/slot</code>, <code>/asahotak</code>\n\n` +
-      `<b>Kategori Perintah:</b>\n`;
+      `<b>Kategori Perintah:</b>\n` +
+      `• 🤖 <b>AI (Kecerdasan Buatan)</b>: <code>/menu ai</code>\n`;
 
     for (const k of catKeys) {
       const count = (cats[k] || []).length;
@@ -131,12 +138,16 @@ const COMMANDS = {
 
     const inline_keyboard = [
       [
-        { text: '🤖 AI', callback_data: 'menu_tools' },
-        { text: '📥 Downloader', callback_data: 'menu_tools' },
+        { text: '🤖 AI & Chat', callback_data: 'menu_ai' },
+        { text: '📥 Downloader (40+)', callback_data: 'menu_downloader' },
       ],
       [
+        { text: '🛠️ Utilitas / Tools', callback_data: 'menu_tools' },
         { text: '🎮 Game & RPG', callback_data: 'menu_game' },
-        { text: '🛠️ Semua Tools', callback_data: 'menu_tools' },
+      ],
+      [
+        { text: '🎨 Stiker & Maker', callback_data: 'menu_maker' },
+        { text: '🎲 Kata & Random', callback_data: 'menu_random' },
       ],
       [
         { text: '📜 Tampilkan Semua (320+ Fitur)', callback_data: 'menu_all' },

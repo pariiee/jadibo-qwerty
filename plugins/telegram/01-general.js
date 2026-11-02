@@ -37,7 +37,11 @@ module.exports = async function telegramGeneral(ctx) {
     case 'menu': {
       const sub = (args && args.length ? args[0].toLowerCase() : '');
       const infoMod = require('../whatsapp/01-info');
-      const cats = infoMod.CATS;
+      const baseCats = infoMod.CATS;
+      const cats = {
+        ...baseCats,
+        ai: ['ai', 'chatgpt', 'gemini', 'notrack', 'tanyaimg', 'toghibli', 'ailyrics'],
+      };
 
       if (sub === 'all') {
         let txt = `📋 <b>SELURUH PERINTAH ${botData?.bot_name || 'BOT'} (320+ Fitur)</b>\n\n`;
@@ -50,8 +54,9 @@ module.exports = async function telegramGeneral(ctx) {
       }
 
       if (sub && cats[sub]) {
+        const label = sub === 'ai' ? 'ARTIFICIAL INTELLIGENCE' : infoMod.catLabel(sub);
         const cmds = cats[sub].map(c => `/${c}`).join('\n• ');
-        await reply(`〔 <b>Menu ${infoMod.catLabel(sub)}</b> 〕\n\n• ${cmds}\n\n<i>Ketik /menu all untuk melihat seluruh perintah</i>`, { parse_mode: 'HTML' });
+        await reply(`〔 <b>Menu ${label}</b> 〕\n\n• ${cmds}\n\n<i>Ketik /menu all untuk melihat seluruh perintah</i>`, { parse_mode: 'HTML' });
         return true;
       }
 
@@ -72,12 +77,16 @@ module.exports = async function telegramGeneral(ctx) {
           reply_markup: {
             inline_keyboard: [
               [
-                { text: '🤖 AI & Chat', callback_data: 'menu_tools' },
-                { text: '📥 Downloader', callback_data: 'menu_tools' },
+                { text: '🤖 AI & Chat', callback_data: 'menu_ai' },
+                { text: '📥 Downloader (40+)', callback_data: 'menu_downloader' },
               ],
               [
+                { text: '🛠️ Utilitas / Tools', callback_data: 'menu_tools' },
                 { text: '🎮 Game & RPG', callback_data: 'menu_game' },
-                { text: '🛠️ Semua Tools', callback_data: 'menu_tools' },
+              ],
+              [
+                { text: '🎨 Stiker & Maker', callback_data: 'menu_maker' },
+                { text: '🎲 Kata & Random', callback_data: 'menu_random' },
               ],
               [
                 { text: '📜 Tampilkan Semua (/menu all)', callback_data: 'menu_all' },
