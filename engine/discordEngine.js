@@ -81,6 +81,7 @@ async function executeDiscordVoiceAction({
   let session = guildSessions.get(guild.id);
 
   const playSongStream = async (targetSession, videoInfo) => {
+    clearTimeout(targetSession.idleTimer);
     targetSession.song = videoInfo;
     let streamSource;
     if (videoInfo.filePath && fs.existsSync(videoInfo.filePath)) {
@@ -139,6 +140,7 @@ async function executeDiscordVoiceAction({
         player.on(voice.AudioPlayerStatus.Idle, async () => {
           session.song = null;
           if (session.queue.length > 0) {
+            clearTimeout(session.idleTimer);
             const nextSong = session.queue.shift();
             try {
               await playSongStream(session, nextSong);
@@ -158,6 +160,23 @@ async function executeDiscordVoiceAction({
             } catch (e) {
               console.error(`[Bot ${botId}] Gagal memutar next song:`, e.message);
             }
+          } else {
+            clearTimeout(session.idleTimer);
+            session.idleTimer = setTimeout(() => {
+              try {
+                if (!session.song && session.queue.length === 0) {
+                  session.connection?.destroy();
+                  guildSessions.delete(guild.id);
+                  session.textChannel?.send?.({
+                    embeds: [{
+                      title: '👋 Keluar Otomatis dari Voice Channel',
+                      description: 'Bot keluar otomatis dari kanal suara karena tidak ada lagu yang diputar selama 1 menit.',
+                      color: 0x95A5A6,
+                    }],
+                  }).catch(() => {});
+                }
+              } catch {}
+            }, 60000);
           }
         });
       }
@@ -227,6 +246,7 @@ async function executeDiscordVoiceAction({
 
   if (action === 'stop') {
     if (!session) return ctx.reply('Bot sedang tidak berada di Voice Channel server ini.');
+    clearTimeout(session.idleTimer);
     session.queue = [];
     try {
       session.player.stop();
