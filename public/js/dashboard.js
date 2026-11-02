@@ -282,6 +282,13 @@
               '+ Invite ke Server Discord' +
             '</a>' +
           '</div>' : '') +
+        (bot.platform === 'telegram' && bot.telegram_bot_url ?
+          '<div style="margin-top:10px">' +
+            '<a href="' + esc(bot.telegram_bot_url) + '" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline" style="display:flex;align-items:center;justify-content:center;gap:6px;width:100%;font-size:12px;padding:7px 10px;border-radius:8px;color:#229ED9;border-color:rgba(34,158,217,.35);font-weight:600;text-decoration:none">' +
+              '<svg width="14" height="14" viewBox="0 0 24 24"><path fill="currentColor" d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161l-1.97 9.288c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.022c.24-.213-.054-.333-.373-.12L7.94 13.428l-2.943-.92c-.64-.203-.652-.64.133-.948l11.5-4.432c.534-.194 1-.12.932.633z"/></svg>' +
+              'Buka di Telegram' +
+            '</a>' +
+          '</div>' : '') +
         '<div class="btns">' +
           '<button data-cfg>Config</button>' +
           '<button data-stat>Statistik</button>' +

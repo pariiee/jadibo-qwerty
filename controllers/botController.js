@@ -125,6 +125,8 @@ function publicBot(bot) {
   const rawToken = discord_token || (bot.platform === 'discord' ? telegram_token : null);
   const discord_invite_url = bot.platform === 'discord' ? getDiscordInviteUrl(rawToken, 'standard') : null;
   const discord_invite_admin_url = bot.platform === 'discord' ? getDiscordInviteUrl(rawToken, 'admin') : null;
+  const tgUser = bot.bot_number ? String(bot.bot_number).replace(/^@/, '') : null;
+  const telegram_bot_url = bot.platform === 'telegram' && tgUser ? `https://t.me/${tgUser}` : null;
   // `public_id` diteruskan APA ADANYA (bisa null untuk bot lama) — UI memakai
   // `slug` yang sudah diisi di bawah, bukan kolom mentahnya.
   return {
@@ -133,6 +135,7 @@ function publicBot(bot) {
     discord_token: maskToken(discord_token),
     discord_invite_url,
     discord_invite_admin_url,
+    telegram_bot_url,
   };
 }
 

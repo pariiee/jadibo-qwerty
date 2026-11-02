@@ -210,17 +210,47 @@ async function startTelegramBot(botData) {
 
   // ── Event: polling error ──────────────────────────────────────────────────
   tgBot.on('polling_error', async (err) => {
+    const isUnauthorized = err.response?.statusCode === 401 || String(err.message).includes('401');
     const msg = err.code === 'ETELEGRAM'
       ? `Telegram API error: ${err.response?.body?.description || err.message}`
       : err.message;
-    await logBot(botId, 'error', msg);
-    broadcast(botId, 'status', { status: 'disconnected' });
-    await pool.execute("UPDATE bots SET status = 'disconnected', is_running = 0 WHERE id = ?", [botId]);
+    await logBot(botId, isUnauthorized ? 'error' : 'warn', msg);
+
+    // Hanya matikan bot jika token beneran invalid/revoked (401), jangan matikan jika cuma timeout/502/network glitch
+    if (isUnauthorized) {
+      broadcast(botId, 'status', { status: 'disconnected' });
+      await pool.execute("UPDATE bots SET status = 'disconnected', is_running = 0 WHERE id = ?", [botId]);
+    }
   });
 
-  // ── Event: message ────────────────────────────────────────────────────────
+  // ── Event: message & group alerts ─────────────────────────────────────────
   tgBot.on('message', async (msg) => {
     try {
+      // 1. Sambutan anggota baru masuk grup
+      if (msg.new_chat_members && msg.new_chat_members.length) {
+        for (const m of msg.new_chat_members) {
+          if (m.is_bot) continue;
+          const name = [m.first_name, m.last_name].filter(Boolean).join(' ') || 'Member';
+          await tgBot.sendMessage(
+            msg.chat.id,
+            `👋 <b>Selamat Datang di ${msg.chat.title || 'Grup'}!</b>\nHalo <b>${name}</b>, selamat bergabung! Ketik /menu untuk melihat daftar command.`,
+            { parse_mode: 'HTML' }
+          ).catch(() => {});
+        }
+        return;
+      }
+
+      // 2. Notifikasi anggota keluar grup
+      if (msg.left_chat_member) {
+        const leftName = [msg.left_chat_member.first_name, msg.left_chat_member.last_name].filter(Boolean).join(' ') || 'Member';
+        await tgBot.sendMessage(
+          msg.chat.id,
+          `👋 <b>${leftName}</b> telah meninggalkan grup.`,
+          { parse_mode: 'HTML' }
+        ).catch(() => {});
+        return;
+      }
+
       const from = msg.from?.username || msg.from?.first_name || String(msg.from?.id);
       const text = msg.text || '[media]';
       const isCmd = msg.text && (msg.text.startsWith('/') || msg.text.startsWith(botData.prefix ?? '/'));
@@ -231,14 +261,38 @@ async function startTelegramBot(botData) {
     }
   });
 
-  // ── Verifikasi token dengan getMe ─────────────────────────────────────────
+  // ── Verifikasi token dengan getMe & daftarkan menu perintah ───────────────
   try {
     const me = await tgBot.getMe();
     await logBot(botId, 'info', `Terhubung sebagai @${me.username} (${me.first_name})`);
+
+    // Daftarkan autocomplete list command resmi di menu bot Telegram
+    try {
+      await tgBot.setMyCommands([
+        { command: 'start', description: 'Mulai bot dan tampilkan menu sambutan' },
+        { command: 'menu', description: 'Daftar semua kategori command' },
+        { command: 'ping', description: 'Cek kecepatan respon bot' },
+        { command: 'uptime', description: 'Lihat durasi aktif bot' },
+        { command: 'ai', description: 'Tanya jawab dengan Artificial Intelligence' },
+        { command: 'tiktok', description: 'Download video/audio TikTok tanpa watermark' },
+        { command: 'youtube', description: 'Download video atau lagu YouTube' },
+        { command: 'play', description: 'Cari dan unduh audio lagu' },
+        { command: 'tourl', description: 'Upload file media menjadi URL' },
+        { command: 'sticker', description: 'Buat stiker dari foto' },
+        { command: 'chord', description: 'Cari kunci gitar lagu' },
+        { command: 'lirik', description: 'Cari lirik lagu' },
+        { command: 'cuaca', description: 'Prakiraan cuaca kota' },
+        { command: 'gempa', description: 'Info gempa terkini BMKG' },
+      ]);
+      await logBot(botId, 'info', 'Menu commands Telegram terdaftar');
+    } catch {}
+
+    // Simpan username bot ke bot_number agar link t.me/username langsung aktif
+    if (me.username) {
+      await pool.execute("UPDATE bots SET bot_number = COALESCE(bot_number, ?) WHERE id = ?", [me.username, botId]).catch(() => {});
+    }
+
     await pool.execute("UPDATE bots SET status = 'connected', is_running = 1 WHERE id = ?", [botId]);
-    // Tanpa `incrementStat('total_bots_online')`: di sini bahkan TIDAK ADA
-    // decrement-nya sama sekali, jadi counter-nya cuma bisa naik. Angka
-    // publiknya dihitung dari `bots.status` saat dibaca (getStats()).
     broadcast(botId, 'status', { status: 'connected', username: me.username });
   } catch (e) {
     await logBot(botId, 'error', `Gagal verifikasi token: ${e.message}`);

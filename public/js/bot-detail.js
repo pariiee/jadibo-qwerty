@@ -77,6 +77,15 @@
         if (btnInviteDcAdmin) btnInviteDcAdmin.style.display = 'none';
       }
     }
+    const btnOpenTg = document.getElementById('btn-open-tg');
+    if (btnOpenTg) {
+      if (b.platform === 'telegram' && b.telegram_bot_url) {
+        btnOpenTg.href = b.telegram_bot_url;
+        btnOpenTg.style.display = 'inline-flex';
+      } else {
+        btnOpenTg.style.display = 'none';
+      }
+    }
     document.getElementById('cfg-panel').classList.toggle('tg', isTokenBot);
 
     if (isTokenBot) {
