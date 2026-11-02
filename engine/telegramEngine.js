@@ -381,10 +381,17 @@ async function startTelegramBot(botData) {
     try {
       await tgBot.answerCallbackQuery(cb.id).catch(() => {});
       const data = String(cb.data || '');
+      const chatId = cb.message.chat.id;
+
       if (data === 'ping') {
-        await tgBot.sendMessage(cb.message.chat.id, '🏓 Pong! (Telegram Engine)');
+        await tgBot.sendMessage(chatId, '🏓 Pong! (Telegram Engine)');
       } else if (data === 'menu') {
-        await COMMANDS['/menu']?.(tgBot, cb.message.chat.id, botData);
+        await handleMessage(tgBot, { chat: { id: chatId }, from: cb.from, text: '/menu' }, botData, botId);
+      } else if (data === 'menu_all') {
+        await handleMessage(tgBot, { chat: { id: chatId }, from: cb.from, text: '/menu all' }, botData, botId);
+      } else if (data.startsWith('menu_')) {
+        const cat = data.replace('menu_', '');
+        await handleMessage(tgBot, { chat: { id: chatId }, from: cb.from, text: `/menu ${cat}` }, botData, botId);
       }
     } catch {}
   });
