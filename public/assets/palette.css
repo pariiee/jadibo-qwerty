@@ -2943,3 +2943,147 @@ body.page-dashboard #toast.show{opacity:1;transform:translate(-50%,0)}
   body.page-dashboard .plat-grid{grid-template-columns:1fr}
 }
 
+/* ══════════════════════════════════════════════════════════════════════
+   SOLID MATTE DESIGN SYSTEM (NO GRADIENTS, CLEAN SOLID SURFACES)
+   - Zero gradients across canvas, cards, buttons, badges, and typography
+   - Preserves 3D platform orbit card with solid industrial borders & clean glow
+   ══════════════════════════════════════════════════════════════════════ */
+:root {
+  --bg: #090a0f !important;
+  --bg2: #0e1017 !important;
+  --shell: #11131a !important;
+  --panel: #11131a !important;
+  --card: #11131a !important;
+  --card2: #11131a !important;
+  --border: #1e222d !important;
+  --edge: #1e222d !important;
+  --line: #1e222d !important;
+  --ink: #f3f4f8 !important;
+  --txt: #f3f4f8 !important;
+  --mute: #8e94a8 !important;
+  --muted: #8e94a8 !important;
+  --dark: #f3f4f8 !important;
+  --darkink: #090a0f !important;
+}
+
+html, body, .hero, section, .card, .stat, .step, .price-card, .tst, .faq-item,
+.panel, .sidebar, .topbar, .modal, .hero-robot-frame, .hero-stats-card,
+.robot-floating-card, .plat-btn, .modal-close, .back-btn {
+  background-image: none !important;
+}
+
+body {
+  background-color: #090a0f !important;
+  color: #f3f4f8 !important;
+}
+
+/* Headings: Solid crisp typography without gradient clip */
+h1, h2, h3, h4, .hero h1, .hero h1 .grad, .sec-head h2 {
+  background: none !important;
+  background-image: none !important;
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
+  -webkit-text-fill-color: initial !important;
+  color: #f3f4f8 !important;
+}
+
+/* Cards & Bento Grid: Clean Solid Surfaces */
+.card, .stat, .step, .price-card, .tst, .faq-item, .panel {
+  background-color: #11131a !important;
+  border: 1px solid #1e222d !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.card:hover, .stat:hover, .step:hover, .price-card:hover, .tst:hover {
+  background-color: #141722 !important;
+  border-color: #2a3040 !important;
+  transform: translateY(-2px);
+}
+
+/* Buttons: Solid high-contrast */
+.btn-dark, .btn-primary, .submit-btn {
+  background: #f3f4f8 !important;
+  color: #090a0f !important;
+  border: 1px solid #f3f4f8 !important;
+  font-weight: 700 !important;
+}
+.btn-dark:hover, .btn-primary:hover, .submit-btn:hover {
+  background: #ffffff !important;
+  color: #000000 !important;
+  opacity: 0.95 !important;
+}
+
+.btn-outline {
+  background: #11131a !important;
+  color: #f3f4f8 !important;
+  border: 1px solid #1e222d !important;
+}
+.btn-outline:hover {
+  background: #161a25 !important;
+  border-color: #2e3548 !important;
+}
+
+/* Hero Robot Orbit Frame: Clean solid card with preserved orbit */
+body.page-index .hero-robot-frame {
+  background: #11131a !important;
+  border: 1px solid #1e222d !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+body.page-index .robot-header-bar {
+  border-bottom: 1px solid #1a1e28;
+  padding-bottom: 16px;
+}
+
+body.page-index .robot-brand-chip {
+  background: #161922 !important;
+  border: 1px solid #232838 !important;
+  color: #f3f4f8 !important;
+}
+
+body.page-index .robot-floating-card {
+  background: #161922 !important;
+  border: 1px solid #232838 !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+body.page-index .hero-tag {
+  background: #161922 !important;
+  border: 1px solid #232838 !important;
+  color: #8e94a8 !important;
+}
+
+body.page-index .hero-tag .tag-dot {
+  background: #10b981 !important;
+}
+
+/* Modal and Inputs */
+body.page-dashboard .modal {
+  background: #11131a !important;
+  border: 1px solid #1e222d !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7) !important;
+}
+body.page-dashboard .plat-btn {
+  background: #161922 !important;
+  border: 1px solid #1e222d !important;
+}
+body.page-dashboard .plat-btn:hover {
+  background: #1c202d !important;
+  border-color: #3b82f6 !important;
+}
+.inp, body.page-dashboard .inp {
+  background: #090a0f !important;
+  border: 1px solid #1e222d !important;
+  color: #f3f4f8 !important;
+}
+.inp:focus, body.page-dashboard .inp:focus {
+  border-color: #3b82f6 !important;
+  outline: none !important;
+}
+
