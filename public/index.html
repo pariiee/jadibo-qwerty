@@ -3,19 +3,27 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>qwertygate — Multi-Platform Messaging Gateway</title>
-<!-- @include landing-head.html -->
+<title>qwertygate — №1 Multi-Platform Bot Automation Gateway</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/parigate.svg" />
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#E2E2DE" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/assets/palette.css?v=9.0" />
+  <script src="/js/act.js"></script>
 </head>
 <body class="page-index">
 
-<!-- batang progres baca — posisi & animasinya di assets/motion.css,
-     sengaja cuma "<div></div>" biar markup-nya nggak berisik -->
 <div id="baca"></div>
 
-<!-- MEGA CONTAINER CANVAS UTAMA (GAYA REFERENSI SINGLE FLOATING CANVAS) -->
+<!-- Simbol bintang kecil (dipakai berulang) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="spk" viewBox="0 0 24 24"><path d="M12 0C13 7 17 11 24 12 17 13 13 17 12 24 11 17 7 13 0 12 7 11 11 7 12 0Z" fill="none" stroke="currentColor" stroke-width="1.2"/></symbol>
+</svg>
+
 <div class="mega-canvas">
 
-  <!-- TOP MINIMALIST BAR (TANPA NAVBAR BIASA) -->
   <header class="top-nav">
     <a href="/" class="brand-badge">
       <img src="/assets/parigate.svg" alt="qwertygate" width="32" height="32" />
@@ -27,33 +35,41 @@
         <span class="dot-sm"></span> Masuk
       </button>
       <a class="btn-signup-pill" href="/register">
-        <span class="dot-sm green"></span> Daftar Akun
+        <span class="dot-sm green"></span> Daftar
       </a>
     </div>
   </header>
 
-  <!-- CENTERED IMPACT HERO -->
+  <!-- HERO -->
   <section class="hero-impact">
+    <!-- Dekorasi melayang (disembunyikan di layar kecil) -->
+    <i class="decor d-cube" aria-hidden="true"></i>
+    <svg class="decor d-club" viewBox="0 0 48 52" aria-hidden="true"><g fill="#D8FF7A"><circle cx="24" cy="14" r="11"/><circle cx="12" cy="31" r="11"/><circle cx="36" cy="31" r="11"/><path d="M24 30 18 50H30Z"/></g></svg>
+    <svg class="decor d-heart" viewBox="0 0 48 48" aria-hidden="true"><path d="M24 44C-6 24 6 2 24 16 42 2 54 24 24 44Z" fill="#BFD7FF"/></svg>
+    <svg class="decor d-spk s1" width="22" height="22"><use href="#spk"/></svg>
+    <svg class="decor d-spk s2" width="18" height="18"><use href="#spk"/></svg>
+    <svg class="decor d-spk s3" width="24" height="24"><use href="#spk"/></svg>
+    <svg class="decor d-spk s4" width="16" height="16"><use href="#spk"/></svg>
+
     <div class="hero-pill-badge">
-      <span class="badge-dot"></span> №1 MULTI-PLATFORM BOT AUTOMATION GATEWAY
+      <span class="badge-dot"></span> №1 Multi-Platform Bot Automation Gateway
     </div>
 
-    <h1 class="hero-giant-title">
-      OTOMATISASI BOT SERBA BISA.<br />
-      WHATSAPP, TELEGRAM &amp; DISCORD.
-    </h1>
+    <div class="title-wrap">
+      <h1 class="hero-giant-title">
+        Otomatisasi bot <span class="hl">serba bisa.</span><br />
+        WhatsApp, Telegram &amp; Discord.
+      </h1>
+      <span class="hero-sticker">Tanpa VPS!<small>Langsung aktif</small></span>
+    </div>
 
     <p class="hero-lead-desc">
-      Satu dashboard terpadu untuk mengoperasikan ratusan bot cerdas. Dilengkapi fitur Voice Channel Music Player, AI Chat &amp; Vision, Media Downloader instan, dan auto-moderasi server 24/7 tanpa henti.
+      Satu dashboard untuk mengoperasikan ratusan bot cerdas: Voice Channel Music Player, AI Chat &amp; Vision, Media Downloader instan, dan auto-moderasi server 24/7.
     </p>
 
     <div class="hero-cta-group">
-      <a class="btn-cta-lime" href="/register">
-        Mulai Sekarang Gratis! <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
-      </a>
-      <a class="btn-cta-ghost" href="#harga">
-        Lihat Pilihan Paket
-      </a>
+      <a class="btn-cta-lime" href="/register">Mulai Sekarang Gratis!</a>
+      <a class="btn-cta-ghost" href="#harga">Lihat Pilihan Paket</a>
     </div>
 
     <!-- ORBIT PLATFORM 3D (TETAP ADA & UTUH) -->
@@ -106,98 +122,67 @@
     </div>
   </section>
 
-  <!-- 3 HERO BENTO CARDS (PERSIS GAMBAR REFERENSI CASINO: HITAM, ABU, NEON LIME) -->
+  <!-- 3 BENTO CARDS -->
   <section class="tri-bento-grid">
-    <!-- Card 1: Solid Dark Charcoal Card (Live Telemetri) -->
     <div class="bento-box bento-dark">
-      <div class="bento-badge dark-badge">• Live Telemetry Cluster</div>
-      <h3 class="bento-title-white">Performa Server &amp; Lalu Lintas Realtime</h3>
-      <p class="bento-desc-white">Data statistik terdistribusi langsung dari worker engine Box A &amp; D tanpa jeda.</p>
-      
+      <div>
+        <span class="bento-badge dark-badge">Live Telemetry</span>
+        <h3 class="bento-title-white">Performa server &amp; lalu lintas realtime</h3>
+        <p class="bento-desc-white">Statistik langsung dari worker engine Box A &amp; D tanpa jeda.</p>
+      </div>
       <div class="telemetry-metrics-grid">
-        <div class="t-met">
-          <span class="t-met-num" id="stat-bots">&mdash;</span>
-          <span class="t-met-lbl">Bot Aktif Online</span>
-        </div>
-        <div class="t-met">
-          <span class="t-met-num" id="stat-messages">&mdash;</span>
-          <span class="t-met-lbl">Pesan Diproses</span>
-        </div>
-        <div class="t-met">
-          <span class="t-met-num" id="stat-users">&mdash;</span>
-          <span class="t-met-lbl">Total Pelanggan</span>
-        </div>
-        <div class="t-met">
-          <span class="t-met-num" id="stat-commands">442</span>
-          <span class="t-met-lbl">Fitur Siap Pakai</span>
-        </div>
+        <div class="t-met"><span class="t-met-num" id="stat-bots">&mdash;</span><span class="t-met-lbl">Bot Aktif Online</span></div>
+        <div class="t-met"><span class="t-met-num" id="stat-messages">&mdash;</span><span class="t-met-lbl">Pesan Diproses</span></div>
+        <div class="t-met"><span class="t-met-num" id="stat-users">&mdash;</span><span class="t-met-lbl">Total Pelanggan</span></div>
+        <div class="t-met"><span class="t-met-num" id="stat-commands">442</span><span class="t-met-lbl">Fitur Siap Pakai</span></div>
       </div>
     </div>
 
-    <!-- Card 2: Solid Neutral Light Grey Card (Fitur & Cara Kerja) -->
     <div class="bento-box bento-grey">
-      <div class="bento-badge grey-badge">• 442+ Super Commands</div>
-      <h3 class="bento-title-black">Aktivasi Kilat dalam 3 Langkah</h3>
-      <p class="bento-desc-black">Tanpa ribet sewa VPS, install dependensi, atau setting environment code.</p>
-
+      <div>
+        <span class="bento-badge grey-badge">442+ Super Commands</span>
+        <h3 class="bento-title-black">Aktif dalam 3 langkah</h3>
+        <p class="bento-desc-black">Tanpa sewa VPS, install dependensi, atau setting environment.</p>
+      </div>
       <div class="quick-steps-list">
-        <div class="qs-item">
-          <span class="qs-num">1</span>
-          <div class="qs-text">
-            <b>Pilih Platform</b>
-            <span>WhatsApp, Telegram, atau Discord</span>
-          </div>
-        </div>
-        <div class="qs-item">
-          <span class="qs-num">2</span>
-          <div class="qs-text">
-            <b>Tautkan Akun</b>
-            <span>Scan QR Code atau masukkan Bot Token</span>
-          </div>
-        </div>
-        <div class="qs-item">
-          <span class="qs-num">3</span>
-          <div class="qs-text">
-            <b>Ketik .menu</b>
-            <span>Bot langsung aktif melayani 24 jam</span>
-          </div>
-        </div>
+        <div class="qs-item"><span class="qs-num">1</span><div class="qs-text"><b>Pilih platform</b><span>WhatsApp, Telegram, atau Discord</span></div></div>
+        <div class="qs-item"><span class="qs-num">2</span><div class="qs-text"><b>Tautkan akun</b><span>Scan QR Code atau masukkan Bot Token</span></div></div>
+        <div class="qs-item"><span class="qs-num">3</span><div class="qs-text"><b>Ketik .menu</b><span>Bot langsung melayani 24 jam</span></div></div>
       </div>
     </div>
 
-    <!-- Card 3: Solid Neon Lime Card (Paket Berlangganan) -->
     <div class="bento-box bento-lime">
-      <div class="bento-badge lime-badge">• Instant Deployment</div>
-      <h3 class="bento-title-black">Paket Fleksibel Mulai 10 Ribu</h3>
-      <p class="bento-desc-black">Dapatkan akses voice streaming musik, downloader HD sosmed, dan proteksi anti-link grup.</p>
-
-      <div class="lime-perks-box">
-        <div class="l-perk">✓ Dukungan Voice Channel Music Discord</div>
-        <div class="l-perk">✓ AI Vision &amp; GPT Assistant Terintegrasi</div>
-        <div class="l-perk">✓ Caching Disk Lokal Cepat &amp; Hemat Kuota</div>
+      <div>
+        <span class="bento-badge lime-badge">Instant Deployment</span>
+        <h3 class="bento-title-black">Paket fleksibel mulai 10 ribu</h3>
+        <p class="bento-desc-black">Akses voice streaming musik, downloader HD sosmed, dan proteksi anti-link grup.</p>
       </div>
-
-      <a class="btn-bento-action" href="#harga">
-        Lihat Seluruh Paket <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
-      </a>
+      <div>
+        <div class="lime-perks-box">
+          <div class="l-perk">✓ Voice Channel Music Discord</div>
+          <div class="l-perk">✓ AI Vision &amp; GPT Assistant</div>
+          <div class="l-perk">✓ Caching disk lokal, hemat kuota</div>
+        </div>
+        <a class="btn-bento-action" href="#harga">Lihat Seluruh Paket</a>
+      </div>
     </div>
   </section>
 
-  <!-- SECTION HARGA (PRICING GRID DYNAMIC) -->
+  <!-- HARGA -->
   <section id="harga" class="pricing-section">
     <div class="sec-headline">
-      <span class="headline-pill">• Transparan &amp; Terjangkau</span>
-      <h2>Pilih Paket Langganan Sesuai Kebutuhan</h2>
-      <p class="headline-sub">Setiap paket sudah mencakup akses API gateway, auto-restart bila crash, dan update fitur gratis.</p>
+      <span class="headline-pill">Transparan &amp; Terjangkau</span>
+      <h2>Pilih paket sesuai kebutuhan</h2>
+      <p class="headline-sub">Setiap paket sudah termasuk akses API gateway, auto-restart bila crash, dan update fitur gratis.</p>
     </div>
     <div class="price-grid" id="price-grid"></div>
   </section>
 
-  <!-- SECTION TESTIMONI (REVIEWS) -->
+  <!-- TESTIMONI -->
   <section id="testimoni" class="testimoni-section">
     <div class="sec-headline">
-      <span class="headline-pill">• Ulasan Terverifikasi</span>
-      <h2>Dipercaya Komunitas &amp; Pelaku Bisnis</h2>
+      <span class="headline-pill">Ulasan Terverifikasi</span>
+      <h2>Dipercaya komunitas &amp; pelaku bisnis</h2>
     </div>
     <div class="tst-grid" id="tst-grid"></div>
   </section>
