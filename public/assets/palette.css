@@ -2965,13 +2965,14 @@ body.page-dashboard #toast.show{opacity:1;transform:translate(-50%,0)}
   --blue: #BFD7FF;
 }
 
-html { background: #E2E2DE !important; scroll-behavior: smooth; }
+html { background: #FAFAFA !important; scroll-behavior: smooth; }
 
 body {
-  background: #E2E2DE !important;
+  background: #FAFAFA !important;
   color: #1B1B20 !important;
   font-family: 'Bricolage Grotesque', system-ui, -apple-system, sans-serif !important;
-  padding: clamp(8px, 3vw, 44px) clamp(8px, 3vw, 48px) !important;
+  padding: 0 !important;
+  margin: 0 !important;
   box-sizing: border-box !important;
   -webkit-font-smoothing: antialiased;
 }
@@ -2979,12 +2980,12 @@ body {
 .mega-canvas {
   max-width: 1240px;
   margin: 0 auto;
-  background: #FAFAFA !important;
-  border-radius: clamp(22px, 3vw, 32px) !important;
-  padding: clamp(16px, 3vw, 32px) clamp(14px, 3.5vw, 36px) clamp(20px, 3vw, 36px) !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  padding: clamp(20px, 3vw, 32px) clamp(16px, 3.5vw, 40px) clamp(24px, 4vw, 48px) !important;
   border: 0 !important;
-  box-shadow: 0 1px 0 rgba(255,255,255,.8) inset, 0 20px 60px rgba(27,27,32,.06) !important;
-  overflow: hidden;
+  box-shadow: none !important;
+  overflow: visible !important;
 }
 
 /* ── Top bar ── */
