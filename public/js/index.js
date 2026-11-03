@@ -41,10 +41,10 @@
       const tierKey = idx === 0 ? 'starter' : (idx === 1 ? 'pro' : 'enterprise');
       const taglines = {
         basic: 'Solusi awal otomatisasi bot personal & pengujian.',
-        premium: 'Solusi otomatisasi andal untuk operasional bisnis kamu.',
-        ultra: 'Kapasitas maksimal & performa tinggi tanpa kompromi.'
+        juragan: 'Kapasitas lebih besar untuk bisnis & operasional tim.',
+        sultan: 'Performa maksimal tanpa batas untuk komunitas skala besar.'
       };
-      const tagline = taglines[p.id?.toLowerCase()] || taglines.basic;
+      const tagline = taglines[p.id?.toLowerCase()] || taglines[p.name?.toLowerCase()] || taglines.basic;
       const el = document.createElement('div');
       el.className = 'price-card' + (isPop ? ' price-card-popular' : '') + ' tier-' + tierKey;
       el.innerHTML =
@@ -81,10 +81,10 @@
 
   // ── Testimoni ───────────────────────────────────────────────────
   const tst = [
-    { n: "Michael Grant", r: "Content Creator", t: "It's not just about followers, it's about building a real community that supports each other." },
-    { n: "David Kim", r: "Social Media Strategist", t: "I've grown my audience faster here than on any other messaging platform I've tried." },
-    { n: "Emma Rodriguez", r: "Digital Marketer at SocialLift", t: "User-friendly, engaging, and built for growth. Every connection you make here is meaningful." },
-    { n: "Rizky Pratama", r: "Store Bot Community Lead", t: "Bot online 24 jam nonstop dan stabil banget. Pelanggan toko senang karena semua respon instan tanpa delay." }
+    { n: "Fajar Nugraha", r: "Komunitas Gaming Discord", t: "Fitur music voice player di Discord jernih banget, ga pernah ngadat dan streaming instan. Rekomended buat server rame." },
+    { n: "Siti Rahmawati", r: "Owner Online Shop WA", t: "Auto-responder WhatsApp bantu jawab ratusan chat pembeli tiap hari tanpa delay. Penjualan toko naik drastis." },
+    { n: "Budi Santoso", r: "Admin Grup Telegram", t: "Fitur auto-moderasi anti-link dan antispam sangat ampuh ngebersihin grup dari spammer dan bot phising." },
+    { n: "Rizky Pratama", r: "Digital Agency Lead", t: "Bot online 24 jam nonstop dan stabil banget. Pelanggan puas karena semua perintah langsung diproses kilat." }
   ];
   const g = document.getElementById("tst-grid");
   const starSvg = '<svg width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';

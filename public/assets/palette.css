@@ -1988,13 +1988,13 @@ body.page-index .faq-a{
 body.page-index footer{
   position:relative;
   z-index:20;
-  margin-top:-48px;
+  margin-top:48px;
   border-top-left-radius:36px;
   border-top-right-radius:36px;
-  box-shadow:0 -28px 70px rgba(0,0,0,.65);
-  border-top:1px solid rgba(255,255,255,.1);
-  background:#090a0f!important;
-  padding:64px 0 36px;
+  box-shadow:none;
+  border-top:1px solid #ECECE8;
+  background:#FAFAFA!important;
+  padding:36px 0;
 }
 :root:not([data-theme="dark"]) body.page-index footer{
   background:#ffffff!important;
@@ -3308,410 +3308,126 @@ body {
 }
 
 
-:root, :root[data-theme="dark"], :root[data-theme="light"], html.dark {
-  --bg: #E2E2DE !important;
-  --bg2: #FFFFFF !important;
-  --shell: #FFFFFF !important;
-  --panel: #FFFFFF !important;
-  --card: #FFFFFF !important;
-  --card2: #FAFAFA !important;
-  --border: #E2E2DE !important;
-  --edge: #111111 !important;
-  --line: #E2E2DE !important;
-  --ink: #111111 !important;
-  --txt: #111111 !important;
-  --mute: #4B5563 !important;
-  --muted: #4B5563 !important;
-  --dark: #111111 !important;
-  --darkink: #FFFFFF !important;
-  --lime: #C8F564 !important;
+/* ══════════════════════════════════════════════════════════════════════
+   PERBAIKAN PRICING & TESTIMONIAL OVERFLOW (CLEAN & ANTI-TABRAKAN)
+   ══════════════════════════════════════════════════════════════════════ */
+.pricing-section, #harga {
+  width: 100% !important;
+  box-sizing: border-box !important;
+  margin-bottom: 56px !important;
+  clear: both !important;
 }
 
-html {
-  background-color: #E2E2DE !important;
-  background-image: none !important;
-}
-
-body {
-  background-color: #E2E2DE !important;
-  background-image: none !important;
-  color: #111111 !important;
-  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
-  padding: 16px 20px !important;
+#price-grid, .price-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)) !important;
+  gap: 24px !important;
+  align-items: stretch !important;
+  width: 100% !important;
   box-sizing: border-box !important;
 }
 
-/* Main Container: Pure White Floating Canvas */
-.wrap, body.page-index .hero-in, body.page-dashboard .app, body.page-auth .card, body.page-billing .app, body.page-pricing .app, body.page-admin .app, body.page-bot .app {
-  background: #FFFFFF !important;
-  border-radius: 36px !important;
-  border: 1.5px solid rgba(0, 0, 0, 0.08) !important;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.04) !important;
-}
-
-body.page-index .wrap {
-  padding: 32px 40px !important;
-  margin: 0 auto 20px !important;
-}
-
-/* Headings: Extra Bold, Solid Black, Tight Tracking */
-h1, h2, h3, h4, .hero h1, .hero h1 .grad, .sec-head h2 {
-  background: none !important;
-  background-image: none !important;
-  -webkit-background-clip: unset !important;
-  background-clip: unset !important;
-  -webkit-text-fill-color: initial !important;
-  color: #111111 !important;
-  font-weight: 800 !important;
-  letter-spacing: -0.035em !important;
-}
-
-.hero h1 {
-  font-size: 52px !important;
-  line-height: 1.05 !important;
-  margin-bottom: 20px !important;
-}
-
-.hero .sub {
-  color: #4B5563 !important;
-  font-size: 17px !important;
-  line-height: 1.6 !important;
-}
-
-@media (max-width: 768px) {
-  body { padding: 8px !important; }
-  .wrap, body.page-index .wrap { padding: 22px 18px !important; border-radius: 24px !important; }
-  .hero h1 { font-size: 32px !important; }
-}
-
-/* Hero Tag Pill */
-body.page-index .hero-tag {
-  background: #111111 !important;
-  color: #FFFFFF !important;
-  border-radius: 9999px !important;
-  padding: 6px 18px !important;
-  font-size: 12.5px !important;
-  font-weight: 700 !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  margin-bottom: 18px !important;
-}
-
-body.page-index .hero-tag .tag-dot {
-  background: #C8F564 !important;
-  width: 8px !important;
-  height: 8px !important;
-  border-radius: 50% !important;
-}
-
-/* Buttons: 3D Layered Pill Style */
-.btn-dark, .btn-primary, .submit-btn, a.btn-dark {
-  background: #C8F564 !important;
-  color: #111111 !important;
-  border: 1.5px solid #111111 !important;
-  border-radius: 9999px !important;
-  font-weight: 800 !important;
-  padding: 12px 24px !important;
-  box-shadow: 0 4px 0 #111111 !important;
-  transition: transform 0.1s ease, box-shadow 0.1s ease !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  cursor: pointer !important;
-}
-
-.btn-dark:hover, .btn-primary:hover, .submit-btn:hover {
-  background: #d4f768 !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 6px 0 #111111 !important;
-}
-
-.btn-dark:active, .btn-primary:active, .submit-btn:active {
-  transform: translateY(3px) !important;
-  box-shadow: 0 1px 0 #111111 !important;
-}
-
-.btn-outline, a.btn-outline {
-  background: #FFFFFF !important;
-  color: #111111 !important;
-  border: 1.5px solid #111111 !important;
-  border-radius: 9999px !important;
-  font-weight: 700 !important;
-  padding: 12px 24px !important;
-  box-shadow: 0 4px 0 #111111 !important;
-  transition: transform 0.1s ease, box-shadow 0.1s ease !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-
-.btn-outline:hover {
-  background: #F4F4F4 !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 6px 0 #111111 !important;
-}
-
-/* Platform Rail */
-#platforms {
-  margin: 20px 0 !important;
-}
-#platforms .plat {
-  background: #FFFFFF !important;
-  border: 1.5px solid #111111 !important;
-  border-radius: 9999px !important;
-  box-shadow: 0 3px 0 #111111 !important;
-  color: #111111 !important;
-  font-weight: 700 !important;
-  padding: 8px 18px !important;
-  opacity: 1 !important;
-}
-
-/* ── KARTU REBUILD: CLEAN SOLID HIGH-CONTRAST ── */
-.card, .stat, .step, .price-card, .tst, .faq-item {
-  background: #FFFFFF !important;
-  border-radius: 24px !important;
-  padding: 26px !important;
-  border: 1.5px solid #111111 !important;
-  box-shadow: 0 5px 0 #111111 !important;
-  color: #111111 !important;
-  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
-}
-
-.card:hover, .stat:hover, .step:hover, .price-card:hover {
-  transform: translateY(-2px) !important;
-  box-shadow: 0 7px 0 #111111 !important;
-}
-
-/* 1. Live Stats Cards */
-.stats .stat {
+.price-card {
+  width: 100% !important;
+  box-sizing: border-box !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: 6px !important;
-}
-.stats .stat b, .stats .stat .val, [id^="stat-"] {
-  font-size: 34px !important;
-  font-weight: 800 !important;
-  color: #111111 !important;
-  letter-spacing: -0.03em !important;
-  line-height: 1.1 !important;
-}
-.stats .stat span, .stats .stat .lbl {
-  font-size: 13.5px !important;
-  font-weight: 600 !important;
-  color: #4B5563 !important;
+  justify-content: space-between !important;
+  padding: 28px !important;
+  border-radius: 26px !important;
+  border: 1.5px solid #1B1B20 !important;
+  box-shadow: 0 4px 0 #1B1B20 !important;
+  background: #FFFFFF !important;
+  min-height: 480px !important;
 }
 
-/* 2. Features Cards */
-#features .card-dark {
-  background: #121212 !important;
-  color: #FFFFFF !important;
-  border-color: #111111 !important;
-}
-#features .card-dark .lead, #features .card-dark h3, #features .card-dark b {
-  color: #FFFFFF !important;
-  font-weight: 800 !important;
-  font-size: 20px !important;
-}
-#features .card-dark p {
-  color: #D1D5DB !important;
-}
-#features .card h4 {
-  font-size: 18px !important;
-  font-weight: 800 !important;
-  color: #111111 !important;
-  margin: 12px 0 6px !important;
-}
-#features .card p {
-  color: #4B5563 !important;
-  font-size: 14px !important;
-  line-height: 1.55 !important;
+.price-card.price-card-popular {
+  background: #D8FF7A !important;
+  border: 2px solid #1B1B20 !important;
+  box-shadow: 0 6px 0 #1B1B20 !important;
 }
 
-/* 3. Steps (Cara Kerja) */
-#howto .step i {
-  width: 44px !important;
-  height: 44px !important;
-  border-radius: 50% !important;
-  background: #C8F564 !important;
-  border: 1.5px solid #111111 !important;
-  color: #111111 !important;
-  font-weight: 800 !important;
-  font-size: 18px !important;
-  display: grid !important;
-  place-items: center !important;
-  margin-bottom: 14px !important;
-  box-shadow: 0 3px 0 #111111 !important;
-}
-#howto .step h4 {
-  font-size: 18px !important;
-  font-weight: 800 !important;
-  color: #111111 !important;
-  margin: 0 0 8px !important;
-}
-#howto .step p {
-  color: #4B5563 !important;
-  font-size: 14px !important;
-  line-height: 1.55 !important;
+.price-card .pc-top-box {
+  width: 100% !important;
+  box-sizing: border-box !important;
 }
 
-/* 4. Pricing Cards */
-.price-card .pc-tier-title {
-  font-weight: 800 !important;
-  color: #111111 !important;
-  font-size: 15px !important;
-  letter-spacing: 0.05em !important;
-}
-.price-card .pc-price-val {
-  font-size: 32px !important;
-  font-weight: 800 !important;
-  color: #111111 !important;
-  letter-spacing: -0.03em !important;
-}
-.price-card .pc-price-cycle {
-  color: #6B7280 !important;
-  font-weight: 600 !important;
-  font-size: 13px !important;
-}
-.price-card .pc-feat-list li {
-  color: #111111 !important;
-  font-size: 13.5px !important;
-}
+.price-card .btn,
 .price-card .pc-cta-btn {
-  background: #111111 !important;
-  color: #FFFFFF !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  margin: 18px 0 !important;
+  padding: 13px 20px !important;
   border-radius: 9999px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  background: #1B1B20 !important;
+  color: #FFFFFF !important;
   font-weight: 700 !important;
-  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.3) !important;
+  font-size: 14.5px !important;
+  text-decoration: none !important;
+  box-shadow: 0 3px 0 rgba(0,0,0,0.2) !important;
 }
 
-/* Pricing Popular (Neon Lime Highlight) */
-.price-card-popular {
-  background: #C8F564 !important;
-  border: 2px solid #111111 !important;
-  box-shadow: 0 8px 0 #111111 !important;
-}
-.price-card-popular .pc-tier-title,
-.price-card-popular .pc-price-val,
-.price-card-popular .pc-feat-list li,
-.price-card-popular .pc-tagline {
-  color: #111111 !important;
-}
-.price-card-popular .pc-cta-btn {
-  background: #111111 !important;
+.price-card.price-card-popular .btn,
+.price-card.price-card-popular .pc-cta-btn {
+  background: #1B1B20 !important;
   color: #FFFFFF !important;
   box-shadow: 0 4px 0 #000000 !important;
 }
 
-/* ── HERO ROBOT ORBIT FRAME (3D GALAXY ORBIT PLATFORM) ── */
-body.page-index .hero-robot-frame {
-  background: #121212 !important;
-  border: 2px solid #111111 !important;
-  border-radius: 36px !important;
-  box-shadow: 0 12px 0 #111111 !important;
-  color: #FFFFFF !important;
-  padding: 26px !important;
-}
-
-body.page-index .robot-header-bar {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.14) !important;
-  padding-bottom: 14px !important;
-  margin-bottom: 22px !important;
-}
-
-body.page-index .robot-brand-chip {
-  background: rgba(255, 255, 255, 0.12) !important;
-  color: #FFFFFF !important;
-  border: 1px solid rgba(255, 255, 255, 0.22) !important;
-  border-radius: 9999px !important;
-  padding: 6px 14px !important;
+.price-card .pc-extra-tag {
+  margin-top: 14px !important;
+  padding-top: 12px !important;
+  border-top: 1.5px dashed rgba(27,27,32,0.2) !important;
+  font-size: 13px !important;
   font-weight: 700 !important;
-  font-size: 12px !important;
+  color: #D97706 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
 }
 
-body.page-index .robot-live-badge {
-  color: #C8F564 !important;
-  font-weight: 800 !important;
-  font-size: 12px !important;
-}
-body.page-index .live-dot {
-  background: #C8F564 !important;
-}
-
-body.page-index .orbit-galaxy-ring {
-  color: rgba(200, 245, 100, 0.45) !important;
+/* Testimoni Grid & Footer Anti-Tabrakan */
+.testimoni-section, #testimoni {
+  width: 100% !important;
+  box-sizing: border-box !important;
+  margin-bottom: 56px !important;
+  clear: both !important;
 }
 
-body.page-index .robot-floating-card {
-  background: #C8F564 !important;
-  color: #111111 !important;
-  border: 2px solid #111111 !important;
-  border-radius: 20px !important;
-  box-shadow: 0 6px 0 #111111 !important;
-  padding: 14px 18px !important;
+#tst-grid, .tst-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)) !important;
+  gap: 20px !important;
+  align-items: stretch !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
 }
 
-body.page-index .robot-floating-card * {
-  color: #111111 !important;
-}
-
-body.page-index .rfc-badge {
-  background: #111111 !important;
-  color: #C8F564 !important;
-  border-radius: 9999px !important;
-  padding: 4px 12px !important;
-  font-size: 11px !important;
-  font-weight: 800 !important;
-}
-
-/* Nav & Sidebar */
-nav.nav, .topbar {
-  background: transparent !important;
-  border: none !important;
-}
-.sidebar {
-  background: #FAFAFA !important;
-  border-right: 1.5px solid #E2E2DE !important;
-  border-radius: 36px 0 0 36px !important;
-}
-.nav-item.on, .nav-item.active {
-  background: #111111 !important;
-  color: #FFFFFF !important;
-  border-radius: 9999px !important;
-}
-.nav-item.on * {
-  color: #FFFFFF !important;
-}
-
-/* Inputs & Form */
-.inp, body.page-dashboard .inp {
+.tst {
   background: #FFFFFF !important;
-  border: 1.5px solid #E2E2DE !important;
-  border-radius: 12px !important;
-  color: #111111 !important;
-  padding: 12px 14px !important;
-}
-.inp:focus, body.page-dashboard .inp:focus {
-  border-color: #111111 !important;
-  box-shadow: 0 3px 0 #111111 !important;
-  outline: none !important;
+  border: 1.5px solid #1B1B20 !important;
+  border-radius: 22px !important;
+  padding: 22px !important;
+  box-shadow: 0 4px 0 #1B1B20 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  box-sizing: border-box !important;
+  min-height: 200px !important;
 }
 
-body.page-dashboard .modal {
-  background: #FFFFFF !important;
-  border: 2px solid #111111 !important;
-  border-radius: 28px !important;
-  box-shadow: 0 16px 0 #111111 !important;
-  color: #111111 !important;
-}
-body.page-dashboard .plat-btn {
-  background: #F4F4F4 !important;
-  border: 1.5px solid #E2E2DE !important;
-  border-radius: 18px !important;
-}
-body.page-dashboard .plat-btn:hover {
-  background: #C8F564 !important;
-  border-color: #111111 !important;
+.bottom-footer, footer, body.page-index footer {
+  margin-top: 56px !important;
+  margin-bottom: 0 !important;
+  position: relative !important;
+  z-index: 10 !important;
+  clear: both !important;
+  box-sizing: border-box !important;
+  box-shadow: none !important;
 }
 
 
