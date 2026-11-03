@@ -168,6 +168,12 @@ app.use(express.static(path.join(__dirname, 'public'), {
   index: false,
   maxAge: '1d',
   etag: true,
+  setHeaders(res, filePath) {
+    if (filePath.endsWith('sw.js')) {
+      res.setHeader('Service-Worker-Allowed', '/');
+      res.setHeader('Cache-Control', 'no-cache');
+    }
+  },
 }));
 
 // ─── Rate Limiter ─────────────────────────────────────────────────────────────
