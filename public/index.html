@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/assets/palette.css?v=9.7.0" />
+  <link rel="stylesheet" href="/assets/palette.css?v=9.8.0" />
   <script src="/js/act.js"></script>
 </head>
 <body class="page-index">
@@ -127,47 +127,99 @@
     </div>
   </section>
 
-  <!-- 3 BENTO CARDS -->
+  <!-- 3 BENTO CARDS (VARIATIF & BERDIMENSI) -->
   <section class="tri-bento-grid">
+    <!-- BENTO 1: Dark Audio Streaming & Cluster Telemetry -->
     <div class="bento-box bento-dark">
       <div>
-        <span class="bento-badge dark-badge">Multi-Engine Gateway</span>
+        <div class="bento-head-row">
+          <span class="bento-badge dark-badge">Multi-Engine Gateway</span>
+          <span class="latency-pill"><i class="pulse-dot"></i> 14ms live</span>
+        </div>
         <h3 class="bento-title-white">Performa tinggi &amp; tanpa batas</h3>
         <p class="bento-desc-white">Otomatisasi 3 platform sekaligus dalam satu panel cerdas.</p>
       </div>
-      <div class="engine-features-list">
-        <div class="ef-item">⚡ <b>Cluster Box A &amp; D</b>: Pemrosesan pesan instan ultra-low latency</div>
-        <div class="ef-item">🎵 <b>Discord Voice Player</b>: Streaming audio jernih HD 24/7</div>
-        <div class="ef-item">🛡️ <b>Auto-Healing Engine</b>: Otomatis restart bila bot disconnect</div>
+
+      <div class="bento-micro-widget dark-widget">
+        <div class="bmw-top">
+          <div class="bmw-bot-tag">
+            <span class="bmw-dot"></span>
+            <b>Discord Voice Engine</b>
+          </div>
+          <div class="audio-equalizer" aria-label="Equalizer sound">
+            <span class="eq-bar b1"></span>
+            <span class="eq-bar b2"></span>
+            <span class="eq-bar b3"></span>
+            <span class="eq-bar b4"></span>
+            <span class="eq-bar b5"></span>
+          </div>
+        </div>
+        <div class="bmw-title">Now Streaming: Lo-Fi Beats 24/7</div>
+        <div class="bmw-footer">
+          <span class="bmw-chip">48kHz Opus</span>
+          <span class="bmw-chip">Auto-Leave 60s</span>
+          <span class="bmw-chip green">Zero Latency</span>
+        </div>
       </div>
     </div>
 
+    <!-- BENTO 2: Interactive Chat Mockup -->
     <div class="bento-box bento-grey">
       <div>
-        <span class="bento-badge grey-badge">442+ Super Commands</span>
-        <h3 class="bento-title-black">Aktif dalam 3 langkah</h3>
-        <p class="bento-desc-black">Tanpa sewa VPS, install dependensi, atau setting environment.</p>
+        <div class="bento-head-row">
+          <span class="bento-badge grey-badge">442+ Super Commands</span>
+          <span class="micro-chip-tag">Instant Response</span>
+        </div>
+        <h3 class="bento-title-black">Ketik langsung aktif</h3>
+        <p class="bento-desc-black">Simulasi respon bot WhatsApp, Telegram &amp; Discord tanpa setting rumit.</p>
       </div>
-      <div class="quick-steps-list">
-        <div class="qs-item"><span class="qs-num">1</span><div class="qs-text"><b>Pilih platform</b><span>WhatsApp, Telegram, atau Discord</span></div></div>
-        <div class="qs-item"><span class="qs-num">2</span><div class="qs-text"><b>Tautkan akun</b><span>Scan QR Code atau masukkan Bot Token</span></div></div>
-        <div class="qs-item"><span class="qs-num">3</span><div class="qs-text"><b>Ketik .menu</b><span>Bot langsung melayani 24 jam</span></div></div>
+
+      <div class="bento-chat-mockup">
+        <div class="chat-msg user-msg">
+          <div class="msg-bubble">.menu</div>
+        </div>
+        <div class="chat-msg bot-msg">
+          <div class="msg-bubble bot-bubble">
+            <div class="bb-head">
+              <span class="bb-badge">⚡ QWERTYGATE v2.6</span>
+              <span class="bb-time">24ms</span>
+            </div>
+            <div class="bb-text">
+              Halo Kak! Menu aktif:<br />
+              • 🎵 <b>/play</b> &bull; Voice Channel HD<br />
+              • 🤖 <b>/ai</b> &bull; GPT-4o Vision Assistant<br />
+              • 📥 <b>.dl</b> &bull; Media Downloader
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
+    <!-- BENTO 3: 3D Lime Feature & Pricing Card -->
     <div class="bento-box bento-lime">
       <div>
-        <span class="bento-badge lime-badge">Instant Deployment</span>
-        <h3 class="bento-title-black">Paket fleksibel mulai 10 ribu</h3>
-        <p class="bento-desc-black">Akses voice streaming musik, downloader HD sosmed, dan proteksi anti-link grup.</p>
-      </div>
-      <div>
-        <div class="lime-perks-box">
-          <div class="l-perk">✓ Voice Channel Music Discord</div>
-          <div class="l-perk">✓ AI Vision &amp; GPT Assistant</div>
-          <div class="l-perk">✓ Caching disk lokal, hemat kuota</div>
+        <div class="bento-head-row">
+          <span class="bento-badge lime-badge">Instant Deployment</span>
+          <span class="promo-sticker-pill">Mulai Rp10rb</span>
         </div>
-        <a class="btn-bento-action" href="#harga">Lihat Seluruh Paket</a>
+        <h3 class="bento-title-black">Paket fleksibel &amp; terjangkau</h3>
+        <p class="bento-desc-black">Akses voice streaming musik, downloader HD sosmed, dan proteksi grup 24/7.</p>
+      </div>
+
+      <div class="lime-feature-card">
+        <div class="lfc-top">
+          <div>
+            <span class="lfc-label">Starter Plan</span>
+            <div class="lfc-price">Rp10.000<small>/30 hari</small></div>
+          </div>
+          <span class="lfc-tag">Hemat 40%</span>
+        </div>
+        <ul class="lfc-perks">
+          <li><span>✓</span> Voice Channel Music Discord 24/7</li>
+          <li><span>✓</span> Unlimited Chat AI &amp; Media Downloader</li>
+          <li><span>✓</span> Caching disk lokal, bebas delay</li>
+        </ul>
+        <a class="btn-bento-action" href="#harga">Lihat Seluruh Paket ↗</a>
       </div>
     </div>
   </section>
@@ -254,6 +306,6 @@
 
 <script src="/js/vendor/gsap.min.js"></script>
 <script src="/js/vendor/ScrollTrigger.min.js"></script>
-<script src="/js/index.js?v=9.7.0" defer></script>
+<script src="/js/index.js?v=9.8.0" defer></script>
 </body>
 </html>
