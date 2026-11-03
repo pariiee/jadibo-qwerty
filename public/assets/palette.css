@@ -3030,17 +3030,19 @@ body {
 .hero-pill-badge {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   background: #FFFFFF;
-  box-shadow: 0 0 0 1px #E6E6E2;
   border-radius: 9999px;
-  padding: 7px 16px;
-  font-size: 12.5px;
-  font-weight: 600;
-  margin-bottom: 22px;
+  padding: 7px 22px 7px 7px;
+  font-size: clamp(13px, 1.5vw, 16px);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin-bottom: clamp(22px, 3vw, 30px);
   max-width: 100%;
+  text-align: left;
+  box-shadow: 0 0 0 1px #E6E6E2, 0 0 0 6px #FAFAFA, 0 0 0 7px #E8E8E4, 0 6px 18px rgba(27,27,32,.06);
 }
-.badge-dot { width: 7px; height: 7px; border-radius: 50%; background: #9BD13A; flex-shrink: 0; }
+.badge-no { background: #1B1B20; color: #D8FF7A; font-weight: 800; font-size: .95em; letter-spacing: -0.02em; padding: 7px 14px; border-radius: 9999px; flex-shrink: 0; }
 
 .title-wrap { position: relative; display: inline-block; max-width: 100%; }
 .hero-giant-title {
@@ -3267,17 +3269,85 @@ body {
   box-shadow: none !important;
 }
 
-/* ── Footer ── */
-.bottom-footer {
-  display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;
-  gap: 14px 20px;
-  padding-top: 26px;
-  border-top: 1px solid #ECECE8;
+/* ── Judul section ── */
+.sec-headline { text-align: center; max-width: 680px; margin: 0 auto clamp(24px, 4vw, 36px); }
+.headline-pill { display: inline-block; font-size: 12px; font-weight: 600; padding: 3px 10px; margin-bottom: 14px; border: 1px solid #1B1B20; border-radius: 7px; }
+.sec-headline h2 { font-size: clamp(28px, 4.4vw, 42px); font-weight: 800; line-height: 1.05; letter-spacing: -0.045em; color: #1B1B20; margin: 0 0 10px; text-wrap: balance; }
+.headline-sub { color: #5B5B63; font-size: 15.5px; line-height: 1.5; margin: 0; }
+
+/* ── Harga (anti-overflow, gaya datar) ── */
+.pricing-section, #harga { width: 100% !important; box-sizing: border-box !important; margin-bottom: clamp(40px, 6vw, 64px) !important; clear: both !important; scroll-margin-top: 20px; }
+#price-grid, .price-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr)) !important;
+  gap: clamp(14px, 2vw, 20px) !important;
+  align-items: stretch !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
 }
-.footer-left { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #6B6B73; }
-.footer-links { display: flex; gap: 18px; flex-wrap: wrap; }
-.footer-links a { color: #1B1B20; font-size: 13px; font-weight: 600; text-decoration: none; }
-.footer-links a:hover { text-decoration: underline; }
+.price-card {
+  width: 100% !important; box-sizing: border-box !important;
+  display: flex !important; flex-direction: column !important; justify-content: space-between !important;
+  padding: clamp(20px, 3vw, 28px) !important;
+  border: 0 !important; border-radius: 24px !important;
+  box-shadow: 0 0 0 1px #E6E6E2 !important;
+  background: #FFFFFF !important;
+  min-height: 460px !important;
+}
+.price-card.price-card-popular { background: #D8FF7A !important; box-shadow: none !important; }
+.price-card .pc-top-box { width: 100% !important; box-sizing: border-box !important; }
+.price-card .btn, .price-card .pc-cta-btn {
+  width: 100% !important; max-width: 100% !important; box-sizing: border-box !important;
+  margin: 18px 0 !important; padding: 13px 20px !important;
+  border-radius: 9999px !important;
+  display: flex !important; align-items: center !important; justify-content: center !important; gap: 8px !important;
+  background: #1B1B20 !important; color: #FFFFFF !important;
+  font-weight: 700 !important; font-size: 14.5px !important; text-decoration: none !important;
+  box-shadow: none !important;
+}
+.price-card .pc-extra-tag {
+  margin-top: 14px !important; padding-top: 12px !important;
+  border-top: 1.5px dashed rgba(27,27,32,.2) !important;
+  font-size: 13px !important; font-weight: 700 !important; color: #B45309 !important;
+  width: 100% !important; box-sizing: border-box !important;
+}
+
+/* ── Testimoni (3 kartu seimbang, gaya datar) ── */
+.testimoni-section, #testimoni { width: 100% !important; box-sizing: border-box !important; margin-bottom: clamp(40px, 6vw, 64px) !important; clear: both !important; }
+#tst-grid, .tst-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)) !important;
+  gap: clamp(14px, 2vw, 20px) !important;
+  align-items: stretch !important;
+  width: 100% !important; box-sizing: border-box !important;
+}
+.tst {
+  background: #FFFFFF !important;
+  border: 0 !important; border-radius: 24px !important;
+  padding: clamp(18px, 3vw, 24px) !important;
+  box-shadow: 0 0 0 1px #E6E6E2 !important;
+  display: flex !important; flex-direction: column !important; justify-content: space-between !important;
+  box-sizing: border-box !important;
+  min-height: 200px !important;
+}
+
+/* ── Footer (menimpa semua style footer lama) ── */
+body.page-index .mega-canvas footer.bottom-footer {
+  position: static !important; inset: auto !important; transform: none !important; opacity: 1 !important;
+  z-index: auto !important; float: none !important; clear: both !important;
+  width: auto !important; height: auto !important; min-height: 0 !important;
+  margin: clamp(32px, 5vw, 48px) 0 0 !important;
+  padding: 26px 0 0 !important;
+  background: transparent !important;
+  border: 0 !important; border-top: 1px solid #ECECE8 !important; border-radius: 0 !important;
+  box-shadow: none !important; box-sizing: border-box !important;
+  display: flex !important; justify-content: space-between !important; align-items: center !important;
+  flex-wrap: wrap !important; gap: 14px 20px !important;
+}
+body.page-index .footer-left { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #6B6B73; }
+body.page-index .footer-links { display: flex; gap: 18px; flex-wrap: wrap; }
+body.page-index .footer-links a { color: #1B1B20; font-size: 13px; font-weight: 600; text-decoration: none; }
+body.page-index .footer-links a:hover { text-decoration: underline; }
 
 /* Fokus keyboard */
 .link-signin:focus-visible, .btn-signup-pill:focus-visible, .btn-cta-lime:focus-visible,
@@ -3302,136 +3372,9 @@ body {
 @media (max-width: 420px) {
   .brand-sub-chip { display: none; }
   .link-signin, .btn-signup-pill { height: 38px; padding: 0 14px; font-size: 13px; }
-  .hero-pill-badge { font-size: 11px; padding: 6px 12px; }
+  .hero-pill-badge { font-size: 12.5px; gap: 10px; padding: 6px 16px 6px 6px; }
+  .badge-no { padding: 6px 11px; }
   .footer-left { font-size: 12px; }
-}
-
-
-/* ══════════════════════════════════════════════════════════════════════
-   PERBAIKAN PRICING & TESTIMONIAL OVERFLOW (CLEAN & ANTI-TABRAKAN)
-   ══════════════════════════════════════════════════════════════════════ */
-.pricing-section, #harga {
-  width: 100% !important;
-  box-sizing: border-box !important;
-  margin-bottom: 56px !important;
-  clear: both !important;
-}
-
-#price-grid, .price-grid {
-  display: grid !important;
-  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)) !important;
-  gap: 24px !important;
-  align-items: stretch !important;
-  width: 100% !important;
-  box-sizing: border-box !important;
-}
-
-.price-card {
-  width: 100% !important;
-  box-sizing: border-box !important;
-  display: flex !important;
-  flex-direction: column !important;
-  justify-content: space-between !important;
-  padding: 28px !important;
-  border-radius: 26px !important;
-  border: 1.5px solid #1B1B20 !important;
-  box-shadow: 0 4px 0 #1B1B20 !important;
-  background: #FFFFFF !important;
-  min-height: 480px !important;
-}
-
-.price-card.price-card-popular {
-  background: #D8FF7A !important;
-  border: 2px solid #1B1B20 !important;
-  box-shadow: 0 6px 0 #1B1B20 !important;
-}
-
-.price-card .pc-top-box {
-  width: 100% !important;
-  box-sizing: border-box !important;
-}
-
-.price-card .btn,
-.price-card .pc-cta-btn {
-  width: 100% !important;
-  max-width: 100% !important;
-  box-sizing: border-box !important;
-  margin: 18px 0 !important;
-  padding: 13px 20px !important;
-  border-radius: 9999px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 8px !important;
-  background: #1B1B20 !important;
-  color: #FFFFFF !important;
-  font-weight: 700 !important;
-  font-size: 14.5px !important;
-  text-decoration: none !important;
-  box-shadow: 0 3px 0 rgba(0,0,0,0.2) !important;
-}
-
-.price-card.price-card-popular .btn,
-.price-card.price-card-popular .pc-cta-btn {
-  background: #1B1B20 !important;
-  color: #FFFFFF !important;
-  box-shadow: 0 4px 0 #000000 !important;
-}
-
-.price-card .pc-extra-tag {
-  margin-top: 14px !important;
-  padding-top: 12px !important;
-  border-top: 1.5px dashed rgba(27,27,32,0.2) !important;
-  font-size: 13px !important;
-  font-weight: 700 !important;
-  color: #D97706 !important;
-  width: 100% !important;
-  box-sizing: border-box !important;
-}
-
-/* Testimoni Grid & Footer Anti-Tabrakan */
-.testimoni-section, #testimoni {
-  width: 100% !important;
-  box-sizing: border-box !important;
-  margin-bottom: 56px !important;
-  clear: both !important;
-}
-
-#tst-grid, .tst-grid {
-  display: grid !important;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)) !important;
-  gap: 20px !important;
-  align-items: stretch !important;
-  width: 100% !important;
-  box-sizing: border-box !important;
-}
-
-.tst {
-  background: #FFFFFF !important;
-  border: 1.5px solid #1B1B20 !important;
-  border-radius: 22px !important;
-  padding: 22px !important;
-  box-shadow: 0 4px 0 #1B1B20 !important;
-  display: flex !important;
-  flex-direction: column !important;
-  justify-content: space-between !important;
-  box-sizing: border-box !important;
-  min-height: 200px !important;
-}
-
-.bottom-footer, footer, body.page-index footer {
-  margin-top: 64px !important;
-  margin-bottom: 0 !important;
-  position: static !important;
-  z-index: 1 !important;
-  clear: both !important;
-  box-sizing: border-box !important;
-  border-radius: 0 !important;
-  border: 0 !important;
-  border-top: 1px solid #ECECE8 !important;
-  box-shadow: none !important;
-  background: transparent !important;
-  padding: 28px 0 12px !important;
 }
 
 
