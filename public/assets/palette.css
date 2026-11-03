@@ -1984,22 +1984,21 @@ body.page-index .faq-a{
 :root[data-theme="dark"] body.page-index .faq-a,html.dark body.page-index .faq-a{
   color:#94a3b8!important;
 }
-/* footer: 1:1 layout reference + Overlapping Section Effect */
-body.page-index footer{
-  position:relative;
-  z-index:20;
-  margin-top:48px;
-  border-top-left-radius:36px;
-  border-top-right-radius:36px;
-  box-shadow:none;
-  border-top:1px solid #ECECE8;
-  background:#FAFAFA!important;
-  padding:36px 0;
-}
-:root:not([data-theme="dark"]) body.page-index footer{
-  background:#ffffff!important;
-  border-top-color:#e2e8f0;
-  box-shadow:0 -20px 50px rgba(15,23,42,.12);
+/* footer: clean flat bottom bar inside mega-canvas */
+body.page-index footer,
+.bottom-footer {
+  position: static !important;
+  z-index: 1 !important;
+  margin-top: 56px !important;
+  margin-bottom: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  border-top: 1px solid #E6E6E2 !important;
+  background: transparent !important;
+  padding: 24px 0 8px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  clear: both !important;
 }
 body.page-auth footer,footer{
   border-top:1px solid #e2e8f0;margin-top:0;background:#ffffff;padding:64px 0 36px;
@@ -3421,13 +3420,18 @@ body {
 }
 
 .bottom-footer, footer, body.page-index footer {
-  margin-top: 56px !important;
+  margin-top: 64px !important;
   margin-bottom: 0 !important;
-  position: relative !important;
-  z-index: 10 !important;
+  position: static !important;
+  z-index: 1 !important;
   clear: both !important;
   box-sizing: border-box !important;
+  border-radius: 0 !important;
+  border: 0 !important;
+  border-top: 1px solid #ECECE8 !important;
   box-shadow: none !important;
+  background: transparent !important;
+  padding: 28px 0 12px !important;
 }
 
 
