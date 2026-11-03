@@ -1,28 +1,13 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<script>
-  (function () {
-    try {
-      var s = localStorage.getItem('yb-theme');
-      var t = (s === 'dark' || s === 'light') ? s : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-      document.documentElement.dataset.theme = t;
-      if (t === 'dark') document.documentElement.classList.add('dark');
-      else document.documentElement.classList.remove('dark');
-
-      if (localStorage.getItem('yb-is-admin') === '1') {
-        document.documentElement.classList.add('is-admin');
-      }
-    } catch (e) {}
-  })();
-</script>
 <link rel="icon" type="image/x-icon" href="/favicon.ico" />
 <link rel="icon" type="image/svg+xml" href="/assets/parigate.svg" />
 <link rel="apple-touch-icon" href="/assets/parigate.svg" />
 <link rel="manifest" href="/manifest.json" />
-<meta name="theme-color" content="#0d0e12" />
+<meta name="theme-color" content="#E2E2DE" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
