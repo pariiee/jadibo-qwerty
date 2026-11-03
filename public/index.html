@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/assets/palette.css?v=9.9.0" />
+  <link rel="stylesheet" href="/assets/palette.css?v=10.0" />
   <script src="/js/act.js"></script>
 </head>
 <body class="page-index">
@@ -127,108 +127,85 @@
     </div>
   </section>
 
-  <!-- 3 BENTO CARDS (ASIMETRIS & ANIMASI AKTIF TANPA EMOJI) -->
-  <section class="tri-bento-grid">
-    <!-- BENTO 1: Flagship Card (Lebar) - Audio Engine & Live Waveform -->
-    <div class="bento-box bento-dark bento-hero">
-      <div>
-        <div class="bento-head-row">
-          <span class="bento-badge dark-badge">Multi-Engine Gateway</span>
-          <span class="latency-pill"><span class="sonar-wrapper"><i class="sonar-ring"></i><i class="pulse-dot"></i></span> 14ms live</span>
-        </div>
-        <h3 class="bento-title-white">Performa tinggi &amp; tanpa batas</h3>
-        <p class="bento-desc-white">Otomatisasi 3 platform sekaligus dalam satu panel cerdas Box A &amp; D.</p>
-      </div>
+<section class="bento-grid">
 
-      <div class="bento-micro-widget dark-widget">
-        <div class="bmw-top">
-          <div class="bmw-bot-tag">
-            <span class="bmw-dot"></span>
-            <b>Discord Voice Audio Stream</b>
-          </div>
-          <div class="audio-equalizer" aria-label="Equalizer sound">
-            <span class="eq-bar eb1"></span>
-            <span class="eq-bar eb2"></span>
-            <span class="eq-bar eb3"></span>
-            <span class="eq-bar eb4"></span>
-            <span class="eq-bar eb5"></span>
-            <span class="eq-bar eb6"></span>
-            <span class="eq-bar eb7"></span>
-          </div>
-        </div>
-        <div class="bmw-title">Now Streaming: Lo-Fi Beats 24/7</div>
-        <div class="bmw-footer">
-          <span class="bmw-chip">48kHz Opus</span>
-          <span class="bmw-chip">Buffer 0.1s</span>
-          <span class="bmw-chip green">Bitrate 384kbps</span>
-        </div>
+  <!-- A: persegi panjang, gelap -->
+  <article class="bx bx-dark bx-wide">
+    <div class="bx-head">
+      <span class="bx-tag">Discord Voice</span>
+      <span class="latency-pill"><span class="sonar-wrapper"><i class="sonar-ring"></i><i class="pulse-dot"></i></span> 14ms live</span>
+    </div>
+    <h3 class="bx-title">Musik 24 jam, kualitas studio</h3>
+    <div class="player">
+      <div class="vinyl"></div>
+      <div class="player-info">
+        <b>Lo-Fi Beats 24/7</b>
+        <small>Now streaming di voice channel</small>
+        <div class="player-bar"><i></i></div>
+      </div>
+      <div class="audio-equalizer" aria-hidden="true">
+        <span class="eq-bar eb1"></span><span class="eq-bar eb2"></span><span class="eq-bar eb3"></span><span class="eq-bar eb4"></span><span class="eq-bar eb5"></span><span class="eq-bar eb6"></span><span class="eq-bar eb7"></span>
       </div>
     </div>
+    <div class="bx-chips"><span>48kHz Opus</span><span>Buffer 0.1s</span><span class="g">384kbps</span></div>
+  </article>
 
-    <!-- BENTO 2: Mid Card - Terminal Command Mockup with Blinking Cursor -->
-    <div class="bento-box bento-grey bento-mid">
-      <div>
-        <div class="bento-head-row">
-          <span class="bento-badge grey-badge">442+ Commands</span>
-          <span class="micro-chip-tag">CLI Console</span>
-        </div>
-        <h3 class="bento-title-black">Ketik langsung aktif</h3>
-        <p class="bento-desc-black">Simulasi respon interaktif WhatsApp, Telegram &amp; Discord.</p>
-      </div>
-
-      <div class="bento-terminal-mockup">
-        <div class="term-header">
-          <div class="term-dots">
-            <span class="td red"></span><span class="td yellow"></span><span class="td green"></span>
-          </div>
-          <span class="term-title">gateway-worker-01</span>
-        </div>
-        <div class="term-body">
-          <div class="term-line prompt"><span class="p-sign">&gt;</span> .menu --live<span class="cursor-blink">_</span></div>
-          <div class="term-line res-ok">[OK] Gateway v2.6 connected (24ms)</div>
-          <div class="term-line sub">+ music : Discord HD voice player</div>
-          <div class="term-line sub">+ vision : GPT-4o analyze image</div>
-          <div class="term-line sub">+ dl : YouTube, TikTok &amp; IG</div>
-        </div>
-      </div>
+  <!-- B: kotak, abu -->
+  <article class="bx bx-grey bx-square">
+    <span class="bx-tag">Fitur Siap Pakai</span>
+    <div class="bx-big">442<sup>+</sup></div>
+    <div>
+      <p class="bx-desc">Commands lengkap, tinggal ketik <b>.menu</b></p>
+      <div class="bx-chips dark"><span>Musik</span><span>AI Vision</span><span>Downloader</span><span>Anti-link</span></div>
     </div>
+  </article>
 
-    <!-- BENTO 3: Compact Card - Floating 3D Pricing Badge -->
-    <div class="bento-box bento-lime bento-compact">
-      <div>
-        <div class="bento-head-row">
-          <span class="bento-badge lime-badge">Instant Setup</span>
-          <span class="promo-sticker-pill animated-float">Rp10rb/bln</span>
-        </div>
-        <h3 class="bento-title-black">Paket fleksibel</h3>
-        <p class="bento-desc-black">Akses bot music, downloader HD, dan proteksi grup tanpa biaya sewa VPS.</p>
-      </div>
-
-      <div class="lime-feature-card">
-        <div class="lfc-top">
-          <div>
-            <span class="lfc-label">Starter Plan</span>
-            <div class="lfc-price">Rp10.000<small>/30 hari</small></div>
-          </div>
-        </div>
-        <ul class="lfc-perks">
-          <li>
-            <svg class="check-ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-            <span>Voice Music Discord 24/7</span>
-          </li>
-          <li>
-            <svg class="check-ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-            <span>Unlimited AI &amp; Downloader</span>
-          </li>
-          <li>
-            <svg class="check-ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-            <span>Auto-Healing Server Crash</span>
-          </li>
-        </ul>
-        <a class="btn-bento-action" href="#harga">Lihat Seluruh Paket ↗</a>
-      </div>
+  <!-- C: tinggi, lime -->
+  <article class="bx bx-lime bx-tall">
+    <div class="bx-head">
+      <span class="bx-tag">Instant Setup</span>
+      <span class="promo-sticker-pill animated-float">Rp10rb/bln</span>
     </div>
-  </section>
+    <h3 class="bx-title">Paket fleksibel, tanpa sewa VPS</h3>
+    <p class="bx-desc">Bot music, downloader HD, dan proteksi grup, langsung aktif.</p>
+    <div class="price-box">
+      <span class="lfc-label">Starter Plan</span>
+      <div class="lfc-price">Rp10.000<small>/30 hari</small></div>
+      <ul class="lfc-perks">
+        <li><svg class="check-ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg><span>Voice Music Discord 24/7</span></li>
+        <li><svg class="check-ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg><span>Unlimited AI &amp; Downloader</span></li>
+        <li><svg class="check-ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg><span>Auto-Healing Server Crash</span></li>
+      </ul>
+      <a class="btn-bento-action" href="#harga">Lihat Seluruh Paket ↗</a>
+    </div>
+  </article>
+
+  <!-- D: persegi panjang, putih (teks kiri, chat kanan) -->
+  <article class="bx bx-white bx-wide bx-split">
+    <div class="bx-split-text">
+      <span class="bx-tag">WhatsApp · Telegram</span>
+      <h3 class="bx-title">Ketik perintah, bot langsung jawab</h3>
+      <p class="bx-desc">Respon instan 24 jam, tanpa kamu perlu online.</p>
+    </div>
+    <div class="chat">
+      <div class="msg me">.menu</div>
+      <div class="msg bot"><b>qwertygate</b>Pilih fitur: Musik, AI, Downloader, Moderasi</div>
+      <div class="msg me">.play lofi beats</div>
+      <div class="msg bot typing"><i></i><i></i><i></i></div>
+    </div>
+  </article>
+
+  <!-- E: kotak, biru -->
+  <article class="bx bx-blue bx-square">
+    <span class="bx-tag">Auto-Healing</span>
+    <div class="bx-big">24/7</div>
+    <div>
+      <p class="bx-desc">Bot crash? Restart otomatis tanpa kamu pantau.</p>
+      <div class="uptime"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="on"></i></div>
+    </div>
+  </article>
+
+</section>
 
   <!-- HARGA -->
   <section id="harga" class="pricing-section">
@@ -312,6 +289,6 @@
 
 <script src="/js/vendor/gsap.min.js"></script>
 <script src="/js/vendor/ScrollTrigger.min.js"></script>
-<script src="/js/index.js?v=9.9.0" defer></script>
+<script src="/js/index.js?v=10.0" defer></script>
 </body>
 </html>
