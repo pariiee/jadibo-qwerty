@@ -2944,146 +2944,296 @@ body.page-dashboard #toast.show{opacity:1;transform:translate(-50%,0)}
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   SOLID MATTE DESIGN SYSTEM (NO GRADIENTS, CLEAN SOLID SURFACES)
-   - Zero gradients across canvas, cards, buttons, badges, and typography
-   - Preserves 3D platform orbit card with solid industrial borders & clean glow
+   NEO-MODERNIST PLAYFUL DESIGN SYSTEM (UNIFIED THEME — NO DARK/LIGHT SWITCH)
+   - Canvas: Warm Neutral Grey (#E2E2DE)
+   - Main Container: Pure Solid White (#FFFFFF) with 36px rounded corners
+   - High-Contrast Typography: Heavy Black (#111111) with tight tracking
+   - Solid Bento Card Hierarchy: Black (#121212) | Light Grey (#F4F4F4) | Neon Lime (#C8F564)
+   - Solid Pill Buttons with 3D Layered Offset
+   - Hero Platform Orbit Card fully preserved with high-contrast framing
    ══════════════════════════════════════════════════════════════════════ */
-:root {
-  --bg: #090a0f !important;
-  --bg2: #0e1017 !important;
-  --shell: #11131a !important;
-  --panel: #11131a !important;
-  --card: #11131a !important;
-  --card2: #11131a !important;
-  --border: #1e222d !important;
-  --edge: #1e222d !important;
-  --line: #1e222d !important;
-  --ink: #f3f4f8 !important;
-  --txt: #f3f4f8 !important;
-  --mute: #8e94a8 !important;
-  --muted: #8e94a8 !important;
-  --dark: #f3f4f8 !important;
-  --darkink: #090a0f !important;
+
+:root, :root[data-theme="dark"], :root[data-theme="light"], html.dark {
+  --bg: #E2E2DE !important;
+  --bg2: #FFFFFF !important;
+  --shell: #FFFFFF !important;
+  --panel: #FFFFFF !important;
+  --card: #F4F4F4 !important;
+  --card2: #F4F4F4 !important;
+  --border: #E2E2DE !important;
+  --edge: #111111 !important;
+  --line: #E2E2DE !important;
+  --ink: #111111 !important;
+  --txt: #111111 !important;
+  --mute: #555555 !important;
+  --muted: #555555 !important;
+  --dark: #111111 !important;
+  --darkink: #FFFFFF !important;
+  --lime: #C8F564 !important;
 }
 
-html, body, .hero, section, .card, .stat, .step, .price-card, .tst, .faq-item,
-.panel, .sidebar, .topbar, .modal, .hero-robot-frame, .hero-stats-card,
-.robot-floating-card, .plat-btn, .modal-close, .back-btn {
+html {
+  background-color: #E2E2DE !important;
   background-image: none !important;
 }
 
 body {
-  background-color: #090a0f !important;
-  color: #f3f4f8 !important;
+  background-color: #E2E2DE !important;
+  background-image: none !important;
+  color: #111111 !important;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+  padding: 14px 16px !important;
+  box-sizing: border-box !important;
 }
 
-/* Headings: Solid crisp typography without gradient clip */
+/* Main Container: Pure White Floating Canvas */
+.wrap, body.page-index .hero-in, body.page-dashboard .app, body.page-auth .card, body.page-billing .app, body.page-pricing .app, body.page-admin .app, body.page-bot .app {
+  background: #FFFFFF !important;
+  border-radius: 36px !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.04) !important;
+}
+
+body.page-index .wrap {
+  padding: 28px 36px !important;
+  margin: 0 auto 16px !important;
+}
+
+/* Headings: Extra Bold, Solid Black, Tight Tracking */
 h1, h2, h3, h4, .hero h1, .hero h1 .grad, .sec-head h2 {
   background: none !important;
   background-image: none !important;
   -webkit-background-clip: unset !important;
   background-clip: unset !important;
   -webkit-text-fill-color: initial !important;
-  color: #f3f4f8 !important;
+  color: #111111 !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.035em !important;
 }
 
-/* Cards & Bento Grid: Clean Solid Surfaces */
-.card, .stat, .step, .price-card, .tst, .faq-item, .panel {
-  background-color: #11131a !important;
-  border: 1px solid #1e222d !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
+.hero h1 {
+  font-size: 48px !important;
+  line-height: 1.05 !important;
 }
 
-.card:hover, .stat:hover, .step:hover, .price-card:hover, .tst:hover {
-  background-color: #141722 !important;
-  border-color: #2a3040 !important;
-  transform: translateY(-2px);
+@media (max-width: 768px) {
+  body { padding: 8px !important; }
+  .wrap, body.page-index .wrap { padding: 20px 16px !important; border-radius: 24px !important; }
+  .hero h1 { font-size: 32px !important; }
 }
 
-/* Buttons: Solid high-contrast */
-.btn-dark, .btn-primary, .submit-btn {
-  background: #f3f4f8 !important;
-  color: #090a0f !important;
-  border: 1px solid #f3f4f8 !important;
-  font-weight: 700 !important;
-}
-.btn-dark:hover, .btn-primary:hover, .submit-btn:hover {
-  background: #ffffff !important;
-  color: #000000 !important;
-  opacity: 0.95 !important;
-}
-
-.btn-outline {
-  background: #11131a !important;
-  color: #f3f4f8 !important;
-  border: 1px solid #1e222d !important;
-}
-.btn-outline:hover {
-  background: #161a25 !important;
-  border-color: #2e3548 !important;
-}
-
-/* Hero Robot Orbit Frame: Clean solid card with preserved orbit */
-body.page-index .hero-robot-frame {
-  background: #11131a !important;
-  border: 1px solid #1e222d !important;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5) !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-
-body.page-index .robot-header-bar {
-  border-bottom: 1px solid #1a1e28;
-  padding-bottom: 16px;
-}
-
-body.page-index .robot-brand-chip {
-  background: #161922 !important;
-  border: 1px solid #232838 !important;
-  color: #f3f4f8 !important;
-}
-
-body.page-index .robot-floating-card {
-  background: #161922 !important;
-  border: 1px solid #232838 !important;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-
+/* Hero Tag Pill */
 body.page-index .hero-tag {
-  background: #161922 !important;
-  border: 1px solid #232838 !important;
-  color: #8e94a8 !important;
+  background: #111111 !important;
+  color: #FFFFFF !important;
+  border-radius: 9999px !important;
+  padding: 6px 16px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
 }
 
 body.page-index .hero-tag .tag-dot {
-  background: #10b981 !important;
+  background: #C8F564 !important;
+  width: 7px !important;
+  height: 7px !important;
+  border-radius: 50% !important;
 }
 
-/* Modal and Inputs */
-body.page-dashboard .modal {
-  background: #11131a !important;
-  border: 1px solid #1e222d !important;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7) !important;
+/* Buttons: 3D Layered Pill Style */
+.btn-dark, .btn-primary, .submit-btn, a.btn-dark {
+  background: #C8F564 !important;
+  color: #111111 !important;
+  border: 1.5px solid #111111 !important;
+  border-radius: 9999px !important;
+  font-weight: 800 !important;
+  box-shadow: 0 4px 0 #111111 !important;
+  transition: transform 0.1s ease, box-shadow 0.1s ease !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
-body.page-dashboard .plat-btn {
-  background: #161922 !important;
-  border: 1px solid #1e222d !important;
+
+.btn-dark:hover, .btn-primary:hover, .submit-btn:hover {
+  background: #d4f768 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 5px 0 #111111 !important;
 }
-body.page-dashboard .plat-btn:hover {
-  background: #1c202d !important;
-  border-color: #3b82f6 !important;
+
+.btn-dark:active, .btn-primary:active, .submit-btn:active {
+  transform: translateY(3px) !important;
+  box-shadow: 0 1px 0 #111111 !important;
 }
+
+.btn-outline, a.btn-outline {
+  background: #111111 !important;
+  color: #FFFFFF !important;
+  border: 1.5px solid #111111 !important;
+  border-radius: 9999px !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.25) !important;
+}
+
+.btn-outline:hover {
+  background: #252525 !important;
+  color: #FFFFFF !important;
+}
+
+/* 3-Style Bento Cards (Black, Grey, Lime) */
+.card, .stat, .step, .price-card, .tst, .faq-item {
+  border-radius: 24px !important;
+  padding: 24px !important;
+  border: 1.5px solid #111111 !important;
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.08) !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.card:hover, .stat:hover, .step:hover, .price-card:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 0 rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Card 1: Black Solid Card */
+.grid>.card:nth-child(3n+1), .steps-grid>.step:nth-child(3n+1), .pricing-grid>.price-card:nth-child(3n+1), .stats>.stat:nth-child(3n+1) {
+  background: #121212 !important;
+  color: #FFFFFF !important;
+  border-color: #121212 !important;
+}
+.grid>.card:nth-child(3n+1) h2, .grid>.card:nth-child(3n+1) h3, .grid>.card:nth-child(3n+1) b, .grid>.card:nth-child(3n+1) .val,
+.steps-grid>.step:nth-child(3n+1) h3, .stats>.stat:nth-child(3n+1) .val, .stats>.stat:nth-child(3n+1) .lbl {
+  color: #FFFFFF !important;
+}
+.grid>.card:nth-child(3n+1) .sub, .steps-grid>.step:nth-child(3n+1) p, .stats>.stat:nth-child(3n+1) .sub {
+  color: #9ca3af !important;
+}
+
+/* Card 2: Neutral Light Grey */
+.grid>.card:nth-child(3n+2), .steps-grid>.step:nth-child(3n+2), .pricing-grid>.price-card:nth-child(3n+2), .stats>.stat:nth-child(3n+2) {
+  background: #F4F4F4 !important;
+  color: #111111 !important;
+  border-color: #E2E2DE !important;
+}
+
+/* Card 3: Playful Neon Lime */
+.grid>.card:nth-child(3n+3), .steps-grid>.step:nth-child(3n+3), .pricing-grid>.price-card:nth-child(3n+3), .stats>.stat:nth-child(3n+3) {
+  background: #C8F564 !important;
+  color: #111111 !important;
+  border-color: #111111 !important;
+}
+.grid>.card:nth-child(3n+3) h2, .grid>.card:nth-child(3n+3) h3, .grid>.card:nth-child(3n+3) b, .grid>.card:nth-child(3n+3) .val,
+.steps-grid>.step:nth-child(3n+3) h3, .stats>.stat:nth-child(3n+3) .val, .stats>.stat:nth-child(3n+3) .lbl {
+  color: #111111 !important;
+}
+
+/* Hero Robot Frame: 3D Platform Orbit Card */
+body.page-index .hero-robot-frame {
+  background: #121212 !important;
+  border: 2px solid #111111 !important;
+  border-radius: 32px !important;
+  box-shadow: 0 12px 0 #111111 !important;
+  color: #FFFFFF !important;
+  padding: 24px !important;
+}
+
+body.page-index .robot-header-bar {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+  padding-bottom: 14px !important;
+  margin-bottom: 20px !important;
+}
+
+body.page-index .robot-brand-chip {
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #FFFFFF !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 9999px !important;
+  padding: 5px 12px !important;
+  font-weight: 700 !important;
+}
+
+body.page-index .robot-live-badge {
+  color: #C8F564 !important;
+  font-weight: 800 !important;
+}
+body.page-index .live-dot {
+  background: #C8F564 !important;
+}
+
+body.page-index .orbit-galaxy-ring {
+  color: rgba(200, 245, 100, 0.4) !important;
+}
+
+body.page-index .robot-floating-card {
+  background: #C8F564 !important;
+  color: #111111 !important;
+  border: 2px solid #111111 !important;
+  border-radius: 20px !important;
+  box-shadow: 0 6px 0 #111111 !important;
+  padding: 12px 16px !important;
+}
+
+body.page-index .robot-floating-card * {
+  color: #111111 !important;
+}
+
+body.page-index .rfc-badge {
+  background: #111111 !important;
+  color: #C8F564 !important;
+  border-radius: 9999px !important;
+  padding: 3px 10px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+
+/* Nav & Sidebar */
+nav.nav, .topbar {
+  background: transparent !important;
+  border: none !important;
+}
+.sidebar {
+  background: #FAFAFA !important;
+  border-right: 1px solid #E2E2DE !important;
+  border-radius: 36px 0 0 36px !important;
+}
+.nav-item.on, .nav-item.active {
+  background: #111111 !important;
+  color: #FFFFFF !important;
+  border-radius: 9999px !important;
+}
+.nav-item.on * {
+  color: #FFFFFF !important;
+}
+
+/* Inputs & Form */
 .inp, body.page-dashboard .inp {
-  background: #090a0f !important;
-  border: 1px solid #1e222d !important;
-  color: #f3f4f8 !important;
+  background: #FFFFFF !important;
+  border: 1.5px solid #E2E2DE !important;
+  border-radius: 12px !important;
+  color: #111111 !important;
+  padding: 12px 14px !important;
 }
 .inp:focus, body.page-dashboard .inp:focus {
-  border-color: #3b82f6 !important;
+  border-color: #111111 !important;
+  box-shadow: 0 3px 0 #111111 !important;
   outline: none !important;
 }
+
+body.page-dashboard .modal {
+  background: #FFFFFF !important;
+  border: 2px solid #111111 !important;
+  border-radius: 28px !important;
+  box-shadow: 0 16px 0 #111111 !important;
+  color: #111111 !important;
+}
+body.page-dashboard .plat-btn {
+  background: #F4F4F4 !important;
+  border: 1.5px solid #E2E2DE !important;
+  border-radius: 18px !important;
+}
+body.page-dashboard .plat-btn:hover {
+  background: #C8F564 !important;
+  border-color: #111111 !important;
+}
+
 
