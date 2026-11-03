@@ -73,7 +73,28 @@
   let botKuota = new Map();
   let maxSlots = 2;
 
+  function renderSkeletons() {
+    const grid = document.getElementById('bot-grid');
+    if (!grid || bots.length) return;
+    grid.innerHTML = [1, 2].map(() => `
+      <div class="card bc skeleton-card" style="pointer-events:none;opacity:0.6;animation:skeleton-pulse 1.4s ease-in-out infinite">
+        <div class="row" style="display:flex;justify-content:space-between;margin-bottom:12px">
+          <div style="width:75px;height:22px;border-radius:6px;background:var(--border)"></div>
+          <div style="width:55px;height:22px;border-radius:6px;background:var(--border)"></div>
+        </div>
+        <div style="width:55%;height:22px;border-radius:6px;background:var(--border);margin:12px 0 8px"></div>
+        <div style="width:85%;height:14px;border-radius:4px;background:var(--border);margin-bottom:16px"></div>
+        <div style="width:100%;height:45px;border-radius:8px;background:var(--border);margin-bottom:14px"></div>
+        <div class="row" style="display:flex;justify-content:space-between;margin-top:10px">
+          <div style="width:35%;height:14px;border-radius:4px;background:var(--border)"></div>
+          <div style="width:25%;height:14px;border-radius:4px;background:var(--border)"></div>
+        </div>
+      </div>
+    `).join('');
+  }
+
   async function loadBots() {
+    renderSkeletons();
     const [dBots, dKuota] = await Promise.all([
       api('/api/bots'),
       api('/api/kuota')
@@ -473,11 +494,24 @@
   // yang dia dengerin cuma pesan `stats`. Log live tetap jalan di /bot/:id
   // (bot-detail.js punya socket sendiri).
 
+  // Setup toggle intip / sembunyikan token bot
+  const btnToggle = document.getElementById('toggle-token-btn');
+  if (btnToggle) {
+    btnToggle.addEventListener('click', (e) => {
+      e.preventDefault();
+      const inp = document.getElementById('f-token');
+      if (!inp) return;
+      const isPass = inp.type === 'password';
+      inp.type = isPass ? 'text' : 'password';
+      btnToggle.innerHTML = isPass
+        ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>'
+        : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+    });
+  }
+
   (async () => {
     if (!(await whoami())) return;
     await loadBots();
-    // Dipanggil DI SINI, bukan di dalam whoami(): whoami() `return null` kalau
-    // sesinya mati, jadi baris ini ikut ke-skip dan bannernya tidak pernah muncul.
     muatPengumuman();
   })();
 

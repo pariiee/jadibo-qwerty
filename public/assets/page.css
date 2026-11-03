@@ -687,3 +687,4 @@ body.page-log #terminal{margin-top:4px;border:1px solid var(--border);border-rad
 .panduan code{font-family:Consolas,Menlo,monospace;font-size:12.5px;background:var(--surf3);
   border:1px solid var(--border);border-radius:5px;padding:1px 6px;color:var(--txt)}
 .panduan a{color:var(--acc);font-weight:600}
+@keyframes skeleton-pulse { 0%, 100% { opacity: 0.35 } 50% { opacity: 0.75 } }

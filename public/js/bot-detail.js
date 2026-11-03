@@ -370,6 +370,7 @@
   function startPolling() {
     if (statusPoller) return;
     statusPoller = setInterval(async () => {
+      if (document.hidden) return; // Jeda polling jika tab browser tidak aktif / di-minimize
       const d = await api('/api/bots/' + botId);
       if (!d?.ok) return;
       const st = d.bot.status;

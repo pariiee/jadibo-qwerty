@@ -71,6 +71,7 @@ if (TANPA_EFEK) {
 
 const fs           = require('fs');
 const express      = require('express');
+const compression  = require('compression');
 const http         = require('http');
 const WebSocket    = require('ws');
 const path         = require('path');
@@ -161,9 +162,13 @@ app.use(express.urlencoded({ extended: true }));
 // jalur uang, karena satu POST yang lolos = saldo atau paket berubah.
 app.use(cekOrigin.cekOrigin);
 
-// Static files — index:false supaya '/' tidak disajikan mentah oleh static
-// (halaman harus lewat renderer include di bawah, biar partial ikut dirangkai)
-app.use(express.static(path.join(__dirname, 'public'), { index: false }));
+// Static files — compression + 1-day cache untuk asset publik, index:false supaya disajikan via renderer
+app.use(compression());
+app.use(express.static(path.join(__dirname, 'public'), {
+  index: false,
+  maxAge: '1d',
+  etag: true,
+}));
 
 // ─── Rate Limiter ─────────────────────────────────────────────────────────────
 const authLimiter = rateLimit({

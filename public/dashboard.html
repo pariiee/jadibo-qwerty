@@ -65,7 +65,15 @@
       <form id="add-form">
         <div class="field"><label for="f-name">Nama bot *</label><input class="inp" id="f-name" required placeholder="Contoh: Bot Saya"></div>
         <div class="field" id="wrap-botnum"><label id="lbl-owner" for="f-botnum">Nomor bot WA</label><input class="inp" id="f-botnum" inputmode="tel" placeholder="628xxxxxxxxxx"><div class="hint" id="hint-owner">Nomor yang di-pair ke bot</div></div>
-        <div class="field" id="wrap-token" style="display:none"><label for="f-token">Token Telegram bot *</label><input class="inp" id="f-token" placeholder="123456:ABC-DEF..." type="password" autocomplete="off"></div>
+        <div class="field" id="wrap-token" style="display:none">
+          <label for="f-token">Token Bot *</label>
+          <div style="position:relative;display:flex;align-items:center">
+            <input class="inp" id="f-token" placeholder="123456:ABC-DEF..." type="password" autocomplete="off" style="padding-right:42px;width:100%">
+            <button id="toggle-token-btn" type="button" aria-label="Lihat token" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--mute);padding:6px;display:flex;align-items:center;justify-content:center">
+              <svg id="icon-eye-token" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
         <div class="field"><label for="f-owner">Nomor owner</label><input class="inp" id="f-owner" inputmode="tel" placeholder="628xxxxxxxxxx"></div>
         <div class="field"><label for="f-prefix">Prefix</label><input class="inp" id="f-prefix" value="." maxlength="3"></div>
         <input id="f-footer" type="hidden" value="Powered by qwertygate">
