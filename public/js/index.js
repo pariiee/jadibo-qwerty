@@ -213,23 +213,7 @@
       });
     }
 
-    // 6. Footer Overlapping Section Animation (Khusus Footer menimpa #testimoni)
-    const footEl = document.querySelector('body.page-index footer');
-    if (footEl) {
-      gsap.fromTo(footEl,
-        { y: 60 },
-        {
-          y: 0,
-          ease: 'none',
-          scrollTrigger: {
-            trigger: footEl,
-            start: 'top bottom',
-            end: 'top 82%',
-            scrub: 0.6
-          }
-        }
-      );
-    }
+    // 6. Footer bersih tanpa overlapping animasi paksa
   }
 
 window.toggleTheme = toggleTheme; window.openAuth = openAuth; window.closeAuth = closeAuth;
