@@ -3270,13 +3270,34 @@ body {
 }
 
 /* ── Judul section ── */
-.sec-headline { text-align: center; max-width: 680px; margin: 0 auto clamp(24px, 4vw, 36px); }
+.sec-headline {
+  text-align: center;
+  max-width: 680px;
+  margin: 0 auto clamp(24px, 4vw, 36px);
+  padding-top: 24px !important;
+}
 .headline-pill { display: inline-block; font-size: 12px; font-weight: 600; padding: 3px 10px; margin-bottom: 14px; border: 1px solid #1B1B20; border-radius: 7px; }
-.sec-headline h2 { font-size: clamp(28px, 4.4vw, 42px); font-weight: 800; line-height: 1.05; letter-spacing: -0.045em; color: #1B1B20; margin: 0 0 10px; text-wrap: balance; }
+.sec-headline h2 {
+  font-size: clamp(28px, 4.4vw, 42px);
+  font-weight: 800;
+  line-height: 1.15 !important;
+  letter-spacing: -0.045em;
+  color: #1B1B20;
+  margin: 0 0 10px;
+  text-wrap: balance;
+  padding: 4px 0 !important;
+}
 .headline-sub { color: #5B5B63; font-size: 15.5px; line-height: 1.5; margin: 0; }
 
-/* ── Harga (anti-overflow, gaya datar) ── */
-.pricing-section, #harga { width: 100% !important; box-sizing: border-box !important; margin-bottom: clamp(40px, 6vw, 64px) !important; clear: both !important; scroll-margin-top: 20px; }
+/* ── Harga (anti-overflow, gaya datar rapi) ── */
+.pricing-section, #harga {
+  width: 100% !important;
+  box-sizing: border-box !important;
+  margin-bottom: clamp(40px, 6vw, 64px) !important;
+  clear: both !important;
+  scroll-margin-top: 32px;
+  padding-top: 16px !important;
+}
 #price-grid, .price-grid {
   display: grid !important;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr)) !important;
@@ -3286,63 +3307,147 @@ body {
   box-sizing: border-box !important;
 }
 .price-card {
-  width: 100% !important; box-sizing: border-box !important;
-  display: flex !important; flex-direction: column !important; justify-content: space-between !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+  gap: 14px !important;
   padding: clamp(20px, 3vw, 28px) !important;
-  border: 0 !important; border-radius: 24px !important;
+  border: 0 !important;
+  border-radius: 24px !important;
   box-shadow: 0 0 0 1px #E6E6E2 !important;
   background: #FFFFFF !important;
-  min-height: 460px !important;
+  min-height: 480px !important;
 }
-.price-card.price-card-popular { background: #D8FF7A !important; box-shadow: none !important; }
-.price-card .pc-top-box { width: 100% !important; box-sizing: border-box !important; }
-.price-card .btn, .price-card .pc-cta-btn {
-  width: 100% !important; max-width: 100% !important; box-sizing: border-box !important;
-  margin: 18px 0 !important; padding: 13px 20px !important;
-  border-radius: 9999px !important;
-  display: flex !important; align-items: center !important; justify-content: center !important; gap: 8px !important;
-  background: #1B1B20 !important; color: #FFFFFF !important;
-  font-weight: 700 !important; font-size: 14.5px !important; text-decoration: none !important;
+.price-card.price-card-popular {
+  background: #D8FF7A !important;
   box-shadow: none !important;
 }
+.price-card .pc-top-box {
+  width: 100% !important;
+  box-sizing: border-box !important;
+  margin-bottom: 2px !important;
+}
+.price-card .pc-tier-header {
+  margin-bottom: 8px !important;
+}
+.price-card .pc-tagline {
+  margin-bottom: 14px !important;
+  line-height: 1.4 !important;
+}
+.price-card .pc-price-wrap {
+  margin-bottom: 4px !important;
+}
+.price-card .btn, .price-card .pc-cta-btn {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  margin: 8px 0 14px !important;
+  padding: 13px 20px !important;
+  border-radius: 9999px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  background: #1B1B20 !important;
+  color: #FFFFFF !important;
+  font-weight: 700 !important;
+  font-size: 14.5px !important;
+  text-decoration: none !important;
+  box-shadow: none !important;
+  flex-shrink: 0 !important;
+}
+.price-card .pc-feat-label {
+  font-size: 11.5px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.05em !important;
+  margin-bottom: 8px !important;
+  color: #6B6B73 !important;
+}
+.price-card .pc-feat-list {
+  flex-grow: 1 !important;
+  margin: 0 0 14px !important;
+  padding: 0 !important;
+  list-style: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+}
 .price-card .pc-extra-tag {
-  margin-top: 14px !important; padding-top: 12px !important;
+  margin-top: auto !important;
+  padding-top: 14px !important;
   border-top: 1.5px dashed rgba(27,27,32,.2) !important;
-  font-size: 13px !important; font-weight: 700 !important; color: #B45309 !important;
-  width: 100% !important; box-sizing: border-box !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  color: #B45309 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+.price-card.price-card-popular .pc-extra-tag {
+  color: #1B1B20 !important;
+  border-top-color: rgba(27,27,32,.3) !important;
+  font-weight: 800 !important;
 }
 
 /* ── Testimoni (3 kartu seimbang, gaya datar) ── */
-.testimoni-section, #testimoni { width: 100% !important; box-sizing: border-box !important; margin-bottom: clamp(40px, 6vw, 64px) !important; clear: both !important; }
+.testimoni-section, #testimoni {
+  width: 100% !important;
+  box-sizing: border-box !important;
+  margin-bottom: clamp(40px, 6vw, 64px) !important;
+  clear: both !important;
+  padding-top: 16px !important;
+}
 #tst-grid, .tst-grid {
   display: grid !important;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)) !important;
   gap: clamp(14px, 2vw, 20px) !important;
   align-items: stretch !important;
-  width: 100% !important; box-sizing: border-box !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
 }
 .tst {
   background: #FFFFFF !important;
-  border: 0 !important; border-radius: 24px !important;
-  padding: clamp(18px, 3vw, 24px) !important;
+  border: 0 !important;
+  border-radius: 24px !important;
+  padding: clamp(20px, 3vw, 26px) !important;
   box-shadow: 0 0 0 1px #E6E6E2 !important;
-  display: flex !important; flex-direction: column !important; justify-content: space-between !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
   box-sizing: border-box !important;
-  min-height: 200px !important;
+  min-height: 220px !important;
 }
 
-/* ── Footer (menimpa semua style footer lama) ── */
-body.page-index .mega-canvas footer.bottom-footer {
-  position: static !important; inset: auto !important; transform: none !important; opacity: 1 !important;
-  z-index: auto !important; float: none !important; clear: both !important;
-  width: auto !important; height: auto !important; min-height: 0 !important;
-  margin: clamp(32px, 5vw, 48px) 0 0 !important;
+/* ── Footer (menimpa semua style footer lama secara total) ── */
+body.page-index footer,
+body.page-index .mega-canvas footer,
+body.page-index .mega-canvas footer.bottom-footer,
+footer.bottom-footer,
+footer {
+  position: static !important;
+  inset: auto !important;
+  transform: none !important;
+  opacity: 1 !important;
+  z-index: 1 !important;
+  float: none !important;
+  clear: both !important;
+  width: auto !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: clamp(40px, 6vw, 60px) 0 0 !important;
   padding: 26px 0 0 !important;
   background: transparent !important;
-  border: 0 !important; border-top: 1px solid #ECECE8 !important; border-radius: 0 !important;
-  box-shadow: none !important; box-sizing: border-box !important;
-  display: flex !important; justify-content: space-between !important; align-items: center !important;
-  flex-wrap: wrap !important; gap: 14px 20px !important;
+  border: 0 !important;
+  border-top: 1px solid #ECECE8 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 14px 20px !important;
 }
 body.page-index .footer-left { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #6B6B73; }
 body.page-index .footer-links { display: flex; gap: 18px; flex-wrap: wrap; }
