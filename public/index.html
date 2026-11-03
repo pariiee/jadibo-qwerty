@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/assets/palette.css?v=9.6.0" />
+  <link rel="stylesheet" href="/assets/palette.css?v=9.7.0" />
   <script src="/js/act.js"></script>
 </head>
 <body class="page-index">
@@ -104,18 +104,23 @@
           </div>
         </div>
 
-        <div class="hoc-status-strip">
+        <!-- Live Telemetry dipindah langsung ke Orbit Cluster Card -->
+        <div class="hoc-status-strip hoc-telemetry-strip">
           <div class="hss-stat">
-            <span class="hss-lbl">Bot Online</span>
-            <b class="hss-val" id="mk-bots">3</b>
+            <b class="hss-val" id="stat-bots">3</b>
+            <span class="hss-lbl">Bot Aktif Online</span>
           </div>
           <div class="hss-stat">
-            <span class="hss-lbl">Commands</span>
-            <b class="hss-val" id="rfc-cmds">442+</b>
+            <b class="hss-val" id="stat-messages">—</b>
+            <span class="hss-lbl">Pesan Diproses</span>
           </div>
           <div class="hss-stat">
-            <span class="hss-lbl">Gateway</span>
-            <span class="hss-badge">CONNECTED</span>
+            <b class="hss-val" id="stat-users">—</b>
+            <span class="hss-lbl">Total Pelanggan</span>
+          </div>
+          <div class="hss-stat">
+            <b class="hss-val" id="stat-commands">442</b>
+            <span class="hss-lbl">Fitur Siap Pakai</span>
           </div>
         </div>
       </div>
@@ -126,15 +131,14 @@
   <section class="tri-bento-grid">
     <div class="bento-box bento-dark">
       <div>
-        <span class="bento-badge dark-badge">Live Telemetry</span>
-        <h3 class="bento-title-white">Performa server &amp; lalu lintas realtime</h3>
-        <p class="bento-desc-white">Statistik langsung dari worker engine Box A &amp; D tanpa jeda.</p>
+        <span class="bento-badge dark-badge">Multi-Engine Gateway</span>
+        <h3 class="bento-title-white">Performa tinggi &amp; tanpa batas</h3>
+        <p class="bento-desc-white">Otomatisasi 3 platform sekaligus dalam satu panel cerdas.</p>
       </div>
-      <div class="telemetry-metrics-grid">
-        <div class="t-met"><span class="t-met-num" id="stat-bots">&mdash;</span><span class="t-met-lbl">Bot Aktif Online</span></div>
-        <div class="t-met"><span class="t-met-num" id="stat-messages">&mdash;</span><span class="t-met-lbl">Pesan Diproses</span></div>
-        <div class="t-met"><span class="t-met-num" id="stat-users">&mdash;</span><span class="t-met-lbl">Total Pelanggan</span></div>
-        <div class="t-met"><span class="t-met-num" id="stat-commands">442</span><span class="t-met-lbl">Fitur Siap Pakai</span></div>
+      <div class="engine-features-list">
+        <div class="ef-item">⚡ <b>Cluster Box A &amp; D</b>: Pemrosesan pesan instan ultra-low latency</div>
+        <div class="ef-item">🎵 <b>Discord Voice Player</b>: Streaming audio jernih HD 24/7</div>
+        <div class="ef-item">🛡️ <b>Auto-Healing Engine</b>: Otomatis restart bila bot disconnect</div>
       </div>
     </div>
 
@@ -250,6 +254,6 @@
 
 <script src="/js/vendor/gsap.min.js"></script>
 <script src="/js/vendor/ScrollTrigger.min.js"></script>
-<script src="/js/index.js?v=9.6.0" defer></script>
+<script src="/js/index.js?v=9.7.0" defer></script>
 </body>
 </html>
