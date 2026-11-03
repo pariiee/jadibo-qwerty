@@ -3202,38 +3202,49 @@ body {
 }
 .ef-item b { color: #FFFFFF; }
 
-/* ── 3 kartu bento (Variatif, Berdimensi, & Interaktif) ── */
+/* ── 3 kartu bento (Asimetris, Berdimensi, & Animasi Tanpa Emoji) ── */
 .tri-bento-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr));
-  gap: clamp(14px, 2vw, 20px);
+  grid-template-columns: 1.4fr 1.05fr 1fr;
+  gap: clamp(14px, 2.2vw, 22px);
   margin-bottom: clamp(48px, 7vw, 72px);
+  align-items: stretch;
 }
+@media (max-width: 980px) {
+  .tri-bento-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .bento-box {
-  border-radius: 26px !important;
-  padding: clamp(22px, 3vw, 28px) !important;
+  border-radius: 28px !important;
+  padding: clamp(24px, 3.2vw, 30px) !important;
   border: 0 !important;
   display: flex !important;
   flex-direction: column !important;
   justify-content: space-between !important;
-  gap: 20px;
-  min-height: clamp(360px, 36vw, 420px);
+  gap: 22px;
   transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease !important;
   position: relative !important;
   overflow: hidden !important;
 }
 .bento-box:hover {
-  transform: translateY(-5px) !important;
+  transform: translateY(-6px) !important;
 }
+
+/* Ukuran Bervariasi (Asimetris) */
+.bento-hero { min-height: 440px !important; }
+.bento-mid  { min-height: 410px !important; }
+.bento-compact { min-height: 380px !important; }
 
 .bento-dark {
   background: #1B1B20 !important;
   color: #FFFFFF !important;
   border: 1px solid rgba(255,255,255,.08) !important;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.18) !important;
+  box-shadow: 0 12px 36px rgba(0,0,0,0.2) !important;
 }
 .bento-dark:hover {
-  box-shadow: 0 20px 44px rgba(0,0,0,0.3) !important;
+  box-shadow: 0 22px 50px rgba(0,0,0,0.35) !important;
 }
 
 .bento-grey {
@@ -3243,17 +3254,17 @@ body {
   box-shadow: 0 8px 24px rgba(27,27,32,0.04) !important;
 }
 .bento-grey:hover {
-  box-shadow: 0 16px 36px rgba(27,27,32,0.08) !important;
+  box-shadow: 0 18px 40px rgba(27,27,32,0.09) !important;
 }
 
 .bento-lime {
   background: #D8FF7A !important;
   color: #1B1B20 !important;
   border: 1px solid rgba(0,0,0,0.08) !important;
-  box-shadow: 0 10px 30px rgba(166,216,74,0.18) !important;
+  box-shadow: 0 12px 34px rgba(166,216,74,0.2) !important;
 }
 .bento-lime:hover {
-  box-shadow: 0 20px 44px rgba(166,216,74,0.32) !important;
+  box-shadow: 0 24px 50px rgba(166,216,74,0.36) !important;
 }
 
 .bento-head-row {
@@ -3272,17 +3283,39 @@ body {
 .dark-badge { color: #FFFFFF; border-color: rgba(255,255,255,.4); }
 .grey-badge, .lime-badge { color: #1B1B20; border-color: #1B1B20; }
 
+/* Sonar Radar Live Ping */
 .latency-pill {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 7px;
   background: rgba(255,255,255,.1);
   color: #D8FF7A;
   font-size: 11px;
   font-weight: 700;
-  padding: 3px 8px;
+  padding: 4px 9px;
   border-radius: 9999px;
 }
+.sonar-wrapper {
+  position: relative;
+  width: 7px;
+  height: 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.sonar-ring {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #D8FF7A;
+  animation: sonarPulse 1.8s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+}
+@keyframes sonarPulse {
+  0% { transform: scale(1); opacity: 0.9; }
+  100% { transform: scale(3.2); opacity: 0; }
+}
+
 .micro-chip-tag {
   background: #FFFFFF;
   color: #1B1B20;
@@ -3297,8 +3330,16 @@ body {
   color: #D8FF7A;
   font-size: 11px;
   font-weight: 800;
-  padding: 3px 9px;
+  padding: 4px 10px;
   border-radius: 9999px;
+}
+.animated-float {
+  display: inline-block;
+  animation: floatSticker 2.6s ease-in-out infinite alternate;
+}
+@keyframes floatSticker {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-5px); }
 }
 
 .bento-title-white, .bento-title-black {
@@ -3314,65 +3355,66 @@ body {
 .bento-desc-white { color: #B4B4BC !important; }
 .bento-desc-black { color: #4B4B53 !important; }
 
-/* ── 1. Audio Equalizer Micro Widget ── */
+/* ── 1. Audio Equalizer 7-Bar (Hero) ── */
 .bento-micro-widget {
   background: rgba(255,255,255,.06);
   border: 1px solid rgba(255,255,255,.1);
-  border-radius: 18px;
-  padding: 16px;
+  border-radius: 20px;
+  padding: 18px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.2) inset;
+  gap: 12px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.2) inset;
 }
 .bmw-top { display: flex; justify-content: space-between; align-items: center; }
-.bmw-bot-tag { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: #FFFFFF; }
-.bmw-dot { width: 7px; height: 7px; border-radius: 50%; background: #D8FF7A; }
-.audio-equalizer { display: flex; align-items: flex-end; gap: 3px; height: 16px; }
-.eq-bar { width: 3px; background: #D8FF7A; border-radius: 2px; animation: eqBounce 1.1s ease-in-out infinite alternate; }
-.eq-bar.b1 { height: 50%; animation-delay: 0.1s; }
-.eq-bar.b2 { height: 100%; animation-delay: 0.3s; }
-.eq-bar.b3 { height: 40%; animation-delay: 0.15s; }
-.eq-bar.b4 { height: 85%; animation-delay: 0.35s; }
-.eq-bar.b5 { height: 60%; animation-delay: 0.25s; }
-@keyframes eqBounce { 0% { transform: scaleY(0.35); } 100% { transform: scaleY(1); } }
-.bmw-title { font-size: 13.5px; font-weight: 700; color: #FFFFFF; }
+.bmw-bot-tag { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #FFFFFF; font-weight: 700; }
+.bmw-dot { width: 8px; height: 8px; border-radius: 50%; background: #D8FF7A; }
+.audio-equalizer { display: flex; align-items: flex-end; gap: 3.5px; height: 18px; }
+.eq-bar { width: 3px; background: #D8FF7A; border-radius: 2px; animation: eqBounce 1.2s ease-in-out infinite alternate; }
+.eb1 { height: 45%; animation-delay: 0.1s; }
+.eb2 { height: 95%; animation-delay: 0.35s; }
+.eb3 { height: 35%; animation-delay: 0.15s; }
+.eb4 { height: 85%; animation-delay: 0.4s; }
+.eb5 { height: 60%; animation-delay: 0.2s; }
+.eb6 { height: 100%; animation-delay: 0.3s; }
+.eb7 { height: 50%; animation-delay: 0.25s; }
+@keyframes eqBounce { 0% { transform: scaleY(0.3); } 100% { transform: scaleY(1); } }
+.bmw-title { font-size: 14px; font-weight: 700; color: #FFFFFF; }
 .bmw-footer { display: flex; gap: 6px; flex-wrap: wrap; }
 .bmw-chip { background: rgba(255,255,255,.1); color: #E2E2DE; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 6px; }
 .bmw-chip.green { background: rgba(216,255,122,.15); color: #D8FF7A; }
 
-/* ── 2. Interactive Chat Mockup ── */
-.bento-chat-mockup {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  background: #FFFFFF;
+/* ── 2. Terminal Mockup with Blinking Cursor ── */
+.bento-terminal-mockup {
+  background: #111114;
   border-radius: 18px;
+  border: 1px solid #2B2B30;
   padding: 14px;
-  border: 1px solid #E2E2DE;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.03);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.1);
 }
-.chat-msg { display: flex; width: 100%; }
-.user-msg { justify-content: flex-end; }
-.user-msg .msg-bubble {
-  background: #1B1B20;
-  color: #D8FF7A;
-  font-weight: 800;
-  font-size: 13px;
-  padding: 5px 12px;
-  border-radius: 12px 12px 2px 12px;
+.term-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  padding-bottom: 8px;
+  margin-bottom: 10px;
 }
-.bot-msg { justify-content: flex-start; }
-.bot-bubble {
-  background: #F4F4F2;
-  border-radius: 12px 12px 12px 2px;
-  padding: 10px 12px;
-  width: 100%;
-}
-.bb-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-.bb-badge { font-size: 10.5px; font-weight: 800; color: #1B1B20; }
-.bb-time { font-size: 10px; font-weight: 700; color: #15803D; background: rgba(34,197,94,0.14); padding: 1px 6px; border-radius: 9999px; }
-.bb-text { font-size: 12px; line-height: 1.45; color: #374151; }
+.term-dots { display: flex; gap: 5px; }
+.td { width: 8px; height: 8px; border-radius: 50%; }
+.td.red { background: #EF4444; }
+.td.yellow { background: #F59E0B; }
+.td.green { background: #10B981; }
+.term-title { font-size: 10.5px; color: #888890; }
+.term-body { display: flex; flex-direction: column; gap: 5px; }
+.term-line { font-size: 11.5px; line-height: 1.4; }
+.term-line.prompt { color: #FFFFFF; font-weight: 700; }
+.p-sign { color: #D8FF7A; margin-right: 4px; font-weight: 800; }
+.cursor-blink { display: inline-block; font-weight: 800; animation: blinkCur 0.9s infinite; color: #D8FF7A; }
+@keyframes blinkCur { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+.term-line.res-ok { color: #D8FF7A; font-weight: 600; }
+.term-line.sub { color: #A0A0AA; padding-left: 8px; }
 
 /* ── 3. Lime Feature Card ── */
 .lime-feature-card {
@@ -3389,10 +3431,9 @@ body {
 .lfc-label { font-size: 11px; font-weight: 700; color: #6B7280; text-transform: uppercase; letter-spacing: 0.05em; }
 .lfc-price { font-size: 22px; font-weight: 800; color: #1B1B20; line-height: 1.1; }
 .lfc-price small { font-size: 12px; font-weight: 600; color: #6B7280; }
-.lfc-tag { background: #1B1B20; color: #D8FF7A; font-size: 10.5px; font-weight: 800; padding: 3px 8px; border-radius: 9999px; }
-.lfc-perks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
-.lfc-perks li { display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 600; color: #1B1B20; }
-.lfc-perks li span { color: #15803D; font-weight: 800; }
+.lfc-perks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.lfc-perks li { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: #1B1B20; }
+.check-ic { color: #15803D; flex-shrink: 0; }
 .btn-bento-action {
   background: #1B1B20; color: #FFFFFF; text-decoration: none;
   border-radius: 9999px; padding: 12px 20px;
