@@ -12,222 +12,211 @@
      sengaja cuma "<div></div>" biar markup-nya nggak berisik -->
 <div id="baca"></div>
 
-<!-- @include nav.html -->
+<!-- MEGA CONTAINER CANVAS UTAMA (GAYA REFERENSI SINGLE FLOATING CANVAS) -->
+<div class="mega-canvas">
 
-<header class="hero">
-  <div class="wrap hero-in">
-    <div class="hero-l">
-      <div class="hero-tag">
-        <span class="tag-dot"></span>
-        <span>Layanan Bot Multi-Platform Otomatis</span>
-      </div>
-      <h1>QWERTYGATE BOTS</h1>
-      <p class="sub">Kelola bot WhatsApp, Telegram, dan Discord dalam satu platform terpadu. Dilengkapi ratusan fitur siap pakai, respon instan, dan aktif 24 jam tanpa henti.</p>
-      <div class="hero-btns">
-        <a class="btn btn-outline btn-pill" href="#features">Pelajari Fitur</a>
-        <a class="btn btn-dark btn-pill" href="/register">Mulai Sekarang <svg class="arr-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg></a>
-      </div>
+  <!-- TOP MINIMALIST BAR (TANPA NAVBAR BIASA) -->
+  <header class="top-nav">
+    <a href="/" class="brand-badge">
+      <img src="/assets/parigate.svg" alt="qwertygate" width="32" height="32" />
+      <span class="brand-text">qwertygate</span>
+      <span class="brand-sub-chip">PRO</span>
+    </a>
+    <div class="top-nav-actions">
+      <button type="button" class="link-signin" data-act="openAuth('login')">
+        <span class="dot-sm"></span> Masuk
+      </button>
+      <a class="btn-signup-pill" href="/register">
+        <span class="dot-sm green"></span> Daftar Akun
+      </a>
+    </div>
+  </header>
+
+  <!-- CENTERED IMPACT HERO -->
+  <section class="hero-impact">
+    <div class="hero-pill-badge">
+      <span class="badge-dot"></span> №1 MULTI-PLATFORM BOT AUTOMATION GATEWAY
     </div>
 
-    <div class="hero-visual">
-      <div class="hero-robot-frame">
-        <div class="robot-corner-cut"></div>
-        <div class="robot-header-bar">
-          <div class="robot-brand-chip">
-            <img src="/assets/parigate.svg" alt="qwertygate" width="22" height="22" />
-            <span>qwertygate core v2.5</span>
+    <h1 class="hero-giant-title">
+      OTOMATISASI BOT SERBA BISA.<br />
+      WHATSAPP, TELEGRAM &amp; DISCORD.
+    </h1>
+
+    <p class="hero-lead-desc">
+      Satu dashboard terpadu untuk mengoperasikan ratusan bot cerdas. Dilengkapi fitur Voice Channel Music Player, AI Chat &amp; Vision, Media Downloader instan, dan auto-moderasi server 24/7 tanpa henti.
+    </p>
+
+    <div class="hero-cta-group">
+      <a class="btn-cta-lime" href="/register">
+        Mulai Sekarang Gratis! <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+      </a>
+      <a class="btn-cta-ghost" href="#harga">
+        Lihat Pilihan Paket
+      </a>
+    </div>
+
+    <!-- ORBIT PLATFORM 3D (TETAP ADA & UTUH) -->
+    <div class="hero-orbit-card">
+      <div class="hoc-header">
+        <div class="hoc-brand">
+          <img src="/assets/parigate.svg" alt="core" width="20" height="20" />
+          <span>qwertygate live cluster v2.6</span>
+        </div>
+        <div class="hoc-live-badge"><i class="pulse-dot"></i> CLUSTER ACTIVE</div>
+      </div>
+
+      <div class="hoc-body">
+        <div class="orbit-wrap">
+          <svg class="orbit-galaxy-ring" viewBox="0 0 320 220" width="320" height="220" fill="none">
+            <ellipse cx="160" cy="110" rx="136" ry="46" transform="rotate(-18 160 110)" stroke="currentColor" stroke-dasharray="4 6" stroke-width="1.5" opacity="0.45" />
+            <ellipse cx="160" cy="110" rx="136" ry="46" transform="rotate(18 160 110)" stroke="currentColor" stroke-dasharray="3 5" stroke-width="1.2" opacity="0.3" />
+          </svg>
+          <img src="/assets/parigate.svg" alt="qwertygate" width="135" height="135" class="orbit-center-logo" />
+
+          <!-- Orbit Item A: WhatsApp -->
+          <div class="orbit-item item-wa" title="WhatsApp Bot Engine">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984 0 1.76.459 3.478 1.333 4.992L2 22l5.133-1.345c1.458.796 3.1 1.214 4.872 1.215h.004c5.505 0 9.988-4.479 9.989-9.985 0-2.667-1.037-5.176-2.922-7.062A9.927 9.927 0 0 0 12.012 2zm5.834 14.164c-.247.692-1.244 1.344-1.737 1.411-.492.066-1.127.112-3.626-.925-2.986-1.238-4.9-4.275-5.049-4.474-.148-.198-1.213-1.616-1.213-3.08 0-1.464.767-2.186 1.039-2.484.272-.298.594-.372.793-.372.198 0 .396.002.57.01.184.008.434-.07.679.52.247.594.841 2.054.915 2.203.074.149.124.322.025.52-.099.198-.149.322-.297.495-.148.174-.312.389-.446.523-.148.148-.303.309-.13.606.173.297.77 1.272 1.651 2.058 1.134 1.011 2.091 1.325 2.388 1.474.297.148.471.124.645-.074.173-.198.742-.866.94-1.163.198-.297.396-.247.669-.148.272.099 1.73.816 2.027.965.297.148.495.223.569.347.074.124.074.717-.173 1.409z"/></svg>
           </div>
-          <span class="robot-live-badge"><i class="live-dot"></i> LIVE</span>
+          <!-- Orbit Item B: Discord -->
+          <div class="orbit-item item-dc" title="Discord Bot Engine">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.893.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+          </div>
+          <!-- Orbit Item C: Telegram -->
+          <div class="orbit-item item-tg" title="Telegram Bot Engine">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
+          </div>
         </div>
 
-        <div class="robot-canvas">
-          <div class="robot-emblem-art">
-            <div class="orbit-wrap">
-              <svg class="orbit-galaxy-ring" viewBox="0 0 320 220" width="320" height="220" fill="none">
-                <ellipse cx="160" cy="110" rx="136" ry="46" transform="rotate(-18 160 110)" stroke="currentColor" stroke-dasharray="4 6" stroke-width="1.5" opacity="0.32" />
-                <ellipse cx="160" cy="110" rx="136" ry="46" transform="rotate(18 160 110)" stroke="currentColor" stroke-dasharray="3 5" stroke-width="1.2" opacity="0.22" />
-              </svg>
-              <img src="/assets/parigate.svg" alt="qwertygate" width="145" height="145" class="orbit-center-logo" />
-
-              <!-- Arah 1: Ring A (WhatsApp & Discord) -->
-              <div class="orbit-item item-wa" title="WhatsApp Bot">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984 0 1.76.459 3.478 1.333 4.992L2 22l5.133-1.345c1.458.796 3.1 1.214 4.872 1.215h.004c5.505 0 9.988-4.479 9.989-9.985 0-2.667-1.037-5.176-2.922-7.062A9.927 9.927 0 0 0 12.012 2zm5.834 14.164c-.247.692-1.244 1.344-1.737 1.411-.492.066-1.127.112-3.626-.925-2.986-1.238-4.9-4.275-5.049-4.474-.148-.198-1.213-1.616-1.213-3.08 0-1.464.767-2.186 1.039-2.484.272-.298.594-.372.793-.372.198 0 .396.002.57.01.184.008.434-.07.679.52.247.594.841 2.054.915 2.203.074.149.124.322.025.52-.099.198-.149.322-.297.495-.148.174-.312.389-.446.523-.148.148-.303.309-.13.606.173.297.77 1.272 1.651 2.058 1.134 1.011 2.091 1.325 2.388 1.474.297.148.471.124.645-.074.173-.198.742-.866.94-1.163.198-.297.396-.247.669-.148.272.099 1.73.816 2.027.965.297.148.495.223.569.347.074.124.074.717-.173 1.409z"/></svg>
-              </div>
-              <div class="orbit-item item-dc" title="Discord Bot">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.893.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
-              </div>
-
-              <!-- Arah 2: Ring B (Telegram - Berlawanan Arah) -->
-              <div class="orbit-item item-tg" title="Telegram Bot">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
-              </div>
-            </div>
+        <div class="hoc-status-strip">
+          <div class="hss-stat">
+            <span class="hss-lbl">Bot Online</span>
+            <b class="hss-val" id="mk-bots">3</b>
           </div>
-
-          <div class="robot-floating-card">
-            <div class="rfc-row">
-              <div class="rfc-col">
-                <span class="rfc-label">Active Bots</span>
-                <b class="rfc-val"><span id="mk-bots">1</span> online</b>
-              </div>
-              <div class="rfc-col">
-                <span class="rfc-label">Command</span>
-                <b class="rfc-val"><span id="rfc-cmds">442</span> aktif</b>
-              </div>
-              <div class="rfc-col rfc-r">
-                <span class="rfc-label">Engine</span>
-                <span class="rfc-badge">CONNECTED</span>
-              </div>
-            </div>
+          <div class="hss-stat">
+            <span class="hss-lbl">Commands</span>
+            <b class="hss-val" id="rfc-cmds">442+</b>
+          </div>
+          <div class="hss-stat">
+            <span class="hss-lbl">Gateway</span>
+            <span class="hss-badge">CONNECTED</span>
           </div>
         </div>
       </div>
     </div>
-  </div>
-</header>
+  </section>
 
-<!-- Rail platform: yang didukung bot, diambil dari plugins/ (bukan
-       karangan). Isinya DUA set kembar — animasi m-rel menggeser -50%,
-       jadi loop-nya mulus tanpa lompatan. Kalau nambah platform,
-       tambah di KEDUA set. Gerak & state-nya di assets/motion.css §2b. -->
-<div id="platforms" aria-label="Platform yang didukung">
-  <div class="plat-rail">
-      <div class="plat-set">
-        <span class="plat"><i class="plat-i plat-wa" data-i="W"></i>WhatsApp</span>
-        <span class="plat"><i class="plat-i plat-tg" data-i="T"></i>Telegram</span>
-        <span class="plat"><i class="plat-i plat-dc" data-i="D"></i>Discord</span>
-        <span class="plat"><i class="plat-i plat-wa" data-i="W"></i>WhatsApp</span>
-        <span class="plat"><i class="plat-i plat-tg" data-i="T"></i>Telegram</span>
-        <span class="plat"><i class="plat-i plat-dc" data-i="D"></i>Discord</span>
-      </div>
-      <div class="plat-set" aria-hidden="true">
-        <span class="plat"><i class="plat-i plat-wa" data-i="W"></i>WhatsApp</span>
-        <span class="plat"><i class="plat-i plat-tg" data-i="T"></i>Telegram</span>
-        <span class="plat"><i class="plat-i plat-dc" data-i="D"></i>Discord</span>
-        <span class="plat"><i class="plat-i plat-wa" data-i="W"></i>WhatsApp</span>
-        <span class="plat"><i class="plat-i plat-tg" data-i="T"></i>Telegram</span>
-        <span class="plat"><i class="plat-i plat-dc" data-i="D"></i>Discord</span>
-      </div>
-    </div>
-  </div>
-
-<section id="stats">
-  <div class="wrap">
-    <div class="stats-head">
-      <p class="sec-label"><span class="stat-live-pulse"></span> Live Statistik</p>
-      <span class="live-realtime-badge"><i class="pulse-ring"></i> Real-time Telemetry</span>
-    </div>
-    <div class="stats">
-      <div class="stat">
-        <b id="stat-bots">&mdash;</b><span>Bot Online</span>
-        <span class="stat-foot" style="background:var(--ok)"></span>
-      </div>
-      <div class="stat">
-        <b id="stat-users">&mdash;</b><span>Total Pengguna</span>
-        <span class="stat-foot" style="background:var(--info)"></span>
-      </div>
-      <div class="stat">
-        <b id="stat-messages">&mdash;</b><span>Pesan Diproses</span>
-        <span class="stat-foot" style="background:#8b5cf6"></span>
-      </div>
-      <div class="stat">
-        <b id="stat-commands">442</b><span>Command Tersedia</span>
-        <span class="stat-foot" style="background:#f59e0b"></span>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section id="features">
-  <div class="wrap">
-    <p class="sec-label">Keunggulan</p>
-    <h2>Satu platform untuk seluruh kebutuhan bot Anda.</h2>
-    <div class="feat">
-      <div class="card card-dark" style="grid-column:span 2">
-        <div class="lead">Pusat Kendali Multi-Platform</div>
-        <p>Hubungkan bot WhatsApp, Telegram, dan Discord secara bersamaan. Didukung auto-moderasi grup, fitur utilitas, dan integrasi webhook mandiri.</p>
-      </div>
-      <div class="card">
-        <div class="icon" style="background:rgba(16,185,129,0.08);color:#10b981;width:42px;height:42px;border-radius:12px;display:grid;place-items:center;">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+  <!-- 3 HERO BENTO CARDS (PERSIS GAMBAR REFERENSI CASINO: HITAM, ABU, NEON LIME) -->
+  <section class="tri-bento-grid">
+    <!-- Card 1: Solid Dark Charcoal Card (Live Telemetri) -->
+    <div class="bento-box bento-dark">
+      <div class="bento-badge dark-badge">• Live Telemetry Cluster</div>
+      <h3 class="bento-title-white">Performa Server &amp; Lalu Lintas Realtime</h3>
+      <p class="bento-desc-white">Data statistik terdistribusi langsung dari worker engine Box A &amp; D tanpa jeda.</p>
+      
+      <div class="telemetry-metrics-grid">
+        <div class="t-met">
+          <span class="t-met-num" id="stat-bots">&mdash;</span>
+          <span class="t-met-lbl">Bot Aktif Online</span>
         </div>
-        <h4>Telemetri Waktu Nyata</h4>
-        <p>Pantau lalu lintas pesan masuk, pemakaian kuota, dan status koneksi bot secara langsung.</p>
-      </div>
-      <div class="card">
-        <div class="icon" style="background:rgba(37,99,235,0.08);color:#2563eb;width:42px;height:42px;border-radius:12px;display:grid;place-items:center;">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        <div class="t-met">
+          <span class="t-met-num" id="stat-messages">&mdash;</span>
+          <span class="t-met-lbl">Pesan Diproses</span>
         </div>
-        <h4>Sesi Mandiri &amp; Stabil</h4>
-        <p>Setiap sesi bot berjalan di lingkungan terisolasi demi menjaga stabilitas dan privasi akun.</p>
-      </div>
-      <div class="card">
-        <div class="icon" style="background:rgba(124,58,237,0.08);color:#7c3aed;width:42px;height:42px;border-radius:12px;display:grid;place-items:center;">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <div class="t-met">
+          <span class="t-met-num" id="stat-users">&mdash;</span>
+          <span class="t-met-lbl">Total Pelanggan</span>
         </div>
-        <h4>Pemasangan Cepat</h4>
-        <p>Tautkan akun WhatsApp melalui pemindaian kode QR atau masukkan token Telegram dalam hitungan detik.</p>
-      </div>
-      <div class="card">
-        <div class="icon" style="background:rgba(234,88,12,0.08);color:#ea580c;width:42px;height:42px;border-radius:12px;display:grid;place-items:center;">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <div class="t-met">
+          <span class="t-met-num" id="stat-commands">442</span>
+          <span class="t-met-lbl">Fitur Siap Pakai</span>
         </div>
-        <h4>Ratusan Perintah Siap Pakai</h4>
-        <p>Akses fitur pengunduh media sosial, kecerdasan buatan, moderasi otomatis, dan manajemen grup.</p>
       </div>
     </div>
-  </div>
-</section>
 
-<section id="howto">
-  <div class="wrap">
-    <p class="sec-label">Cara Kerja</p>
-    <h2>Aktif dalam tiga langkah mudah.</h2>
-    <div class="steps">
-      <div class="step">
-        <i>1</i>
-        <h4>Pilih Paket &amp; Platform</h4>
-        <p>Daftar akun, pilih platform yang diinginkan, dan tentukan paket langganan yang sesuai.</p>
-      </div>
-      <div class="step">
-        <i>2</i>
-        <h4>Tautkan Akun</h4>
-        <p>Pindai kode QR untuk WhatsApp atau masukkan token bot untuk Telegram dan Discord.</p>
-      </div>
-      <div class="step">
-        <i>3</i>
-        <h4>Bot Langsung Bekerja</h4>
-        <p>Ketik <b>.menu</b> pada ruang obrolan untuk mulai menggunakan seluruh fitur secara instan.</p>
+    <!-- Card 2: Solid Neutral Light Grey Card (Fitur & Cara Kerja) -->
+    <div class="bento-box bento-grey">
+      <div class="bento-badge grey-badge">• 442+ Super Commands</div>
+      <h3 class="bento-title-black">Aktivasi Kilat dalam 3 Langkah</h3>
+      <p class="bento-desc-black">Tanpa ribet sewa VPS, install dependensi, atau setting environment code.</p>
+
+      <div class="quick-steps-list">
+        <div class="qs-item">
+          <span class="qs-num">1</span>
+          <div class="qs-text">
+            <b>Pilih Platform</b>
+            <span>WhatsApp, Telegram, atau Discord</span>
+          </div>
+        </div>
+        <div class="qs-item">
+          <span class="qs-num">2</span>
+          <div class="qs-text">
+            <b>Tautkan Akun</b>
+            <span>Scan QR Code atau masukkan Bot Token</span>
+          </div>
+        </div>
+        <div class="qs-item">
+          <span class="qs-num">3</span>
+          <div class="qs-text">
+            <b>Ketik .menu</b>
+            <span>Bot langsung aktif melayani 24 jam</span>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-</section>
 
-<section id="harga">
-  <div class="wrap">
-    <p class="sec-label">Harga</p>
-    <h2>Pilih sesuai kebutuhan Anda.</h2>
+    <!-- Card 3: Solid Neon Lime Card (Paket Berlangganan) -->
+    <div class="bento-box bento-lime">
+      <div class="bento-badge lime-badge">• Instant Deployment</div>
+      <h3 class="bento-title-black">Paket Fleksibel Mulai 10 Ribu</h3>
+      <p class="bento-desc-black">Dapatkan akses voice streaming musik, downloader HD sosmed, dan proteksi anti-link grup.</p>
+
+      <div class="lime-perks-box">
+        <div class="l-perk">✓ Dukungan Voice Channel Music Discord</div>
+        <div class="l-perk">✓ AI Vision &amp; GPT Assistant Terintegrasi</div>
+        <div class="l-perk">✓ Caching Disk Lokal Cepat &amp; Hemat Kuota</div>
+      </div>
+
+      <a class="btn-bento-action" href="#harga">
+        Lihat Seluruh Paket <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+      </a>
+    </div>
+  </section>
+
+  <!-- SECTION HARGA (PRICING GRID DYNAMIC) -->
+  <section id="harga" class="pricing-section">
+    <div class="sec-headline">
+      <span class="headline-pill">• Transparan &amp; Terjangkau</span>
+      <h2>Pilih Paket Langganan Sesuai Kebutuhan</h2>
+      <p class="headline-sub">Setiap paket sudah mencakup akses API gateway, auto-restart bila crash, dan update fitur gratis.</p>
+    </div>
     <div class="price-grid" id="price-grid"></div>
-  </div>
-</section>
+  </section>
 
-<section id="testimoni">
-  <div class="wrap">
-    <div class="tst-layout-grid">
-      <div class="tst-left-box">
-        <p class="sec-label">Ulasan Pengguna</p>
-        <h2>Dipercaya oleh ribuan komunitas dan pelaku usaha.</h2>
-        <p class="tst-hdr-sub">Pengalaman nyata dari para pemilik komunitas dan tim yang mengotomatisasi percakapan mereka setiap hari.</p>
-        <a class="btn btn-dark tst-cta-btn" href="/register">Mulai Sekarang <svg class="arr-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg></a>
-      </div>
-      <div class="tst-right-cards">
-        <div class="tst-grid" id="tst-grid"></div>
-      </div>
+  <!-- SECTION TESTIMONI (REVIEWS) -->
+  <section id="testimoni" class="testimoni-section">
+    <div class="sec-headline">
+      <span class="headline-pill">• Ulasan Terverifikasi</span>
+      <h2>Dipercaya Komunitas &amp; Pelaku Bisnis</h2>
     </div>
-  </div>
-</section>
+    <div class="tst-grid" id="tst-grid"></div>
+  </section>
 
-<!-- @include footer.html -->
+  <!-- FOOTER MINIMALIS -->
+  <footer class="bottom-footer">
+    <div class="footer-left">
+      <img src="/assets/parigate.svg" alt="logo" width="22" height="22" />
+      <span>&copy; 2026 qwertygate. All rights reserved. Powered by yaparbots engine.</span>
+    </div>
+    <div class="footer-links">
+      <a href="/login">Masuk</a>
+      <a href="/register">Daftar</a>
+      <a href="/privacy">Privasi</a>
+      <a href="/terms">Ketentuan</a>
+    </div>
+  </footer>
+
+</div>
 
 <!-- Auth modal -->
 <div class="overlay" id="auth-overlay">
