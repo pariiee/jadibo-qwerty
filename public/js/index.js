@@ -144,11 +144,19 @@
   fetch('/api/auth/me', { credentials: 'include' }).then(r => r.json()).then(d => {
     if (d.ok) location.href = '/dashboard';
   }).catch(() => {});
-  // ── Floating Glass Pill Navbar on Scroll (Shrink Animation) ──
+  // ── Floating Glass Pill Navbar on Scroll (Hysteresis Anti-Jitter) ──
   const navEl = document.querySelector('.top-nav') || document.querySelector('body.page-index > nav');
   if (navEl) {
+    let isScrolled = false;
     const onNavScroll = function () {
-      navEl.classList.toggle('scrolled', window.scrollY > 20);
+      const y = window.scrollY || window.pageYOffset || 0;
+      if (!isScrolled && y > 40) {
+        isScrolled = true;
+        navEl.classList.add('scrolled');
+      } else if (isScrolled && y < 10) {
+        isScrolled = false;
+        navEl.classList.remove('scrolled');
+      }
     };
     window.addEventListener('scroll', onNavScroll, { passive: true });
     onNavScroll();
