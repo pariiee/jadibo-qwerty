@@ -41,7 +41,7 @@ body.page-index, body.page-auth {
   overflow:visible!important;
   overflow-x:hidden!important;
 }
-body:not(.page-index):not(.page-auth){
+body:not(.page-index):not(.page-auth):not(.page-dashboard){
   margin:0!important;
   min-height:100vh!important;
   font-family:'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',sans-serif!important;
@@ -57,7 +57,7 @@ a{color:inherit;text-decoration:none}
 button{font:inherit;color:inherit;cursor:pointer}
 :focus-visible{outline:2px solid #6366f1;outline-offset:2px}
 
-.shell, .app{
+.shell, body:not(.page-dashboard) .app{
   flex:1!important;
   max-width:1280px!important;
   margin:0 auto!important;
@@ -73,7 +73,7 @@ button{font:inherit;color:inherit;cursor:pointer}
   position:relative!important;
   transition:grid-template-columns .25s ease!important;
 }
-.shell.mini, .app.mini{grid-template-columns:76px 1fr!important}
+.shell.mini, body:not(.page-dashboard) .app.mini{grid-template-columns:76px 1fr!important}
 
 /* sidebar */
 aside{
@@ -849,51 +849,58 @@ html body.page-dashboard .content {
   overflow: visible !important;
 }
 
-/* ══ Top Floating Navbar (Cerah & Bersih) ══ */
-.cx-navbar {
+/* ══ Top Floating Navbar (Cerah & 100% Simetris di Tengah) ══ */
+html body.page-dashboard header.topbar.cx-navbar {
   position: sticky !important;
   top: 14px !important;
   z-index: 100 !important;
   background: transparent !important;
+  border: 0 !important;
+  border-bottom: 0 !important;
+  box-shadow: none !important;
+  height: auto !important;
+  min-height: 0 !important;
   padding: 0 !important;
-  margin-bottom: clamp(20px, 2.5vw, 28px) !important;
-  border: none !important;
+  margin: 0 auto clamp(20px, 2.5vw, 28px) !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  display: block !important;
 }
-.cx-nav-inner {
-  display: flex !important;
+html body.page-dashboard header.topbar.cx-navbar .cx-nav-inner {
+  display: grid !important;
+  grid-template-columns: 1fr auto 1fr !important;
   align-items: center !important;
-  justify-content: space-between !important;
-  gap: 16px !important;
+  width: 100% !important;
   background: #FFFFFF !important;
   border: 1px solid #E6E6E2 !important;
   border-radius: 9999px !important;
-  padding: 7px 12px 7px 18px !important;
-  box-shadow: 0 8px 28px rgba(27, 27, 32, 0.06) !important;
+  padding: 8px 14px 8px 20px !important;
+  box-shadow: 0 4px 20px rgba(27, 27, 32, 0.05) !important;
 }
-.cx-brand {
+html body.page-dashboard .cx-brand {
   display: flex !important;
   align-items: center !important;
   gap: 10px !important;
   text-decoration: none !important;
   color: #1B1B20 !important;
-  flex-shrink: 0 !important;
+  justify-self: start !important;
 }
-.cx-brand-title {
+html body.page-dashboard .cx-brand-title {
   font-size: 17px !important;
   font-weight: 800 !important;
   letter-spacing: -0.03em !important;
   color: #1B1B20 !important;
 }
-.cx-nav-pill {
+html body.page-dashboard .cx-nav-pill {
   display: flex !important;
   align-items: center !important;
   gap: 4px !important;
   background: #F2F2EE !important;
   padding: 4px 6px !important;
   border-radius: 9999px !important;
-  overflow-x: auto !important;
+  justify-self: center !important;
 }
-.cx-nav-item {
+html body.page-dashboard .cx-nav-item {
   display: inline-flex !important;
   align-items: center !important;
   gap: 6px !important;
@@ -906,19 +913,19 @@ html body.page-dashboard .content {
   transition: all .15s ease !important;
   white-space: nowrap !important;
 }
-.cx-nav-item:hover { color: #1B1B20 !important; }
-.cx-nav-item.on, .cx-nav-item.active {
+html body.page-dashboard .cx-nav-item:hover { color: #1B1B20 !important; }
+html body.page-dashboard .cx-nav-item.on, html body.page-dashboard .cx-nav-item.active {
   background: #1B1B20 !important;
   color: #FFFFFF !important;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12) !important;
 }
-.cx-nav-actions {
+html body.page-dashboard .cx-nav-actions {
   display: flex !important;
   align-items: center !important;
   gap: 10px !important;
-  flex-shrink: 0 !important;
+  justify-self: end !important;
 }
-.cx-icon-btn {
+html body.page-dashboard .cx-icon-btn {
   width: 38px !important;
   height: 38px !important;
   border-radius: 50% !important;
@@ -930,11 +937,11 @@ html body.page-dashboard .content {
   text-decoration: none !important;
   transition: transform .15s ease, background .15s ease !important;
 }
-.cx-icon-btn:hover {
+html body.page-dashboard .cx-icon-btn:hover {
   transform: scale(1.05) !important;
   background: #EAEAE7 !important;
 }
-.cx-avatar-btn {
+html body.page-dashboard .cx-avatar-btn {
   width: 38px !important;
   height: 38px !important;
   border-radius: 50% !important;
