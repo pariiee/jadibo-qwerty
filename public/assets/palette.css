@@ -1984,28 +1984,9 @@ body.page-index .faq-a{
 :root[data-theme="dark"] body.page-index .faq-a,html.dark body.page-index .faq-a{
   color:#94a3b8!important;
 }
-/* footer: clean flat bottom bar inside mega-canvas */
-body.page-index footer,
-.bottom-footer {
-  position: static !important;
-  z-index: 1 !important;
-  margin-top: 56px !important;
-  margin-bottom: 0 !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  border-top: 1px solid #E6E6E2 !important;
-  background: transparent !important;
-  padding: 24px 0 8px !important;
-  width: 100% !important;
-  box-sizing: border-box !important;
-  clear: both !important;
-}
-body.page-auth footer,footer{
+/* footer: auth pages */
+body.page-auth footer {
   border-top:1px solid #e2e8f0;margin-top:0;background:#ffffff;padding:64px 0 36px;
-}
-:root[data-theme="dark"] body.page-index footer,:root[data-theme="dark"] footer,
-html.dark body.page-index footer,html.dark footer{
-  background:#090a0f!important;border-top-color:rgba(255,255,255,.08)!important;
 }
 .foot-main-wrap{max-width:1160px;margin:0 auto;padding:0 24px}
 .foot-top-grid{display:flex;justify-content:space-between;align-items:flex-end;gap:40px;margin-bottom:60px;flex-wrap:wrap}
@@ -3737,6 +3718,25 @@ body {
   .link-signin, .btn-signup-pill { height: 38px; padding: 0 14px; font-size: 13px; }
   .hero-pill-badge { font-size: 12.5px; gap: 10px; padding: 6px 16px 6px 6px; }
   .badge-no { padding: 6px 11px; }
+}
+
+/* ── Kunci tampilan CTA & footer baru ── */
+html body.page-index section.cta-band {
+  background: #D8FF7A !important;
+  border-radius: 28px !important;
+  padding: clamp(24px, 4vw, 40px) !important;
+  box-shadow: 0 14px 34px rgba(166, 216, 74, .25) !important;
+  overflow: hidden !important;
+}
+html body.page-index footer.site-footer {
+  display: block !important;
+  background: #1B1B20 !important;
+  border: 0 !important;
+  border-radius: 28px !important;
+  padding: clamp(24px, 4vw, 44px) clamp(20px, 4vw, 44px) 0 !important;
+  margin: 0 !important;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, .18) !important;
+  overflow: hidden !important;
 }
 
 
