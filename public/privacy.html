@@ -42,49 +42,118 @@
     </div>
   </header>
 
-  <!-- KONTEN PRIVASI -->
-  <main class="legal-card">
-    <div class="legal-header">
-      <a href="/" class="legal-back">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-        Kembali ke Beranda
-      </a>
-      <h1 class="legal-title">Kebijakan Privasi</h1>
-      <p class="legal-updated">Terakhir diperbarui: 4 November 2026</p>
+  <!-- HERO DOKUMEN -->
+  <section class="legal-hero">
+    <div class="hero-pill-badge">
+      <span class="badge-no">№1</span> Komitmen Keamanan &amp; Data
     </div>
-
-    <div class="legal-content">
-      <p>Selamat datang di <strong>qwertygate</strong>. Kami menghargai dan melindungi privasi setiap pengguna, pemilik bot, serta anggota komunitas yang menggunakan layanan gateway otomatisasi bot multi-platform kami.</p>
-
-      <h3>1. Data yang Kami Kumpulkan</h3>
-      <p>Untuk menjalankan gateway bot secara stabil dan andal, kami mengumpulkan data teknis berikut:</p>
-      <ul>
-        <li><strong>Informasi Akun:</strong> Username, alamat email terdaftar, dan kata sandi yang telah dienkripsi menggunakan hashing aman.</li>
-        <li><strong>Kredensial Bot:</strong> Token autentikasi bot Discord atau Telegram, serta sesi terenkripsi WhatsApp Baileys yang disimpan aman untuk menjaga bot tetap online.</li>
-        <li><strong>Telemetri &amp; Log Performa:</strong> Jumlah pesan yang diproses, uptime bot, log error koneksi, dan latency response untuk pemeliharaan sistem 24/7.</li>
-      </ul>
-
-      <h3>2. Penggunaan Data</h3>
-      <p>Data yang dikumpulkan hanya digunakan untuk:</p>
-      <ul>
-        <li>Menghubungkan dan menjalankan bot di platform WhatsApp, Telegram, dan Discord.</li>
-        <li>Menampilkan ringkasan status operasional pada dashboard akun Anda.</li>
-        <li>Mencegah penyalahgunaan sistem, spamming ilegal, atau aktivitas yang melanggar ketentuan platform pihak ketiga.</li>
-      </ul>
-
-      <h3>3. Keamanan &amp; Perlindungan Kredensial</h3>
-      <p>Kami menerapkan prinsip <em>Zero-Knowledge</em> untuk data sensitif. Token bot dan session keys dienkripsi di server Box D dengan proteksi ketat. Kami tidak pernah menjual, menyewakan, atau membagikan kredensial Anda kepada pihak mana pun.</p>
-
-      <h3>4. Interaksi Chat &amp; Pesan</h3>
-      <p>qwertygate bertindak sebagai gateway relay pesan secara real-time. Kami <strong>tidak menyimpan isi obrolan pribadi</strong> Anda atau pengguna bot Anda ke dalam database jangka panjang, kecuali cache sementara yang diperlukan untuk command buffer atau file audio yang otomatis dibersihkan secara berkala.</p>
-
-      <h3>5. Hak Pengguna</h3>
-      <p>Anda berhak sewaktu-waktu menghapus bot, mencabut token, atau mengajukan penutupan akun secara penuh melalui dashboard atau dengan menghubungi tim support kami.</p>
-
-      <h3>6. Kontak Dukungan</h3>
-      <p>Jika ada pertanyaan atau permintaan terkait data pribadi Anda, silakan hubungi kami melalui komunitas resmi di Discord atau kanal bantuan WhatsApp kami.</p>
+    <div class="title-wrap">
+      <h1 class="hero-giant-title">
+        <span class="t-line">Privasi bot kamu, <span class="hl">terlindungi penuh.</span></span>
+      </h1>
+      <span class="hero-sticker">Zero-Log!<small>Obrolan Anda milik Anda</small></span>
     </div>
-  </main>
+    <p class="hero-lead-desc" style="max-width:580px">
+      Transparansi penuh bagaimana gateway qwertygate melindungi kredensial, token bot, dan lalu lintas pesan kamu.
+    </p>
+  </section>
+
+  <!-- 3 TOP BENTO COMPONENT CARDS -->
+  <section class="legal-bento-grid">
+    <article class="lbg-card lbg-lime">
+      <span class="bx-tag">Zero-Log Chat</span>
+      <div>
+        <h3>Pesan Real-Time Tanpa Arsip</h3>
+        <p>qwertygate adalah gateway lalu lintas. Isi obrolan pribadi &amp; grup tidak pernah disimpan di database.</p>
+      </div>
+      <div class="bx-chips dark"><span>No Snooping</span><span>Auto-Purge Cache</span></div>
+    </article>
+
+    <article class="lbg-card lbg-purple">
+      <span class="bx-tag">Enkripsi Kredensial</span>
+      <div>
+        <h3>Token &amp; Kunci Bot Terisolasi</h3>
+        <p>Token Discord, Bot API Telegram, dan session WhatsApp Baileys dienkripsi dengan standar hash ketat.</p>
+      </div>
+      <div class="bx-chips"><span>AES Hashed</span><span>Box D Secure</span></div>
+    </article>
+
+    <article class="lbg-card lbg-blue">
+      <span class="bx-tag">Kontrol Penuh</span>
+      <div>
+        <h3>Kendali 100% di Tangan Kamu</h3>
+        <p>Kamu dapat mencabut token, mereset session, atau menghapus seluruh riwayat bot kapan saja via panel.</p>
+      </div>
+      <div class="bx-chips dark"><span>1-Click Purge</span><span>Self-Managed</span></div>
+    </article>
+  </section>
+
+  <!-- 6 PASAL DOKUMEN DALAM GRID KARTU BERSIH -->
+  <section class="legal-articles-grid">
+    <article class="la-card">
+      <div class="la-head">
+        <span class="la-num">01</span>
+        <span class="la-badge">Data Akun</span>
+      </div>
+      <h4>Informasi yang Kami Kumpulkan</h4>
+      <p>Kami hanya mengumpulkan data esensial untuk keperluan autentikasi akun dan koneksi bot:</p>
+      <ul>
+        <li><strong>Identitas:</strong> Username unik, email terverifikasi, dan hash password yang aman.</li>
+        <li><strong>Kredensial Layanan:</strong> Token bot platform untuk menjaga proses tetap online di cloud.</li>
+        <li><strong>Telemetri:</strong> Hitungan pesan berhasil, status uptime, dan latency untuk auto-healing.</li>
+      </ul>
+    </article>
+
+    <article class="la-card">
+      <div class="la-head">
+        <span class="la-num">02</span>
+        <span class="la-badge">Tujuan</span>
+      </div>
+      <h4>Bagaimana Data Digunakan</h4>
+      <p>Data kamu murni dialokasikan untuk operasional runtime gateway bot:</p>
+      <ul>
+        <li>Menginisialisasi engine multi-platform secara serentak 24 jam.</li>
+        <li>Menyajikan metrik performa di panel dashboard secara akurat.</li>
+        <li>Menjaga keamanan jaringan dari serangan spam, bot abuse, dan brute-force.</li>
+      </ul>
+    </article>
+
+    <article class="la-card">
+      <div class="la-head">
+        <span class="la-num">03</span>
+        <span class="la-badge">Keamanan</span>
+      </div>
+      <h4>Penyimpanan &amp; Proteksi Token</h4>
+      <p>Kami menerapkan prinsip <em>Principle of Least Privilege</em>. Token bot kamu tidak pernah diekspos ke publik atau dibagikan ke pihak ketiga mana pun tanpa izin eksplisit.</p>
+    </article>
+
+    <article class="la-card">
+      <div class="la-head">
+        <span class="la-num">04</span>
+        <span class="la-badge">Media</span>
+      </div>
+      <h4>Penyimpanan Sementara (Audio &amp; Cache)</h4>
+      <p>File audio stream Discord Voice dan temporary media downloader disimpan di folder disk cache terisolasi dan dihapus otomatis setelah proses streaming selesai.</p>
+    </article>
+
+    <article class="la-card">
+      <div class="la-head">
+        <span class="la-num">05</span>
+        <span class="la-badge">Hak Kamu</span>
+      </div>
+      <h4>Penghapusan &amp; Reset Data</h4>
+      <p>Kamu memiliki hak penuh untuk meminta ekspor data, menghentikan bot, atau menghapus seluruh akun qwertygate kamu tanpa prosedur berbelit.</p>
+    </article>
+
+    <article class="la-card">
+      <div class="la-head">
+        <span class="la-num">06</span>
+        <span class="la-badge">Bantuan</span>
+      </div>
+      <h4>Kontak Perlindungan Data</h4>
+      <p>Pertanyaan seputar kebijakan data dapat diajukan langsung melalui server resmi Discord atau support WhatsApp kami yang aktif 24 jam.</p>
+    </article>
+  </section>
 
   <!-- FOOTER BENTO -->
   <div class="ft-bento" role="contentinfo">

@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/assets/palette.css?v=18.0" />
+  <link rel="stylesheet" href="/assets/palette.css?v=19.0" />
   <script src="/js/act.js"></script>
 </head>
 <body class="page-index">
@@ -42,47 +42,113 @@
     </div>
   </header>
 
-  <!-- KONTEN KETENTUAN -->
-  <main class="legal-card">
-    <div class="legal-header">
-      <a href="/" class="legal-back">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-        Kembali ke Beranda
-      </a>
-      <h1 class="legal-title">Ketentuan Layanan</h1>
-      <p class="legal-updated">Terakhir diperbarui: 4 November 2026</p>
+  <!-- HERO DOKUMEN -->
+  <section class="legal-hero">
+    <div class="hero-pill-badge">
+      <span class="badge-no">№1</span> Pedoman &amp; Perjanjian Pengguna
     </div>
-
-    <div class="legal-content">
-      <p>Dengan mendaftar atau menggunakan layanan <strong>qwertygate</strong>, Anda menyetujui seluruh ketentuan dan pedoman penggunaan layanan berikut.</p>
-
-      <h3>1. Definisi Layanan</h3>
-      <p>qwertygate menyediakan platform gateway otomatisasi bot multi-platform untuk WhatsApp, Telegram, dan Discord berbasis cloud runtime. Kami menyediakan infrastruktur hosting bot mandiri tanpa mewajibkan pengguna mengelola VPS sendiri.</p>
-
-      <h3>2. Akun &amp; Tanggung Jawab Pengguna</h3>
-      <ul>
-        <li>Anda bertanggung jawab menjaga kerahasiaan username, password, dan token bot Anda.</li>
-        <li>Anda wajib memastikan bot yang dijalankan tidak melanggar hukum yang berlaku di Republik Indonesia serta Terms of Service dari masing-masing platform (WhatsApp, Telegram, Discord).</li>
-        <li>DILARANG KERAS menggunakan qwertygate untuk: spam massal, phishing, penipuan, broadcast ilegal, penyebaran malware, atau konten terlarang.</li>
-      </ul>
-
-      <h3>3. Langganan, Pembayaran &amp; Kuota</h3>
-      <ul>
-        <li>Layanan disediakan dengan model paket berlangganan fleksibel (Starter, Pro, Sultan) dengan rincian durasi dan kuota fitur sesuai yang tertera pada panel dashboard.</li>
-        <li>Semua transaksi pembayaran diproses melalui payment gateway terverifikasi. Masa aktif bot dihitung secara transparan sejak pembayaran berhasil dikonfirmasi.</li>
-        <li>Pembatalan atau penghentian paket tidak memberikan pengembalian saldo (refund) kecuali terjadi kendala teknis total dari sisi infrastruktur kami selama lebih dari 48 jam berturut-turut.</li>
-      </ul>
-
-      <h3>4. Ketersediaan Layanan (Uptime &amp; Auto-Healing)</h3>
-      <p>Kami berupaya menjaga uptime layanan hingga 99.9% dengan sistem auto-healing restart otomatis. Namun, pemeliharaan rutin server, gangguan jaringan upstream, atau pemblokiran nomor/token oleh platform pihak ketiga (seperti banned nomor WhatsApp) berada di luar kendali langsung qwertygate.</p>
-
-      <h3>5. Penghentian Akun</h3>
-      <p>Kami berhak membekukan atau menghentikan akun tanpa pemberitahuan sebelumnya apabila ditemukan indikasi serangan DDoS, eksploitasi celah server, atau pelanggaran serius terhadap ketentuan ini.</p>
-
-      <h3>6. Perubahan Ketentuan</h3>
-      <p>qwertygate dapat memperbarui Ketentuan Layanan sewaktu-waktu. Perubahan material akan diumumkan melalui dashboard atau server komunitas Discord kami.</p>
+    <div class="title-wrap">
+      <h1 class="hero-giant-title">
+        <span class="t-line">Ketentuan layanan <span class="hl">yang transparan.</span></span>
+      </h1>
+      <span class="hero-sticker">Jelas &amp; Adil!<small>Tanpa biaya tersembunyi</small></span>
     </div>
-  </main>
+    <p class="hero-lead-desc" style="max-width:580px">
+      Aturan main yang jelas, adil, dan tanpa pasal tersembunyi untuk seluruh pengguna bot gateway qwertygate.
+    </p>
+  </section>
+
+  <!-- 3 TOP BENTO COMPONENT CARDS -->
+  <section class="legal-bento-grid">
+    <article class="lbg-card lbg-dark">
+      <span class="bx-tag">Infrastruktur Cloud</span>
+      <div>
+        <h3>Aktif 24 Jam Tanpa Sewa VPS</h3>
+        <p>qwertygate mengelola runtime, memory allocation, dan restart otomatis saat server upstream mengalami gangguan.</p>
+      </div>
+      <div class="bx-chips dark"><span>99.9% Target Uptime</span><span>Auto-Healing</span></div>
+    </article>
+
+    <article class="lbg-card lbg-lime">
+      <span class="bx-tag">Fair Use Policy</span>
+      <div>
+        <h3>Bebas Eksplorasi, Tanpa Spam</h3>
+        <p>Gunakan seluruh fitur bot untuk kebutuhan komunitas &amp; bisnis Anda secara bertanggung jawab tanpa melanggar hukum.</p>
+      </div>
+      <div class="bx-chips"><span>Anti-Abuse Guard</span><span>Clean Traffic</span></div>
+    </article>
+
+    <article class="lbg-card lbg-blue">
+      <span class="bx-tag">Transparansi Paket</span>
+      <div>
+        <h3>Paket Jelas &amp; Masa Aktif Riil</h3>
+        <p>Durasi paket dihitung transparan dari detik pembayaran berhasil. Tanpa perpanjangan diam-diam atau auto-debet tersembunyi.</p>
+      </div>
+      <div class="bx-chips dark"><span>No Auto-Debit</span><span>Instant Confirmation</span></div>
+    </article>
+  </section>
+
+  <!-- 6 PASAL DOKUMEN DALAM GRID KARTU BERSIH -->
+  <section class="legal-articles-grid">
+    <article class="la-card">
+      <div class="la-head">
+        <span class="la-num">01</span>
+        <span class="la-badge">Layanan</span>
+      </div>
+      <h4>Ruang Lingkup Gateway</h4>
+      <p>qwertygate menyediakan gateway automasi perantara antara akun Anda dengan API WhatsApp Baileys, Telegram Bot API, dan Discord Developer Gateway. Pengguna wajib memiliki hak akses sah atas nomor atau akun bot yang didaftarkan.</p>
+    </article>
+
+    <article class="la-card">
+      <div class="la-head">
+        <span class="la-num">02</span>
+        <span class="la-badge">Tanggung Jawab</span>
+      </div>
+      <h4>Kewajiban Pengguna</h4>
+      <p>Anda bertanggung jawab penuh atas segala bentuk pesan, media, dan interaksi yang dikirimkan melalui bot Anda. Dilarang keras menggunakan gateway untuk:</p>
+      <ul>
+        <li>Spam massal tanpa persetujuan penerima (unsolicited messages).</li>
+        <li>Penipuan, phishing, perjudian ilegal, atau distribusi konten terlarang.</li>
+        <li>Tindakan eksploitasi yang memicu overload pada cluster server.</li>
+      </ul>
+    </article>
+
+    <article class="la-card">
+      <div class="la-head">
+        <span class="la-num">03</span>
+        <span class="la-badge">Paket &amp; Saldo</span>
+      </div>
+      <h4>Pembayaran &amp; Kebijakan Refund</h4>
+      <p>Biaya langganan dibayar di muka melalui QRIS atau kanal payment gateway resmi. Karena sifat produk digital dan resource komputasi cloud yang langsung teralokasi, pembayaran tidak dapat dikembalikan (non-refundable), kecuali terjadi downtime total sistem lebih dari 48 jam berturut-turut.</p>
+    </article>
+
+    <article class="la-card">
+      <div class="la-head">
+        <span class="la-num">04</span>
+        <span class="la-badge">Platform Pihak ke-3</span>
+      </div>
+      <h4>Batasan Eksternal</h4>
+      <p>Kebijakan pemblokiran nomor WhatsApp, revoke token Telegram, atau penangguhan Discord bot berada di luar kendali kami. Kami menyediakan panduan koneksi aman, namun kepatuhan terhadap aturan platform pihak ketiga menjadi tanggung jawab pemilik bot.</p>
+    </article>
+
+    <article class="la-card">
+      <div class="la-head">
+        <span class="la-num">05</span>
+        <span class="la-badge">Sanksi</span>
+      </div>
+      <h4>Penghentian &amp; Pemblokiran Layanan</h4>
+      <p>Kami berhak membekukan akses akun secara sepihak tanpa ganti rugi jika ditemukan bukti aktivitas ilegal atau percobaan manipulasi sistem database.</p>
+    </article>
+
+    <article class="la-card">
+      <div class="la-head">
+        <span class="la-num">06</span>
+        <span class="la-badge">Pembaruan</span>
+      </div>
+      <h4>Perubahan Aturan</h4>
+      <p>Ketentuan dapat disesuaikan mengikuti regulasi teknologi dan pembaruan API platform. Pengguna disarankan meninjau halaman ini secara berkala.</p>
+    </article>
+  </section>
 
   <!-- FOOTER BENTO -->
   <div class="ft-bento" role="contentinfo">
