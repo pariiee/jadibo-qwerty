@@ -3086,6 +3086,7 @@ body {
   text-wrap: balance;
   isolation: isolate;
 }
+.hero-giant-title .t-line { display: block; text-wrap: balance; }
 /* coretan biru di bawah kata sorotan */
 .hero-giant-title .hl { position: relative; white-space: nowrap; }
 .hero-giant-title .hl::after {
@@ -3536,26 +3537,59 @@ body.page-index .footer-links a:hover { text-decoration: underline; }
   .hero-sticker { right: 0; }
 }
 @media (max-width: 720px) {
-  .decor { display: none; }
   .top-nav { padding: 10px 0; margin-bottom: 20px; }
-  .hero-sticker {
-    position: static !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 6px !important;
-    transform: none !important;
-    margin: 8px auto 16px !important;
-    font-size: 12px !important;
-    box-shadow: 0 0 0 1px #1B1B20 !important;
+
+  /* Dekorasi tetap tampil, versi mini supaya mirip desktop */
+  .decor { display: block; }
+  .d-spk.s3, .d-spk.s4 { display: none; }
+  .d-cube {
+    width: 30px; height: 30px; border-radius: 9px;
+    left: 3%; top: 80px;
+    box-shadow: 0 3px 0 #000, 0 8px 12px rgba(0,0,0,.16);
   }
-  .title-wrap { display: flex; flex-direction: column; align-items: center; }
+  .d-heart {
+    width: 32px; right: 3%; left: auto; top: 124px;
+    filter: drop-shadow(0 3px 0 #8FB3F0);
+  }
+  .d-club {
+    width: 34px; left: 4%; top: 350px;
+    filter: drop-shadow(0 3px 0 #A6D84A);
+  }
+  .d-spk.s1 { left: auto; right: 9%; top: 72px; }
+  .d-spk.s2 { left: auto; right: 7%; top: 352px; }
+
+  /* Judul: hierarki jelas, garis biru tetap di bawah "tanpa ribet." */
+  .title-wrap {
+    display: block;
+    width: 100%;
+    padding-bottom: 30px;   /* ruang buat stiker yang menimpa */
+  }
   .hero-giant-title {
-    font-size: clamp(30px, 8vw, 44px) !important;
-    line-height: 1.15 !important;
-    margin-bottom: 8px !important;
+    font-size: clamp(32px, 9.4vw, 46px) !important;
+    line-height: 1.06 !important;
+    letter-spacing: -0.04em;
+    margin: 0 !important;
   }
-  .hero-giant-title .hl { white-space: normal; }
-  .hero-lead-desc { font-size: 14.5px !important; padding: 0 8px; }
+  .hero-giant-title .hl { white-space: nowrap; }
+  .hero-giant-title .t-sub {
+    font-size: .74em;
+    line-height: 1.12;
+    margin-top: .3em;
+  }
+
+  /* Stiker menimpa pojok kanan bawah judul, sama seperti desktop */
+  .hero-sticker {
+    position: absolute !important;
+    right: 2%;
+    bottom: 0;
+    transform: rotate(-4deg);
+    padding: 6px 11px;
+    font-size: 12.5px;
+    box-shadow: 0 0 0 1.5px #1B1B20, 0 4px 12px rgba(27,27,32,.12);
+  }
+  .hero-sticker small { font-size: 10.5px; margin-left: 12px; }
+
+  .hero-lead-desc { font-size: 14.5px !important; padding: 0 8px; margin-top: 4px; }
   .hero-cta-group { gap: 12px; }
   .btn-cta-lime { width: 100%; max-width: 280px; padding: 14px 24px; text-align: center; }
   .btn-cta-ghost { width: 100%; text-align: center; }
