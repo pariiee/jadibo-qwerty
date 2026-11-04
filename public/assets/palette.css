@@ -3488,40 +3488,177 @@ body {
   min-height: 220px !important;
 }
 
-/* ── Footer (menimpa semua style footer lama secara total) ── */
-body.page-index footer,
-body.page-index .mega-canvas footer,
-body.page-index .mega-canvas footer.bottom-footer,
-footer.bottom-footer,
-footer {
-  position: static !important;
-  inset: auto !important;
-  transform: none !important;
-  opacity: 1 !important;
-  z-index: 1 !important;
-  float: none !important;
-  clear: both !important;
-  width: auto !important;
-  height: auto !important;
-  min-height: 0 !important;
-  margin: clamp(40px, 6vw, 60px) 0 0 !important;
-  padding: 26px 0 0 !important;
-  background: transparent !important;
-  border: 0 !important;
-  border-top: 1px solid #ECECE8 !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  box-sizing: border-box !important;
-  display: flex !important;
-  justify-content: space-between !important;
-  align-items: center !important;
-  flex-wrap: wrap !important;
-  gap: 14px 20px !important;
+/* ── CTA penutup ── */
+#fitur, #testimoni { scroll-margin-top: 80px; }
+
+.cta-band {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px 32px;
+  background: #D8FF7A;
+  color: #1B1B20;
+  border-radius: 28px;
+  padding: clamp(24px, 4vw, 40px);
+  box-shadow: 0 14px 34px rgba(166, 216, 74, .25);
+  margin-bottom: clamp(12px, 2vw, 20px);
 }
-body.page-index .footer-left { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #6B6B73; }
-body.page-index .footer-links { display: flex; gap: 18px; flex-wrap: wrap; }
-body.page-index .footer-links a { color: #1B1B20; font-size: 13px; font-weight: 600; text-decoration: none; }
-body.page-index .footer-links a:hover { text-decoration: underline; }
+.cb-text { position: relative; z-index: 1; max-width: 560px; display: flex; flex-direction: column; gap: 12px; }
+.cb-text h2 {
+  margin: 0;
+  font-size: clamp(26px, 4.2vw, 42px);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+}
+.cb-text p { margin: 0; font-size: 15px; font-weight: 500; line-height: 1.5; opacity: .75; }
+.cb-btn {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: #1B1B20;
+  color: #FFFFFF;
+  border-radius: 9999px;
+  padding: 16px 30px;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-decoration: none;
+  box-shadow: 0 0 0 5px rgba(27, 27, 32, .08);
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.cb-btn:hover { transform: translateY(-2px); box-shadow: 0 0 0 7px rgba(27, 27, 32, .1); }
+.cb-btn svg { transition: transform .15s ease; }
+.cb-btn:hover svg { transform: translate(2px, -2px); }
+.cb-btn:focus-visible { outline: 3px solid #1B1B20; outline-offset: 4px; }
+.cb-spk { position: absolute; color: rgba(27, 27, 32, .3); pointer-events: none; }
+.cb-s1 { right: 38%; top: 18px; }
+.cb-s2 { right: 6%; bottom: 16px; }
+
+/* ── Footer gelap ── */
+.site-footer {
+  position: relative;
+  overflow: hidden;
+  background: #1B1B20;
+  color: #FFFFFF;
+  border-radius: 28px;
+  padding: clamp(24px, 4vw, 44px) clamp(20px, 4vw, 44px) 0;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, .18);
+}
+.sf-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1.6fr repeat(3, 1fr);
+  gap: 32px clamp(20px, 4vw, 48px);
+  padding-bottom: clamp(24px, 4vw, 36px);
+}
+.sf-logo { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: #FFFFFF; }
+.sf-logo img { border-radius: 50%; }
+.sf-name { font-size: 22px; font-weight: 800; letter-spacing: -0.04em; }
+.sf-chip { background: #D8FF7A; color: #1B1B20; }
+.sf-desc { margin: 14px 0 18px; max-width: 340px; font-size: 14px; font-weight: 500; line-height: 1.55; color: #A0A0AA; }
+.sf-plats { display: flex; flex-wrap: wrap; gap: 6px; }
+.sf-plats span {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255, 255, 255, .08);
+  color: #E2E2DE;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 11px;
+  border-radius: 9999px;
+}
+.sf-plats span::before {
+  content: "";
+  width: 6px; height: 6px;
+  margin-right: 7px;
+  border-radius: 50%;
+  background: #D8FF7A;
+}
+
+.sf-col h4 {
+  margin: 0 0 14px;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #8A8A94;
+}
+.sf-col ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.sf-col a {
+  display: inline-block;
+  color: #FFFFFF;
+  font-size: 14.5px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color .15s ease, transform .15s ease;
+}
+.sf-col a:hover { color: #D8FF7A; transform: translateX(3px); }
+.site-footer a:focus-visible { outline: 2px solid #D8FF7A; outline-offset: 3px; border-radius: 4px; }
+
+.sf-bottom {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  padding: 18px 0;
+  border-top: 1px solid rgba(255, 255, 255, .1);
+  font-size: 13px;
+  color: #8A8A94;
+}
+.sf-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(216, 255, 122, .12);
+  color: #D8FF7A;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 5px 11px;
+  border-radius: 9999px;
+}
+
+/* Wordmark raksasa, terpotong di dasar kartu */
+.sf-wordmark {
+  font-size: clamp(48px, 15vw, 200px);
+  font-weight: 800;
+  letter-spacing: -0.06em;
+  line-height: .78;
+  text-align: center;
+  white-space: nowrap;
+  color: rgba(255, 255, 255, .07);
+  margin: 6px 0 -.14em;
+  user-select: none;
+  pointer-events: none;
+}
+
+@media (max-width: 860px) {
+  .sf-grid { grid-template-columns: repeat(3, 1fr); }
+  .sf-brand { grid-column: 1 / -1; }
+}
+@media (max-width: 640px) {
+  .cta-band { flex-direction: column; align-items: flex-start; }
+  .cb-btn { width: 100%; justify-content: center; }
+  .cb-s1 { right: 14%; top: 14px; }
+  .cb-s2 { display: none; }
+}
+@media (max-width: 480px) {
+  .sf-grid { grid-template-columns: 1fr 1fr; }
+  .sf-bottom { flex-direction: column; align-items: flex-start; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cb-btn, .cb-btn svg, .sf-col a { transition: none; }
+}
 
 /* Fokus keyboard */
 .link-signin:focus-visible, .btn-signup-pill:focus-visible, .btn-cta-lime:focus-visible,
@@ -3600,7 +3737,6 @@ body.page-index .footer-links a:hover { text-decoration: underline; }
   .link-signin, .btn-signup-pill { height: 38px; padding: 0 14px; font-size: 13px; }
   .hero-pill-badge { font-size: 12.5px; gap: 10px; padding: 6px 16px 6px 6px; }
   .badge-no { padding: 6px 11px; }
-  .footer-left { font-size: 12px; }
 }
 
 

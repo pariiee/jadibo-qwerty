@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/assets/palette.css?v=13.3" />
+  <link rel="stylesheet" href="/assets/palette.css?v=14.0" />
   <script src="/js/act.js"></script>
 </head>
 <body class="page-index">
@@ -127,7 +127,7 @@
     </div>
   </section>
 
-<section class="bento-grid">
+<section class="bento-grid" id="fitur">
 
   <!-- A: persegi panjang, gelap -->
   <article class="bx bx-dark bx-wide">
@@ -206,18 +206,67 @@
     <div class="tst-grid" id="tst-grid"></div>
   </section>
 
-  <!-- FOOTER MINIMALIS -->
-  <footer class="bottom-footer">
-    <div class="footer-left">
-      <img src="/assets/parigate.svg" alt="logo" width="22" height="22" />
-      <span>&copy; 2026 qwertygate. All rights reserved. Powered by yaparbots engine.</span>
+  <!-- CTA PENUTUP -->
+  <section class="cta-band">
+    <svg class="cb-spk cb-s1" width="26" height="26" aria-hidden="true"><use href="#spk"/></svg>
+    <svg class="cb-spk cb-s2" width="18" height="18" aria-hidden="true"><use href="#spk"/></svg>
+    <div class="cb-text">
+      <span class="bx-tag">Tinggal Pakai</span>
+      <h2>Siap bikin bot kamu aktif 24 jam?</h2>
+      <p>Daftar sekarang, pilih paket, dan biarkan bot bekerja untuk kamu.</p>
     </div>
-    <div class="footer-links">
-      <a href="/login">Masuk</a>
-      <a href="/register">Daftar</a>
-      <a href="/privacy">Privasi</a>
-      <a href="/terms">Ketentuan</a>
+    <a class="cb-btn" href="/register">
+      Mulai Sekarang Gratis
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+    </a>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="sf-grid">
+      <div class="sf-brand">
+        <a href="/" class="sf-logo">
+          <img src="/assets/parigate.svg" alt="qwertygate" width="32" height="32" />
+          <span class="sf-name">qwertygate</span>
+          <span class="brand-sub-chip sf-chip">PRO</span>
+        </a>
+        <p class="sf-desc">Gateway otomatisasi bot multi-platform. Satu panel untuk WhatsApp, Telegram, dan Discord.</p>
+        <div class="sf-plats"><span>WhatsApp</span><span>Telegram</span><span>Discord</span></div>
+      </div>
+
+      <nav class="sf-col" aria-label="Navigasi">
+        <h4>Jelajahi</h4>
+        <ul>
+          <li><a href="#fitur">Fitur</a></li>
+          <li><a href="#harga">Harga</a></li>
+          <li><a href="#testimoni">Ulasan</a></li>
+        </ul>
+      </nav>
+
+      <nav class="sf-col" aria-label="Akun">
+        <h4>Akun</h4>
+        <ul>
+          <li><a href="/login">Masuk</a></li>
+          <li><a href="/register">Daftar</a></li>
+          <li><a href="/dashboard">Dashboard</a></li>
+        </ul>
+      </nav>
+
+      <nav class="sf-col" aria-label="Legal">
+        <h4>Legal</h4>
+        <ul>
+          <li><a href="/privacy">Privasi</a></li>
+          <li><a href="/terms">Ketentuan</a></li>
+        </ul>
+      </nav>
     </div>
+
+    <div class="sf-bottom">
+      <span>&copy; 2026 qwertygate. Powered by yaparbots engine.</span>
+      <span class="sf-live"><i class="pulse-dot"></i> Online 24/7</span>
+    </div>
+
+    <div class="sf-wordmark" aria-hidden="true">qwertygate</div>
   </footer>
 
 </div>
@@ -269,6 +318,6 @@
 
 <script src="/js/vendor/gsap.min.js"></script>
 <script src="/js/vendor/ScrollTrigger.min.js"></script>
-<script src="/js/index.js?v=13.3" defer></script>
+<script src="/js/index.js?v=14.0" defer></script>
 </body>
 </html>
