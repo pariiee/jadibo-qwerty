@@ -1,22 +1,52 @@
-<header class="topbar">
-  <div class="top">
-    <button class="round" id="burger" data-act="toggleSidebar" aria-label="Toggle sidebar" aria-expanded="true">
-      <svg class="i" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="4"/><path d="M9 3v18"/></svg>
-    </button>
-    
-    <h1 id="greeting" class="topbar-title" style="display:none">Dashboard</h1>
+<header class="topbar cx-navbar">
+  <div class="cx-nav-inner">
+    <!-- Sisi Kiri: Brand Logo -->
+    <a href="/dashboard" class="cx-brand">
+      <img src="/assets/parigate.svg" alt="qwertygate" width="34" height="34" />
+      <span class="cx-brand-title">qwertygate</span>
+      <span class="brand-sub-chip">PRO</span>
+    </a>
 
-    <div class="top-actions" style="display:flex;gap:12px;align-items:center;position:relative">
-      <button class="theme-switch" id="theme" data-act="toggleTheme" aria-label="Ganti tema" title="Ganti tema">
-        <span class="ts-icon ts-sun">
-          <svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
-        </span>
-        <span class="ts-icon ts-moon">
-          <svg class="i" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
-        </span>
-      </button>
+    <!-- Tengah: Floating Nav Pill Container -->
+    <nav class="cx-nav-pill" id="nav">
+      <a href="/dashboard" id="nav-dashboard" class="cx-nav-item"><span>Dashboard</span></a>
+      <a href="/command" id="nav-command" class="cx-nav-item"><span>Command</span></a>
+      <a href="/log" id="nav-log" class="cx-nav-item"><span>Log</span></a>
+      <a href="/panduan" id="nav-panduan" class="cx-nav-item"><span>Panduan</span></a>
+      <a href="/billing" id="nav-billing" class="cx-nav-item"><span>Riwayat</span></a>
+      <a href="/saldo" id="nav-saldo" class="cx-nav-item"><span>Saldo</span></a>
+      <a href="/pricing" id="nav-pricing" class="cx-nav-item"><span>Pricing</span></a>
+      
+      <!-- Manage Dropdown untuk Admin -->
+      <div class="cx-nav-dropdown" id="nav-admin" style="display:none">
+        <button type="button" class="cx-nav-item cx-dropdown-btn" id="btn-nav-manage">
+          <span>Manage</span>
+          <svg class="chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="cx-dropdown-menu" id="nav-manage-sub">
+          <a href="/kountole/users" class="cx-drop-item">Manage User</a>
+          <a href="/kountole/bots" class="cx-drop-item">Manage Bot</a>
+          <a href="/kountole/orders" class="cx-drop-item">Pesanan</a>
+          <a href="/kountole/saldo" class="cx-drop-item">Saldo User</a>
+          <a href="/kountole/harga" class="cx-drop-item">Harga &amp; Benefit</a>
+          <a href="/kountole/sistem" class="cx-drop-item">Sistem &amp; Server</a>
+          <a href="/kountole/logs" class="cx-drop-item">Log Sistem</a>
+        </div>
+      </div>
+    </nav>
 
-      <button type="button" class="top-avatar" id="top-avatar-btn" data-act="toggleUserMenu" aria-label="Menu Akun" aria-haspopup="true" aria-expanded="false">
+    <!-- Sisi Kanan: Action Buttons & Avatar -->
+    <div class="cx-nav-actions">
+      <!-- Search & Log shortcuts -->
+      <a href="/command" class="cx-icon-btn" aria-label="Cari Command" title="Cari Command">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      </a>
+      <a href="/log" class="cx-icon-btn" aria-label="Log Bot" title="Log Aktivitas">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      </a>
+
+      <!-- Profile Avatar Button -->
+      <button type="button" class="top-avatar cx-avatar-btn" id="top-avatar-btn" data-act="toggleUserMenu" aria-label="Menu Akun" aria-haspopup="true" aria-expanded="false">
         <div class="av" id="top-avatar-txt">?</div>
       </button>
 

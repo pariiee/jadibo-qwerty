@@ -793,16 +793,126 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   padding:1px 5px!important;border-radius:5px!important;color:#c7d2fe!important;
 }
 
-/* Matikan switch tema: seluruh UI sekarang satu palet Bento permanen */
+/* Matikan switch tema & sembunyikan sidebar permanen (beralih total ke Top Navbar) */
 .theme-switch { display: none !important; }
+#sidebar, aside#sidebar { display: none !important; }
+.app { display: block !important; padding: 0 !important; }
+main {
+  margin-left: 0 !important;
+  width: 100% !important;
+  max-width: 1380px !important;
+  margin: 0 auto !important;
+  padding: 16px clamp(16px, 2.5vw, 32px) 40px !important;
+}
 
-/* ══ Dashboard — Bento "Command Center" ══ */
+/* ══ Top Floating Navbar (Referensi Cryptech) ══ */
+.cx-navbar {
+  position: sticky !important;
+  top: 14px !important;
+  z-index: 100 !important;
+  background: transparent !important;
+  padding: 0 !important;
+  margin-bottom: clamp(22px, 3vw, 32px) !important;
+  border: none !important;
+}
+.cx-nav-inner {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+  background: rgba(27, 27, 32, 0.88) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 9999px !important;
+  padding: 7px 12px 7px 18px !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2) !important;
+}
+.cx-brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  text-decoration: none !important;
+  color: #FFFFFF !important;
+  flex-shrink: 0 !important;
+}
+.cx-brand-title {
+  font-size: 17px !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.03em !important;
+  color: #FFFFFF !important;
+}
+.cx-nav-pill {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  background: rgba(0, 0, 0, 0.3) !important;
+  padding: 4px 6px !important;
+  border-radius: 9999px !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  overflow-x: auto !important;
+}
+.cx-nav-item {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 7px 16px !important;
+  border-radius: 9999px !important;
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+  color: #A0A0AA !important;
+  text-decoration: none !important;
+  transition: all .15s ease !important;
+  white-space: nowrap !important;
+}
+.cx-nav-item:hover {
+  color: #FFFFFF !important;
+}
+.cx-nav-item.on, .cx-nav-item.active {
+  background: #FFFFFF !important;
+  color: #1B1B20 !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12) !important;
+}
+.cx-nav-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  flex-shrink: 0 !important;
+}
+.cx-icon-btn {
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  display: grid !important;
+  place-items: center !important;
+  color: #FFFFFF !important;
+  text-decoration: none !important;
+  transition: transform .15s ease, background .15s ease !important;
+}
+.cx-icon-btn:hover {
+  transform: scale(1.05) !important;
+  background: rgba(255, 255, 255, 0.15) !important;
+}
+.cx-avatar-btn {
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 50% !important;
+  border: 2px solid #D8FF7A !important;
+  background: #1B1B20 !important;
+  color: #D8FF7A !important;
+  font-weight: 800 !important;
+  display: grid !important;
+  place-items: center !important;
+  cursor: pointer !important;
+}
 
-/* Grid utama */
+/* ══ Dashboard Bento "Command Center" — Tata Letak Referensi ══ */
+
 body.page-dashboard .dx-bento {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
-  grid-auto-rows: minmax(150px, auto);
   gap: clamp(12px, 1.6vw, 18px);
   margin-bottom: clamp(28px, 4vw, 40px);
 }
@@ -810,7 +920,6 @@ body.page-dashboard .dx-tile {
   position: relative;
   overflow: hidden;
   min-width: 0;
-  grid-column: span 3;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -822,15 +931,15 @@ body.page-dashboard .dx-tile {
 body.page-dashboard .dx-tile:hover { transform: translateY(-4px); }
 
 body.page-dashboard .dx-top { display: flex; align-items: center; gap: 10px; }
-body.page-dashboard .dx-ic { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; }
-body.page-dashboard .dx-ic .i { width: 19px; height: 19px; }
+body.page-dashboard .dx-ic { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; }
+body.page-dashboard .dx-ic .i { width: 18px; height: 18px; }
 body.page-dashboard .dx-lbl { font-size: 11.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; opacity: .72; }
 html body.page-dashboard .dx-tile .dx-val,
 html body.page-dashboard .dx-tile #st-role,
 html body.page-dashboard .dx-tile #st-exp,
 html body.page-dashboard .dx-tile #st-online,
 html body.page-dashboard .dx-tile #st-slot {
-  font-size: clamp(30px, 3.2vw, 40px) !important;
+  font-size: clamp(28px, 3vw, 38px) !important;
   font-weight: 800 !important;
   letter-spacing: -0.04em !important;
   line-height: 1.05 !important;
@@ -838,79 +947,83 @@ html body.page-dashboard .dx-tile #st-slot {
 }
 body.page-dashboard .dx-sub { margin-top: 6px; font-size: 12.5px; font-weight: 600; line-height: 1.35; opacity: .72; }
 
-/* Varian warna */
-body.page-dashboard .dx-welcome {
-  grid-column: span 6;
-  grid-row: span 2;
-  justify-content: flex-start;
-  gap: 16px;
-  background: #D8FF7A;
-  color: #1B1B20;
-  box-shadow: 0 14px 34px rgba(166, 216, 74, .22);
+/* Tata Letak Desktop: 4 Mini Cards di Kiri (Grid 2x2), Card Lebar di Kanan */
+@media (min-width: 960px) {
+  body.page-dashboard .dx-online  { grid-column: 1 / 4 !important; grid-row: 1 !important; }
+  body.page-dashboard .dx-role    { grid-column: 4 / 7 !important; grid-row: 1 !important; }
+  body.page-dashboard .dx-exp     { grid-column: 1 / 4 !important; grid-row: 2 !important; }
+  body.page-dashboard .dx-slot    { grid-column: 4 / 7 !important; grid-row: 2 !important; }
+  body.page-dashboard .dx-welcome { grid-column: 7 / 13 !important; grid-row: 1 / 3 !important; }
 }
-body.page-dashboard .dx-online {
-  background: #5865F2 radial-gradient(circle at 100% 0, rgba(255, 255, 255, .24), transparent 55%);
-  color: #FFFFFF;
-  box-shadow: 0 14px 34px rgba(88, 101, 242, .28);
-}
-body.page-dashboard .dx-online .dx-ic { background: rgba(255, 255, 255, .2); }
-body.page-dashboard .dx-role {
-  background: var(--card, #24262c);
-  color: var(--ink, #FFFFFF);
-  box-shadow: inset 0 0 0 1px var(--edge, rgba(255, 255, 255, .1));
-}
-body.page-dashboard .dx-role .dx-ic { background: rgba(127, 127, 127, .16); }
-body.page-dashboard .dx-exp { background: #BFD7FF; color: #1B1B20; box-shadow: 0 14px 34px rgba(143, 179, 240, .22); }
-body.page-dashboard .dx-exp .dx-ic { background: rgba(27, 27, 32, .1); }
-body.page-dashboard .dx-slot { background: #1B1B20; color: #FFFFFF; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1); }
-body.page-dashboard .dx-slot .dx-ic { background: rgba(255, 255, 255, .1); }
-html body.page-dashboard .dx-slot .dx-val,
-html body.page-dashboard .dx-slot #st-slot { color: #D8FF7A !important; }
 
-/* Welcome */
-body.page-dashboard .dx-chip {
+/* Varian Warna Kartu Bento */
+/* Card 1: Bot Online — Highlight Lime seperti BTC di referensi */
+body.page-dashboard .dx-online {
+  background: #D8FF7A !important;
+  color: #1B1B20 !important;
+  box-shadow: 0 14px 34px rgba(166, 216, 74, .24) !important;
+}
+body.page-dashboard .dx-online .dx-ic { background: rgba(27, 27, 32, .12) !important; color: #1B1B20 !important; }
+
+/* Card 2: Status Slot — Card Bersih Putih / Kontras */
+body.page-dashboard .dx-role {
+  background: #FFFFFF !important;
+  color: #1B1B20 !important;
+  box-shadow: 0 0 0 1px #E6E6E2, 0 10px 28px rgba(0,0,0,0.04) !important;
+}
+body.page-dashboard .dx-role .dx-ic { background: #F2F2EE !important; color: #1B1B20 !important; }
+
+/* Card 3: Kedaluwarsa — Card Bersih Putih */
+body.page-dashboard .dx-exp {
+  background: #FFFFFF !important;
+  color: #1B1B20 !important;
+  box-shadow: 0 0 0 1px #E6E6E2, 0 10px 28px rgba(0,0,0,0.04) !important;
+}
+body.page-dashboard .dx-exp .dx-ic { background: #F2F2EE !important; color: #1B1B20 !important; }
+
+/* Card 4: Slot Dibeli — Sky Blue Pastel seperti ETH di referensi */
+body.page-dashboard .dx-slot {
+  background: #BFD7FF !important;
+  color: #1B1B20 !important;
+  box-shadow: 0 14px 34px rgba(143, 179, 240, .25) !important;
+}
+body.page-dashboard .dx-slot .dx-ic { background: rgba(27, 27, 32, .12) !important; color: #1B1B20 !important; }
+
+/* Card Kanan: Welcome & Command Center (Dark Brand High Impact) */
+body.page-dashboard .dx-welcome {
+  justify-content: flex-start !important;
+  gap: 16px !important;
+  background: #1B1B20 !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, .25) !important;
+  padding: clamp(24px, 3vw, 36px) !important;
+}
+body.page-dashboard .dx-welcome .dx-chip {
   align-self: flex-start;
   display: inline-flex;
-  padding: 4px 10px;
-  border: 1px solid currentColor;
-  border-radius: 8px;
+  padding: 4px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 9999px;
   font-size: 11.5px;
-  font-weight: 700;
+  font-weight: 800;
+  color: #D8FF7A;
+  background: rgba(216, 255, 122, 0.08);
 }
 html body.page-dashboard .dx-welcome h1 {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  font-size: inherit;
+  gap: 6px;
   line-height: 1;
-  color: inherit;
-  text-transform: none;
 }
-body.page-dashboard .dx-hello { font-size: 14px; font-weight: 700; opacity: .7; text-transform: none; letter-spacing: .01em; }
+body.page-dashboard .dx-hello { font-size: 13.5px; font-weight: 700; opacity: .7; letter-spacing: .02em; text-transform: uppercase; color: #A0A0AA; }
 body.page-dashboard .dx-name {
-  position: relative;
-  isolation: isolate;
-  align-self: flex-start;
-  display: inline-block;
-  min-height: 1.05em;
-  max-width: 100%;
-  overflow-wrap: anywhere;
-  font-size: clamp(36px, 5.2vw, 60px);
+  font-size: clamp(32px, 4vw, 48px);
   font-weight: 800;
-  letter-spacing: -0.05em;
-  line-height: 1.02;
-  color: #1B1B20;
+  letter-spacing: -0.04em;
+  color: #FFFFFF;
 }
-body.page-dashboard .dx-name::after {
-  content: "";
-  position: absolute;
-  left: -2%; right: -2%; bottom: -.04em;
-  height: .24em;
-  z-index: -1;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 12' preserveAspectRatio='none'%3E%3Cpath d='M2 8C30 1 50 12 80 6S140 2 198 7' fill='none' stroke='%23BFD7FF' stroke-width='7' stroke-linecap='round'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
-}
-html body.page-dashboard .dx-lead { margin: 0; max-width: 380px; font-size: 15px; font-weight: 500; line-height: 1.5; opacity: .75; }
+html body.page-dashboard .dx-lead { margin: 0; max-width: 440px; font-size: 14.5px; font-weight: 500; line-height: 1.5; color: #A0A0AA; }
 body.page-dashboard .dx-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: auto; position: relative; z-index: 2; }
 html body.page-dashboard .dx-btn {
   display: inline-flex;
@@ -918,40 +1031,25 @@ html body.page-dashboard .dx-btn {
   gap: 12px;
   border: 0;
   border-radius: 9999px;
-  padding: 12px 12px 12px 24px;
-  background: #1B1B20;
-  color: #D8FF7A;
-  font: 800 14.5px/1 inherit;
-  letter-spacing: -0.01em;
+  padding: 10px 12px 10px 22px;
+  background: #D8FF7A;
+  color: #1B1B20;
+  font: 800 14px/1 inherit;
   cursor: pointer;
-  box-shadow: 0 0 0 5px rgba(27, 27, 32, .08);
+  box-shadow: 0 4px 18px rgba(216, 255, 122, 0.25);
   transition: transform .15s ease;
 }
 html body.page-dashboard .dx-btn:hover { transform: translateY(-2px); }
-body.page-dashboard .dx-btn-ic { width: 28px; height: 28px; border-radius: 50%; background: #D8FF7A; color: #1B1B20; display: grid; place-items: center; }
-body.page-dashboard .dx-btn-ic .i { width: 15px; height: 15px; }
-body.page-dashboard .dx-btn:focus-visible { outline: 3px solid #1B1B20; outline-offset: 3px; }
+body.page-dashboard .dx-btn-ic { width: 26px; height: 26px; border-radius: 50%; background: #1B1B20; color: #D8FF7A; display: grid; place-items: center; }
+body.page-dashboard .dx-btn-ic .i { width: 14px; height: 14px; }
 
-/* Dekorasi Welcome (gema orbit landing) */
-body.page-dashboard .dx-welcome::before,
-body.page-dashboard .dx-welcome::after { content: ""; position: absolute; border-radius: 50%; border: 1.5px dashed rgba(27, 27, 32, .22); pointer-events: none; }
-body.page-dashboard .dx-welcome::before { width: 300px; height: 300px; right: -90px; bottom: -110px; }
-body.page-dashboard .dx-welcome::after  { width: 170px; height: 170px; right: -25px; bottom: -45px; }
-body.page-dashboard .dx-orb { position: absolute; width: 34px; height: 34px; border-radius: 50%; pointer-events: none; box-shadow: 0 0 0 4px #D8FF7A, 0 6px 14px rgba(27, 27, 32, .16); }
-body.page-dashboard .dx-orb.o1 { right: 184px; bottom: 74px;  background: #5865F2; }
-body.page-dashboard .dx-orb.o2 { right: 118px; bottom: 153px; background: #BFD7FF; }
-body.page-dashboard .dx-orb.o3 { right: 28px;  bottom: 107px; background: #1B1B20; }
-body.page-dashboard .dx-deco { position: absolute; color: rgba(27, 27, 32, .38); pointer-events: none; }
-body.page-dashboard .dx-deco.d1 { right: 26px; top: 24px; width: 24px; height: 24px; }
-body.page-dashboard .dx-deco.d2 { right: 74px; top: 62px; width: 15px; height: 15px; }
-
-/* Judul section bot */
+/* Judul Section Bot Kamu */
 body.page-dashboard .dx-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin: 0 0 16px; }
-html body.page-dashboard .dx-head h2 { margin: 0; font-size: clamp(22px, 2.6vw, 28px); font-weight: 800; letter-spacing: -0.04em; color: var(--ink, #FFFFFF); }
+html body.page-dashboard .dx-head h2 { margin: 0; font-size: clamp(22px, 2.6vw, 28px); font-weight: 800; letter-spacing: -0.04em; color: var(--ink, #1B1B20); }
 html body.page-dashboard .dx-head p { margin: 4px 0 0; font-size: 13.5px; font-weight: 500; color: var(--mute, #A0A0AA); }
 html body.page-dashboard #slot-text { display: inline-flex; align-items: center; padding: 6px 14px; border-radius: 9999px; background: #D8FF7A; color: #1B1B20; font-size: 13px; font-weight: 800; }
 
-/* Grid & kartu bot */
+/* Grid & Kartu Bot */
 html body.page-dashboard #bot-grid {
   display: grid !important;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)) !important;
@@ -967,10 +1065,10 @@ html body.page-dashboard #bot-grid .card.bc {
   gap: 14px !important;
   min-height: 210px !important;
   padding: 22px !important;
-  background: var(--card, #24262c) !important;
+  background: #FFFFFF !important;
   border: 0 !important;
   border-radius: 28px !important;
-  box-shadow: inset 0 0 0 1px var(--edge, rgba(255, 255, 255, .1)) !important;
+  box-shadow: 0 0 0 1px #E6E6E2, 0 10px 28px rgba(0,0,0,0.04) !important;
   cursor: pointer !important;
   transition: transform .25s cubic-bezier(.16, 1, .3, 1), box-shadow .25s ease !important;
 }
@@ -979,16 +1077,7 @@ html body.page-dashboard #bot-grid .card.bc:has(.eb-tg) { --glow: 34, 158, 217; 
 html body.page-dashboard #bot-grid .card.bc:has(.eb-dc) { --glow: 88, 101, 242; }
 html body.page-dashboard #bot-grid .card.bc:hover {
   transform: translateY(-4px) !important;
-  box-shadow: inset 0 0 0 1px rgba(var(--glow), .55) !important;
-}
-html body.page-dashboard #bot-grid .card.bc::before {
-  content: "";
-  position: absolute;
-  right: -50px; top: -50px;
-  width: 190px; height: 190px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(var(--glow), .26), transparent 70%);
-  pointer-events: none;
+  box-shadow: 0 0 0 1.5px rgba(var(--glow), .6), 0 14px 34px rgba(0,0,0,0.08) !important;
 }
 html body.page-dashboard #bot-grid .card.bc::after {
   counter-increment: bot;
@@ -999,44 +1088,43 @@ html body.page-dashboard #bot-grid .card.bc::after {
   font-weight: 800;
   letter-spacing: -0.05em;
   line-height: 1;
-  color: var(--ink, #FFFFFF);
-  opacity: .06;
+  color: #1B1B20;
+  opacity: .05;
   pointer-events: none;
 }
 html body.page-dashboard #bot-grid .card.bc > * { position: relative; z-index: 1; }
 html body.page-dashboard #bot-grid .card.bc .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 html body.page-dashboard #bot-grid .card.bc h3 {
   margin: 6px 0 0 !important;
-  font-size: 22px;
+  font-size: 21px;
   font-weight: 800;
   letter-spacing: -0.035em;
   line-height: 1.1;
-  color: var(--ink, #FFFFFF);
+  color: #1B1B20;
 }
-html body.page-dashboard #bot-grid .card.bc p { margin: 0; font-size: 13.5px; color: var(--mute, #A0A0AA); }
+html body.page-dashboard #bot-grid .card.bc p { margin: 0; font-size: 13.5px; color: #5B5B63; }
 html body.page-dashboard #bot-grid .card.bc .btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; }
 html body.page-dashboard #bot-grid .card.bc .btns button {
   border: 0;
   border-radius: 9999px;
-  padding: 9px 16px;
-  background: transparent;
-  color: var(--ink, #FFFFFF);
+  padding: 8px 16px;
+  background: #F4F4F0;
+  color: #1B1B20;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: inset 0 0 0 1px var(--edge, rgba(255, 255, 255, .14));
   transition: transform .15s ease;
 }
 html body.page-dashboard #bot-grid .card.bc .btns button:hover { transform: translateY(-1px); }
-html body.page-dashboard #bot-grid .card.bc .btns button[data-cfg] { background: #D8FF7A; color: #1B1B20; box-shadow: none; }
+html body.page-dashboard #bot-grid .card.bc .btns button[data-cfg] { background: #1B1B20; color: #D8FF7A; }
 
-/* Label platform & status */
+/* Label Platform & Status */
 body.page-dashboard .eb-label { font-size: 11px !important; font-weight: 800 !important; text-transform: uppercase !important; padding: 4px 10px !important; border-radius: 9999px !important; }
-body.page-dashboard .eb-label.eb-wa { background: rgba(37, 211, 102, .15) !important; color: #25D366 !important; border: 1px solid rgba(37, 211, 102, .3) !important; }
-body.page-dashboard .eb-label.eb-tg { background: rgba(34, 158, 217, .15) !important; color: #229ED9 !important; border: 1px solid rgba(34, 158, 217, .3) !important; }
-body.page-dashboard .eb-label.eb-dc { background: rgba(88, 101, 242, .15) !important; color: #7C86FF !important; border: 1px solid rgba(88, 101, 242, .35) !important; }
-body.page-dashboard .on-dot { font-size: 11px !important; font-weight: 700 !important; padding: 3px 10px !important; border-radius: 9999px !important; background: rgba(34, 197, 94, .12) !important; color: var(--green, #22C55E) !important; }
-body.page-dashboard .on-dot.off { background: rgba(127, 127, 127, .14) !important; color: var(--mute, #A0A0AA) !important; }
+body.page-dashboard .eb-label.eb-wa { background: rgba(37, 211, 102, .15) !important; color: #16a34a !important; border: 1px solid rgba(37, 211, 102, .3) !important; }
+body.page-dashboard .eb-label.eb-tg { background: rgba(34, 158, 217, .15) !important; color: #0284c7 !important; border: 1px solid rgba(34, 158, 217, .3) !important; }
+body.page-dashboard .eb-label.eb-dc { background: rgba(88, 101, 242, .15) !important; color: #5865F2 !important; border: 1px solid rgba(88, 101, 242, .35) !important; }
+body.page-dashboard .on-dot { font-size: 11px !important; font-weight: 700 !important; padding: 3px 10px !important; border-radius: 9999px !important; background: rgba(34, 197, 94, .12) !important; color: #16a34a !important; }
+body.page-dashboard .on-dot.off { background: #F2F2EE !important; color: #7B7B83 !important; }
 
 /* Tile "+ Tambah Bot" */
 html body.page-dashboard #bot-grid .card.add-card {
@@ -1046,10 +1134,10 @@ html body.page-dashboard #bot-grid .card.add-card {
   justify-content: center !important;
   min-height: 210px !important;
   background: transparent !important;
-  border: 2px dashed var(--edge, rgba(255, 255, 255, .18)) !important;
+  border: 2px dashed #D0D0CA !important;
   border-radius: 28px !important;
   box-shadow: none !important;
-  color: var(--mute, #A0A0AA) !important;
+  color: #5B5B63 !important;
   font-size: 15px;
   font-weight: 800;
   cursor: pointer !important;
@@ -1057,25 +1145,18 @@ html body.page-dashboard #bot-grid .card.add-card {
 }
 html body.page-dashboard #bot-grid .card.add-card:hover {
   transform: translateY(-4px) !important;
-  border-color: #D8FF7A !important;
-  background: rgba(216, 255, 122, .07) !important;
-  color: var(--ink, #FFFFFF) !important;
+  border-color: #1B1B20 !important;
+  background: #F4F4F0 !important;
+  color: #1B1B20 !important;
 }
 
-/* Responsif */
-@media (max-width: 1100px) {
-  body.page-dashboard .dx-welcome { grid-column: span 12; grid-row: auto; min-height: 260px; }
-  body.page-dashboard .dx-tile:not(.dx-welcome) { grid-column: span 6; }
+/* Responsif Mobile & Tablet */
+@media (max-width: 959px) {
+  body.page-dashboard .dx-welcome { grid-column: span 12 !important; min-height: 220px !important; }
+  body.page-dashboard .dx-tile:not(.dx-welcome) { grid-column: span 6 !important; }
 }
-@media (max-width: 700px) {
-  body.page-dashboard .dx-orb { display: none; }
-  body.page-dashboard .dx-welcome::before { width: 220px; height: 220px; right: -90px; bottom: -100px; }
-  body.page-dashboard .dx-welcome::after { display: none; }
+@media (max-width: 600px) {
+  .cx-nav-pill { display: none !important; }
+  body.page-dashboard .dx-tile:not(.dx-welcome) { grid-column: span 12 !important; }
 }
-@media (max-width: 420px) {
-  body.page-dashboard .dx-tile:not(.dx-welcome) { grid-column: span 12; }
-}
-@media (prefers-reduced-motion: reduce) {
-  body.page-dashboard .dx-tile, html body.page-dashboard .dx-btn,
-  html body.page-dashboard #bot-grid .card { transition: none !important; }
-}
+
