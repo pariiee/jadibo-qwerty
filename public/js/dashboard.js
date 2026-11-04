@@ -552,4 +552,8 @@ window.openAddBot = openAddBot; window.closeAdd = closeAdd;
 window.showStep = showStep; window.backStep = backStep; window.pickPlatform = pickPlatform;
 window.logout = logout;
 
+// Tombol "Tambah bot" di tile Welcome
+const dxAdd = document.getElementById('dx-add');
+if (dxAdd) dxAdd.addEventListener('click', openAddBot);
+
 })();

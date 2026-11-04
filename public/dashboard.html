@@ -18,18 +18,74 @@
       <div id="pengumuman" style="display:none"><strong id="peng-judul"></strong><p id="peng-isi"></p></div>
       <h1 id="greeting" style="display:none"></h1>
       <div class="empty" id="empty-state" style="display:none"></div>
-      <section class="hero">
-        <h1 id="hero-greeting"><span class="hero-sub">Selamat datang kembali,</span><span class="hero-user" id="hero-name"></span></h1>
-      </section>
 
-      <section class="stats" aria-label="Ringkasan akun">
-        <div class="stat"><div class="sic"><svg class="i" viewBox="0 0 24 24"><path d="M12 3l8 4-8 4-8-4 8-4zM4 12l8 4 8-4M4 17l8 4 8-4"/></svg></div><span class="lbl">Status slot</span><div class="val" id="st-role">—</div><div class="sub" id="st-role-sub">Kapasitas slot bot</div></div>
-        <div class="stat"><div class="sic"><svg class="i" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4"/></svg></div><span class="lbl">Kedaluwarsa</span><div class="val" id="st-exp">Tidak ada</div><div class="sub" id="st-exp-sub">Masa aktif langganan</div></div>
-        <div class="stat"><div class="sic"><svg class="i" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg></div><span class="lbl">Bot online</span><div class="val" id="st-online">0</div><div class="sub" id="st-online-sub">dari 0 bot kamu</div></div>
-        <div class="stat"><div class="sic"><svg class="i" viewBox="0 0 24 24"><path d="M3 7h18v10H3zM3 11h18"/></svg></div><span class="lbl">Slot dibeli</span><div class="val" id="st-slot">0</div><div class="sub" id="st-slot-sub">Kapasitas slot akun</div></div>
-      </section>
+      <div class="dx-bento" aria-label="Ringkasan akun">
 
-      <div class="sec-head"><h2>Slot bot kamu</h2><small id="slot-text">0 / 0</small></div>
+        <!-- Welcome -->
+        <article class="dx-tile dx-welcome">
+          <svg class="dx-deco d1" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0C13 7 17 11 24 12 17 13 13 17 12 24 11 17 7 13 0 12 7 11 11 7 12 0Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+          <svg class="dx-deco d2" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0C13 7 17 11 24 12 17 13 13 17 12 24 11 17 7 13 0 12 7 11 11 7 12 0Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+          <i class="dx-orb o1" aria-hidden="true"></i><i class="dx-orb o2" aria-hidden="true"></i><i class="dx-orb o3" aria-hidden="true"></i>
+
+          <span class="dx-chip">Dashboard</span>
+          <h1 id="hero-greeting">
+            <span class="dx-hello">Selamat datang kembali,</span>
+            <span class="dx-name" id="hero-name"></span>
+          </h1>
+          <p class="dx-lead">Pantau dan atur semua bot WhatsApp, Telegram, dan Discord kamu dari satu tempat.</p>
+          <div class="dx-actions">
+            <button type="button" class="dx-btn" id="dx-add">
+              Tambah bot
+              <span class="dx-btn-ic"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>
+            </button>
+          </div>
+        </article>
+
+        <!-- Bot online (ungu) -->
+        <article class="dx-tile dx-online">
+          <div class="dx-top"><span class="dx-ic"><svg class="i" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg></span><span class="dx-lbl">Bot online</span></div>
+          <div>
+            <div class="dx-val" id="st-online">0</div>
+            <div class="dx-sub" id="st-online-sub">dari 0 bot kamu</div>
+          </div>
+        </article>
+
+        <!-- Status slot (kartu) -->
+        <article class="dx-tile dx-role">
+          <div class="dx-top"><span class="dx-ic"><svg class="i" viewBox="0 0 24 24"><path d="M12 3l8 4-8 4-8-4 8-4zM4 12l8 4 8-4M4 17l8 4 8-4"/></svg></span><span class="dx-lbl">Status slot</span></div>
+          <div>
+            <div class="dx-val" id="st-role">—</div>
+            <div class="dx-sub" id="st-role-sub">Kapasitas slot bot</div>
+          </div>
+        </article>
+
+        <!-- Kedaluwarsa (biru) -->
+        <article class="dx-tile dx-exp">
+          <div class="dx-top"><span class="dx-ic"><svg class="i" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4"/></svg></span><span class="dx-lbl">Kedaluwarsa</span></div>
+          <div>
+            <div class="dx-val" id="st-exp">Tidak ada</div>
+            <div class="dx-sub" id="st-exp-sub">Masa aktif langganan</div>
+          </div>
+        </article>
+
+        <!-- Slot dibeli (hitam) -->
+        <article class="dx-tile dx-slot">
+          <div class="dx-top"><span class="dx-ic"><svg class="i" viewBox="0 0 24 24"><path d="M3 7h18v10H3zM3 11h18"/></svg></span><span class="dx-lbl">Slot dibeli</span></div>
+          <div>
+            <div class="dx-val" id="st-slot">0</div>
+            <div class="dx-sub" id="st-slot-sub">Kapasitas slot akun</div>
+          </div>
+        </article>
+
+      </div>
+
+      <div class="dx-head">
+        <div>
+          <h2>Slot bot kamu</h2>
+          <p>Klik Config untuk mengatur bot.</p>
+        </div>
+        <small id="slot-text">0 / 0</small>
+      </div>
       <div class="grid" id="bot-grid"></div>
     </div>
   </main>
