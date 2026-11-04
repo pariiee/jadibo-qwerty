@@ -792,3 +792,210 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   background:rgba(255,255,255,0.07)!important;border:1px solid rgba(255,255,255,0.08)!important;
   padding:1px 5px!important;border-radius:5px!important;color:#c7d2fe!important;
 }
+
+/* ── Bento Console Dashboard v2.0 ── */
+body.page-dashboard .hero {
+  margin-bottom: 22px !important;
+}
+body.page-dashboard #hero-greeting {
+  font-size: clamp(22px, 2.5vw, 28px) !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.025em !important;
+  color: var(--ink) !important;
+  margin: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+}
+body.page-dashboard .hero-sub {
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  color: var(--mute) !important;
+  letter-spacing: 0 !important;
+  text-transform: uppercase !important;
+}
+body.page-dashboard .hero-user {
+  color: var(--ink) !important;
+  font-weight: 800 !important;
+}
+
+/* Bento 4-Stat Grid */
+body.page-dashboard .stats {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 16px !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  margin-bottom: 28px !important;
+}
+body.page-dashboard .stats .stat {
+  background: var(--card) !important;
+  border: 1px solid var(--edge) !important;
+  border-radius: 22px !important;
+  padding: 20px 22px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  min-height: 140px !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.04) !important;
+  transition: transform .2s ease, border-color .2s ease !important;
+}
+body.page-dashboard .stats .stat:hover {
+  transform: translateY(-3px) !important;
+  border-color: rgba(255,255,255,0.2) !important;
+}
+body.page-dashboard .stat .sic {
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 12px !important;
+  background: rgba(255,255,255,0.05) !important;
+  display: grid !important;
+  place-items: center !important;
+  margin-bottom: 4px !important;
+  color: var(--ink) !important;
+}
+body.page-dashboard .stat .lbl {
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  color: var(--mute) !important;
+  margin-bottom: 2px !important;
+}
+body.page-dashboard .stat .val {
+  font-size: clamp(24px, 2.2vw, 28px) !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em !important;
+  color: var(--ink) !important;
+  line-height: 1.15 !important;
+}
+body.page-dashboard .stat .val.ok { color: var(--green) !important; }
+body.page-dashboard .stat .val.warn { color: var(--warn, #f59e0b) !important; }
+body.page-dashboard .stat .val.dim { color: var(--mute) !important; font-weight: 600 !important; }
+body.page-dashboard .stat .sub {
+  font-size: 12px !important;
+  color: var(--mute) !important;
+  margin: 0 !important;
+  line-height: 1.4 !important;
+}
+
+/* Section Head Bento */
+body.page-dashboard .sec-head {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin-bottom: 16px !important;
+}
+body.page-dashboard .sec-head h2 {
+  font-size: 19px !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em !important;
+  color: var(--ink) !important;
+  margin: 0 !important;
+}
+body.page-dashboard #slot-text {
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid var(--edge) !important;
+  border-radius: 9999px !important;
+  padding: 4px 12px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  color: var(--ink) !important;
+}
+
+/* Bot Grid Bento */
+body.page-dashboard #bot-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
+  gap: 18px !important;
+}
+body.page-dashboard .card.bc {
+  background: var(--card) !important;
+  border: 1px solid var(--edge) !important;
+  border-radius: 24px !important;
+  padding: 22px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05) !important;
+  transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease !important;
+  cursor: pointer !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+body.page-dashboard .card.bc:hover {
+  transform: translateY(-4px) !important;
+  border-color: rgba(255,255,255,0.22) !important;
+  box-shadow: 0 10px 28px rgba(0,0,0,0.12) !important;
+}
+body.page-dashboard .card.bc h3 {
+  font-size: 18px !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em !important;
+  color: var(--ink) !important;
+}
+
+/* Platform & Status Labels */
+body.page-dashboard .eb-label {
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+  padding: 4px 10px !important;
+  border-radius: 9999px !important;
+}
+body.page-dashboard .eb-label.eb-wa { background: rgba(37,211,102,0.15) !important; color: #25D366 !important; border: 1px solid rgba(37,211,102,0.3) !important; }
+body.page-dashboard .eb-label.eb-tg { background: rgba(34,158,217,0.15) !important; color: #229ED9 !important; border: 1px solid rgba(34,158,217,0.3) !important; }
+body.page-dashboard .eb-label.eb-dc { background: rgba(88,101,242,0.15) !important; color: #5865F2 !important; border: 1px solid rgba(88,101,242,0.3) !important; }
+
+body.page-dashboard .on-dot {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 3px 10px !important;
+  border-radius: 9999px !important;
+  background: rgba(34,197,94,0.12) !important;
+  color: var(--green) !important;
+}
+body.page-dashboard .on-dot.off {
+  background: rgba(255,255,255,0.05) !important;
+  color: var(--mute) !important;
+}
+
+/* Add Card Bento Slot */
+body.page-dashboard .add-card {
+  border: 2px dashed var(--edge) !important;
+  background: rgba(255,255,255,0.02) !important;
+  border-radius: 24px !important;
+  min-height: 220px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 12px !important;
+  cursor: pointer !important;
+  color: var(--ink) !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  transition: transform .2s ease, border-color .2s ease, background .2s ease !important;
+}
+body.page-dashboard .add-card:hover {
+  transform: translateY(-3px) !important;
+  border-color: #5865F2 !important;
+  background: rgba(88,101,242,0.06) !important;
+}
+
+/* Responsive Breakpoints */
+@media (max-width: 960px) {
+  body.page-dashboard .stats { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+@media (max-width: 580px) {
+  body.page-dashboard .stats { grid-template-columns: 1fr !important; }
+  body.page-dashboard #bot-grid { grid-template-columns: 1fr !important; }
+}
