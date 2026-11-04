@@ -516,6 +516,8 @@ app.get('/register/verify',  halaman('register-verify.html'));
 app.get('/register/success', halaman('register-success.html'));
 app.get('/forgot-password', halaman('login.html'));
 app.get('/reset-password',  halaman('login.html'));
+app.get('/privacy',         halaman('privacy.html'));
+app.get('/terms',           halaman('terms.html'));
 app.get('/',             halaman('index.html'));
 app.get('*',             halamanError(404));
 
