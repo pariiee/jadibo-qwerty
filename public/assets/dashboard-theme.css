@@ -1255,3 +1255,82 @@ html body.page-dashboard #bot-grid .card.add-card:hover {
   html body.page-dashboard #bot-grid .card, .sd-help, .sd-arc { transition: none !important; }
 }
 
+/* ══ 5. Jaminan Scroll Aktif & Responsif Segala Device ══ */
+html,
+body.page-dashboard {
+  height: auto !important;
+  min-height: 100vh !important;
+  max-height: none !important;
+  overflow: visible !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+body.page-dashboard .app,
+body.page-dashboard main,
+body.page-dashboard .content {
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow: visible !important;
+  overflow-y: visible !important;
+}
+
+/* Responsif Tablet & Mobile */
+@media (max-width: 960px) {
+  html body.page-dashboard main {
+    padding: 12px 14px 40px !important;
+  }
+  html body.page-dashboard header.topbar.cx-navbar .cx-nav-inner {
+    grid-template-columns: auto 1fr auto !important;
+    padding: 6px 12px !important;
+    gap: 8px !important;
+  }
+  html body.page-dashboard .cx-nav-pill {
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  body.page-dashboard .dx-bento {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+  }
+  body.page-dashboard .dx-welcome {
+    grid-column: 1 / -1 !important;
+    grid-row: auto !important;
+  }
+  body.page-dashboard .dx-online,
+  body.page-dashboard .dx-role,
+  body.page-dashboard .dx-exp,
+  body.page-dashboard .dx-slot {
+    grid-column: span 1 !important;
+    grid-row: auto !important;
+  }
+  body.page-dashboard .dx-lower {
+    grid-template-columns: 1fr !important;
+    gap: 18px !important;
+  }
+  body.page-dashboard .dx-side {
+    position: static !important;
+  }
+  html body.page-dashboard #bot-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 540px) {
+  body.page-dashboard .dx-bento {
+    grid-template-columns: 1fr !important;
+  }
+  html body.page-dashboard header.topbar.cx-navbar .cx-nav-inner {
+    display: flex !important;
+    justify-content: space-between !important;
+  }
+  html body.page-dashboard .cx-nav-pill {
+    display: none !important;
+  }
+  html body.page-dashboard .dx-name {
+    font-size: 32px !important;
+  }
+}
+
