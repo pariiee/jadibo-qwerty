@@ -521,19 +521,19 @@ details[open] .cmd-panah{transform:rotate(180deg)!important;color:var(--ink)!imp
 }
 
 @media (min-width: 761px){
-  body:not(.page-index):not(.page-auth){
+  body:not(.page-index):not(.page-auth):not(.page-dashboard){
     height:100vh!important;
     overflow:hidden!important;
   }
-  .shell, .app{
+  .shell, body:not(.page-dashboard) .app{
     height:calc(100vh - 40px)!important;
     max-height:calc(100vh - 40px)!important;
   }
-  aside{
+  body:not(.page-dashboard) aside{
     height:100%!important;
     overflow-y:auto!important;
   }
-  main{
+  body:not(.page-dashboard) main{
     height:calc(100% - 20px)!important;
     overflow-y:auto!important;
     scrollbar-width:thin;
