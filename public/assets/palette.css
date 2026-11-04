@@ -2988,7 +2988,7 @@ body {
   overflow: visible !important;
 }
 
-/* ── Top bar (Sticky on Scroll) ── */
+/* ── Top bar (Sticky & Shrink on Scroll) ── */
 .top-nav {
   position: sticky;
   top: 0;
@@ -2997,11 +2997,34 @@ body {
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  padding: 12px 0;
+  padding: 16px 0;
   margin-bottom: clamp(20px, 3.5vw, 36px);
   background: rgba(250, 250, 250, 0.88);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
+  transition: padding 0.25s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s ease, box-shadow 0.25s ease, margin 0.25s ease, border-radius 0.25s ease;
+}
+.top-nav.scrolled {
+  padding: 8px 18px !important;
+  background: rgba(250, 250, 250, 0.95) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.05) !important;
+  border-radius: 9999px !important;
+  margin-top: 10px !important;
+  margin-bottom: clamp(14px, 2.5vw, 24px) !important;
+}
+.top-nav.scrolled .brand-badge img {
+  width: 26px !important;
+  height: 26px !important;
+  transition: width 0.2s, height 0.2s;
+}
+.top-nav.scrolled .brand-text {
+  font-size: 18px !important;
+}
+.top-nav.scrolled .link-signin,
+.top-nav.scrolled .btn-signup-pill {
+  height: 34px !important;
+  padding: 0 16px !important;
+  font-size: 13px !important;
 }
 .brand-badge { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; min-width: 0; }
 .brand-text { font-size: clamp(18px, 2.4vw, 22px); font-weight: 800; color: #1B1B20; letter-spacing: -0.04em; }

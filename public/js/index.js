@@ -144,11 +144,11 @@
   fetch('/api/auth/me', { credentials: 'include' }).then(r => r.json()).then(d => {
     if (d.ok) location.href = '/dashboard';
   }).catch(() => {});
-  // ── Floating Glass Pill Navbar on Scroll ─────────────────────────
-  const navEl = document.querySelector('body.page-index > nav');
+  // ── Floating Glass Pill Navbar on Scroll (Shrink Animation) ──
+  const navEl = document.querySelector('.top-nav') || document.querySelector('body.page-index > nav');
   if (navEl) {
     const onNavScroll = function () {
-      navEl.classList.toggle('scrolled', window.scrollY > 30);
+      navEl.classList.toggle('scrolled', window.scrollY > 20);
     };
     window.addEventListener('scroll', onNavScroll, { passive: true });
     onNavScroll();
