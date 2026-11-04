@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/assets/palette.css?v=17.0" />
+  <link rel="stylesheet" href="/assets/palette.css?v=17.1" />
   <script src="/js/act.js"></script>
 </head>
 <body class="page-index">
@@ -232,78 +232,65 @@
       <div class="co" aria-hidden="true">
         <i class="co-ring r1"></i><i class="co-ring r2"></i><i class="co-ring r3"></i>
         <img class="co-core" src="/assets/parigate.svg" width="56" height="56" alt="" />
-        <div class="co-orbit o-dc"><span class="co-node dc"><svg width="20" height="20" fill="currentColor"><use href="#i-dc"/></svg></span></div>
-        <div class="co-orbit o-wa"><span class="co-node wa"><svg width="20" height="20" fill="currentColor"><use href="#i-wa"/></svg></span></div>
-        <div class="co-orbit o-tg"><span class="co-node tg"><svg width="20" height="20" fill="currentColor"><use href="#i-tg"/></svg></span></div>
+        <div class="co-orbit o-dc"><span class="co-node p-dc"><svg width="20" height="20" fill="currentColor"><use href="#i-dc"/></svg></span></div>
+        <div class="co-orbit o-wa"><span class="co-node p-wa"><svg width="20" height="20" fill="currentColor"><use href="#i-wa"/></svg></span></div>
+        <div class="co-orbit o-tg"><span class="co-node p-tg"><svg width="20" height="20" fill="currentColor"><use href="#i-tg"/></svg></span></div>
       </div>
     </article>
 
-    <!-- Komunitas Discord (ungu) -->
-    <article class="ft-card ft-dc">
-      <svg class="ft-dc-bg" fill="currentColor" aria-hidden="true"><use href="#i-dc"/></svg>
-      <span class="bx-tag">Komunitas</span>
-      <div>
-        <h3>Ngobrol bareng di Discord</h3>
-        <p>Tanya fitur, tukar tips, dan ikuti kabar terbaru.</p>
-      </div>
-      <a class="ft-dc-btn" href="https://discord.gg/yapari" target="_blank" rel="noopener noreferrer">
-        Gabung Server
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
-      </a>
-    </article>
-
-    <!-- Brand (gelap) -->
+    <!-- Footer gelap: brand + semua tautan -->
     <article class="ft-card ft-brand">
-      <div class="ft-brand-top">
-        <a href="/" class="ft-logo">
-          <img src="/assets/parigate.svg" alt="qwertygate" width="32" height="32" />
-          <span class="ft-name">qwertygate</span>
-          <span class="brand-sub-chip ft-chip">PRO</span>
-        </a>
-        <p class="ft-desc">Gateway otomatisasi bot multi-platform. Satu panel untuk WhatsApp, Telegram, dan Discord.</p>
-        <div class="ft-plats">
-          <span class="ft-plat wa"><i><svg width="12" height="12" fill="currentColor"><use href="#i-wa"/></svg></i>WhatsApp</span>
-          <span class="ft-plat tg"><i><svg width="12" height="12" fill="currentColor"><use href="#i-tg"/></svg></i>Telegram</span>
-          <span class="ft-plat dc"><i><svg width="12" height="12" fill="currentColor"><use href="#i-dc"/></svg></i>Discord</span>
+      <div class="ft-main">
+        <div class="ft-brandcol">
+          <a href="/" class="ft-logo">
+            <img src="/assets/parigate.svg" alt="qwertygate" width="32" height="32" />
+            <span class="ft-name">qwertygate</span>
+            <span class="brand-sub-chip ft-chip">PRO</span>
+          </a>
+          <p class="ft-desc">Gateway otomatisasi bot multi-platform. Satu panel untuk WhatsApp, Telegram, dan Discord.</p>
+
+          <div class="ft-plats">
+            <a class="ft-plat p-wa" href="https://wa.me/6287778032605" target="_blank" rel="noopener noreferrer"><i><svg width="12" height="12" fill="currentColor"><use href="#i-wa"/></svg></i>WhatsApp</a>
+            <a class="ft-plat p-tg" href="https://t.me/qwertygatev1_bot" target="_blank" rel="noopener noreferrer"><i><svg width="12" height="12" fill="currentColor"><use href="#i-tg"/></svg></i>Telegram</a>
+            <a class="ft-plat p-dc" href="https://discord.gg/yapari" target="_blank" rel="noopener noreferrer"><i><svg width="12" height="12" fill="currentColor"><use href="#i-dc"/></svg></i>Discord</a>
+          </div>
+
+          <p class="ft-powered">Powered by yaparbots engine</p>
         </div>
-        <p class="ft-powered">Powered by yaparbots engine</p>
+
+        <div class="ft-nav">
+          <nav aria-label="Jelajahi">
+            <h4>Jelajahi</h4>
+            <ul>
+              <li><a href="#fitur">Fitur</a></li>
+              <li><a href="#harga">Harga</a></li>
+              <li><a href="#testimoni">Ulasan</a></li>
+            </ul>
+          </nav>
+          <nav aria-label="Akun">
+            <h4>Akun</h4>
+            <ul>
+              <li><a href="/login">Masuk</a></li>
+              <li><a href="/register">Daftar</a></li>
+              <li><a href="/dashboard">Dashboard</a></li>
+            </ul>
+          </nav>
+          <nav aria-label="Legal">
+            <h4>Legal</h4>
+            <ul>
+              <li><a href="/privacy">Privasi</a></li>
+              <li><a href="/terms">Ketentuan</a></li>
+            </ul>
+          </nav>
+        </div>
       </div>
+
+      <div class="ft-bar">
+        <span>&copy; 2026 qwertygate. All rights reserved.</span>
+        <span class="ft-live"><i class="pulse-dot"></i> Online 24/7</span>
+      </div>
+
       <div class="ft-wordmark" aria-hidden="true">qwertygate</div>
-    </article>
-
-    <!-- Link (abu) -->
-    <article class="ft-card ft-links">
-      <div class="ft-cols">
-        <nav aria-label="Jelajahi">
-          <h4>Jelajahi</h4>
-          <ul>
-            <li><a href="#fitur">Fitur</a></li>
-            <li><a href="#harga">Harga</a></li>
-            <li><a href="#testimoni">Ulasan</a></li>
-          </ul>
-        </nav>
-        <nav aria-label="Akun">
-          <h4>Akun</h4>
-          <ul>
-            <li><a href="/login">Masuk</a></li>
-            <li><a href="/register">Daftar</a></li>
-            <li><a href="/dashboard">Dashboard</a></li>
-          </ul>
-        </nav>
-      </div>
-      <p class="ft-copy">&copy; 2026 qwertygate.<br />All rights reserved.</p>
-    </article>
-
-    <!-- Legal + status (biru) -->
-    <article class="ft-card ft-legal">
-      <nav aria-label="Legal">
-        <h4>Legal</h4>
-        <ul>
-          <li><a href="/privacy">Privasi</a></li>
-          <li><a href="/terms">Ketentuan</a></li>
-        </ul>
-      </nav>
-      <span class="ft-live"><i class="pulse-dot"></i> Online 24/7</span>
     </article>
 
   </div>
@@ -357,6 +344,6 @@
 
 <script src="/js/vendor/gsap.min.js"></script>
 <script src="/js/vendor/ScrollTrigger.min.js"></script>
-<script src="/js/index.js?v=17.0" defer></script>
+<script src="/js/index.js?v=17.1" defer></script>
 </body>
 </html>
