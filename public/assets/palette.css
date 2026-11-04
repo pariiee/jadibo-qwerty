@@ -3689,7 +3689,7 @@ body {
 .ft-plat.p-dc i { background: var(--purple); color: #FFFFFF; }
 .ft-powered { margin: 14px 0 0; font-size: 12.5px; font-weight: 600; color: #8A8A94; }
 
-.ft-nav { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.ft-nav { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
 
 .ft-bar {
   display: flex;
