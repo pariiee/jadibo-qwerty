@@ -3622,28 +3622,78 @@ body {
 .ft-btn:hover { transform: translateY(-2px); }
 .ft-btn-arr { width: 28px; height: 28px; border-radius: 50%; background: #1B1B20; color: #D8FF7A; display: grid; place-items: center; }
 
-.co { position: absolute; right: -60px; top: 50%; width: 380px; height: 380px; margin-top: -190px; pointer-events: none; }
-.co-ring { position: absolute; left: 50%; top: 50%; border-radius: 50%; border: 1.5px dashed rgba(27,27,32,.16); transform: translate(-50%, -50%); }
-.co-ring.r1 { width: 130px; height: 130px; }
-.co-ring.r2 { width: 250px; height: 250px; }
-.co-ring.r3 { width: 380px; height: 380px; }
-.co-core { position: absolute; left: 50%; top: 50%; width: 56px; height: 56px; margin: -28px 0 0 -28px; border-radius: 50%; box-shadow: 0 0 0 6px #FFFFFF, 0 0 0 7.5px #E6E6E2; }
-.co-orbit { position: absolute; left: 50%; top: 50%; width: 0; height: 0; animation: coSpin var(--t) linear infinite; animation-delay: var(--d); }
-.co-node {
-  position: absolute; left: var(--r); top: 0;
-  width: 44px; height: 44px; margin: -22px 0 0 -22px;
-  border-radius: 50%; display: grid; place-items: center;
-  box-shadow: 0 0 0 4px #FFFFFF, 0 6px 16px rgba(27,27,32,.14);
-  animation: coSpin var(--t) linear infinite reverse;
-  animation-delay: var(--d);
+/* Live Staggered Notification Stack (Responsif) */
+.ft-live-stack {
+  position: absolute;
+  right: clamp(18px, 4vw, 44px);
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(320px, 42vw);
+  pointer-events: none;
+  z-index: 1;
 }
-.o-dc { --r: 65px;  --t: 26s; --d: -4s; }
-.o-wa { --r: 125px; --t: 38s; --d: -20s; }
-.o-tg { --r: 190px; --t: 52s; --d: -9s; }
-.co-node.p-wa { background: #D8FF7A; color: #1B1B20; }
-.co-node.p-tg { background: #BFD7FF; color: #1B1B20; }
-.co-node.p-dc { background: var(--purple); color: #FFFFFF; }
-@keyframes coSpin { to { transform: rotate(360deg); } }
+.fls-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: #FFFFFF;
+  border-radius: 16px;
+  box-shadow: 0 0 0 1px #E6E6E2, 0 10px 24px rgba(27, 27, 32, .07);
+  will-change: transform;
+}
+.fls-card:nth-child(1) { animation: flsFloat1 4s ease-in-out infinite alternate; }
+.fls-card:nth-child(2) { animation: flsFloat2 4s ease-in-out infinite alternate; animation-delay: -1.3s; box-shadow: 0 0 0 1.5px #1B1B20, 0 12px 28px rgba(27, 27, 32, .12); }
+.fls-card:nth-child(3) { animation: flsFloat3 4s ease-in-out infinite alternate; animation-delay: -2.6s; }
+
+.fls-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.fls-dc .fls-icon { background: var(--purple); color: #FFFFFF; }
+.fls-wa .fls-icon { background: #D8FF7A; color: #1B1B20; }
+.fls-tg .fls-icon { background: #BFD7FF; color: #1B1B20; }
+
+.fls-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+.fls-info b { font-size: 13px; font-weight: 800; color: #1B1B20; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fls-info small { font-size: 11px; font-weight: 600; color: #7B7B83; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.fls-badge {
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+.fls-badge.dc { background: rgba(88, 101, 242, .12); color: #5865F2; }
+.fls-badge.wa { background: rgba(216, 255, 122, .24); color: #1B1B20; }
+.fls-badge.tg { background: rgba(143, 179, 240, .24); color: #1B1B20; }
+
+@keyframes flsFloat1 {
+  0% { transform: rotate(-2deg) translateY(0); }
+  100% { transform: rotate(-2deg) translateY(-8px); }
+}
+@keyframes flsFloat2 {
+  0% { transform: translateX(-12px) translateY(0); }
+  100% { transform: translateX(-12px) translateY(-6px); }
+}
+@keyframes flsFloat3 {
+  0% { transform: rotate(1.5deg) translateY(0); }
+  100% { transform: rotate(1.5deg) translateY(-8px); }
+}
 
 /* Kartu hitam: brand + semua tautan */
 .ft-brand {
@@ -3730,10 +3780,21 @@ body {
 
 @media (max-width: 860px) {
   .ft-main { grid-template-columns: minmax(0, 1fr); }
+  .ft-live-stack { width: 280px; }
 }
-@media (max-width: 640px) {
+@media (max-width: 760px) {
   .ft-cta { min-height: 0; justify-content: flex-start; }
-  .co { position: relative; right: auto; top: auto; align-self: center; margin: -76px 0; transform: scale(.6); }
+  .ft-cta-text { max-width: 100%; width: 100%; }
+  .ft-live-stack {
+    position: relative;
+    right: auto;
+    top: auto;
+    transform: none;
+    width: 100%;
+    margin-top: 20px;
+    gap: 8px;
+  }
+  .fls-card { transform: none !important; animation: none !important; box-shadow: 0 0 0 1px #E6E6E2, 0 4px 12px rgba(27,27,32,.04) !important; }
   .ft-btn { align-self: stretch; justify-content: space-between; }
 }
 @media (max-width: 480px) {
@@ -3741,7 +3802,7 @@ body {
   .ft-bar { flex-direction: column; align-items: flex-start; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .co-orbit, .co-node { animation-play-state: paused; }
+  .fls-card { animation: none !important; transform: none !important; }
   .ft-card ul a, .ft-btn, .ft-plat { transition: none; }
 }
 
