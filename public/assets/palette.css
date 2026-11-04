@@ -3469,177 +3469,7 @@ body {
   min-height: 220px !important;
 }
 
-/* ── CTA penutup ── */
-#fitur, #testimoni { scroll-margin-top: 80px; }
 
-.cta-band {
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 20px 32px;
-  background: #D8FF7A;
-  color: #1B1B20;
-  border-radius: 28px;
-  padding: clamp(24px, 4vw, 40px);
-  box-shadow: 0 14px 34px rgba(166, 216, 74, .25);
-  margin-bottom: clamp(12px, 2vw, 20px);
-}
-.cb-text { position: relative; z-index: 1; max-width: 560px; display: flex; flex-direction: column; gap: 12px; }
-.cb-text h2 {
-  margin: 0;
-  font-size: clamp(26px, 4.2vw, 42px);
-  font-weight: 800;
-  line-height: 1.05;
-  letter-spacing: -0.045em;
-  text-wrap: balance;
-}
-.cb-text p { margin: 0; font-size: 15px; font-weight: 500; line-height: 1.5; opacity: .75; }
-.cb-btn {
-  position: relative;
-  z-index: 1;
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  background: #1B1B20;
-  color: #FFFFFF;
-  border-radius: 9999px;
-  padding: 16px 30px;
-  font-size: 16px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  text-decoration: none;
-  box-shadow: 0 0 0 5px rgba(27, 27, 32, .08);
-  transition: transform .15s ease, box-shadow .15s ease;
-}
-.cb-btn:hover { transform: translateY(-2px); box-shadow: 0 0 0 7px rgba(27, 27, 32, .1); }
-.cb-btn svg { transition: transform .15s ease; }
-.cb-btn:hover svg { transform: translate(2px, -2px); }
-.cb-btn:focus-visible { outline: 3px solid #1B1B20; outline-offset: 4px; }
-.cb-spk { position: absolute; color: rgba(27, 27, 32, .3); pointer-events: none; }
-.cb-s1 { right: 38%; top: 18px; }
-.cb-s2 { right: 6%; bottom: 16px; }
-
-/* ── Footer gelap ── */
-.site-footer {
-  position: relative;
-  overflow: hidden;
-  background: #1B1B20;
-  color: #FFFFFF;
-  border-radius: 28px;
-  padding: clamp(24px, 4vw, 44px) clamp(20px, 4vw, 44px) 0;
-  box-shadow: 0 14px 36px rgba(0, 0, 0, .18);
-}
-.sf-grid {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  grid-template-columns: 1.6fr repeat(3, 1fr);
-  gap: 32px clamp(20px, 4vw, 48px);
-  padding-bottom: clamp(24px, 4vw, 36px);
-}
-.sf-logo { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: #FFFFFF; }
-.sf-logo img { border-radius: 50%; }
-.sf-name { font-size: 22px; font-weight: 800; letter-spacing: -0.04em; }
-.sf-chip { background: #D8FF7A; color: #1B1B20; }
-.sf-desc { margin: 14px 0 18px; max-width: 340px; font-size: 14px; font-weight: 500; line-height: 1.55; color: #A0A0AA; }
-.sf-plats { display: flex; flex-wrap: wrap; gap: 6px; }
-.sf-plats span {
-  display: inline-flex;
-  align-items: center;
-  background: rgba(255, 255, 255, .08);
-  color: #E2E2DE;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 5px 11px;
-  border-radius: 9999px;
-}
-.sf-plats span::before {
-  content: "";
-  width: 6px; height: 6px;
-  margin-right: 7px;
-  border-radius: 50%;
-  background: #D8FF7A;
-}
-
-.sf-col h4 {
-  margin: 0 0 14px;
-  font-size: 11.5px;
-  font-weight: 800;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  color: #8A8A94;
-}
-.sf-col ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
-.sf-col a {
-  display: inline-block;
-  color: #FFFFFF;
-  font-size: 14.5px;
-  font-weight: 600;
-  text-decoration: none;
-  transition: color .15s ease, transform .15s ease;
-}
-.sf-col a:hover { color: #D8FF7A; transform: translateX(3px); }
-.site-footer a:focus-visible { outline: 2px solid #D8FF7A; outline-offset: 3px; border-radius: 4px; }
-
-.sf-bottom {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px 20px;
-  padding: 18px 0;
-  border-top: 1px solid rgba(255, 255, 255, .1);
-  font-size: 13px;
-  color: #8A8A94;
-}
-.sf-live {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  background: rgba(216, 255, 122, .12);
-  color: #D8FF7A;
-  font-size: 11.5px;
-  font-weight: 700;
-  padding: 5px 11px;
-  border-radius: 9999px;
-}
-
-/* Wordmark raksasa, terpotong di dasar kartu */
-.sf-wordmark {
-  font-size: clamp(48px, 15vw, 200px);
-  font-weight: 800;
-  letter-spacing: -0.06em;
-  line-height: .78;
-  text-align: center;
-  white-space: nowrap;
-  color: rgba(255, 255, 255, .07);
-  margin: 6px 0 -.14em;
-  user-select: none;
-  pointer-events: none;
-}
-
-@media (max-width: 860px) {
-  .sf-grid { grid-template-columns: repeat(3, 1fr); }
-  .sf-brand { grid-column: 1 / -1; }
-}
-@media (max-width: 640px) {
-  .cta-band { flex-direction: column; align-items: flex-start; }
-  .cb-btn { width: 100%; justify-content: center; }
-  .cb-s1 { right: 14%; top: 14px; }
-  .cb-s2 { display: none; }
-}
-@media (max-width: 480px) {
-  .sf-grid { grid-template-columns: 1fr 1fr; }
-  .sf-bottom { flex-direction: column; align-items: flex-start; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .cb-btn, .cb-btn svg, .sf-col a { transition: none; }
-}
 
 /* Fokus keyboard */
 .link-signin:focus-visible, .btn-signup-pill:focus-visible, .btn-cta-lime:focus-visible,
@@ -3720,23 +3550,197 @@ body {
   .badge-no { padding: 6px 11px; }
 }
 
-/* ── Kunci tampilan CTA & footer baru ── */
-html body.page-index section.cta-band {
-  background: #D8FF7A !important;
-  border-radius: 28px !important;
-  padding: clamp(24px, 4vw, 40px) !important;
-  box-shadow: 0 14px 34px rgba(166, 216, 74, .25) !important;
-  overflow: hidden !important;
+/* ══ Warna ungu (nuansa Discord) ══ */
+:root { --purple: #5865F2; --purple-soft: #D9D7FF; }
+
+/* ══ Footer bento ══ */
+#fitur, #testimoni { scroll-margin-top: 80px; }
+
+.ft-bento {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(12px, 2vw, 20px);
+  margin-top: clamp(40px, 6vw, 60px);
 }
-html body.page-index footer.site-footer {
-  display: block !important;
-  background: #1B1B20 !important;
-  border: 0 !important;
-  border-radius: 28px !important;
-  padding: clamp(24px, 4vw, 44px) clamp(20px, 4vw, 44px) 0 !important;
-  margin: 0 !important;
-  box-shadow: 0 14px 36px rgba(0, 0, 0, .18) !important;
-  overflow: hidden !important;
+.ft-card {
+  position: relative;
+  overflow: hidden;
+  min-width: 0;
+  border-radius: 28px;
+  padding: clamp(22px, 3vw, 32px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 18px;
+  transition: transform .25s cubic-bezier(.16, 1, .3, 1);
 }
+.ft-card:hover { transform: translateY(-4px); }
+.ft-card h4 {
+  margin: 0 0 12px;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  opacity: .55;
+}
+.ft-card ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+.ft-card ul a {
+  display: inline-block;
+  color: inherit;
+  font-size: 14.5px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform .15s ease;
+}
+.ft-card ul a:hover { transform: translateX(3px); text-decoration: underline; text-underline-offset: 4px; }
+.ft-card a:focus-visible { outline: 2px solid #1B1B20; outline-offset: 3px; border-radius: 4px; }
+
+/* CTA putih + orbit */
+.ft-cta {
+  grid-column: span 3;
+  min-height: 300px;
+  justify-content: center;
+  background: #FFFFFF;
+  color: #1B1B20;
+  box-shadow: 0 0 0 1px #E6E6E2;
+}
+.ft-cta-text { position: relative; z-index: 1; max-width: 400px; display: flex; flex-direction: column; align-items: flex-start; gap: 14px; }
+.ft-cta h2 { margin: 0; font-size: clamp(26px, 3.6vw, 40px); font-weight: 800; line-height: 1.05; letter-spacing: -0.045em; text-wrap: balance; }
+.ft-cta p { margin: 0; font-size: 15px; font-weight: 500; line-height: 1.5; color: #5B5B63; }
+.ft-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 6px;
+  background: #D8FF7A;
+  color: #1B1B20;
+  border-radius: 9999px;
+  padding: 13px 14px 13px 26px;
+  font-size: 15.5px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-decoration: none;
+  box-shadow: inset 0 -4px 0 rgba(27,27,32,.14), 0 0 0 5px #FFFFFF, 0 0 0 6.5px #D9D9D5;
+  transition: transform .15s ease;
+}
+.ft-btn:hover { transform: translateY(-2px); }
+.ft-btn-arr { width: 28px; height: 28px; border-radius: 50%; background: #1B1B20; color: #D8FF7A; display: grid; place-items: center; }
+
+.co { position: absolute; right: -60px; top: 50%; width: 380px; height: 380px; margin-top: -190px; pointer-events: none; }
+.co-ring { position: absolute; left: 50%; top: 50%; border-radius: 50%; border: 1.5px dashed rgba(27,27,32,.16); transform: translate(-50%, -50%); }
+.co-ring.r1 { width: 130px; height: 130px; }
+.co-ring.r2 { width: 250px; height: 250px; }
+.co-ring.r3 { width: 380px; height: 380px; }
+.co-core { position: absolute; left: 50%; top: 50%; width: 56px; height: 56px; margin: -28px 0 0 -28px; border-radius: 50%; box-shadow: 0 0 0 6px #FFFFFF, 0 0 0 7.5px #E6E6E2; }
+.co-orbit { position: absolute; left: 50%; top: 50%; width: 0; height: 0; animation: coSpin var(--t) linear infinite; animation-delay: var(--d); }
+.co-node {
+  position: absolute; left: var(--r); top: 0;
+  width: 44px; height: 44px; margin: -22px 0 0 -22px;
+  border-radius: 50%; display: grid; place-items: center;
+  box-shadow: 0 0 0 4px #FFFFFF, 0 6px 16px rgba(27,27,32,.14);
+  animation: coSpin var(--t) linear infinite reverse;
+  animation-delay: var(--d);
+}
+.o-dc { --r: 65px;  --t: 26s; --d: -4s; }
+.o-wa { --r: 125px; --t: 38s; --d: -20s; }
+.o-tg { --r: 190px; --t: 52s; --d: -9s; }
+.co-node.wa { background: #D8FF7A; color: #1B1B20; }
+.co-node.tg { background: #BFD7FF; color: #1B1B20; }
+.co-node.dc { background: var(--purple); color: #FFFFFF; }
+@keyframes coSpin { to { transform: rotate(360deg); } }
+
+/* Kartu ungu Discord */
+.ft-dc {
+  background: var(--purple);
+  color: #FFFFFF;
+  box-shadow: 0 14px 34px rgba(88,101,242,.28);
+}
+.ft-dc > *:not(.ft-dc-bg) { position: relative; z-index: 1; }
+.ft-dc .bx-tag { border-color: rgba(255,255,255,.55); }
+.ft-dc h3 { margin: 0 0 8px; font-size: clamp(22px, 2.2vw, 26px); font-weight: 800; line-height: 1.1; letter-spacing: -0.04em; }
+.ft-dc p { margin: 0; font-size: 14px; font-weight: 500; line-height: 1.45; opacity: .85; }
+.ft-dc-bg { position: absolute; right: -28px; top: -24px; width: 150px; height: 150px; color: rgba(255,255,255,.12); transform: rotate(12deg); pointer-events: none; }
+.ft-dc-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  background: #FFFFFF; color: #1B1B20;
+  border-radius: 9999px; padding: 12px 20px;
+  font-size: 14px; font-weight: 800; text-decoration: none;
+  transition: transform .15s ease;
+}
+.ft-dc-btn:hover { transform: translateY(-1px); }
+.ft-dc a:focus-visible { outline-color: #FFFFFF; }
+
+/* Brand gelap */
+.ft-brand {
+  grid-column: span 2;
+  min-height: 320px;
+  padding-bottom: 0;
+  background: #1B1B20;
+  color: #FFFFFF;
+  box-shadow: 0 14px 36px rgba(0,0,0,.18);
+  container-type: inline-size;
+}
+.ft-brand a:focus-visible { outline-color: #D8FF7A; }
+.ft-logo { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: #FFFFFF; }
+.ft-logo img { border-radius: 50%; }
+.ft-name { font-size: 22px; font-weight: 800; letter-spacing: -0.04em; }
+.ft-chip { background: #D8FF7A; color: #1B1B20; }
+.ft-desc { margin: 14px 0 16px; max-width: 360px; font-size: 14px; font-weight: 500; line-height: 1.55; color: #A0A0AA; }
+.ft-plats { display: flex; flex-wrap: wrap; gap: 8px; }
+.ft-plat { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,.08); color: #E2E2DE; font-size: 12.5px; font-weight: 600; padding: 5px 12px 5px 5px; border-radius: 9999px; }
+.ft-plat i { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; }
+.ft-plat.wa i { background: #D8FF7A; color: #1B1B20; }
+.ft-plat.tg i { background: #BFD7FF; color: #1B1B20; }
+.ft-plat.dc i { background: var(--purple); color: #FFFFFF; }
+.ft-powered { margin: 14px 0 0; font-size: 12.5px; font-weight: 600; color: #8A8A94; }
+.ft-wordmark {
+  font-size: clamp(44px, 9vw, 112px);
+  font-size: 16cqw;
+  font-weight: 800;
+  letter-spacing: -0.06em;
+  line-height: .8;
+  text-align: center;
+  white-space: nowrap;
+  color: rgba(255,255,255,.07);
+  margin: 4px 0 -.16em;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Abu & biru */
+.ft-links { background: #EAEAE7; color: #1B1B20; box-shadow: inset 0 0 0 1px #DFDFDC; }
+.ft-legal { background: #BFD7FF; color: #1B1B20; box-shadow: 0 14px 34px rgba(143,179,240,.25); }
+.ft-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px 16px; }
+.ft-copy { margin: 0; font-size: 12.5px; font-weight: 600; line-height: 1.5; opacity: .6; }
+.ft-live { align-self: flex-start; display: inline-flex; align-items: center; gap: 7px; background: #1B1B20; color: #D8FF7A; font-size: 11.5px; font-weight: 700; padding: 6px 12px; border-radius: 9999px; }
+
+@media (max-width: 980px) {
+  .ft-bento { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ft-cta, .ft-dc, .ft-brand { grid-column: span 2; }
+}
+@media (max-width: 640px) {
+  .ft-bento { grid-template-columns: 1fr; }
+  .ft-cta, .ft-dc, .ft-brand, .ft-links, .ft-legal { grid-column: auto; }
+  .ft-cta { min-height: 0; justify-content: flex-start; }
+  .co { position: relative; right: auto; top: auto; align-self: center; margin: -76px 0; transform: scale(.6); }
+  .ft-btn { align-self: stretch; justify-content: space-between; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .co-orbit, .co-node { animation-play-state: paused; }
+  .ft-card, .ft-card ul a, .ft-btn, .ft-dc-btn { transition: none; }
+}
+
+/* Kartu "Discord Voice": aksen ungu menggantikan lime */
+.eq-bar, .player-bar i { background: #8E98FF; }
+.vinyl { background: radial-gradient(circle, #5865F2 0 12%, #1B1B20 13% 16%, #2c2c33 17% 58%, #0e0e11 59%); }
+
+/* Avatar testimoni mengikuti platformnya: Discord, WhatsApp, Telegram */
+body.page-index .tst:nth-child(1) .tst-f i { background: #5865F2 !important; color: #fff !important; }
+body.page-index .tst:nth-child(2) .tst-f i { background: #D8FF7A !important; color: #1B1B20 !important; }
+body.page-index .tst:nth-child(3) .tst-f i { background: #BFD7FF !important; color: #1B1B20 !important; }
+
+/* Dekorasi hero: wajik ungu, melengkapi club (lime) dan heart (biru) */
+.d-diamond { width: 56px; left: 22%; top: 70%; transform: rotate(-10deg); filter: drop-shadow(0 5px 0 #A29CF2); }
+@media (max-width: 720px) { .d-diamond { display: none; } }
 
 
