@@ -800,9 +800,18 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 main {
   margin-left: 0 !important;
   width: 100% !important;
-  max-width: 1380px !important;
+  max-width: 1360px !important;
   margin: 0 auto !important;
   padding: 16px clamp(16px, 2.5vw, 32px) 40px !important;
+}
+
+body.page-dashboard {
+  background: #EFEFEA !important;
+  color: #1B1B20 !important;
+  --ink: #1B1B20 !important;
+  --mute: #5B5B63 !important;
+  --card: #FFFFFF !important;
+  --edge: #E6E6E2 !important;
 }
 
 /* ══ Top Floating Navbar (Referensi Cryptech) ══ */
@@ -812,7 +821,7 @@ main {
   z-index: 100 !important;
   background: transparent !important;
   padding: 0 !important;
-  margin-bottom: clamp(22px, 3vw, 32px) !important;
+  margin-bottom: clamp(20px, 2.5vw, 28px) !important;
   border: none !important;
 }
 .cx-nav-inner {
@@ -820,13 +829,10 @@ main {
   align-items: center !important;
   justify-content: space-between !important;
   gap: 16px !important;
-  background: rgba(27, 27, 32, 0.88) !important;
-  backdrop-filter: blur(20px) !important;
-  -webkit-backdrop-filter: blur(20px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: #1B1B20 !important;
   border-radius: 9999px !important;
   padding: 7px 12px 7px 18px !important;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2) !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16) !important;
 }
 .cx-brand {
   display: flex !important;
@@ -846,10 +852,9 @@ main {
   display: flex !important;
   align-items: center !important;
   gap: 4px !important;
-  background: rgba(0, 0, 0, 0.3) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
   padding: 4px 6px !important;
   border-radius: 9999px !important;
-  border: 1px solid rgba(255, 255, 255, 0.06) !important;
   overflow-x: auto !important;
 }
 .cx-nav-item {
@@ -913,8 +918,8 @@ main {
 body.page-dashboard .dx-bento {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: clamp(12px, 1.6vw, 18px);
-  margin-bottom: clamp(28px, 4vw, 40px);
+  gap: 16px;
+  margin-bottom: 28px;
 }
 body.page-dashboard .dx-tile {
   position: relative;
@@ -923,29 +928,29 @@ body.page-dashboard .dx-tile {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 14px;
-  padding: clamp(18px, 2vw, 24px);
-  border-radius: 28px;
+  gap: 10px;
+  padding: 20px 22px;
+  border-radius: 24px;
   transition: transform .25s cubic-bezier(.16, 1, .3, 1);
 }
-body.page-dashboard .dx-tile:hover { transform: translateY(-4px); }
+body.page-dashboard .dx-tile:hover { transform: translateY(-3px); }
 
 body.page-dashboard .dx-top { display: flex; align-items: center; gap: 10px; }
-body.page-dashboard .dx-ic { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; }
-body.page-dashboard .dx-ic .i { width: 18px; height: 18px; }
-body.page-dashboard .dx-lbl { font-size: 11.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; opacity: .72; }
+body.page-dashboard .dx-ic { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; }
+body.page-dashboard .dx-ic .i { width: 17px; height: 17px; }
+body.page-dashboard .dx-lbl { font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
 html body.page-dashboard .dx-tile .dx-val,
 html body.page-dashboard .dx-tile #st-role,
 html body.page-dashboard .dx-tile #st-exp,
 html body.page-dashboard .dx-tile #st-online,
 html body.page-dashboard .dx-tile #st-slot {
-  font-size: clamp(28px, 3vw, 38px) !important;
+  font-size: clamp(26px, 2.6vw, 34px) !important;
   font-weight: 800 !important;
-  letter-spacing: -0.04em !important;
-  line-height: 1.05 !important;
+  letter-spacing: -0.035em !important;
+  line-height: 1.1 !important;
   color: inherit !important;
 }
-body.page-dashboard .dx-sub { margin-top: 6px; font-size: 12.5px; font-weight: 600; line-height: 1.35; opacity: .72; }
+body.page-dashboard .dx-sub { margin-top: 4px; font-size: 12px; font-weight: 600; line-height: 1.35; }
 
 /* Tata Letak Desktop: 4 Mini Cards di Kiri (Grid 2x2), Card Lebar di Kanan */
 @media (min-width: 960px) {
@@ -961,42 +966,56 @@ body.page-dashboard .dx-sub { margin-top: 6px; font-size: 12.5px; font-weight: 6
 body.page-dashboard .dx-online {
   background: #D8FF7A !important;
   color: #1B1B20 !important;
-  box-shadow: 0 14px 34px rgba(166, 216, 74, .24) !important;
+  box-shadow: 0 8px 24px rgba(166, 216, 74, .22) !important;
+}
+body.page-dashboard .dx-online .dx-lbl,
+body.page-dashboard .dx-online .dx-val,
+body.page-dashboard .dx-online #st-online,
+body.page-dashboard .dx-online .dx-sub,
+body.page-dashboard .dx-online #st-online-sub {
+  color: #1B1B20 !important;
+  opacity: 1 !important;
 }
 body.page-dashboard .dx-online .dx-ic { background: rgba(27, 27, 32, .12) !important; color: #1B1B20 !important; }
 
-/* Card 2: Status Slot — Card Bersih Putih / Kontras */
+/* Card 2: Status Slot — Card Bersih Putih */
 body.page-dashboard .dx-role {
   background: #FFFFFF !important;
   color: #1B1B20 !important;
-  box-shadow: 0 0 0 1px #E6E6E2, 0 10px 28px rgba(0,0,0,0.04) !important;
+  box-shadow: 0 0 0 1px #E6E6E2, 0 8px 24px rgba(0,0,0,0.03) !important;
 }
+body.page-dashboard .dx-role .dx-lbl { color: #5B5B63 !important; }
+body.page-dashboard .dx-role .dx-sub { color: #7B7B83 !important; }
 body.page-dashboard .dx-role .dx-ic { background: #F2F2EE !important; color: #1B1B20 !important; }
 
 /* Card 3: Kedaluwarsa — Card Bersih Putih */
 body.page-dashboard .dx-exp {
   background: #FFFFFF !important;
   color: #1B1B20 !important;
-  box-shadow: 0 0 0 1px #E6E6E2, 0 10px 28px rgba(0,0,0,0.04) !important;
+  box-shadow: 0 0 0 1px #E6E6E2, 0 8px 24px rgba(0,0,0,0.03) !important;
 }
+body.page-dashboard .dx-exp .dx-lbl { color: #5B5B63 !important; }
+body.page-dashboard .dx-exp .dx-sub { color: #7B7B83 !important; }
 body.page-dashboard .dx-exp .dx-ic { background: #F2F2EE !important; color: #1B1B20 !important; }
 
-/* Card 4: Slot Dibeli — Sky Blue Pastel seperti ETH di referensi */
+/* Card 4: Slot Dibeli — Sky Blue Pastel */
 body.page-dashboard .dx-slot {
   background: #BFD7FF !important;
   color: #1B1B20 !important;
-  box-shadow: 0 14px 34px rgba(143, 179, 240, .25) !important;
+  box-shadow: 0 8px 24px rgba(143, 179, 240, .22) !important;
 }
+body.page-dashboard .dx-slot .dx-lbl { color: #1B1B20 !important; opacity: .8 !important; }
+body.page-dashboard .dx-slot .dx-sub { color: #1B1B20 !important; opacity: .8 !important; }
 body.page-dashboard .dx-slot .dx-ic { background: rgba(27, 27, 32, .12) !important; color: #1B1B20 !important; }
 
 /* Card Kanan: Welcome & Command Center (Dark Brand High Impact) */
 body.page-dashboard .dx-welcome {
-  justify-content: flex-start !important;
-  gap: 16px !important;
+  justify-content: space-between !important;
+  gap: 14px !important;
   background: #1B1B20 !important;
   color: #FFFFFF !important;
-  box-shadow: 0 14px 36px rgba(0, 0, 0, .25) !important;
-  padding: clamp(24px, 3vw, 36px) !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, .2) !important;
+  padding: 24px 28px !important;
 }
 body.page-dashboard .dx-welcome .dx-chip {
   align-self: flex-start;
@@ -1016,14 +1035,14 @@ html body.page-dashboard .dx-welcome h1 {
   gap: 6px;
   line-height: 1;
 }
-body.page-dashboard .dx-hello { font-size: 13.5px; font-weight: 700; opacity: .7; letter-spacing: .02em; text-transform: uppercase; color: #A0A0AA; }
+body.page-dashboard .dx-hello { font-size: 13px; font-weight: 700; opacity: .7; letter-spacing: .02em; text-transform: uppercase; color: #A0A0AA; }
 body.page-dashboard .dx-name {
-  font-size: clamp(32px, 4vw, 48px);
+  font-size: clamp(30px, 3.5vw, 42px);
   font-weight: 800;
   letter-spacing: -0.04em;
   color: #FFFFFF;
 }
-html body.page-dashboard .dx-lead { margin: 0; max-width: 440px; font-size: 14.5px; font-weight: 500; line-height: 1.5; color: #A0A0AA; }
+html body.page-dashboard .dx-lead { margin: 0; max-width: 440px; font-size: 14px; font-weight: 500; line-height: 1.5; color: #A0A0AA; }
 body.page-dashboard .dx-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: auto; position: relative; z-index: 2; }
 html body.page-dashboard .dx-btn {
   display: inline-flex;
@@ -1045,31 +1064,32 @@ body.page-dashboard .dx-btn-ic .i { width: 14px; height: 14px; }
 
 /* Judul Section Bot Kamu */
 body.page-dashboard .dx-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin: 0 0 16px; }
-html body.page-dashboard .dx-head h2 { margin: 0; font-size: clamp(22px, 2.6vw, 28px); font-weight: 800; letter-spacing: -0.04em; color: var(--ink, #1B1B20); }
-html body.page-dashboard .dx-head p { margin: 4px 0 0; font-size: 13.5px; font-weight: 500; color: var(--mute, #A0A0AA); }
+html body.page-dashboard .dx-head h2 { margin: 0; font-size: clamp(22px, 2.6vw, 26px); font-weight: 800; letter-spacing: -0.035em; color: #1B1B20; }
+html body.page-dashboard .dx-head p { margin: 4px 0 0; font-size: 13.5px; font-weight: 500; color: #5B5B63; }
 html body.page-dashboard #slot-text { display: inline-flex; align-items: center; padding: 6px 14px; border-radius: 9999px; background: #D8FF7A; color: #1B1B20; font-size: 13px; font-weight: 800; }
 
 /* Grid & Kartu Bot */
 html body.page-dashboard #bot-grid {
   display: grid !important;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)) !important;
-  gap: clamp(12px, 1.6vw, 18px) !important;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)) !important;
+  gap: 16px !important;
   counter-reset: bot;
 }
 html body.page-dashboard #bot-grid .card.bc {
-  --glow: 255, 255, 255;
+  --glow: 27, 27, 32;
   position: relative !important;
   overflow: hidden !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: 14px !important;
-  min-height: 210px !important;
+  gap: 12px !important;
+  min-height: 220px !important;
   padding: 22px !important;
   background: #FFFFFF !important;
   border: 0 !important;
-  border-radius: 28px !important;
-  box-shadow: 0 0 0 1px #E6E6E2, 0 10px 28px rgba(0,0,0,0.04) !important;
+  border-radius: 26px !important;
+  box-shadow: 0 0 0 1px #E6E6E2, 0 10px 28px rgba(27,27,32,0.04) !important;
   cursor: pointer !important;
+  color: #1B1B20 !important;
   transition: transform .25s cubic-bezier(.16, 1, .3, 1), box-shadow .25s ease !important;
 }
 html body.page-dashboard #bot-grid .card.bc:has(.eb-wa) { --glow: 37, 211, 102; }
@@ -1077,7 +1097,7 @@ html body.page-dashboard #bot-grid .card.bc:has(.eb-tg) { --glow: 34, 158, 217; 
 html body.page-dashboard #bot-grid .card.bc:has(.eb-dc) { --glow: 88, 101, 242; }
 html body.page-dashboard #bot-grid .card.bc:hover {
   transform: translateY(-4px) !important;
-  box-shadow: 0 0 0 1.5px rgba(var(--glow), .6), 0 14px 34px rgba(0,0,0,0.08) !important;
+  box-shadow: 0 0 0 1.5px rgba(var(--glow), .6), 0 14px 34px rgba(27,27,32,0.08) !important;
 }
 html body.page-dashboard #bot-grid .card.bc::after {
   counter-increment: bot;
@@ -1093,22 +1113,67 @@ html body.page-dashboard #bot-grid .card.bc::after {
   pointer-events: none;
 }
 html body.page-dashboard #bot-grid .card.bc > * { position: relative; z-index: 1; }
-html body.page-dashboard #bot-grid .card.bc .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+html body.page-dashboard #bot-grid .card.bc .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: #5B5B63 !important; }
 html body.page-dashboard #bot-grid .card.bc h3 {
-  margin: 6px 0 0 !important;
-  font-size: 21px;
-  font-weight: 800;
-  letter-spacing: -0.035em;
-  line-height: 1.1;
-  color: #1B1B20;
+  margin: 4px 0 0 !important;
+  font-size: 20px !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.03em !important;
+  line-height: 1.15 !important;
+  color: #1B1B20 !important;
 }
-html body.page-dashboard #bot-grid .card.bc p { margin: 0; font-size: 13.5px; color: #5B5B63; }
+html body.page-dashboard #bot-grid .card.bc p { margin: 0; font-size: 13.5px; color: #5B5B63 !important; }
+
+/* Kuota Box di Kartu Bot */
+html body.page-dashboard #bot-grid .card.bc .bot-kuota-sec {
+  background: #F8F8F5 !important;
+  border: 1px solid #E6E6E2 !important;
+  border-radius: 14px !important;
+  padding: 10px 12px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+}
+html body.page-dashboard #bot-grid .card.bc .bot-kuota-info {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+}
+html body.page-dashboard #bot-grid .card.bc .bot-kuota-info span { color: #5B5B63 !important; font-size: 12px !important; }
+html body.page-dashboard #bot-grid .card.bc .bot-kuota-info b { color: #1B1B20 !important; font-size: 12.5px !important; }
+html body.page-dashboard #bot-grid .card.bc .bot-kuota-bar {
+  background: #E2E2DE !important;
+  height: 6px !important;
+  border-radius: 9999px !important;
+  overflow: hidden !important;
+}
+html body.page-dashboard #bot-grid .card.bc .bot-kuota-sub { color: #7B7B83 !important; font-size: 11.5px !important; }
+
+/* Auto Renew & Addon Row di Kartu Bot */
+html body.page-dashboard #bot-grid .card.bc .bot-auto-renew-row {
+  background: #F8F8F5 !important;
+  border: 1px solid #E6E6E2 !important;
+  border-radius: 12px !important;
+  padding: 8px 12px !important;
+  color: #1B1B20 !important;
+}
+html body.page-dashboard #bot-grid .card.bc .bot-auto-renew-row span { color: #1B1B20 !important; }
+html body.page-dashboard #bot-grid .card.bc .bot-addon-row button,
+html body.page-dashboard #bot-grid .card.bc a.btn-outline {
+  background: #FFFFFF !important;
+  border: 1px solid #D0D0CA !important;
+  color: #1B1B20 !important;
+}
+html body.page-dashboard #bot-grid .card.bc .bot-addon-row button:hover {
+  background: #F2F2EE !important;
+}
+
 html body.page-dashboard #bot-grid .card.bc .btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; }
 html body.page-dashboard #bot-grid .card.bc .btns button {
   border: 0;
   border-radius: 9999px;
   padding: 8px 16px;
-  background: #F4F4F0;
+  background: #F2F2EE;
   color: #1B1B20;
   font-size: 13px;
   font-weight: 700;
@@ -1132,10 +1197,10 @@ html body.page-dashboard #bot-grid .card.add-card {
   flex-direction: column !important;
   align-items: center !important;
   justify-content: center !important;
-  min-height: 210px !important;
+  min-height: 220px !important;
   background: transparent !important;
   border: 2px dashed #D0D0CA !important;
-  border-radius: 28px !important;
+  border-radius: 26px !important;
   box-shadow: none !important;
   color: #5B5B63 !important;
   font-size: 15px;
@@ -1159,4 +1224,5 @@ html body.page-dashboard #bot-grid .card.add-card:hover {
   .cx-nav-pill { display: none !important; }
   body.page-dashboard .dx-tile:not(.dx-welcome) { grid-column: span 12 !important; }
 }
+
 
