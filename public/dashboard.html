@@ -81,17 +81,7 @@
         <!-- Kartu bot + tile "Tambah bot" dirender JS ke sini.
              #bot-grid memakai display:contents, jadi anak-anaknya ikut grid bento. -->
         <div id="bot-grid"></div>
-
-        <!-- Status bot (miring) -->
-        <article class="bt-tile bt-streak bt-s3 bt-anim">
-          <div class="bt-sh">
-            <h3 id="bt-stk-title">Belum ada bot</h3>
-            <div class="bt-big"><svg class="bt-bolt" viewBox="0 0 24 24"><use href="#bt-bolt"/></svg><span id="bt-stk-num">0</span></div>
-          </div>
-          <div class="bt-plats"><i data-p="wa">WA</i><i data-p="tg">TG</i><i data-p="dc">DC</i></div>
-          <div class="bt-tr"><i id="bt-stk-bar" style="width:0"></i></div>
-          <div class="bt-foot"><span>Slot terpakai</span><b id="slot-text">0 / 0</b></div>
-        </article>
+        <span id="slot-text" style="display:none">0 / 0</span>
 
       </div>
     </div>
@@ -147,6 +137,6 @@
   </div>
 </div>
 <div class="toast" id="toast" role="status"></div>
-<script src="/js/dashboard.js?v=10.0"></script>
+<script src="/js/dashboard.js?v=10.1"></script>
 </body>
 </html>
