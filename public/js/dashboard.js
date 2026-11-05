@@ -115,13 +115,13 @@
     // nentuin boleh nambah bot apa nggak — di situ admin dapet 999, dan angka
     // itu yang bikin baris ini nulis "1 / ∞" padahal jatahnya 2.
     const beli = me?.slots_beli ?? maxSlots;
-    document.getElementById('slot-text').textContent = `${used} / ${beli}`;
+    document.getElementById('slot-text').textContent = me?.is_admin ? `${used} / \u221e` : `${used} / ${beli}`;
 
     const elSlot = document.getElementById('st-slot');
-    elSlot.textContent = String(beli);
-    elSlot.className = 'val' + (beli > 0 && used >= beli ? ' warn' : '');
+    elSlot.textContent = me?.is_admin ? '0' : String(beli);
+    elSlot.className = 'bt-v' + (beli > 0 && used >= beli ? ' warn' : '');
     document.getElementById('st-slot-sub').textContent =
-      me?.is_admin ? `Administrator \u2014 tak terbatas, ${used} terpakai`
+      me?.is_admin ? `Tak terbatas \u00b7 ${used} terpakai`
       : beli === 0 ? 'Belum ada slot \u2014 klaim Trial atau beli paket'
       : used >= beli ? `Slot penuh \u2014 ${used} dari ${beli} terpakai`
       : `Sisa ${beli - used} slot lagi dari ${beli}`;
@@ -325,7 +325,8 @@
     add.type = 'button';
     add.className = 'bt-tile bt-add bt-s3' + (btAnimated ? '' : ' bt-anim');
     if (!btAnimated) add.style.animationDelay = (300 + bots.length * 70) + 'ms';
-    add.innerHTML = '<span class="bt-pl"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><span>Tambah bot</span>';
+    const slotDesc = (me && me.is_admin) ? (bots.length + ' / \u221e slot terpakai') : (bots.length + ' / ' + (me && me.slots ? me.slots : 1) + ' slot terpakai');
+    add.innerHTML = '<span class="bt-pl"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><span>Tambah bot</span><small style="font-size:12px;color:var(--bt-mute);font-weight:600">' + esc(slotDesc) + '</small>';
     add.onclick = openAddBot;
     grid.appendChild(add);
 

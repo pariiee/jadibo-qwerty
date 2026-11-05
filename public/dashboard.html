@@ -69,6 +69,7 @@
         <article class="bt-tile bt-k bt-peach bt-deco bt-s3 bt-anim">
           <div class="bt-lb"><span class="bt-ic"><svg class="i" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4"/></svg></span>Kedaluwarsa</div>
           <div><div class="bt-v" id="st-exp">Tidak ada</div><div class="bt-sb" id="st-exp-sub">Masa aktif langganan</div></div>
+          <div style="margin-top:auto"><a href="/pricing" class="bt-pill-btn">Klaim trial 5 hari</a></div>
         </article>
 
         <!-- Panduan -->
@@ -81,7 +82,17 @@
         <!-- Kartu bot + tile "Tambah bot" dirender JS ke sini.
              #bot-grid memakai display:contents, jadi anak-anaknya ikut grid bento. -->
         <div id="bot-grid"></div>
-        <span id="slot-text" style="display:none">0 / 0</span>
+
+        <!-- Status bot (miring) -->
+        <article class="bt-tile bt-streak bt-s3 bt-anim">
+          <div class="bt-sh">
+            <h3 id="bt-stk-title">Semua bot lagi online</h3>
+            <div class="bt-big"><svg class="bt-bolt" viewBox="0 0 24 24"><use href="#bt-bolt"/></svg><span id="bt-stk-num">0</span></div>
+          </div>
+          <div class="bt-plats"><i data-p="wa">WA</i><i data-p="tg">TG</i><i data-p="dc">DC</i></div>
+          <div class="bt-tr"><i id="bt-stk-bar" style="width:0"></i></div>
+          <div class="bt-foot"><span>Slot terpakai</span><b id="slot-text">0 / 0</b></div>
+        </article>
 
       </div>
     </div>
@@ -137,6 +148,6 @@
   </div>
 </div>
 <div class="toast" id="toast" role="status"></div>
-<script src="/js/dashboard.js?v=10.1"></script>
+<script src="/js/dashboard.js?v=10.2"></script>
 </body>
 </html>
