@@ -985,17 +985,15 @@ body.page-dashboard .bt-purple{background:var(--bt-purple);color:#fff;--bt-text:
 body.page-dashboard .bt-deco::before{content:"";position:absolute;right:-26px;top:-26px;width:110px;height:110px;border-radius:50%;background:rgba(255,255,255,.4);pointer-events:none}
 
 /* Tile statistik */
-body.page-dashboard .bt-lb{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:700;color:var(--bt-text)}
-body.page-dashboard .bt-ic{width:38px;height:38px;border-radius:12px;background:var(--bt-soft);display:grid;place-items:center;color:var(--bt-text)}
-body.page-dashboard .bt-v{font-size:clamp(38px,4vw,44px);font-weight:800;letter-spacing:-.045em;line-height:1;color:var(--bt-text)}
-body.page-dashboard #st-role,body.page-dashboard #st-exp{font-size:clamp(24px,2.6vw,30px) !important;line-height:1.15 !important}
-body.page-dashboard .bt-sb{margin-top:8px;font-size:13.5px;font-weight:500;color:var(--bt-mute);line-height:1.4}
-body.page-dashboard .bt-purple .bt-sb{color:rgba(255,255,255,.9) !important;font-weight:600 !important}
-body.page-dashboard .bt-up{display:flex;gap:4px;height:24px;margin-top:14px}
+body.page-dashboard .bt-lb{display:flex;align-items:center;gap:10px;font-size:13.5px;font-weight:600;color:var(--bt-mute)}
+body.page-dashboard .bt-ic{width:34px;height:34px;border-radius:11px;background:var(--bt-soft);display:grid;place-items:center;color:var(--bt-text)}
+body.page-dashboard .bt-v{font-size:clamp(28px,2.8vw,36px);font-weight:800;letter-spacing:-.04em;line-height:1.05;color:var(--bt-text)}
+body.page-dashboard .bt-sb{margin-top:6px;font-size:12.5px;font-weight:500;color:var(--bt-mute);line-height:1.35}
+body.page-dashboard .bt-up{display:flex;gap:4px;height:22px;margin-top:12px}
 body.page-dashboard .bt-up i{flex:1;border-radius:4px;background:rgba(255,255,255,.35);transform-origin:bottom;animation:bt-grow .6s cubic-bezier(.16,1,.3,1) backwards}
 body.page-dashboard .bt-up i:last-child{background:var(--bt-lime);animation:bt-grow .6s cubic-bezier(.16,1,.3,1) backwards,bt-pulse 1.8s .6s ease-in-out infinite}
 body.page-dashboard .bt-pips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
-body.page-dashboard .bt-pips i{width:28px;height:28px;border-radius:8px;background:var(--bt-purple);border:2px solid #151515;font-style:normal;display:grid;place-items:center;font-weight:800;font-size:16px;line-height:1}
+body.page-dashboard .bt-pips i{width:24px;height:24px;border-radius:8px;background:var(--bt-purple);border:2px solid #151515;font-style:normal;display:grid;place-items:center;font-weight:800;font-size:14px}
 body.page-dashboard .bt-pips i.bt-empty,body.page-dashboard .bt-pips i.bt-inf{background:transparent;border-style:dashed}
 
 /* Welcome */
@@ -1012,15 +1010,15 @@ body.page-dashboard .bt-wart{position:absolute !important;right:10px;bottom:6px;
 body.page-dashboard .bt-wring{position:absolute !important;right:-70px;bottom:-80px;width:290px;height:290px;border:2px dashed rgba(21,21,21,.25);border-radius:50%;z-index:0 !important}
 
 /* Pill Button */
-body.page-dashboard .bt-pill-btn{display:inline-flex;align-items:center;justify-content:center;padding:7px 16px;background:#fff !important;color:#151515 !important;border:2px solid #151515 !important;border-radius:999px !important;font-size:13px !important;font-weight:700 !important;text-decoration:none !important;box-shadow:none !important}
+body.page-dashboard .bt-pill-btn{display:inline-flex;align-items:center;justify-content:center;padding:6px 14px;background:#fff !important;color:#151515 !important;border:1.5px solid #151515 !important;border-radius:999px !important;font-size:12px !important;font-weight:700 !important;text-decoration:none !important;box-shadow:none !important}
 body.page-dashboard .bt-pill-btn:hover{transform:translateY(-2px)}
 
 /* Panduan */
-body.page-dashboard .bt-promo h3{font-size:clamp(22px,2.2vw,26px);font-weight:800;letter-spacing:-.04em;line-height:1.2;max-width:280px;color:#151515}
-body.page-dashboard .bt-promo p{margin-top:8px;max-width:260px;font-size:14px;color:var(--bt-mute);line-height:1.5}
-body.page-dashboard .bt-promo .bt-go{background:#151515 !important;color:#fff !important}
-body.page-dashboard .bt-promo .bt-go span{background:var(--bt-lime) !important;color:#151515 !important}
-body.page-dashboard .bt-fl{position:absolute !important;right:-12px;z-index:0 !important;padding:7px 18px;border:2px solid var(--bt-line);border-radius:999px;background:#fff;color:#151515;font-size:13px;font-weight:700;animation:bt-drift 6s ease-in-out infinite alternate}
+body.page-dashboard .bt-promo h3{font-size:24px;font-weight:800;letter-spacing:-.04em;line-height:1.1;max-width:240px}
+body.page-dashboard .bt-promo p{margin-top:6px;max-width:230px;font-size:12.5px;color:var(--bt-mute);line-height:1.45}
+body.page-dashboard .bt-promo .bt-go{background:var(--bt-lime);color:#151515}
+body.page-dashboard .bt-promo .bt-go span{background:#151515;color:var(--bt-lime)}
+body.page-dashboard .bt-fl{position:absolute !important;right:-12px;z-index:0 !important;padding:6px 14px;border:2px solid var(--bt-line);border-radius:999px;background:var(--bt-soft);font-size:12px;font-weight:700;animation:bt-drift 6s ease-in-out infinite alternate}
 body.page-dashboard .bt-f1{top:22px}
 body.page-dashboard .bt-f2{top:72px;right:34px;animation-delay:-2s}
 body.page-dashboard .bt-f3{top:122px;animation-delay:-4s}
