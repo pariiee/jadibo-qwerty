@@ -1070,18 +1070,35 @@ body.page-dashboard .bt-foot b{color:var(--bt-text)}
 @keyframes bt-bob{to{transform:translateY(-8px) rotate(3deg)}}
 
 @media (max-width:1000px){
-  body.page-dashboard .bt-grid{grid-template-columns:repeat(6,minmax(0,1fr))}
-  body.page-dashboard .bt-s5{grid-column:span 6;grid-row:span 1;min-height:280px}
+  body.page-dashboard .bt-grid{grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}
+  body.page-dashboard .bt-s5{grid-column:span 6;grid-row:span 1;min-height:260px}
   body.page-dashboard .bt-s4{grid-column:span 6}
-  body.page-dashboard .bt-s3,body.page-dashboard .bt-s2{grid-column:span 3}
+  body.page-dashboard .bt-s3{grid-column:span 3}
+  body.page-dashboard .bt-s2{grid-column:span 3}
+  body.page-dashboard .bt-add,body.page-dashboard .bt-streak{grid-column:span 3}
 }
-@media (max-width:600px){
-  body.page-dashboard .bt-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
-  body.page-dashboard .bt-s5,body.page-dashboard .bt-s4,body.page-dashboard .bt-bot{grid-column:span 2}
-  body.page-dashboard .bt-bot{grid-row:span 1}
-  body.page-dashboard .bt-s3,body.page-dashboard .bt-s2{grid-column:span 1}
-  body.page-dashboard .bt-wart{width:130px;height:130px}
+@media (max-width:640px){
+  html body.page-dashboard main{padding:10px 12px 48px !important}
+  body.page-dashboard .bt-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  body.page-dashboard .bt-tile{padding:16px;border-radius:20px}
+  body.page-dashboard .bt-hero{padding:20px 18px;min-height:auto}
+  body.page-dashboard .bt-s5,
+  body.page-dashboard .bt-s4,
+  body.page-dashboard .bt-bot,
+  body.page-dashboard .bt-add,
+  body.page-dashboard .bt-streak{grid-column:span 2 !important}
+  body.page-dashboard .bt-s3,
+  body.page-dashboard .bt-s2{grid-column:span 1 !important}
+  body.page-dashboard .bt-bot{grid-row:span 1 !important}
+  body.page-dashboard .bt-wart{width:110px !important;height:110px !important;opacity:.85}
+  body.page-dashboard .bt-wring{display:none !important}
   body.page-dashboard .bt-fl{display:none !important}
+  body.page-dashboard .bt-name{font-size:clamp(32px,8vw,44px) !important}
+}
+@media (max-width:380px){
+  body.page-dashboard .bt-grid{grid-template-columns:1fr}
+  body.page-dashboard .bt-s3,
+  body.page-dashboard .bt-s2{grid-column:span 1 !important}
 }
 @media (prefers-reduced-motion:reduce){body.page-dashboard .bt-grid *{animation:none !important;transition:none !important}}
 
