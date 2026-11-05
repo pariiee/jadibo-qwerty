@@ -301,27 +301,6 @@
     add.innerHTML = '<span class="round"><svg class="i" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span><span>+ Tambah Bot</span>';
     add.addEventListener('click', openAddBot);
     grid.appendChild(add);
-    renderSide();
-  }
-
-  function renderSide() {
-    const total = bots.length;
-    const online = bots.filter(b => b.is_running).length;
-    const by = p => bots.filter(b => (b.platform || 'whatsapp') === p).length;
-    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-    const pct = total ? Math.round(online / total * 100) : 0;
-
-    set('sd-total', total);
-    set('sd-pct', pct + '%');
-    set('sd-wa', by('whatsapp'));
-    set('sd-tg', by('telegram'));
-    set('sd-dc', by('discord'));
-
-    const arc = document.getElementById('sd-arc');
-    if (arc) {
-      arc.style.opacity = pct ? '1' : '0';
-      arc.style.strokeDashoffset = String(100 - pct);
-    }
   }
 
   // ── Add bot ─────────────────────────────────────────────────────

@@ -1089,73 +1089,16 @@ html body.page-dashboard .dx-btn:hover { transform: translateY(-2px); }
 body.page-dashboard .dx-btn-ic { width: 26px; height: 26px; border-radius: 50%; background: #D8FF7A !important; color: #1B1B20 !important; display: grid; place-items: center; }
 body.page-dashboard .dx-btn-ic .i { width: 14px; height: 14px; }
 
-/* ══ 3. Baris bawah: bot (kiri) + ringkasan (kanan) ══ */
-body.page-dashboard .dx-lower {
-  display: grid;
-  grid-template-columns: minmax(0, 8fr) minmax(0, 4fr);
-  gap: 16px;
-  align-items: start;
-}
-body.page-dashboard .dx-bots { min-width: 0; }
-body.page-dashboard .dx-side { position: sticky; top: 92px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
-@media (max-width: 1000px) {
-  body.page-dashboard .dx-lower { grid-template-columns: minmax(0, 1fr); }
-  body.page-dashboard .dx-side { position: static; }
-}
-
+/* ══ 3. Baris bawah: Slot bot kamu ══ */
 body.page-dashboard .dx-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin: 0 0 16px; }
 html body.page-dashboard .dx-head h2 { margin: 0; font-size: clamp(22px, 2.6vw, 28px); font-weight: 800; letter-spacing: -0.04em; color: #1B1B20; }
 html body.page-dashboard .dx-head p { margin: 4px 0 0; font-size: 13.5px; font-weight: 500; color: #5B5B63; }
 html body.page-dashboard #slot-text { display: inline-flex; align-items: center; padding: 6px 14px; border-radius: 9999px; background: #D8FF7A; color: #1B1B20; font-size: 13px; font-weight: 800; }
 
-/* Kartu samping (Status Bot & Panduan) */
-body.page-dashboard .dx-card {
-  position: relative;
-  padding: 22px;
-  border-radius: 28px;
-  background: #FFFFFF;
-  color: #1B1B20;
-  box-shadow: 0 0 0 1px #E6E6E2, 0 8px 24px rgba(0, 0, 0, .03);
-}
-.sd-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-html body.page-dashboard .sd-head h3 { margin: 0; font-size: 17px; font-weight: 800; letter-spacing: -0.03em; color: #1B1B20; }
-.sd-chip { padding: 4px 10px; border-radius: 9999px; background: #F2F2EE; font-size: 12px; font-weight: 800; }
-
-.sd-gauge-wrap { position: relative; max-width: 270px; margin: 10px auto 18px; }
-.sd-gauge { display: block; width: 100%; height: auto; overflow: visible; }
-.sd-track, .sd-arc { fill: none; stroke-width: 16; stroke-linecap: round; }
-.sd-track { stroke: #EFEFEA; }
-.sd-arc { stroke: url(#sdg); stroke-dasharray: 100 100; stroke-dashoffset: 100; transition: stroke-dashoffset .9s cubic-bezier(.16, 1, .3, 1); }
-.sd-read { position: absolute; left: 0; right: 0; bottom: 2px; display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
-.sd-read b { font-size: 34px; font-weight: 800; letter-spacing: -0.04em; color: #1B1B20; }
-.sd-read span { font-size: 12px; font-weight: 700; color: #5B5B63; }
-
-.sd-mini { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-.sd-m { display: flex; flex-direction: column; gap: 8px; padding: 12px 12px 14px; border-radius: 18px; }
-.sd-m span { font-size: 11px; font-weight: 800; opacity: .75; }
-.sd-m b { font-size: 24px; font-weight: 800; letter-spacing: -0.04em; line-height: 1; }
-.sd-m.m-wa { background: #D8FF7A; color: #1B1B20; }
-.sd-m.m-tg { background: #BFD7FF; color: #1B1B20; }
-.sd-m.m-dc { background: #5865F2; color: #FFFFFF; }
-
-html body.page-dashboard .sd-help {
-  display: flex; flex-direction: column; gap: 14px;
-  min-height: 130px;
-  background: #1B1B20 !important; color: #FFFFFF !important;
-  box-shadow: 0 14px 36px rgba(0, 0, 0, .14) !important;
-  text-decoration: none !important;
-  transition: transform .25s cubic-bezier(.16, 1, .3, 1);
-}
-html body.page-dashboard .sd-help:hover { transform: translateY(-4px); }
-html body.page-dashboard .sd-help .dx-chip { align-self: flex-start; padding: 4px 12px; border-radius: 9999px; background: #D8FF7A; color: #1B1B20; font-size: 11.5px; font-weight: 800; }
-html body.page-dashboard .sd-help b { max-width: 240px; font-size: 18px; font-weight: 800; line-height: 1.2; letter-spacing: -0.03em; }
-.sd-help-arr { position: absolute; right: 18px; bottom: 18px; width: 36px; height: 36px; border-radius: 50%; background: #D8FF7A; color: #1B1B20; display: grid; place-items: center; }
-.sd-help:focus-visible { outline: 3px solid #D8FF7A; outline-offset: 3px; }
-
 /* ══ 4. Kartu bot: warna per platform ══ */
 html body.page-dashboard #bot-grid {
   display: grid !important;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)) !important;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)) !important;
   gap: 16px !important;
 }
 html body.page-dashboard #bot-grid .card.bc {
