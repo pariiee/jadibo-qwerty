@@ -238,69 +238,99 @@
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   }
 
+  let btAnimated = false;
+
+  function renderSide() {
+    const total = bots.length;
+    const online = bots.filter(b => b.is_running).length;
+    const pct = total ? Math.round(online / total * 100) : 0;
+    const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+
+    setTxt('bt-stk-num', online);
+    setTxt('bt-stk-title', total === 0 ? 'Belum ada bot' : (online === total ? 'Semua bot lagi online' : online + ' dari ' + total + ' bot online'));
+    const bar = document.getElementById('bt-stk-bar');
+    if (bar) bar.style.width = pct + '%';
+
+    const key = { wa: 'whatsapp', tg: 'telegram', dc: 'discord' };
+    document.querySelectorAll('.bt-plats [data-p]').forEach(el => {
+      const p = key[el.dataset.p];
+      el.classList.toggle('bt-off', !bots.some(b => (b.platform || 'whatsapp') === p));
+    });
+
+    const pips = document.getElementById('bt-pips');
+    if (pips) {
+      const used = bots.length;
+      const unlimited = !!(me && me.is_admin);
+      const cap = unlimited ? 0 : (me && me.plan_aktif ? (me.slots || 1) : 0);
+      let h = '';
+      for (let i = 0; i < Math.min(used, 8); i++) h += '<i></i>';
+      if (unlimited) h += '<i class="bt-inf">\u221e</i>';
+      else for (let i = used; i < Math.min(cap, 8); i++) h += '<i class="bt-empty"></i>';
+      pips.innerHTML = h;
+    }
+  }
+
   function renderBots() {
     const grid = document.getElementById('bot-grid');
-    const empty = document.getElementById('empty-state');
     grid.innerHTML = '';
-    if (empty) empty.style.display = 'none';
 
-    bots.forEach(bot => {
-      const card = document.createElement('div');
-      card.className = 'card bc';
-      card.addEventListener('click', () => { location.href = '/bot/' + botHref(bot); });
+    const PL = {
+      whatsapp: { c: 'bt-lime', n: 'WhatsApp', s: 'bt-s-wa' },
+      telegram: { c: 'bt-sky',  n: 'Telegram', s: 'bt-s-tg' },
+      discord:  { c: 'bt-lav',  n: 'Discord',  s: 'bt-s-dc' }
+    };
+
+    bots.forEach((bot, i) => {
+      const p = PL[bot.platform] || PL.whatsapp;
       const on = bot.is_running;
       const stTxt = on ? 'Online' : (bot.status === 'connecting' ? 'Connecting' : 'Offline');
       const k = botKuota.get(bot.id);
 
       let kuotaHtml = '';
-      if (k) {
-        if (k.tanpaBatas) {
-          kuotaHtml = '<div class="bot-kuota-sec">' +
-            '<div class="bot-kuota-info"><span>Kuota Pesan</span><b>Tanpa Batas</b></div>' +
-            '<div class="bot-kuota-sub">Akun bebas batas kuota</div>' +
-          '</div>';
-        } else if (!k.paketAktif) {
-          kuotaHtml = '<div class="bot-kuota-sec">' +
-            '<div class="bot-kuota-info"><span>Kuota Pesan</span><b style="color:var(--errTxt)">Paket Berakhir</b></div>' +
-            '<div class="bot-kuota-sub">Perpanjang di menu Pricing</div>' +
-          '</div>';
-        } else {
-          const w = k.persen >= 95 ? 'var(--errTxt)' : (k.persen >= 80 ? 'var(--warn)' : 'var(--green)');
-          kuotaHtml = '<div class="bot-kuota-sec">' +
-            '<div class="bot-kuota-info"><span>Kuota Pesan</span><b>' + Number(k.sisa || 0).toLocaleString('id-ID') + ' / ' + Number(k.batas || 0).toLocaleString('id-ID') + '</b></div>' +
-            '<div class="bot-kuota-bar"><div class="bot-kuota-fill" style="width:' + Math.min(100, k.persen) + '%;background:' + w + '"></div></div>' +
-            '<div class="bot-kuota-sub">' + k.persen + '% terpakai · harian: ' + Number(k.harian || 0).toLocaleString('id-ID') + '</div>' +
-          '</div>';
-        }
+      if (k && k.tanpaBatas) {
+        kuotaHtml = '<div class="bt-q"><div class="bt-row"><span>Kuota pesan</span><b>Tanpa batas</b></div>' +
+          '<div class="bt-bar"><i style="width:100%"></i></div></div>';
+      } else if (k && k.paketAktif) {
+        const w = k.persen >= 95 ? 'var(--errTxt)' : (k.persen >= 80 ? 'var(--warn)' : 'var(--bt-purple)');
+        kuotaHtml = '<div class="bt-q"><div class="bt-row"><span>Kuota pesan</span><b>' +
+          Number(k.sisa || 0).toLocaleString('id-ID') + ' / ' + Number(k.batas || 0).toLocaleString('id-ID') + '</b></div>' +
+          '<div class="bt-bar"><i style="width:' + Math.min(100, k.persen) + '%;background:' + w + '"></i></div>' +
+          '<small>' + k.persen + '% terpakai</small></div>';
+      } else if (k && !k.paketAktif) {
+        kuotaHtml = '<div class="bt-q"><div class="bt-row"><span>Kuota pesan</span><b style="color:var(--errTxt)">Paket Berakhir</b></div>' +
+          '<small>Perpanjang di menu Pricing</small></div>';
       }
 
-      const platCls = bot.platform === 'telegram' ? 'eb-tg' : (bot.platform === 'discord' ? 'eb-dc' : 'eb-wa');
-      const platName = bot.platform === 'telegram' ? 'Telegram' : (bot.platform === 'discord' ? 'Discord' : 'WhatsApp');
-
+      const card = document.createElement('article');
+      card.className = 'bt-tile bt-k bt-bot bt-s3 bt-r2 ' + p.c + (btAnimated ? '' : ' bt-anim');
+      if (!btAnimated) card.style.animationDelay = (300 + i * 70) + 'ms';
       card.innerHTML =
-        '<div class="row">' +
-          '<span class="eb-label ' + platCls + '">' + esc(platName) + '</span>' +
-          '<span class="on-dot ' + (on ? '' : 'off') + '">' + stTxt + '</span>' +
-        '</div>' +
-        '<h3 style="margin:10px 0 4px">' + esc(bot.bot_name) + '</h3>' +
-        '<div class="row" style="margin-top:2px;font-size:13px;color:var(--mute)">' + (bot.description ? esc(bot.description) : 'Tidak ada deskripsi') + '</div>' +
+        '<div class="bt-row"><span class="bt-pill">' + esc(p.n) + '</span>' +
+          '<span class="bt-pill' + (on ? ' bt-on' : '') + '">' + stTxt + '</span></div>' +
+        '<span class="bt-stk"><svg viewBox="0 0 64 64" aria-hidden="true"><use href="#' + p.s + '"/></svg></span>' +
+        '<div><h3>' + esc(bot.bot_name) + '</h3>' +
+          '<p class="bt-d">' + (bot.description ? esc(bot.description) : 'Tidak ada deskripsi') + '</p></div>' +
         kuotaHtml +
-        '<div class="row" style="margin-top:14px"><span>Prefix: <b style="color:var(--ink)">' + esc(bot.prefix) + '</b></span><span>' + esc(new Date(bot.created_at).toLocaleDateString('id-ID')) + '</span></div>' +
-        '<div class="btns">' +
-          '<button data-cfg>Config</button>' +
-          '<button data-stat>Statistik</button>' +
-        '</div>';
+        '<div class="bt-row bt-m"><span>Prefix <b>' + esc(bot.prefix) + '</b></span>' +
+          '<span>' + esc(new Date(bot.created_at).toLocaleDateString('id-ID')) + '</span></div>' +
+        '<div class="bt-btns"><button type="button" class="bt-pri" data-cfg>Config</button>' +
+          '<button type="button" data-stat>Statistik</button></div>';
+
       grid.appendChild(card);
-      card.querySelector('[data-cfg]').addEventListener('click', (e) => { e.stopPropagation(); location.href = '/config/' + botHref(bot); });
-      card.querySelector('[data-stat]').addEventListener('click', (e) => { e.stopPropagation(); location.href = '/bot/' + botHref(bot); });
+      card.querySelector('[data-cfg]').onclick = (e) => { e.stopPropagation(); location.href = '/config/' + botHref(bot); };
+      card.querySelector('[data-stat]').onclick = (e) => { e.stopPropagation(); location.href = '/bot/' + botHref(bot); };
     });
 
-    // Selalu tampilkan card Tambah Bot
-    const add = document.createElement('div');
-    add.className = 'card add-card';
-    add.innerHTML = '<span class="round"><svg class="i" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span><span>+ Tambah Bot</span>';
-    add.addEventListener('click', openAddBot);
+    const add = document.createElement('button');
+    add.type = 'button';
+    add.className = 'bt-tile bt-add bt-s3' + (btAnimated ? '' : ' bt-anim');
+    if (!btAnimated) add.style.animationDelay = (300 + bots.length * 70) + 'ms';
+    add.innerHTML = '<span class="bt-pl"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><span>Tambah bot</span>';
+    add.onclick = openAddBot;
     grid.appendChild(add);
+
+    btAnimated = true;
+    renderSide();
   }
 
   // ── Add bot ─────────────────────────────────────────────────────
@@ -455,5 +485,8 @@ window.logout = logout;
 // Tombol "Tambah bot" di tile Welcome
 const dxAdd = document.getElementById('dx-add');
 if (dxAdd) dxAdd.addEventListener('click', openAddBot);
+
+// Stagger animasi masuk untuk tile statis
+document.querySelectorAll('.bt-grid > .bt-anim').forEach((el, i) => { el.style.animationDelay = (i * 60) + 'ms'; });
 
 })();
