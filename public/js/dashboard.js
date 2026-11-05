@@ -490,4 +490,27 @@ if (dxAdd) dxAdd.addEventListener('click', openAddBot);
 // Stagger animasi masuk untuk tile statis
 document.querySelectorAll('.bt-grid > .bt-anim').forEach((el, i) => { el.style.animationDelay = (i * 60) + 'ms'; });
 
+// Accordion statistik di layar mobile
+const toggleBtn = document.getElementById('bt-toggle-btn');
+if (toggleBtn) {
+  toggleBtn.onclick = () => {
+    const grid = document.querySelector('.bt-grid');
+    if (!grid) return;
+    const isCollapsed = grid.classList.toggle('bt-collapsed');
+    toggleBtn.setAttribute('aria-expanded', !isCollapsed);
+    const txt = document.getElementById('bt-toggle-txt');
+    if (txt) txt.textContent = isCollapsed ? 'Tampilkan' : 'Sembunyikan';
+  };
+  // Layar sangat pendek: otomatis lipat statistik agar daftar bot langsung terlihat
+  if (window.innerHeight <= 680 && window.innerWidth <= 768) {
+    const grid = document.querySelector('.bt-grid');
+    if (grid) {
+      grid.classList.add('bt-collapsed');
+      toggleBtn.setAttribute('aria-expanded', 'false');
+      const txt = document.getElementById('bt-toggle-txt');
+      if (txt) txt.textContent = 'Tampilkan';
+    }
+  }
+}
+
 })();

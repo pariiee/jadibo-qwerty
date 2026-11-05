@@ -39,8 +39,17 @@
           <button type="button" class="bt-go" id="dx-add">Tambah bot<span><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span></button>
         </article>
 
+        <!-- Toggle Accordion Statistik (Mobile) -->
+        <div class="bt-stat-toggle" id="bt-stat-toggle">
+          <span>Statistik Ringkas</span>
+          <button type="button" id="bt-toggle-btn" aria-expanded="true">
+            <span id="bt-toggle-txt">Sembunyikan</span>
+            <svg class="i" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+        </div>
+
         <!-- Bot online -->
-        <article class="bt-tile bt-purple bt-deco bt-s3 bt-anim">
+        <article class="bt-tile bt-purple bt-deco bt-s3 bt-stat-card bt-anim">
           <div class="bt-lb"><span class="bt-ic"><svg class="i" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg></span>Bot online</div>
           <div>
             <div class="bt-v" id="st-online">0</div>
@@ -50,13 +59,13 @@
         </article>
 
         <!-- Status slot -->
-        <article class="bt-tile bt-k bt-lav bt-deco bt-s2 bt-anim">
+        <article class="bt-tile bt-k bt-lav bt-deco bt-s2 bt-stat-card bt-anim">
           <div class="bt-lb"><span class="bt-ic"><svg class="i" viewBox="0 0 24 24"><path d="M12 3l8 4-8 4-8-4 8-4zM4 12l8 4 8-4M4 17l8 4 8-4"/></svg></span>Status</div>
           <div><div class="bt-v" id="st-role">—</div><div class="bt-sb" id="st-role-sub">Kapasitas slot bot</div></div>
         </article>
 
         <!-- Slot dibeli -->
-        <article class="bt-tile bt-k bt-sky bt-deco bt-s2 bt-anim">
+        <article class="bt-tile bt-k bt-sky bt-deco bt-s2 bt-stat-card bt-anim">
           <div class="bt-lb"><span class="bt-ic"><svg class="i" viewBox="0 0 24 24"><path d="M3 7h18v10H3zM3 11h18"/></svg></span>Slot</div>
           <div>
             <div class="bt-v" id="st-slot">0</div>
@@ -66,7 +75,7 @@
         </article>
 
         <!-- Kedaluwarsa -->
-        <article class="bt-tile bt-k bt-peach bt-deco bt-s3 bt-anim">
+        <article class="bt-tile bt-k bt-peach bt-deco bt-s3 bt-stat-card bt-anim">
           <div class="bt-lb"><span class="bt-ic"><svg class="i" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4"/></svg></span>Kedaluwarsa</div>
           <div><div class="bt-v" id="st-exp">Tidak ada</div><div class="bt-sb" id="st-exp-sub">Masa aktif langganan</div></div>
           <div style="margin-top:auto"><a href="/pricing" class="bt-pill-btn">Klaim trial 5 hari</a></div>
@@ -148,6 +157,6 @@
   </div>
 </div>
 <div class="toast" id="toast" role="status"></div>
-<script src="/js/dashboard.js?v=10.3"></script>
+<script src="/js/dashboard.js?v=10.7"></script>
 </body>
 </html>

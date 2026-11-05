@@ -1069,6 +1069,9 @@ body.page-dashboard .bt-foot b{color:var(--bt-text)}
 @keyframes bt-drift{to{transform:translateX(-14px)}}
 @keyframes bt-bob{to{transform:translateY(-8px) rotate(3deg)}}
 
+/* Accordion / Collapsible Statistik (Mobile) */
+body.page-dashboard .bt-stat-toggle{display:none}
+
 @media (max-width:1000px){
   body.page-dashboard .bt-grid{grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}
   body.page-dashboard .bt-s5{grid-column:span 6;grid-row:span 1;min-height:260px}
@@ -1078,17 +1081,22 @@ body.page-dashboard .bt-foot b{color:var(--bt-text)}
   body.page-dashboard .bt-add,body.page-dashboard .bt-streak{grid-column:span 3}
 }
 @media (max-width:768px){
-  html body.page-dashboard main{padding:10px 14px 48px !important}
-  body.page-dashboard .bt-grid{display:flex !important;flex-direction:column !important;gap:12px !important}
-  body.page-dashboard .bt-tile{width:100% !important;padding:18px !important;border-radius:22px !important;box-sizing:border-box !important}
-  body.page-dashboard .bt-hero{padding:22px 20px !important}
-  body.page-dashboard .bt-s5,
+  html body.page-dashboard main{padding:10px 12px 48px !important}
+  body.page-dashboard .bt-stat-toggle{display:flex !important;align-items:center !important;justify-content:space-between !important;grid-column:span 2 !important;width:100% !important;padding:8px 14px !important;border-radius:999px !important;background:#fff !important;border:2px solid #151515 !important;font-size:13px !important;font-weight:700 !important;color:#151515 !important;box-sizing:border-box !important;margin:4px 0 !important}
+  body.page-dashboard .bt-stat-toggle button{display:inline-flex !important;align-items:center !important;gap:6px !important;border:none !important;background:#151515 !important;color:#D8FF7A !important;border-radius:999px !important;padding:4px 12px !important;font-size:11.5px !important;font-weight:800 !important;cursor:pointer !important}
+  body.page-dashboard .bt-stat-toggle button svg{width:13px !important;height:13px !important;transition:transform .25s ease !important}
+  body.page-dashboard .bt-grid.bt-collapsed .bt-stat-toggle button svg{transform:rotate(180deg) !important}
+  body.page-dashboard .bt-grid.bt-collapsed .bt-stat-card{display:none !important}
+
+  /* Grid 2x2 untuk 4 Mini Stat, 1 Kolom untuk Card Lainnya */
+  body.page-dashboard .bt-grid{display:grid !important;grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:10px !important}
+  body.page-dashboard .bt-tile{padding:16px !important;border-radius:20px !important;box-sizing:border-box !important}
+  body.page-dashboard .bt-hero{grid-column:span 2 !important;grid-row:auto !important;padding:20px 18px !important;min-height:auto !important}
+  body.page-dashboard .bt-stat-card{grid-column:span 1 !important;grid-row:auto !important;min-height:140px !important}
   body.page-dashboard .bt-s4,
-  body.page-dashboard .bt-s3,
-  body.page-dashboard .bt-s2,
   body.page-dashboard .bt-bot,
   body.page-dashboard .bt-add,
-  body.page-dashboard .bt-streak{grid-column:auto !important;grid-row:auto !important;width:100% !important}
+  body.page-dashboard .bt-streak{grid-column:span 2 !important;grid-row:auto !important;width:100% !important}
   body.page-dashboard .bt-wart{width:110px !important;height:110px !important;opacity:.85}
   body.page-dashboard .bt-wring{display:none !important}
   body.page-dashboard .bt-fl{display:none !important}
