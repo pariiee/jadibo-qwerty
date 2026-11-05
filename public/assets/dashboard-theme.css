@@ -954,7 +954,7 @@ html body.page-dashboard .cx-avatar-btn {
   cursor: pointer !important;
 }
 
-/* ══ 2. Baris atas Bento: 4 mini stat kiri + Welcome kanan ══ */
+/* ══ 2. Baris atas Bento: 4 mini stat (Solid White) + Welcome (Solid Lime) ══ */
 body.page-dashboard .dx-bento {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
@@ -963,35 +963,42 @@ body.page-dashboard .dx-bento {
 }
 body.page-dashboard .dx-tile {
   position: relative;
-  overflow: hidden;
   min-width: 0;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   gap: 10px;
-  padding: 20px 22px;
-  border-radius: 28px;
-  transition: transform .25s cubic-bezier(.16, 1, .3, 1);
+  padding: 22px 24px;
+  border-radius: 24px;
+  background: #FFFFFF !important;
+  color: #1B1B20 !important;
+  border: 1px solid #E6E6E2 !important;
+  box-shadow: 0 4px 16px rgba(27, 27, 32, 0.03) !important;
+  transition: transform .2s ease, box-shadow .2s ease;
 }
-body.page-dashboard .dx-tile:hover { transform: translateY(-4px); }
+body.page-dashboard .dx-tile:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(27, 27, 32, 0.06) !important;
+}
 
 body.page-dashboard .dx-top { display: flex; align-items: center; gap: 10px; }
-body.page-dashboard .dx-ic { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; }
-body.page-dashboard .dx-ic .i { width: 17px; height: 17px; }
-body.page-dashboard .dx-lbl { font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+body.page-dashboard .dx-ic { width: 36px; height: 36px; border-radius: 12px; background: #F4F4F0 !important; color: #1B1B20 !important; display: grid; place-items: center; flex-shrink: 0; }
+body.page-dashboard .dx-ic .i { width: 18px; height: 18px; }
+body.page-dashboard .dx-lbl { font-size: 11.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #5B5B63 !important; }
 html body.page-dashboard .dx-tile .dx-val,
 html body.page-dashboard .dx-tile #st-role,
 html body.page-dashboard .dx-tile #st-exp,
 html body.page-dashboard .dx-tile #st-online,
 html body.page-dashboard .dx-tile #st-slot {
-  font-size: clamp(26px, 2.6vw, 34px) !important;
+  font-size: clamp(28px, 2.8vw, 36px) !important;
   font-weight: 800 !important;
   letter-spacing: -0.035em !important;
   line-height: 1.1 !important;
-  color: inherit !important;
+  color: #1B1B20 !important;
 }
-body.page-dashboard .dx-sub { margin-top: 6px; font-size: 12.5px; font-weight: 600; line-height: 1.35; opacity: .72; }
+body.page-dashboard .dx-sub { margin-top: 4px; font-size: 12.5px; font-weight: 600; line-height: 1.35; color: #7B7B83 !important; }
 
+/* Desktop Grid 2x2 Kiri & Card Lebar Kanan */
 @media (min-width: 960px) {
   body.page-dashboard .dx-online  { grid-column: 1 / 4 !important; grid-row: 1 !important; }
   body.page-dashboard .dx-role    { grid-column: 4 / 7 !important; grid-row: 1 !important; }
@@ -1000,43 +1007,19 @@ body.page-dashboard .dx-sub { margin-top: 6px; font-size: 12.5px; font-weight: 6
   body.page-dashboard .dx-welcome { grid-column: 7 / 13 !important; grid-row: 1 / 3 !important; }
 }
 
-/* Varian Warna Kartu Bento Atas */
-body.page-dashboard .dx-online {
-  background: #5865F2 radial-gradient(circle at 100% 0, rgba(255, 255, 255, .24), transparent 55%) !important;
-  color: #FFFFFF !important;
-  box-shadow: 0 10px 28px rgba(88, 101, 242, .26) !important;
-}
-body.page-dashboard .dx-online .dx-lbl,
-body.page-dashboard .dx-online .dx-val,
-body.page-dashboard .dx-online #st-online,
-body.page-dashboard .dx-online .dx-sub,
-body.page-dashboard .dx-online #st-online-sub { color: #FFFFFF !important; }
-body.page-dashboard .dx-online .dx-ic { background: rgba(255, 255, 255, .2) !important; color: #FFFFFF !important; }
+/* Aksen Ramah User pada 4 Mini Card */
+body.page-dashboard .dx-online .dx-ic { background: #E8F9EE !important; color: #16a34a !important; }
+html body.page-dashboard .dx-online #st-online { color: #16a34a !important; }
 
-body.page-dashboard .dx-role, body.page-dashboard .dx-exp {
-  background: #FFFFFF !important;
-  color: #1B1B20 !important;
-  box-shadow: 0 0 0 1px #E6E6E2, 0 8px 24px rgba(0,0,0,0.03) !important;
-}
-body.page-dashboard .dx-role .dx-lbl, body.page-dashboard .dx-exp .dx-lbl { color: #5B5B63 !important; }
-body.page-dashboard .dx-role .dx-sub, body.page-dashboard .dx-exp .dx-sub { color: #7B7B83 !important; }
-body.page-dashboard .dx-role .dx-ic, body.page-dashboard .dx-exp .dx-ic { background: #F2F2EE !important; color: #1B1B20 !important; }
-
-body.page-dashboard .dx-slot {
-  background: #BFD7FF !important;
-  color: #1B1B20 !important;
-  box-shadow: 0 8px 24px rgba(143, 179, 240, .22) !important;
-}
-body.page-dashboard .dx-slot .dx-lbl, body.page-dashboard .dx-slot .dx-sub { color: #1B1B20 !important; opacity: .8 !important; }
-body.page-dashboard .dx-slot .dx-ic { background: rgba(27, 27, 32, .1) !important; color: #1B1B20 !important; }
-
+/* Card Kanan: Welcome Hero (Solid Lime Bersih Tanpa Gradasi) */
 body.page-dashboard .dx-welcome {
-  justify-content: flex-start !important;
-  gap: 16px !important;
   background: #D8FF7A !important;
   color: #1B1B20 !important;
-  box-shadow: 0 14px 34px rgba(166, 216, 74, .25) !important;
-  padding: 24px 28px !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 10px 30px rgba(166, 216, 74, 0.22) !important;
+  padding: 26px 30px !important;
+  justify-content: flex-start !important;
+  gap: 16px !important;
 }
 body.page-dashboard .dx-welcome .dx-chip {
   align-self: flex-start;
@@ -1047,6 +1030,7 @@ body.page-dashboard .dx-welcome .dx-chip {
   border-radius: 9999px;
   font-size: 11.5px;
   font-weight: 800;
+  border: none !important;
 }
 html body.page-dashboard .dx-welcome h1 {
   margin: 0;
@@ -1058,18 +1042,18 @@ html body.page-dashboard .dx-welcome h1 {
   color: inherit;
   text-transform: none;
 }
-body.page-dashboard .dx-hello { display: block; font-size: 15px; font-weight: 700; opacity: .7; letter-spacing: 0; text-transform: none; }
+body.page-dashboard .dx-hello { display: block; font-size: 15px; font-weight: 700; opacity: .75; letter-spacing: 0; text-transform: none; color: #1B1B20; }
 body.page-dashboard .dx-name {
   display: block;
   min-height: 1.05em;
   overflow-wrap: anywhere;
-  font-size: clamp(38px, 4.6vw, 58px) !important;
+  font-size: clamp(38px, 4.6vw, 54px) !important;
   font-weight: 800;
-  letter-spacing: -0.05em;
+  letter-spacing: -0.045em;
   line-height: 1.02;
   color: #1B1B20;
 }
-html body.page-dashboard .dx-lead { margin: 0; max-width: 400px; font-size: 15px; font-weight: 500; line-height: 1.5; opacity: .75; }
+html body.page-dashboard .dx-lead { margin: 0; max-width: 440px; font-size: 14.5px; font-weight: 500; line-height: 1.5; color: #1B1B20; opacity: .8; }
 body.page-dashboard .dx-actions { margin-top: auto; display: flex; flex-wrap: wrap; gap: 10px; }
 html body.page-dashboard .dx-btn {
   display: inline-flex;
@@ -1077,12 +1061,12 @@ html body.page-dashboard .dx-btn {
   gap: 12px;
   border: 0;
   border-radius: 9999px;
-  padding: 10px 12px 10px 22px;
+  padding: 11px 14px 11px 24px;
   background: #1B1B20 !important;
   color: #D8FF7A !important;
   font: 800 14px/1 inherit;
   cursor: pointer;
-  box-shadow: 0 4px 18px rgba(27, 27, 32, 0.2);
+  box-shadow: 0 4px 16px rgba(27, 27, 32, 0.2);
   transition: transform .15s ease;
 }
 html body.page-dashboard .dx-btn:hover { transform: translateY(-2px); }
@@ -1091,106 +1075,127 @@ body.page-dashboard .dx-btn-ic .i { width: 14px; height: 14px; }
 
 /* ══ 3. Baris bawah: Slot bot kamu ══ */
 body.page-dashboard .dx-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin: 0 0 16px; }
-html body.page-dashboard .dx-head h2 { margin: 0; font-size: clamp(22px, 2.6vw, 28px); font-weight: 800; letter-spacing: -0.04em; color: #1B1B20; }
+html body.page-dashboard .dx-head h2 { margin: 0; font-size: clamp(22px, 2.5vw, 26px); font-weight: 800; letter-spacing: -0.035em; color: #1B1B20; }
 html body.page-dashboard .dx-head p { margin: 4px 0 0; font-size: 13.5px; font-weight: 500; color: #5B5B63; }
 html body.page-dashboard #slot-text { display: inline-flex; align-items: center; padding: 6px 14px; border-radius: 9999px; background: #D8FF7A; color: #1B1B20; font-size: 13px; font-weight: 800; }
 
-/* ══ 4. Kartu bot: warna per platform ══ */
+/* ══ 4. Kartu bot: Solid White Bersih & Family User ══ */
 html body.page-dashboard #bot-grid {
   display: grid !important;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)) !important;
   gap: 16px !important;
 }
 html body.page-dashboard #bot-grid .card.bc {
-  --ink: #1B1B20 !important;
-  --mute: rgba(27, 27, 32, .62) !important;
   position: relative !important;
-  overflow: hidden !important;
   display: flex !important;
   flex-direction: column !important;
   justify-content: space-between !important;
-  gap: 12px !important;
-  min-height: 230px !important;
-  padding: 22px !important;
-  background-color: #FFFFFF !important;
-  background-image: radial-gradient(circle at 100% 0, rgba(255, 255, 255, .35), transparent 55%) !important;
-  border: 0 !important;
-  border-radius: 28px !important;
-  box-shadow: 0 0 0 1px #E6E6E2, 0 10px 28px rgba(27, 27, 32, .04) !important;
+  gap: 14px !important;
+  min-height: 220px !important;
+  padding: 24px !important;
+  background: #FFFFFF !important;
+  border: 1px solid #E6E6E2 !important;
+  border-radius: 26px !important;
+  box-shadow: 0 4px 16px rgba(27, 27, 32, 0.03) !important;
   color: #1B1B20 !important;
   cursor: pointer !important;
-  transition: transform .25s cubic-bezier(.16, 1, .3, 1) !important;
+  transition: transform .2s ease, box-shadow .2s ease !important;
 }
-html body.page-dashboard #bot-grid .card.bc:hover { transform: translateY(-4px) !important; }
-
-html body.page-dashboard #bot-grid .card.bc:has(.eb-wa) { background-color: #D8FF7A !important; box-shadow: 0 14px 34px rgba(166, 216, 74, .25) !important; }
-html body.page-dashboard #bot-grid .card.bc:has(.eb-tg) { background-color: #BFD7FF !important; box-shadow: 0 14px 34px rgba(143, 179, 240, .25) !important; }
-html body.page-dashboard #bot-grid .card.bc:has(.eb-dc) {
-  --ink: #FFFFFF !important;
-  --mute: rgba(255, 255, 255, .74) !important;
-  background-color: #5865F2 !important;
-  background-image: radial-gradient(circle at 100% 0, rgba(255, 255, 255, .24), transparent 55%) !important;
-  color: #FFFFFF !important;
-  box-shadow: 0 14px 34px rgba(88, 101, 242, .3) !important;
+html body.page-dashboard #bot-grid .card.bc:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: 0 10px 28px rgba(27, 27, 32, 0.08) !important;
 }
+html body.page-dashboard #bot-grid .card.bc .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: #5B5B63 !important; }
+html body.page-dashboard #bot-grid .card.bc h3 {
+  margin: 4px 0 0 !important;
+  font-size: 21px !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.03em !important;
+  line-height: 1.15 !important;
+  color: #1B1B20 !important;
+}
+html body.page-dashboard #bot-grid .card.bc p { margin: 0; font-size: 13.5px; color: #5B5B63 !important; }
 
-html body.page-dashboard #bot-grid .card.bc h3 { margin: 4px 0 0 !important; font-size: 22px !important; font-weight: 800 !important; letter-spacing: -0.035em !important; color: var(--ink) !important; }
-
-/* Pill platform & status */
+/* Pill Platform Solid Bersih */
 html body.page-dashboard #bot-grid .card.bc .eb-label {
-  padding: 5px 11px !important; border: 0 !important; border-radius: 9999px !important;
-  background: #1B1B20 !important; color: #D8FF7A !important;
-  font-size: 11px !important; font-weight: 800 !important; letter-spacing: .04em !important; text-transform: uppercase !important;
+  padding: 4px 12px !important;
+  border: 0 !important;
+  border-radius: 9999px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  letter-spacing: .04em !important;
+  text-transform: uppercase !important;
 }
-html body.page-dashboard #bot-grid .card.bc:has(.eb-tg) .eb-label { color: #BFD7FF !important; }
-html body.page-dashboard #bot-grid .card.bc:has(.eb-dc) .eb-label { background: #FFFFFF !important; color: #5865F2 !important; }
+html body.page-dashboard #bot-grid .card.bc .eb-label.eb-wa { background: #E8F9EE !important; color: #16a34a !important; }
+html body.page-dashboard #bot-grid .card.bc .eb-label.eb-tg { background: #EBF5FF !important; color: #0284c7 !important; }
+html body.page-dashboard #bot-grid .card.bc .eb-label.eb-dc { background: #EEF0FF !important; color: #5865F2 !important; }
+
 html body.page-dashboard #bot-grid .card.bc .on-dot {
-  padding: 4px 11px !important; border-radius: 9999px !important;
-  background: rgba(27, 27, 32, .1) !important; color: #1B1B20 !important;
-  font-size: 11px !important; font-weight: 800 !important;
+  padding: 4px 11px !important;
+  border-radius: 9999px !important;
+  background: #E8F9EE !important;
+  color: #16a34a !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
 }
-html body.page-dashboard #bot-grid .card.bc .on-dot.off { background: rgba(27, 27, 32, .06) !important; color: rgba(27, 27, 32, .55) !important; }
-html body.page-dashboard #bot-grid .card.bc:has(.eb-dc) .on-dot { background: rgba(255, 255, 255, .2) !important; color: #FFFFFF !important; }
-html body.page-dashboard #bot-grid .card.bc:has(.eb-dc) .on-dot.off { background: rgba(255, 255, 255, .1) !important; color: rgba(255, 255, 255, .65) !important; }
+html body.page-dashboard #bot-grid .card.bc .on-dot.off {
+  background: #F4F4F0 !important;
+  color: #7B7B83 !important;
+}
 
-/* Kuota pesan */
-html body.page-dashboard #bot-grid .card.bc .bot-kuota-sec { background: rgba(255, 255, 255, .55) !important; border: 0 !important; border-radius: 16px !important; padding: 10px 12px !important; }
-html body.page-dashboard #bot-grid .card.bc .bot-kuota-info b { color: var(--ink) !important; }
-html body.page-dashboard #bot-grid .card.bc .bot-kuota-bar { height: 6px !important; border-radius: 9999px !important; overflow: hidden !important; background: rgba(27, 27, 32, .14) !important; }
-html body.page-dashboard #bot-grid .card.bc .bot-kuota-fill[style*="var(--green)"] { background: #1B1B20 !important; }
-html body.page-dashboard #bot-grid .card.bc:has(.eb-dc) .bot-kuota-sec { background: rgba(255, 255, 255, .16) !important; }
-html body.page-dashboard #bot-grid .card.bc:has(.eb-dc) .bot-kuota-bar { background: rgba(255, 255, 255, .25) !important; }
-html body.page-dashboard #bot-grid .card.bc:has(.eb-dc) .bot-kuota-fill[style*="var(--green)"] { background: #FFFFFF !important; }
+/* Kuota Pesan Solid */
+html body.page-dashboard #bot-grid .card.bc .bot-kuota-sec {
+  background: #F8F8F5 !important;
+  border: 1px solid #EAEAE6 !important;
+  border-radius: 14px !important;
+  padding: 10px 14px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+}
+html body.page-dashboard #bot-grid .card.bc .bot-kuota-info { display: flex !important; justify-content: space-between !important; align-items: center !important; }
+html body.page-dashboard #bot-grid .card.bc .bot-kuota-info span { color: #5B5B63 !important; font-size: 12px !important; }
+html body.page-dashboard #bot-grid .card.bc .bot-kuota-info b { color: #1B1B20 !important; font-size: 12.5px !important; font-weight: 800 !important; }
+html body.page-dashboard #bot-grid .card.bc .bot-kuota-bar { height: 6px !important; border-radius: 9999px !important; overflow: hidden !important; background: #E5E5E0 !important; }
+html body.page-dashboard #bot-grid .card.bc .bot-kuota-sub { color: #7B7B83 !important; font-size: 11.5px !important; }
 
-/* Tombol */
-html body.page-dashboard #bot-grid .card.bc .btns { display: flex !important; flex-wrap: wrap; gap: 8px; margin-top: auto !important; }
+/* Tombol Segmented Solid */
+html body.page-dashboard #bot-grid .card.bc .btns { display: flex !important; gap: 8px; margin-top: auto !important; }
 html body.page-dashboard #bot-grid .card.bc .btns button {
-  border: 0; border-radius: 9999px; padding: 9px 18px;
-  background: rgba(27, 27, 32, .1) !important; color: #1B1B20 !important;
-  font-size: 13px; font-weight: 700; cursor: pointer; transition: transform .15s ease;
+  border: 0 !important;
+  border-radius: 9999px !important;
+  padding: 8px 18px !important;
+  background: #F2F2EE !important;
+  color: #1B1B20 !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: transform .15s ease, background .15s ease !important;
 }
-html body.page-dashboard #bot-grid .card.bc .btns button:hover { transform: translateY(-1px); }
+html body.page-dashboard #bot-grid .card.bc .btns button:hover { transform: translateY(-1px); background: #E8E8E4 !important; }
 html body.page-dashboard #bot-grid .card.bc .btns button[data-cfg] { background: #1B1B20 !important; color: #D8FF7A !important; }
-html body.page-dashboard #bot-grid .card.bc:has(.eb-dc) .btns button { background: rgba(255, 255, 255, .18) !important; color: #FFFFFF !important; }
-html body.page-dashboard #bot-grid .card.bc:has(.eb-dc) .btns button[data-cfg] { background: #FFFFFF !important; color: #5865F2 !important; }
 
-/* Tile "+ Tambah Bot" */
+/* Tile "+ Tambah Bot" Solid */
 html body.page-dashboard #bot-grid .card.add-card {
-  display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important;
-  min-height: 230px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 220px !important;
   background: transparent !important;
-  border: 2px dashed #CFCFC9 !important;
-  border-radius: 28px !important;
+  border: 2px dashed #D0D0CA !important;
+  border-radius: 26px !important;
   box-shadow: none !important;
   color: #5B5B63 !important;
-  font-size: 15px !important; font-weight: 800 !important;
+  font-size: 15px !important;
+  font-weight: 800 !important;
   cursor: pointer !important;
-  transition: transform .25s cubic-bezier(.16, 1, .3, 1), border-color .2s ease, background .2s ease, color .2s ease !important;
+  transition: transform .2s ease, border-color .2s ease, background .2s ease, color .2s ease !important;
 }
 html body.page-dashboard #bot-grid .card.add-card:hover {
-  transform: translateY(-4px) !important;
+  transform: translateY(-3px) !important;
   border-color: #1B1B20 !important;
-  background: rgba(255, 255, 255, .6) !important;
+  background: #FFFFFF !important;
   color: #1B1B20 !important;
 }
 
