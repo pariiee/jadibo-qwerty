@@ -2457,13 +2457,13 @@ body.page-profil .profil-bento-content {
   margin: 0 auto !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: 14px !important;
+  gap: 20px !important;
 }
 
 body.page-profil .profil-hero-banner {
   display: flex !important; align-items: center !important; justify-content: space-between !important;
   flex-wrap: wrap !important; gap: 16px !important; background: #D9D3FF !important;
-  border: 2.5px solid #151515 !important; border-radius: 26px !important; padding: 22px 28px !important;
+  border: 2.5px solid #151515 !important; border-radius: 26px !important; padding: 24px 30px !important;
   box-shadow: 4px 4px 0px #151515 !important; color: #151515 !important;
 }
 body.page-profil .profil-hero-chip {
@@ -2490,18 +2490,19 @@ body.page-profil .profil-stat-val { font-size: 20px !important; font-weight: 800
 body.page-profil .profil-stats-grid {
   display: grid !important;
   grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-  gap: 10px !important;
+  gap: 16px !important;
+  margin: 4px 0 !important;
 }
 body.page-profil .profil-stat-tile {
   position: relative !important;
   border: 2px solid #151515 !important;
-  border-radius: 20px !important;
-  padding: 16px 18px !important;
+  border-radius: 22px !important;
+  padding: 20px 22px !important;
   box-shadow: 3px 3px 0px #151515 !important;
   display: flex !important;
   flex-direction: column !important;
   justify-content: space-between !important;
-  min-height: 105px !important;
+  min-height: 118px !important;
 }
 body.page-profil .profil-tile-head {
   display: flex !important;
@@ -2516,26 +2517,26 @@ body.page-profil .profil-tile-lbl {
   letter-spacing: .03em !important;
 }
 body.page-profil .profil-tile-ic {
-  width: 28px !important;
-  height: 28px !important;
-  border-radius: 8px !important;
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 9px !important;
   background: rgba(255, 255, 255, 0.5) !important;
   display: grid !important;
   place-items: center !important;
   color: #151515 !important;
 }
 body.page-profil .profil-tile-val {
-  font-size: clamp(22px, 2.2vw, 28px) !important;
+  font-size: clamp(24px, 2.4vw, 30px) !important;
   font-weight: 800 !important;
   color: #151515 !important;
   line-height: 1.1 !important;
 }
 body.page-profil .profil-tile-sub {
   position: static !important;
-  font-size: 12px !important;
+  font-size: 12.5px !important;
   font-weight: 600 !important;
   color: rgba(21, 21, 21, 0.65) !important;
-  margin-top: 4px !important;
+  margin-top: 6px !important;
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
@@ -2545,17 +2546,17 @@ body.page-profil .profil-tile-sub {
 body.page-profil .profil-forms-grid {
   display: grid !important;
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  gap: 14px !important;
+  gap: 18px !important;
 }
 body.page-profil .profil-form-card {
   background: #FFFFFF !important;
   border: 2.5px solid #151515 !important;
   border-radius: 24px !important;
   box-shadow: 4px 4px 0px #151515 !important;
-  padding: 24px !important;
+  padding: 26px 28px !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: 16px !important;
+  gap: 18px !important;
 }
 body.page-profil .pf-span-2 {
   grid-column: span 2 !important;
