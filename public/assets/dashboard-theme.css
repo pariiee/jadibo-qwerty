@@ -3733,3 +3733,264 @@ body.page-bot-config .start-card small {
   body.page-bot-config .row2 { grid-template-columns: 1fr !important; }
 }
 
+/* ══ Bot Stats Component Styles (/bot/:id) ══ */
+body.page-bot-stats {
+  background: #EEEDFB !important;
+  color: #151515 !important;
+  padding: 16px 20px 48px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+}
+
+body.page-bot-stats .app {
+  width: 100% !important;
+  max-width: 1360px !important;
+  margin: 0 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+}
+
+body.page-bot-stats .topbar {
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 12px 20px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 14px !important;
+  background: #FFFFFF !important;
+  border: 2.5px solid #151515 !important;
+  border-radius: 24px !important;
+  box-shadow: 4px 4px 0px #151515 !important;
+  box-sizing: border-box !important;
+  flex-wrap: wrap !important;
+}
+
+body.page-bot-stats .back-link {
+  width: 40px !important;
+  height: 40px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 50% !important;
+  background: #FFFFFF !important;
+  border: 2px solid #151515 !important;
+  color: #151515 !important;
+  box-shadow: 2px 2px 0px #151515 !important;
+  flex-shrink: 0 !important;
+  text-decoration: none !important;
+  transition: transform .15s ease, box-shadow .15s ease !important;
+}
+body.page-bot-stats .back-link:hover {
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 3px 3px 0px #151515 !important;
+}
+
+body.page-bot-stats .ttl {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+body.page-bot-stats .ttl h1 {
+  font-size: 18px !important;
+  font-weight: 800 !important;
+  color: #151515 !important;
+  margin: 0 !important;
+}
+body.page-bot-stats .st {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 3px 12px !important;
+  border-radius: 999px !important;
+  background: #FAF9FF !important;
+  border: 1.5px solid #151515 !important;
+  font-size: 11.5px !important;
+  font-weight: 800 !important;
+  color: #151515 !important;
+  flex-shrink: 0 !important;
+}
+body.page-bot-stats .dot {
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  background: #64748B !important;
+}
+body.page-bot-stats .dot.on {
+  background: #22c55e !important;
+  box-shadow: 0 0 8px #22c55e !important;
+}
+
+body.page-bot-stats .top-actions .btn {
+  height: 38px !important;
+  padding: 0 16px !important;
+  border-radius: 999px !important;
+  font-size: 12.5px !important;
+  font-weight: 800 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  border: 2px solid #151515 !important;
+  background: #FFFFFF !important;
+  color: #151515 !important;
+  box-shadow: 2px 2px 0px #151515 !important;
+  cursor: pointer !important;
+  text-decoration: none !important;
+  transition: transform .15s ease, box-shadow .15s ease !important;
+}
+body.page-bot-stats .top-actions .btn:hover {
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 3px 3px 0px #151515 !important;
+}
+
+body.page-bot-stats .layout {
+  width: 100% !important;
+}
+body.page-bot-stats .stats-wrap {
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+}
+
+/* 5 Mini Stat Bento Cards */
+body.page-bot-stats .stats {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+  gap: 12px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+body.page-bot-stats .stat {
+  background: #FFFFFF !important;
+  border: 2.5px solid #151515 !important;
+  border-radius: 20px !important;
+  box-shadow: 3px 3px 0px #151515 !important;
+  padding: 18px 20px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  gap: 6px !important;
+  box-sizing: border-box !important;
+}
+body.page-bot-stats .stat .k {
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  color: #5E5C70 !important;
+}
+body.page-bot-stats .stat b {
+  font-size: 30px !important;
+  font-weight: 800 !important;
+  color: #151515 !important;
+  line-height: 1.15 !important;
+}
+body.page-bot-stats .stat small {
+  font-size: 11.5px !important;
+  font-weight: 600 !important;
+  color: #71717A !important;
+}
+body.page-bot-stats .stat-kuota .btn-xs {
+  background: #D8FF7A !important;
+  border: 1.5px solid #151515 !important;
+  border-radius: 999px !important;
+  padding: 3px 10px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  color: #151515 !important;
+  cursor: pointer !important;
+  box-shadow: 1px 1px 0px #151515 !important;
+}
+
+/* Two Columns (Donut & User Table) */
+body.page-bot-stats .two {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 16px !important;
+}
+body.page-bot-stats .panel {
+  background: #FFFFFF !important;
+  border: 2.5px solid #151515 !important;
+  border-radius: 24px !important;
+  box-shadow: 4px 4px 0px #151515 !important;
+  padding: 24px !important;
+  box-sizing: border-box !important;
+}
+body.page-bot-stats .panel h2 {
+  font-size: 18px !important;
+  font-weight: 800 !important;
+  color: #151515 !important;
+  margin: 0 0 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+body.page-bot-stats .panel-head {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin-bottom: 16px !important;
+}
+body.page-bot-stats .panel-head h2 { margin: 0 !important; }
+
+/* Donut container */
+body.page-bot-stats .donut-wrap {
+  display: flex !important;
+  align-items: center !important;
+  gap: 20px !important;
+  flex-wrap: wrap !important;
+}
+body.page-bot-stats .donut-graphic {
+  width: 140px !important;
+  height: 140px !important;
+  flex-shrink: 0 !important;
+}
+body.page-bot-stats .donut-legend {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  flex: 1 1 auto !important;
+}
+
+/* Table */
+body.page-bot-stats .tbl-wrap {
+  overflow-x: auto !important;
+}
+body.page-bot-stats .tbl {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  font-size: 13px !important;
+}
+body.page-bot-stats .tbl th {
+  background: #FAF9FF !important;
+  border-bottom: 2px solid #151515 !important;
+  padding: 10px 12px !important;
+  font-weight: 800 !important;
+  color: #151515 !important;
+  text-align: left !important;
+}
+body.page-bot-stats .tbl td {
+  padding: 10px 12px !important;
+  border-bottom: 1.5px solid #E4E4E7 !important;
+  color: #151515 !important;
+  font-weight: 600 !important;
+}
+
+/* Chart */
+body.page-bot-stats .chart {
+  min-height: 220px !important;
+  width: 100% !important;
+}
+body.page-bot-stats .chart-summary {
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  color: #5E5C70 !important;
+}
+
+@media (max-width: 900px) {
+  body.page-bot-stats .two { grid-template-columns: 1fr !important; }
+}
+
+
