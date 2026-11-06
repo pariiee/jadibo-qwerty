@@ -96,6 +96,20 @@
   }
 
   async function muatCommand() {
+    const list = document.getElementById('cmd-list');
+    if (list) {
+      list.innerHTML = [1, 2, 3, 4, 5, 6].map(() => `
+        <div class="cmd-row" style="padding:14px;pointer-events:none">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="display:flex;gap:10px;align-items:center">
+              <div class="bt-skel" style="width:70px;height:24px;border-radius:7px"></div>
+              <div class="bt-skel" style="width:55px;height:20px;border-radius:999px"></div>
+            </div>
+            <div class="bt-skel" style="width:24px;height:24px;border-radius:50%"></div>
+          </div>
+        </div>
+      `).join('');
+    }
     const d = await api('/api/command');
     if (!d?.ok) { document.getElementById('cmd-hitung').textContent = 'Gagal memuat daftar command.'; return; }
 

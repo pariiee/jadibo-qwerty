@@ -6,54 +6,82 @@
 <title>Riwayat Pembayaran — qwertygate</title>
 <!-- @include head.html -->
 </head>
-<body class="page-billing">
+<body class="page-dashboard page-billing">
 <div class="app">
-
-  <!-- @include sidebar.html -->
 
   <main>
     <!-- @include topbar.html -->
 
-    <div class="content">
-      <div class="cmd-head">
-        <h2>Riwayat Pembayaran</h2>
-        <p class="m-sub">Semua pesanan paket kamu. Yang masih menunggu bisa dicek statusnya kapan saja.</p>
+    <div class="content billing-bento-content">
+      <!-- Hero Banner Riwayat -->
+      <section class="billing-hero-banner">
+        <div class="billing-hero-left">
+          <span class="billing-hero-chip">INVOICE & TRANSAKSI</span>
+          <h2>Riwayat Pembayaran</h2>
+          <p>Semua catatan pesanan dan pembelian paket kamu. Cek status pembayaran atau konfirmasi pesanan tertunda.</p>
+        </div>
+        <div class="billing-hero-stat">
+          <span class="billing-stat-lbl">Total Transaksi</span>
+          <b class="billing-stat-val" id="billing-total-val">...</b>
+        </div>
+      </section>
+
+      <!-- Toolbar Filter & Reload -->
+      <div class="billing-toolbar adm-bar">
+        <div class="billing-select-wrap">
+          <select class="inp" id="filter-status" data-act="muatOrder">
+            <option value="" hidden selected>Semua status</option>
+            <option value="pending">Menunggu</option>
+            <option value="paid">Lunas</option>
+            <option value="rejected">Ditolak</option>
+          </select>
+        </div>
+
+        <button class="cmd-btn-reload" data-act="muatOrder" type="button">
+          <svg class="i" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+          <span>Muat Ulang</span>
+        </button>
       </div>
 
-      <div class="adm-bar">
-        <select class="inp" id="filter-status" data-act="muatOrder">
-          <option value="" hidden selected>Semua status</option>
-          <option value="pending">Menunggu</option>
-          <option value="paid">Lunas</option>
-          <option value="rejected">Ditolak</option>
-        </select>
-        <button class="btn btn-outline" data-act="muatOrder">Muat Ulang</button>
-      </div>
-
-      <div class="tbl-wrap">
-        <table class="tbl" id="tbl-order">
+      <!-- Container Tabel Neo-Brutalist -->
+      <div class="tbl-wrap billing-table-card">
+        <table class="tbl billing-tbl" id="tbl-order">
           <thead>
             <tr>
-              <th>Kode</th><th>Paket</th><th style="text-align:right">Jumlah</th>
-              <th>Cara</th><th>Status</th><th>Waktu</th><th></th>
+              <th>KODE INVOICE</th>
+              <th>PAKET</th>
+              <th style="text-align:right">JUMLAH</th>
+              <th>METODE</th>
+              <th>STATUS</th>
+              <th>WAKTU</th>
+              <th style="text-align:right">AKSI</th>
             </tr>
           </thead>
-          <tbody><tr><td colspan="7" class="kosong">Memuat…</td></tr></tbody>
+          <tbody>
+            <tr>
+              <td colspan="7" class="kosong">Memuat riwayat transaksi…</td>
+            </tr>
+          </tbody>
         </table>
       </div>
 
-      <!-- Jalan keluar buat yang belum pernah pesan: tanpa ini user gratis cuma
-           lihat tabel kosong lalu mentok. Trial-nya sudah lama ada di /pricing;
-           di sini cuma dipindah ke tempat dia bingung. -->
-      <div class="cmd-kosong" id="order-kosong" style="display:none">
-        <span id="kosong-teks">Anda belum pernah berlangganan.</span>
+      <!-- State Kosong jika belum pernah pesan -->
+      <div class="cmd-kosong billing-kosong-card" id="order-kosong" style="display:none">
+        <div class="billing-kosong-icon">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 15h0M2 10h20"/></svg>
+        </div>
+        <h3>Belum Ada Riwayat Pesanan</h3>
+        <p id="kosong-teks">Kamu belum pernah berlangganan paket atau bertransaksi.</p>
+        <a class="bt-go" href="/pricing" style="margin-top:8px">
+          <span>&rarr;</span> Lihat Pilihan Paket di Pricing
+        </a>
       </div>
 
-      <p class="m-sub" id="order-note" style="margin-top:14px"></p>
+      <p class="billing-note-txt" id="order-note"></p>
     </div>
   </main>
 </div>
 
-<script src="/js/billing.js?v=2.9" defer></script>
+<script src="/js/billing.js?v=3.0" defer></script>
 </body>
 </html>

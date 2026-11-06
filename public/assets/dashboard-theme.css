@@ -2243,3 +2243,204 @@ body.page-pricing .pricing-btn-secondary {
   box-shadow: 3px 3px 0px #151515 !important;
 }
 
+/* ══ Global Bento Skeleton Loading ══ */
+@keyframes bt-skel-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.bt-skel {
+  background: linear-gradient(90deg, #E6E4F7 25%, #F5F4FF 50%, #E6E4F7 75%) !important;
+  background-size: 200% 100% !important;
+  animation: bt-skel-shimmer 1.5s infinite ease-in-out !important;
+  color: transparent !important;
+  border: 1px solid rgba(21, 21, 21, 0.08) !important;
+  pointer-events: none !important;
+  user-select: none !important;
+}
+.tbl-skel-row td {
+  padding: 16px 14px !important;
+  background: #FFFFFF !important;
+  border-bottom: 1.5px solid #F0EFEB !important;
+}
+.tbl-skel-bar {
+  height: 18px !important;
+  border-radius: 6px !important;
+}
+
+/* ══ Billing / Riwayat Component Styles ══ */
+body.page-billing .billing-bento-content {
+  width: 100% !important;
+  max-width: 1360px !important;
+  margin: 0 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 14px !important;
+}
+
+body.page-billing .billing-hero-banner {
+  display: flex !important; align-items: center !important; justify-content: space-between !important;
+  flex-wrap: wrap !important; gap: 16px !important; background: #BFD7FF !important;
+  border: 2.5px solid #151515 !important; border-radius: 26px !important; padding: 22px 28px !important;
+  box-shadow: 4px 4px 0px #151515 !important; color: #151515 !important;
+}
+body.page-billing .billing-hero-chip {
+  display: inline-block !important; background: #fff !important; color: #151515 !important;
+  border: 2px solid #151515 !important; border-radius: 999px !important; font-size: 11.5px !important;
+  font-weight: 800 !important; padding: 3px 12px !important; margin-bottom: 8px !important;
+}
+body.page-billing .billing-hero-left h2, body.page-billing h2 {
+  font-size: clamp(24px, 3vw, 32px) !important; font-weight: 800 !important;
+  color: #151515 !important; margin: 0 0 6px !important; line-height: 1.15 !important;
+}
+body.page-billing .billing-hero-left p {
+  font-size: 14px !important; font-weight: 500 !important; color: rgba(21, 21, 21, 0.8) !important; margin: 0 !important;
+}
+body.page-billing .billing-hero-stat {
+  display: flex !important; flex-direction: column !important; align-items: flex-end !important;
+  background: #fff !important; border: 2px solid #151515 !important; border-radius: 18px !important;
+  padding: 10px 18px !important; box-shadow: 2px 2px 0px #151515 !important;
+}
+body.page-billing .billing-stat-lbl { font-size: 11px !important; font-weight: 700 !important; color: #5E5C70 !important; text-transform: uppercase !important; }
+body.page-billing .billing-stat-val { font-size: 20px !important; font-weight: 800 !important; color: #151515 !important; }
+
+body.page-billing .billing-toolbar {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  flex-wrap: nowrap !important;
+}
+body.page-billing select.inp { display: none !important; }
+body.page-billing .billing-select-wrap {
+  position: relative !important;
+  flex: 0 0 220px !important;
+}
+body.page-billing .billing-select-wrap .custom-select-wrap {
+  position: relative !important;
+  width: 100% !important;
+}
+body.page-billing .cs-trigger {
+  width: 100% !important;
+  height: 46px !important;
+  padding: 0 16px !important;
+  background: #FFFFFF !important;
+  border: 2px solid #151515 !important;
+  border-radius: 16px !important;
+  font-family: inherit !important;
+  font-size: 13.5px !important;
+  font-weight: 800 !important;
+  color: #151515 !important;
+  box-shadow: 3px 3px 0px #151515 !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+body.page-billing .cs-arrow { width: 16px !important; height: 16px !important; stroke: #151515 !important; stroke-width: 2.5 !important; }
+
+/* Table Neo-Brutalist */
+body.page-billing .billing-table-card {
+  background: #FFFFFF !important;
+  border: 2.5px solid #151515 !important;
+  border-radius: 24px !important;
+  box-shadow: 4px 4px 0px #151515 !important;
+  overflow-x: auto !important;
+  padding: 0 !important;
+}
+body.page-billing .billing-tbl {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  font-size: 13.5px !important;
+}
+body.page-billing .billing-tbl th {
+  background: #FAF9FF !important;
+  color: #151515 !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  letter-spacing: .03em !important;
+  padding: 16px 18px !important;
+  border-bottom: 2px solid #151515 !important;
+  text-align: left !important;
+}
+body.page-billing .billing-tbl td {
+  padding: 14px 18px !important;
+  border-bottom: 1px solid #E6E6E2 !important;
+  color: #151515 !important;
+  vertical-align: middle !important;
+}
+body.page-billing .billing-tbl tr:last-child td {
+  border-bottom: none !important;
+}
+body.page-billing .billing-code {
+  font-family: monospace !important;
+  font-size: 12.5px !important;
+  font-weight: 800 !important;
+  background: #151515 !important;
+  color: #D8FF7A !important;
+  padding: 3px 8px !important;
+  border-radius: 6px !important;
+}
+body.page-billing .billing-amount {
+  font-size: 14.5px !important;
+  font-weight: 800 !important;
+  color: #151515 !important;
+}
+body.page-billing .billing-method {
+  font-size: 11.5px !important;
+  font-weight: 800 !important;
+  background: #F5F4FF !important;
+  border: 1.5px solid #151515 !important;
+  border-radius: 6px !important;
+  padding: 2px 7px !important;
+}
+body.page-billing .billing-status {
+  font-size: 11.5px !important;
+  font-weight: 800 !important;
+  border: 1.5px solid #151515 !important;
+  border-radius: 999px !important;
+  padding: 3px 10px !important;
+  display: inline-block !important;
+}
+body.page-billing .st-paid { background: #D8FF7A !important; color: #151515 !important; }
+body.page-billing .st-pending { background: #FFDFC0 !important; color: #151515 !important; }
+body.page-billing .st-rejected { background: #FFD2D2 !important; color: #151515 !important; }
+body.page-billing .billing-time { font-size: 12.5px !important; color: #5E5C70 !important; }
+body.page-billing .billing-btn-cek {
+  background: #151515 !important;
+  color: #FFFFFF !important;
+  border: 1.5px solid #151515 !important;
+  border-radius: 999px !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  padding: 6px 14px !important;
+  cursor: pointer !important;
+  box-shadow: 2px 2px 0px #151515 !important;
+  transition: transform .15s ease, box-shadow .15s ease !important;
+}
+body.page-billing .billing-btn-cek:hover {
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 3px 3px 0px #151515 !important;
+}
+
+body.page-billing .billing-kosong-card {
+  background: #FFFFFF !important;
+  border: 2.5px solid #151515 !important;
+  border-radius: 24px !important;
+  box-shadow: 4px 4px 0px #151515 !important;
+  padding: 40px 24px !important;
+  text-align: center !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+body.page-billing .billing-kosong-card h3 { margin: 0 !important; font-size: 18px !important; font-weight: 800 !important; }
+body.page-billing .billing-kosong-card p { margin: 0 0 10px !important; font-size: 13.5px !important; color: #5E5C70 !important; }
+body.page-billing .billing-note-txt { font-size: 13.5px !important; font-weight: 600 !important; color: #5E5C70 !important; margin: 4px 0 0 !important; }
+body.page-billing .billing-note-txt a { color: #151515 !important; font-weight: 800 !important; text-decoration: underline !important; }
+
+@media (max-width: 640px) {
+  body.page-billing .billing-hero-stat { display: none !important; }
+  body.page-billing .billing-toolbar { flex-wrap: wrap !important; gap: 10px !important; }
+  body.page-billing .billing-select-wrap { flex: 1 1 100% !important; width: 100% !important; }
+}
+

@@ -60,11 +60,28 @@
   }
 
   async function loadPaket() {
+    const grid = document.getElementById('plan-grid');
+    if (grid && !grid.children.length) {
+      grid.innerHTML = [1, 2, 3].map(() => `
+        <div class="plan-card" style="pointer-events:none">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div class="bt-skel" style="width:100px;height:22px;border-radius:6px"></div>
+            <div class="bt-skel" style="width:60px;height:18px;border-radius:999px"></div>
+          </div>
+          <div class="bt-skel" style="width:140px;height:38px;border-radius:8px;margin:12px 0"></div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div class="bt-skel" style="width:100%;height:16px;border-radius:4px"></div>
+            <div class="bt-skel" style="width:85%;height:16px;border-radius:4px"></div>
+            <div class="bt-skel" style="width:70%;height:16px;border-radius:4px"></div>
+          </div>
+          <div class="bt-skel" style="width:100%;height:44px;border-radius:999px;margin-top:16px"></div>
+        </div>
+      `).join('');
+    }
     const d = await api('/api/plans');
     if (!d?.ok) return;
     paket = d.plans || [];
     const jumlahFitur = d.fitur || 0;
-    const grid = document.getElementById('plan-grid');
     grid.innerHTML = '';
 
     // Card 1: Free Trial

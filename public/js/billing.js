@@ -36,11 +36,30 @@
   let semuaOrder = [];
   let aku = null;   // dari /api/auth/me — buat tahu trial masih bisa diklaim
 
+  function renderTblSkeleton() {
+    const tbody = document.querySelector('#tbl-order tbody');
+    if (!tbody) return;
+    tbody.innerHTML = [1, 2, 3, 4].map(() => `
+      <tr class="tbl-skel-row">
+        <td><div class="bt-skel tbl-skel-bar" style="width:110px"></div></td>
+        <td><div class="bt-skel tbl-skel-bar" style="width:130px"></div></td>
+        <td style="text-align:right"><div class="bt-skel tbl-skel-bar" style="width:80px;margin-left:auto"></div></td>
+        <td><div class="bt-skel tbl-skel-bar" style="width:65px"></div></td>
+        <td><div class="bt-skel tbl-skel-bar" style="width:75px"></div></td>
+        <td><div class="bt-skel tbl-skel-bar" style="width:120px"></div></td>
+        <td style="text-align:right"><div class="bt-skel tbl-skel-bar" style="width:85px;margin-left:auto"></div></td>
+      </tr>
+    `).join('');
+  }
+
   function gambar() {
     const st = document.getElementById('filter-status').value;
     const baris = semuaOrder.filter((o) => !st || o.status === st);
     const tbody = document.querySelector('#tbl-order tbody');
     const kosong = document.getElementById('order-kosong');
+
+    const btv = document.getElementById('billing-total-val');
+    if (btv) btv.textContent = semuaOrder.length + ' Transaksi';
 
     if (!baris.length) {
       tbody.innerHTML = '<tr><td colspan="7" class="kosong">' +
@@ -50,43 +69,39 @@
       tbody.innerHTML = baris.map((o) => {
         const [cls, label] = STATUS[o.status] || ['', o.status];
         return '<tr>' +
-          '<td><code>' + esc(o.order_id) + '</code></td>' +
-          '<td>' + esc(o.plan) + '</td>' +
-          '<td style="text-align:right"><b>' + rupiah(o.amount) + '</b></td>' +
-          '<td class="muted">' + esc(String(o.method || '').toUpperCase() || '—') + '</td>' +
-          '<td><span class="badge ' + cls + '">' + label + '</span></td>' +
-          '<td class="muted">' + waktu(o.paid_at || o.created_at) + '</td>' +
-          '<td class="aksi">' + (o.status === 'pending'
-            ? '<button class="btn btn-outline btn-sm" data-act="cekOrder(\'' + esc(o.order_id) + '\')">Cek Status</button>'
+          '<td><code class="billing-code">' + esc(o.order_id) + '</code></td>' +
+          '<td><b>' + esc(o.plan) + '</b></td>' +
+          '<td style="text-align:right"><b class="billing-amount">' + rupiah(o.amount) + '</b></td>' +
+          '<td><span class="billing-method">' + esc(String(o.method || '').toUpperCase() || '—') + '</span></td>' +
+          '<td><span class="billing-status ' + cls + '">' + label + '</span></td>' +
+          '<td class="billing-time">' + waktu(o.paid_at || o.created_at) + '</td>' +
+          '<td style="text-align:right">' + (o.status === 'pending'
+            ? '<button class="billing-btn-cek" data-act="cekOrder(\'' + esc(o.order_id) + '\')">Cek Status</button>'
             : '') + '</td>' +
           '</tr>';
       }).join('');
     }
 
-    // Kartu jalan keluar cuma muncul kalau memang belum ada pesanan SAMA SEKALI —
-    // kalau cuma kena filter, tabel kosongnya sudah ada pesannya sendiri.
     const belumPernah = semuaOrder.length === 0;
     kosong.style.display = belumPernah ? 'flex' : 'none';
-    // Tabel kosong + kartu kosong sekaligus = dua pesan yang sama. Yang bicara
-    // kartunya, tabelnya disembunyikan.
     document.querySelector('.tbl-wrap').style.display = belumPernah ? 'none' : '';
     if (belumPernah) {
       const kt = document.getElementById('kosong-teks');
-      if (kt) kt.textContent = 'Anda belum pernah berlangganan.';
+      if (kt) kt.textContent = 'Kamu belum pernah berlangganan atau bertransaksi.';
     }
 
-    // Catatan di bawah tabel.
     const pending = semuaOrder.filter((o) => o.status === 'pending');
     const catatan = document.getElementById('order-note');
     if (pending.length) {
-      catatan.innerHTML = 'Masih ada pesanan yang belum dibayar. Lanjutkan pembayarannya di ' +
-        '<a href="/pricing">halaman langganan</a> — atau klik “Cek Status” kalau sudah bayar.';
+      catatan.innerHTML = 'Masih ada pesanan yang belum dibayar. Selesaikan pembayaran di ' +
+        '<a href="/pricing">halaman pricing</a> — atau tekan “Cek Status” bila kamu sudah transfer.';
     } else {
       catatan.textContent = semuaOrder.length ? 'Semua pesanan sudah selesai.' : '';
     }
   }
 
   async function muatOrder() {
+    renderTblSkeleton();
     const [d, me] = await Promise.all([api('/api/billing/orders'), api('/api/auth/me')]);
     if (!d?.ok) { document.querySelector('#tbl-order tbody').innerHTML =
       '<tr><td colspan="7" class="kosong">Gagal memuat riwayat.</td></tr>'; return; }
