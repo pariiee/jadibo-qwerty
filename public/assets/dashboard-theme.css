@@ -1438,7 +1438,8 @@ body.page-command .cmd-inp:focus {
   outline: 3px solid #7A63F0 !important;
   outline-offset: 1px !important;
 }
-body.page-command .cmd-btn-reload {
+body.page-command .cmd-btn-reload,
+body.page-log .cmd-btn-reload {
   flex: 0 0 auto !important;
   white-space: nowrap !important;
   height: 46px !important; padding: 0 20px !important; display: inline-flex !important;
@@ -1447,11 +1448,13 @@ body.page-command .cmd-btn-reload {
   font-size: 13.5px !important; font-weight: 800 !important; box-shadow: 3px 3px 0px #151515 !important; cursor: pointer !important;
   transition: transform .15s ease, box-shadow .15s ease !important;
 }
-body.page-command .cmd-btn-reload:hover {
+body.page-command .cmd-btn-reload:hover,
+body.page-log .cmd-btn-reload:hover {
   transform: translate(-1px, -1px) !important;
   box-shadow: 5px 5px 0px #151515 !important;
 }
-body.page-command .cmd-btn-reload svg { stroke: #D8FF7A !important; }
+body.page-command .cmd-btn-reload svg,
+body.page-log .cmd-btn-reload svg { stroke: #D8FF7A !important; }
 body.page-command .cmd-info-row { font-size: 13px !important; font-weight: 600 !important; color: #5E5C70 !important; }
 body.page-command .cmd-list {
   display: grid !important;
