@@ -1173,3 +1173,41 @@ html body.page-dashboard .bt-hero #hero-name {
   overflow-wrap: anywhere;
 }
 
+/* ── Perbaikan navbar ── */
+
+/* Kunci utama: header tidak boleh membuat stacking context, supaya panel (z-index 1)
+   tampil di atas bar, sedangkan popover (z-index 300) tetap di atas panel. */
+html body.page-dashboard header.topbar.cx-navbar { z-index: auto !important; }
+
+/* Tinggi baris tetap, supaya segitiga selalu pas dengan tepi panel */
+html body.page-dashboard header.topbar.cx-navbar .cx-nav-inner { grid-template-rows: 44px !important; }
+
+html body.page-dashboard .cx-nav-item {
+  height: 40px !important;
+  padding: 0 16px !important;
+  font-family: inherit !important;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+}
+html body.page-dashboard .cx-nav-item.on::after,
+html body.page-dashboard .cx-nav-item.active::after { bottom: -21px !important; }
+
+html body.page-dashboard .cx-me { height: 44px !important; }
+html body.page-dashboard .cx-me .av { width: 36px !important; height: 36px !important; }
+
+/* Popover: perbaiki shorthand font yang tidak valid */
+html body.page-dashboard .user-popover .pop-item {
+  font-family: inherit !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+}
+
+@media (max-width: 760px) {
+  html body.page-dashboard .cx-nav-item { padding: 0 13px !important; }
+}
+@media (max-width: 480px) {
+  html body.page-dashboard .cx-nav-item { padding: 0 11px !important; }
+}
+
