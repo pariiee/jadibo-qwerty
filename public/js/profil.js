@@ -30,8 +30,23 @@
     return Math.ceil((d - Date.now()) / 86400000);
   };
 
+  function pasangProfilSkel() {
+    ['pf-user', 'pf-sejak', 'pf-role', 'pf-paket', 'pf-exp', 'pf-exp-sub', 'pf-bot', 'pf-bot-sub'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.add('bt-skel');
+    });
+  }
+  function lepasProfilSkel() {
+    ['pf-user', 'pf-sejak', 'pf-role', 'pf-paket', 'pf-exp', 'pf-exp-sub', 'pf-bot', 'pf-bot-sub'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.remove('bt-skel');
+    });
+  }
+
   async function muatProfil() {
+    pasangProfilSkel();
     const [me, bots] = await Promise.all([api('/api/auth/me'), api('/api/bots')]);
+    lepasProfilSkel();
     if (!me?.ok) return;
     const u = me.user;
 
