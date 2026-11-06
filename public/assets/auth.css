@@ -110,7 +110,15 @@ form{display:flex;flex-direction:column;gap:14px}
 .msg.ok{background:var(--acc);color:var(--acc-ink)}
 .sw a{text-decoration-color:var(--acc);text-decoration-thickness:3px}
 .card h2::before{display:block;width:max-content;margin-bottom:10px;padding:3px 12px;border:2px solid var(--ink);border-radius:999px;background:var(--acc);color:var(--acc-ink);font-size:12px;font-weight:700;letter-spacing:0;line-height:1.4}
-#auth-login h2::before{content:"Masuk"}#auth-register h2::before{content:"Daftar"}#auth-forgot h2::before{content:"Pemulihan"}#auth-reset h2::before{content:"Reset"}
+#s-login h2::before, #auth-login h2::before{content:"Masuk"}#s-register h2::before, #auth-register h2::before{content:"Daftar"}#s-forgot h2::before, #auth-forgot h2::before{content:"Pemulihan"}#s-reset h2::before, #auth-reset h2::before{content:"Reset"}
 
+/* Reset penimpa modal legacy */
+body.page-auth .card {
+  position: relative !important;
+  transform: none !important;
+  max-width: none !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+}
 .field-err { display: block; margin-top: 4px; font-size: 12px; font-weight: 700; color: var(--err); }
 .msg.show { display: block !important; }

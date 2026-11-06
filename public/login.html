@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Masuk — qwertygate</title>
 <!-- @include head.html -->
-<link rel="stylesheet" href="/assets/auth.css?v=5.0">
+<link rel="stylesheet" href="/assets/auth.css?v=6.0">
 </head>
 <body class="page-auth" data-mode="login">
 
@@ -51,7 +51,7 @@
       <h2>Selamat datang kembali</h2>
       <p class="desc">Masukkan detail akun kamu untuk melanjutkan.</p>
       <form id="login-form">
-        <div class="f"><label for="login-username">Username atau email</label><input class="inp" id="login-username" name="username" placeholder="Username atau nama@gmail.com" autocomplete="username" required></div>
+        <div class="f"><label for="login-username">Username atau email</label><input class="inp" id="login-username" name="username" placeholder="Username atau nama@gmail.com" autocomplete="username" required><span class="field-err" id="reg-err-username"></span></div>
         <div class="f"><label for="login-password">Kata sandi</label><div class="pw"><input class="inp" id="login-password" name="password" type="password" placeholder="Masukkan kata sandi" autocomplete="current-password" required><button type="button" class="eye hid btn-toggle-pass" data-target="login-password" aria-label="Lihat kata sandi"><svg viewBox="0 0 24 24"><use href="#i-eye"/></svg></button></div></div>
         <div class="aux"><a href="/forgot-password">Lupa kata sandi?</a></div>
         <div class="msg err" id="login-error" role="alert"></div><div class="msg ok" id="login-ok" role="status"></div>
@@ -63,7 +63,7 @@
     </section>
 
     <!-- DAFTAR -->
-    <section class="card" id="auth-register" style="display:none" hidden>
+    <section class="card" id="auth-register" hidden>
       <div class="brand"><span class="logo"><svg viewBox="0 0 24 24"><rect x="5" y="8" width="14" height="9" rx="3"/><path d="M12 4v4"/></svg></span>qwertygate</div>
       <h2>Buat akun baru</h2>
       <p class="desc">Lengkapi data di bawah untuk membuat akun kamu.</p>
@@ -82,7 +82,7 @@
     </section>
 
     <!-- LUPA -->
-    <section class="card" id="auth-forgot" style="display:none" hidden>
+    <section class="card" id="auth-forgot" hidden>
       <div class="brand"><span class="logo"><svg viewBox="0 0 24 24"><rect x="5" y="8" width="14" height="9" rx="3"/><path d="M12 4v4"/></svg></span>qwertygate</div>
       <h2>Lupa kata sandi</h2>
       <p class="desc">Masukkan email terdaftar, kami kirim tautan untuk mengatur ulang kata sandi.</p>
@@ -95,7 +95,7 @@
     </section>
 
     <!-- RESET -->
-    <section class="card" id="auth-reset" style="display:none" hidden>
+    <section class="card" id="auth-reset" hidden>
       <div class="brand"><span class="logo"><svg viewBox="0 0 24 24"><rect x="5" y="8" width="14" height="9" rx="3"/><path d="M12 4v4"/></svg></span>qwertygate</div>
       <h2>Atur kata sandi baru</h2>
       <p class="desc">Pilih kata sandi baru yang aman dan sulit ditebak.</p>
