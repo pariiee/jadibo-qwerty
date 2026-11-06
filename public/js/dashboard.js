@@ -36,6 +36,10 @@
     const d = await api('/api/auth/me');
     if (!d?.ok) { location.href = '/'; return null; }
     me = d.user;
+    const tn = document.getElementById('top-name');
+    if (tn) tn.textContent = 'Hai, ' + me.username + '!';
+    const tr = document.getElementById('top-role');
+    if (tr) tr.textContent = me.is_admin ? 'Admin' : (me.plan_aktif ? (me.slots || 1) + ' Slot' : 'Belum ada paket');
     const topAv = document.getElementById('top-avatar-txt');
     if (topAv) topAv.textContent = (me.username || '?')[0].toUpperCase();
     document.getElementById('greeting').textContent   = 'Selamat Datang Kembali, ' + me.username;

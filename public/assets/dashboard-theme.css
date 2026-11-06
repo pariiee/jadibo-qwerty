@@ -849,111 +849,6 @@ html body.page-dashboard .content {
   overflow: visible !important;
 }
 
-/* ══ Top Floating Navbar (Cerah & 100% Simetris di Tengah) ══ */
-html body.page-dashboard header.topbar.cx-navbar {
-  position: sticky !important;
-  top: 14px !important;
-  z-index: 100 !important;
-  background: transparent !important;
-  border: 0 !important;
-  border-bottom: 0 !important;
-  box-shadow: none !important;
-  height: auto !important;
-  min-height: 0 !important;
-  padding: 0 !important;
-  margin: 0 auto clamp(20px, 2.5vw, 28px) !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  display: block !important;
-}
-html body.page-dashboard header.topbar.cx-navbar .cx-nav-inner {
-  display: grid !important;
-  grid-template-columns: 1fr auto 1fr !important;
-  align-items: center !important;
-  width: 100% !important;
-  background: #FFFFFF !important;
-  border: 1px solid #E6E6E2 !important;
-  border-radius: 9999px !important;
-  padding: 8px 14px 8px 20px !important;
-  box-shadow: 0 4px 20px rgba(27, 27, 32, 0.05) !important;
-}
-html body.page-dashboard .cx-brand {
-  display: flex !important;
-  align-items: center !important;
-  gap: 10px !important;
-  text-decoration: none !important;
-  color: #1B1B20 !important;
-  justify-self: start !important;
-}
-html body.page-dashboard .cx-brand-title {
-  font-size: 17px !important;
-  font-weight: 800 !important;
-  letter-spacing: -0.03em !important;
-  color: #1B1B20 !important;
-}
-html body.page-dashboard .cx-nav-pill {
-  display: flex !important;
-  align-items: center !important;
-  gap: 4px !important;
-  background: #F2F2EE !important;
-  padding: 4px 6px !important;
-  border-radius: 9999px !important;
-  justify-self: center !important;
-}
-html body.page-dashboard .cx-nav-item {
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 6px !important;
-  padding: 7px 16px !important;
-  border-radius: 9999px !important;
-  font-size: 13.5px !important;
-  font-weight: 700 !important;
-  color: #5B5B63 !important;
-  text-decoration: none !important;
-  transition: all .15s ease !important;
-  white-space: nowrap !important;
-}
-html body.page-dashboard .cx-nav-item:hover { color: #1B1B20 !important; }
-html body.page-dashboard .cx-nav-item.on, html body.page-dashboard .cx-nav-item.active {
-  background: #1B1B20 !important;
-  color: #FFFFFF !important;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12) !important;
-}
-html body.page-dashboard .cx-nav-actions {
-  display: flex !important;
-  align-items: center !important;
-  gap: 10px !important;
-  justify-self: end !important;
-}
-html body.page-dashboard .cx-icon-btn {
-  width: 38px !important;
-  height: 38px !important;
-  border-radius: 50% !important;
-  background: #F4F4F0 !important;
-  border: 1px solid #E6E6E2 !important;
-  display: grid !important;
-  place-items: center !important;
-  color: #1B1B20 !important;
-  text-decoration: none !important;
-  transition: transform .15s ease, background .15s ease !important;
-}
-html body.page-dashboard .cx-icon-btn:hover {
-  transform: scale(1.05) !important;
-  background: #EAEAE7 !important;
-}
-html body.page-dashboard .cx-avatar-btn {
-  width: 38px !important;
-  height: 38px !important;
-  border-radius: 50% !important;
-  border: 2px solid #1B1B20 !important;
-  background: #1B1B20 !important;
-  color: #D8FF7A !important;
-  font-weight: 800 !important;
-  display: grid !important;
-  place-items: center !important;
-  cursor: pointer !important;
-}
-
 /* ══ Dashboard Bento ══ */
 body.page-dashboard{--bt-font:'Bricolage Grotesque',system-ui,-apple-system,'Segoe UI',sans-serif;--bt-card:#fff;--bt-text:#151515;--bt-mute:#5E5C70;--bt-line:#151515;--bt-soft:#F5F4FF;--bt-lime:#D8FF7A;--bt-lav:#D9D3FF;--bt-sky:#BFD7FF;--bt-peach:#FFDFC0;--bt-purple:#7A63F0;--bt-teal:#3FD9C3}
 
@@ -1096,13 +991,98 @@ body.page-dashboard .bt-foot b{color:var(--bt-text)}
 }
 @media (prefers-reduced-motion:reduce){body.page-dashboard .bt-grid *{animation:none !important;transition:none !important}}
 
-/* ══ KODE C: penyesuaian navbar ══ */
-html body.page-dashboard header.topbar.cx-navbar .cx-nav-inner{border:2px solid #151515 !important;box-shadow:none !important}
-html body.page-dashboard .cx-nav-pill{background:transparent !important}
-html body.page-dashboard .cx-nav-item{border:2px solid transparent !important}
-html body.page-dashboard .cx-nav-item.on,html body.page-dashboard .cx-nav-item.active{background:#D8FF7A !important;color:#151515 !important;border-color:#151515 !important}
-html body.page-dashboard .cx-icon-btn{background:#fff !important;border:2px solid #151515 !important}
-html body.page-dashboard .cx-avatar-btn{background:#7A63F0 !important;border:2px solid #151515 !important;color:#fff !important}
+/* ══ Navbar gaya referensi: bar hitam + penanda menu aktif ══ */
+html body.page-dashboard { --nv-bar: #151515; --nv-ink: #FFFFFF; --nv-mute: #B9B9C2; --nv-on: #2E2E33; --nv-panel: #EEEDFB; }
+
+html body.page-dashboard header.topbar.cx-navbar {
+  position: relative !important; top: auto !important; z-index: 60 !important;
+  display: block !important; width: 100% !important; height: auto !important; min-height: 0 !important;
+  margin: 0 !important; padding: 0 !important;
+  background: transparent !important; border: 0 !important; box-shadow: none !important;
+}
+html body.page-dashboard header.topbar.cx-navbar .cx-nav-inner {
+  display: grid !important; grid-template-columns: 1fr auto 1fr !important; align-items: center !important; gap: 16px !important;
+  width: 100% !important; padding: 14px 22px 38px !important;
+  background: var(--nv-bar) !important; color: var(--nv-ink) !important;
+  border: 0 !important; border-radius: 28px 28px 0 0 !important; box-shadow: none !important;
+}
+
+/* Brand */
+html body.page-dashboard .cx-brand { display: flex !important; align-items: center !important; gap: 10px !important; justify-self: start !important; text-decoration: none !important; color: var(--nv-ink) !important; }
+html body.page-dashboard .cx-brand-title { font-size: 18px !important; font-weight: 800 !important; letter-spacing: -.04em !important; color: var(--nv-ink) !important; }
+html body.page-dashboard .cx-navbar .brand-sub-chip { background: #D8FF7A !important; color: #151515 !important; }
+
+/* Menu */
+html body.page-dashboard .cx-nav-pill { display: flex !important; align-items: center !important; gap: 6px !important; justify-self: center !important; padding: 0 !important; background: transparent !important; border: 0 !important; box-shadow: none !important; }
+html body.page-dashboard .cx-nav-item {
+  position: relative !important; display: inline-flex !important; align-items: center !important; gap: 8px !important;
+  padding: 9px 16px !important; border: 0 !important; border-radius: 999px !important;
+  background: transparent !important; color: var(--nv-mute) !important;
+  font: 600 13.5px/1 inherit !important; text-decoration: none !important; cursor: pointer;
+  transition: background .2s ease, color .2s ease !important;
+}
+html body.page-dashboard .cx-nav-item:hover { color: var(--nv-ink) !important; }
+html body.page-dashboard .cx-nav-item.on,
+html body.page-dashboard .cx-nav-item.active { background: var(--nv-on) !important; color: var(--nv-ink) !important; }
+html body.page-dashboard .cx-nav-item.on::after,
+html body.page-dashboard .cx-nav-item.active::after {
+  content: ""; position: absolute; left: 50%; bottom: -20px; width: 24px; height: 13px; transform: translateX(-50%);
+  background: var(--nv-panel); clip-path: polygon(0 100%, 50% 0, 100% 100%);
+}
+html body.page-dashboard .cx-nav-item:focus-visible, html body.page-dashboard .cx-me:focus-visible { outline: 2px solid #D8FF7A !important; outline-offset: 3px; }
+
+/* Blok akun */
+html body.page-dashboard .cx-nav-actions { position: relative !important; display: flex !important; align-items: center !important; justify-self: end !important; gap: 10px !important; }
+html body.page-dashboard .cx-me {
+  display: flex !important; align-items: center !important; gap: 10px !important;
+  width: auto !important; height: auto !important; padding: 4px 8px 4px 4px !important;
+  border: 0 !important; border-radius: 999px !important; background: transparent !important;
+  color: var(--nv-ink) !important; font: inherit !important; cursor: pointer;
+  transition: background .2s ease !important;
+}
+html body.page-dashboard .cx-me:hover { background: rgba(255, 255, 255, .09) !important; }
+html body.page-dashboard .cx-me .av { width: 40px !important; height: 40px !important; border-radius: 50% !important; border: 0 !important; background: #7A63F0 !important; color: #fff !important; display: grid !important; place-items: center !important; font-size: 14px; font-weight: 800; }
+html body.page-dashboard .cx-me-txt { display: flex; flex-direction: column; text-align: left; line-height: 1.2; font-size: 13px; }
+html body.page-dashboard .cx-me-txt b { font-weight: 800; color: var(--nv-ink); }
+html body.page-dashboard .cx-me-txt small { font-size: 12px; color: var(--nv-mute); }
+html body.page-dashboard .nv-chev { color: var(--nv-mute); }
+
+/* Popover akun & dropdown Manage */
+html body.page-dashboard .user-popover {
+  position: absolute !important; right: 0 !important; top: calc(100% + 16px) !important; z-index: 300 !important;
+  width: 250px; padding: 14px !important;
+  background: #FFFFFF !important; color: #151515 !important;
+  border: 2px solid #151515 !important; border-radius: 20px !important; box-shadow: 0 18px 40px rgba(40, 30, 90, .22) !important;
+}
+html body.page-dashboard .user-popover .pop-name { color: #151515 !important; font-weight: 800; }
+html body.page-dashboard .user-popover .pop-email { color: #5E5C70 !important; }
+html body.page-dashboard .user-popover .pop-badge { background: #D8FF7A !important; color: #151515 !important; border: 1.5px solid #151515 !important; border-radius: 999px !important; font-weight: 700; }
+html body.page-dashboard .user-popover .pop-menu { display: flex; flex-direction: column; gap: 2px; margin-top: 10px; }
+html body.page-dashboard .user-popover .pop-item { display: flex !important; align-items: center !important; gap: 10px !important; padding: 10px 12px !important; border: 0 !important; border-radius: 12px !important; background: transparent !important; color: #151515 !important; font: 700 14px/1 inherit !important; text-decoration: none !important; cursor: pointer; width: 100%; text-align: left; }
+html body.page-dashboard .user-popover .pop-item:hover { background: #F1EFFF !important; }
+html body.page-dashboard .user-popover .pop-logout { color: #B42318 !important; }
+html body.page-dashboard .cx-dropdown-menu { background: #FFFFFF !important; border: 2px solid #151515 !important; border-radius: 16px !important; box-shadow: 0 18px 40px rgba(40, 30, 90, .22) !important; z-index: 300 !important; }
+html body.page-dashboard .cx-drop-item { color: #151515 !important; font-weight: 700 !important; }
+html body.page-dashboard .cx-drop-item:hover { background: #F1EFFF !important; }
+
+/* Panel konten menimpa bar (efek referensi) */
+html body.page-dashboard header.cx-navbar + .content {
+  position: relative !important; z-index: 1 !important;
+  margin-top: -20px !important; padding-top: 28px !important;
+  background: var(--nv-panel) !important; border-radius: 26px 26px 0 0 !important;
+}
+
+/* Responsif */
+@media (max-width: 760px) {
+  html body.page-dashboard header.topbar.cx-navbar .cx-nav-inner { grid-template-columns: auto 1fr auto !important; padding: 12px 14px 34px !important; gap: 8px !important; }
+  html body.page-dashboard .cx-nav-item span, html body.page-dashboard .cx-me-txt, html body.page-dashboard .nv-chev { display: none !important; }
+  html body.page-dashboard .cx-nav-item { padding: 10px 13px !important; }
+}
+@media (max-width: 480px) {
+  html body.page-dashboard .cx-brand-title, html body.page-dashboard .cx-navbar .brand-sub-chip { display: none !important; }
+  html body.page-dashboard .cx-nav-item { padding: 10px 11px !important; }
+}
+@media (prefers-reduced-motion: reduce) { html body.page-dashboard .cx-nav-item, html body.page-dashboard .cx-me { transition: none !important; } }
 
 /* Jaminan Scroll Bebas Dashboard */
 html,
@@ -1191,16 +1171,5 @@ html body.page-dashboard .bt-hero #hero-name {
   visibility: visible !important;
   text-transform: none !important;
   overflow-wrap: anywhere;
-}
-
-@media (max-width: 540px) {
-  html body.page-dashboard .cx-nav-pill { display: none !important; }
-}
-
-html body.page-dashboard .cx-nav-pill {
-  background: transparent !important;
-  border: 0 !important;
-  box-shadow: none !important;
-  padding: 0 !important;
 }
 
