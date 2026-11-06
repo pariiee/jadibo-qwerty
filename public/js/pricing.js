@@ -28,7 +28,8 @@
     me = d.user;
     const topAv = document.getElementById('top-avatar-txt');
     if (topAv) topAv.textContent = (me.username || '?')[0].toUpperCase();
-    document.getElementById('greeting').textContent = 'Pricing & Paket';
+    const sapaan = document.getElementById('greeting');
+    if (sapaan) sapaan.textContent = 'Pricing & Paket';
     if (me.is_admin) document.getElementById('nav-admin').style.display = '';
     renderStatus();
     return me;
@@ -199,10 +200,10 @@
     if (!senyap) showToast(d.message || 'Belum ada pembayaran masuk.', 'info');
   }
 
-  document.addEventListener('DOMContentLoaded', async () => {
+  (async () => {
     await whoami();
     await loadPaket();
-  });
+  })();
 
   window.klaimTrial = klaimTrial;
   window.bukaBayar = bukaBayar;
