@@ -79,41 +79,73 @@ body.page-auth .auth-card {
   }
 }
 
-/* ---------- Brand & Header (Rata Tengah) ---------- */
+/* ---------- Brand & Header ---------- */
 body.page-auth .auth-brand {
   display: flex !important;
-  justify-content: center !important;
   align-items: center !important;
-  margin-bottom: 18px !important;
-  text-align: center !important;
+  gap: 10px !important;
+  margin-bottom: 12px !important;
+  text-align: left !important;
 }
 
-body.page-auth .auth-logo {
-  display: block !important;
-  margin: 0 auto !important;
-  width: 48px !important;
-  height: 48px !important;
-  object-fit: contain !important;
+body.page-auth .brand-badge-box {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 12px !important;
+  border: 2px solid #151515 !important;
+  background: #D8FF7A !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 2px 2px 0px #151515 !important;
+  flex-shrink: 0 !important;
 }
+body.page-auth .brand-badge-box.bg-login { background: #D8FF7A !important; }
+body.page-auth .brand-badge-box.bg-register { background: #D9D3FF !important; }
+body.page-auth .brand-badge-box.bg-forgot { background: #BFD7FF !important; }
+body.page-auth .brand-badge-box.bg-reset { background: #FFDFC0 !important; }
+
+body.page-auth .brand-text {
+  font-size: 19px !important;
+  font-weight: 800 !important;
+  color: #151515 !important;
+  letter-spacing: -.02em !important;
+}
+
+body.page-auth .auth-pill-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 3px 14px !important;
+  border-radius: 999px !important;
+  border: 1.5px solid #151515 !important;
+  font-size: 11.5px !important;
+  font-weight: 800 !important;
+  color: #151515 !important;
+  margin-bottom: 14px !important;
+}
+body.page-auth .auth-pill-badge.badge-login { background: #D8FF7A !important; }
+body.page-auth .auth-pill-badge.badge-register { background: #D9D3FF !important; }
+body.page-auth .auth-pill-badge.badge-forgot { background: #BFD7FF !important; }
+body.page-auth .auth-pill-badge.badge-reset { background: #FFDFC0 !important; }
 
 body.page-auth .auth-card h2 {
   display: block !important;
-  text-align: center !important;
-  font-size: 23px !important;
-  line-height: 1.25 !important;
-  font-weight: 700 !important;
+  text-align: left !important;
+  font-size: 24px !important;
+  line-height: 1.2 !important;
+  font-weight: 800 !important;
   letter-spacing: -0.02em !important;
-  color: var(--a-ink) !important;
+  color: #151515 !important;
   margin: 0 0 6px !important;
 }
 
 body.page-auth .auth-desc {
   display: block !important;
-  text-align: center !important;
-  font-size: 14px !important;
-  line-height: 1.5 !important;
-  color: var(--a-muted) !important;
-  margin: 0 0 24px !important;
+  text-align: left !important;
+  font-size: 13.5px !important;
+  line-height: 1.45 !important;
+  color: #5E5C70 !important;
+  margin: 0 0 20px !important;
 }
 
 /* ---------- Form & Field ---------- */
@@ -330,13 +362,22 @@ body.page-auth .btn-social {
 }
 
 body.page-auth .btn-auth-submit {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  height: 48px !important;
+  padding: 0 8px 0 22px !important;
   color: #FFFFFF !important;
   background: #151515 !important;
   border: 2px solid #151515 !important;
   border-radius: 999px !important;
   box-shadow: 3px 3px 0px #151515 !important;
+  font-size: 15px !important;
   font-weight: 800 !important;
+  cursor: pointer !important;
   transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+  box-sizing: border-box !important;
 }
 
 body.page-auth .btn-auth-submit:hover:not(:disabled) {
@@ -356,14 +397,37 @@ body.page-auth .btn-auth-submit:disabled {
   box-shadow: none !important;
 }
 
+body.page-auth .btn-arrow-circle {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 50% !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+}
+body.page-auth .circle-login { background: #D8FF7A !important; }
+body.page-auth .circle-register { background: #D9D3FF !important; }
+body.page-auth .circle-forgot { background: #BFD7FF !important; }
+body.page-auth .circle-reset { background: #FFDFC0 !important; }
+
 body.page-auth .btn-social {
   color: #151515 !important;
   background: #FFFFFF !important;
   border: 2px solid #151515 !important;
   border-radius: 999px !important;
   box-shadow: 2px 2px 0px #151515 !important;
+  font-size: 14px !important;
   font-weight: 700 !important;
+  height: 46px !important;
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 10px !important;
+  text-decoration: none !important;
   transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+  box-sizing: border-box !important;
 }
 
 body.page-auth .btn-social:hover {
@@ -381,9 +445,9 @@ body.page-auth .auth-divider {
   display: flex !important;
   align-items: center !important;
   gap: 14px !important;
-  margin: 20px 0 !important;
-  font-size: 13px !important;
-  font-weight: 600 !important;
+  margin: 18px 0 !important;
+  font-size: 12.5px !important;
+  font-weight: 700 !important;
   color: var(--a-muted) !important;
   text-align: center !important;
 }
@@ -392,28 +456,37 @@ body.page-auth .auth-divider::before,
 body.page-auth .auth-divider::after {
   content: "" !important;
   flex: 1 !important;
-  height: 1px !important;
-  background: var(--a-line) !important;
+  height: 1.5px !important;
+  background: #151515 !important;
 }
 
-/* ---------- Switch Link (Rata Tengah Bawah) ---------- */
+/* ---------- Switch Link ---------- */
 body.page-auth .switch-line {
   margin: 20px 0 0 !important;
-  font-size: 14px !important;
+  font-size: 13.5px !important;
   text-align: center !important;
   color: var(--a-muted) !important;
+  font-weight: 600 !important;
 }
 
 body.page-auth .switch-line a {
-  font-weight: 700 !important;
-  color: var(--a-ink) !important;
-  text-decoration: underline !important;
-  text-decoration-color: var(--a-line-strong) !important;
-  text-underline-offset: 3px !important;
-  transition: color 0.15s !important;
+  font-weight: 800 !important;
+  color: #151515 !important;
+  text-decoration: none !important;
+  padding-bottom: 2px !important;
+  display: inline-block !important;
 }
 
-body.page-auth .switch-line a:hover {
-  color: var(--a-accent) !important;
+body.page-auth .link-highlight-login {
+  border-bottom: 3px solid #D8FF7A !important;
+}
+body.page-auth .link-highlight-register {
+  border-bottom: 3px solid #D9D3FF !important;
+}
+body.page-auth .link-highlight-forgot {
+  border-bottom: 3px solid #BFD7FF !important;
+}
+body.page-auth .link-highlight-reset {
+  border-bottom: 3px solid #FFDFC0 !important;
 }
 
