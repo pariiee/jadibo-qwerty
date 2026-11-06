@@ -1,11 +1,17 @@
-// Halaman Panduan (/panduan). Isinya statis — nol endpoint, nol tabel, nol JS
-// buat buka-tutup (pakai <details> bawaan browser, yang sudah bisa diakses
-// keyboard & screen reader tanpa satu baris kode pun). File ini cuma benerin
-// topbar yang default-nya menulis "Dashboard".
 (function () {
   const sapaan = document.getElementById('greeting');
   if (sapaan) sapaan.textContent = 'Panduan';
-  // Tombol "Tambah Bot" di topbar nggak nyambung ke halaman ini; arahkan ke
-  // Dashboard, sama seperti billing.js/profil.js/command.js.
   window.openAddBot = () => { location.href = '/dashboard'; };
+
+  const cari = document.getElementById('panduan-cari');
+  const cards = document.querySelectorAll('.faq-card');
+  if (cari && cards.length) {
+    cari.addEventListener('input', () => {
+      const q = cari.value.toLowerCase().trim();
+      cards.forEach((card) => {
+        const text = card.textContent.toLowerCase();
+        card.style.display = !q || text.includes(q) ? '' : 'none';
+      });
+    });
+  }
 })();

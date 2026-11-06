@@ -6,147 +6,213 @@
 <title>Panduan — qwertygate</title>
 <!-- @include head.html -->
 </head>
-<body class="page-panduan">
+<body class="page-dashboard page-panduan">
 <div class="app">
-
-  <!-- @include sidebar.html -->
 
   <main>
     <!-- @include topbar.html -->
 
-    <div class="content">
-      <div class="cmd-head">
-        <h2>Panduan</h2>
-        <p class="m-sub">Dari bot masih kosong sampai jalan sendiri. Klik salah satu untuk membuka.</p>
+    <div class="content panduan-bento-content">
+      <!-- Hero Banner Panduan Bento -->
+      <section class="panduan-hero-banner">
+        <div class="panduan-hero-left">
+          <span class="panduan-hero-chip">PUSAT BANTUAN</span>
+          <h2>Panduan Penggunaan</h2>
+          <p>Petunjuk praktis dari bot baru hingga online 24/7. Klik pertanyaan di bawah untuk membaca langkah lengkapnya.</p>
+        </div>
+        <div class="panduan-hero-stat">
+          <span class="panduan-stat-lbl">Dokumentasi</span>
+          <b class="panduan-stat-val">10 Panduan</b>
+        </div>
+      </section>
+
+      <!-- Search Input Filter -->
+      <div class="panduan-search-wrap">
+        <svg class="panduan-search-ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input class="panduan-inp" id="panduan-cari" type="search" placeholder="Cari topik bantuan (misal: pairing code, qr, kuota, owner)..." autocomplete="off" />
       </div>
 
-      <div class="panduan">
+      <!-- Grid Daftar FAQ Panduan -->
+      <div class="panduan-grid" id="panduan-list">
 
-        <details class="faq-item">
-          <summary class="faq-q">1. Bikin bot & sambungkan ke WhatsApp
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <details class="faq-card" name="faq-group">
+          <summary class="faq-q">
+            <div class="faq-q-left">
+              <span class="faq-num">01</span>
+              <span class="faq-title">Bikin bot & sambungkan ke WhatsApp</span>
+            </div>
+            <span class="faq-arrow" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </span>
           </summary>
           <div class="faq-a">
             <ol>
-              <li>Buka <b>Dashboard</b>, klik <b>Tambah Bot</b>, isi nama bot. Prefix (awalan command) bebas — contoh <code>.</code></li>
-              <li>Bot muncul sebagai kartu, status <b>Offline</b>. Klik <b>Config</b> untuk masuk ke halamannya.</li>
-              <li>Klik <b>Scan QR</b>, lalu di HP: <b>WhatsApp &rarr; titik tiga &rarr; Perangkat Tertaut &rarr; Tautkan Perangkat</b>, dan scan QR yang muncul.</li>
-              <li>Tidak bisa scan? Pilih <b>Pairing Code</b> dan masukkan 8 angka yang tampil ke WhatsApp di HP kamu.</li>
-              <li>Tunggu status berubah jadi <b>Online</b>. Biasanya 10–20 detik.</li>
+              <li>Buka <b>Dashboard</b>, klik tombol <b>Tambah Bot</b>, dan isi nama bot kamu.</li>
+              <li>Bot akan muncul di grid berstatus <b>Offline</b>. Klik tombol <b>Config</b> untuk membuka kontrol bot.</li>
+              <li>Klik <b>Scan QR</b>, lalu buka WhatsApp di HP: <b>Titik Tiga &rarr; Perangkat Tertaut &rarr; Tautkan Perangkat</b>, lalu scan kode QR.</li>
+              <li>Tidak bisa scan? Gunakan <b>Pairing Code</b> dan masukkan 8 digit angka langsung di aplikasi WhatsApp HP.</li>
+              <li>Tunggu status berubah jadi <b>Online</b> (biasanya 10–20 detik).</li>
             </ol>
-            <p><b>Penting:</b> nomor yang kamu tautkan = nomor bot. Jangan pakai nomor yang sedang kamu pakai untuk chat pribadi — bot membalas semua pesan yang masuk, dan nomor itu tidak bisa dipakai membuka WhatsApp di HP selama tertaut.</p>
+            <div class="faq-note">
+              <b>Catatan:</b> Nomor yang ditautkan adalah nomor bot. Jangan gunakan nomor pribadi utama karena bot akan merespons pesan secara otomatis.
+            </div>
           </div>
         </details>
 
-        <details class="faq-item">
-          <summary class="faq-q">2. Memakai bot di grup
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <details class="faq-card" name="faq-group">
+          <summary class="faq-q">
+            <div class="faq-q-left">
+              <span class="faq-num">02</span>
+              <span class="faq-title">Memakai bot di grup</span>
+            </div>
+            <span class="faq-arrow" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </span>
           </summary>
           <div class="faq-a">
             <ol>
-              <li>Masukkan <b>nomor bot</b> ke grup seperti menambahkan anggota biasa.</li>
-              <li>Jadikan dia admin grup (disarankan) — sebagian command seperti buka/tutup grup dan anti-link butuh admin.</li>
-              <li>Di grup, tulis <code>.menu</code> untuk melihat semua command yang tersedia.</li>
+              <li>Masukkan nomor bot ke dalam grup WhatsApp seperti menambahkan anggota biasa.</li>
+              <li>Jadikan bot sebagai admin grup (opsional namun disarankan agar fitur moderasi seperti anti-link dan tutup grup bekerja).</li>
+              <li>Ketik perintah <code>.menu</code> di grup untuk mengecek daftar fitur aktif.</li>
             </ol>
-            <p>Prefix (awalan) tiap bot bisa beda dan diatur di <b>Config</b>. Kalau bot tidak membalas, cek dulu prefix-nya — command tanpa prefix yang benar diabaikan begitu saja.</p>
+            <p>Prefix bot bisa diatur bebas di halaman <b>Config</b>. Perintah tanpa prefix yang tepat akan diabaikan oleh sistem.</p>
           </div>
         </details>
 
-        <details class="faq-item">
-          <summary class="faq-q">3. Mengatur nomor owner
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <details class="faq-card" name="faq-group">
+          <summary class="faq-q">
+            <div class="faq-q-left">
+              <span class="faq-num">03</span>
+              <span class="faq-title">Mengatur nomor owner</span>
+            </div>
+            <span class="faq-arrow" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </span>
           </summary>
           <div class="faq-a">
-            <p><b>Nomor owner</b> adalah nomor yang selalu dilayani bot, walaupun kuota pesan habis dan walaupun botnya dipakai orang lain. Kamu sendiri tidak pernah masuk hitungan kuota.</p>
+            <p><b>Nomor owner</b> adalah pemilik bot yang selalu dilayani tanpa batas, bebas dari kuota pesan harian.</p>
             <ul>
-              <li>Atur di <b>Config &rarr; Pengaturan</b>, atau dari WhatsApp dengan <code>.addowner 62812xxxxxxx</code> saat mengirim dari nomor owner.</li>
-              <li>Jumlah nomor owner dibatasi oleh paket — paket Gratis tidak dapat owner number sama sekali.</li>
-              <li>Kuota owner cuma ditegakkan saat bot dibikin/diubah, jadi pakai nomor yang benar sejak awal.</li>
+              <li>Atur via <b>Config &rarr; Pengaturan</b>, atau ketik <code>.addowner 628xxx</code> dari nomor owner aktif.</li>
+              <li>Jumlah nomor owner dibatasi sesuai jatah paket langganan aktif kamu.</li>
             </ul>
           </div>
         </details>
 
-        <details class="faq-item">
-          <summary class="faq-q">4. Kuota pesan & masa aktif
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <details class="faq-card" name="faq-group">
+          <summary class="faq-q">
+            <div class="faq-q-left">
+              <span class="faq-num">04</span>
+              <span class="faq-title">Kuota pesan & masa aktif</span>
+            </div>
+            <span class="faq-arrow" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </span>
           </summary>
           <div class="faq-a">
-            <p>Ada dua batas yang berbeda, dan keduanya dicek terpisah:</p>
+            <p>Sistem membedakan dua batas penggunaan:</p>
             <ul>
-              <li><b>Kuota seumur paket</b> — total pesan yang boleh diterima bot sejak paket dibeli. Habis = bot berhenti membalas sampai paket dibeli lagi. Tidak reset sendiri.</li>
-              <li><b>Kuota harian</b> — direset otomatis setiap <b>00:00 WIB</b>.</li>
-              <li><b>Masa aktif</b> — setelah lewat, bot dimatikan otomatis oleh sistem dan dinyalakan lagi begitu paket diperpanjang.</li>
+              <li><b>Kuota harian:</b> Direset otomatis setiap hari pada <b>00:00 WIB</b>.</li>
+              <li><b>Masa aktif:</b> Masa berlaku paket. Saat masa aktif habis, bot otomatis dipause dan aktif kembali setelah langganan diperpanjang.</li>
             </ul>
-            <p>Sisa kuotamu bisa dilihat kapan saja di halaman <a href="/kuota">Kuota</a>. Sistem juga mengirim peringatan lewat WhatsApp saat kuota mulai menipis.</p>
           </div>
         </details>
 
-        <details class="faq-item">
-          <summary class="faq-q">5. Membayar & memperpanjang paket
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <details class="faq-card" name="faq-group">
+          <summary class="faq-q">
+            <div class="faq-q-left">
+              <span class="faq-num">05</span>
+              <span class="faq-title">Membayar & memperpanjang paket</span>
+            </div>
+            <span class="faq-arrow" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </span>
           </summary>
           <div class="faq-a">
             <ol>
-              <li>Buka halaman <a href="/pricing">Pricing</a>, pilih paket, lalu pilih cara bayar.</li>
-              <li><b>QRIS manual</b> — kamu scan QR, bayar dengan nominal <b>persis</b>, lalu admin mengonfirmasi. Simpan halaman <a href="/billing">Riwayat</a>; di sana ada tombol cek status.</li>
-              <li><b>Otomatis</b> — paket aktif sendiri begitu pembayaran masuk, tidak perlu menunggu admin.</li>
-              <li>Paket baru <b>menambah</b> masa aktif yang masih berjalan, bukan menggantinya. Beli lebih awal tidak merugikan.</li>
+              <li>Buka menu <a href="/pricing">Pricing</a>, pilih paket sesuai kebutuhan kamu.</li>
+              <li>Bayar dengan <b>QRIS Otomatis</b> atau <b>QRIS Manual</b> sesuai metode yang dipilih.</li>
+              <li>Paket baru akan <b>menambah durasi</b> masa aktif yang ada secara kumulatif.</li>
             </ol>
-            <p>Bot yang tadinya dimatikan karena paket habis akan <b>dinyalakan otomatis</b> begitu paketnya aktif.</p>
           </div>
         </details>
 
-        <details class="faq-item">
-          <summary class="faq-q">6. Bot tiba-tiba offline, kenapa?
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <details class="faq-card" name="faq-group">
+          <summary class="faq-q">
+            <div class="faq-q-left">
+              <span class="faq-num">06</span>
+              <span class="faq-title">Bot tiba-tiba offline, kenapa?</span>
+            </div>
+            <span class="faq-arrow" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </span>
           </summary>
           <div class="faq-a">
-            <p>Urutan pengecekan, dari yang paling sering terjadi:</p>
             <ol>
-              <li><b>Masa aktif paket habis.</b> Cek di <a href="/kuota">Kuota</a> atau <a href="/profil">Profil</a>. Kalau iya, perpanjang di <a href="/pricing">Pricing</a> — botnya nyala sendiri.</li>
-              <li><b>HP-nya membuka WhatsApp dengan nomor yang sama.</b> Tautan akan putus. Tutup WhatsApp di HP bernomor bot.</li>
-              <li><b>WhatsApp di HP logout / ganti perangkat.</b> Hapus sesi di Config, lalu scan QR ulang.</li>
-              <li><b>Sesi tidak valid lagi.</b> Klik <b>Clear Session</b> di Config, lalu scan QR baru.</li>
+              <li><b>Masa aktif paket habis:</b> Cek di profil akun dan lakukan perpanjangan.</li>
+              <li><b>Aplikasi WhatsApp di HP dibuka bersamaan:</b> Sesi tautan akan putus.</li>
+              <li><b>Sesi kedaluwarsa:</b> Buka <b>Config</b>, klik <b>Clear Session</b>, lalu scan ulang kode QR.</li>
             </ol>
-            <p>Log lengkapnya ada di halaman <a href="/log">Log Aktivitas</a> — biasanya penyebabnya kelihatan di baris terakhir sebelum bot berhenti.</p>
+            <p>Cek halaman <a href="/log">Log Aktivitas</a> untuk mengetahui riwayat error secara terperinci.</p>
           </div>
         </details>
 
-        <details class="faq-item">
-          <summary class="faq-q">7. Lupa password atau mau ganti nomor HP
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <details class="faq-card" name="faq-group">
+          <summary class="faq-q">
+            <div class="faq-q-left">
+              <span class="faq-num">07</span>
+              <span class="faq-title">Lupa password & ganti nomor HP</span>
+            </div>
+            <span class="faq-arrow" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </span>
           </summary>
           <div class="faq-a">
-            <p>Password bisa diganti sendiri di halaman <a href="/profil">Profil</a> (butuh password lama). Mengganti password akan <b>mengeluarkan semua perangkat lain</b> yang masih login — termasuk sesi yang mungkin bukan kamu.</p>
-            <p>Nomor HP untuk notifikasi juga diatur di halaman yang sama. Kalau kamu benar-benar lupa password lama, hubungi admin — tidak ada pemulihan lewat email untuk sekarang.</p>
+            <p>Kamu dapat mengganti password dan nomor telepon untuk notifikasi langsung di halaman <a href="/profil">Profil Akun</a>.</p>
           </div>
         </details>
 
-        <details class="faq-item">
-          <summary class="faq-q">8. Melihat semua command
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <details class="faq-card" name="faq-group">
+          <summary class="faq-q">
+            <div class="faq-q-left">
+              <span class="faq-num">08</span>
+              <span class="faq-title">Melihat semua command bot</span>
+            </div>
+            <span class="faq-arrow" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </span>
           </summary>
           <div class="faq-a">
-            <p>Halaman <a href="/command">Command</a> memuat seluruh daftar beserta keterangan dan aliasnya, lengkap dengan pencarian dan penyaringan per kategori.</p>
-            <p>Dari WhatsApp, tulis <code>.menu</code> di chat pribadi bot atau di grup. <b>Semua command terbuka untuk semua paket</b> — paket hanya membedakan kuota pesan, masa aktif, dan jumlah nomor owner.</p>
+            <p>Kunjungi katalog lengkap di halaman <a href="/command">Command Manager</a> untuk menyaring berdasarkan platform WhatsApp, Telegram, dan Discord.</p>
           </div>
         </details>
 
-        <details class="faq-item">
-          <summary class="faq-q">9. Bagaimana cara mengklaim Trial 5 hari gratis?
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <details class="faq-card" name="faq-group">
+          <summary class="faq-q">
+            <div class="faq-q-left">
+              <span class="faq-num">09</span>
+              <span class="faq-title">Cara klaim Trial 5 hari gratis</span>
+            </div>
+            <span class="faq-arrow" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </span>
           </summary>
           <div class="faq-a">
-            <p>Buka menu <a href="/pricing">Pricing</a>, lalu pilih paket Trial. Masa aktif mulai dihitung saat paket diambil.</p>
+            <p>Buka halaman <a href="/pricing">Pricing</a>, cari paket Trial dan tekan tombol <b>Klaim Trial</b>.</p>
           </div>
         </details>
 
-        <details class="faq-item">
-          <summary class="faq-q">10. Bisakah saya mengubah prefix command?
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <details class="faq-card" name="faq-group">
+          <summary class="faq-q">
+            <div class="faq-q-left">
+              <span class="faq-num">10</span>
+              <span class="faq-title">Mengubah prefix command</span>
+            </div>
+            <span class="faq-arrow" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </span>
           </summary>
           <div class="faq-a">
-            <p>Bisa. Buka <b>Config</b> pada bot kamu, lalu ubah kolom Prefix dan klik Simpan.</p>
+            <p>Masuk ke menu <b>Config</b> pada bot kamu, ubah karakter prefix (misal <code>!</code> atau <code>#</code>), lalu klik Simpan.</p>
           </div>
         </details>
 
@@ -155,6 +221,6 @@
   </main>
 </div>
 
-<script src="/js/panduan.js"></script>
+<script src="/js/panduan.js?v=2.0" defer></script>
 </body>
 </html>
