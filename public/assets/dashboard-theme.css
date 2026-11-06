@@ -797,15 +797,15 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 .theme-switch { display: none !important; }
 #sidebar, aside#sidebar { display: none !important; }
 
-/* ══ 1. Halaman penuh: tanpa bingkai card ══ */
-html, html body.page-dashboard {
+/* ══ 1. Halaman penuh: tanpa bingkai card (Dashboard & Command) ══ */
+html, html body.page-dashboard, html body.page-command {
   height: auto !important;
   min-height: 100% !important;
   overflow-x: hidden !important;
   overflow-y: auto !important;
   background: #EEEDFB !important;
 }
-html body.page-dashboard {
+html body.page-dashboard, html body.page-command {
   margin: 0 !important;
   padding: 0 !important;
   display: block !important;
@@ -816,7 +816,7 @@ html body.page-dashboard {
   --card: #FFFFFF !important;
   --edge: #E6E6E2 !important;
 }
-html body.page-dashboard .app {
+html body.page-dashboard .app, html body.page-command .app {
   display: block !important;
   position: static !important;
   width: auto !important; max-width: none !important;
@@ -828,8 +828,10 @@ html body.page-dashboard .app {
   overflow: visible !important;
 }
 html body.page-dashboard .app::before, html body.page-dashboard .app::after,
-html body.page-dashboard main::before, html body.page-dashboard main::after { display: none !important; }
-html body.page-dashboard main {
+html body.page-dashboard main::before, html body.page-dashboard main::after,
+html body.page-command .app::before, html body.page-command .app::after,
+html body.page-command main::before, html body.page-command main::after { display: none !important; }
+html body.page-dashboard main, html body.page-command main {
   position: static !important;
   width: 100% !important; max-width: 1360px !important;
   height: auto !important; min-height: 0 !important; max-height: none !important;
@@ -840,7 +842,7 @@ html body.page-dashboard main {
   box-shadow: none !important;
   overflow: visible !important;
 }
-html body.page-dashboard .content {
+html body.page-dashboard .content, html body.page-command .content {
   height: auto !important; max-height: none !important;
   padding: 0 !important;
   background: transparent !important;
@@ -991,16 +993,16 @@ body.page-dashboard .bt-foot b{color:var(--bt-text)}
 }
 @media (prefers-reduced-motion:reduce){body.page-dashboard .bt-grid *{animation:none !important;transition:none !important}}
 
-/* ══ Navbar gaya referensi: bar hitam + penanda menu aktif ══ */
-html body.page-dashboard { --nv-bar: #151515; --nv-ink: #FFFFFF; --nv-mute: #B9B9C2; --nv-on: #2E2E33; --nv-panel: #EEEDFB; }
+/* ══ Navbar gaya referensi: bar hitam + penanda menu aktif (Global) ══ */
+:root { --nv-bar: #151515; --nv-ink: #FFFFFF; --nv-mute: #B9B9C2; --nv-on: #2E2E33; --nv-panel: #EEEDFB; }
 
-html body.page-dashboard header.topbar.cx-navbar {
+header.topbar.cx-navbar {
   position: relative !important; top: auto !important; z-index: 60 !important;
   display: block !important; width: 100% !important; height: auto !important; min-height: 0 !important;
   margin: 0 !important; padding: 0 !important;
   background: transparent !important; border: 0 !important; box-shadow: none !important;
 }
-html body.page-dashboard header.topbar.cx-navbar .cx-nav-inner {
+header.topbar.cx-navbar .cx-nav-inner {
   display: grid !important; grid-template-columns: 1fr auto 1fr !important; align-items: center !important; gap: 16px !important;
   width: 100% !important; padding: 14px 22px 38px !important;
   background: var(--nv-bar) !important; color: var(--nv-ink) !important;
@@ -1008,65 +1010,65 @@ html body.page-dashboard header.topbar.cx-navbar .cx-nav-inner {
 }
 
 /* Brand */
-html body.page-dashboard .cx-brand { display: flex !important; align-items: center !important; gap: 10px !important; justify-self: start !important; text-decoration: none !important; color: var(--nv-ink) !important; }
-html body.page-dashboard .cx-brand-title { font-size: 18px !important; font-weight: 800 !important; letter-spacing: -.04em !important; color: var(--nv-ink) !important; }
-html body.page-dashboard .cx-navbar .brand-sub-chip { background: #D8FF7A !important; color: #151515 !important; }
+.cx-brand { display: flex !important; align-items: center !important; gap: 10px !important; justify-self: start !important; text-decoration: none !important; color: var(--nv-ink) !important; }
+.cx-brand-title { font-size: 18px !important; font-weight: 800 !important; letter-spacing: -.04em !important; color: var(--nv-ink) !important; }
+.cx-navbar .brand-sub-chip { background: #D8FF7A !important; color: #151515 !important; }
 
 /* Menu */
-html body.page-dashboard .cx-nav-pill { display: flex !important; align-items: center !important; gap: 6px !important; justify-self: center !important; padding: 0 !important; background: transparent !important; border: 0 !important; box-shadow: none !important; }
-html body.page-dashboard .cx-nav-item {
+.cx-nav-pill { display: flex !important; align-items: center !important; gap: 6px !important; justify-self: center !important; padding: 0 !important; background: transparent !important; border: 0 !important; box-shadow: none !important; }
+.cx-nav-item {
   position: relative !important; display: inline-flex !important; align-items: center !important; gap: 8px !important;
   padding: 9px 16px !important; border: 0 !important; border-radius: 999px !important;
   background: transparent !important; color: var(--nv-mute) !important;
   font: 600 13.5px/1 inherit !important; text-decoration: none !important; cursor: pointer;
   transition: background .2s ease, color .2s ease !important;
 }
-html body.page-dashboard .cx-nav-item:hover { color: var(--nv-ink) !important; }
-html body.page-dashboard .cx-nav-item.on,
-html body.page-dashboard .cx-nav-item.active { background: var(--nv-on) !important; color: var(--nv-ink) !important; }
-html body.page-dashboard .cx-nav-item.on::after,
-html body.page-dashboard .cx-nav-item.active::after {
+.cx-nav-item:hover { color: var(--nv-ink) !important; }
+.cx-nav-item.on,
+.cx-nav-item.active { background: var(--nv-on) !important; color: var(--nv-ink) !important; }
+.cx-nav-item.on::after,
+.cx-nav-item.active::after {
   content: ""; position: absolute; left: 50%; bottom: -20px; width: 24px; height: 13px; transform: translateX(-50%);
   background: var(--nv-panel); clip-path: polygon(0 100%, 50% 0, 100% 100%);
 }
-html body.page-dashboard .cx-nav-item:focus-visible, html body.page-dashboard .cx-me:focus-visible { outline: 2px solid #D8FF7A !important; outline-offset: 3px; }
+.cx-nav-item:focus-visible, .cx-me:focus-visible { outline: 2px solid #D8FF7A !important; outline-offset: 3px; }
 
 /* Blok akun */
-html body.page-dashboard .cx-nav-actions { position: relative !important; display: flex !important; align-items: center !important; justify-self: end !important; gap: 10px !important; }
-html body.page-dashboard .cx-me {
+.cx-nav-actions { position: relative !important; display: flex !important; align-items: center !important; justify-self: end !important; gap: 10px !important; }
+.cx-me {
   display: flex !important; align-items: center !important; gap: 10px !important;
   width: auto !important; height: auto !important; padding: 4px 8px 4px 4px !important;
   border: 0 !important; border-radius: 999px !important; background: transparent !important;
   color: var(--nv-ink) !important; font: inherit !important; cursor: pointer;
   transition: background .2s ease !important;
 }
-html body.page-dashboard .cx-me:hover { background: rgba(255, 255, 255, .09) !important; }
-html body.page-dashboard .cx-me .av { width: 40px !important; height: 40px !important; border-radius: 50% !important; border: 0 !important; background: #7A63F0 !important; color: #fff !important; display: grid !important; place-items: center !important; font-size: 14px; font-weight: 800; }
-html body.page-dashboard .cx-me-txt { display: flex; flex-direction: column; text-align: left; line-height: 1.2; font-size: 13px; }
-html body.page-dashboard .cx-me-txt b { font-weight: 800; color: var(--nv-ink); }
-html body.page-dashboard .cx-me-txt small { font-size: 12px; color: var(--nv-mute); }
-html body.page-dashboard .nv-chev { color: var(--nv-mute); }
+.cx-me:hover { background: rgba(255, 255, 255, .09) !important; }
+.cx-me .av { width: 40px !important; height: 40px !important; border-radius: 50% !important; border: 0 !important; background: #7A63F0 !important; color: #fff !important; display: grid !important; place-items: center !important; font-size: 14px; font-weight: 800; }
+.cx-me-txt { display: flex; flex-direction: column; text-align: left; line-height: 1.2; font-size: 13px; }
+.cx-me-txt b { font-weight: 800; color: var(--nv-ink); }
+.cx-me-txt small { font-size: 12px; color: var(--nv-mute); }
+.nv-chev { color: var(--nv-mute); }
 
 /* Popover akun & dropdown Manage */
-html body.page-dashboard .user-popover {
+.user-popover {
   position: absolute !important; right: 0 !important; top: calc(100% + 16px) !important; z-index: 300 !important;
   width: 250px; padding: 14px !important;
   background: #FFFFFF !important; color: #151515 !important;
   border: 2px solid #151515 !important; border-radius: 20px !important; box-shadow: 0 18px 40px rgba(40, 30, 90, .22) !important;
 }
-html body.page-dashboard .user-popover .pop-name { color: #151515 !important; font-weight: 800; }
-html body.page-dashboard .user-popover .pop-email { color: #5E5C70 !important; }
-html body.page-dashboard .user-popover .pop-badge { background: #D8FF7A !important; color: #151515 !important; border: 1.5px solid #151515 !important; border-radius: 999px !important; font-weight: 700; }
-html body.page-dashboard .user-popover .pop-menu { display: flex; flex-direction: column; gap: 2px; margin-top: 10px; }
-html body.page-dashboard .user-popover .pop-item { display: flex !important; align-items: center !important; gap: 10px !important; padding: 10px 12px !important; border: 0 !important; border-radius: 12px !important; background: transparent !important; color: #151515 !important; font: 700 14px/1 inherit !important; text-decoration: none !important; cursor: pointer; width: 100%; text-align: left; }
-html body.page-dashboard .user-popover .pop-item:hover { background: #F1EFFF !important; }
-html body.page-dashboard .user-popover .pop-logout { color: #B42318 !important; }
-html body.page-dashboard .cx-dropdown-menu { background: #FFFFFF !important; border: 2px solid #151515 !important; border-radius: 16px !important; box-shadow: 0 18px 40px rgba(40, 30, 90, .22) !important; z-index: 300 !important; }
-html body.page-dashboard .cx-drop-item { color: #151515 !important; font-weight: 700 !important; }
-html body.page-dashboard .cx-drop-item:hover { background: #F1EFFF !important; }
+.user-popover .pop-name { color: #151515 !important; font-weight: 800; }
+.user-popover .pop-email { color: #5E5C70 !important; }
+.user-popover .pop-badge { background: #D8FF7A !important; color: #151515 !important; border: 1.5px solid #151515 !important; border-radius: 999px !important; font-weight: 700; }
+.user-popover .pop-menu { display: flex; flex-direction: column; gap: 2px; margin-top: 10px; }
+.user-popover .pop-item { display: flex !important; align-items: center !important; gap: 10px !important; padding: 10px 12px !important; border: 0 !important; border-radius: 12px !important; background: transparent !important; color: #151515 !important; font: 700 14px/1 inherit !important; text-decoration: none !important; cursor: pointer; width: 100%; text-align: left; }
+.user-popover .pop-item:hover { background: #F1EFFF !important; }
+.user-popover .pop-logout { color: #B42318 !important; }
+.cx-dropdown-menu { background: #FFFFFF !important; border: 2px solid #151515 !important; border-radius: 16px !important; box-shadow: 0 18px 40px rgba(40, 30, 90, .22) !important; z-index: 300 !important; }
+.cx-drop-item { color: #151515 !important; font-weight: 700 !important; }
+.cx-drop-item:hover { background: #F1EFFF !important; }
 
 /* Panel konten menimpa bar (efek referensi) */
-html body.page-dashboard header.cx-navbar + .content {
+header.cx-navbar + .content {
   position: relative !important; z-index: 1 !important;
   margin-top: -20px !important; padding-top: 28px !important;
   background: var(--nv-panel) !important; border-radius: 26px 26px 0 0 !important;
@@ -1074,15 +1076,15 @@ html body.page-dashboard header.cx-navbar + .content {
 
 /* Responsif */
 @media (max-width: 760px) {
-  html body.page-dashboard header.topbar.cx-navbar .cx-nav-inner { grid-template-columns: auto 1fr auto !important; padding: 12px 14px 34px !important; gap: 8px !important; }
-  html body.page-dashboard .cx-nav-item span, html body.page-dashboard .cx-me-txt, html body.page-dashboard .nv-chev { display: none !important; }
-  html body.page-dashboard .cx-nav-item { padding: 10px 13px !important; }
+  header.topbar.cx-navbar .cx-nav-inner { grid-template-columns: auto 1fr auto !important; padding: 12px 14px 34px !important; gap: 8px !important; }
+  .cx-nav-item span, .cx-me-txt, .nv-chev { display: none !important; }
+  .cx-nav-item { padding: 10px 13px !important; }
 }
 @media (max-width: 480px) {
-  html body.page-dashboard .cx-brand-title, html body.page-dashboard .cx-navbar .brand-sub-chip { display: none !important; }
-  html body.page-dashboard .cx-nav-item { padding: 10px 11px !important; }
+  .cx-brand-title, .cx-navbar .brand-sub-chip { display: none !important; }
+  .cx-nav-item { padding: 10px 11px !important; }
 }
-@media (prefers-reduced-motion: reduce) { html body.page-dashboard .cx-nav-item, html body.page-dashboard .cx-me { transition: none !important; } }
+@media (prefers-reduced-motion: reduce) { .cx-nav-item, .cx-me { transition: none !important; } }
 
 /* Jaminan Scroll Bebas Dashboard */
 html,
@@ -1173,16 +1175,16 @@ html body.page-dashboard .bt-hero #hero-name {
   overflow-wrap: anywhere;
 }
 
-/* ── Perbaikan navbar ── */
+/* ── Perbaikan navbar (Global) ── */
 
 /* Kunci utama: header tidak boleh membuat stacking context, supaya panel (z-index 1)
    tampil di atas bar, sedangkan popover (z-index 300) tetap di atas panel. */
-html body.page-dashboard header.topbar.cx-navbar { z-index: auto !important; }
+header.topbar.cx-navbar { z-index: auto !important; }
 
 /* Tinggi baris tetap, supaya segitiga selalu pas dengan tepi panel */
-html body.page-dashboard header.topbar.cx-navbar .cx-nav-inner { grid-template-rows: 44px !important; }
+header.topbar.cx-navbar .cx-nav-inner { grid-template-rows: 44px !important; }
 
-html body.page-dashboard .cx-nav-item {
+.cx-nav-item {
   height: 40px !important;
   padding: 0 16px !important;
   font-family: inherit !important;
@@ -1190,14 +1192,14 @@ html body.page-dashboard .cx-nav-item {
   font-weight: 600 !important;
   line-height: 1 !important;
 }
-html body.page-dashboard .cx-nav-item.on::after,
-html body.page-dashboard .cx-nav-item.active::after { bottom: -21px !important; }
+.cx-nav-item.on::after,
+.cx-nav-item.active::after { bottom: -21px !important; }
 
-html body.page-dashboard .cx-me { height: 44px !important; }
-html body.page-dashboard .cx-me .av { width: 36px !important; height: 36px !important; }
+.cx-me { height: 44px !important; }
+.cx-me .av { width: 36px !important; height: 36px !important; }
 
 /* Popover: perbaiki shorthand font yang tidak valid */
-html body.page-dashboard .user-popover .pop-item {
+.user-popover .pop-item {
   font-family: inherit !important;
   font-size: 14px !important;
   font-weight: 700 !important;
@@ -1205,24 +1207,24 @@ html body.page-dashboard .user-popover .pop-item {
 }
 
 @media (max-width: 760px) {
-  html body.page-dashboard .cx-nav-item { padding: 0 13px !important; }
+  .cx-nav-item { padding: 0 13px !important; }
 }
 @media (max-width: 480px) {
-  html body.page-dashboard .cx-nav-item { padding: 0 11px !important; }
+  .cx-nav-item { padding: 0 11px !important; }
 }
 
-/* ══ Rapatkan spacing dashboard ══ */
-html body.page-dashboard { --bt-gap: 10px; --bt-pad: 16px; }
+/* ══ Rapatkan spacing dashboard & command ══ */
+html body.page-dashboard, html body.page-command { --bt-gap: 10px; --bt-pad: 16px; }
 
 /* Halaman & navbar */
-html body.page-dashboard .app { padding: 0 !important; }
-html body.page-dashboard main { padding: 10px clamp(12px, 1.8vw, 24px) 24px !important; }
-html body.page-dashboard header.topbar.cx-navbar .cx-nav-inner { padding: 12px 22px 28px !important; }
-html body.page-dashboard .cx-nav-item.on::after,
-html body.page-dashboard .cx-nav-item.active::after { bottom: -17px !important; width: 20px !important; height: 11px !important; }
-html body.page-dashboard header.cx-navbar + .content { margin-top: -14px !important; padding: 14px 0 0 !important; }
+html body.page-dashboard .app, html body.page-command .app { padding: 0 !important; }
+html body.page-dashboard main, html body.page-command main { padding: 10px clamp(12px, 1.8vw, 24px) 24px !important; }
+header.topbar.cx-navbar .cx-nav-inner { padding: 12px 22px 28px !important; }
+.cx-nav-item.on::after,
+.cx-nav-item.active::after { bottom: -17px !important; width: 20px !important; height: 11px !important; }
+header.cx-navbar + .content { margin-top: -14px !important; padding: 14px 0 0 !important; }
 @media (max-width: 760px) {
-  html body.page-dashboard header.topbar.cx-navbar .cx-nav-inner { padding: 10px 14px 28px !important; }
+  header.topbar.cx-navbar .cx-nav-inner { padding: 10px 14px 28px !important; }
 }
 
 /* Grid & tile */
@@ -1468,12 +1470,14 @@ body.page-command .cmd-hero-chip {
   padding: 3px 12px !important;
   margin-bottom: 8px !important;
 }
-body.page-command .cmd-hero-left h2 {
+body.page-command .cmd-hero-left h2,
+body.page-command h2 {
   font-size: clamp(24px, 3vw, 32px) !important;
   font-weight: 800 !important;
   letter-spacing: -0.04em !important;
   margin: 0 0 6px !important;
   line-height: 1.15 !important;
+  color: #151515 !important;
 }
 body.page-command .cmd-hero-left p {
   font-size: 14px !important;
