@@ -1425,8 +1425,328 @@ body.page-dashboard #add-overlay .submit-btn:hover {
   transform: translate(-2px, -2px) !important;
   box-shadow: 5px 5px 0px #151515 !important;
 }
-body.page-dashboard #add-overlay .submit-btn:active {
-  transform: translate(1px, 1px) !important;
-  box-shadow: 1px 1px 0px #151515 !important;
+/* ══ Command Manager Bento Neo-Brutalist ══ */
+html body.page-command {
+  background: #EEEDFB !important;
+  color: #151515 !important;
+  font-family: var(--bt-font, 'Bricolage Grotesque', system-ui, sans-serif) !important;
+}
+body.page-command .cmd-bento-content {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+  max-width: 1100px !important;
+  margin: 0 auto !important;
+  padding: 16px 20px 60px !important;
+}
+
+/* Hero Banner Bento */
+body.page-command .cmd-hero-banner {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  flex-wrap: wrap !important;
+  gap: 16px !important;
+  background: #D8FF7A !important;
+  border: 2.5px solid #151515 !important;
+  border-radius: 26px !important;
+  padding: 24px 28px !important;
+  box-shadow: 4px 4px 0px #151515 !important;
+  color: #151515 !important;
+}
+body.page-command .cmd-hero-left {
+  max-width: 680px !important;
+}
+body.page-command .cmd-hero-chip {
+  display: inline-block !important;
+  background: #FFFFFF !important;
+  color: #151515 !important;
+  border: 2px solid #151515 !important;
+  border-radius: 999px !important;
+  font-size: 11.5px !important;
+  font-weight: 800 !important;
+  padding: 3px 12px !important;
+  margin-bottom: 8px !important;
+}
+body.page-command .cmd-hero-left h2 {
+  font-size: clamp(24px, 3vw, 32px) !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.04em !important;
+  margin: 0 0 6px !important;
+  line-height: 1.15 !important;
+}
+body.page-command .cmd-hero-left p {
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  color: rgba(21, 21, 21, 0.8) !important;
+  line-height: 1.45 !important;
+  margin: 0 !important;
+}
+body.page-command .cmd-hero-stat {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-end !important;
+  background: #FFFFFF !important;
+  border: 2px solid #151515 !important;
+  border-radius: 18px !important;
+  padding: 12px 20px !important;
+  box-shadow: 2px 2px 0px #151515 !important;
+}
+body.page-command .cmd-stat-lbl {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: #5E5C70 !important;
+  text-transform: uppercase !important;
+}
+body.page-command .cmd-stat-val {
+  font-size: 24px !important;
+  font-weight: 800 !important;
+  color: #151515 !important;
+  letter-spacing: -0.03em !important;
+}
+
+/* Toolbar Filter & Cari */
+body.page-command .cmd-toolbar {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  flex-wrap: wrap !important;
+}
+body.page-command .cmd-search-wrap {
+  position: relative !important;
+  flex: 1 1 260px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+body.page-command .cmd-search-ic {
+  position: absolute !important;
+  left: 14px !important;
+  color: #5E5C70 !important;
+  pointer-events: none !important;
+}
+body.page-command .cmd-inp {
+  width: 100% !important;
+  height: 46px !important;
+  padding: 0 16px 0 42px !important;
+  background: #FFFFFF !important;
+  border: 2px solid #151515 !important;
+  border-radius: 16px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: #151515 !important;
+  box-shadow: 2px 2px 0px #151515 !important;
+  box-sizing: border-box !important;
+}
+body.page-command .cmd-inp:focus {
+  outline: 3px solid #7A63F0 !important;
+  outline-offset: 1px !important;
+}
+body.page-command .cmd-select {
+  height: 46px !important;
+  padding: 0 16px !important;
+  background: #FFFFFF !important;
+  border: 2px solid #151515 !important;
+  border-radius: 16px !important;
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+  color: #151515 !important;
+  box-shadow: 2px 2px 0px #151515 !important;
+  cursor: pointer !important;
+  flex: 0 1 220px !important;
+}
+body.page-command .cmd-btn-reload {
+  height: 46px !important;
+  padding: 0 20px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  background: #151515 !important;
+  color: #FFFFFF !important;
+  border: 2px solid #151515 !important;
+  border-radius: 999px !important;
+  font-size: 13.5px !important;
+  font-weight: 800 !important;
+  box-shadow: 2px 2px 0px #151515 !important;
+  cursor: pointer !important;
+  transition: transform .15s ease, box-shadow .15s ease !important;
+}
+body.page-command .cmd-btn-reload:hover {
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 4px 4px 0px #151515 !important;
+}
+body.page-command .cmd-btn-reload svg { stroke: #D8FF7A !important; }
+
+/* Status Text Info */
+body.page-command .cmd-info-row {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: #5E5C70 !important;
+  margin-top: -4px !important;
+}
+
+/* List Accordion Bento */
+body.page-command .cmd-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+}
+body.page-command .cmd-row {
+  background: #FFFFFF !important;
+  border: 2px solid #151515 !important;
+  border-radius: 18px !important;
+  box-shadow: 3px 3px 0px #151515 !important;
+  overflow: hidden !important;
+  transition: transform .15s ease, box-shadow .15s ease !important;
+}
+body.page-command .cmd-row:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 4px 4px 0px #151515 !important;
+}
+body.page-command .cmd-row[open] {
+  background: #FFFFFF !important;
+  box-shadow: 4px 4px 0px #7A63F0 !important;
+  border-color: #151515 !important;
+}
+body.page-command .cmd-row summary {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 14px 18px !important;
+  cursor: pointer !important;
+  user-select: none !important;
+  list-style: none !important;
+}
+body.page-command .cmd-row summary::-webkit-details-marker { display: none !important; }
+body.page-command .cmd-kiri {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+body.page-command .cmd-nama {
+  font-family: monospace !important;
+  font-size: 15px !important;
+  font-weight: 800 !important;
+  background: #151515 !important;
+  color: #D8FF7A !important;
+  border-radius: 8px !important;
+  padding: 4px 10px !important;
+}
+body.page-command .cmd-kat {
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  background: #F5F4FF !important;
+  color: #151515 !important;
+  border: 1.5px solid #151515 !important;
+  border-radius: 999px !important;
+  padding: 2px 10px !important;
+}
+body.page-command .cmd-kanan {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+body.page-command .engine-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 26px !important;
+  height: 26px !important;
+  border-radius: 50% !important;
+  border: 1.5px solid #151515 !important;
+}
+body.page-command .eb-wa { background: #EAF9EE !important; }
+body.page-command .eb-tg { background: #EBF5FF !important; }
+body.page-command .eb-dc { background: #EEF0FF !important; }
+body.page-command .cmd-panah {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 24px !important;
+  height: 24px !important;
+  border-radius: 50% !important;
+  background: #F5F4FF !important;
+  color: #151515 !important;
+  transition: transform .2s ease !important;
+}
+body.page-command .cmd-row[open] .cmd-panah {
+  transform: rotate(180deg) !important;
+  background: #D8FF7A !important;
+}
+
+/* Isi Accordion */
+body.page-command .cmd-isi {
+  border-top: 1.5px dashed #E6E6E2 !important;
+  padding: 14px 18px 16px !important;
+  background: #FAF9FF !important;
+}
+body.page-command .cmd-desk {
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+  color: #151515 !important;
+  line-height: 1.5 !important;
+  margin: 0 0 10px !important;
+}
+body.page-command .cmd-alias {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+}
+body.page-command .cmd-alias-lbl {
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  color: #5E5C70 !important;
+  text-transform: uppercase !important;
+  letter-spacing: .05em !important;
+}
+body.page-command .cmd-alias-item {
+  font-family: monospace !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  background: #FFFFFF !important;
+  border: 1.5px solid #151515 !important;
+  border-radius: 6px !important;
+  padding: 2px 7px !important;
+  color: #151515 !important;
+}
+
+/* State Kosong & Pager */
+body.page-command .cmd-kosong {
+  background: #FFFFFF !important;
+  border: 2px dashed #151515 !important;
+  border-radius: 20px !important;
+  padding: 40px 20px !important;
+  text-align: center !important;
+}
+body.page-command .cmd-kosong-ic { font-size: 32px !important; margin-bottom: 8px !important; }
+body.page-command .cmd-pager {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 12px !important;
+  margin-top: 16px !important;
+}
+body.page-command .cmd-pager-btn {
+  background: #FFFFFF !important;
+  color: #151515 !important;
+  border: 2px solid #151515 !important;
+  border-radius: 999px !important;
+  padding: 8px 18px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  box-shadow: 2px 2px 0px #151515 !important;
+  cursor: pointer !important;
+}
+body.page-command .cmd-pager-btn:hover { transform: translateY(-1px) !important; }
+body.page-command .cmd-pager-info {
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  color: #151515 !important;
+}
+
+@media (max-width: 600px) {
+  body.page-command .cmd-hero-stat { display: none !important; }
+  body.page-command .cmd-toolbar { flex-direction: column !important; align-items: stretch !important; }
+  body.page-command .cmd-select, body.page-command .cmd-btn-reload { width: 100% !important; justify-content: center !important; }
 }
 
