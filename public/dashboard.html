@@ -18,6 +18,7 @@
       <div id="pengumuman" style="display:none"><strong id="peng-judul"></strong><p id="peng-isi"></p></div>
       <h1 id="greeting" style="display:none"></h1>
       <div class="empty" id="empty-state" style="display:none"></div>
+      <span id="slot-text" style="display:none"></span>
 
       <svg width="0" height="0" style="position:absolute" aria-hidden="true">
         <symbol id="bt-bolt" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></symbol>
@@ -83,17 +84,6 @@
              #bot-grid memakai display:contents, jadi anak-anaknya ikut grid bento. -->
         <div id="bot-grid"></div>
 
-        <!-- Status bot (miring) -->
-        <article class="bt-tile bt-streak bt-s3 bt-anim">
-          <div class="bt-sh">
-            <h3 id="bt-stk-title">Semua bot lagi online</h3>
-            <div class="bt-big"><svg class="bt-bolt" viewBox="0 0 24 24"><use href="#bt-bolt"/></svg><span id="bt-stk-num">0</span></div>
-          </div>
-          <div class="bt-plats"><i data-p="wa">WA</i><i data-p="tg">TG</i><i data-p="dc">DC</i></div>
-          <div class="bt-tr"><i id="bt-stk-bar" style="width:0"></i></div>
-          <div class="bt-foot"><span>Slot terpakai</span><b id="slot-text">0 / 0</b></div>
-        </article>
-
       </div>
     </div>
   </main>
@@ -148,6 +138,6 @@
   </div>
 </div>
 <div class="toast" id="toast" role="status"></div>
-<script src="/js/dashboard.js?v=10.8"></script>
+<script src="/js/dashboard.js?v=10.9"></script>
 </body>
 </html>

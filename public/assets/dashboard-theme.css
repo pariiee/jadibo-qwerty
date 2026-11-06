@@ -1124,6 +1124,75 @@ body.page-dashboard .content {
   overflow-y: visible !important;
 }
 
+/* ── Angka & teks statistik: menang atas aturan lama berbasis id ── */
+html body.page-dashboard .bt-tile #st-online,
+html body.page-dashboard .bt-tile #st-role,
+html body.page-dashboard .bt-tile #st-exp,
+html body.page-dashboard .bt-tile #st-slot {
+  display: block !important;
+  font-family: var(--bt-font) !important;
+  font-size: clamp(28px, 2.8vw, 36px) !important;
+  font-weight: 800 !important;
+  letter-spacing: -.04em !important;
+  line-height: 1.05 !important;
+  color: inherit !important;
+  -webkit-text-fill-color: currentColor !important;
+  background: none !important;
+  text-transform: none !important;
+  opacity: 1 !important;
+}
+html body.page-dashboard .bt-tile #st-online-sub,
+html body.page-dashboard .bt-tile #st-role-sub,
+html body.page-dashboard .bt-tile #st-exp-sub,
+html body.page-dashboard .bt-tile #st-slot-sub {
+  margin-top: 6px !important;
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+  line-height: 1.35 !important;
+  color: var(--bt-mute) !important;
+  opacity: 1 !important;
+}
+
+/* ── Sapaan Welcome ── */
+html body.page-dashboard .bt-hero #hero-greeting {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  font-size: inherit !important;
+  font-weight: 400 !important;
+  line-height: 1 !important;
+  letter-spacing: 0 !important;
+  color: #151515 !important;
+  text-transform: none !important;
+  background: none !important;
+}
+html body.page-dashboard .bt-hero #hero-greeting .bt-hello {
+  display: block !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  line-height: 1.3 !important;
+  letter-spacing: 0 !important;
+  color: rgba(21, 21, 21, .68) !important;
+  text-transform: none !important;
+}
+html body.page-dashboard .bt-hero #hero-name {
+  display: block !important;
+  min-height: 1.05em;
+  font-size: clamp(44px, 5.4vw, 68px) !important;
+  font-weight: 800 !important;
+  letter-spacing: -.055em !important;
+  line-height: 1 !important;
+  color: #151515 !important;
+  -webkit-text-fill-color: #151515 !important;
+  background: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  text-transform: none !important;
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 540px) {
   html body.page-dashboard .cx-nav-pill { display: none !important; }
 }

@@ -41,8 +41,12 @@
     document.getElementById('greeting').textContent   = 'Selamat Datang Kembali, ' + me.username;
     const hg = document.getElementById('hero-greeting');
     if (hg) {
-      hg.innerHTML = '<span class="hero-sub">Selamat datang kembali,</span><span class="hero-user" id="hero-name"></span>';
+      hg.innerHTML = '<span class="bt-hello">Selamat datang kembali,</span><span class="bt-name" id="hero-name"></span>';
       typeWriter(document.getElementById('hero-name'), me.username);
+      setTimeout(() => {
+        const hn = document.getElementById('hero-name');
+        if (hn && !hn.textContent.trim()) hn.textContent = me.username;
+      }, 2000);
     }
     if (me.is_admin) document.getElementById('nav-admin').style.display = '';
     const nd = document.getElementById('nav-dashboard');
@@ -241,33 +245,16 @@
   let btAnimated = false;
 
   function renderSide() {
-    const total = bots.length;
-    const online = bots.filter(b => b.is_running).length;
-    const pct = total ? Math.round(online / total * 100) : 0;
-    const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-
-    setTxt('bt-stk-num', online);
-    setTxt('bt-stk-title', total === 0 ? 'Belum ada bot' : (online === total ? 'Semua bot lagi online' : online + ' dari ' + total + ' bot online'));
-    const bar = document.getElementById('bt-stk-bar');
-    if (bar) bar.style.width = pct + '%';
-
-    const key = { wa: 'whatsapp', tg: 'telegram', dc: 'discord' };
-    document.querySelectorAll('.bt-plats [data-p]').forEach(el => {
-      const p = key[el.dataset.p];
-      el.classList.toggle('bt-off', !bots.some(b => (b.platform || 'whatsapp') === p));
-    });
-
     const pips = document.getElementById('bt-pips');
-    if (pips) {
-      const used = bots.length;
-      const unlimited = !!(me && me.is_admin);
-      const cap = unlimited ? 0 : (me && me.plan_aktif ? (me.slots || 1) : 0);
-      let h = '';
-      for (let i = 0; i < Math.min(used, 8); i++) h += '<i></i>';
-      if (unlimited) h += '<i class="bt-inf">\u221e</i>';
-      else for (let i = used; i < Math.min(cap, 8); i++) h += '<i class="bt-empty"></i>';
-      pips.innerHTML = h;
-    }
+    if (!pips) return;
+    const used = bots.length;
+    const unlimited = !!(me && me.is_admin);
+    const cap = unlimited ? 0 : (me && me.plan_aktif ? (me.slots || 1) : 0);
+    let h = '';
+    for (let i = 0; i < Math.min(used, 8); i++) h += '<i></i>';
+    if (unlimited) h += '<i class="bt-inf">\u221e</i>';
+    else for (let i = used; i < Math.min(cap, 8); i++) h += '<i class="bt-empty"></i>';
+    pips.innerHTML = h;
   }
 
   function renderBots() {
@@ -323,7 +310,7 @@
 
     const add = document.createElement('button');
     add.type = 'button';
-    add.className = 'bt-tile bt-add bt-s3' + (btAnimated ? '' : ' bt-anim');
+    add.className = 'bt-tile bt-add bt-s3 bt-r2' + (btAnimated ? '' : ' bt-anim');
     if (!btAnimated) add.style.animationDelay = (300 + bots.length * 70) + 'ms';
     const slotDesc = (me && me.is_admin) ? (bots.length + ' / \u221e slot terpakai') : (bots.length + ' / ' + (me && me.slots ? me.slots : 1) + ' slot terpakai');
     add.innerHTML = '<span class="bt-pl"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><span>Tambah bot</span><small style="font-size:12px;color:var(--bt-mute);font-weight:600">' + esc(slotDesc) + '</small>';
