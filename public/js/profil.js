@@ -50,6 +50,11 @@
     if (!me?.ok) return;
     const u = me.user;
 
+    const tn = document.getElementById('top-name');
+    if (tn) tn.textContent = 'Hai, ' + u.username + '!';
+    const tr = document.getElementById('top-role');
+    if (tr) tr.textContent = u.role_label || '—';
+
     document.getElementById('pf-user').textContent = u.username;
     document.getElementById('hp-nomor').value = u.phone || '';
     document.getElementById('em-alamat').value = u.email || '';

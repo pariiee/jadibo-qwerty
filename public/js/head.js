@@ -184,6 +184,10 @@ document.addEventListener('DOMContentLoaded', function () {
     if (d && d.ok && d.user) {
       var u = d.user;
       if (topAv && u.username) topAv.textContent = u.username[0].toUpperCase();
+      var tn = document.getElementById('top-name');
+      if (tn && u.username) tn.textContent = 'Hai, ' + u.username + '!';
+      var tr = document.getElementById('top-role');
+      if (tr) tr.textContent = u.role_label || (u.is_admin ? 'Admin' : (u.slots ? u.slots + ' Slot' : 'Member'));
       if (pName) pName.textContent = u.username || 'User';
       if (pEmail) pEmail.textContent = u.email || (u.username + '@gmail.com');
       if (pRole) pRole.textContent = u.is_admin ? 'Admin' : (u.slots ? u.slots + ' Slot' : 'User');
@@ -216,6 +220,8 @@ document.addEventListener('DOMContentLoaded', function () {
       } else {
         localStorage.removeItem('yb-is-admin');
         document.documentElement.classList.remove('is-admin');
+        var elNav = document.getElementById('nav-admin');
+        if (elNav) elNav.style.display = 'none';
       }
     }
   }).catch(function () {});

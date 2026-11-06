@@ -2973,3 +2973,27 @@ body.page-saldo .saldo-kosong-card {
   body.page-saldo .saldo-hero-stat { display: none !important; }
 }
 
+/* ══ Profil: perbaiki spacing & samakan dengan dashboard ══ */
+body.page-profil { --pf-gap: 22px; }
+
+/* Menang atas "display:block" dari blok Fix Full-Width */
+html body.page-dashboard.page-profil .content.profil-bento-content {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: var(--pf-gap) !important;
+  padding-top: 30px !important;
+  padding-bottom: 28px !important;
+}
+html body.page-profil .profil-stats-grid { gap: var(--pf-gap) !important; margin: 0 !important; }
+html body.page-profil .profil-forms-grid { gap: var(--pf-gap) !important; }
+
+/* Tanpa bayangan keras, garis 2px seperti dashboard */
+html body.page-profil .profil-hero-banner,
+html body.page-profil .profil-hero-stat,
+html body.page-profil .profil-stat-tile,
+html body.page-profil .profil-form-card,
+html body.page-profil .pf-btn-submit { box-shadow: none !important; }
+html body.page-profil .profil-hero-banner,
+html body.page-profil .profil-form-card { border-width: 2px !important; }
+html body.page-profil .pf-btn-submit:hover { transform: translateY(-2px) !important; box-shadow: none !important; }
+
