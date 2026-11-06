@@ -4228,5 +4228,12 @@ body.page-invoice #inv-success-box .btn-primary {
   text-decoration: none !important;
 }
 
+/* ══ Sembunyikan Tombol Ganti Tema di Seluruh Halaman ══ */
+.theme-btn,
+.theme-btn-auth,
+[data-act="toggleTheme"] {
+  display: none !important;
+}
+
 
 
