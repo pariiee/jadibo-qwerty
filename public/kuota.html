@@ -6,41 +6,68 @@
 <title>Kuota Pesan — qwertygate</title>
 <!-- @include head.html -->
 </head>
-<body class="page-kuota">
+<body class="page-dashboard page-kuota">
 <div class="app">
-
-  <!-- @include sidebar.html -->
 
   <main>
     <!-- @include topbar.html -->
 
-    <div class="content">
-      <div class="cmd-head">
-        <h2>Kuota Pesan</h2>
-        <p class="m-sub">Sisa jatah pesan tiap bot kamu. Kalau habis, bot berhenti membalas sampai paket ditambah.</p>
+    <div class="content kuota-bento-content">
+      <!-- Hero Banner Bento -->
+      <section class="kuota-hero-banner">
+        <div class="kuota-hero-left">
+          <span class="kuota-hero-chip">MONITORING LIMIT</span>
+          <h2>Kuota Pesan Bot</h2>
+          <p>Pantau sisa jatah pesan per bot, pemakaian harian, dan kapasitas seumur paket secara real-time.</p>
+        </div>
+        <div class="kuota-hero-stat">
+          <span class="kuota-stat-lbl">Reset Harian</span>
+          <b class="kuota-stat-val">00:00 WIB</b>
+        </div>
+      </section>
+
+      <!-- State Kosong jika belum ada bot -->
+      <div id="kuota-kosong" class="kuota-kosong-card" style="display:none">
+        <div class="kuota-kosong-ic">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/></svg>
+        </div>
+        <h3>Belum Ada Bot Terdaftar</h3>
+        <p>Kamu belum memiliki bot aktif. Tambahkan bot di Dashboard agar kuota pesan dapat dipantau.</p>
+        <a class="bt-go" href="/dashboard" style="margin-top:6px">
+          <span>+</span> Tambah Bot Baru
+        </a>
       </div>
 
-      <div id="kuota-kosong" class="card" style="display:none">
-        <p class="m-sub" style="margin:0 0 12px">Kamu belum punya bot. Bikin bot dulu supaya kuotanya bisa dipantau.</p>
-        <a class="btn" href="/dashboard">Ke Dashboard</a>
-      </div>
+      <!-- Grid Daftar Kartu Kuota Bot -->
+      <div class="kuota-grid" id="kuota-daftar"></div>
 
-      <div id="kuota-daftar"></div>
-
-      <div class="card" style="margin-top:16px">
-        <div class="kuota-legenda">
-          <strong>Bagaimana hitungannya</strong>
-          <ul class="m-sub" style="margin:8px 0 0;padding-left:18px">
-            <li><b>Sisa paket</b> — jatah pesan seumur paket. Habis = beli paket baru, tidak reset sendiri.</li>
-            <li><b>Per hari</b> — jatah harian yang direset otomatis tiap <b>00:00 WIB</b>.</li>
-            <li>Pemilik bot (kamu) <b>tidak ikut dihitung</b> kuota, jadi kamu selalu bisa memakai bot sendiri.</li>
-          </ul>
+      <!-- Penjelasan Ketentuan Kuota -->
+      <div class="kuota-info-card">
+        <div class="kuota-info-header">
+          <div class="kuota-info-ic">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#151515" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+          </div>
+          <h4>Bagaimana Hitungan Kuota Pesan Bekerja?</h4>
+        </div>
+        <div class="kuota-info-grid">
+          <div class="kuota-info-item">
+            <b>1. Sisa Kuota Paket</b>
+            <p>Jatah pesan total seumur paket aktif. Bila habis, bot berhenti merespons dan dapat ditambah via menu Pricing.</p>
+          </div>
+          <div class="kuota-info-item">
+            <b>2. Batas Pesan Per Hari</b>
+            <p>Batas maksimal pesan masuk dalam 24 jam. Kuota harian direset otomatis setiap pukul 00:00 WIB.</p>
+          </div>
+          <div class="kuota-info-item">
+            <b>3. Bebas Kuota Owner</b>
+            <p>Pesan dari nomor Owner bot tidak dihitung ke dalam kuota harian maupun total paket.</p>
+          </div>
         </div>
       </div>
     </div>
   </main>
 </div>
 
-<script src="/js/kuota.js"></script>
+<script src="/js/kuota.js?v=2.1" defer></script>
 </body>
 </html>

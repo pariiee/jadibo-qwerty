@@ -19,39 +19,56 @@
   // ambang peringatan WA di engine/kuota.js — kalau di sana diubah, ubah di sini.
   const warna = (persen) => (persen >= 95 ? 'var(--errTxt)' : persen >= 80 ? 'var(--warn)' : 'var(--ok)');
 
+  function renderKuotaSkeleton() {
+    const daftar = document.getElementById('kuota-daftar');
+    if (!daftar) return;
+    daftar.innerHTML = [1, 2].map(() => `
+      <div class="kuota-card" style="pointer-events:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div class="bt-skel" style="width:120px;height:24px;border-radius:8px"></div>
+          <div class="bt-skel" style="width:70px;height:22px;border-radius:999px"></div>
+        </div>
+        <div class="bt-skel" style="width:160px;height:34px;border-radius:8px;margin-bottom:12px"></div>
+        <div class="bt-skel" style="width:100%;height:14px;border-radius:999px;margin-bottom:10px"></div>
+        <div class="bt-skel" style="width:140px;height:18px;border-radius:6px"></div>
+      </div>
+    `).join('');
+  }
+
   function kartuBot(b) {
     const st = b.jalan ? ['st-on', 'Online'] : (b.status === 'connecting' ? ['st-wait', 'Connecting'] : ['st-off', 'Offline']);
 
     let isi;
     if (!b.paketAktif) {
       isi =
-        '<div class="kuota-angka"><b style="color:var(--errTxt)">Paket tidak aktif</b></div>' +
-        '<p class="m-sub" style="margin:4px 0 0">Bot berhenti membalas dan dimatikan otomatis sampai paket diperpanjang.</p>';
+        '<div class="kuota-angka"><b style="color:#E11D48">Paket Tidak Aktif</b></div>' +
+        '<p class="kuota-desc">Bot berhenti merespons dan dipause otomatis sampai masa aktif paket diperpanjang.</p>';
     } else if (b.tanpaBatas) {
       isi =
-        '<div class="kuota-angka"><b>Tanpa batas</b></div>' +
-        '<p class="m-sub" style="margin:4px 0 0">Akun ini tidak dibatasi kuota pesan.</p>';
+        '<div class="kuota-angka"><b>Tanpa Batas</b></div>' +
+        '<p class="kuota-desc">Akun ini memiliki kuota pesan unlimited.</p>';
     } else {
       isi =
-        '<div class="kuota-angka"><b>' + angka(b.sisa) + '</b><span>sisa dari ' + angka(b.batas) + ' pesan</span></div>' +
-        '<div class="kuota-bar"><i style="width:' + Math.min(100, b.persen) + '%;background:' + warna(b.persen) + '"></i></div>' +
-        '<p class="m-sub" style="margin:8px 0 0">' + b.persen + '% terpakai' + (b.habis ? ' — <b style="color:var(--errTxt)">kuota habis</b>' : '') + '</p>';
+        '<div class="kuota-angka"><b>' + angka(b.sisa) + '</b><span class="kuota-total"> / ' + angka(b.batas) + ' pesan tersisa</span></div>' +
+        '<div class="kuota-progress-wrap"><div class="kuota-bar-fill" style="width:' + Math.min(100, b.persen) + '%;background:' + warna(b.persen) + '"></div></div>' +
+        '<div class="kuota-status-line"><span>' + b.persen + '% terpakai</span>' + (b.habis ? '<b style="color:#E11D48">Kuota Habis</b>' : '') + '</div>';
     }
 
-    return '<div class="card kuota-card">' +
-      '<div class="kuota-head">' +
+    return '<div class="kuota-card">' +
+      '<div class="kuota-card-head">' +
         '<div>' +
-          '<h4>' + esc(b.nama) + '</h4>' +
-          '<div class="bc-status"><span class="st-dot ' + st[0] + '"></span>' + st[1] + '</div>' +
+          '<h3 class="kuota-bot-name">' + esc(b.nama) + '</h3>' +
+          '<span class="kuota-status-pill ' + st[0] + '"><i class="st-dot"></i>' + st[1] + '</span>' +
         '</div>' +
-        (b.habis || !b.paketAktif ? '<a class="btn btn-outline" href="/pricing">Tambah Kuota</a>' : '') +
+        (b.habis || !b.paketAktif ? '<a class="kuota-btn-topup" href="/pricing">Perpanjang &rarr;</a>' : '') +
       '</div>' +
       isi +
-      '<div class="kuota-harian">Per hari: <b>' + angka(b.harian) + '</b> · reset 00:00 WIB</div>' +
+      '<div class="kuota-harian-footer">Limit Harian: <b>' + angka(b.harian) + ' pesan</b> <span class="kuota-reset-tag">Reset 00:00 WIB</span></div>' +
     '</div>';
   }
 
   async function muat() {
+    renderKuotaSkeleton();
     const d = await api('/api/kuota');
     const daftar = document.getElementById('kuota-daftar');
     const kosong = document.getElementById('kuota-kosong');
