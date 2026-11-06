@@ -83,19 +83,17 @@
             </div>
             <div>
               <h3>Nomor WhatsApp</h3>
-              <p>Jalur pesan otomatis status pembayaran dan peringatan bila bot offline.</p>
+              <p>Jalur notifikasi otomatis pembayaran &amp; peringatan bot offline.</p>
             </div>
           </div>
           <form id="hp-form">
-            <div class="field">
-              <label for="hp-nomor">Nomor HP / WhatsApp</label>
+            <label class="pf-label" for="hp-nomor">Nomor HP / WhatsApp</label>
+            <div class="pf-input-group">
               <input class="inp pf-inp" id="hp-nomor" type="tel" placeholder="08123456789" autocomplete="tel" />
+              <button class="pf-btn-submit" id="hp-btn" type="submit">Simpan</button>
             </div>
             <div class="err pf-err" id="hp-error"></div>
             <div class="ok pf-ok" id="hp-ok"></div>
-            <div class="pf-actions">
-              <button class="pf-btn-submit" id="hp-btn" type="submit">Simpan Nomor</button>
-            </div>
           </form>
         </section>
 
@@ -107,19 +105,17 @@
             </div>
             <div>
               <h3>Alamat Email</h3>
-              <p>Saluran darurat bila koneksi WhatsApp bot terputus sehingga info tetap sampai.</p>
+              <p>Saluran cadangan bila koneksi WhatsApp bot terputus.</p>
             </div>
           </div>
           <form id="em-form">
-            <div class="field">
-              <label for="em-alamat">Alamat Email Utama</label>
+            <label class="pf-label" for="em-alamat">Alamat Email Utama</label>
+            <div class="pf-input-group">
               <input class="inp pf-inp" id="em-alamat" type="email" placeholder="nama@gmail.com" autocomplete="email" />
+              <button class="pf-btn-submit" id="em-btn" type="submit">Simpan</button>
             </div>
             <div class="err pf-err" id="em-error"></div>
             <div class="ok pf-ok" id="em-ok"></div>
-            <div class="pf-actions">
-              <button class="pf-btn-submit" id="em-btn" type="submit">Simpan Email</button>
-            </div>
           </form>
         </section>
 
@@ -131,26 +127,26 @@
             </div>
             <div>
               <h3>Keamanan &amp; Ganti Password</h3>
-              <p>Masukkan password lama terlebih dahulu demi melindungi akunmu dari akses liar.</p>
+              <p>Perbarui kata sandi akunmu secara berkala agar tetap aman.</p>
             </div>
           </div>
           <form id="pw-form">
             <div class="pf-pw-fields">
               <div class="field">
-                <label for="pw-lama">Password Lama</label>
-                <input class="inp pf-inp" id="pw-lama" type="password" autocomplete="current-password" placeholder="••••••••" required />
+                <label class="pf-label" for="pw-lama">Password Lama</label>
+                <input class="inp pf-inp" id="pw-lama" type="password" autocomplete="current-password" placeholder="Password saat ini" required />
               </div>
               <div class="field">
-                <label for="pw-baru">Password Baru</label>
+                <label class="pf-label" for="pw-baru">Password Baru</label>
                 <input class="inp pf-inp" id="pw-baru" type="password" placeholder="Min. 6 karakter" autocomplete="new-password" required />
               </div>
               <div class="field">
-                <label for="pw-ulang">Ulangi Password Baru</label>
+                <label class="pf-label" for="pw-ulang">Ulangi Password Baru</label>
                 <input class="inp pf-inp" id="pw-ulang" type="password" placeholder="Ulangi password baru" autocomplete="new-password" required />
               </div>
             </div>
             <div class="err pf-err" id="pw-error"></div>
-            <div class="pf-actions">
+            <div class="pf-actions" style="margin-top:4px">
               <button class="pf-btn-submit" type="submit">Perbarui Password</button>
             </div>
           </form>
@@ -160,6 +156,6 @@
   </main>
 </div>
 
-<script src="/js/profil.js?v=2.0" defer></script>
+<script src="/js/profil.js?v=2.1" defer></script>
 </body>
 </html>

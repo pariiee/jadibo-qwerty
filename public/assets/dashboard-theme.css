@@ -2584,32 +2584,41 @@ body.page-profil .pf-ic-box {
   place-items: center !important;
   flex-shrink: 0 !important;
 }
-body.page-profil .field {
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 6px !important;
-  margin-bottom: 12px !important;
-}
-body.page-profil .field label {
+body.page-profil .pf-label {
+  display: block !important;
   font-size: 13px !important;
   font-weight: 800 !important;
   color: #151515 !important;
+  margin-bottom: 8px !important;
+}
+body.page-profil .pf-input-group {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
 }
 body.page-profil .pf-inp {
+  flex: 1 1 auto !important;
   width: 100% !important;
   height: 46px !important;
   padding: 0 16px !important;
   background: #FFFFFF !important;
   border: 2px solid #151515 !important;
-  border-radius: 14px !important;
+  border-radius: 16px !important;
   font-size: 14px !important;
   font-weight: 600 !important;
   color: #151515 !important;
-  box-shadow: 2px 2px 0px #151515 !important;
+  box-shadow: none !important;
+  box-sizing: border-box !important;
 }
 body.page-profil .pf-inp:focus {
   outline: 3px solid #7A63F0 !important;
   outline-offset: 1px !important;
+}
+body.page-profil .field {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  margin-bottom: 10px !important;
 }
 body.page-profil .pf-pw-fields {
   display: grid !important;
@@ -2617,7 +2626,9 @@ body.page-profil .pf-pw-fields {
   gap: 12px !important;
 }
 body.page-profil .pf-btn-submit {
-  height: 44px !important;
+  flex: 0 0 auto !important;
+  white-space: nowrap !important;
+  height: 46px !important;
   padding: 0 22px !important;
   background: #151515 !important;
   color: #FFFFFF !important;
@@ -2637,13 +2648,13 @@ body.page-profil .pf-err {
   font-size: 12.5px !important;
   font-weight: 700 !important;
   color: #E11D48 !important;
-  margin-bottom: 8px !important;
+  margin-top: 8px !important;
 }
 body.page-profil .pf-ok {
   font-size: 12.5px !important;
   font-weight: 700 !important;
   color: #059669 !important;
-  margin-bottom: 8px !important;
+  margin-top: 8px !important;
 }
 
 @media (max-width: 860px) {
