@@ -52,6 +52,8 @@ body.page-auth {
 .auth-brand {
   display: flex !important;
   align-items: center !important;
+  justify-content: flex-start !important;
+  text-align: left !important;
   gap: 12px !important;
   margin-bottom: 16px !important;
 }
