@@ -1947,3 +1947,299 @@ body.page-panduan .faq-note {
   body.page-panduan .panduan-hero-stat { display: none !important; }
 }
 
+/* ══ Pricing Component Styles ══ */
+body.page-pricing .pricing-bento-content {
+  width: 100% !important;
+  max-width: 1360px !important;
+  margin: 0 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+}
+
+body.page-pricing .pricing-hero-banner {
+  display: flex !important; align-items: center !important; justify-content: space-between !important;
+  flex-wrap: wrap !important; gap: 16px !important; background: #D9D3FF !important;
+  border: 2.5px solid #151515 !important; border-radius: 26px !important; padding: 22px 28px !important;
+  box-shadow: 4px 4px 0px #151515 !important; color: #151515 !important;
+}
+body.page-pricing .pricing-hero-chip {
+  display: inline-block !important; background: #fff !important; color: #151515 !important;
+  border: 2px solid #151515 !important; border-radius: 999px !important; font-size: 11.5px !important;
+  font-weight: 800 !important; padding: 3px 12px !important; margin-bottom: 8px !important;
+}
+body.page-pricing .pricing-hero-left h2, body.page-pricing h2 {
+  font-size: clamp(24px, 3vw, 32px) !important; font-weight: 800 !important;
+  color: #151515 !important; margin: 0 0 6px !important; line-height: 1.15 !important;
+}
+body.page-pricing .pricing-hero-left p {
+  font-size: 14px !important; font-weight: 500 !important; color: rgba(21, 21, 21, 0.8) !important; margin: 0 !important;
+}
+body.page-pricing .pricing-hero-stat {
+  display: flex !important; flex-direction: column !important; align-items: flex-end !important;
+  background: #fff !important; border: 2px solid #151515 !important; border-radius: 18px !important;
+  padding: 10px 18px !important; box-shadow: 2px 2px 0px #151515 !important; gap: 4px !important;
+}
+body.page-pricing .pricing-stat-lbl { font-size: 11px !important; font-weight: 700 !important; color: #5E5C70 !important; text-transform: uppercase !important; }
+body.page-pricing .pricing-stat-badge-row { display: flex !important; align-items: center !important; gap: 8px !important; }
+body.page-pricing .pricing-stat-val { font-size: 18px !important; font-weight: 800 !important; color: #151515 !important; }
+body.page-pricing .pricing-stat-sub { font-size: 12px !important; font-weight: 600 !important; color: #5E5C70 !important; }
+body.page-pricing .pricing-btn-trial-hero {
+  margin-top: 4px !important; background: #D8FF7A !important; color: #151515 !important;
+  border: 1.5px solid #151515 !important; border-radius: 999px !important; font-size: 12px !important;
+  font-weight: 800 !important; padding: 4px 12px !important; cursor: pointer !important;
+  box-shadow: 2px 2px 0px #151515 !important;
+}
+
+body.page-pricing .pricing-note-card {
+  background: #FFFFFF !important; border: 2px solid #151515 !important; border-radius: 16px !important;
+  box-shadow: 3px 3px 0px #151515 !important; padding: 12px 18px !important; font-size: 13.5px !important;
+  font-weight: 600 !important; color: #151515 !important;
+}
+
+/* Bento Plan Cards Grid */
+body.page-pricing .plan-wrap { width: 100% !important; margin: 0 !important; }
+body.page-pricing .plan-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
+  gap: 14px !important;
+  align-items: stretch !important;
+}
+body.page-pricing .plan-card {
+  background: #FFFFFF !important;
+  border: 2.5px solid #151515 !important;
+  border-radius: 24px !important;
+  box-shadow: 4px 4px 0px #151515 !important;
+  padding: 24px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+  position: relative !important;
+  transition: transform .2s ease, box-shadow .2s ease !important;
+}
+body.page-pricing .plan-card:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: 6px 6px 0px #151515 !important;
+}
+body.page-pricing .plan-card.aktif {
+  background: #FAF9FF !important;
+  border-color: #151515 !important;
+}
+body.page-pricing .pc-head {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin-bottom: 4px !important;
+}
+body.page-pricing .pc-name {
+  font-size: 18px !important;
+  font-weight: 800 !important;
+  color: #151515 !important;
+}
+body.page-pricing .pc-tag {
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  background: #151515 !important;
+  color: #D8FF7A !important;
+  border-radius: 999px !important;
+  padding: 3px 10px !important;
+}
+body.page-pricing .pc-price {
+  font-size: clamp(28px, 2.6vw, 36px) !important;
+  font-weight: 800 !important;
+  letter-spacing: -.04em !important;
+  color: #151515 !important;
+  line-height: 1.1 !important;
+  margin: 6px 0 12px !important;
+}
+body.page-pricing .pc-price small {
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  letter-spacing: normal !important;
+  color: #5E5C70 !important;
+}
+body.page-pricing .pc-list {
+  list-style: none !important;
+  padding: 0 !important;
+  margin: 0 0 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+}
+body.page-pricing .pc-list li {
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  color: #151515 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+body.page-pricing .pc-list li::before {
+  content: "✓" !important;
+  font-weight: 800 !important;
+  color: #151515 !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  width: 18px !important;
+  height: 18px !important;
+  border-radius: 50% !important;
+  background: #D8FF7A !important;
+  font-size: 11px !important;
+  flex-shrink: 0 !important;
+}
+body.page-pricing .plan-card .btn {
+  width: 100% !important;
+  height: 44px !important;
+  border-radius: 999px !important;
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 3px 3px 0px #151515 !important;
+  border: 2px solid #151515 !important;
+  cursor: pointer !important;
+  transition: transform .15s ease, box-shadow .15s ease !important;
+}
+body.page-pricing .plan-card .btn-dark {
+  background: #151515 !important;
+  color: #FFFFFF !important;
+}
+body.page-pricing .plan-card .btn-dark:hover {
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 5px 5px 0px #151515 !important;
+}
+body.page-pricing .plan-card .btn-outline {
+  background: #FFFFFF !important;
+  color: #151515 !important;
+}
+
+/* Modal Neo-Brutalist Checkout */
+body.page-pricing .overlay {
+  background: rgba(21, 21, 21, 0.6) !important;
+  backdrop-filter: blur(4px) !important;
+}
+body.page-pricing .modal.pricing-modal {
+  background: #FFFFFF !important;
+  border: 3px solid #151515 !important;
+  border-radius: 28px !important;
+  box-shadow: 8px 8px 0px #151515 !important;
+  padding: 28px !important;
+  max-width: 480px !important;
+  width: 90% !important;
+}
+body.page-pricing .pricing-modal-chip {
+  display: inline-block !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  background: #F5F4FF !important;
+  color: #151515 !important;
+  border: 1.5px solid #151515 !important;
+  border-radius: 999px !important;
+  padding: 2px 10px !important;
+  margin-bottom: 8px !important;
+}
+body.page-pricing .pricing-modal-title {
+  font-size: 22px !important;
+  font-weight: 800 !important;
+  color: #151515 !important;
+  margin: 0 0 4px !important;
+}
+body.page-pricing .pricing-modal-sub {
+  font-size: 13.5px !important;
+  color: #5E5C70 !important;
+  margin: 0 0 18px !important;
+}
+body.page-pricing .pricing-plat-grid {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+}
+body.page-pricing .pricing-plat-btn {
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+  padding: 14px 18px !important;
+  background: #FFFFFF !important;
+  border: 2px solid #151515 !important;
+  border-radius: 18px !important;
+  box-shadow: 3px 3px 0px #151515 !important;
+  cursor: pointer !important;
+  text-align: left !important;
+  transition: transform .15s ease, box-shadow .15s ease !important;
+}
+body.page-pricing .pricing-plat-btn:hover {
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 5px 5px 0px #151515 !important;
+}
+body.page-pricing .plat-ic-box {
+  width: 44px !important;
+  height: 44px !important;
+  border: 2px solid #151515 !important;
+  border-radius: 12px !important;
+  display: grid !important;
+  place-items: center !important;
+  flex-shrink: 0 !important;
+}
+body.page-pricing .plat-txt-box {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+}
+body.page-pricing .plat-txt-title {
+  font-size: 15px !important;
+  font-weight: 800 !important;
+  color: #151515 !important;
+}
+body.page-pricing .plat-txt-desc {
+  font-size: 12px !important;
+  color: #5E5C70 !important;
+}
+
+body.page-pricing .pricing-qr-wrap {
+  display: grid !important;
+  place-items: center !important;
+  padding: 16px !important;
+  background: #FAF9FF !important;
+  border: 2px solid #151515 !important;
+  border-radius: 18px !important;
+  margin: 12px 0 16px !important;
+}
+body.page-pricing .pricing-qr-wrap img {
+  max-width: 220px !important;
+  border-radius: 12px !important;
+  border: 2px solid #151515 !important;
+}
+body.page-pricing .pricing-modal-actions {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  margin-top: 16px !important;
+}
+body.page-pricing .pricing-btn-primary {
+  height: 44px !important;
+  background: #151515 !important;
+  color: #FFFFFF !important;
+  border: 2px solid #151515 !important;
+  border-radius: 999px !important;
+  font-size: 13.5px !important;
+  font-weight: 800 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-decoration: none !important;
+  box-shadow: 3px 3px 0px #151515 !important;
+}
+body.page-pricing .pricing-btn-secondary {
+  height: 44px !important;
+  background: #FFFFFF !important;
+  color: #151515 !important;
+  border: 2px solid #151515 !important;
+  border-radius: 999px !important;
+  font-size: 13.5px !important;
+  font-weight: 800 !important;
+  cursor: pointer !important;
+  box-shadow: 3px 3px 0px #151515 !important;
+}
+
