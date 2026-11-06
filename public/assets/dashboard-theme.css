@@ -1290,17 +1290,18 @@ body.page-dashboard .bt-stk svg { width: 40px; height: 40px; }
 
 /* ══ Command Manager Component Styles ══ */
 body.page-command .cmd-bento-content {
-  max-width: 1100px !important;
+  width: 100% !important;
+  max-width: 1360px !important;
   margin: 0 auto !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: 16px !important;
+  gap: 14px !important;
 }
 
 body.page-command .cmd-hero-banner {
   display: flex !important; align-items: center !important; justify-content: space-between !important;
   flex-wrap: wrap !important; gap: 16px !important; background: #D8FF7A !important;
-  border: 2.5px solid #151515 !important; border-radius: 26px !important; padding: 24px 28px !important;
+  border: 2.5px solid #151515 !important; border-radius: 26px !important; padding: 22px 28px !important;
   box-shadow: 4px 4px 0px #151515 !important; color: #151515 !important;
 }
 body.page-command .cmd-hero-chip {
@@ -1318,16 +1319,44 @@ body.page-command .cmd-hero-left p {
 body.page-command .cmd-hero-stat {
   display: flex !important; flex-direction: column !important; align-items: flex-end !important;
   background: #fff !important; border: 2px solid #151515 !important; border-radius: 18px !important;
-  padding: 12px 20px !important; box-shadow: 2px 2px 0px #151515 !important;
+  padding: 10px 18px !important; box-shadow: 2px 2px 0px #151515 !important;
 }
 body.page-command .cmd-stat-lbl { font-size: 11px !important; font-weight: 700 !important; color: #5E5C70 !important; text-transform: uppercase !important; }
-body.page-command .cmd-stat-val { font-size: 24px !important; font-weight: 800 !important; color: #151515 !important; }
+body.page-command .cmd-stat-val { font-size: 22px !important; font-weight: 800 !important; color: #151515 !important; }
 
 body.page-command .cmd-toolbar {
   display: flex !important;
   align-items: center !important;
   gap: 12px !important;
   flex-wrap: nowrap !important;
+}
+body.page-command .cmd-select-wrap {
+  position: relative !important;
+  flex: 0 0 220px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+body.page-command .cmd-select {
+  width: 100% !important;
+  height: 46px !important;
+  padding: 0 38px 0 16px !important;
+  background: #FFFFFF !important;
+  border: 2px solid #151515 !important;
+  border-radius: 16px !important;
+  font-family: inherit !important;
+  font-size: 13.5px !important;
+  font-weight: 800 !important;
+  color: #151515 !important;
+  box-shadow: 3px 3px 0px #151515 !important;
+  cursor: pointer !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+}
+body.page-command .cmd-select-arr {
+  position: absolute !important;
+  right: 14px !important;
+  color: #151515 !important;
+  pointer-events: none !important;
 }
 body.page-command .cmd-search-wrap {
   position: relative !important;
@@ -1345,13 +1374,6 @@ body.page-command .cmd-inp:focus {
   outline: 3px solid #7A63F0 !important;
   outline-offset: 1px !important;
 }
-body.page-command .cmd-select {
-  flex: 0 0 200px !important;
-  height: 46px !important; padding: 0 16px !important; background: #fff !important;
-  border: 2px solid #151515 !important; border-radius: 16px !important; font-size: 13.5px !important;
-  font-weight: 700 !important; color: #151515 !important; box-shadow: 3px 3px 0px #151515 !important;
-  cursor: pointer !important;
-}
 body.page-command .cmd-btn-reload {
   flex: 0 0 auto !important;
   white-space: nowrap !important;
@@ -1361,46 +1383,58 @@ body.page-command .cmd-btn-reload {
   font-size: 13.5px !important; font-weight: 800 !important; box-shadow: 3px 3px 0px #151515 !important; cursor: pointer !important;
   transition: transform .15s ease, box-shadow .15s ease !important;
 }
+body.page-command .cmd-btn-reload:hover {
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 5px 5px 0px #151515 !important;
+}
 body.page-command .cmd-btn-reload svg { stroke: #D8FF7A !important; }
 body.page-command .cmd-info-row { font-size: 13px !important; font-weight: 600 !important; color: #5E5C70 !important; }
-body.page-command .cmd-list { display: flex !important; flex-direction: column !important; gap: 10px !important; }
+body.page-command .cmd-list {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+}
 body.page-command .cmd-row {
   background: #fff !important; border: 2px solid #151515 !important; border-radius: 18px !important;
   box-shadow: 3px 3px 0px #151515 !important; overflow: hidden !important;
 }
 body.page-command .cmd-row summary {
-  display: flex !important; align-items: center !important; justify-content: space-between !important;
-  padding: 14px 18px !important; cursor: pointer !important; list-style: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 10px 14px !important;
+  cursor: pointer !important;
+  list-style: none !important;
 }
 body.page-command .cmd-row summary::-webkit-details-marker { display: none !important; }
-body.page-command .cmd-kiri { display: flex !important; align-items: center !important; gap: 12px !important; }
+body.page-command .cmd-kiri { display: flex !important; align-items: center !important; gap: 10px !important; }
 body.page-command .cmd-nama {
-  font-family: monospace !important; font-size: 15px !important; font-weight: 800 !important;
-  background: #151515 !important; color: #D8FF7A !important; border-radius: 8px !important; padding: 4px 10px !important;
+  font-family: monospace !important; font-size: 13.5px !important; font-weight: 800 !important;
+  background: #151515 !important; color: #D8FF7A !important; border-radius: 7px !important; padding: 3px 8px !important;
 }
 body.page-command .cmd-kat {
-  font-size: 12px !important; font-weight: 700 !important; background: #F5F4FF !important;
-  color: #151515 !important; border: 1.5px solid #151515 !important; border-radius: 999px !important; padding: 2px 10px !important;
+  font-size: 11px !important; font-weight: 700 !important; background: #F5F4FF !important;
+  color: #151515 !important; border: 1.5px solid #151515 !important; border-radius: 999px !important; padding: 2px 8px !important;
 }
-body.page-command .cmd-kanan { display: flex !important; align-items: center !important; gap: 12px !important; }
+body.page-command .cmd-kanan { display: flex !important; align-items: center !important; gap: 10px !important; }
 body.page-command .engine-badge {
   display: inline-flex !important; align-items: center !important; justify-content: center !important;
-  width: 26px !important; height: 26px !important; border-radius: 50% !important; border: 1.5px solid #151515 !important;
+  width: 24px !important; height: 24px !important; border-radius: 50% !important; border: 1.5px solid #151515 !important;
 }
 body.page-command .eb-wa { background: #EAF9EE !important; }
 body.page-command .eb-tg { background: #EBF5FF !important; }
 body.page-command .eb-dc { background: #EEF0FF !important; }
 body.page-command .cmd-panah {
   display: inline-flex !important; align-items: center !important; justify-content: center !important;
-  width: 24px !important; height: 24px !important; border-radius: 50% !important; background: #F5F4FF !important;
+  width: 22px !important; height: 22px !important; border-radius: 50% !important; background: #F5F4FF !important;
 }
 body.page-command .cmd-row[open] .cmd-panah { transform: rotate(180deg) !important; background: #D8FF7A !important; }
-body.page-command .cmd-isi { border-top: 1.5px dashed #E6E6E2 !important; padding: 14px 18px 16px !important; background: #FAF9FF !important; }
-body.page-command .cmd-desk { font-size: 13.5px !important; color: #151515 !important; margin: 0 0 10px !important; }
-body.page-command .cmd-alias { display: flex !important; align-items: center !important; gap: 8px !important; flex-wrap: wrap !important; }
+body.page-command .cmd-isi { border-top: 1.5px dashed #E6E6E2 !important; padding: 10px 14px 12px !important; background: #FAF9FF !important; }
+body.page-command .cmd-desk { font-size: 13px !important; color: #151515 !important; margin: 0 0 8px !important; line-height: 1.45 !important; }
+body.page-command .cmd-alias { display: flex !important; align-items: center !important; gap: 6px !important; flex-wrap: wrap !important; }
 body.page-command .cmd-alias-item {
-  font-family: monospace !important; font-size: 12px !important; font-weight: 700 !important;
-  background: #fff !important; border: 1.5px solid #151515 !important; border-radius: 6px !important; padding: 2px 7px !important;
+  font-family: monospace !important; font-size: 11.5px !important; font-weight: 700 !important;
+  background: #fff !important; border: 1.5px solid #151515 !important; border-radius: 6px !important; padding: 2px 6px !important;
 }
 body.page-command .cmd-pager { display: flex !important; align-items: center !important; justify-content: center !important; gap: 12px !important; margin-top: 16px !important; }
 body.page-command .cmd-pager-btn {
@@ -1410,9 +1444,14 @@ body.page-command .cmd-pager-btn {
 }
 body.page-command .cmd-pager-info { font-size: 13px !important; font-weight: 700 !important; color: #151515 !important; }
 
-@media (max-width: 600px) {
+@media (max-width: 800px) {
+  body.page-command .cmd-list { grid-template-columns: 1fr !important; }
+}
+@media (max-width: 640px) {
   body.page-command .cmd-hero-stat { display: none !important; }
-  body.page-command .cmd-toolbar { flex-direction: column !important; align-items: stretch !important; }
-  body.page-command .cmd-select, body.page-command .cmd-btn-reload { width: 100% !important; }
+  body.page-command .cmd-toolbar { flex-wrap: wrap !important; gap: 10px !important; }
+  body.page-command .cmd-select-wrap { flex: 1 1 100% !important; width: 100% !important; }
+  body.page-command .cmd-search-wrap { flex: 1 1 100% !important; width: 100% !important; }
+  body.page-command .cmd-btn-reload { width: 100% !important; justify-content: center !important; }
 }
 
