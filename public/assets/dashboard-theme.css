@@ -2669,3 +2669,306 @@ body.page-profil .pf-ok {
   body.page-profil .profil-hero-stat { display: none !important; }
 }
 
+/* ══ Fix Full-Width Profil Page ══ */
+html body.page-dashboard.page-profil .content,
+body.page-profil .content {
+  display: block !important;
+  width: 100% !important;
+  max-width: none !important;
+}
+
+/* ══ Saldo / Wallet Component Styles ══ */
+body.page-saldo .saldo-bento-content {
+  width: 100% !important;
+  max-width: 1360px !important;
+  margin: 0 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 14px !important;
+}
+
+body.page-saldo .saldo-hero-banner {
+  display: flex !important; align-items: center !important; justify-content: space-between !important;
+  flex-wrap: wrap !important; gap: 16px !important; background: #D8FF7A !important;
+  border: 2.5px solid #151515 !important; border-radius: 26px !important; padding: 22px 28px !important;
+  box-shadow: 4px 4px 0px #151515 !important; color: #151515 !important;
+}
+body.page-saldo .saldo-hero-chip {
+  display: inline-block !important; background: #fff !important; color: #151515 !important;
+  border: 2px solid #151515 !important; border-radius: 999px !important; font-size: 11.5px !important;
+  font-weight: 800 !important; padding: 3px 12px !important; margin-bottom: 8px !important;
+}
+body.page-saldo .saldo-hero-left h2, body.page-saldo h2 {
+  font-size: clamp(24px, 3vw, 32px) !important; font-weight: 800 !important;
+  color: #151515 !important; margin: 0 0 6px !important; line-height: 1.15 !important;
+}
+body.page-saldo .saldo-hero-left p {
+  font-size: 14px !important; font-weight: 500 !important; color: rgba(21, 21, 21, 0.8) !important; margin: 0 !important;
+}
+body.page-saldo .saldo-hero-stat {
+  display: flex !important; flex-direction: column !important; align-items: flex-end !important;
+  background: #fff !important; border: 2px solid #151515 !important; border-radius: 18px !important;
+  padding: 10px 18px !important; box-shadow: 2px 2px 0px #151515 !important; gap: 4px !important;
+}
+body.page-saldo .saldo-stat-lbl { font-size: 11px !important; font-weight: 700 !important; color: #5E5C70 !important; text-transform: uppercase !important; }
+body.page-saldo .saldo-btn-riwayat {
+  background: #151515 !important; color: #FFFFFF !important; border: 1.5px solid #151515 !important;
+  border-radius: 999px !important; font-size: 12px !important; font-weight: 800 !important;
+  padding: 4px 12px !important; display: inline-flex !important; align-items: center !important; gap: 6px !important;
+  cursor: pointer !important; box-shadow: 2px 2px 0px #151515 !important;
+}
+
+body.page-saldo .saldo-note-card {
+  background: #FFF5EA !important; border: 2px solid #151515 !important; border-radius: 18px !important;
+  box-shadow: 3px 3px 0px #151515 !important; padding: 14px 20px !important; font-size: 13.5px !important;
+  font-weight: 600 !important; color: #151515 !important;
+}
+
+/* Grid Top: Saldo Bal & Form */
+body.page-saldo .saldo-top-grid {
+  display: grid !important;
+  grid-template-columns: 1fr 1.6fr !important;
+  gap: 14px !important;
+  align-items: stretch !important;
+}
+body.page-saldo .saldo-bal-card {
+  border: 2.5px solid #151515 !important;
+  border-radius: 24px !important;
+  box-shadow: 4px 4px 0px #151515 !important;
+  padding: 24px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+  background: #D8FF7A !important;
+  color: #151515 !important;
+}
+body.page-saldo .saldo-bal-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+body.page-saldo .saldo-bal-lbl {
+  font-size: 11.5px !important;
+  font-weight: 800 !important;
+  color: rgba(21, 21, 21, 0.7) !important;
+  letter-spacing: .03em !important;
+}
+body.page-saldo .saldo-bal-ic {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 12px !important;
+  background: #FFFFFF !important;
+  border: 2px solid #151515 !important;
+  display: grid !important;
+  place-items: center !important;
+}
+body.page-saldo .saldo-angka-val {
+  font-size: clamp(34px, 3.8vw, 52px) !important;
+  font-weight: 800 !important;
+  letter-spacing: -.05em !important;
+  line-height: 1 !important;
+  color: #151515 !important;
+  overflow-wrap: anywhere !important;
+}
+body.page-saldo .saldo-bal-desc {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: rgba(21, 21, 21, 0.7) !important;
+  margin: 0 !important;
+}
+
+/* Form Top Up */
+body.page-saldo .saldo-form-card {
+  background: #FFFFFF !important;
+  border: 2.5px solid #151515 !important;
+  border-radius: 24px !important;
+  box-shadow: 4px 4px 0px #151515 !important;
+  padding: 24px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 14px !important;
+}
+body.page-saldo .saldo-form-head h3 {
+  margin: 6px 0 4px !important;
+  font-size: 18px !important;
+  font-weight: 800 !important;
+  color: #151515 !important;
+}
+body.page-saldo .saldo-form-head p {
+  margin: 0 0 10px !important;
+  font-size: 13px !important;
+  color: #5E5C70 !important;
+  line-height: 1.4 !important;
+}
+body.page-saldo .saldo-qris-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  background: #151515 !important;
+  color: #D8FF7A !important;
+  border-radius: 999px !important;
+  padding: 2px 10px !important;
+}
+body.page-saldo .saldo-field-lbl {
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  color: #151515 !important;
+  display: block !important;
+  margin-bottom: 6px !important;
+}
+body.page-saldo .saldo-inp {
+  width: 100% !important;
+  height: 46px !important;
+  padding: 0 16px !important;
+  background: #FFFFFF !important;
+  border: 2px solid #151515 !important;
+  border-radius: 14px !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  color: #151515 !important;
+  box-shadow: none !important;
+}
+body.page-saldo .saldo-inp:focus {
+  outline: 3px solid #7A63F0 !important;
+  outline-offset: 1px !important;
+}
+body.page-saldo .saldo-hint {
+  font-size: 11.5px !important;
+  font-weight: 600 !important;
+  color: #5E5C70 !important;
+  margin-top: 4px !important;
+}
+body.page-saldo .saldo-quick-chips {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+}
+body.page-saldo .chip-btn {
+  height: 34px !important;
+  padding: 0 14px !important;
+  background: #F5F4FF !important;
+  border: 1.5px solid #151515 !important;
+  border-radius: 999px !important;
+  font-size: 12.5px !important;
+  font-weight: 800 !important;
+  color: #151515 !important;
+  cursor: pointer !important;
+  box-shadow: 2px 2px 0px #151515 !important;
+  transition: transform .15s ease, background .15s ease !important;
+}
+body.page-saldo .chip-btn:hover {
+  background: #D8FF7A !important;
+  transform: translate(-1px, -1px) !important;
+}
+body.page-saldo .saldo-btn-submit {
+  height: 46px !important;
+  width: 100% !important;
+  background: #151515 !important;
+  color: #FFFFFF !important;
+  border: 2px solid #151515 !important;
+  border-radius: 999px !important;
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  cursor: pointer !important;
+  box-shadow: 3px 3px 0px #151515 !important;
+  transition: transform .15s ease, box-shadow .15s ease !important;
+  margin-top: 4px !important;
+}
+body.page-saldo .saldo-btn-submit:hover {
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 5px 5px 0px #151515 !important;
+}
+
+/* Tagihan QRIS Pending */
+body.page-saldo .saldo-qris-card {
+  background: #FFFFFF !important;
+  border: 2.5px solid #151515 !important;
+  border-radius: 24px !important;
+  box-shadow: 4px 4px 0px #151515 !important;
+  padding: 24px !important;
+}
+
+/* Ledger Section */
+body.page-saldo .saldo-ledger-section {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  margin-top: 6px !important;
+}
+body.page-saldo .saldo-ledger-head {
+  display: flex !important;
+  align-items: flex-end !important;
+  justify-content: space-between !important;
+  flex-wrap: wrap !important;
+  gap: 10px !important;
+}
+body.page-saldo .saldo-ledger-head h3 {
+  margin: 0 0 4px !important;
+  font-size: 18px !important;
+  font-weight: 800 !important;
+  color: #151515 !important;
+}
+body.page-saldo .saldo-ledger-head p {
+  margin: 0 !important;
+  font-size: 13px !important;
+  color: #5E5C70 !important;
+}
+body.page-saldo .saldo-billing-link {
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  color: #151515 !important;
+  text-decoration: underline !important;
+}
+body.page-saldo .saldo-table-card {
+  background: #FFFFFF !important;
+  border: 2.5px solid #151515 !important;
+  border-radius: 24px !important;
+  box-shadow: 4px 4px 0px #151515 !important;
+  overflow-x: auto !important;
+}
+body.page-saldo .saldo-tbl {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  font-size: 13.5px !important;
+}
+body.page-saldo .saldo-tbl th {
+  background: #FAF9FF !important;
+  color: #151515 !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  letter-spacing: .03em !important;
+  padding: 16px 18px !important;
+  border-bottom: 2px solid #151515 !important;
+  text-align: left !important;
+}
+body.page-saldo .saldo-tbl td {
+  padding: 14px 18px !important;
+  border-bottom: 1px solid #E6E6E2 !important;
+  color: #151515 !important;
+  vertical-align: middle !important;
+}
+body.page-saldo .saldo-tbl tr:last-child td {
+  border-bottom: none !important;
+}
+body.page-saldo .saldo-kosong-card {
+  background: #FFFFFF !important;
+  border: 2px solid #151515 !important;
+  border-radius: 18px !important;
+  box-shadow: 3px 3px 0px #151515 !important;
+  padding: 30px 20px !important;
+  text-align: center !important;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  color: #5E5C70 !important;
+}
+
+@media (max-width: 900px) {
+  body.page-saldo .saldo-top-grid { grid-template-columns: 1fr !important; }
+}
+@media (max-width: 640px) {
+  body.page-saldo .saldo-hero-stat { display: none !important; }
+}
+

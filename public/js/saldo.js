@@ -154,7 +154,22 @@
     }
   }
 
+  function renderLedgerSkeleton() {
+    const tbody = document.querySelector('#tbl-ledger tbody');
+    if (!tbody) return;
+    tbody.innerHTML = [1, 2, 3, 4].map(() => `
+      <tr class="tbl-skel-row">
+        <td><div class="bt-skel tbl-skel-bar" style="width:110px"></div></td>
+        <td><div class="bt-skel tbl-skel-bar" style="width:90px"></div></td>
+        <td style="text-align:right"><div class="bt-skel tbl-skel-bar" style="width:80px;margin-left:auto"></div></td>
+        <td style="text-align:right"><div class="bt-skel tbl-skel-bar" style="width:90px;margin-left:auto"></div></td>
+        <td><div class="bt-skel tbl-skel-bar" style="width:140px"></div></td>
+      </tr>
+    `).join('');
+  }
+
   async function muatLedger() {
+    renderLedgerSkeleton();
     const d = await api('/api/wallet/ledger?limit=50');
     const tbody = document.querySelector('#tbl-ledger tbody');
     const kosong = document.getElementById('ledger-kosong');
