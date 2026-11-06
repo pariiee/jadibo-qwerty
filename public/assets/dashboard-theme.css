@@ -1260,3 +1260,173 @@ body.page-dashboard .bt-stk svg { width: 40px; height: 40px; }
   }
 }
 
+/* ══ Modal Tambah Bot Bento Neo-Brutalist ══ */
+body.page-dashboard .overlay {
+  background: rgba(21, 21, 21, 0.5) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  z-index: 500 !important;
+}
+body.page-dashboard #add-overlay .modal {
+  background: #FFFFFF !important;
+  border: 2.5px solid #151515 !important;
+  border-radius: 28px !important;
+  box-shadow: 8px 8px 0px #151515 !important;
+  color: #151515 !important;
+  padding: 30px !important;
+  width: 90% !important;
+  max-width: 480px !important;
+  position: relative !important;
+}
+body.page-dashboard #add-overlay .modal-close {
+  position: absolute !important;
+  top: 18px !important;
+  right: 18px !important;
+  width: 36px !important;
+  height: 36px !important;
+  border: 2px solid #151515 !important;
+  border-radius: 50% !important;
+  background: #FFFFFF !important;
+  color: #151515 !important;
+  display: grid !important;
+  place-items: center !important;
+  box-shadow: 2px 2px 0px #151515 !important;
+  cursor: pointer !important;
+  transition: transform .15s ease, background .15s ease, color .15s ease !important;
+}
+body.page-dashboard #add-overlay .modal-close:hover {
+  background: #151515 !important;
+  color: #FFFFFF !important;
+  transform: scale(1.05) !important;
+}
+body.page-dashboard #add-overlay h3 {
+  font-family: var(--bt-font) !important;
+  font-size: 24px !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.035em !important;
+  color: #151515 !important;
+  margin: 0 0 6px !important;
+}
+body.page-dashboard #add-overlay .m-sub {
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  color: #5E5C70 !important;
+  margin: 0 0 22px !important;
+}
+body.page-dashboard #add-overlay .plat-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 12px !important;
+}
+body.page-dashboard #add-overlay .plat-btn {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 12px !important;
+  padding: 22px 10px !important;
+  border: 2px solid #151515 !important;
+  border-radius: 22px !important;
+  background: #FFFFFF !important;
+  color: #151515 !important;
+  box-shadow: 3px 3px 0px #151515 !important;
+  cursor: pointer !important;
+  transition: transform .15s ease, box-shadow .15s ease !important;
+}
+body.page-dashboard #add-overlay .plat-btn:hover {
+  transform: translate(-2px, -2px) !important;
+  box-shadow: 5px 5px 0px #151515 !important;
+}
+body.page-dashboard #add-overlay .plat-btn:active {
+  transform: translate(1px, 1px) !important;
+  box-shadow: 1px 1px 0px #151515 !important;
+}
+body.page-dashboard #add-overlay #plat-wa { background: #EAF9EE !important; }
+body.page-dashboard #add-overlay #plat-tg { background: #EBF5FF !important; }
+body.page-dashboard #add-overlay #plat-dc { background: #EEF0FF !important; }
+body.page-dashboard #add-overlay .plat-btn span {
+  font-family: var(--bt-font) !important;
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  color: #151515 !important;
+}
+
+/* Form Konfigurasi Bot di Step 2 */
+body.page-dashboard #add-overlay .back-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  margin-bottom: 20px !important;
+}
+body.page-dashboard #add-overlay .back-btn {
+  width: 36px !important;
+  height: 36px !important;
+  border: 2px solid #151515 !important;
+  border-radius: 50% !important;
+  background: #FFFFFF !important;
+  color: #151515 !important;
+  display: grid !important;
+  place-items: center !important;
+  box-shadow: 2px 2px 0px #151515 !important;
+  cursor: pointer !important;
+}
+body.page-dashboard #add-overlay .back-btn:hover {
+  background: #151515 !important;
+  color: #FFFFFF !important;
+}
+body.page-dashboard #add-overlay .field {
+  margin-bottom: 14px !important;
+}
+body.page-dashboard #add-overlay .field label {
+  display: block !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  color: #151515 !important;
+  margin-bottom: 6px !important;
+}
+body.page-dashboard #add-overlay .field .inp {
+  width: 100% !important;
+  box-sizing: border-box !important;
+  background: #F5F4FF !important;
+  border: 2px solid #151515 !important;
+  border-radius: 14px !important;
+  color: #151515 !important;
+  font-family: inherit !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  padding: 11px 14px !important;
+}
+body.page-dashboard #add-overlay .field .inp:focus {
+  background: #FFFFFF !important;
+  outline: 3px solid #7A63F0 !important;
+  outline-offset: 1px !important;
+}
+body.page-dashboard #add-overlay .field .hint {
+  font-size: 11.5px !important;
+  color: #5E5C70 !important;
+  margin-top: 4px !important;
+}
+body.page-dashboard #add-overlay .submit-btn {
+  width: 100% !important;
+  background: #151515 !important;
+  color: #D8FF7A !important;
+  border: 2px solid #151515 !important;
+  border-radius: 999px !important;
+  padding: 13px 20px !important;
+  font-family: var(--bt-font) !important;
+  font-size: 14.5px !important;
+  font-weight: 800 !important;
+  box-shadow: 3px 3px 0px #151515 !important;
+  cursor: pointer !important;
+  margin-top: 10px !important;
+  transition: transform .15s ease, box-shadow .15s ease !important;
+}
+body.page-dashboard #add-overlay .submit-btn:hover {
+  transform: translate(-2px, -2px) !important;
+  box-shadow: 5px 5px 0px #151515 !important;
+}
+body.page-dashboard #add-overlay .submit-btn:active {
+  transform: translate(1px, 1px) !important;
+  box-shadow: 1px 1px 0px #151515 !important;
+}
+
