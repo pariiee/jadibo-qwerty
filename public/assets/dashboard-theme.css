@@ -1523,3 +1523,244 @@ body.page-command .cmd-pager-info { font-size: 13px !important; font-weight: 700
   body.page-command .cmd-btn-reload { width: 100% !important; justify-content: center !important; }
 }
 
+/* ══ Log Activity Component Styles ══ */
+body.page-log .log-bento-content {
+  width: 100% !important;
+  max-width: 1360px !important;
+  margin: 0 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 14px !important;
+}
+
+body.page-log .log-hero-banner {
+  display: flex !important; align-items: center !important; justify-content: space-between !important;
+  flex-wrap: wrap !important; gap: 16px !important; background: #BFD7FF !important;
+  border: 2.5px solid #151515 !important; border-radius: 26px !important; padding: 22px 28px !important;
+  box-shadow: 4px 4px 0px #151515 !important; color: #151515 !important;
+}
+body.page-log .log-hero-chip {
+  display: inline-block !important; background: #fff !important; color: #151515 !important;
+  border: 2px solid #151515 !important; border-radius: 999px !important; font-size: 11.5px !important;
+  font-weight: 800 !important; padding: 3px 12px !important; margin-bottom: 8px !important;
+}
+body.page-log .log-hero-left h2, body.page-log h2 {
+  font-size: clamp(24px, 3vw, 32px) !important; font-weight: 800 !important;
+  color: #151515 !important; margin: 0 0 6px !important; line-height: 1.15 !important;
+}
+body.page-log .log-hero-left p {
+  font-size: 14px !important; font-weight: 500 !important; color: rgba(21, 21, 21, 0.8) !important; margin: 0 !important;
+}
+body.page-log .log-hero-stat {
+  display: flex !important; flex-direction: column !important; align-items: flex-end !important;
+  background: #fff !important; border: 2px solid #151515 !important; border-radius: 18px !important;
+  padding: 10px 18px !important; box-shadow: 2px 2px 0px #151515 !important;
+}
+body.page-log .log-stat-lbl { font-size: 11px !important; font-weight: 700 !important; color: #5E5C70 !important; text-transform: uppercase !important; }
+body.page-log .log-stat-val { font-size: 20px !important; font-weight: 800 !important; color: #151515 !important; }
+
+body.page-log .log-toolbar {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  flex-wrap: nowrap !important;
+}
+body.page-log select.inp {
+  display: none !important;
+}
+body.page-log .log-select-wrap {
+  position: relative !important;
+  flex: 0 0 240px !important;
+}
+body.page-log .log-select-level {
+  flex: 0 0 180px !important;
+}
+body.page-log .log-select-wrap .custom-select-wrap {
+  position: relative !important;
+  width: 100% !important;
+}
+body.page-log .cs-trigger {
+  width: 100% !important;
+  height: 46px !important;
+  padding: 0 16px !important;
+  background: #FFFFFF !important;
+  border: 2px solid #151515 !important;
+  border-radius: 16px !important;
+  font-family: inherit !important;
+  font-size: 13.5px !important;
+  font-weight: 800 !important;
+  color: #151515 !important;
+  box-shadow: 3px 3px 0px #151515 !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  transition: transform .15s ease, box-shadow .15s ease !important;
+}
+body.page-log .cs-trigger:hover {
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 4px 4px 0px #151515 !important;
+}
+body.page-log .cs-label {
+  color: #151515 !important;
+  font-weight: 800 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+body.page-log .cs-arrow {
+  width: 16px !important;
+  height: 16px !important;
+  stroke: #151515 !important;
+  stroke-width: 2.5 !important;
+  transition: transform .2s ease !important;
+  flex-shrink: 0 !important;
+}
+body.page-log .cs-trigger.open .cs-arrow {
+  transform: rotate(180deg) !important;
+}
+body.page-log .cs-menu {
+  position: absolute !important;
+  top: calc(100% + 8px) !important;
+  left: 0 !important;
+  width: 100% !important;
+  min-width: 200px !important;
+  max-height: 280px !important;
+  overflow-y: auto !important;
+  background: #FFFFFF !important;
+  border: 2.5px solid #151515 !important;
+  border-radius: 16px !important;
+  padding: 6px !important;
+  box-shadow: 4px 4px 0px #151515 !important;
+  z-index: 100 !important;
+  display: none !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+}
+body.page-log .cs-menu.open {
+  display: flex !important;
+}
+body.page-log .cs-option {
+  padding: 8px 12px !important;
+  border-radius: 10px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  color: #151515 !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  transition: all .15s ease !important;
+}
+body.page-log .cs-option:hover {
+  background: #BFD7FF !important;
+  color: #151515 !important;
+}
+body.page-log .cs-option.on {
+  background: #151515 !important;
+  color: #BFD7FF !important;
+}
+
+/* Terminal Box Neo-Brutalist */
+body.page-log .log-terminal-card {
+  background: #151515 !important;
+  border: 2.5px solid #151515 !important;
+  border-radius: 24px !important;
+  box-shadow: 4px 4px 0px #151515 !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+body.page-log .log-term-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 12px 18px !important;
+  background: #202020 !important;
+  border-bottom: 2px solid #2D2D2D !important;
+}
+body.page-log .log-term-dots {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+body.page-log .log-term-dots .dot {
+  width: 12px !important;
+  height: 12px !important;
+  border-radius: 50% !important;
+  display: inline-block !important;
+}
+body.page-log .dot-r { background: #FF5F56 !important; }
+body.page-log .dot-y { background: #FFBD2E !important; }
+body.page-log .dot-g { background: #27C93F !important; }
+body.page-log .log-term-title {
+  font-family: monospace !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  color: #8E8D9A !important;
+}
+body.page-log .log-term-right {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+body.page-log .log-pulse-dot {
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  background: #D8FF7A !important;
+  box-shadow: 0 0 8px #D8FF7A !important;
+  animation: bt-pulse 1.8s infinite ease-in-out !important;
+}
+body.page-log .log-term-status {
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  color: #D8FF7A !important;
+  letter-spacing: .05em !important;
+}
+body.page-log #terminal {
+  height: 60vh !important;
+  min-height: 420px !important;
+  overflow-y: auto !important;
+  padding: 18px 20px !important;
+  background: #151515 !important;
+  font-family: 'Consolas', 'Courier New', monospace !important;
+  font-size: 13px !important;
+  line-height: 1.8 !important;
+  color: #E2E8F0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  margin: 0 !important;
+}
+body.page-log #terminal .log-line {
+  margin: 0 0 4px !important;
+  padding: 2px 0 !important;
+  word-break: break-all !important;
+}
+body.page-log #terminal .log-info { color: #E2E8F0 !important; }
+body.page-log #terminal .log-cmd { color: #D8FF7A !important; font-weight: 700 !important; }
+body.page-log #terminal .log-warn { color: #FFD166 !important; }
+body.page-log #terminal .log-error { color: #FF6B6B !important; font-weight: 700 !important; }
+body.page-log #terminal .term-hint { color: #64748B !important; font-style: italic !important; }
+
+body.page-log .log-kosong-card {
+  background: #fff !important;
+  border: 2.5px solid #151515 !important;
+  border-radius: 24px !important;
+  box-shadow: 4px 4px 0px #151515 !important;
+  padding: 40px 24px !important;
+  text-align: center !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+@media (max-width: 640px) {
+  body.page-log .log-hero-stat { display: none !important; }
+  body.page-log .log-toolbar { flex-wrap: wrap !important; gap: 10px !important; }
+  body.page-log .log-select-wrap { flex: 1 1 100% !important; width: 100% !important; }
+  body.page-log .log-select-level { flex: 1 1 100% !important; width: 100% !important; }
+  body.page-log .cmd-btn-reload { width: 100% !important; justify-content: center !important; }
+}
+

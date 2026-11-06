@@ -6,44 +6,79 @@
 <title>Log Aktivitas — qwertygate</title>
 <!-- @include head.html -->
 </head>
-<body class="page-log">
+<body class="page-dashboard page-log">
 <div class="app">
-
-  <!-- @include sidebar.html -->
 
   <main>
     <!-- @include topbar.html -->
 
-    <div class="content">
-      <div class="cmd-head">
-        <h2>Log Aktivitas</h2>
-        <p class="m-sub">Catatan kejadian tiap bot kamu — pesan masuk, command yang jalan, dan koneksi.</p>
+    <div class="content log-bento-content">
+      <!-- Hero Banner Log Bento -->
+      <section class="log-hero-banner">
+        <div class="log-hero-left">
+          <span class="log-hero-chip">KONSOL AKTIVITAS</span>
+          <h2>Log Aktivitas</h2>
+          <p>Catatan real-time kejadian tiap bot kamu — pesan masuk, command yang diproses, dan status koneksi.</p>
+        </div>
+        <div class="log-hero-stat">
+          <span class="log-stat-lbl">Live Console</span>
+          <b class="log-stat-val" id="log-stat-val">Streaming</b>
+        </div>
+      </section>
+
+      <!-- Bar Filter & Aksi -->
+      <div class="log-toolbar adm-bar">
+        <div class="log-select-wrap">
+          <select class="inp" id="pilih-bot" data-act="muatLogHalaman"></select>
+        </div>
+
+        <div class="log-select-wrap log-select-level">
+          <select class="inp" id="log-level" data-act="muatLogHalaman">
+            <option value="">Semua Level</option>
+            <option value="info">Info</option>
+            <option value="cmd">Command</option>
+            <option value="warn">Peringatan</option>
+            <option value="error">Error</option>
+          </select>
+        </div>
+
+        <button class="cmd-btn-reload" data-act="muatLogHalaman" type="button">
+          <svg class="i" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+          <span>Muat Ulang</span>
+        </button>
       </div>
 
-      <div class="adm-bar">
-        <select class="inp" id="pilih-bot" data-act="muatLogHalaman"></select>
-        <select class="inp" id="log-level" data-act="muatLogHalaman">
-          <option value="">Semua level</option>
-          <option value="info">Info</option>
-          <option value="cmd">Command</option>
-          <option value="warn">Peringatan</option>
-          <option value="error">Error</option>
-        </select>
-        <button class="btn btn-outline" data-act="muatLogHalaman">Muat Ulang</button>
+      <!-- State Jika Belum Punya Bot -->
+      <div id="log-kosong" class="log-kosong-card" style="display:none">
+        <h3 style="margin:0 0 6px;font-size:18px;font-weight:800;color:#151515">Belum Ada Bot Terdaftar</h3>
+        <p style="margin:0 0 14px;font-size:13.5px;color:#5E5C70">Kamu belum punya bot aktif, jadi log aktivitas belum dapat ditampilkan.</p>
+        <a class="bt-go" href="/dashboard">
+          <span>+</span> Tambah Bot di Dashboard
+        </a>
       </div>
 
-      <div id="log-kosong" class="card" style="display:none">
-        <p class="m-sub" style="margin:0 0 12px">Kamu belum punya bot, jadi belum ada log yang bisa ditampilkan.</p>
-        <a class="btn" href="/dashboard">Ke Dashboard</a>
-      </div>
-
-      <div class="terminal" id="terminal">
-        <p class="log-line term-hint">// memuat…</p>
+      <!-- Terminal Box Bento Neo-Brutalist -->
+      <div class="log-terminal-card" id="terminal-card">
+        <div class="log-term-header">
+          <div class="log-term-dots">
+            <span class="dot dot-r"></span>
+            <span class="dot dot-y"></span>
+            <span class="dot dot-g"></span>
+          </div>
+          <span class="log-term-title">terminal://bot-activity.log</span>
+          <div class="log-term-right">
+            <span class="log-pulse-dot"></span>
+            <span class="log-term-status">LIVE STREAM</span>
+          </div>
+        </div>
+        <div class="terminal" id="terminal">
+          <p class="log-line term-hint">// memuat log aktivitas…</p>
+        </div>
       </div>
     </div>
   </main>
 </div>
 
-<script src="/js/log.js"></script>
+<script src="/js/log.js?v=2.1" defer></script>
 </body>
 </html>
