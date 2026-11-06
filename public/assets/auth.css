@@ -1,5 +1,5 @@
 
-/* ══ Auth Bento Neo-Brutalist Styles (qwertygate) ══ */
+/* ══ Auth Bento Neo-Brutalist Compact Styles (qwertygate) ══ */
 :root {
   --bg: #EEEDFB;
   --ink: #151515;
@@ -13,33 +13,35 @@
 body.page-auth {
   margin: 0 !important;
   min-height: 100vh !important;
+  height: 100vh !important;
   background: var(--bg) !important;
   color: var(--ink) !important;
   font-family: 'Bricolage Grotesque', system-ui, -apple-system, sans-serif !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  padding: 32px 16px !important;
+  padding: 12px 16px !important;
   box-sizing: border-box !important;
+  overflow-y: auto !important;
 }
 
 .auth-wrap {
   width: 100% !important;
-  max-width: 440px !important;
-  margin: 20px auto !important;
+  max-width: 410px !important;
+  margin: auto !important;
   box-sizing: border-box !important;
 }
 
-/* Card Neo-Brutalist dengan Double Border Aksen */
+/* Card Compact dengan Ring Proporsional */
 .auth-card {
   background: #FFFFFF !important;
   border: 2.5px solid #151515 !important;
-  border-radius: 32px !important;
-  padding: 28px 26px !important;
+  border-radius: 26px !important;
+  padding: 22px 22px 20px !important;
   box-sizing: border-box !important;
   position: relative !important;
   margin: 0 !important;
-  box-shadow: 0 0 0 10px var(--accent), 0 0 0 12.5px #151515 !important;
+  box-shadow: 0 0 0 6px var(--accent), 0 0 0 8.5px #151515 !important;
 }
 
 /* Warna Aksen Per Pane */
@@ -54,19 +56,23 @@ body.page-auth {
   align-items: center !important;
   justify-content: flex-start !important;
   text-align: left !important;
-  gap: 12px !important;
-  margin-bottom: 16px !important;
+  gap: 10px !important;
+  margin-bottom: 10px !important;
 }
 .auth-logo-dot {
-  width: 48px !important;
-  height: 48px !important;
+  width: 38px !important;
+  height: 38px !important;
   border-radius: 50% !important;
-  border: 2.5px solid #151515 !important;
+  border: 2px solid #151515 !important;
   background: var(--accent) !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
   flex-shrink: 0 !important;
+}
+.auth-logo-dot svg {
+  width: 20px !important;
+  height: 20px !important;
 }
 #auth-register .auth-logo-dot svg {
   stroke: #FFFFFF !important;
@@ -75,7 +81,7 @@ body.page-auth {
   fill: #FFFFFF !important;
 }
 .auth-brand-name {
-  font-size: 22px !important;
+  font-size: 19px !important;
   font-weight: 800 !important;
   color: #151515 !important;
   letter-spacing: -0.04em !important;
@@ -84,13 +90,13 @@ body.page-auth {
 /* Pill Tag Status */
 .auth-tag {
   display: inline-block !important;
-  border: 2.5px solid #151515 !important;
+  border: 2px solid #151515 !important;
   background: var(--accent) !important;
   border-radius: 999px !important;
-  padding: 6px 18px !important;
-  font-size: 13px !important;
+  padding: 4px 14px !important;
+  font-size: 11.5px !important;
   font-weight: 800 !important;
-  margin-bottom: 14px !important;
+  margin-bottom: 10px !important;
   color: #151515 !important;
   line-height: 1.2 !important;
 }
@@ -100,47 +106,47 @@ body.page-auth {
 
 /* Judul & Deskripsi */
 .auth-card h2 {
-  font-size: 34px !important;
+  font-size: 24px !important;
   font-weight: 800 !important;
-  letter-spacing: -0.04em !important;
-  line-height: 1.05 !important;
+  letter-spacing: -0.03em !important;
+  line-height: 1.1 !important;
   text-align: left !important;
   color: #151515 !important;
-  margin: 0 0 12px !important;
+  margin: 0 0 4px !important;
 }
 .auth-desc {
-  font-size: 16px !important;
-  line-height: 1.45 !important;
+  font-size: 13.5px !important;
+  line-height: 1.4 !important;
   color: #5E5C70 !important;
   text-align: left !important;
-  margin: 0 0 24px !important;
+  margin: 0 0 14px !important;
 }
 
 /* Fields & Form */
 form {
   display: flex !important;
   flex-direction: column !important;
-  gap: 16px !important;
+  gap: 10px !important;
 }
 .field {
   display: flex !important;
   flex-direction: column !important;
 }
 .field label {
-  font-size: 15px !important;
+  font-size: 13px !important;
   font-weight: 800 !important;
   color: #151515 !important;
-  margin-bottom: 8px !important;
+  margin-bottom: 5px !important;
   text-align: left !important;
 }
 
-/* Input Pill 56px */
+/* Input Pill 46px */
 .inp {
-  height: 56px !important;
-  border: 2.5px solid #151515 !important;
+  height: 46px !important;
+  border: 2px solid #151515 !important;
   border-radius: 999px !important;
-  padding: 0 22px !important;
-  font-size: 16px !important;
+  padding: 0 18px !important;
+  font-size: 14px !important;
   font-family: inherit !important;
   font-weight: 500 !important;
   color: #151515 !important;
@@ -156,11 +162,11 @@ form {
 }
 .inp:focus {
   outline: 3px solid var(--accent) !important;
-  outline-offset: 2px !important;
+  outline-offset: 1px !important;
 }
 #auth-login .inp:focus {
   outline: 3px solid #151515 !important;
-  outline-offset: 2px !important;
+  outline-offset: 1px !important;
 }
 .inp.is-invalid, .inp.invalid {
   border-color: #B42318 !important;
@@ -172,11 +178,11 @@ form {
   width: 100% !important;
 }
 .inp-pass-wrap .inp {
-  padding-right: 56px !important;
+  padding-right: 48px !important;
 }
 .btn-toggle-pass {
   position: absolute !important;
-  right: 14px !important;
+  right: 12px !important;
   top: 50% !important;
   transform: translateY(-50%) !important;
   background: none !important;
@@ -185,7 +191,7 @@ form {
   display: grid !important;
   place-items: center !important;
   color: #5E5C70 !important;
-  padding: 6px !important;
+  padding: 4px !important;
 }
 .btn-toggle-pass:hover {
   color: #151515 !important;
@@ -193,16 +199,16 @@ form {
 
 /* Hints & Inline Errors */
 .field-hint {
-  font-size: 13px !important;
+  font-size: 11.5px !important;
   color: #5E5C70 !important;
-  margin-top: 8px !important;
+  margin-top: 4px !important;
   text-align: left !important;
 }
 .field-err {
-  font-size: 13px !important;
+  font-size: 11.5px !important;
   color: #B42318 !important;
   font-weight: 700 !important;
-  margin-top: 8px !important;
+  margin-top: 4px !important;
   text-align: left !important;
   display: block !important;
 }
@@ -212,11 +218,11 @@ form {
 .auth-aux {
   display: flex !important;
   justify-content: flex-end !important;
-  margin: -4px 0 6px !important;
+  margin: -2px 0 2px !important;
 }
 .auth-link-sub {
   color: #7A63F0 !important;
-  font-size: 13.5px !important;
+  font-size: 12.5px !important;
   font-weight: 800 !important;
   text-decoration: none !important;
 }
@@ -224,9 +230,9 @@ form {
   text-decoration: underline !important;
 }
 
-/* Tombol Submit 66px Kapsul */
+/* Tombol Submit 50px Kapsul */
 .btn-auth-submit {
-  height: 66px !important;
+  height: 50px !important;
   border-radius: 999px !important;
   background: #151515 !important;
   color: #FFFFFF !important;
@@ -235,8 +241,8 @@ form {
   display: flex !important;
   justify-content: space-between !important;
   align-items: center !important;
-  padding: 0 10px 0 32px !important;
-  font-size: 17px !important;
+  padding: 0 6px 0 22px !important;
+  font-size: 15px !important;
   font-weight: 800 !important;
   cursor: pointer !important;
   width: 100% !important;
@@ -254,8 +260,8 @@ form {
   cursor: not-allowed !important;
 }
 .btn-arrow {
-  width: 46px !important;
-  height: 46px !important;
+  width: 38px !important;
+  height: 38px !important;
   border-radius: 50% !important;
   background: var(--accent) !important;
   color: #151515 !important;
@@ -271,9 +277,9 @@ form {
 .auth-divider {
   display: flex !important;
   align-items: center !important;
-  gap: 14px !important;
-  margin: 20px 0 16px !important;
-  font-size: 15px !important;
+  gap: 12px !important;
+  margin: 12px 0 10px !important;
+  font-size: 13px !important;
   font-weight: 800 !important;
   color: #5E5C70 !important;
   text-align: center !important;
@@ -282,24 +288,24 @@ form {
 .auth-divider::after {
   content: "" !important;
   flex: 1 !important;
-  height: 3px !important;
+  height: 2px !important;
   background: #DEDEDE !important;
   border-radius: 999px !important;
 }
 
-/* Tombol Google 60px */
+/* Tombol Google 46px */
 .btn-social {
-  height: 60px !important;
+  height: 46px !important;
   border-radius: 999px !important;
-  border: 2.5px solid #151515 !important;
+  border: 2px solid #151515 !important;
   background: #FFFFFF !important;
   color: #151515 !important;
-  font-size: 16px !important;
+  font-size: 14px !important;
   font-weight: 800 !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 12px !important;
+  gap: 10px !important;
   text-decoration: none !important;
   box-shadow: none !important;
   width: 100% !important;
@@ -311,16 +317,16 @@ form {
   background: #FAFAFA !important;
 }
 .social-ic {
-  width: 24px !important;
-  height: 24px !important;
+  width: 20px !important;
+  height: 20px !important;
   flex-shrink: 0 !important;
 }
 
 /* Switch Link Footer */
 .switch-line {
-  margin: 22px 0 0 !important;
+  margin: 14px 0 0 !important;
   text-align: center !important;
-  font-size: 16px !important;
+  font-size: 13.5px !important;
   color: #5E5C70 !important;
   font-weight: 600 !important;
 }
@@ -328,33 +334,33 @@ form {
   font-weight: 800 !important;
   color: #151515 !important;
   text-decoration: none !important;
-  box-shadow: inset 0 -4px 0 var(--accent) !important;
-  padding-bottom: 2px !important;
+  box-shadow: inset 0 -3px 0 var(--accent) !important;
+  padding-bottom: 1px !important;
   display: inline-block !important;
 }
 
 /* Password Strength Bar */
 .pass-strength {
-  margin-top: 10px !important;
+  margin-top: 6px !important;
   display: flex !important;
   align-items: center !important;
-  gap: 14px !important;
+  gap: 10px !important;
 }
 .strength-bars {
   display: flex !important;
-  gap: 12px !important;
+  gap: 8px !important;
   flex: 1 !important;
 }
 .s-bar {
-  height: 12px !important;
-  border: 2.5px solid #151515 !important;
+  height: 8px !important;
+  border: 2px solid #151515 !important;
   border-radius: 999px !important;
   background: #FFFFFF !important;
   flex: 1 !important;
   transition: background .25s ease !important;
 }
 .strength-txt {
-  font-size: 15px !important;
+  font-size: 12.5px !important;
   font-weight: 800 !important;
   color: #5E5C70 !important;
 }
@@ -365,11 +371,11 @@ form {
 /* Alert Messages */
 .err, .ok-msg {
   border: 2px solid #151515 !important;
-  border-radius: 18px !important;
-  padding: 12px 16px !important;
+  border-radius: 14px !important;
+  padding: 8px 12px !important;
   font-weight: 700 !important;
-  font-size: 13.5px !important;
-  margin-bottom: 12px !important;
+  font-size: 12.5px !important;
+  margin-bottom: 8px !important;
   box-sizing: border-box !important;
 }
 .err {
@@ -382,14 +388,3 @@ form {
   color: #151515 !important;
 }
 .ok-msg:empty { display: none !important; }
-
-@media (max-width: 480px) {
-  body.page-auth { padding: 24px 12px !important; }
-  .auth-card { padding: 24px 18px !important; border-radius: 26px !important; }
-  .auth-card h2 { font-size: 28px !important; }
-  .auth-desc { font-size: 14.5px !important; }
-  .inp { height: 50px !important; font-size: 15px !important; }
-  .btn-auth-submit { height: 58px !important; font-size: 16px !important; padding: 0 8px 0 24px !important; }
-  .btn-arrow { width: 40px !important; height: 40px !important; }
-  .btn-social { height: 52px !important; font-size: 15px !important; }
-}
