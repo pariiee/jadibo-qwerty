@@ -23,6 +23,7 @@
   };
 
   let botId = null;
+  const botMap = new Map();
 
   async function isiPilihanBot() {
     const d = await api('/api/bots');
@@ -36,6 +37,7 @@
       return false;
     }
     kosong.style.display = 'none';
+    bots.forEach((b) => botMap.set(b.id, b));
     sel.innerHTML = bots.map((b) => '<option value="' + b.id + '">' + esc(b.bot_name) + '</option>').join('');
     botId = bots[0].id;
     return true;
@@ -45,6 +47,11 @@
     if (!botId) return;
     const pilih = document.getElementById('pilih-bot');
     if (pilih.value) botId = Number(pilih.value);
+
+    const b = botMap.get(botId);
+    const namaBot = (b?.bot_name || pilih.options[pilih.selectedIndex]?.text || 'BOT').toUpperCase();
+    const ttl = document.getElementById('log-term-title');
+    if (ttl) ttl.textContent = namaBot + ' LIVE LOG';
 
     const lv = document.getElementById('log-level').value;
     const term = document.getElementById('terminal');
