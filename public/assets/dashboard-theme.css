@@ -1211,3 +1211,52 @@ html body.page-dashboard .user-popover .pop-item {
   html body.page-dashboard .cx-nav-item { padding: 0 11px !important; }
 }
 
+/* ══ Rapatkan spacing dashboard ══ */
+html body.page-dashboard { --bt-gap: 10px; --bt-pad: 16px; }
+
+/* Halaman & navbar */
+html body.page-dashboard .app { padding: 0 !important; }
+html body.page-dashboard main { padding: 10px clamp(12px, 1.8vw, 24px) 24px !important; }
+html body.page-dashboard header.topbar.cx-navbar .cx-nav-inner { padding: 12px 22px 28px !important; }
+html body.page-dashboard .cx-nav-item.on::after,
+html body.page-dashboard .cx-nav-item.active::after { bottom: -17px !important; width: 20px !important; height: 11px !important; }
+html body.page-dashboard header.cx-navbar + .content { margin-top: -14px !important; padding: 14px 0 0 !important; }
+@media (max-width: 760px) {
+  html body.page-dashboard header.topbar.cx-navbar .cx-nav-inner { padding: 10px 14px 28px !important; }
+}
+
+/* Grid & tile */
+body.page-dashboard .bt-grid { gap: var(--bt-gap); grid-auto-rows: minmax(96px, auto); }
+body.page-dashboard .bt-tile { padding: var(--bt-pad); gap: 8px; border-radius: 24px; }
+body.page-dashboard .bt-lb { gap: 8px; }
+body.page-dashboard .bt-ic { width: 30px; height: 30px; border-radius: 10px; }
+body.page-dashboard .bt-sb { margin-top: 3px; }
+body.page-dashboard .bt-up { height: 16px; margin-top: 8px; }
+body.page-dashboard .bt-pips { margin-top: 8px; }
+body.page-dashboard .bt-pips i { width: 22px; height: 22px; border-radius: 7px; }
+
+/* Angka statistik (id-level, supaya menang atas aturan lama) */
+html body.page-dashboard .bt-tile #st-online,
+html body.page-dashboard .bt-tile #st-role,
+html body.page-dashboard .bt-tile #st-exp,
+html body.page-dashboard .bt-tile #st-slot { font-size: clamp(26px, 2.4vw, 32px) !important; }
+
+/* Welcome: tidak lagi direnggangkan */
+body.page-dashboard .bt-hero { padding: 20px 22px; gap: 10px; justify-content: flex-start; }
+body.page-dashboard .bt-hero .bt-go { margin-top: auto; }
+html body.page-dashboard .bt-hero #hero-name { font-size: clamp(40px, 4.6vw, 58px) !important; }
+body.page-dashboard .bt-wart { width: 160px; height: 160px; }
+
+/* Kartu bot */
+body.page-dashboard .bt-bot { gap: 8px; }
+body.page-dashboard .bt-q { padding: 8px 12px; }
+body.page-dashboard .bt-stk { top: 46px; width: 70px; height: 70px; }
+body.page-dashboard .bt-stk svg { width: 40px; height: 40px; }
+
+/* Tombol "Klaim trial" pindah ke pojok kanan atas tile Kedaluwarsa (layar lebar) */
+@media (min-width: 1180px) {
+  body.page-dashboard .bt-peach > div:last-child {
+    position: absolute !important; top: 14px; right: 14px; margin: 0 !important; z-index: 2;
+  }
+}
+
