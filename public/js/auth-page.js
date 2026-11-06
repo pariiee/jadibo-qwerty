@@ -7,8 +7,22 @@
   const isForgot = path === '/forgot-password';
   const isReset = path === '/reset-password';
 
-  document.body.dataset.mode = isDaftar ? 'register' : (isForgot ? 'forgot' : (isReset ? 'reset' : 'login'));
+  const mode = isDaftar ? 'register' : (isForgot ? 'forgot' : (isReset ? 'reset' : 'login'));
+  document.body.dataset.mode = mode;
   document.title = (isDaftar ? 'Daftar' : (isForgot ? 'Lupa Password' : (isReset ? 'Reset Password' : 'Masuk'))) + ' — qwertygate';
+
+  const shell = document.querySelector('.shell');
+  if (shell) shell.dataset.s = mode;
+  const ah = document.getElementById('ah');
+  const ap = document.getElementById('ap');
+  const copy = {
+    login: ['Bot kamu, aktif 24 jam tanpa ribet.', 'Otomatisasi WhatsApp, Telegram, dan Discord dari satu dashboard.'],
+    register: ['Mulai bot pertamamu hari ini.', 'Daftar gratis, pilih paket, bot langsung jalan.'],
+    forgot: ['Lupa kata sandi? Tenang saja.', 'Kami kirim tautan pemulihan ke email terdaftar.'],
+    reset: ['Satu langkah lagi.', 'Buat kata sandi baru yang aman dan mudah kamu ingat.']
+  };
+  if (ah && copy[mode]) ah.textContent = copy[mode][0];
+  if (ap && copy[mode]) ap.textContent = copy[mode][1];
 
   document.getElementById('auth-login').style.display = (!isDaftar && !isForgot && !isReset) ? 'block' : 'none';
   document.getElementById('auth-register').style.display = isDaftar ? 'block' : 'none';
