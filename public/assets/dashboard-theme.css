@@ -3242,3 +3242,494 @@ body.page-kuota .kuota-kosong-card {
   body.page-kuota .kuota-hero-stat { display: none !important; }
 }
 
+/* ══ Bot Config / Control Component Styles ══ */
+body.page-bot-config {
+  background: #EEEDFB !important;
+  color: #151515 !important;
+  padding: 16px 20px 48px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+}
+
+body.page-bot-config .app {
+  width: 100% !important;
+  max-width: 1360px !important;
+  margin: 0 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+}
+
+body.page-bot-config .topbar {
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 12px 20px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 14px !important;
+  background: #FFFFFF !important;
+  border: 2.5px solid #151515 !important;
+  border-radius: 24px !important;
+  box-shadow: 4px 4px 0px #151515 !important;
+  box-sizing: border-box !important;
+  flex-wrap: wrap !important;
+}
+
+body.page-bot-config .back-link {
+  width: 40px !important;
+  height: 40px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 50% !important;
+  background: #FFFFFF !important;
+  border: 2px solid #151515 !important;
+  color: #151515 !important;
+  box-shadow: 2px 2px 0px #151515 !important;
+  flex-shrink: 0 !important;
+  text-decoration: none !important;
+  transition: transform .15s ease, box-shadow .15s ease !important;
+}
+body.page-bot-config .back-link:hover {
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 3px 3px 0px #151515 !important;
+}
+
+body.page-bot-config .ttl {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+body.page-bot-config .ttl h1 {
+  font-size: 18px !important;
+  font-weight: 800 !important;
+  color: #151515 !important;
+  margin: 0 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+body.page-bot-config .st {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 3px 12px !important;
+  border-radius: 999px !important;
+  background: #FAF9FF !important;
+  border: 1.5px solid #151515 !important;
+  font-size: 11.5px !important;
+  font-weight: 800 !important;
+  color: #151515 !important;
+  flex-shrink: 0 !important;
+}
+body.page-bot-config .dot {
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  background: #64748B !important;
+  flex-shrink: 0 !important;
+}
+body.page-bot-config .dot.on {
+  background: #22c55e !important;
+  box-shadow: 0 0 8px #22c55e !important;
+}
+body.page-bot-config .dot.wait {
+  background: #f59e0b !important;
+  box-shadow: 0 0 8px #f59e0b !important;
+}
+
+body.page-bot-config #bot-pick {
+  background: #FFFFFF !important;
+  border: 2px solid #151515 !important;
+  color: #151515 !important;
+  border-radius: 14px !important;
+  padding: 8px 14px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  box-shadow: 2px 2px 0px #151515 !important;
+}
+
+body.page-bot-config .top-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+body.page-bot-config .top-actions .btn {
+  height: 38px !important;
+  padding: 0 14px !important;
+  border-radius: 999px !important;
+  font-size: 12.5px !important;
+  font-weight: 800 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  border: 2px solid #151515 !important;
+  box-shadow: 2px 2px 0px #151515 !important;
+  cursor: pointer !important;
+  text-decoration: none !important;
+  transition: transform .15s ease, box-shadow .15s ease !important;
+}
+body.page-bot-config .top-actions .btn:hover {
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 3px 3px 0px #151515 !important;
+}
+body.page-bot-config .top-actions .btn-outline {
+  background: #FFFFFF !important;
+  color: #151515 !important;
+}
+body.page-bot-config .top-actions .btn-danger {
+  background: #FF5F56 !important;
+  color: #FFFFFF !important;
+}
+body.page-bot-config .theme-btn {
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 50% !important;
+  background: #FFFFFF !important;
+  border: 2px solid #151515 !important;
+  color: #151515 !important;
+  box-shadow: 2px 2px 0px #151515 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+}
+
+/* Layout 2 Kolom */
+body.page-bot-config .layout {
+  width: 100% !important;
+  display: grid !important;
+  grid-template-columns: 1.25fr 1fr !important;
+  gap: 16px !important;
+  align-items: start !important;
+}
+body.page-bot-config .cols {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+}
+
+/* Panel Bento */
+body.page-bot-config .panel {
+  background: #FFFFFF !important;
+  border: 2.5px solid #151515 !important;
+  border-radius: 24px !important;
+  box-shadow: 4px 4px 0px #151515 !important;
+  padding: 24px !important;
+}
+body.page-bot-config .panel h2 {
+  font-size: 18px !important;
+  font-weight: 800 !important;
+  color: #151515 !important;
+  margin: 0 0 16px !important;
+  letter-spacing: -.02em !important;
+}
+
+/* Kontrol Grid Buttons */
+body.page-bot-config .ctrl-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+}
+body.page-bot-config .ctrl-grid .btn {
+  height: 44px !important;
+  border-radius: 14px !important;
+  border: 2px solid #151515 !important;
+  font-size: 13.5px !important;
+  font-weight: 800 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  cursor: pointer !important;
+  box-shadow: 2px 2px 0px #151515 !important;
+  transition: transform .15s ease, box-shadow .15s ease !important;
+}
+body.page-bot-config .ctrl-grid .btn:hover:not(:disabled) {
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 4px 4px 0px #151515 !important;
+}
+body.page-bot-config .ctrl-grid .btn:disabled {
+  opacity: 0.45 !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+}
+body.page-bot-config .ctrl-grid .btn-ok {
+  background: #D8FF7A !important;
+  color: #151515 !important;
+}
+body.page-bot-config .ctrl-grid .btn-stop {
+  background: #FF5F56 !important;
+  color: #FFFFFF !important;
+}
+body.page-bot-config .ctrl-grid .btn-outline {
+  background: #FFFFFF !important;
+  color: #151515 !important;
+}
+body.page-bot-config .ctrl-msg {
+  margin-top: 10px !important;
+  font-size: 12.5px !important;
+  font-weight: 700 !important;
+  color: #151515 !important;
+}
+
+/* Form Fields */
+body.page-bot-config .field {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  margin-bottom: 14px !important;
+}
+body.page-bot-config .field label {
+  font-size: 12.5px !important;
+  font-weight: 800 !important;
+  color: #151515 !important;
+}
+body.page-bot-config .field .req { color: #E11D48 !important; }
+body.page-bot-config .field .hint {
+  font-size: 11.5px !important;
+  color: #5E5C70 !important;
+  line-height: 1.4 !important;
+}
+body.page-bot-config .inp {
+  width: 100% !important;
+  box-sizing: border-box !important;
+  background: #FFFFFF !important;
+  border: 2px solid #151515 !important;
+  border-radius: 14px !important;
+  padding: 10px 14px !important;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  color: #151515 !important;
+  box-shadow: none !important;
+}
+body.page-bot-config .inp:focus {
+  outline: 3px solid #7A63F0 !important;
+  outline-offset: 1px !important;
+}
+body.page-bot-config .row2 {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 12px !important;
+}
+body.page-bot-config .save {
+  width: 100% !important;
+  height: 46px !important;
+  padding: 0 20px !important;
+  border-radius: 999px !important;
+  background: #151515 !important;
+  color: #FFFFFF !important;
+  border: 2px solid #151515 !important;
+  font-weight: 800 !important;
+  font-size: 14px !important;
+  box-shadow: 3px 3px 0px #151515 !important;
+  cursor: pointer !important;
+  transition: transform .15s ease, box-shadow .15s ease !important;
+  margin-top: 10px !important;
+}
+body.page-bot-config .save:hover {
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 5px 5px 0px #151515 !important;
+}
+
+/* Terminal Panel Neo-Brutalist */
+body.page-bot-config .term-panel {
+  padding: 0 !important;
+  overflow: hidden !important;
+  background: #151515 !important;
+  border: 2.5px solid #151515 !important;
+  border-radius: 24px !important;
+  box-shadow: 4px 4px 0px #151515 !important;
+}
+body.page-bot-config .term-head {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 12px 18px !important;
+  background: #202020 !important;
+  border-bottom: 2px solid #2D2D2D !important;
+}
+body.page-bot-config .term-dots {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+body.page-bot-config .term-dots span:not(.lb) {
+  width: 11px !important;
+  height: 11px !important;
+  border-radius: 50% !important;
+}
+body.page-bot-config .term-dots .lb {
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  color: #E2E8F0 !important;
+  margin-left: 8px !important;
+  font-family: monospace !important;
+}
+body.page-bot-config .term-right {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+body.page-bot-config .term-right .state {
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  background: #64748B !important;
+}
+body.page-bot-config .term-right .state.live {
+  background: #D8FF7A !important;
+  box-shadow: 0 0 8px #D8FF7A !important;
+}
+body.page-bot-config .term-right .lbl {
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  color: #94A3B8 !important;
+}
+body.page-bot-config .clear-btn {
+  background: rgba(255,255,255,.08) !important;
+  border: 1.5px solid #3A3A3A !important;
+  border-radius: 6px !important;
+  padding: 2px 8px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: #CBD5E1 !important;
+  cursor: pointer !important;
+}
+body.page-bot-config #terminal {
+  height: 380px !important;
+  overflow-y: auto !important;
+  padding: 16px !important;
+  font-family: 'Consolas', 'Courier New', monospace !important;
+  font-size: 12.5px !important;
+  line-height: 1.7 !important;
+  color: #E2E8F0 !important;
+  background: #151515 !important;
+}
+body.page-bot-config #terminal .log-line {
+  margin-bottom: 3px !important;
+  word-break: break-all !important;
+}
+body.page-bot-config #terminal .log-info { color: #E2E8F0 !important; }
+body.page-bot-config #terminal .log-cmd { color: #D8FF7A !important; font-weight: 700 !important; }
+body.page-bot-config #terminal .log-warn { color: #FFD166 !important; }
+body.page-bot-config #terminal .log-error,
+body.page-bot-config #terminal .log-cmderr { color: #FF6B6B !important; font-weight: 700 !important; }
+body.page-bot-config #terminal .term-hint { color: #64748B !important; }
+
+/* QR Panel */
+body.page-bot-config #qr-panel {
+  background: #FFFFFF !important;
+  border: 2.5px solid #151515 !important;
+  border-radius: 24px !important;
+  box-shadow: 4px 4px 0px #151515 !important;
+}
+body.page-bot-config .qr-head {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin-bottom: 16px !important;
+}
+body.page-bot-config .qr-head p {
+  margin: 0 !important;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  color: #151515 !important;
+}
+body.page-bot-config .qr-head button {
+  background: #F1F1EF !important;
+  border: 1.5px solid #151515 !important;
+  border-radius: 8px !important;
+  padding: 4px 10px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+}
+body.page-bot-config .qr-body {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  text-align: center !important;
+  gap: 12px !important;
+}
+body.page-bot-config #qr-canvas {
+  border: 2px solid #151515 !important;
+  border-radius: 16px !important;
+  padding: 8px !important;
+  background: #FFFFFF !important;
+}
+body.page-bot-config .pair-code {
+  font-family: monospace !important;
+  font-size: 32px !important;
+  font-weight: 800 !important;
+  letter-spacing: 4px !important;
+  background: #151515 !important;
+  color: #D8FF7A !important;
+  padding: 10px 20px !important;
+  border-radius: 14px !important;
+  border: 2px solid #151515 !important;
+}
+
+/* Modals */
+body.page-bot-config .overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(21, 21, 21, 0.65) !important;
+  backdrop-filter: blur(6px) !important;
+  display: none !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 9999 !important;
+}
+body.page-bot-config .overlay.show { display: flex !important; }
+body.page-bot-config .modal {
+  background: #FFFFFF !important;
+  border: 3px solid #151515 !important;
+  border-radius: 26px !important;
+  width: 90% !important;
+  max-width: 440px !important;
+  padding: 28px !important;
+  box-shadow: 8px 8px 0px #151515 !important;
+}
+body.page-bot-config .start-cards {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 12px !important;
+  margin-top: 16px !important;
+}
+body.page-bot-config .start-card {
+  background: #FAF9FF !important;
+  border: 2px solid #151515 !important;
+  border-radius: 18px !important;
+  padding: 18px 14px !important;
+  text-align: center !important;
+  cursor: pointer !important;
+  box-shadow: 3px 3px 0px #151515 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 6px !important;
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  color: #151515 !important;
+  transition: transform .15s ease, background .15s ease !important;
+}
+body.page-bot-config .start-card:hover {
+  background: #D8FF7A !important;
+  transform: translate(-1px, -1px) !important;
+}
+body.page-bot-config .start-card small {
+  font-size: 11.5px !important;
+  font-weight: 500 !important;
+  color: #5E5C70 !important;
+}
+
+@media (max-width: 900px) {
+  body.page-bot-config .layout { grid-template-columns: 1fr !important; }
+  body.page-bot-config .row2 { grid-template-columns: 1fr !important; }
+}
+
