@@ -1,70 +1,31 @@
 /* ==========================================================
-   auth.css — Halaman Login / Daftar / Lupa & Reset Kata Sandi
-   Terisolasi, presisi rata tengah, support Light & Dark mode.
+   auth.css — Halaman Login / Daftar (Bento Neo-Brutalist)
    ========================================================== */
 
-/* ---------- Variabel Dasar (Light Mode Default) ---------- */
 :root {
-  --a-bg: #f1f4f9;
+  --a-bg: #EEEDFB;
   --a-card: #ffffff;
-  --a-field: #f8fafc;
-  --a-ink: #0f172a;
-  --a-muted: #64748b;
-  --a-line: #e2e8f0;
-  --a-line-strong: #cbd5e1;
-  --a-accent: #2563eb;
-  --a-ring: rgba(37, 99, 235, 0.16);
-  --a-btn-bg: #0f172a;
+  --a-field: #ffffff;
+  --a-ink: #151515;
+  --a-muted: #5E5C70;
+  --a-line: #151515;
+  --a-line-strong: #151515;
+  --a-accent: #7A63F0;
+  --a-ring: rgba(122, 99, 240, 0.25);
+  --a-btn-bg: #151515;
   --a-btn-ink: #ffffff;
-  --a-ok: #059669;
-  --a-ok-bg: rgba(16, 185, 129, 0.1);
-  --a-ok-line: rgba(16, 185, 129, 0.3);
-  --a-err: #dc2626;
-  --a-err-bg: rgba(220, 38, 38, 0.08);
-  --a-err-line: rgba(220, 38, 38, 0.25);
-  --a-hover: rgba(15, 23, 42, 0.04);
-  --a-shadow: 0 10px 30px -8px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.04);
+  --a-ok: #15803d;
+  --a-ok-bg: #D8FF7A;
+  --a-ok-line: #151515;
+  --a-err: #b91c1c;
+  --a-err-bg: #fee2e2;
+  --a-err-line: #151515;
+  --a-hover: #F1F1EF;
+  --a-shadow: 6px 6px 0px #151515;
 }
 
-/* ---------- Variabel Gelap (Dark Mode) ---------- */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]):not(.light) {
-    --a-bg: #0c0d12;
-    --a-card: #151922;
-    --a-field: #1b202c;
-    --a-ink: #f8fafc;
-    --a-muted: #94a3b8;
-    --a-line: rgba(255, 255, 255, 0.12);
-    --a-line-strong: rgba(255, 255, 255, 0.24);
-    --a-accent: #60a5fa;
-    --a-ring: rgba(96, 165, 250, 0.25);
-    --a-btn-bg: #f8fafc;
-    --a-btn-ink: #0f172a;
-    --a-ok: #34d399;
-    --a-err: #f87171;
-    --a-hover: rgba(255, 255, 255, 0.06);
-    --a-shadow: 0 14px 40px -10px rgba(0, 0, 0, 0.65);
-  }
-}
-
-:root[data-theme="dark"],
-html.dark,
-body.page-auth[data-theme="dark"] {
-  --a-bg: #0c0d12 !important;
-  --a-card: #151922 !important;
-  --a-field: #1b202c !important;
-  --a-ink: #f8fafc !important;
-  --a-muted: #94a3b8 !important;
-  --a-line: rgba(255, 255, 255, 0.12) !important;
-  --a-line-strong: rgba(255, 255, 255, 0.24) !important;
-  --a-accent: #60a5fa !important;
-  --a-ring: rgba(96, 165, 250, 0.25) !important;
-  --a-btn-bg: #f8fafc !important;
-  --a-btn-ink: #0f172a !important;
-  --a-ok: #34d399 !important;
-  --a-err: #f87171 !important;
-  --a-hover: rgba(255, 255, 255, 0.06) !important;
-  --a-shadow: 0 14px 40px -10px rgba(0, 0, 0, 0.65) !important;
+body.page-auth {
+  font-family: 'Bricolage Grotesque', system-ui, -apple-system, sans-serif !important;
 }
 
 /* ---------- Layout Body ---------- */
@@ -101,16 +62,15 @@ body.page-auth main.auth-wrap {
 body.page-auth .auth-card {
   position: relative !important;
   width: 100% !important;
-  max-width: 410px !important;
+  max-width: 420px !important;
   margin: 0 auto !important;
-  padding: clamp(26px, 5vw, 36px) clamp(18px, 4.5vw, 28px) !important;
+  padding: 32px 28px !important;
   background: var(--a-card) !important;
-  border: 1px solid var(--a-line) !important;
-  border-radius: clamp(18px, 4vw, 24px) !important;
-  box-shadow: var(--a-shadow) !important;
+  border: 2.5px solid #151515 !important;
+  border-radius: 26px !important;
+  box-shadow: 6px 6px 0px #151515 !important;
   box-sizing: border-box !important;
   text-align: left !important;
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease !important;
 }
 
 @media (max-width: 480px) {
@@ -179,13 +139,13 @@ body.page-auth .inp {
   padding: 0 14px !important;
   font: inherit !important;
   font-size: 14.5px !important;
-  color: var(--a-ink) !important;
-  background: var(--a-field) !important;
-  border: 1.5px solid var(--a-line) !important;
-  border-radius: 12px !important;
+  color: #151515 !important;
+  background: #FFFFFF !important;
+  border: 2px solid #151515 !important;
+  border-radius: 14px !important;
   outline: none !important;
   box-shadow: none !important;
-  transition: border-color 0.15s, box-shadow 0.15s !important;
+  transition: outline 0.15s !important;
   text-align: left !important;
 }
 
@@ -194,14 +154,9 @@ body.page-auth .inp::placeholder {
   opacity: 0.75 !important;
 }
 
-body.page-auth .inp:hover {
-  border-color: var(--a-line-strong) !important;
-}
-
 body.page-auth .inp:focus {
-  border-color: var(--a-accent) !important;
-  box-shadow: 0 0 0 3.5px var(--a-ring) !important;
-  background: var(--a-card) !important;
+  outline: 3px solid #7A63F0 !important;
+  outline-offset: 1px !important;
 }
 
 body.page-auth .inp.is-invalid,
@@ -375,37 +330,46 @@ body.page-auth .btn-social {
 }
 
 body.page-auth .btn-auth-submit {
-  color: var(--a-btn-ink) !important;
-  background: var(--a-btn-bg) !important;
-  border: 0 !important;
-  box-shadow: 0 4px 14px -2px rgba(0, 0, 0, 0.18) !important;
+  color: #FFFFFF !important;
+  background: #151515 !important;
+  border: 2px solid #151515 !important;
+  border-radius: 999px !important;
+  box-shadow: 3px 3px 0px #151515 !important;
+  font-weight: 800 !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
 }
 
-body.page-auth .btn-auth-submit:hover {
-  opacity: 0.92 !important;
-  transform: translateY(-1px) !important;
+body.page-auth .btn-auth-submit:hover:not(:disabled) {
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 4px 4px 0px #151515 !important;
 }
 
 body.page-auth .btn-auth-submit:active {
-  transform: translateY(0) !important;
+  transform: translate(0, 0) !important;
+  box-shadow: 2px 2px 0px #151515 !important;
 }
 
 body.page-auth .btn-auth-submit:disabled {
   opacity: 0.5 !important;
   cursor: not-allowed !important;
   transform: none !important;
+  box-shadow: none !important;
 }
 
 body.page-auth .btn-social {
-  color: var(--a-ink) !important;
-  background: var(--a-card) !important;
-  border: 1.5px solid var(--a-line) !important;
-  font-weight: 600 !important;
+  color: #151515 !important;
+  background: #FFFFFF !important;
+  border: 2px solid #151515 !important;
+  border-radius: 999px !important;
+  box-shadow: 2px 2px 0px #151515 !important;
+  font-weight: 700 !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
 }
 
 body.page-auth .btn-social:hover {
-  background: var(--a-hover) !important;
-  border-color: var(--a-line-strong) !important;
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 3px 3px 0px #151515 !important;
+  background: #FFFFFF !important;
 }
 
 body.page-auth .social-ic {
