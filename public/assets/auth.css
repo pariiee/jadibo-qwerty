@@ -36,8 +36,8 @@ html, body.page-auth {
 .auth-card {
   background: #FFFFFF !important;
   border: 2.5px solid #151515 !important;
-  border-radius: 26px !important;
-  padding: 22px 22px 20px !important;
+  border-radius: 24px !important;
+  padding: 18px 20px 14px !important;
   box-sizing: border-box !important;
   position: relative !important;
   margin: 0 !important;
@@ -56,12 +56,12 @@ html, body.page-auth {
   align-items: center !important;
   justify-content: flex-start !important;
   text-align: left !important;
-  gap: 10px !important;
-  margin-bottom: 10px !important;
+  gap: 8px !important;
+  margin-bottom: 8px !important;
 }
 .auth-logo-dot {
-  width: 38px !important;
-  height: 38px !important;
+  width: 32px !important;
+  height: 32px !important;
   border-radius: 50% !important;
   border: 2px solid #151515 !important;
   background: var(--accent) !important;
@@ -71,8 +71,8 @@ html, body.page-auth {
   flex-shrink: 0 !important;
 }
 .auth-logo-dot svg {
-  width: 20px !important;
-  height: 20px !important;
+  width: 17px !important;
+  height: 17px !important;
 }
 #auth-register .auth-logo-dot svg {
   stroke: #FFFFFF !important;
@@ -81,7 +81,7 @@ html, body.page-auth {
   fill: #FFFFFF !important;
 }
 .auth-brand-name {
-  font-size: 19px !important;
+  font-size: 17px !important;
   font-weight: 800 !important;
   color: #151515 !important;
   letter-spacing: -0.04em !important;
@@ -93,10 +93,10 @@ html, body.page-auth {
   border: 2px solid #151515 !important;
   background: var(--accent) !important;
   border-radius: 999px !important;
-  padding: 4px 14px !important;
-  font-size: 11.5px !important;
+  padding: 3px 12px !important;
+  font-size: 11px !important;
   font-weight: 800 !important;
-  margin-bottom: 10px !important;
+  margin-bottom: 8px !important;
   color: #151515 !important;
   line-height: 1.2 !important;
 }
@@ -106,47 +106,47 @@ html, body.page-auth {
 
 /* Judul & Deskripsi */
 .auth-card h2 {
-  font-size: 24px !important;
+  font-size: 21px !important;
   font-weight: 800 !important;
   letter-spacing: -0.03em !important;
   line-height: 1.1 !important;
   text-align: left !important;
   color: #151515 !important;
-  margin: 0 0 4px !important;
+  margin: 0 0 3px !important;
 }
 .auth-desc {
-  font-size: 13.5px !important;
-  line-height: 1.4 !important;
+  font-size: 12.5px !important;
+  line-height: 1.35 !important;
   color: #5E5C70 !important;
   text-align: left !important;
-  margin: 0 0 14px !important;
+  margin: 0 0 10px !important;
 }
 
 /* Fields & Form */
 form {
   display: flex !important;
   flex-direction: column !important;
-  gap: 10px !important;
+  gap: 8px !important;
 }
 .field {
   display: flex !important;
   flex-direction: column !important;
 }
 .field label {
-  font-size: 13px !important;
+  font-size: 12px !important;
   font-weight: 800 !important;
   color: #151515 !important;
-  margin-bottom: 5px !important;
+  margin-bottom: 3px !important;
   text-align: left !important;
 }
 
-/* Input Pill 46px */
+/* Input Pill 42px */
 .inp {
-  height: 46px !important;
+  height: 42px !important;
   border: 2px solid #151515 !important;
   border-radius: 999px !important;
-  padding: 0 18px !important;
-  font-size: 14px !important;
+  padding: 0 16px !important;
+  font-size: 13.5px !important;
   font-family: inherit !important;
   font-weight: 500 !important;
   color: #151515 !important;
@@ -178,11 +178,11 @@ form {
   width: 100% !important;
 }
 .inp-pass-wrap .inp {
-  padding-right: 48px !important;
+  padding-right: 44px !important;
 }
 .btn-toggle-pass {
   position: absolute !important;
-  right: 12px !important;
+  right: 10px !important;
   top: 50% !important;
   transform: translateY(-50%) !important;
   background: none !important;
@@ -199,16 +199,16 @@ form {
 
 /* Hints & Inline Errors */
 .field-hint {
-  font-size: 11.5px !important;
+  font-size: 11px !important;
   color: #5E5C70 !important;
-  margin-top: 4px !important;
+  margin-top: 3px !important;
   text-align: left !important;
 }
 .field-err {
-  font-size: 11.5px !important;
+  font-size: 11px !important;
   color: #B42318 !important;
   font-weight: 700 !important;
-  margin-top: 4px !important;
+  margin-top: 3px !important;
   text-align: left !important;
   display: block !important;
 }
@@ -218,11 +218,11 @@ form {
 .auth-aux {
   display: flex !important;
   justify-content: flex-end !important;
-  margin: -2px 0 2px !important;
+  margin: -3px 0 1px !important;
 }
 .auth-link-sub {
   color: #7A63F0 !important;
-  font-size: 12.5px !important;
+  font-size: 12px !important;
   font-weight: 800 !important;
   text-decoration: none !important;
 }
@@ -230,9 +230,9 @@ form {
   text-decoration: underline !important;
 }
 
-/* Tombol Submit 50px Kapsul */
+/* Tombol Submit 46px Kapsul */
 .btn-auth-submit {
-  height: 50px !important;
+  height: 46px !important;
   border-radius: 999px !important;
   background: #151515 !important;
   color: #FFFFFF !important;
@@ -241,8 +241,8 @@ form {
   display: flex !important;
   justify-content: space-between !important;
   align-items: center !important;
-  padding: 0 6px 0 22px !important;
-  font-size: 15px !important;
+  padding: 0 5px 0 18px !important;
+  font-size: 14px !important;
   font-weight: 800 !important;
   cursor: pointer !important;
   width: 100% !important;
@@ -260,8 +260,8 @@ form {
   cursor: not-allowed !important;
 }
 .btn-arrow {
-  width: 38px !important;
-  height: 38px !important;
+  width: 34px !important;
+  height: 34px !important;
   border-radius: 50% !important;
   background: var(--accent) !important;
   color: #151515 !important;
@@ -277,9 +277,9 @@ form {
 .auth-divider {
   display: flex !important;
   align-items: center !important;
-  gap: 12px !important;
-  margin: 12px 0 10px !important;
-  font-size: 13px !important;
+  gap: 10px !important;
+  margin: 8px 0 6px !important;
+  font-size: 12px !important;
   font-weight: 800 !important;
   color: #5E5C70 !important;
   text-align: center !important;
@@ -293,19 +293,19 @@ form {
   border-radius: 999px !important;
 }
 
-/* Tombol Google 46px */
+/* Tombol Google 42px */
 .btn-social {
-  height: 46px !important;
+  height: 42px !important;
   border-radius: 999px !important;
   border: 2px solid #151515 !important;
   background: #FFFFFF !important;
   color: #151515 !important;
-  font-size: 14px !important;
+  font-size: 13px !important;
   font-weight: 800 !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 10px !important;
+  gap: 8px !important;
   text-decoration: none !important;
   box-shadow: none !important;
   width: 100% !important;
@@ -317,16 +317,16 @@ form {
   background: #FAFAFA !important;
 }
 .social-ic {
-  width: 20px !important;
-  height: 20px !important;
+  width: 18px !important;
+  height: 18px !important;
   flex-shrink: 0 !important;
 }
 
 /* Switch Link Footer */
 .switch-line {
-  margin: 14px 0 0 !important;
+  margin: 10px 0 0 !important;
   text-align: center !important;
-  font-size: 13.5px !important;
+  font-size: 12.5px !important;
   color: #5E5C70 !important;
   font-weight: 600 !important;
 }
