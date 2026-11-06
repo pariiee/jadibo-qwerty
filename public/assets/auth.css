@@ -10,11 +10,11 @@
   box-sizing: border-box;
 }
 
-body.page-auth {
+html, body.page-auth {
   margin: 0 !important;
   min-height: 100vh !important;
-  height: 100vh !important;
-  background: var(--bg) !important;
+  background: #EEEDFB !important;
+  background-color: #EEEDFB !important;
   color: var(--ink) !important;
   font-family: 'Bricolage Grotesque', system-ui, -apple-system, sans-serif !important;
   display: flex !important;

@@ -418,6 +418,7 @@ const halaman = (nama, kode = 200) => (_, res) => {
         fs.readFileSync(path.join(PUBLIC_HTML, 'partials', f), 'utf8'))
       .replace(/(\/(?:assets|js)\/[\w.-]+\.(?:css|js))"/g,
         (m, p) => `${p}?v=${mtimeAset(p)}"`);
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.status(kode).type('html').send(html);
   } catch (e) {
     console.error('[Page]', nama, e.message);

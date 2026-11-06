@@ -1,6 +1,6 @@
 'use strict';
 
-const CACHE_NAME = 'qwertygate-pwa-v92';
+const CACHE_NAME = 'qwertygate-pwa-v93';
 const PRECACHE_ASSETS = [
   '/offline.html',
   '/manifest.json',
@@ -43,6 +43,14 @@ self.addEventListener('fetch', (event) => {
   if (req.mode === 'navigate') {
     event.respondWith(
       fetch(req).catch(() => caches.match('/offline.html'))
+    );
+    return;
+  }
+
+  // Khusus asset auth: selalu Network First
+  if (url.pathname.includes('auth.css') || url.pathname.includes('auth-page.js')) {
+    event.respondWith(
+      fetch(req).catch(() => caches.match(req))
     );
     return;
   }
