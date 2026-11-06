@@ -11,18 +11,12 @@
   document.body.dataset.mode = mode;
   document.title = (isDaftar ? 'Daftar' : (isForgot ? 'Lupa Password' : (isReset ? 'Reset Password' : 'Masuk'))) + ' — qwertygate';
 
-  const shell = document.querySelector('.shell');
-  if (shell) shell.dataset.s = mode;
-  const ah = document.getElementById('ah');
-  const ap = document.getElementById('ap');
-  const copy = {
-    login: ['Bot kamu, aktif 24 jam tanpa ribet.', 'Otomatisasi WhatsApp, Telegram, dan Discord dari satu dashboard.'],
-    register: ['Mulai bot pertamamu hari ini.', 'Daftar gratis, pilih paket, bot langsung jalan.'],
-    forgot: ['Lupa kata sandi? Tenang saja.', 'Kami kirim tautan pemulihan ke email terdaftar.'],
-    reset: ['Satu langkah lagi.', 'Buat kata sandi baru yang aman dan mudah kamu ingat.']
-  };
-  if (ah && copy[mode]) ah.textContent = copy[mode][0];
-  if (ap && copy[mode]) ap.textContent = copy[mode][1];
+  function setBtnLabel(b, txt) {
+    if (!b) return;
+    const l = b.querySelector('.btn-label');
+    if (l) l.textContent = txt;
+    else b.textContent = txt;
+  }
 
   document.getElementById('auth-login').style.display = (!isDaftar && !isForgot && !isReset) ? 'block' : 'none';
   document.getElementById('auth-register').style.display = isDaftar ? 'block' : 'none';
@@ -255,7 +249,7 @@
     }
 
     btn.disabled = true;
-    btn.textContent = 'Mendaftarkan...';
+    setBtnLabel(btn, 'Mendaftarkan...');
 
     try {
       const data = await kirim('/api/auth/register', {
@@ -275,19 +269,19 @@
             ok.style.display = 'block';
           }
           document.getElementById('register-form').reset();
-          btn.textContent = 'Tautan Terkirim';
+          setBtnLabel(btn, 'Tautan Terkirim');
         } else {
           location.href = '/dashboard';
         }
       } else {
         tampilkanErrorReg(data.message);
         btn.disabled = false;
-        btn.textContent = 'Daftar Akun';
+        setBtnLabel(btn, 'Daftar Akun');
       }
     } catch {
       tampilkanErrorReg('Gagal terhubung ke server');
       btn.disabled = false;
-      btn.textContent = 'Daftar Akun';
+      setBtnLabel(btn, 'Daftar Akun');
     }
   });
 
@@ -302,7 +296,7 @@
       err.classList.remove('show');
       ok.style.display = 'none';
       btn.disabled = true;
-      btn.textContent = 'Mengirim...';
+      setBtnLabel(btn, 'Mengirim...');
 
       try {
         const data = await kirim('/api/auth/forgot-password', {
@@ -321,7 +315,7 @@
         err.classList.add('show');
       } finally {
         btn.disabled = false;
-        btn.textContent = 'Send Reset Link';
+        setBtnLabel(btn, 'Kirim Tautan Pemulihan');
       }
     });
   }
@@ -347,7 +341,7 @@
       }
 
       btn.disabled = true;
-      btn.textContent = 'Menyimpan...';
+      setBtnLabel(btn, 'Menyimpan...');
 
       try {
         const data = await kirim('/api/auth/reset-password', { token, password: pass });
@@ -359,13 +353,13 @@
           err.textContent = data.message || 'Gagal mereset password';
           err.classList.add('show');
           btn.disabled = false;
-          btn.textContent = 'Update Password';
+          setBtnLabel(btn, 'Simpan Kata Sandi');
         }
       } catch {
         err.textContent = 'Gagal terhubung ke server';
         err.classList.add('show');
         btn.disabled = false;
-        btn.textContent = 'Update Password';
+        setBtnLabel(btn, 'Simpan Kata Sandi');
       }
     });
   }
