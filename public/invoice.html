@@ -6,7 +6,7 @@
 <title>Invoice Pembayaran — qwertygate</title>
 <!-- @include head.html -->
 </head>
-<body class="page-invoice">
+<body class="page-dashboard page-invoice">
 <div class="app">
 
   <!-- @include sidebar.html -->
@@ -14,76 +14,78 @@
   <main>
     <!-- @include topbar.html -->
 
-    <div class="content">
-      <div class="cmd-head" style="text-align:center;margin-bottom:20px">
+    <div class="content invoice-bento-content">
+      <div class="invoice-hero-banner">
         <h2>Invoice Tagihan</h2>
-        <p class="m-sub">Selesaikan pembayaran QRIS agar saldo / paket otomatis masuk ke akun kamu.</p>
+        <p>Selesaikan pembayaran QRIS agar saldo atau paket otomatis aktif.</p>
       </div>
 
       <div class="invoice-card" id="invoice-box">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div class="inv-head-row">
           <div>
-            <span class="m-sub" style="font-size:12px;display:block">KODE TAGIHAN</span>
-            <b id="inv-order-id" style="font-size:16px;letter-spacing:0.5px">—</b>
+            <span class="inv-sub-label">KODE TAGIHAN</span>
+            <b id="inv-order-id">—</b>
           </div>
           <div id="inv-status-badge">
             <span class="badge-status badge-pending">Memuat…</span>
           </div>
         </div>
 
-        <div style="text-align:center;margin:16px 0">
-          <div class="m-sub" style="font-size:12px;margin-bottom:4px">TOTAL PEMBAYARAN</div>
-          <div id="inv-amount" style="font-size:34px;font-weight:800;color:#10b981;line-height:1.1">—</div>
+        <div class="inv-amount-wrap">
+          <div class="inv-sub-label">TOTAL PEMBAYARAN</div>
+          <div id="inv-amount">—</div>
         </div>
 
         <div class="countdown-box" id="inv-countdown-box">
-          <span class="m-sub">Batas Pembayaran:</span>
-          <b id="inv-timer" style="color:#f59e0b">05:00</b>
+          <span>Batas Pembayaran:</span>
+          <b id="inv-timer">05:00</b>
         </div>
 
-        <div style="text-align:center" id="inv-qr-container">
+        <div id="inv-qr-container">
           <div class="invoice-qr-wrap">
             <img id="inv-qr-img" src="" alt="QRIS Code" />
           </div>
-          <p class="m-sub" style="font-size:12px;margin:8px auto;max-width:320px">
-            Pindai QR di atas menggunakan GoPay, OVO, Dana, ShopeePay, BCA, atau m-Banking apa saja.
+          <p class="inv-qr-hint">
+            Pindai QR di atas menggunakan GoPay, OVO, DANA, ShopeePay, BCA, atau m-Banking apa saja.
           </p>
         </div>
 
-        <div style="margin:20px 0 10px;background:rgba(255,255,255,0.02);border-radius:10px;padding:12px 14px">
+        <div class="inv-details-box">
           <div class="row-detail">
-            <span class="m-sub">Item</span>
+            <span>Item</span>
             <b id="inv-plan-name">Top up Saldo</b>
           </div>
           <div class="row-detail">
-            <span class="m-sub">Metode</span>
-            <span>QRIS Otomatis</span>
+            <span>Metode</span>
+            <b>QRIS Otomatis</b>
           </div>
           <div class="row-detail">
-            <span class="m-sub">Waktu Order</span>
+            <span>Waktu Order</span>
             <span id="inv-created-at">—</span>
           </div>
         </div>
 
-        <div id="inv-actions" style="display:flex;flex-direction:column;gap:10px;margin-top:18px">
-          <button class="btn btn-primary" id="btn-cek-status" data-act="cekStatusManual" style="width:100%;background:#10b981;color:#000;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg> Cek Status Pembayaran
+        <div id="inv-actions">
+          <button class="btn btn-primary" id="btn-cek-status" data-act="cekStatusManual">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+            <span>Cek Status Pembayaran</span>
           </button>
-          <a class="btn btn-outline" id="btn-pay-link" href="#" target="_blank" rel="noopener" style="display:none;text-align:center;width:100%;display:flex;align-items:center;justify-content:center;gap:6px">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> Buka Aplikasi Pembayaran
+          <a class="btn btn-outline" id="btn-pay-link" href="#" target="_blank" rel="noopener" style="display:none">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            <span>Buka Aplikasi Pembayaran</span>
           </a>
-          <a class="btn btn-outline" href="/saldo" style="text-align:center;width:100%">
+          <a class="btn btn-outline" href="/saldo">
             ← Kembali ke Halaman Saldo
           </a>
         </div>
 
-        <div id="inv-success-box" style="display:none;text-align:center;padding:20px 0">
-          <div style="display:flex;justify-content:center;margin-bottom:12px">
-            <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        <div id="inv-success-box" style="display:none">
+          <div class="inv-success-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
           </div>
-          <h3 style="color:#10b981;margin-bottom:6px">Pembayaran Berhasil!</h3>
-          <p class="m-sub" style="margin-bottom:16px">Saldo sudah masuk ke wallet kamu. Mengalihkan ke saldo…</p>
-          <a class="btn btn-primary" href="/saldo" style="background:#10b981;color:#000;font-weight:700">Buka Saldo Sekarang</a>
+          <h3>Pembayaran Berhasil!</h3>
+          <p>Saldo sudah masuk ke wallet akun kamu. Mengalihkan ke halaman saldo…</p>
+          <a class="btn btn-primary" href="/saldo">Buka Saldo Sekarang</a>
         </div>
       </div>
     </div>
