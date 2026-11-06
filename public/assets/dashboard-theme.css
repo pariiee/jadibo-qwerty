@@ -1393,10 +1393,14 @@ body.page-command .cmd-list {
   display: grid !important;
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   gap: 10px !important;
+  align-items: start !important;
 }
 body.page-command .cmd-row {
   background: #fff !important; border: 2px solid #151515 !important; border-radius: 18px !important;
   box-shadow: 3px 3px 0px #151515 !important; overflow: hidden !important;
+  align-self: start !important;
+  height: fit-content !important;
+  transition: transform .15s ease, box-shadow .15s ease !important;
 }
 body.page-command .cmd-row summary {
   display: flex !important;

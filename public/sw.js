@@ -1,6 +1,6 @@
 'use strict';
 
-const CACHE_NAME = 'qwertygate-pwa-v62';
+const CACHE_NAME = 'qwertygate-pwa-v63';
 const PRECACHE_ASSETS = [
   '/offline.html',
   '/manifest.json',

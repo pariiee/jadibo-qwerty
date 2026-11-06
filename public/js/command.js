@@ -56,7 +56,7 @@
     // Klik baris = buka detail (deskripsi + alias). <details> bawaan browser,
     // jadi nol JavaScript buat buka/tutupnya.
     list.innerHTML = potong.map((c) => `
-      <details class="cmd-row">
+      <details class="cmd-row" name="cmd-item">
         <summary>
           <div class="cmd-kiri">
             <code class="cmd-nama">${esc(c.prefix)}</code>
