@@ -1,6 +1,6 @@
 'use strict';
 
-const CACHE_NAME = 'qwertygate-pwa-v98';
+const CACHE_NAME = 'qwertygate-pwa-v100';
 const PRECACHE_ASSETS = [
   '/offline.html',
   '/manifest.json',
@@ -35,7 +35,7 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(req.url);
 
   // Jangan pernah cache request POST, API, socket, atau auth
-  if (req.method !== 'GET' || url.pathname.startsWith('/api/') || url.pathname.startsWith('/ws')) {
+  if (req.method !== 'GET' || url.pathname.startsWith('/api/') || url.pathname.startsWith('/ws') || url.pathname.includes('auth') || url.pathname === '/login' || url.pathname === '/register') {
     return;
   }
 

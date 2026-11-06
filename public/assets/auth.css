@@ -417,13 +417,35 @@ body.page-auth .auth-card .auth-tag { margin: 0 0 14px !important; font-size: 13
 body.page-auth .auth-card h2 { margin: 0 0 6px !important; font-size: 30px !important; letter-spacing: -0.035em !important; line-height: 1.15 !important; }
 body.page-auth .auth-card .auth-desc { margin: 0 0 20px !important; font-size: 14.5px !important; line-height: 1.45 !important; }
 
-/* Pane Register Styling Khusus */
-#auth-register { --accent: #7A63F0; }
-#auth-register .auth-tag { background: #7A63F0 !important; color: #FFFFFF !important; border-color: #151515 !important; }
-#auth-register .btn-arrow { background: #7A63F0 !important; color: #FFFFFF !important; }
-#auth-register .btn-arrow svg { stroke: #FFFFFF !important; }
+/* Pane Register Compact — Muat 1 Layar Penuh */
+#auth-register {
+  --accent: #7A63F0;
+  padding: 20px 28px 16px !important;
+}
+#auth-register .auth-brand { margin: 0 0 6px !important; }
+#auth-register .auth-brand-logo { width: 30px !important; height: 30px !important; }
+#auth-register .auth-brand-name { font-size: 18px !important; }
+#auth-register .auth-tag { display: none !important; }
+#auth-register h2 { font-size: 22px !important; margin: 0 0 2px !important; line-height: 1.1 !important; }
+#auth-register .auth-desc { font-size: 12.5px !important; margin: 0 0 10px !important; line-height: 1.3 !important; }
+
+#auth-register form { gap: 8px !important; }
+#auth-register .field label { margin: 0 0 3px !important; font-size: 12px !important; line-height: 1.1 !important; }
+#auth-register .inp { height: 40px !important; border-radius: 12px !important; font-size: 13.5px !important; padding: 0 14px !important; }
 #auth-register .inp:focus { outline: 3px solid #7A63F0 !important; outline-offset: 1px !important; }
-#auth-register .switch-line a { box-shadow: inset 0 -3px 0 #7A63F0 !important; }
+#auth-register .field-hint { display: none !important; }
+#auth-register .field-err { margin: 2px 0 0 !important; font-size: 11px !important; }
+#auth-register .pass-strength { margin: 4px 0 0 !important; gap: 8px !important; }
+#auth-register .s-bar { height: 6px !important; border-width: 1.5px !important; }
+#auth-register .strength-txt { font-size: 11.5px !important; }
+
+#auth-register .btn-auth-submit { height: 44px !important; font-size: 14.5px !important; padding: 0 6px 0 18px !important; }
+#auth-register .btn-arrow { width: 32px !important; height: 32px !important; background: #7A63F0 !important; color: #FFFFFF !important; }
+#auth-register .btn-arrow svg { stroke: #FFFFFF !important; width: 16px !important; height: 16px !important; }
+#auth-register .auth-divider { margin: 8px 0 6px !important; font-size: 12px !important; }
+#auth-register .btn-social { height: 40px !important; font-size: 13.5px !important; }
+#auth-register .switch-line { margin: 10px 0 0 !important; font-size: 12.5px !important; }
+#auth-register .switch-line a { box-shadow: inset 0 -2px 0 #7A63F0 !important; }
 
 /* Form: nolkan margin bawaan, atur jarak lewat gap */
 body.page-auth .auth-card form { margin: 0 !important; gap: 12px !important; width: 100% !important; }
