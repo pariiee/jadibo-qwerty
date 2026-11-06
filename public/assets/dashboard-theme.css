@@ -1750,10 +1750,14 @@ body.page-log .log-kosong-card {
   box-shadow: 4px 4px 0px #151515 !important;
   padding: 40px 24px !important;
   text-align: center !important;
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  gap: 12px !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+body.page-log .log-kosong-card[style*="display: none"],
+body.page-log .log-kosong-card[style*="display:none"] {
+  display: none !important;
 }
 
 @media (max-width: 640px) {

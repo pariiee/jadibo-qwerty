@@ -74,13 +74,11 @@
     muatLogHalaman();
   })();
 
-  // Topbar default-nya menulis "Dashboard" + tombol "Tambah Bot" — dua-duanya
-  // salah di halaman ini. Pola yang sama dipakai command.js/profil.js/billing.js.
-  document.getElementById('greeting').textContent = 'Log Aktivitas';
+  const selBot = document.getElementById('pilih-bot');
+  if (selBot) selBot.onchange = muatLogHalaman;
+  const selLv = document.getElementById('log-level');
+  if (selLv) selLv.onchange = muatLogHalaman;
 
-
-  // Topbar default-nya menulis "Dashboard" + tombol "Tambah Bot" — dua-duanya
-  // salah di halaman ini. Pola yang sama dipakai command.js/profil.js/billing.js.
   const sapaan = document.getElementById('greeting');
   if (sapaan) sapaan.textContent = 'Log Aktivitas';
   window.openAddBot = () => { location.href = '/dashboard'; };
