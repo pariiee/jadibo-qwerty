@@ -477,4 +477,10 @@ if (dxAdd) dxAdd.addEventListener('click', openAddBot);
 // Stagger animasi masuk untuk tile statis
 document.querySelectorAll('.bt-grid > .bt-anim').forEach((el, i) => { el.style.animationDelay = (i * 60) + 'ms'; });
 
+// Tandai menu navbar aktif
+document.querySelectorAll('.cx-nav-item[href]').forEach(a => {
+  const h = a.getAttribute('href');
+  if (location.pathname === h || location.pathname.startsWith(h + '/')) a.classList.add('on', 'active');
+});
+
 })();

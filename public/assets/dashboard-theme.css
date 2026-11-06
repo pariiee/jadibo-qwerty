@@ -1197,3 +1197,10 @@ html body.page-dashboard .bt-hero #hero-name {
   html body.page-dashboard .cx-nav-pill { display: none !important; }
 }
 
+html body.page-dashboard .cx-nav-pill {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+

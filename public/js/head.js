@@ -266,6 +266,11 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
+  document.querySelectorAll('.cx-nav-item[href]').forEach(function (a) {
+    var h = a.getAttribute('href');
+    if (location.pathname === h || location.pathname.startsWith(h + '/')) a.classList.add('on', 'active');
+  });
+
   // ── Custom Select Dropdown (§Obsidian Glassmorphic) ─────────────────
   function enhanceCustomSelect(sel) {
     if (!sel || sel.dataset.csInit === '1') return;
