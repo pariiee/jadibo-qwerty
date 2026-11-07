@@ -1109,11 +1109,11 @@ html body.page-dashboard header.cx-navbar ~ .content {
   background: var(--nv-panel) !important; border-radius: 26px 26px 0 0 !important;
 }
 
-/* Responsif Mobile Header (< 900px): Bersih, Rapat ke Atas, Tanpa Bocor Putih */
+/* Responsif Mobile Header (< 900px): Bersih, Rapat ke Atas, Background Asli #EEEDFB */
 @media (max-width: 900px) {
   html,
   html body.page-dashboard {
-    background: #151515 !important;
+    background: #EEEDFB !important;
   }
 
   html body.page-dashboard,
