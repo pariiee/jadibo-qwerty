@@ -222,7 +222,7 @@
     p.textContent = '// Terminal dibersihkan';
     t.appendChild(p);
     if (notify) {
-      try { await fetch('/api/bots/' + botId + '/logs', { method: 'DELETE', credentials: 'include' }); } catch {}
+      try { await api('/api/bots/' + botId + '/logs', { method: 'DELETE' }); } catch {}
       broadcast({ type: 'clear_term' });
       if (ws && ws.readyState === WebSocket.OPEN) {
         try { ws.send(JSON.stringify({ type: 'clear_terminal', botId: parseInt(botId, 10) })); } catch {}
