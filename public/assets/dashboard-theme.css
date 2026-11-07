@@ -1109,14 +1109,26 @@ html body.page-dashboard header.cx-navbar ~ .content {
   background: var(--nv-panel) !important; border-radius: 26px 26px 0 0 !important;
 }
 
-/* Responsif Mobile Header (< 900px): Bersih seperti referensi */
+/* Responsif Mobile Header (< 900px): Bersih, Rapat ke Atas, Tanpa Bocor Putih */
 @media (max-width: 900px) {
-  /* Topbar Mobile: bar hitam rapi tanpa gap mengambang */
+  html,
+  html body.page-dashboard {
+    background: #151515 !important;
+  }
+
+  html body.page-dashboard,
+  html body.page-dashboard .app,
+  html body.page-dashboard main {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Topbar Mobile: bar hitam rapat ke atas tanpa radius atas bocor */
   html body.page-dashboard header.topbar.cx-navbar {
     margin: 0 !important;
     max-width: 100% !important;
     width: 100% !important;
-    border-radius: 24px 24px 0 0 !important;
+    border-radius: 0 !important;
     border: none !important;
     background: #151515 !important;
     padding: 0 !important;
@@ -1126,12 +1138,13 @@ html body.page-dashboard header.cx-navbar ~ .content {
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
-    padding: 12px 14px 26px !important;
+    padding: max(12px, env(safe-area-inset-top, 12px)) 16px 28px !important;
     gap: 10px !important;
     width: 100% !important;
     box-sizing: border-box !important;
     border: none !important;
-    background: transparent !important;
+    border-radius: 0 !important;
+    background: #151515 !important;
   }
 
   /* Sembunyikan SEMUA navigasi pill horizontal di mobile */
@@ -4744,7 +4757,9 @@ html body.page-admin .modal-close:hover {
     background: #151515 !important;
     color: #FFFFFF !important;
     border-radius: 0 28px 28px 0 !important;
-    padding: 18px 16px !important;
+    border: none !important;
+    outline: none !important;
+    padding: max(18px, env(safe-area-inset-top, 18px)) 16px max(18px, env(safe-area-inset-bottom, 18px)) !important;
     transform: translateX(-102%) !important;
     transition: transform .35s cubic-bezier(.16, 1, .3, 1) !important;
     box-shadow: 6px 0px 30px rgba(0, 0, 0, .45) !important;
