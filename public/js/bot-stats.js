@@ -113,12 +113,21 @@
       isiTabel(tblCmd, top5.map((c, i) => '<tr><td>' + (i + 1) + '</td><td>' + esc(c.cmd) + '</td><td>' + n(c.n) + '</td></tr>'), 3, '');
     }
 
+    const isDiscord = (d.bot?.platform === 'discord');
+    const thUser = document.getElementById('th-user-col');
+    const thGroup = document.getElementById('th-group-col');
+    if (thUser) thUser.textContent = isDiscord ? 'Member' : 'User';
+    if (thGroup) thGroup.textContent = isDiscord ? 'Server' : 'Grup';
+
+    const defaultDm = isDiscord ? 'Direct Message' : 'Private';
+    const emptyMsg = 'Belum ada aktivitas ' + (isDiscord ? 'member.' : 'user.');
+
     isiTabel(document.querySelector('#tbl-usr tbody'),
       d.user.map((u, i) => '<tr><td class="muted">' + (i + 1) + '</td><td>' + esc(u.nama) +
-        '</td><td class="muted">' + esc(u.grup || '—') + '</td>' +
+        '</td><td class="muted">' + esc(u.grup || defaultDm) + '</td>' +
         '<td style="text-align:right"><b>' + n(u.n) + '</b><br><small class="muted">' + n(u.ncmd) + ' cmd</small></td>' +
         '<td style="text-align:right" class="muted">' + jam(u.terakhir) + '</td></tr>'),
-      5, 'Belum ada aktivitas user.');
+      5, emptyMsg);
 
     // Batang harian: 7 hari penuh (isi 0 jika tidak ada aktivitas di hari tsb)
     const hariMap = new Map();

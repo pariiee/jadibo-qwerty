@@ -4129,7 +4129,43 @@ body.page-bot-stats .chart-summary {
 }
 
 @media (max-width: 900px) {
-  body.page-bot-stats .two { grid-template-columns: 1fr !important; }
+  body.page-bot-stats {
+    padding: 14px 14px 44px !important;
+  }
+  body.page-bot-stats .app {
+    gap: 14px !important;
+  }
+  body.page-bot-stats .topbar {
+    padding: 12px 14px !important;
+    border-radius: 20px !important;
+  }
+  body.page-bot-stats .stats {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+  body.page-bot-stats .stat {
+    padding: 14px 14px !important;
+    border-radius: 18px !important;
+    min-height: 100px !important;
+  }
+  body.page-bot-stats .stat b {
+    font-size: 24px !important;
+  }
+  body.page-bot-stats .stat small {
+    font-size: 11px !important;
+  }
+  body.page-bot-stats .stat-kuota {
+    grid-column: span 2 !important;
+  }
+  body.page-bot-stats .two {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+  body.page-bot-stats .panel {
+    padding: 16px 14px !important;
+    border-radius: 20px !important;
+  }
 }
 
 /* ══ Invoice Checkout Styles (/invoice/:orderId) ══ */
