@@ -214,7 +214,7 @@
     if (scroll) scrollTerm();
   }
   function scrollTerm() { const t = document.getElementById('terminal'); t.scrollTop = t.scrollHeight; }
-  function clearTerminal(notify = true) {
+  async function clearTerminal(notify = true) {
     const t = document.getElementById('terminal');
     t.innerHTML = '';
     const p = document.createElement('p');
@@ -222,6 +222,7 @@
     p.textContent = '// Terminal dibersihkan';
     t.appendChild(p);
     if (notify) {
+      try { await fetch('/api/bots/' + botId + '/logs', { method: 'DELETE', credentials: 'include' }); } catch {}
       broadcast({ type: 'clear_term' });
       if (ws && ws.readyState === WebSocket.OPEN) {
         try { ws.send(JSON.stringify({ type: 'clear_terminal', botId: parseInt(botId, 10) })); } catch {}
@@ -518,11 +519,13 @@
     const inp = document.getElementById('cfg-token');
     const btn = document.getElementById('token-toggle');
     if (!inp || !btn) return;
-    const isPw = inp.type === 'password';
+    const isPw = (inp.type === 'password');
     inp.type = isPw ? 'text' : 'password';
-    const txt = btn.querySelector('.lbl-txt');
-    if (txt) txt.textContent = isPw ? 'Tutup' : 'Lihat';
-    else btn.textContent = isPw ? 'Tutup' : 'Lihat';
+    btn.setAttribute('title', isPw ? 'Sembunyikan token' : 'Lihat token');
+    btn.setAttribute('aria-label', isPw ? 'Sembunyikan token' : 'Lihat token');
+    btn.innerHTML = isPw
+      ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>'
+      : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
   }
 
   // ── Delete ───────────────────────────────────────────────────────

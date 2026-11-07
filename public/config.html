@@ -39,13 +39,15 @@
   <div style="display:flex;flex-direction:column;gap:18px;min-width:0">
     <div class="panel term-panel">
       <div class="term-head">
-        <div class="term-dots">
-          <span style="background:var(--err)"></span><span style="background:var(--warn)"></span><span style="background:var(--ok)"></span>
-          <span class="lb">Live Terminal</span>
+        <div class="term-left">
+          <div class="term-dots" aria-hidden="true">
+            <span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span>
+          </div>
+          <span class="term-title">Live Terminal</span>
         </div>
         <div class="term-right">
           <span class="state" id="ws-dot"></span><span class="lbl" id="ws-lbl">Disconnected</span>
-          <button class="clear-btn" data-act="clearTerminal">Clear</button>
+          <button class="clear-btn" data-act="clearTerminal" title="Bersihkan log dari database">Clear</button>
         </div>
       </div>
       <div id="terminal"><p class="log-line term-hint">// Log akan muncul di sini setelah bot di-start</p></div>
@@ -150,7 +152,7 @@
   </div>
 </div>
 
-<script src="/js/config.js?v=2.7" defer></script>
+<script src="/js/config.js?v=2.8" defer></script>
 </div>
 </body>
 </html>

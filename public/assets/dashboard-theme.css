@@ -3689,30 +3689,30 @@ body.page-bot-config .token-input-wrap {
   align-items: center !important;
 }
 body.page-bot-config .token-input-wrap .inp {
-  padding-right: 76px !important;
+  padding-right: 44px !important;
 }
 body.page-bot-config #token-toggle {
   position: absolute !important;
   right: 6px !important;
   top: 50% !important;
   transform: translateY(-50%) !important;
+  width: 32px !important;
+  height: 32px !important;
   display: inline-flex !important;
   align-items: center !important;
-  gap: 4px !important;
-  background: #F4F3FF !important;
-  border: 1.5px solid #151515 !important;
+  justify-content: center !important;
+  background: transparent !important;
+  border: none !important;
   border-radius: 8px !important;
-  padding: 4px 8px !important;
-  font-size: 11px !important;
-  font-weight: 800 !important;
-  color: #151515 !important;
+  color: #5E5C70 !important;
   cursor: pointer !important;
-  box-shadow: 1px 1px 0px #151515 !important;
-  transition: background .15s ease, transform .15s ease !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  transition: background .15s ease, color .15s ease !important;
 }
 body.page-bot-config #token-toggle:hover {
-  background: #E8E5FF !important;
-  transform: translateY(-50%) scale(1.02) !important;
+  background: #F4F3FF !important;
+  color: #151515 !important;
 }
 body.page-bot-config .inp {
   width: 100% !important;
@@ -3773,22 +3773,32 @@ body.page-bot-config .term-head {
   background: #202020 !important;
   border-bottom: 2px solid #2D2D2D !important;
 }
+body.page-bot-config .term-left {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
 body.page-bot-config .term-dots {
   display: flex !important;
   align-items: center !important;
   gap: 6px !important;
 }
-body.page-bot-config .term-dots span:not(.lb) {
+body.page-bot-config .term-dots span {
   width: 11px !important;
   height: 11px !important;
   border-radius: 50% !important;
+  display: inline-block !important;
 }
-body.page-bot-config .term-dots .lb {
-  font-size: 12px !important;
+body.page-bot-config .term-dots .dot-r { background: #FF5F56 !important; }
+body.page-bot-config .term-dots .dot-y { background: #FFBD2E !important; }
+body.page-bot-config .term-dots .dot-g { background: #27C93F !important; }
+
+body.page-bot-config .term-title {
+  font-size: 13px !important;
   font-weight: 800 !important;
-  color: #E2E8F0 !important;
-  margin-left: 8px !important;
-  font-family: monospace !important;
+  color: #F8FAFC !important;
+  letter-spacing: .02em !important;
+  line-height: 1 !important;
 }
 body.page-bot-config .term-right {
   display: flex !important;

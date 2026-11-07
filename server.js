@@ -290,6 +290,7 @@ app.post('/api/bots/:id/stop',          apiLimiter, auth.requireAuth, bot.stopBo
 app.post('/api/bots/:id/restart',       apiLimiter, auth.requireAuth, bot.restartBot);
 app.post('/api/bots/:id/clear-session', apiLimiter, auth.requireAuth, bot.clearSession);
 app.get('/api/bots/:id/logs',           apiLimiter, auth.requireAuth, bot.getBotLogs);
+app.delete('/api/bots/:id/logs',        apiLimiter, auth.requireAuth, bot.clearBotLogs);
 app.get('/api/bots/:id/stats',         apiLimiter, auth.requireAuth, bot.getBotStats);
 app.get('/api/bots/:id/config',        apiLimiter, auth.requireAuth, bot.exportConfig);
 app.post('/api/bots/:id/resolve-invite', apiLimiter, auth.requireAuth, bot.resolveInvite);

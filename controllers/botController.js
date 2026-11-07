@@ -463,6 +463,9 @@ async function restartBot(req, res) {
     const bot = await assertOwnership(req, res, req.params.id);
     if (!bot) return;
 
+    // Bersihkan log terminal lama saat restart agar sesi baru bersih
+    await pool.execute('DELETE FROM bot_logs WHERE bot_id = ?', [bot.id]);
+
     // Satu jalur restart, di worker: command WA .restart dan tombol ini
     // nggak boleh punya logika masing-masing (dulu pernah, hasilnya beda).
     const out = await engineBus.restart(bot.id);
@@ -471,6 +474,20 @@ async function restartBot(req, res) {
   } catch (err) {
     console.error('[Bot] restartBot error:', err);
     return sendError(res, err.status || 500, pesanManusia(err));
+  }
+}
+
+// ─── DELETE /api/bots/:id/logs ────────────────────────────────────────────────
+async function clearBotLogs(req, res) {
+  try {
+    const bot = await assertOwnership(req, res, req.params.id);
+    if (!bot) return;
+
+    await pool.execute('DELETE FROM bot_logs WHERE bot_id = ?', [bot.id]);
+    return res.json({ ok: true, message: 'Log terminal dibersihkan' });
+  } catch (err) {
+    console.error('[Bot] clearBotLogs error:', err);
+    return sendError(res, 500, 'Terjadi kesalahan server');
   }
 }
 
@@ -834,7 +851,7 @@ async function beliRespon(req, res) {
 
 module.exports = {
   listBots, getBot, createBot, updateBot, deleteBot,
-  startBot, stopBot, restartBot, clearSession, getBotLogs, getBotStats, exportConfig,
+  startBot, stopBot, restartBot, clearSession, getBotLogs, clearBotLogs, getBotStats, exportConfig,
   resolveInvite, beliRespon,
   // State runtime — dibaca engine (whatsappEngine/telegramEngine) & plugin.
   activeBots, activeGroupsPerBot, activeChannelsPerBot,
