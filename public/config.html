@@ -34,6 +34,23 @@
 
     <!-- @include config-form.html -->
 
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:18px;min-width:0">
+    <div class="panel term-panel">
+      <div class="term-head">
+        <div class="term-dots">
+          <span style="background:var(--err)"></span><span style="background:var(--warn)"></span><span style="background:var(--ok)"></span>
+          <span class="lb">Live Terminal</span>
+        </div>
+        <div class="term-right">
+          <span class="state" id="ws-dot"></span><span class="lbl" id="ws-lbl">Disconnected</span>
+          <button class="clear-btn" data-act="clearTerminal">Clear</button>
+        </div>
+      </div>
+      <div id="terminal"><p class="log-line term-hint">// Log akan muncul di sini setelah bot di-start</p></div>
+    </div>
+
     <div class="panel panel-imp-exp">
       <div class="panel-head-mini">
         <h2>Import / Export</h2>
@@ -52,22 +69,6 @@
         <input type="file" id="cfg-file" accept=".json,application/json" class="custom-file-hidden" />
       </div>
       <div class="ctrl-msg" id="imp-msg"></div>
-    </div>
-  </div>
-
-  <div style="display:flex;flex-direction:column;gap:18px;min-width:0">
-    <div class="panel term-panel">
-      <div class="term-head">
-        <div class="term-dots">
-          <span style="background:var(--err)"></span><span style="background:var(--warn)"></span><span style="background:var(--ok)"></span>
-          <span class="lb">Live Terminal</span>
-        </div>
-        <div class="term-right">
-          <span class="state" id="ws-dot"></span><span class="lbl" id="ws-lbl">Disconnected</span>
-          <button class="clear-btn" data-act="clearTerminal">Clear</button>
-        </div>
-      </div>
-      <div id="terminal"><p class="log-line term-hint">// Log akan muncul di sini setelah bot di-start</p></div>
     </div>
   </div>
 </div>
@@ -148,7 +149,7 @@
   </div>
 </div>
 
-<script src="/js/config.js?v=2.6" defer></script>
+<script src="/js/config.js?v=2.7" defer></script>
 </div>
 </body>
 </html>
