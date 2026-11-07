@@ -141,11 +141,25 @@ async function status(req, res) {
     versi = require('../package.json').version || null;
   } catch { /* package.json tanpa version — bukan alasan gagal */ }
 
+  const totalMemMb = os.totalmem() / (1024 * 1024);
+  const freeMemMb = os.freemem() / (1024 * 1024);
+  const maxConfig = parseInt(process.env.MAX_RUNNING_BOTS, 10);
+  const maxBots = Number.isInteger(maxConfig) && maxConfig > 0
+    ? maxConfig
+    : Math.max(1, Math.floor((totalMemMb - 300) / 120));
+  const sisaSlotBot = Math.max(0, Math.floor((freeMemMb - 200) / 120));
+
   return res.json({
     ok: true,
     kesehatan,
     resource: resource(),
     versi,
+    kapasitas: {
+      maxBots,
+      sisaSlotBot,
+      estimasiPerBotMb: 120,
+      bufferOsMb: 300,
+    },
     waktuServer: new Date().toISOString(),
   });
 }

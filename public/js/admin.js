@@ -741,10 +741,12 @@
       badge.style.borderColor = h.ok ? 'rgba(16,185,129,.25)' : 'rgba(239,68,68,.25)';
     }
 
+    const maxB = d.kapasitas?.maxBots || '—';
+    const sisaB = d.kapasitas?.sisaSlotBot ?? '—';
     el.innerHTML =
       kotak('Status', h.ok ? '✓ Sehat' : '⚠ Bermasalah', h.db ? 'DB tersambung' : 'DB TIDAK tersambung') +
-      kotak('Bot online', String(h.bots_online ?? 0), `dari ${h.bots_harus_jalan ?? 0} slot`) +
-      kotak('Versi', d.versi || '—', 'node runtime') +
+      kotak('Kapasitas Server', `~${maxB} Bot`, `muat sisa ~${sisaB} bot`) +
+      kotak('Bot online', String(h.bots_online ?? 0), `dari ${h.bots_harus_jalan ?? 0} slot user`) +
       kotak('Waktu server', jamServer, tglServer);
 
     const alasan = document.getElementById('sys-alasan');
