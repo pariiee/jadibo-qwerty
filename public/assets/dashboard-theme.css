@@ -1109,26 +1109,23 @@ html body.page-dashboard header.cx-navbar ~ .content {
   background: var(--nv-panel) !important; border-radius: 26px 26px 0 0 !important;
 }
 
-/* Responsif Mobile Header (< 900px): Bersih, Rapat ke Atas, Background Asli #EEEDFB */
+/* Responsif Mobile Header (< 900px): Persis seperti referensi */
 @media (max-width: 900px) {
   html,
   html body.page-dashboard {
     background: #EEEDFB !important;
   }
 
-  html body.page-dashboard,
-  html body.page-dashboard .app,
   html body.page-dashboard main {
-    padding: 0 !important;
-    margin: 0 !important;
+    padding: 12px 12px 32px !important;
   }
 
-  /* Topbar Mobile: bar hitam rapat ke atas tanpa radius atas bocor */
+  /* Topbar Mobile: bar hitam rapi ber-radius atas 24px */
   html body.page-dashboard header.topbar.cx-navbar {
     margin: 0 !important;
     max-width: 100% !important;
     width: 100% !important;
-    border-radius: 0 !important;
+    border-radius: 24px 24px 0 0 !important;
     border: none !important;
     background: #151515 !important;
     padding: 0 !important;
@@ -1138,12 +1135,12 @@ html body.page-dashboard header.cx-navbar ~ .content {
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
-    padding: max(12px, env(safe-area-inset-top, 12px)) 16px 28px !important;
+    padding: 12px 14px 28px !important;
     gap: 10px !important;
     width: 100% !important;
     box-sizing: border-box !important;
     border: none !important;
-    border-radius: 0 !important;
+    border-radius: 24px 24px 0 0 !important;
     background: #151515 !important;
   }
 
@@ -1245,7 +1242,7 @@ html body.page-dashboard header.cx-navbar ~ .content {
     position: relative !important;
     z-index: 1 !important;
     margin-top: -18px !important;
-    padding: 16px 12px 32px !important;
+    padding: 16px 0 0 !important;
     background: #EEEDFB !important;
     border-radius: 24px 24px 0 0 !important;
     border: none !important;
