@@ -678,6 +678,7 @@ async function getBotStats(req, res) {
       ok: true,
       bot: {
         id: bot.id,
+        platform: bot.platform,
         receive_limit: Number(bot.receive_limit || 0),
         receive_count: Number(bot.receive_count || 0),
       },

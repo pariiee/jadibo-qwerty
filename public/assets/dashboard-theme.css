@@ -4013,12 +4013,16 @@ body.page-bot-stats .stat {
   flex-direction: column !important;
   justify-content: space-between !important;
   gap: 6px !important;
+  min-width: 0 !important;
   box-sizing: border-box !important;
 }
 body.page-bot-stats .stat .k {
   font-size: 13px !important;
   font-weight: 800 !important;
   color: #5E5C70 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
 }
 body.page-bot-stats .stat b {
   font-size: 30px !important;
@@ -4030,6 +4034,9 @@ body.page-bot-stats .stat small {
   font-size: 11.5px !important;
   font-weight: 600 !important;
   color: #71717A !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
 }
 body.page-bot-stats .stat-kuota .btn-xs {
   background: #D8FF7A !important;
@@ -4138,25 +4145,53 @@ body.page-bot-stats .chart-summary {
   body.page-bot-stats .topbar {
     padding: 12px 14px !important;
     border-radius: 20px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    flex-wrap: nowrap !important;
+    gap: 10px !important;
+  }
+  body.page-bot-stats .ttl {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    min-width: 0 !important;
+    flex: 1 !important;
+  }
+  body.page-bot-stats .ttl h1 {
+    font-size: 16px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+  body.page-bot-stats .top-actions {
+    flex-shrink: 0 !important;
+  }
+  body.page-bot-stats .top-actions .btn {
+    padding: 6px 12px !important;
+    font-size: 12px !important;
+    white-space: nowrap !important;
   }
   body.page-bot-stats .stats {
     display: grid !important;
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-template-columns: 1fr 1fr !important;
     gap: 10px !important;
+    width: 100% !important;
   }
   body.page-bot-stats .stat {
-    padding: 14px 14px !important;
+    padding: 14px 12px !important;
     border-radius: 18px !important;
-    min-height: 100px !important;
+    min-height: 96px !important;
+    min-width: 0 !important;
   }
   body.page-bot-stats .stat b {
     font-size: 24px !important;
   }
   body.page-bot-stats .stat small {
-    font-size: 11px !important;
+    font-size: 10.5px !important;
   }
   body.page-bot-stats .stat-kuota {
-    grid-column: span 2 !important;
+    grid-column: 1 / -1 !important;
   }
   body.page-bot-stats .two {
     grid-template-columns: 1fr !important;
