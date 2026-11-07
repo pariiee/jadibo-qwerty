@@ -269,21 +269,29 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // ── Mobile Drawer Sidebar Navigation ────────────────────────
-  var burgerBtn = document.getElementById('cx-burger-btn');
-  var drawerCloseBtn = document.getElementById('drawer-close-btn');
-  var drawerOverlay = document.getElementById('mobile-drawer-overlay');
-  var mobileDrawer = document.getElementById('mobile-drawer');
-  var drawerAccBtn = document.getElementById('drawer-acc-btn');
-
   function setMobileDrawer(open) {
     document.body.classList.toggle('drawer-open', open);
-    if (burgerBtn) burgerBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
-    if (mobileDrawer) mobileDrawer.setAttribute('aria-hidden', open ? 'false' : 'true');
+    var b = document.getElementById('cx-burger-btn');
+    var d = document.getElementById('mobile-drawer');
+    if (b) b.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (d) d.setAttribute('aria-hidden', open ? 'false' : 'true');
   }
 
-  if (burgerBtn) burgerBtn.addEventListener('click', function (e) { e.stopPropagation(); setMobileDrawer(true); });
-  if (drawerCloseBtn) drawerCloseBtn.addEventListener('click', function () { setMobileDrawer(false); });
-  if (drawerOverlay) drawerOverlay.addEventListener('click', function () { setMobileDrawer(false); });
+  document.addEventListener('click', function (e) {
+    var burger = e.target.closest('#cx-burger-btn');
+    if (burger) {
+      e.preventDefault();
+      e.stopPropagation();
+      setMobileDrawer(true);
+      return;
+    }
+    var close = e.target.closest('#drawer-close-btn') || e.target.closest('#mobile-drawer-overlay');
+    if (close) {
+      e.preventDefault();
+      setMobileDrawer(false);
+      return;
+    }
+  });
 
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape' && document.body.classList.contains('drawer-open')) {
@@ -291,6 +299,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
+  var drawerAccBtn = document.getElementById('drawer-acc-btn');
   if (drawerAccBtn) {
     drawerAccBtn.addEventListener('click', function (e) {
       e.preventDefault();
