@@ -81,9 +81,6 @@
     }
     toggleEl(btnOpenWa, showOpenWa);
 
-    // Panel QR & Pairing Code hanya untuk WhatsApp
-    toggleEl(document.getElementById('qr-panel'), isWa, 'block');
-
     // 2. Discord Controls
     const btnInviteDc = document.getElementById('btn-invite-dc');
     const btnInviteDcAdmin = document.getElementById('btn-invite-dc-admin');
@@ -170,6 +167,7 @@
     const s = map[st] || map.disconnected;
     dot.className = 'dot ' + s.c;
     txt.textContent = s.l;
+    if (st === 'connected') dismissQr();
   }
 
   function syncBtns() {
@@ -258,10 +256,7 @@
         }
         if (d.type === 'qr') showQr(d.payload.qr);
         if (d.type === 'pairing_code') {
-          // Cuma render kalau panelnya masih kebuka — jangan maksa munculin ulang
-          // tiap 20s kalau user udah nutup.
-          if (document.getElementById('qr-panel').classList.contains('show'))
-            showPairing(d.payload.code, d.payload.ttlMs);
+          showPairing(d.payload.code, d.payload.ttlMs);
         }
       } catch {}
     };
@@ -275,36 +270,42 @@
     document.getElementById('ws-lbl').textContent = on ? 'Live' : 'Reconnecting...';
   }
 
-  // ── QR / pairing ─────────────────────────────────────────────────
+  // ── QR / pairing Modal Popup ───────────────────────────────────────────────
   function showQr(qr) {
-    const panel = document.getElementById('qr-panel');
-    panel.classList.add('show');
-    document.getElementById('mode-qr').classList.add('show');
-    document.getElementById('mode-pairing').classList.remove('show');
-    document.getElementById('qr-title').textContent = 'Scan QR Code';
+    const ov = document.getElementById('qr-overlay');
+    if (ov) ov.style.display = 'flex';
+    const mQr = document.getElementById('mode-qr');
+    const mPair = document.getElementById('mode-pairing');
+    if (mQr) mQr.style.display = 'flex';
+    if (mPair) mPair.style.display = 'none';
+
     const canvas = document.getElementById('qr-canvas');
-    if (typeof QRCode !== 'undefined') {
+    if (typeof QRCode !== 'undefined' && canvas) {
       QRCode.toCanvas(canvas, qr, { width: 200, margin: 1 }, (err) => {
-        if (err) {
+        if (err && canvas.parentElement.querySelector('p')) {
           canvas.parentElement.querySelector('p').textContent = qr.slice(0, 120) + (qr.length > 120 ? '...' : '');
         }
       });
     }
   }
+
   function showPairing(code, ttlMs) {
-    const panel = document.getElementById('qr-panel');
-    panel.classList.add('show');
-    document.getElementById('mode-qr').classList.remove('show');
-    document.getElementById('mode-pairing').classList.add('show');
-    document.getElementById('qr-title').textContent = 'Pairing Code';
-    document.getElementById('pair-wait').style.display = 'none';
-    const box = document.getElementById('pair-box');
-    box.style.display = 'flex';
-    document.getElementById('pair-code').textContent = code;
+    const ov = document.getElementById('qr-overlay');
+    if (ov) ov.style.display = 'flex';
+    const mQr = document.getElementById('mode-qr');
+    const mPair = document.getElementById('mode-pairing');
+    if (mQr) mQr.style.display = 'none';
+    if (mPair) mPair.style.display = 'flex';
+
+    const waitEl = document.getElementById('pair-wait');
+    const boxEl = document.getElementById('pair-box');
+    const codeEl = document.getElementById('pair-code');
+    if (waitEl) waitEl.style.display = 'none';
+    if (boxEl) boxEl.style.display = 'flex';
+    if (codeEl) codeEl.textContent = code;
     startPairCountdown(ttlMs || 20000);
   }
-  // Kode ini cuma hidup sebentar di server. Kalau belum dipakai, kode baru bakal
-  // di-push otomatis — timer ini ngasih tau user sisa waktunya.
+
   function startPairCountdown(ttlMs) {
     const el = document.getElementById('pair-timer');
     clearInterval(startPairCountdown._t);
@@ -312,24 +313,26 @@
     const tick = () => {
       if (left <= 0) {
         clearInterval(startPairCountdown._t);
-        // Kode lama udah mati — jangan biarin user ngetik kode basi.
-        document.getElementById('pair-code').textContent = '——————';
-        el.textContent = 'Kode kadaluarsa — meminta kode baru...';
+        const codeEl = document.getElementById('pair-code');
+        if (codeEl) codeEl.textContent = '——————';
+        if (el) el.textContent = 'Kode kadaluarsa — meminta kode baru...';
         return;
       }
-      el.textContent = 'Kode berlaku ' + left + ' detik lagi';
+      if (el) el.textContent = 'Kode berlaku ' + left + ' detik lagi';
       left--;
     };
     tick();
     startPairCountdown._t = setInterval(tick, 1000);
   }
+
   function dismissQr() {
     clearInterval(startPairCountdown._t);
-    document.getElementById('qr-panel').classList.remove('show');
-    document.getElementById('mode-qr').classList.remove('show');
-    document.getElementById('mode-pairing').classList.remove('show');
-    document.getElementById('pair-box').style.display = 'none';
-    document.getElementById('pair-wait').style.display = '';
+    const ov = document.getElementById('qr-overlay');
+    if (ov) ov.style.display = 'none';
+    const mQr = document.getElementById('mode-qr');
+    const mPair = document.getElementById('mode-pairing');
+    if (mQr) mQr.style.display = 'none';
+    if (mPair) mPair.style.display = 'none';
   }
 
   // ── Controls ─────────────────────────────────────────────────────
@@ -357,24 +360,29 @@
       ctrlMsg('Isi Nomor Bot WA dulu di form Konfigurasi sebelum pakai Pairing Code.', 'error');
       return;
     }
-    document.getElementById('qr-panel').classList.add('show');
+    const ov = document.getElementById('qr-overlay');
+    if (ov) ov.style.display = 'flex';
+    const mQr = document.getElementById('mode-qr');
+    const mPair = document.getElementById('mode-pairing');
+
     if (usePairing) {
-      document.getElementById('mode-qr').classList.remove('show');
-      document.getElementById('mode-pairing').classList.add('show');
-      document.getElementById('qr-title').textContent = 'Pairing Code';
-      document.getElementById('pair-wait').style.display = '';
-      document.getElementById('pair-box').style.display = 'none';
-      document.getElementById('pair-timer').textContent = '';
+      if (mQr) mQr.style.display = 'none';
+      if (mPair) mPair.style.display = 'flex';
+      const waitEl = document.getElementById('pair-wait');
+      const boxEl = document.getElementById('pair-box');
+      const timerEl = document.getElementById('pair-timer');
+      if (waitEl) waitEl.style.display = '';
+      if (boxEl) boxEl.style.display = 'none';
+      if (timerEl) timerEl.textContent = '';
     } else {
-      document.getElementById('mode-pairing').classList.remove('show');
-      document.getElementById('mode-qr').classList.add('show');
-      document.getElementById('qr-title').textContent = 'Scan QR Code';
+      if (mPair) mPair.style.display = 'none';
+      if (mQr) mQr.style.display = 'flex';
     }
     ctrlMsg(usePairing ? ('Meminta pairing code untuk ' + botData.bot_number + '...') : 'Memulai bot dengan QR...');
     const d = await api('/api/bots/' + botId + '/start', { method: 'POST', body: JSON.stringify({ use_pairing_code: usePairing }) });
     if (!d) return;
     if (d.ok) { ctrlMsg(d.message); startPolling(); }
-    else { ctrlMsg(d.message, 'error'); document.getElementById('qr-panel').classList.remove('show'); }
+    else { ctrlMsg(d.message, 'error'); dismissQr(); }
   }
   async function stopBot() {
     const d = await api('/api/bots/' + botId + '/stop', { method: 'POST' });
