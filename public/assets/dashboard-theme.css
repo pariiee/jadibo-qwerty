@@ -3833,13 +3833,19 @@ body.page-bot-config .panel-head-mini {
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
-  margin-bottom: 12px !important;
+  margin-bottom: 4px !important;
 }
 body.page-bot-config .panel-head-mini h2 {
   font-size: 16px !important;
   font-weight: 800 !important;
   color: #151515 !important;
   margin: 0 !important;
+}
+body.page-bot-config .imp-exp-desc {
+  font-size: 12px !important;
+  color: #5E5C70 !important;
+  margin: 0 0 12px 0 !important;
+  line-height: 1.4 !important;
 }
 body.page-bot-config .imp-exp-grid {
   display: grid !important;
