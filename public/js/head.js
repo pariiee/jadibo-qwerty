@@ -347,6 +347,17 @@ document.addEventListener('DOMContentLoaded', function () {
       if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
       else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
     });
+    // Geser jari ke kiri untuk menutup drawer (swipe left to close)
+    var touchStartX = 0, touchStartY = 0;
+    drawer.addEventListener('touchstart', function (e) {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+    drawer.addEventListener('touchend', function (e) {
+      var dx = touchStartX - e.changedTouches[0].clientX;
+      var dy = Math.abs(touchStartY - e.changedTouches[0].clientY);
+      if (dx > 45 && dx > dy) setMobileDrawer(false);
+    }, { passive: true });
   }
 
   initDrawer();
