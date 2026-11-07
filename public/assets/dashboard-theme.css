@@ -3623,7 +3623,6 @@ body.page-bot-config .ctrl-msg {
   color: #151515 !important;
 }
 
-/* Bento Grid Form Konfigurasi */
 body.page-bot-config #cfg-form {
   display: grid !important;
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
@@ -4261,12 +4260,10 @@ body.page-bot-stats .chart-summary {
     grid-template-columns: 1fr 1fr !important;
     gap: 10px 10px !important;
   }
-  /* Di mobile: Prefix & Footer berdampingan 2 kolom */
   body.page-bot-config #cfg-form #w-prefix,
   body.page-bot-config #cfg-form #w-footer {
     grid-column: span 1 !important;
   }
-  /* Field lainnya membentang 1 baris penuh */
   body.page-bot-config #cfg-form .field:not(#w-prefix):not(#w-footer) {
     grid-column: 1 / -1 !important;
   }

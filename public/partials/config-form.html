@@ -1,7 +1,6 @@
 <div class="panel form" id="cfg-panel">
   <h2>Konfigurasi Bot</h2>
   <form id="cfg-form" class="cfg-grid-form">
-    <!-- Baris 1: Nama Bot & Nomor Bot / Token -->
     <div class="field" id="w-name">
       <label for="cfg-name">Nama Bot <span class="req">*</span></label>
       <input class="inp" id="cfg-name" type="text" required />
@@ -20,7 +19,6 @@
       <div class="hint" id="token-hint"></div>
     </div>
 
-    <!-- Baris 2: Nama Owner & Nomor Owner -->
     <div class="field" id="w-ownername">
       <label for="cfg-ownername">Nama Owner</label>
       <input class="inp" id="cfg-ownername" type="text" placeholder="Nama kontak owner" />
@@ -32,7 +30,6 @@
       <div class="hint">Akses command owner-only</div>
     </div>
 
-    <!-- Baris 3: Prefix & Footer -->
     <div class="field" id="w-prefix">
       <label for="cfg-prefix">Prefix</label>
       <input class="inp" id="cfg-prefix" type="text" maxlength="3" />
@@ -42,7 +39,6 @@
       <input class="inp" id="cfg-footer" type="text" />
     </div>
 
-    <!-- Baris 4: Limit Harian & Channel ID -->
     <div class="field" id="w-daily">
       <label for="cfg-daily">Limit Harian</label>
       <input class="inp" id="cfg-daily" type="number" min="1" max="9999" placeholder="20" />
@@ -54,7 +50,6 @@
       <div class="hint">JID channel WA untuk .bc</div>
     </div>
 
-    <!-- Baris 5: Banner URL & QRIS URL -->
     <div class="field" id="w-banner">
       <label for="cfg-banner">Banner URL (link gambar)</label>
       <input class="inp" id="cfg-banner" type="text" placeholder="https://..." />
@@ -66,20 +61,17 @@
       <div class="hint">Gambar QRIS untuk .pay</div>
     </div>
 
-    <!-- Baris 6: Deskripsi (Full Width) -->
     <div class="field f-full" id="w-desc">
       <label for="cfg-desc">Deskripsi</label>
       <textarea class="inp" id="cfg-desc" rows="2"></textarea>
     </div>
 
-    <!-- Baris 7: Grup Utama (Full Width) -->
     <div class="field f-full" id="w-maingroups">
       <label for="cfg-maingroups">Grup Utama</label>
       <textarea class="inp" id="cfg-maingroups" rows="3" style="font-family:Consolas,Menlo,monospace" placeholder="120363xxxxxxxxxx@g.us"></textarea>
       <div class="hint">ID grup / <code>.gcutama</code>. Satu per baris. Kosongkan = respon semua grup.</div>
     </div>
 
-    <!-- Error & Submit (Full Width) -->
     <div class="err f-full" id="cfg-err"></div>
     <button class="btn btn-dark save f-full" type="submit">Simpan Perubahan</button>
   </form>
