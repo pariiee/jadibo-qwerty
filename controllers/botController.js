@@ -73,7 +73,7 @@ async function assertOwnership(req, res, botId) {
   const idAngka = (await resolveBotId(botId)) ?? Number(botId);
 
   const [rows] = await pool.execute(
-    'SELECT id, user_id, public_id FROM bots WHERE id = ?',
+    'SELECT id, user_id, public_id, platform, receive_limit, receive_count FROM bots WHERE id = ?',
     [idAngka]
   );
   if (rows.length === 0) { sendError(res, 404, 'Bot tidak ditemukan'); return null; }
