@@ -1110,52 +1110,130 @@ html body.page-dashboard header.cx-navbar + .content {
 
 /* Responsif Mobile Header (< 900px): Bersih seperti referensi */
 @media (max-width: 900px) {
+  /* Topbar Mobile: bar hitam rapi tanpa gap mengambang */
+  html body.page-dashboard header.topbar.cx-navbar {
+    margin: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    border-radius: 24px 24px 0 0 !important;
+    border: none !important;
+    background: #151515 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+  }
   html body.page-dashboard header.topbar.cx-navbar .cx-nav-inner {
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
-    padding: 12px 14px 28px !important;
+    padding: 12px 14px 26px !important;
     gap: 10px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    border: none !important;
+    background: transparent !important;
   }
+
   /* Sembunyikan SEMUA navigasi pill horizontal di mobile */
   html body.page-dashboard .cx-nav-pill {
     display: none !important;
   }
-  /* Pastikan logo dan nama brand tetap tampil gagah */
+
+  /* Brand Kiri: Burger + Logo + qwertygate + PRO */
   html body.page-dashboard .cx-brand-wrap {
     display: flex !important;
     align-items: center !important;
-    gap: 10px !important;
+    gap: 8px !important;
     min-width: 0 !important;
+    flex: 1 !important;
   }
-  html body.page-dashboard .cx-brand-title {
-    display: inline-block !important;
-    font-size: 17px !important;
-    font-weight: 800 !important;
-    color: #FFFFFF !important;
-    letter-spacing: -.04em !important;
-  }
-  html body.page-dashboard .brand-sub-chip {
-    display: inline-block !important;
-    font-size: 10.5px !important;
-    font-weight: 800 !important;
-    background: #D8FF7A !important;
-    color: #151515 !important;
-    padding: 2px 7px !important;
-    border-radius: 6px !important;
-  }
-  /* Tombol burger mobile di kiri */
   html body.page-dashboard .cx-burger {
     display: grid !important;
     place-items: center !important;
-    width: 40px !important;
-    height: 40px !important;
-    border-radius: 14px !important;
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 12px !important;
     border: 1.5px solid rgba(255, 255, 255, .28) !important;
     background: transparent !important;
     color: #FFFFFF !important;
     cursor: pointer !important;
     flex-shrink: 0 !important;
+    padding: 0 !important;
+  }
+  html body.page-dashboard .cx-brand {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    min-width: 0 !important;
+    text-decoration: none !important;
+  }
+  html body.page-dashboard .cx-brand img {
+    width: 28px !important;
+    height: 28px !important;
+    flex-shrink: 0 !important;
+  }
+  html body.page-dashboard .cx-brand-title {
+    display: inline-block !important;
+    font-size: 16px !important;
+    font-weight: 800 !important;
+    color: #FFFFFF !important;
+    letter-spacing: -.04em !important;
+    white-space: nowrap !important;
+  }
+  html body.page-dashboard .brand-sub-chip {
+    display: inline-block !important;
+    font-size: 10px !important;
+    font-weight: 800 !important;
+    background: #D8FF7A !important;
+    color: #151515 !important;
+    padding: 2px 6px !important;
+    border-radius: 6px !important;
+    line-height: 1 !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* Bagian Kanan: HANYA AVATAR BULAT, SEMBUNYIKAN TEKS & CHEVRON */
+  html body.page-dashboard .cx-nav-actions {
+    display: flex !important;
+    align-items: center !important;
+    flex-shrink: 0 !important;
+  }
+  html body.page-dashboard .cx-me {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+  html body.page-dashboard .cx-me-txt,
+  html body.page-dashboard .nv-chev {
+    display: none !important;
+  }
+  html body.page-dashboard .top-avatar .av {
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 50% !important;
+    background: #7A63F0 !important;
+    color: #FFFFFF !important;
+    font-size: 14px !important;
+    font-weight: 800 !important;
+    display: grid !important;
+    place-items: center !important;
+    flex-shrink: 0 !important;
+    margin: 0 !important;
+    border: 1.5px solid rgba(255, 255, 255, .2) !important;
+  }
+
+  /* Sheet Konten di bawah bar mobile */
+  html body.page-dashboard header.cx-navbar + .content {
+    position: relative !important;
+    z-index: 1 !important;
+    margin-top: -18px !important;
+    padding: 16px 12px 32px !important;
+    background: #EEEDFB !important;
+    border-radius: 24px 24px 0 0 !important;
+    border: none !important;
   }
 }
 @media (prefers-reduced-motion: reduce) { html body.page-dashboard .cx-nav-item, html body.page-dashboard .cx-me { transition: none !important; } }
