@@ -277,6 +277,7 @@
     document.getElementById('hdr-status').textContent = l;
 
     load();
+    setInterval(() => { if (!document.hidden) load(); }, 5000);
   })();
 
   window.tambahRespon = async function () {
