@@ -104,6 +104,12 @@
     const isDc = (b.platform === 'discord');
     const isTg = (b.platform === 'telegram');
 
+    const cfgPanel = document.getElementById('cfg-panel');
+    if (cfgPanel) {
+      cfgPanel.classList.remove('platform-whatsapp', 'platform-discord', 'platform-telegram');
+      cfgPanel.classList.add('platform-' + b.platform);
+    }
+
     // Token Bot: hanya untuk Telegram & Discord
     toggleEl(document.getElementById('w-token'), isDc || isTg, 'flex');
     const lblToken = document.querySelector('label[for="cfg-token"]');
@@ -503,9 +509,12 @@
   function toggleToken() {
     const inp = document.getElementById('cfg-token');
     const btn = document.getElementById('token-toggle');
+    if (!inp || !btn) return;
     const isPw = inp.type === 'password';
     inp.type = isPw ? 'text' : 'password';
-    btn.textContent = isPw ? 'Sembunyi' : 'Lihat';
+    const txt = btn.querySelector('.lbl-txt');
+    if (txt) txt.textContent = isPw ? 'Tutup' : 'Lihat';
+    else btn.textContent = isPw ? 'Tutup' : 'Lihat';
   }
 
   // ── Delete ───────────────────────────────────────────────────────

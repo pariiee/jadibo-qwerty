@@ -3643,7 +3643,8 @@ body.page-bot-config .field[style*="display: none"],
 body.page-bot-config .field[style*="display:none"] {
   display: none !important;
 }
-body.page-bot-config .field.f-full {
+body.page-bot-config .field.f-full,
+body.page-bot-config #cfg-panel.platform-discord #w-footer {
   grid-column: 1 / -1 !important;
 }
 body.page-bot-config .field label {
@@ -3659,6 +3660,38 @@ body.page-bot-config .field .hint {
   font-size: 11px !important;
   color: #5E5C70 !important;
   line-height: 1.35 !important;
+}
+body.page-bot-config .token-input-wrap {
+  position: relative !important;
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+}
+body.page-bot-config .token-input-wrap .inp {
+  padding-right: 76px !important;
+}
+body.page-bot-config #token-toggle {
+  position: absolute !important;
+  right: 6px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  background: #F4F3FF !important;
+  border: 1.5px solid #151515 !important;
+  border-radius: 8px !important;
+  padding: 4px 8px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  color: #151515 !important;
+  cursor: pointer !important;
+  box-shadow: 1px 1px 0px #151515 !important;
+  transition: background .15s ease, transform .15s ease !important;
+}
+body.page-bot-config #token-toggle:hover {
+  background: #E8E5FF !important;
+  transform: translateY(-50%) scale(1.02) !important;
 }
 body.page-bot-config .inp {
   width: 100% !important;

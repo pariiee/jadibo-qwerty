@@ -12,9 +12,12 @@
     </div>
     <div class="field tg-field" id="w-token">
       <label for="cfg-token">Token Bot</label>
-      <div style="position:relative">
-        <input class="inp" id="cfg-token" type="password" style="padding-right:64px" autocomplete="off" />
-        <button type="button" data-act="toggleToken" id="token-toggle">Lihat</button>
+      <div class="token-input-wrap">
+        <input class="inp" id="cfg-token" type="password" autocomplete="off" />
+        <button type="button" data-act="toggleToken" id="token-toggle" aria-label="Lihat atau sembunyikan token">
+          <svg class="eye-ic eye-show" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          <span class="lbl-txt">Lihat</span>
+        </button>
       </div>
       <div class="hint" id="token-hint"></div>
     </div>
@@ -34,15 +37,15 @@
       <label for="cfg-prefix">Prefix</label>
       <input class="inp" id="cfg-prefix" type="text" maxlength="3" />
     </div>
-    <div class="field" id="w-footer">
-      <label for="cfg-footer">Footer</label>
-      <input class="inp" id="cfg-footer" type="text" />
-    </div>
-
     <div class="field" id="w-daily">
       <label for="cfg-daily">Limit Harian</label>
       <input class="inp" id="cfg-daily" type="number" min="1" max="9999" placeholder="20" />
       <div class="hint">Reset harian jam 00:00 WIB</div>
+    </div>
+
+    <div class="field" id="w-footer">
+      <label for="cfg-footer">Footer</label>
+      <input class="inp" id="cfg-footer" type="text" />
     </div>
     <div class="field" id="w-channel">
       <label for="cfg-channel">Channel ID (Broadcast)</label>
