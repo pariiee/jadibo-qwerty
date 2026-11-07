@@ -43,8 +43,15 @@
       </div>
       <button class="btn btn-outline" type="button" id="btn-export2">Download Config (.json)</button>
       <div class="field" style="margin-top:14px">
-        <label for="cfg-file">Import Config</label>
-        <input class="inp" type="file" id="cfg-file" accept=".json,application/json" />
+        <label>Import Config</label>
+        <div class="custom-file-wrap">
+          <label for="cfg-file" class="btn btn-custom-file">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+            <span>Pilih File (.json)</span>
+          </label>
+          <input type="file" id="cfg-file" accept=".json,application/json" class="custom-file-hidden" />
+          <span class="custom-file-name" id="cfg-file-name">Tidak ada file yang dipilih</span>
+        </div>
         <div class="hint">Format versi 1.</div>
       </div>
       <div class="ctrl-msg" id="imp-msg"></div>
@@ -131,7 +138,7 @@
   </div>
 </div>
 
-<script src="/js/config.js?v=2.3" defer></script>
+<script src="/js/config.js?v=2.4" defer></script>
 </div>
 </body>
 </html>

@@ -533,7 +533,16 @@
   // Export: atribut `download` bawaan browser — nggak perlu JS ngunduh manual.
   document.getElementById('btn-export').href = '/api/bots/' + botId + '/config';
   document.getElementById('btn-export2').onclick = () => { location.href = '/api/bots/' + botId + '/config'; };
-  document.getElementById('cfg-file').onchange = (e) => { if (e.target.files[0]) doImport(e.target.files[0]); };
+  document.getElementById('cfg-file').onchange = (e) => {
+    const f = e.target.files[0];
+    const nameEl = document.getElementById('cfg-file-name');
+    if (f) {
+      if (nameEl) nameEl.textContent = f.name;
+      doImport(f);
+    } else if (nameEl) {
+      nameEl.textContent = 'Tidak ada file yang dipilih';
+    }
+  };
   document.getElementById('btn-del').onclick = confirmDelete;
   // Pemilih bot: id-nya ada di URL, jadi pindah bot = pindah URL (reload).
   // Nol state baru, nol risiko "setengah ter-render".
