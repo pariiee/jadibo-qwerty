@@ -543,12 +543,12 @@
   document.getElementById('btn-export2').onclick = () => { location.href = '/api/bots/' + botId + '/config'; };
   document.getElementById('cfg-file').onchange = (e) => {
     const f = e.target.files[0];
-    const nameEl = document.getElementById('cfg-file-name');
+    const btnTxt = document.getElementById('cfg-file-btn-txt');
     if (f) {
-      if (nameEl) nameEl.textContent = f.name;
+      if (btnTxt) btnTxt.textContent = f.name.length > 18 ? f.name.slice(0, 15) + '...' : f.name;
       doImport(f);
-    } else if (nameEl) {
-      nameEl.textContent = 'Tidak ada file yang dipilih';
+    } else if (btnTxt) {
+      btnTxt.textContent = 'Import (.json)';
     }
   };
   document.getElementById('btn-del').onclick = confirmDelete;

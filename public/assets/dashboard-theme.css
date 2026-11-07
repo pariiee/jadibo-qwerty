@@ -3825,13 +3825,51 @@ body.page-bot-config .clear-btn:hover {
   background: #3E3E48 !important;
 }
 
-/* Custom File Upload Neo-Brutalist */
-body.page-bot-config .custom-file-wrap {
+/* Compact Import / Export Panel */
+body.page-bot-config .panel.panel-imp-exp {
+  padding: 16px 20px !important;
+}
+body.page-bot-config .panel-head-mini {
   display: flex !important;
   align-items: center !important;
-  gap: 12px !important;
-  flex-wrap: wrap !important;
-  margin-top: 4px !important;
+  justify-content: space-between !important;
+  margin-bottom: 12px !important;
+}
+body.page-bot-config .panel-head-mini h2 {
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  color: #151515 !important;
+  margin: 0 !important;
+}
+body.page-bot-config .imp-exp-grid {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 10px !important;
+  width: 100% !important;
+}
+body.page-bot-config .btn-imp-exp {
+  width: 100% !important;
+  height: 42px !important;
+  border-radius: 12px !important;
+  border: 2px solid #151515 !important;
+  background: #FAF9FF !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  color: #151515 !important;
+  box-shadow: 2px 2px 0px #151515 !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  padding: 0 10px !important;
+  box-sizing: border-box !important;
+  text-decoration: none !important;
+  transition: transform .15s ease, box-shadow .15s ease !important;
+}
+body.page-bot-config .btn-imp-exp:hover {
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 3px 3px 0px #151515 !important;
 }
 body.page-bot-config .custom-file-hidden {
   position: absolute !important;
@@ -3843,55 +3881,6 @@ body.page-bot-config .custom-file-hidden {
   clip: rect(0, 0, 0, 0) !important;
   white-space: nowrap !important;
   border: 0 !important;
-}
-body.page-bot-config .btn-custom-file {
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  background: #FAF9FF !important;
-  border: 2px solid #151515 !important;
-  border-radius: 12px !important;
-  padding: 8px 16px !important;
-  font-size: 13px !important;
-  font-weight: 800 !important;
-  color: #151515 !important;
-  cursor: pointer !important;
-  box-shadow: 2px 2px 0px #151515 !important;
-  transition: transform .15s ease, box-shadow .15s ease !important;
-}
-body.page-bot-config .btn-custom-file:hover {
-  transform: translate(-1px, -1px) !important;
-  box-shadow: 3px 3px 0px #151515 !important;
-}
-body.page-bot-config .custom-file-name {
-  font-size: 12.5px !important;
-  font-weight: 600 !important;
-  color: #5E5C70 !important;
-  max-width: 200px !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-}
-
-/* Download Config Button */
-body.page-bot-config #btn-export2 {
-  width: 100% !important;
-  height: 42px !important;
-  border-radius: 12px !important;
-  border: 2px solid #151515 !important;
-  background: #FAF9FF !important;
-  font-size: 13.5px !important;
-  font-weight: 800 !important;
-  color: #151515 !important;
-  box-shadow: 2px 2px 0px #151515 !important;
-  cursor: pointer !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-body.page-bot-config #btn-export2:hover {
-  transform: translate(-1px, -1px) !important;
-  box-shadow: 3px 3px 0px #151515 !important;
 }
 body.page-bot-config #terminal {
   height: 380px !important;

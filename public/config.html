@@ -34,25 +34,22 @@
 
     <!-- @include config-form.html -->
 
-    <div class="panel">
-      <h2>Import / Export</h2>
-      <div class="hint" style="line-height:1.7;margin-bottom:12px">
-        <b>Export</b> mengunduh file JSON berisi konfigurasi bot ini — token Telegram
-        tidak ikut. <b>Import</b> membaca file itu lalu <b>langsung menyimpannya</b>.
-        Token Telegram tidak tersentuh, jadi isi ulang manual kalau mau diganti.
+    <div class="panel panel-imp-exp">
+      <div class="panel-head-mini">
+        <h2>Import / Export</h2>
+        <span class="info-dot" title="Export mengunduh file JSON konfigurasi tanpa token. Import membaca file JSON dan langsung menerapkannya.">i</span>
       </div>
-      <button class="btn btn-outline" type="button" id="btn-export2">Download Config (.json)</button>
-      <div class="field" style="margin-top:14px">
-        <label>Import Config</label>
-        <div class="custom-file-wrap">
-          <label for="cfg-file" class="btn btn-custom-file">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
-            <span>Pilih File (.json)</span>
-          </label>
-          <input type="file" id="cfg-file" accept=".json,application/json" class="custom-file-hidden" />
-          <span class="custom-file-name" id="cfg-file-name">Tidak ada file yang dipilih</span>
-        </div>
-        <div class="hint">Format versi 1.</div>
+      <div class="imp-exp-grid">
+        <button class="btn btn-outline btn-imp-exp" type="button" id="btn-export2">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          <span>Export (.json)</span>
+        </button>
+
+        <label for="cfg-file" class="btn btn-outline btn-imp-exp">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+          <span id="cfg-file-btn-txt">Import (.json)</span>
+        </label>
+        <input type="file" id="cfg-file" accept=".json,application/json" class="custom-file-hidden" />
       </div>
       <div class="ctrl-msg" id="imp-msg"></div>
     </div>
@@ -151,7 +148,7 @@
   </div>
 </div>
 
-<script src="/js/config.js?v=2.5" defer></script>
+<script src="/js/config.js?v=2.6" defer></script>
 </div>
 </body>
 </html>
