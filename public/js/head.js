@@ -268,60 +268,106 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  // ── Mobile Drawer Sidebar Navigation ────────────────────────
-  function setMobileDrawer(open) {
-    document.body.classList.toggle('drawer-open', open);
-    var b = document.getElementById('cx-burger-btn');
-    var d = document.getElementById('mobile-drawer');
-    if (b) b.setAttribute('aria-expanded', open ? 'true' : 'false');
-    if (d) d.setAttribute('aria-hidden', open ? 'false' : 'true');
+  // ── Mobile Drawer Sidebar Navigation Controller ──
+  function $d(id) { return document.getElementById(id); }
+
+  function syncDrawer() {
+    function txt(id) { var el = $d(id); return el ? el.textContent.trim() : ''; }
+    function put(id, v) { var el = $d(id); if (el) el.textContent = v; }
+    put('drawer-user-av', txt('top-avatar-txt') || '?');
+    put('drawer-user-name', txt('top-name') || 'Akun');
+    put('drawer-user-role', txt('top-role'));
+    var adm = $d('nav-admin'), grp = $d('drawer-admin-group');
+    if (grp) grp.style.display = (adm && adm.style.display !== 'none') ? '' : 'none';
   }
 
+  function setMobileDrawer(open) {
+    var b = $d('cx-burger-btn'), d = $d('mobile-drawer');
+    var was = document.body.classList.contains('drawer-open');
+    if (open) syncDrawer();
+    document.body.classList.toggle('drawer-open', open);
+    if (b) b.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (d) d.setAttribute('aria-hidden', open ? 'false' : 'true');
+    if (open) { var c = $d('drawer-close-btn'); if (c) setTimeout(function () { c.focus(); }, 60); }
+    else if (was && b) b.focus();
+  }
+
+  function initDrawer() {
+    var drawer = $d('mobile-drawer'), overlay = $d('mobile-drawer-overlay');
+    if (!drawer || !overlay) return;
+
+    // Lepas dari header: pindahkan ke <body> supaya fixed menempel ke layar penuh
+    if (overlay.parentNode !== document.body) document.body.appendChild(overlay);
+    if (drawer.parentNode !== document.body) document.body.appendChild(drawer);
+
+    // Indeks animasi bertahap
+    var n = 0;
+    var uc = drawer.querySelector('.drawer-user-card');
+    if (uc) uc.style.setProperty('--n', n++);
+    drawer.querySelectorAll('.drawer-nav > *').forEach(function (el) { el.style.setProperty('--n', n++); });
+    var lo = drawer.querySelector('.drawer-logout-btn');
+    if (lo) lo.style.setProperty('--n', n);
+
+    // Tandai menu aktif (+ buka accordion bila halaman admin)
+    drawer.querySelectorAll('.drawer-nav-item[href], .drawer-sub-item[href]').forEach(function (a) {
+      var h = a.getAttribute('href');
+      if (location.pathname === h || location.pathname.indexOf(h + '/') === 0) {
+        a.classList.add('on');
+        if (a.classList.contains('drawer-sub-item')) {
+          var acc = $d('drawer-accordion'), ab = $d('drawer-acc-btn');
+          if (acc) acc.classList.add('open');
+          if (ab) ab.setAttribute('aria-expanded', 'true');
+        }
+      }
+    });
+
+    // Data user + grup Admin ikut berubah saat JS lain mengisinya
+    var mo = new MutationObserver(syncDrawer);
+    ['top-name', 'top-role', 'top-avatar-txt'].forEach(function (id) {
+      var el = $d(id);
+      if (el) mo.observe(el, { childList: true, characterData: true, subtree: true });
+    });
+    var adm = $d('nav-admin');
+    if (adm) mo.observe(adm, { attributes: true, attributeFilter: ['style'] });
+    syncDrawer();
+
+    // Tutup otomatis bila layar melebar ke desktop
+    window.matchMedia('(min-width: 901px)').addEventListener('change', function (e) {
+      if (e.matches) setMobileDrawer(false);
+    });
+
+    // Fokus tetap di dalam panel saat terbuka
+    drawer.addEventListener('keydown', function (e) {
+      if (e.key !== 'Tab') return;
+      var items = Array.prototype.filter.call(
+        drawer.querySelectorAll('a[href], button:not([disabled])'),
+        function (el) { return el.offsetParent !== null; });
+      if (!items.length) return;
+      var first = items[0], last = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    });
+  }
+
+  initDrawer();
+
+  // Delegasi klik global: burger, tutup, overlay, accordion
   document.addEventListener('click', function (e) {
-    var burger = e.target.closest('#cx-burger-btn');
-    if (burger) {
-      e.preventDefault();
-      e.stopPropagation();
-      setMobileDrawer(true);
-      return;
+    if (e.target.closest('#cx-burger-btn')) {
+      e.preventDefault(); e.stopPropagation(); setMobileDrawer(true); return;
     }
-    var close = e.target.closest('#drawer-close-btn') || e.target.closest('#mobile-drawer-overlay');
-    if (close) {
-      e.preventDefault();
-      setMobileDrawer(false);
-      return;
+    if (e.target.closest('#drawer-close-btn') || e.target.closest('#mobile-drawer-overlay')) {
+      e.preventDefault(); setMobileDrawer(false); return;
+    }
+    var ab = e.target.closest('#drawer-acc-btn');
+    if (ab) {
+      var acc = $d('drawer-accordion');
+      if (acc) ab.setAttribute('aria-expanded', String(acc.classList.toggle('open')));
     }
   });
 
   document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && document.body.classList.contains('drawer-open')) {
-      setMobileDrawer(false);
-    }
-  });
-
-  var drawerAccBtn = document.getElementById('drawer-acc-btn');
-  if (drawerAccBtn) {
-    drawerAccBtn.addEventListener('click', function (e) {
-      e.preventDefault();
-      var acc = document.getElementById('drawer-accordion');
-      if (acc) {
-        var buka = acc.classList.toggle('open');
-        drawerAccBtn.setAttribute('aria-expanded', buka ? 'true' : 'false');
-      }
-    });
-    if (location.pathname.indexOf('/kountole') === 0) {
-      var acc = document.getElementById('drawer-accordion');
-      if (acc) acc.classList.add('open');
-      drawerAccBtn.setAttribute('aria-expanded', 'true');
-    }
-  }
-
-  // Active state pada navigasi drawer
-  document.querySelectorAll('.drawer-nav a[href]').forEach(function (a) {
-    var h = (a.getAttribute('href') || '/').replace(/\/+$/, '') || '/';
-    if (location.pathname === h || (h !== '/' && location.pathname.startsWith(h))) {
-      a.classList.add('on', 'active');
-    }
+    if (e.key === 'Escape' && document.body.classList.contains('drawer-open')) setMobileDrawer(false);
   });
 
   function toggleUserMenu() {
