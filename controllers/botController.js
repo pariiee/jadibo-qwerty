@@ -73,7 +73,7 @@ async function assertOwnership(req, res, botId) {
   const idAngka = (await resolveBotId(botId)) ?? Number(botId);
 
   const [rows] = await pool.execute(
-    'SELECT id, user_id, public_id, platform, receive_limit, receive_count FROM bots WHERE id = ?',
+    'SELECT id, user_id, public_id, platform, receive_limit, received_count FROM bots WHERE id = ?',
     [idAngka]
   );
   if (rows.length === 0) { sendError(res, 404, 'Bot tidak ditemukan'); return null; }
@@ -680,7 +680,7 @@ async function getBotStats(req, res) {
         id: bot.id,
         platform: bot.platform,
         receive_limit: Number(bot.receive_limit || 0),
-        receive_count: Number(bot.receive_count || 0),
+        receive_count: Number(bot.received_count || 0),
       },
       ringkas: {
         cmd_total:   Number(ringkas.cmd_total || 0),
