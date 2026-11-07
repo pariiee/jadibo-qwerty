@@ -383,6 +383,7 @@
     const body = {
       platform,
       bot_name: document.getElementById('f-name').value.trim(),
+      description: document.getElementById('f-desc')?.value.trim() || undefined,
       bot_number: document.getElementById('f-botnum').value.trim() || undefined,
       owner_number: document.getElementById('f-owner').value.trim() || undefined,
       prefix: document.getElementById('f-prefix').value.trim() || '!',
