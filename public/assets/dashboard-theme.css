@@ -4557,23 +4557,25 @@ html body.page-admin .modal-close:hover {
 }
 
 /* Default Desktop: sembunyikan burger & drawer mobile */
-.cx-burger {
-  display: none !important;
-}
-.mobile-drawer-overlay,
-.mobile-drawer {
-  display: none !important;
+@media (min-width: 961px) {
+  html body .cx-burger {
+    display: none !important;
+  }
+  html body .mobile-drawer-overlay,
+  html body .mobile-drawer {
+    display: none !important;
+  }
 }
 
 /* Breakpoint Mobile (<= 960px): Navbar beralih ke Mobile Sidebar Drawer */
 @media (max-width: 960px) {
   /* Sembunyikan pill navbar panjang di topbar mobile */
-  .cx-nav-pill {
+  html body .cx-nav-pill {
     display: none !important;
   }
 
   /* Munculkan tombol burger di kiri logo */
-  .cx-burger {
+  html body .cx-burger {
     display: grid !important;
     place-items: center !important;
     width: 38px !important;
@@ -4586,12 +4588,12 @@ html body.page-admin .modal-close:hover {
     flex-shrink: 0 !important;
     transition: background .15s ease !important;
   }
-  .cx-burger:hover {
+  html body .cx-burger:hover {
     background: rgba(255, 255, 255, .12) !important;
   }
 
   /* Overlay Backdrop Gelap */
-  .mobile-drawer-overlay {
+  html body .mobile-drawer-overlay {
     display: block !important;
     position: fixed !important;
     inset: 0 !important;
@@ -4602,13 +4604,13 @@ html body.page-admin .modal-close:hover {
     pointer-events: none !important;
     transition: opacity .3s cubic-bezier(.16, 1, .3, 1) !important;
   }
-  body.drawer-open .mobile-drawer-overlay {
+  html body.drawer-open .mobile-drawer-overlay {
     opacity: 1 !important;
     pointer-events: auto !important;
   }
 
   /* Mobile Drawer Sidebar */
-  .mobile-drawer {
+  html body .mobile-drawer {
     display: flex !important;
     flex-direction: column !important;
     position: fixed !important;
@@ -4628,7 +4630,7 @@ html body.page-admin .modal-close:hover {
     box-sizing: border-box !important;
     overflow: hidden !important;
   }
-  body.drawer-open .mobile-drawer {
+  html body.drawer-open .mobile-drawer {
     transform: translateX(0) !important;
   }
 
