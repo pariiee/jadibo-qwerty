@@ -4260,23 +4260,71 @@ body.page-bot-stats .panel-head {
 }
 body.page-bot-stats .panel-head h2 { margin: 0 !important; }
 
-/* Donut container */
-body.page-bot-stats .donut-wrap {
-  display: flex !important;
-  align-items: center !important;
-  gap: 20px !important;
-  flex-wrap: wrap !important;
-}
-body.page-bot-stats .donut-graphic {
-  width: 140px !important;
-  height: 140px !important;
-  flex-shrink: 0 !important;
-}
-body.page-bot-stats .donut-legend {
+/* Command Horizontal Leaderboard */
+body.page-bot-stats .cmd-leaderboard {
   display: flex !important;
   flex-direction: column !important;
+  gap: 12px !important;
+  padding: 4px 0 !important;
+}
+body.page-bot-stats .cmd-bar-item {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+}
+body.page-bot-stats .cmd-bar-meta {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  font-size: 13px !important;
+}
+body.page-bot-stats .cmd-bar-left {
+  display: flex !important;
+  align-items: center !important;
   gap: 8px !important;
-  flex: 1 1 auto !important;
+}
+body.page-bot-stats .cmd-rank {
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  color: #71717A !important;
+  min-width: 20px !important;
+}
+body.page-bot-stats .cmd-badge {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+  font-size: 12.5px !important;
+  font-weight: 800 !important;
+  color: #151515 !important;
+  background: #F4F3FF !important;
+  border: 1.5px solid #151515 !important;
+  border-radius: 6px !important;
+  padding: 2px 8px !important;
+}
+body.page-bot-stats .cmd-bar-right {
+  font-variant-numeric: tabular-nums !important;
+  font-size: 13.5px !important;
+  color: #151515 !important;
+}
+body.page-bot-stats .cmd-bar-right b {
+  font-weight: 800 !important;
+}
+body.page-bot-stats .cmd-bar-right small {
+  color: #71717A !important;
+  font-size: 11.5px !important;
+  font-weight: 600 !important;
+}
+body.page-bot-stats .cmd-track {
+  width: 100% !important;
+  height: 8px !important;
+  background: #EFEFF5 !important;
+  border-radius: 999px !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(0,0,0,0.06) !important;
+}
+body.page-bot-stats .cmd-fill {
+  height: 100% !important;
+  background: linear-gradient(90deg, #7A63F0, #A78BFA) !important;
+  border-radius: 999px !important;
+  transition: width .4s cubic-bezier(.16, 1, .3, 1) !important;
 }
 
 /* Table */
