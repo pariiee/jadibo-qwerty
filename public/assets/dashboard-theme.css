@@ -4547,6 +4547,288 @@ html body.page-admin .modal-close:hover {
   background: #FFDFC0 !important;
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   MOBILE SIDEBAR DRAWER STYLING (Bento Neo-Brutalist)
+   ══════════════════════════════════════════════════════════════════════════ */
+.cx-brand-wrap {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+/* Default Desktop: sembunyikan burger & drawer mobile */
+.cx-burger {
+  display: none !important;
+}
+.mobile-drawer-overlay,
+.mobile-drawer {
+  display: none !important;
+}
+
+/* Breakpoint Mobile (<= 960px): Navbar beralih ke Mobile Sidebar Drawer */
+@media (max-width: 960px) {
+  /* Sembunyikan pill navbar panjang di topbar mobile */
+  .cx-nav-pill {
+    display: none !important;
+  }
+
+  /* Munculkan tombol burger di kiri logo */
+  .cx-burger {
+    display: grid !important;
+    place-items: center !important;
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 12px !important;
+    border: 1.5px solid rgba(255, 255, 255, .28) !important;
+    background: transparent !important;
+    color: #FFFFFF !important;
+    cursor: pointer !important;
+    flex-shrink: 0 !important;
+    transition: background .15s ease !important;
+  }
+  .cx-burger:hover {
+    background: rgba(255, 255, 255, .12) !important;
+  }
+
+  /* Overlay Backdrop Gelap */
+  .mobile-drawer-overlay {
+    display: block !important;
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 9998 !important;
+    background: rgba(21, 21, 21, .55) !important;
+    backdrop-filter: blur(4px) !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transition: opacity .3s cubic-bezier(.16, 1, .3, 1) !important;
+  }
+  body.drawer-open .mobile-drawer-overlay {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+
+  /* Mobile Drawer Sidebar */
+  .mobile-drawer {
+    display: flex !important;
+    flex-direction: column !important;
+    position: fixed !important;
+    z-index: 9999 !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    width: 84% !important;
+    max-width: 320px !important;
+    background: #151515 !important;
+    color: #FFFFFF !important;
+    border-radius: 0 28px 28px 0 !important;
+    padding: 18px 16px !important;
+    transform: translateX(-102%) !important;
+    transition: transform .35s cubic-bezier(.16, 1, .3, 1) !important;
+    box-shadow: 6px 0px 30px rgba(0, 0, 0, .45) !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+  }
+  body.drawer-open .mobile-drawer {
+    transform: translateX(0) !important;
+  }
+
+  /* Header Drawer */
+  .drawer-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    margin-bottom: 14px !important;
+  }
+  .drawer-brand {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    font-size: 17px !important;
+    font-weight: 800 !important;
+    letter-spacing: -.04em !important;
+    color: #FFFFFF !important;
+  }
+  .drawer-chip-pro {
+    font-size: 10px !important;
+    font-weight: 800 !important;
+    background: #D8FF7A !important;
+    color: #151515 !important;
+    padding: 2px 7px !important;
+    border-radius: 6px !important;
+  }
+  .drawer-close {
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 12px !important;
+    border: 1.5px solid rgba(255, 255, 255, .28) !important;
+    background: transparent !important;
+    display: grid !important;
+    place-items: center !important;
+    color: #FFFFFF !important;
+    cursor: pointer !important;
+    transition: background .15s ease !important;
+  }
+  .drawer-close:hover {
+    background: rgba(255, 255, 255, .12) !important;
+  }
+
+  /* User Info Card */
+  .drawer-user-card {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    padding: 12px 14px !important;
+    border-radius: 18px !important;
+    background: #202024 !important;
+    border: 1px solid rgba(255, 255, 255, .08) !important;
+    margin-bottom: 14px !important;
+  }
+  .drawer-av {
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 50% !important;
+    background: #7A63F0 !important;
+    color: #FFFFFF !important;
+    font-weight: 800 !important;
+    font-size: 14px !important;
+    display: grid !important;
+    place-items: center !important;
+    flex-shrink: 0 !important;
+  }
+  .drawer-user-meta b {
+    display: block !important;
+    font-size: 14.5px !important;
+    font-weight: 800 !important;
+    color: #FFFFFF !important;
+  }
+  .drawer-user-meta span {
+    font-size: 12px !important;
+    color: #B9B9C2 !important;
+    font-weight: 600 !important;
+  }
+
+  /* Scrollable Nav Area */
+  .drawer-scroll {
+    flex: 1 !important;
+    overflow-y: auto !important;
+    margin: 0 -4px !important;
+    padding: 0 4px !important;
+  }
+  .drawer-sec {
+    margin: 14px 6px 6px !important;
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    letter-spacing: .08em !important;
+    text-transform: uppercase !important;
+    color: #8A8A94 !important;
+  }
+  .drawer-nav-item,
+  .drawer-acc-btn {
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    width: 100% !important;
+    padding: 11px 14px !important;
+    border: 0 !important;
+    border-radius: 14px !important;
+    background: transparent !important;
+    color: #B9B9C2 !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    text-align: left !important;
+    text-decoration: none !important;
+    cursor: pointer !important;
+    box-sizing: border-box !important;
+    transition: background .15s ease, color .15s ease !important;
+  }
+  .drawer-nav-item:hover,
+  .drawer-acc-btn:hover {
+    color: #FFFFFF !important;
+    background: rgba(255, 255, 255, .06) !important;
+  }
+  .drawer-nav-item.on,
+  .drawer-nav-item.active {
+    background: #2E2E33 !important;
+    color: #FFFFFF !important;
+  }
+  .drawer-nav-item.on::before,
+  .drawer-nav-item.active::before {
+    content: "" !important;
+    position: absolute !important;
+    left: -4px !important;
+    top: 50% !important;
+    width: 4px !important;
+    height: 18px !important;
+    margin-top: -9px !important;
+    border-radius: 4px !important;
+    background: #D8FF7A !important;
+  }
+
+  /* Accordion Submenu Manage */
+  .drawer-accordion .drw-chev {
+    margin-left: auto !important;
+    transition: transform .25s ease !important;
+  }
+  .drawer-accordion.open .drw-chev {
+    transform: rotate(180deg) !important;
+  }
+  .drawer-acc-sub {
+    display: none !important;
+    padding: 2px 0 4px 18px !important;
+  }
+  .drawer-accordion.open .drawer-acc-sub {
+    display: block !important;
+  }
+  .drawer-sub-item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    padding: 8px 14px !important;
+    font-size: 13px !important;
+    color: #B9B9C2 !important;
+    text-decoration: none !important;
+    border-radius: 10px !important;
+    font-weight: 600 !important;
+    transition: color .15s ease, background .15s ease !important;
+  }
+  .drawer-sub-item::after {
+    content: "" !important;
+    order: -1 !important;
+    width: 6px !important;
+    height: 6px !important;
+    border-radius: 50% !important;
+    background: #4A4A52 !important;
+  }
+  .drawer-sub-item:hover {
+    color: #FFFFFF !important;
+    background: rgba(255, 255, 255, .06) !important;
+  }
+
+  /* Tombol Logout Bawah */
+  .drawer-logout-btn {
+    margin-top: 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 10px !important;
+    height: 44px !important;
+    border-radius: 999px !important;
+    border: 2px solid rgba(255, 255, 255, .22) !important;
+    background: transparent !important;
+    color: #FF9C8C !important;
+    font-weight: 800 !important;
+    font-size: 14px !important;
+    cursor: pointer !important;
+    transition: background .2s ease !important;
+    box-sizing: border-box !important;
+  }
+  .drawer-logout-btn:hover {
+    background: rgba(255, 156, 140, .12) !important;
+  }
+}
+
+
 
 
 

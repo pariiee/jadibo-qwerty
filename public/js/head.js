@@ -188,6 +188,12 @@ document.addEventListener('DOMContentLoaded', function () {
       if (tn && u.username) tn.textContent = 'Hai, ' + u.username + '!';
       var tr = document.getElementById('top-role');
       if (tr) tr.textContent = u.role_label || (u.is_admin ? 'Admin' : (u.slots ? u.slots + ' Slot' : 'Member'));
+      var dAv = document.getElementById('drawer-user-av');
+      if (dAv && u.username) dAv.textContent = u.username[0].toUpperCase();
+      var dName = document.getElementById('drawer-user-name');
+      if (dName && u.username) dName.textContent = 'Hai, ' + u.username + '!';
+      var dRole = document.getElementById('drawer-user-role');
+      if (dRole) dRole.textContent = u.role_label || (u.is_admin ? 'Admin' : (u.slots ? u.slots + ' Slot' : 'Member'));
       if (pName) pName.textContent = u.username || 'User';
       if (pEmail) pEmail.textContent = u.email || (u.username + '@gmail.com');
       if (pRole) pRole.textContent = u.is_admin ? 'Admin' : (u.slots ? u.slots + ' Slot' : 'User');
@@ -196,9 +202,11 @@ document.addEventListener('DOMContentLoaded', function () {
         document.documentElement.classList.add('is-admin');
         var elNav = document.getElementById('nav-admin');
         if (elNav) elNav.style.display = '';
+        var elDrwAdmin = document.getElementById('drawer-admin-group');
+        if (elDrwAdmin) elDrwAdmin.style.display = 'block';
 
         // Sembunyikan menu transaksi/saldo/pricing user dari sidebar admin
-        ['nav-saldo', 'nav-pricing', 'nav-billing'].forEach(function (id) {
+        ['nav-saldo', 'nav-pricing', 'nav-billing', 'drw-saldo', 'drw-pricing', 'drw-billing'].forEach(function (id) {
           var el = document.getElementById(id);
           if (el) el.style.display = 'none';
         });
@@ -259,6 +267,53 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
   }
+
+  // ── Mobile Drawer Sidebar Navigation ────────────────────────
+  var burgerBtn = document.getElementById('cx-burger-btn');
+  var drawerCloseBtn = document.getElementById('drawer-close-btn');
+  var drawerOverlay = document.getElementById('mobile-drawer-overlay');
+  var mobileDrawer = document.getElementById('mobile-drawer');
+  var drawerAccBtn = document.getElementById('drawer-acc-btn');
+
+  function setMobileDrawer(open) {
+    document.body.classList.toggle('drawer-open', open);
+    if (burgerBtn) burgerBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (mobileDrawer) mobileDrawer.setAttribute('aria-hidden', open ? 'false' : 'true');
+  }
+
+  if (burgerBtn) burgerBtn.addEventListener('click', function (e) { e.stopPropagation(); setMobileDrawer(true); });
+  if (drawerCloseBtn) drawerCloseBtn.addEventListener('click', function () { setMobileDrawer(false); });
+  if (drawerOverlay) drawerOverlay.addEventListener('click', function () { setMobileDrawer(false); });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && document.body.classList.contains('drawer-open')) {
+      setMobileDrawer(false);
+    }
+  });
+
+  if (drawerAccBtn) {
+    drawerAccBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      var acc = document.getElementById('drawer-accordion');
+      if (acc) {
+        var buka = acc.classList.toggle('open');
+        drawerAccBtn.setAttribute('aria-expanded', buka ? 'true' : 'false');
+      }
+    });
+    if (location.pathname.indexOf('/kountole') === 0) {
+      var acc = document.getElementById('drawer-accordion');
+      if (acc) acc.classList.add('open');
+      drawerAccBtn.setAttribute('aria-expanded', 'true');
+    }
+  }
+
+  // Active state pada navigasi drawer
+  document.querySelectorAll('.drawer-nav a[href]').forEach(function (a) {
+    var h = (a.getAttribute('href') || '/').replace(/\/+$/, '') || '/';
+    if (location.pathname === h || (h !== '/' && location.pathname.startsWith(h))) {
+      a.classList.add('on', 'active');
+    }
+  });
 
   function toggleUserMenu() {
     var pop = document.getElementById('user-popover');
