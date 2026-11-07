@@ -63,54 +63,43 @@
     document.getElementById('hdr-icon').innerHTML = platIcon(b.platform, 18);
     const btnStats = document.getElementById('btn-stats');
     if (btnStats) btnStats.href = '/bot/' + botHref(b);
+    // Helper tampil/sembunyi tombol & panel
+    const toggleEl = (el, show, disp = 'inline-flex') => {
+      if (!el) return;
+      el.hidden = !show;
+      el.style.display = show ? disp : 'none';
+    };
+
     // 1. WhatsApp Controls & Panels
     const isWa = (b.platform === 'whatsapp');
-    const btnClear = document.getElementById('btn-clear-session');
-    if (btnClear) btnClear.style.display = isWa ? 'inline-flex' : 'none';
+    toggleEl(document.getElementById('btn-clear-session'), isWa);
 
     const btnOpenWa = document.getElementById('btn-open-wa');
-    if (btnOpenWa) {
-      if (isWa && b.bot_number) {
-        btnOpenWa.href = 'https://wa.me/' + b.bot_number.replace(/\D/g, '');
-        btnOpenWa.style.display = 'inline-flex';
-      } else {
-        btnOpenWa.style.display = 'none';
-      }
+    const showOpenWa = isWa && Boolean(b.bot_number);
+    if (btnOpenWa && showOpenWa) {
+      btnOpenWa.href = 'https://wa.me/' + b.bot_number.replace(/\D/g, '');
     }
+    toggleEl(btnOpenWa, showOpenWa);
 
     // Panel QR & Pairing Code hanya untuk WhatsApp
-    const qrPanel = document.getElementById('qr-panel');
-    if (qrPanel) {
-      qrPanel.style.display = isWa ? '' : 'none';
-    }
+    toggleEl(document.getElementById('qr-panel'), isWa, 'block');
 
     // 2. Discord Controls
     const btnInviteDc = document.getElementById('btn-invite-dc');
     const btnInviteDcAdmin = document.getElementById('btn-invite-dc-admin');
-    if (btnInviteDc) {
-      if (b.platform === 'discord' && b.discord_invite_url) {
-        btnInviteDc.href = b.discord_invite_url;
-        btnInviteDc.style.display = 'inline-flex';
-        if (btnInviteDcAdmin && b.discord_invite_admin_url) {
-          btnInviteDcAdmin.href = b.discord_invite_admin_url;
-          btnInviteDcAdmin.style.display = 'inline-flex';
-        }
-      } else {
-        btnInviteDc.style.display = 'none';
-        if (btnInviteDcAdmin) btnInviteDcAdmin.style.display = 'none';
-      }
-    }
+    const showDc = (b.platform === 'discord' && Boolean(b.discord_invite_url));
+    if (btnInviteDc && showDc) btnInviteDc.href = b.discord_invite_url;
+    toggleEl(btnInviteDc, showDc);
+
+    const showDcAdmin = (showDc && Boolean(b.discord_invite_admin_url));
+    if (btnInviteDcAdmin && showDcAdmin) btnInviteDcAdmin.href = b.discord_invite_admin_url;
+    toggleEl(btnInviteDcAdmin, showDcAdmin);
 
     // 3. Telegram Controls
     const btnOpenTg = document.getElementById('btn-open-tg');
-    if (btnOpenTg) {
-      if (b.platform === 'telegram' && b.telegram_bot_url) {
-        btnOpenTg.href = b.telegram_bot_url;
-        btnOpenTg.style.display = 'inline-flex';
-      } else {
-        btnOpenTg.style.display = 'none';
-      }
-    }
+    const showTg = (b.platform === 'telegram' && Boolean(b.telegram_bot_url));
+    if (btnOpenTg && showTg) btnOpenTg.href = b.telegram_bot_url;
+    toggleEl(btnOpenTg, showTg);
     const isTokenBot = b.platform === 'telegram' || b.platform === 'discord';
     document.getElementById('cfg-panel').classList.toggle('tg', isTokenBot);
 
