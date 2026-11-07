@@ -63,6 +63,28 @@
     document.getElementById('hdr-icon').innerHTML = platIcon(b.platform, 18);
     const btnStats = document.getElementById('btn-stats');
     if (btnStats) btnStats.href = '/bot/' + botHref(b);
+    // 1. WhatsApp Controls & Panels
+    const isWa = (b.platform === 'whatsapp');
+    const btnClear = document.getElementById('btn-clear-session');
+    if (btnClear) btnClear.style.display = isWa ? 'inline-flex' : 'none';
+
+    const btnOpenWa = document.getElementById('btn-open-wa');
+    if (btnOpenWa) {
+      if (isWa && b.bot_number) {
+        btnOpenWa.href = 'https://wa.me/' + b.bot_number.replace(/\D/g, '');
+        btnOpenWa.style.display = 'inline-flex';
+      } else {
+        btnOpenWa.style.display = 'none';
+      }
+    }
+
+    // Panel QR & Pairing Code hanya untuk WhatsApp
+    const qrPanel = document.getElementById('qr-panel');
+    if (qrPanel) {
+      qrPanel.style.display = isWa ? '' : 'none';
+    }
+
+    // 2. Discord Controls
     const btnInviteDc = document.getElementById('btn-invite-dc');
     const btnInviteDcAdmin = document.getElementById('btn-invite-dc-admin');
     if (btnInviteDc) {
@@ -78,6 +100,8 @@
         if (btnInviteDcAdmin) btnInviteDcAdmin.style.display = 'none';
       }
     }
+
+    // 3. Telegram Controls
     const btnOpenTg = document.getElementById('btn-open-tg');
     if (btnOpenTg) {
       if (b.platform === 'telegram' && b.telegram_bot_url) {
