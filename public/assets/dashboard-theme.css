@@ -3623,48 +3623,63 @@ body.page-bot-config .ctrl-msg {
   color: #151515 !important;
 }
 
-/* Form Fields */
+/* Bento Grid Form Konfigurasi */
+body.page-bot-config #cfg-form {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px 14px !important;
+  width: 100% !important;
+  margin-top: 6px !important;
+}
+
 body.page-bot-config .field {
   display: flex !important;
   flex-direction: column !important;
-  gap: 6px !important;
-  margin-bottom: 14px !important;
+  gap: 5px !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+}
+body.page-bot-config .field.f-full {
+  grid-column: 1 / -1 !important;
 }
 body.page-bot-config .field label {
   font-size: 12.5px !important;
   font-weight: 800 !important;
   color: #151515 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
 }
 body.page-bot-config .field .req { color: #E11D48 !important; }
 body.page-bot-config .field .hint {
-  font-size: 11.5px !important;
+  font-size: 11px !important;
   color: #5E5C70 !important;
-  line-height: 1.4 !important;
+  line-height: 1.35 !important;
 }
 body.page-bot-config .inp {
   width: 100% !important;
   box-sizing: border-box !important;
   background: #FFFFFF !important;
   border: 2px solid #151515 !important;
-  border-radius: 14px !important;
-  padding: 10px 14px !important;
+  border-radius: 12px !important;
+  padding: 9px 12px !important;
   font-size: 13.5px !important;
   font-weight: 600 !important;
   color: #151515 !important;
   box-shadow: none !important;
 }
+body.page-bot-config textarea.inp {
+  resize: vertical !important;
+  min-height: 52px !important;
+}
 body.page-bot-config .inp:focus {
   outline: 3px solid #7A63F0 !important;
   outline-offset: 1px !important;
 }
-body.page-bot-config .row2 {
-  display: grid !important;
-  grid-template-columns: 1fr 1fr !important;
-  gap: 12px !important;
-}
 body.page-bot-config .save {
+  grid-column: 1 / -1 !important;
   width: 100% !important;
-  height: 46px !important;
+  height: 44px !important;
   padding: 0 20px !important;
   border-radius: 999px !important;
   background: #151515 !important;
@@ -3672,6 +3687,7 @@ body.page-bot-config .save {
   border: 2px solid #151515 !important;
   font-weight: 800 !important;
   font-size: 14px !important;
+  margin-top: 6px !important;
   box-shadow: 3px 3px 0px #151515 !important;
   cursor: pointer !important;
   transition: transform .15s ease, box-shadow .15s ease !important;
@@ -4240,6 +4256,19 @@ body.page-bot-stats .chart-summary {
   body.page-bot-config .ctrl-grid .btn {
     width: 100% !important;
     padding: 10px 12px !important;
+  }
+  body.page-bot-config #cfg-form {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px 10px !important;
+  }
+  /* Di mobile: Prefix & Footer berdampingan 2 kolom */
+  body.page-bot-config #cfg-form #w-prefix,
+  body.page-bot-config #cfg-form #w-footer {
+    grid-column: span 1 !important;
+  }
+  /* Field lainnya membentang 1 baris penuh */
+  body.page-bot-config #cfg-form .field:not(#w-prefix):not(#w-footer) {
+    grid-column: 1 / -1 !important;
   }
 }
 
