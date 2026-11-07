@@ -225,7 +225,7 @@
       try { await api('/api/bots/' + botId + '/logs', { method: 'DELETE' }); } catch {}
       broadcast({ type: 'clear_term' });
       if (ws && ws.readyState === WebSocket.OPEN) {
-        try { ws.send(JSON.stringify({ type: 'clear_terminal', botId: parseInt(botId, 10) })); } catch {}
+        try { ws.send(JSON.stringify({ type: 'clear_terminal', botId: botData?.id || botId })); } catch {}
       }
     }
   }
@@ -236,7 +236,8 @@
     const proto = location.protocol === 'https:' ? 'wss' : 'ws';
     ws = new WebSocket(proto + '://' + location.host);
     ws.onopen = () => {
-      ws.send(JSON.stringify({ type: 'subscribe', botId: parseInt(botId, 10) }));
+      const targetId = botData?.id || parseInt(botId, 10) || botId;
+      ws.send(JSON.stringify({ type: 'subscribe', botId: targetId }));
       setWs(true);
     };
     ws.onmessage = (e) => {

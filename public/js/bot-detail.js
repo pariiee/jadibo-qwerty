@@ -197,7 +197,8 @@
     const proto = location.protocol === 'https:' ? 'wss' : 'ws';
     ws = new WebSocket(proto + '://' + location.host);
     ws.onopen = () => {
-      ws.send(JSON.stringify({ type: 'subscribe', botId: parseInt(botId, 10) }));
+      const targetId = botData?.id || parseInt(botId, 10) || botId;
+      ws.send(JSON.stringify({ type: 'subscribe', botId: targetId }));
       setWs(true);
     };
     ws.onmessage = (e) => {

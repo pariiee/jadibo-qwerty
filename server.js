@@ -584,7 +584,14 @@ wss.on('connection', (ws, req) => {
           return;
         }
 
-        const botIdNum = parseInt(data.botId, 10);
+        let botIdNum = parseInt(data.botId, 10);
+        if (!Number.isInteger(botIdNum) || botIdNum <= 0) {
+          try {
+            const { pool } = require('./config/database');
+            const [bRows] = await pool.execute('SELECT id FROM bots WHERE public_id = ? LIMIT 1', [String(data.botId)]);
+            if (bRows.length) botIdNum = bRows[0].id;
+          } catch {}
+        }
         if (!Number.isInteger(botIdNum) || botIdNum <= 0) {
           ws.send(JSON.stringify({ type: 'error', message: 'Invalid bot id' }));
           ws.close();
