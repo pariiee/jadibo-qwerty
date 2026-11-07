@@ -100,17 +100,31 @@
     const showTg = (b.platform === 'telegram' && Boolean(b.telegram_bot_url));
     if (btnOpenTg && showTg) btnOpenTg.href = b.telegram_bot_url;
     toggleEl(btnOpenTg, showTg);
-    const isTokenBot = b.platform === 'telegram' || b.platform === 'discord';
-    document.getElementById('cfg-panel').classList.toggle('tg', isTokenBot);
+    // 4. Form Fields Visibility per Platform
+    const isDc = (b.platform === 'discord');
+    const isTg = (b.platform === 'telegram');
 
-    if (isTokenBot) {
-      ['w-owner','w-ownername','w-botnum','w-channel','w-maingroups'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.style.display = 'none';
-      });
-      const lblToken = document.querySelector('label[for="cfg-token"]');
-      if (lblToken) lblToken.textContent = b.platform === 'discord' ? 'Token Bot Discord' : 'Token Telegram';
+    // Token Bot: hanya untuk Telegram & Discord
+    toggleEl(document.getElementById('w-token'), isDc || isTg, 'flex');
+    const lblToken = document.querySelector('label[for="cfg-token"]');
+    if (lblToken) lblToken.textContent = isDc ? 'Token Bot Discord' : 'Token Telegram';
+    const hintToken = document.getElementById('token-hint');
+    if (hintToken) {
+      hintToken.textContent = isDc
+        ? 'Dapatkan token di Discord Developer Portal → Bot'
+        : 'Dapatkan token dari @BotFather di Telegram';
     }
+
+    // Field khusus WhatsApp
+    toggleEl(document.getElementById('w-botnum'), isWa, 'flex');
+    toggleEl(document.getElementById('w-owner'), isWa, 'flex');
+    toggleEl(document.getElementById('w-ownername'), isWa, 'flex');
+    toggleEl(document.getElementById('w-channel'), isWa, 'flex');
+    toggleEl(document.getElementById('w-maingroups'), isWa, 'flex');
+
+    // Field Banner & QRIS: aktif di WA & Telegram, sembunyikan di Discord
+    toggleEl(document.getElementById('w-banner'), !isDc, 'flex');
+    toggleEl(document.getElementById('w-qris'), !isDc, 'flex');
 
     // is_running = "user mau bot ini jalan", BUKAN "socket kebuka"
     // (engine/whatsappEngine.js:347). Jadi pas WA drop koneksi dan engine

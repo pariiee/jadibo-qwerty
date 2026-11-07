@@ -3632,11 +3632,16 @@ body.page-bot-config #cfg-form {
 }
 
 body.page-bot-config .field {
-  display: flex !important;
+  display: flex;
   flex-direction: column !important;
   gap: 5px !important;
   min-width: 0 !important;
   margin: 0 !important;
+}
+body.page-bot-config .field[hidden],
+body.page-bot-config .field[style*="display: none"],
+body.page-bot-config .field[style*="display:none"] {
+  display: none !important;
 }
 body.page-bot-config .field.f-full {
   grid-column: 1 / -1 !important;
