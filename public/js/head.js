@@ -235,12 +235,13 @@ document.addEventListener('DOMContentLoaded', function () {
     };
   }
 
-  // Dropdown Accordion Manage di Sidebar
+  // Dropdown Accordion Manage di Topbar & Sidebar
   var navAdminGroup = document.getElementById('nav-admin');
   var btnNavManage = document.getElementById('btn-nav-manage');
   if (btnNavManage && navAdminGroup) {
     btnNavManage.addEventListener('click', function (e) {
       e.preventDefault();
+      e.stopPropagation();
       var buka = navAdminGroup.classList.toggle('open');
       btnNavManage.setAttribute('aria-expanded', buka ? 'true' : 'false');
     });
@@ -251,6 +252,12 @@ document.addEventListener('DOMContentLoaded', function () {
       var activeSub = document.getElementById('sub-manage-' + seg);
       if (activeSub) activeSub.classList.add('active');
     }
+    document.addEventListener('click', function (e) {
+      if (navAdminGroup.classList.contains('open') && !navAdminGroup.contains(e.target)) {
+        navAdminGroup.classList.remove('open');
+        btnNavManage.setAttribute('aria-expanded', 'false');
+      }
+    });
   }
 
   function toggleUserMenu() {

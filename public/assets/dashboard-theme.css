@@ -1065,7 +1065,7 @@ html body.page-dashboard .cx-nav-dropdown { position: relative !important; displ
 html body.page-dashboard .cx-dropdown-menu {
   display: none !important;
   position: absolute !important;
-  top: calc(100% + 12px) !important;
+  top: calc(100% + 4px) !important;
   left: 0 !important;
   min-width: 190px !important;
   padding: 8px !important;
@@ -1076,6 +1076,14 @@ html body.page-dashboard .cx-dropdown-menu {
   z-index: 300 !important;
   flex-direction: column !important;
   gap: 2px !important;
+}
+html body.page-dashboard .cx-dropdown-menu::before {
+  content: "" !important;
+  position: absolute !important;
+  top: -12px !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 12px !important;
 }
 html body.page-dashboard .cx-nav-dropdown:hover .cx-dropdown-menu,
 html body.page-dashboard .cx-nav-dropdown.open .cx-dropdown-menu {
