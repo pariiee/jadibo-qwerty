@@ -4675,7 +4675,7 @@ html body.page-admin .modal-close:hover {
 }
 
 /* Default Desktop: sembunyikan burger & drawer mobile */
-@media (min-width: 961px) {
+@media (min-width: 901px) {
   html body .cx-burger {
     display: none !important;
   }
@@ -4685,8 +4685,8 @@ html body.page-admin .modal-close:hover {
   }
 }
 
-/* Breakpoint Mobile (<= 960px): Navbar beralih ke Mobile Sidebar Drawer */
-@media (max-width: 960px) {
+/* Breakpoint Mobile (<= 900px): Navbar beralih ke Mobile Sidebar Drawer */
+@media (max-width: 900px) {
   /* Sembunyikan pill navbar panjang di topbar mobile */
   html body .cx-nav-pill {
     display: none !important;
