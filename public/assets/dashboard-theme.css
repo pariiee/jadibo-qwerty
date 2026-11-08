@@ -5339,7 +5339,85 @@ html body.page-admin .modal-close:hover {
 @media (prefers-reduced-motion: reduce) {
   html body .mobile-drawer, html body .mobile-drawer-overlay { transition: none !important; }
   body.drawer-open .drawer-user-card, body.drawer-open .drawer-nav > *, body.drawer-open .drawer-logout-btn { animation: none !important; }
-}
+  }
+
+  /* ══ Modal Add Bot (Platform Picker) Neo-Brutalism ══ */
+  body.page-dashboard #add-overlay .modal {
+    background: #FFFFFF !important;
+    border: 2px solid #151515 !important;
+    border-radius: 24px !important;
+    box-shadow: 4px 4px 0px #151515 !important;
+    padding: 24px !important;
+    max-width: 440px !important;
+    width: 92% !important;
+  }
+
+  body.page-dashboard #add-overlay .modal h3 {
+    font-size: 18px !important;
+    font-weight: 800 !important;
+    color: #151515 !important;
+    letter-spacing: -.02em !important;
+    margin: 0 0 4px !important;
+  }
+
+  body.page-dashboard #add-overlay .modal .m-sub {
+    font-size: 13px !important;
+    color: #5E5C70 !important;
+    margin: 0 0 16px !important;
+  }
+
+  body.page-dashboard .plat-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 12px !important;
+    margin-top: 14px !important;
+  }
+
+  @media (max-width: 480px) {
+    body.page-dashboard .plat-grid {
+      grid-template-columns: 1fr !important;
+    }
+  }
+
+  body.page-dashboard .plat-btn {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 10px !important;
+    padding: 16px 12px !important;
+    border-radius: 16px !important;
+    background: #FFFFFF !important;
+    border: 2px solid #151515 !important;
+    box-shadow: 2px 2px 0px #151515 !important;
+    color: #151515 !important;
+    cursor: pointer !important;
+    outline: none !important;
+    transition: transform .12s ease, box-shadow .12s ease, background-color .12s ease !important;
+  }
+
+  body.page-dashboard .plat-btn:hover,
+  body.page-dashboard .plat-btn:focus,
+  body.page-dashboard .plat-btn:active {
+    background: #F4F3FF !important;
+    color: #151515 !important;
+    border-color: #151515 !important;
+    transform: translate(-1px, -1px) !important;
+    box-shadow: 3px 3px 0px #151515 !important;
+  }
+
+  body.page-dashboard .plat-btn.sel {
+    background: #F4F3FF !important;
+    border: 2px solid #7A63F0 !important;
+    box-shadow: 2px 2px 0px #7A63F0 !important;
+    color: #151515 !important;
+  }
+
+  body.page-dashboard .plat-btn span {
+    font-size: 13.5px !important;
+    font-weight: 800 !important;
+    color: #151515 !important;
+  }
 
 
 
