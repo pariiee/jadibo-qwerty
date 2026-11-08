@@ -395,19 +395,6 @@
     }
   }
 
-  const chipWrap = document.getElementById('f-pfx-chips');
-  if (chipWrap) {
-    chipWrap.addEventListener('click', (e) => {
-      const btn = e.target.closest('.pfx-chip');
-      if (!btn) return;
-      btn.classList.toggle('active');
-      const act = Array.from(chipWrap.querySelectorAll('.pfx-chip.active')).map(b => b.dataset.pfx);
-      if (!act.length) { btn.classList.add('active'); act.push(btn.dataset.pfx); }
-      const inp = document.getElementById('f-prefix');
-      if (inp) inp.value = act.join('');
-    });
-  }
-
   document.getElementById('add-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeAdd(); });
 
   document.getElementById('add-form').addEventListener('submit', async (e) => {

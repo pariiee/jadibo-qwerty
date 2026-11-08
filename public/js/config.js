@@ -592,18 +592,6 @@
       btnTxt.textContent = 'Import (.json)';
     }
   };
-  const cfgChips = document.getElementById('cfg-pfx-chips');
-  if (cfgChips) {
-    cfgChips.addEventListener('click', (e) => {
-      const btn = e.target.closest('.pfx-chip');
-      if (!btn) return;
-      btn.classList.toggle('active');
-      const act = Array.from(cfgChips.querySelectorAll('.pfx-chip.active')).map(b => b.dataset.pfx);
-      if (!act.length) { btn.classList.add('active'); act.push(btn.dataset.pfx); }
-      const inp = document.getElementById('cfg-prefix');
-      if (inp) inp.value = act.join('');
-    });
-  }
   document.getElementById('btn-del').onclick = confirmDelete;
   // Pemilih bot: id-nya ada di URL, jadi pindah bot = pindah URL (reload).
   // Nol state baru, nol risiko "setengah ter-render".
