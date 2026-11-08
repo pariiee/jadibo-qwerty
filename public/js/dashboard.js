@@ -108,7 +108,6 @@
       api('/api/kuota')
     ]);
     maxSlots = me?.slots_max ?? (me?.is_admin ? 999 : 0);
-    // Daftar bot gagal? Kartu ringkasan tetap keisi — jangan tinggalin strip.
     if (!dBots?.ok) { renderStats(); return; }
     bots = dBots.bots || [];
     botKuota = new Map((dKuota?.bots || []).map(k => [k.id, k]));
@@ -119,9 +118,6 @@
 
   function renderSlots() {
     const used = bots.length;
-    // Tampilan pakai JATAH YANG DIBELI (`slots_beli`). `maxSlots` cuma buat
-    // nentuin boleh nambah bot apa nggak — di situ admin dapet 999, dan angka
-    // itu yang bikin baris ini nulis "1 / ∞" padahal jatahnya 2.
     const beli = me?.slots_beli ?? maxSlots;
     document.getElementById('slot-text').textContent = me?.is_admin ? `${used} / \u221e` : `${used} / ${beli}`;
 
@@ -154,7 +150,6 @@
 
     const baris = [];
 
-    // 1) Kuota per bot. `receive_limit` 0 = tanpa batas (jangan dihitung).
     for (const b of bots) {
       const batas = Number(b.receive_limit) || 0;
       if (batas <= 0) continue;
@@ -172,7 +167,6 @@
       });
     }
 
-    // 2) Masa aktif paket. `hari <= 3` sama dengan ambang di renderStats().
     const exp = me.plan_expired_at ? new Date(me.plan_expired_at) : null;
     const hari = exp ? Math.ceil((exp - Date.now()) / 86400000) : null;
     if (me.plan_aktif && hari !== null && hari <= 3) {
@@ -188,7 +182,6 @@
 
     if (!baris.length) { el.style.display = 'none'; el.innerHTML = ''; return; }
 
-    // Kritis duluan — yang bikin bot benar-benar diam harus dibaca pertama.
     baris.sort((a, b) => Number(b.kritis) - Number(a.kritis));
 
     el.className = 'kuota-alert' + (baris.some((x) => x.kritis) ? ' kritis' : '');
@@ -199,10 +192,6 @@
     el.style.display = '';
   }
 
-  // ── Kartu ringkasan ─────────────────────────────────────────────
-  // "Bot Online" = bot milik user sendiri, dihitung dari /api/bots.
-  // endpoint /stats nggak dipakai karena angkanya global (bocorin jumlah
-  // pelanggan ke semua user) dan bikin request tambahan tiap 10 detik.
   function renderStats() {
     const txt = (id, v, cls) => {
       const el = document.getElementById(id);
@@ -233,13 +222,7 @@
     document.getElementById('st-online-sub').textContent = bots.length
       ? `dari ${bots.length} bot kamu` : 'Belum ada bot';
 
-    // Banner kuota/paket. Dipanggil DI SINI supaya ikut jalan di jalur gagal
-    // (/api/bots error) juga — di situ `bots` kosong, tapi peringatan paket
-    // tetap harus muncul.
     renderPeringatan();
-
-    // Slot pun belum keisi di jalur ini — /api/bots nggak jalan, jadi `used` nggak
-    // diketahui. Jangan timpa angka terakhir yang udah bener sama tebakan.
   }
 
   function esc(s) {
@@ -397,16 +380,44 @@
     e.preventDefault();
     const err = document.getElementById('add-error');
     err.classList.remove('show');
-    const ownerVal = document.getElementById('f-owner')?.value.trim();
+    document.querySelectorAll('#add-form .inp').forEach(i => i.classList.remove('inp-error'));
+
+    const nameInp = document.getElementById('f-name');
+    const nameVal = nameInp?.value.trim();
+    if (!nameVal) {
+      nameInp?.classList.add('inp-error');
+      nameInp?.focus();
+      err.textContent = 'Nama bot wajib diisi.';
+      err.classList.add('show');
+      return;
+    }
+
+    if (platform === 'telegram' || platform === 'discord') {
+      const tokenInp = document.getElementById('f-token');
+      const tokenVal = tokenInp?.value.trim();
+      if (!tokenVal) {
+        tokenInp?.classList.add('inp-error');
+        tokenInp?.focus();
+        err.textContent = (platform === 'discord' ? 'Token Bot Discord' : 'Token Telegram') + ' wajib diisi.';
+        err.classList.add('show');
+        return;
+      }
+    }
+
+    const ownerInp = document.getElementById('f-owner');
+    const ownerVal = ownerInp?.value.trim();
     if (!ownerVal) {
+      ownerInp?.classList.add('inp-error');
+      ownerInp?.focus();
       const lblOwner = platform === 'discord' ? 'Owner Discord ID' : (platform === 'telegram' ? 'Owner Telegram ID' : 'Nomor owner');
       err.textContent = lblOwner + ' wajib diisi.';
       err.classList.add('show');
       return;
     }
+
     const body = {
       platform,
-      bot_name: document.getElementById('f-name').value.trim(),
+      bot_name: nameVal,
       bot_number: document.getElementById('f-botnum').value.trim() || undefined,
       owner_number: ownerVal,
       prefix: document.getElementById('f-prefix').value.trim() || '.',

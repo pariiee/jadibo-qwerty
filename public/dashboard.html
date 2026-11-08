@@ -118,9 +118,9 @@
         <button class="back-btn" data-act="backStep" aria-label="Kembali" type="button"><svg class="i" viewBox="0 0 24 24"><path d="M19 12H5m7-7-7 7 7 7"/></svg></button>
         <h3 id="form-badge">Konfigurasi bot</h3>
       </div>
-      <form id="add-form">
-        <div class="field"><label for="f-name">Nama bot *</label><input class="inp" id="f-name" required placeholder="Contoh: Bot Saya"></div>
-        <div class="field" id="wrap-botnum"><label id="lbl-owner" for="f-botnum">Nomor bot WA</label><input class="inp" id="f-botnum" inputmode="tel" placeholder="628xxxxxxxxxx"><div class="hint" id="hint-owner">Nomor yang di-pair ke bot</div></div>
+      <form id="add-form" novalidate>
+        <div class="field"><label for="f-name">Nama bot *</label><input class="inp" id="f-name" placeholder="Contoh: Bot Saya" autocomplete="off"></div>
+        <div class="field" id="wrap-botnum"><label id="lbl-botnum" for="f-botnum">Nomor bot WA</label><input class="inp" id="f-botnum" inputmode="tel" placeholder="628xxxxxxxxxx"><div class="hint" id="hint-botnum">Nomor yang di-pair ke bot</div></div>
         <div class="field" id="wrap-token" style="display:none">
           <label for="f-token">Token Bot *</label>
           <div style="position:relative;display:flex;align-items:center">
@@ -131,7 +131,7 @@
           </div>
           <div class="hint" id="hint-token" style="margin-top:6px;font-size:11.5px"></div>
         </div>
-        <div class="field"><label id="lbl-owner" for="f-owner">Nomor owner *</label><input class="inp" id="f-owner" inputmode="tel" required placeholder="628xxxxxxxxxx"></div>
+        <div class="field"><label id="lbl-owner" for="f-owner">Nomor owner *</label><input class="inp" id="f-owner" inputmode="tel" placeholder="628xxxxxxxxxx"></div>
         <div class="field">
           <label>Prefix Command <small style="font-weight:600;color:var(--mute)">(Bisa pilih lebih dari satu)</small></label>
           <div class="pfx-chips" id="f-pfx-chips">
