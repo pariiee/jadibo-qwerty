@@ -360,17 +360,23 @@
       if (tokenInp) tokenInp.placeholder = '123456:ABC-DEF...';
       if (hintToken) hintToken.innerHTML = 'Ambil token via <a href="https://t.me/BotFather" target="_blank" rel="noopener" style="color:#7A63F0;font-weight:700;text-decoration:underline">@BotFather</a> di Telegram.';
       setPfxVal('/');
-      lbl.textContent = 'Owner Telegram ID'; inp.placeholder = 'Contoh: 123456789'; hint.textContent = 'Telegram user ID pemilik bot — untuk akses command owner-only';
+      if (lbl) lbl.textContent = 'Owner Telegram ID *';
+      if (inp) inp.placeholder = 'Contoh: 123456789';
+      if (hint) hint.textContent = 'Telegram user ID pemilik bot — untuk akses command owner-only';
     } else if (isDc) {
       if (tokenLbl) tokenLbl.textContent = 'Token Bot Discord *';
       if (tokenInp) tokenInp.placeholder = 'Bot token dari Discord Developer Portal';
       if (hintToken) hintToken.innerHTML = 'Ambil token di <a href="https://discord.com/developers/applications" target="_blank" rel="noopener" style="color:#7A63F0;font-weight:700;text-decoration:underline">Discord Developer Portal → Bot</a>. <a href="/panduan#panduan-discord" target="_blank" style="color:#7A63F0;text-decoration:underline">Lihat Panduan</a>';
       setPfxVal('!');
-      lbl.textContent = 'Owner Discord ID'; inp.placeholder = 'Contoh: 123456789012345678'; hint.textContent = 'Discord User ID pemilik bot (aktifkan Developer Mode lalu Copy ID)';
+      if (lbl) lbl.textContent = 'Owner Discord ID *';
+      if (inp) inp.placeholder = 'Contoh: 123456789012345678';
+      if (hint) hint.textContent = 'Discord User ID pemilik bot (aktifkan Developer Mode lalu Copy ID)';
     } else {
       if (hintToken) hintToken.innerHTML = '';
       setPfxVal('.');
-      lbl.textContent = 'Nomor Owner'; inp.placeholder = '628xxxxxxxxxx'; hint.textContent = 'Nomor pemilik bot — untuk akses command owner-only';
+      if (lbl) lbl.textContent = 'Nomor owner *';
+      if (inp) inp.placeholder = '628xxxxxxxxxx';
+      if (hint) hint.textContent = 'Nomor pemilik bot — untuk akses command owner-only';
     }
   }
 
