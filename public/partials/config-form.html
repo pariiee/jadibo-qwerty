@@ -32,20 +32,20 @@
       <div class="hint">Nama di vCard .owner</div>
     </div>
     <div class="field" id="w-owner">
-      <label for="cfg-owner">Nomor Owner</label>
-      <input class="inp" id="cfg-owner" type="text" placeholder="628xxxxxxxxxx" />
+      <label for="cfg-owner">Nomor Owner <span class="req">*</span></label>
+      <input class="inp" id="cfg-owner" type="text" required placeholder="628xxxxxxxxxx" />
       <div class="hint">Akses command owner-only</div>
     </div>
 
     <div class="field f-full" id="w-prefix">
       <label>Prefix Command <small style="font-weight:600;color:#5E5C70">(Bisa pilih lebih dari satu)</small></label>
       <div class="pfx-chips" id="cfg-pfx-chips">
-        <button type="button" class="pfx-chip" data-pfx=".">.</button>
-        <button type="button" class="pfx-chip" data-pfx="/">/</button>
-        <button type="button" class="pfx-chip" data-pfx="!">!</button>
-        <button type="button" class="pfx-chip" data-pfx="#">#</button>
-        <button type="button" class="pfx-chip" data-pfx="?">?</button>
-        <button type="button" class="pfx-chip" data-pfx="$">$</button>
+        <button type="button" class="pfx-chip" data-act="togglePfx" data-pfx=".">.</button>
+        <button type="button" class="pfx-chip" data-act="togglePfx" data-pfx="/">/</button>
+        <button type="button" class="pfx-chip" data-act="togglePfx" data-pfx="!">!</button>
+        <button type="button" class="pfx-chip" data-act="togglePfx" data-pfx="#">#</button>
+        <button type="button" class="pfx-chip" data-act="togglePfx" data-pfx="?">?</button>
+        <button type="button" class="pfx-chip" data-act="togglePfx" data-pfx="$">$</button>
       </div>
       <input type="hidden" id="cfg-prefix" value="." />
     </div>

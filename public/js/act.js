@@ -53,6 +53,21 @@ if (!window.__actInit) {
   });
 }
 
+window.togglePfx = function (el) {
+  if (!el) return;
+  el.classList.toggle('active');
+  const parent = el.closest('.pfx-chips');
+  if (!parent) return;
+  const active = Array.from(parent.querySelectorAll('.pfx-chip.active')).map(b => b.dataset.pfx);
+  if (!active.length) {
+    el.classList.add('active');
+    active.push(el.dataset.pfx);
+  }
+  const targetId = parent.id === 'f-pfx-chips' ? 'f-prefix' : 'cfg-prefix';
+  const inp = document.getElementById(targetId);
+  if (inp) inp.value = active.join('');
+};
+
 window.showToast = function (msg, tipe) {
   let t = document.getElementById('toast');
   if (!t) {

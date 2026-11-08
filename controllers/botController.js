@@ -248,6 +248,10 @@ async function createBot(req, res) {
     } = req.body;
 
     if (!bot_name) return sendError(res, 400, 'Nama bot wajib diisi');
+    if (!owner_number || !String(owner_number).trim()) {
+      const lblOwner = platform === 'discord' ? 'Owner Discord ID' : (platform === 'telegram' ? 'Owner Telegram ID' : 'Nomor owner');
+      return sendError(res, 400, `${lblOwner} wajib diisi`);
+    }
     if (platform === 'telegram' && !telegram_token)
       return sendError(res, 400, 'Token Telegram wajib diisi untuk platform Telegram');
     if (platform === 'discord' && !discord_token && !telegram_token)
@@ -325,6 +329,11 @@ async function updateBot(req, res) {
         return sendError(res, 400, maks === 0
           ? 'Paket kamu belum bisa pakai Owner Number. Upgrade di halaman Pricing.'
           : `Paket kamu maksimal ${maks} Owner Number.`);
+    }
+
+    if (req.body.owner_number !== undefined && !String(req.body.owner_number).trim()) {
+      const lblOwner = bot.platform === 'discord' ? 'Owner Discord ID' : (bot.platform === 'telegram' ? 'Owner Telegram ID' : 'Nomor owner');
+      return sendError(res, 400, `${lblOwner} tidak boleh dikosongkan`);
     }
 
     for (const key of allowed) {

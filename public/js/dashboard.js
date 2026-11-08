@@ -414,12 +414,19 @@
     e.preventDefault();
     const err = document.getElementById('add-error');
     err.classList.remove('show');
+    const ownerVal = document.getElementById('f-owner')?.value.trim();
+    if (!ownerVal) {
+      const lblOwner = platform === 'discord' ? 'Owner Discord ID' : (platform === 'telegram' ? 'Owner Telegram ID' : 'Nomor owner');
+      err.textContent = lblOwner + ' wajib diisi.';
+      err.classList.add('show');
+      return;
+    }
     const body = {
       platform,
       bot_name: document.getElementById('f-name').value.trim(),
       bot_number: document.getElementById('f-botnum').value.trim() || undefined,
-      owner_number: document.getElementById('f-owner').value.trim() || undefined,
-      prefix: document.getElementById('f-prefix').value.trim() || '!',
+      owner_number: ownerVal,
+      prefix: document.getElementById('f-prefix').value.trim() || '.',
       footer_text: document.getElementById('f-footer').value.trim() || 'Powered by qwertygate',
       telegram_token: platform === 'telegram' ? (document.getElementById('f-token').value.trim() || undefined) : undefined,
       discord_token: platform === 'discord' ? (document.getElementById('f-token').value.trim() || undefined) : undefined,

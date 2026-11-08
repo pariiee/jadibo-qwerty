@@ -513,10 +513,19 @@
       err.classList.add('show');
       return;
     }
+    const ownerVal = document.getElementById('cfg-owner').value.trim();
+    if (!ownerVal) {
+      const isDc = botData?.platform === 'discord';
+      const isTg = botData?.platform === 'telegram';
+      const lblOwner = isDc ? 'Owner Discord ID' : (isTg ? 'Owner Telegram ID' : 'Nomor owner');
+      err.textContent = lblOwner + ' wajib diisi.';
+      err.classList.add('show');
+      return;
+    }
     const body = {
       bot_name: document.getElementById('cfg-name').value.trim(),
       bot_number: document.getElementById('cfg-botnum').value.trim() || undefined,
-      owner_number: document.getElementById('cfg-owner').value.trim() || undefined,
+      owner_number: ownerVal,
       owner_name: document.getElementById('cfg-ownername').value.trim() || undefined,
       prefix: document.getElementById('cfg-prefix').value.trim(),
       footer_text: document.getElementById('cfg-footer').value.trim(),
