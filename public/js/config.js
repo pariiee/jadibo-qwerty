@@ -113,14 +113,32 @@
     if (lblToken) lblToken.textContent = isDc ? 'Token Bot Discord' : 'Token Telegram';
     const hintToken = document.getElementById('token-hint');
     if (hintToken) {
-      hintToken.textContent = isDc
-        ? 'Dapatkan token di Discord Developer Portal → Bot'
-        : 'Dapatkan token dari @BotFather di Telegram';
+      hintToken.innerHTML = isDc
+        ? 'Ambil token di <a href="https://discord.com/developers/applications" target="_blank" rel="noopener" style="color:#7A63F0;font-weight:700;text-decoration:underline">Discord Developer Portal → Bot</a>. <a href="/panduan#panduan-discord" target="_blank" style="color:#7A63F0;text-decoration:underline">Lihat Panduan</a>'
+        : 'Dapatkan token dari <a href="https://t.me/BotFather" target="_blank" rel="noopener" style="color:#7A63F0;font-weight:700;text-decoration:underline">@BotFather di Telegram</a>';
+    }
+
+    // Owner ID / Nomor Owner: tampil di semua platform
+    toggleEl(document.getElementById('w-owner'), true, 'flex');
+    const lblOwner = document.querySelector('label[for="cfg-owner"]');
+    const inpOwner = document.getElementById('cfg-owner');
+    const hintOwner = document.querySelector('#w-owner .hint');
+    if (isDc) {
+      if (lblOwner) lblOwner.textContent = 'Owner Discord ID';
+      if (inpOwner) inpOwner.placeholder = 'Contoh: 123456789012345678';
+      if (hintOwner) hintOwner.textContent = 'User ID akun Discord kamu untuk hak akses Owner';
+    } else if (isTg) {
+      if (lblOwner) lblOwner.textContent = 'Owner Telegram ID';
+      if (inpOwner) inpOwner.placeholder = 'Contoh: 123456789';
+      if (hintOwner) hintOwner.textContent = 'Telegram user ID untuk akses command owner';
+    } else {
+      if (lblOwner) lblOwner.textContent = 'Nomor Owner';
+      if (inpOwner) inpOwner.placeholder = '628xxxxxxxxxx';
+      if (hintOwner) hintOwner.textContent = 'Akses command owner-only';
     }
 
     // Field khusus WhatsApp
     toggleEl(document.getElementById('w-botnum'), isWa, 'flex');
-    toggleEl(document.getElementById('w-owner'), isWa, 'flex');
     toggleEl(document.getElementById('w-ownername'), isWa, 'flex');
     toggleEl(document.getElementById('w-channel'), isWa, 'flex');
     toggleEl(document.getElementById('w-maingroups'), isWa, 'flex');

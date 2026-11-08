@@ -360,16 +360,20 @@
     const hint = document.getElementById('hint-owner');
     const tokenLbl = document.querySelector('label[for="f-token"]');
     const tokenInp = document.getElementById('f-token');
+    const hintToken = document.getElementById('hint-token');
 
     if (isTg) {
       if (tokenLbl) tokenLbl.textContent = 'Token Telegram Bot *';
       if (tokenInp) tokenInp.placeholder = '123456:ABC-DEF...';
+      if (hintToken) hintToken.innerHTML = 'Ambil token via <a href="https://t.me/BotFather" target="_blank" rel="noopener" style="color:#7A63F0;font-weight:700;text-decoration:underline">@BotFather</a> di Telegram.';
       lbl.textContent = 'Owner Telegram ID'; inp.placeholder = 'Contoh: 123456789'; hint.textContent = 'Telegram user ID pemilik bot — untuk akses command owner-only';
     } else if (isDc) {
       if (tokenLbl) tokenLbl.textContent = 'Token Bot Discord *';
       if (tokenInp) tokenInp.placeholder = 'Bot token dari Discord Developer Portal';
-      lbl.textContent = 'Owner Discord ID'; inp.placeholder = 'Contoh: 123456789012345678'; hint.textContent = 'Discord user ID pemilik bot — untuk akses command owner-only';
+      if (hintToken) hintToken.innerHTML = 'Ambil token di <a href="https://discord.com/developers/applications" target="_blank" rel="noopener" style="color:#7A63F0;font-weight:700;text-decoration:underline">Discord Developer Portal → Bot</a>. <a href="/panduan#panduan-discord" target="_blank" style="color:#7A63F0;text-decoration:underline">Lihat Panduan</a>';
+      lbl.textContent = 'Owner Discord ID'; inp.placeholder = 'Contoh: 123456789012345678'; hint.textContent = 'Discord User ID pemilik bot (aktifkan Developer Mode lalu Copy ID)';
     } else {
+      if (hintToken) hintToken.innerHTML = '';
       lbl.textContent = 'Nomor Owner'; inp.placeholder = '628xxxxxxxxxx'; hint.textContent = 'Nomor pemilik bot — untuk akses command owner-only';
     }
   }

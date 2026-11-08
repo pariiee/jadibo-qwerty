@@ -216,11 +216,54 @@
           </div>
         </details>
 
+        <details class="faq-card" name="faq-group" id="panduan-discord" open>
+          <summary class="faq-q">
+            <div class="faq-q-left">
+              <span class="faq-num">11</span>
+              <span class="faq-title">Panduan Lengkap Setup Bot Discord (Token, Intents, &amp; User ID)</span>
+            </div>
+            <span class="faq-arrow" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </span>
+          </summary>
+          <div class="faq-a">
+            <p>Ikuti 4 langkah mudah berikut untuk menghubungkan bot Discord kamu ke qwertygate:</p>
+            <ol style="display:flex;flex-direction:column;gap:12px;margin:10px 0 16px 20px">
+              <li>
+                <b>1. Buat Aplikasi &amp; Ambil Bot Token:</b>
+                <div>Buka <a href="https://discord.com/developers/applications" target="_blank" rel="noopener" style="color:var(--acc);font-weight:700">Discord Developer Portal</a> → klik <b>New Application</b> → beri nama bot kamu. Masuk ke menu <b>Bot</b> di bilah kiri, lalu klik <b>Reset Token</b> dan salin token tersebut ke form qwertygate.</div>
+              </li>
+              <li>
+                <b>2. WAJIB: Aktifkan Privileged Gateway Intents:</b>
+                <div>Di halaman menu <b>Bot</b> yang sama, scroll ke bawah ke bagian <b>Privileged Gateway Intents</b>. Aktifkan ketiga centang berikut (warna hijau):
+                  <ul style="margin:6px 0 6px 18px">
+                    <li><b>Presence Intent</b> (ON)</li>
+                    <li><b>Server Members Intent</b> (ON)</li>
+                    <li><b>Message Content Intent</b> (ON — <i>Sangat penting agar bot bisa membaca pesan command &amp; prefix</i>)</li>
+                  </ul>
+                  Lalu klik <b>Save Changes</b> di bagian bawah.
+                </div>
+              </li>
+              <li>
+                <b>3. Ambil User ID Akun Kamu (Owner Discord ID):</b>
+                <div>Buka aplikasi Discord kamu → buka <b>User Settings</b> (ikon gear) → menu <b>Advanced</b> → aktifkan <b>Developer Mode (ON)</b>.<br>
+                Setelah itu, klik kanan foto profil kamu sendiri (atau tap titik tiga di ponsel) lalu pilih <b>Copy User ID</b>. Masukkan ID angka ini ke kolom <b>Owner Discord ID</b> agar kamu memiliki akses penuh ke fitur admin/owner bot.</div>
+              </li>
+              <li>
+                <b>4. Invite Bot ke Server Discord Kamu:</b>
+                <div>Di Developer Portal, buka menu <b>Installation</b> atau <b>OAuth2 → URL Generator</b> → centang scope <code>bot</code> dan <code>applications.commands</code>.<br>
+                Di bagian <b>Bot Permissions</b>, centang <b>Administrator</b> (atau minimal: <i>Send Messages, Send Messages in Threads, Embed Links, Attach Files, Read Message History, Connect, Speak</i>). Buka link invite yang dihasilkan lalu pilih server Discord tujuan.</div>
+              </li>
+            </ol>
+            <p style="font-size:12.5px;color:var(--mute)">Setelah token dan ID dimasukkan, tekan tombol <b>Start</b> pada panel kontrol untuk mengaktifkan bot kamu secara live.</p>
+          </div>
+        </details>
+
       </div>
     </div>
   </main>
 </div>
 
-<script src="/js/panduan.js?v=2.0" defer></script>
+<script src="/js/panduan.js?v=2.1" defer></script>
 </body>
 </html>
