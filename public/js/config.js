@@ -157,7 +157,12 @@
     document.getElementById('cfg-botnum').value  = b.bot_number || '';
     document.getElementById('cfg-owner').value   = b.owner_number || '';
     document.getElementById('cfg-ownername').value = b.owner_name || '';
-    document.getElementById('cfg-prefix').value  = b.prefix ?? '';
+    const selPfx = document.getElementById('cfg-prefix');
+    if (selPfx) {
+      const pfx = b.prefix ?? '.';
+      if (!Array.from(selPfx.options).some(o => o.value === pfx)) selPfx.add(new Option(pfx, pfx));
+      selPfx.value = pfx;
+    }
     document.getElementById('cfg-footer').value  = b.footer_text || '';
     document.getElementById('cfg-desc').value    = b.description || '';
     // Token SENGAJA nggak di-echo: yang dikirim publicBot() cuma '•••'. Kalau
