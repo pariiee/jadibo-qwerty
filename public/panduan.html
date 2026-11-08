@@ -216,7 +216,7 @@
           </div>
         </details>
 
-        <details class="faq-card" name="faq-group" id="panduan-discord" open>
+        <details class="faq-card" name="faq-group" id="panduan-discord">
           <summary class="faq-q">
             <div class="faq-q-left">
               <span class="faq-num">11</span>
@@ -259,11 +259,47 @@
           </div>
         </details>
 
+        <details class="faq-card" name="faq-group" id="panduan-telegram">
+          <summary class="faq-q">
+            <div class="faq-q-left">
+              <span class="faq-num">12</span>
+              <span class="faq-title">Panduan Lengkap Setup Bot Telegram (Token &amp; Owner ID)</span>
+            </div>
+            <span class="faq-arrow" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </span>
+          </summary>
+          <div class="faq-a">
+            <p>Cara membuat dan mengaktifkan bot Telegram dalam hitungan menit:</p>
+            <ol style="display:flex;flex-direction:column;gap:12px;margin:10px 0 16px 20px">
+              <li>
+                <b>1. Buat Bot di @BotFather:</b>
+                <div>Buka aplikasi Telegram, cari akun resmi <a href="https://t.me/BotFather" target="_blank" rel="noopener" style="color:var(--acc);font-weight:700">@BotFather</a>. Ketik perintah <code>/newbot</code>, lalu ikuti petunjuknya:
+                  <ul style="margin:6px 0 6px 18px">
+                    <li>Masukkan nama tampilan bot (bebas).</li>
+                    <li>Masukkan username bot (wajib berakhiran <code>bot</code>, misal: <code>mykeren_bot</code>).</li>
+                  </ul>
+                  BotFather akan memberikan pesan berisi <b>HTTP API Token</b> (format: <code>123456789:ABCdefGhIjk...</code>). Salin token tersebut ke form bot qwertygate.
+                </div>
+              </li>
+              <li>
+                <b>2. Ambil Owner Telegram ID (ID Akun Kamu):</b>
+                <div>Buka bot pembaca ID resmi seperti <a href="https://t.me/userinfobot" target="_blank" rel="noopener" style="color:var(--acc);font-weight:700">@userinfobot</a> di Telegram. Kirim pesan <code>/start</code>. Bot akan membalas dengan info akunmu termasuk <b>Id: 123456789</b>. Salin angka ID tersebut dan masukkan ke kolom <b>Owner Telegram ID</b>.</div>
+              </li>
+              <li>
+                <b>3. Matikan Group Privacy (Jika Ingin Dipakai di Grup):</b>
+                <div>Agar bot dapat merespons command di grup tanpa harus di-mention: di chat <b>@BotFather</b> ketik <code>/mybots</code> → pilih bot kamu → <b>Bot Settings</b> → <b>Group Privacy</b> → klik <b>Turn off</b>.</div>
+              </li>
+            </ol>
+            <p style="font-size:12.5px;color:var(--mute)">Setelah disimpan, tekan tombol <b>Start</b> pada panel kontrol qwertygate. Bot Telegram kamu langsung aktif 24 jam!</p>
+          </div>
+        </details>
+
       </div>
     </div>
   </main>
 </div>
 
-<script src="/js/panduan.js?v=2.1" defer></script>
+<script src="/js/panduan.js?v=2.2" defer></script>
 </body>
 </html>
