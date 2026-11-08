@@ -85,19 +85,23 @@
     const grid = document.getElementById('bot-grid');
     if (!grid || bots.length) return;
     grid.innerHTML = [1, 2].map(() => `
-      <div class="card bc skeleton-card" style="pointer-events:none;opacity:0.6;animation:skeleton-pulse 1.4s ease-in-out infinite">
-        <div class="row" style="display:flex;justify-content:space-between;margin-bottom:12px">
-          <div style="width:75px;height:22px;border-radius:6px;background:var(--border)"></div>
-          <div style="width:55px;height:22px;border-radius:6px;background:var(--border)"></div>
+      <article class="bt-tile bt-k bt-bot bt-s3 bt-r2 bt-skeleton">
+        <div class="bt-row" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <div style="width:76px;height:24px;border-radius:999px;background:#E4E4E7"></div>
+          <div style="width:60px;height:24px;border-radius:999px;background:#E4E4E7"></div>
         </div>
-        <div style="width:55%;height:22px;border-radius:6px;background:var(--border);margin:12px 0 8px"></div>
-        <div style="width:85%;height:14px;border-radius:4px;background:var(--border);margin-bottom:16px"></div>
-        <div style="width:100%;height:45px;border-radius:8px;background:var(--border);margin-bottom:14px"></div>
-        <div class="row" style="display:flex;justify-content:space-between;margin-top:10px">
-          <div style="width:35%;height:14px;border-radius:4px;background:var(--border)"></div>
-          <div style="width:25%;height:14px;border-radius:4px;background:var(--border)"></div>
+        <div style="width:65%;height:22px;border-radius:6px;background:#E4E4E7;margin:4px 0 8px"></div>
+        <div style="width:85%;height:14px;border-radius:4px;background:#E4E4E7;margin-bottom:16px"></div>
+        <div style="width:100%;height:44px;border-radius:10px;background:#F4F3FF;margin-bottom:14px;border:1px solid #E4E4E7"></div>
+        <div class="bt-row bt-m" style="display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:10px">
+          <div style="width:30%;height:14px;border-radius:4px;background:#E4E4E7"></div>
+          <div style="width:25%;height:14px;border-radius:4px;background:#E4E4E7"></div>
         </div>
-      </div>
+        <div class="bt-btns" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
+          <div style="height:36px;border-radius:999px;background:#151515;opacity:0.12"></div>
+          <div style="height:36px;border-radius:999px;background:#151515;opacity:0.12"></div>
+        </div>
+      </article>
     `).join('');
   }
 

@@ -5413,11 +5413,23 @@ html body.page-admin .modal-close:hover {
     color: #151515 !important;
   }
 
-  body.page-dashboard .plat-btn span {
-    font-size: 13.5px !important;
-    font-weight: 800 !important;
-    color: #151515 !important;
-  }
+/* Skeleton Card Bento Loading */
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 0.95; }
+}
+
+body.page-dashboard .bt-tile.bt-skeleton {
+  pointer-events: none !important;
+  background: #FFFFFF !important;
+  border: 2px solid #151515 !important;
+  border-radius: 24px !important;
+  box-shadow: 2px 2px 0px #151515 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 18px !important;
+  animation: skeleton-pulse 1.4s ease-in-out infinite !important;
+}
 
 
 
