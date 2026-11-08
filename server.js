@@ -416,7 +416,9 @@ const halaman = (nama, kode = 200) => (_, res) => {
   try {
     const html = fs.readFileSync(path.join(PUBLIC_HTML, nama), 'utf8')
       .replace(INCLUDE_RE, (_, f) =>
-        fs.readFileSync(path.join(PUBLIC_HTML, 'partials', f), 'utf8'));
+        fs.readFileSync(path.join(PUBLIC_HTML, 'partials', f), 'utf8'))
+      .replace(/(\/(?:assets|js)\/[\w.-]+\.(?:css|js))"/g,
+        (m, p) => `${p}?v=${mtimeAset(p)}"`);
     res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.status(kode).type('html').send(html);
   } catch (e) {
