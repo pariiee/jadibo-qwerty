@@ -370,35 +370,29 @@ app.use('/api/admin', auth.requireAuth, (req, res, next) => {
 });
 
 app.get('/api/admin/users',          auth.requireAuth, auth.requireKing, auth.listUsers);
-app.patch('/api/admin/users/:id',    auth.requireAuth, auth.requireKing, auth.updateUser);
-app.delete('/api/admin/users/:id',   auth.requireAuth, auth.requireKing, auth.deleteUser);
+app.patch('/api/admin/users/:id',    auth.requireAuth, auth.requireSuperAdmin, auth.updateUser);
+app.delete('/api/admin/users/:id',   auth.requireAuth, auth.requireSuperAdmin, auth.deleteUser);
 
-app.get('/api/admin/billing/orders',                  auth.requireAuth, auth.requireKing, billing.adminOrders);
-app.post('/api/admin/billing/orders/:orderId/confirm', auth.requireAuth, auth.requireKing, billing.adminKonfirmasi);
-app.post('/api/admin/billing/orders/:orderId/reject',  auth.requireAuth, auth.requireKing, billing.adminTolak);
-app.get('/api/admin/billing/settings',                auth.requireAuth, auth.requireKing, billing.adminSettings);
-app.put('/api/admin/billing/plans',                   auth.requireAuth, auth.requireKing, billing.adminSetPlans);
-app.put('/api/admin/billing/settings',                auth.requireAuth, auth.requireKing, billing.adminSetSettings);
-// Top-up & reset kuota pesan per bot. Owner-only, sama seperti endpoint admin
-// lain. Dipakai saat kompensasi bot error atau pembelian kuota tambahan.
-app.post('/api/admin/bots/:id/kuota',        auth.requireAuth, auth.requireKing, billing.adminTopupKuota);
-app.post('/api/admin/bots/:id/reset-kuota',  auth.requireAuth, auth.requireKing, billing.adminResetKuota);
+app.get('/api/admin/billing/orders',                  auth.requireAuth, auth.requireSuperAdmin, billing.adminOrders);
+app.post('/api/admin/billing/orders/:orderId/confirm', auth.requireAuth, auth.requireSuperAdmin, billing.adminKonfirmasi);
+app.post('/api/admin/billing/orders/:orderId/reject',  auth.requireAuth, auth.requireSuperAdmin, billing.adminTolak);
+app.get('/api/admin/billing/settings',                auth.requireAuth, auth.requireSuperAdmin, billing.adminSettings);
+app.put('/api/admin/billing/plans',                   auth.requireAuth, auth.requireSuperAdmin, billing.adminSetPlans);
+app.put('/api/admin/billing/settings',                auth.requireAuth, auth.requireSuperAdmin, billing.adminSetSettings);
+app.post('/api/admin/bots/:id/kuota',        auth.requireAuth, auth.requireSuperAdmin, billing.adminTopupKuota);
+app.post('/api/admin/bots/:id/reset-kuota',  auth.requireAuth, auth.requireSuperAdmin, billing.adminResetKuota);
 
-// ─── Admin: dompet ───────────────────────────────────────────────────────────
-// Lihat saldo & jurnal user, penyesuaian manual (alasan wajib), dan pemeriksaan
-// konsistensi SUM(jurnal) == saldo. TIDAK ada tarik saldo / transfer antar user.
-app.get('/api/admin/wallet/users',                    auth.requireAuth, auth.requireKing, wallet.adminUsers);
-app.get('/api/admin/wallet/users/:userId/ledger',     auth.requireAuth, auth.requireKing, wallet.adminLedger);
-app.post('/api/admin/wallet/users/:userId/adjust',    moneyLimiter, auth.requireAuth, auth.requireKing, wallet.adminAdjust);
-app.get('/api/admin/wallet/konsistensi',              auth.requireAuth, auth.requireKing, wallet.adminKonsistensi);
-app.get('/api/admin/wallet/pendapatan',               auth.requireAuth, auth.requireKing, wallet.adminPendapatan);
+app.get('/api/admin/wallet/users',                    auth.requireAuth, auth.requireSuperAdmin, wallet.adminUsers);
+app.get('/api/admin/wallet/users/:userId/ledger',     auth.requireAuth, auth.requireSuperAdmin, wallet.adminLedger);
+app.post('/api/admin/wallet/users/:userId/adjust',    moneyLimiter, auth.requireAuth, auth.requireSuperAdmin, wallet.adminAdjust);
+app.get('/api/admin/wallet/konsistensi',              auth.requireAuth, auth.requireSuperAdmin, wallet.adminKonsistensi);
+app.get('/api/admin/wallet/pendapatan',               auth.requireAuth, auth.requireSuperAdmin, wallet.adminPendapatan);
 
-// ─── Tab "Sistem" (kesehatan, resource, audit, pendapatan, broadcast) ─────────
 app.get('/api/admin/sistem',      auth.requireAuth, auth.requireKing, sistem.status);
 app.get('/api/admin/audit',       auth.requireAuth, auth.requireKing, sistem.audit);
 app.get('/api/admin/system-logs', auth.requireAuth, auth.requireKing, sistem.getSystemLogs);
-app.get('/api/admin/pendapatan',  auth.requireAuth, auth.requireKing, sistem.pendapatan);
-app.post('/api/admin/broadcast',  auth.requireAuth, auth.requireKing, sistem.broadcast);
+app.get('/api/admin/pendapatan',  auth.requireAuth, auth.requireSuperAdmin, sistem.pendapatan);
+app.post('/api/admin/broadcast',  auth.requireAuth, auth.requireSuperAdmin, sistem.broadcast);
 
 // ─── Halaman HTML ─────────────────────────────────────────────────────────────
 // Halaman berisi <!-- @include head.html --> dll; partial di public/partials/

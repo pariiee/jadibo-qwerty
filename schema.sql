@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS users (
   email        VARCHAR(254) DEFAULT NULL,
   plan         VARCHAR(32) NOT NULL DEFAULT 'user',
   plan_expired_at DATETIME DEFAULT NULL,
-  plan_slots   INT NOT NULL DEFAULT 2,
+  plan_slots   INT NOT NULL DEFAULT 1,
   trial_used_at DATETIME DEFAULT NULL,
   extra_owners INT NOT NULL DEFAULT 0,
   extra_quota  INT NOT NULL DEFAULT 0,

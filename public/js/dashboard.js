@@ -51,6 +51,16 @@
     if (me.is_admin) document.getElementById('nav-admin').style.display = '';
     const nd = document.getElementById('nav-dashboard');
     if (nd) nd.classList.add('on', 'active');
+
+    if (me.is_superadmin) {
+      const btnAdd = document.getElementById('dx-add');
+      if (btnAdd) btnAdd.style.display = 'none';
+      const heroLead = document.querySelector('.bt-hero .bt-lead');
+      if (heroLead) heroLead.textContent = 'Ringkasan ekosistem qwertygate, omzet transaksi, dan kesehatan infrastruktur sistem.';
+      const trialBtn = document.querySelector('.bt-peach .bt-pill-btn');
+      if (trialBtn) trialBtn.style.display = 'none';
+    }
+
     renderStats();
     return me;
   }
@@ -195,13 +205,54 @@
   function renderStats() {
     const txt = (id, v, cls) => {
       const el = document.getElementById(id);
+      if (!el) return;
       el.textContent = v;
       el.className = 'val' + (cls ? ' ' + cls : '');
     };
 
-    txt('st-role', me.is_admin ? 'Admin' : (me.plan_aktif ? (me.slots || 1) + ' Slot' : '0 Slot'));
+    if (me?.is_superadmin) {
+      txt('st-role', 'Kawula', 'ok');
+      const subRole = document.getElementById('st-role-sub');
+      if (subRole) subRole.textContent = 'Super Administrator';
+
+      const lbOnline = document.querySelector('.bt-purple .bt-lb');
+      if (lbOnline) lbOnline.innerHTML = '<span class="bt-ic"><svg class="i" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>Total Omzet';
+
+      const lbSlot = document.querySelector('.bt-sky .bt-lb');
+      if (lbSlot) lbSlot.innerHTML = '<span class="bt-ic"><svg class="i" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>RAM Server';
+
+      const lbExp = document.querySelector('.bt-peach .bt-lb');
+      if (lbExp) lbExp.innerHTML = '<span class="bt-ic"><svg class="i" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4"/></svg></span>Transaksi';
+
+      api('/api/admin/pendapatan').then(d => {
+        if (d?.ok && d.ringkas) {
+          txt('st-online', 'Rp ' + Number(d.ringkas.total_lunas || 0).toLocaleString('id-ID'), 'ok');
+          const subOnline = document.getElementById('st-online-sub');
+          if (subOnline) subOnline.textContent = (d.ringkas.jumlah_lunas || 0) + ' transaksi berhasil';
+
+          txt('st-exp', (d.ringkas.jumlah_lunas || 0) + ' Order', 'ok');
+          const subExp = document.getElementById('st-exp-sub');
+          if (subExp) subExp.textContent = (d.ringkas.jumlah_pending || 0) + ' order pending';
+        }
+      });
+
+      api('/api/admin/sistem').then(d => {
+        if (d?.ok && d.sistem?.ram) {
+          const r = d.sistem.ram;
+          const ramPct = Math.round((r.terpakai / r.total) * 100);
+          txt('st-slot', ramPct + '%', ramPct > 80 ? 'warn' : 'ok');
+          const subSlot = document.getElementById('st-slot-sub');
+          if (subSlot) subSlot.textContent = Math.round(r.terpakai / 1048576) + 'MB / ' + Math.round(r.total / 1048576) + 'MB';
+        }
+      });
+
+      renderPeringatan();
+      return;
+    }
+
+    txt('st-role', me.is_admin ? 'Staff' : (me.plan_aktif ? (me.slots || 1) + ' Slot' : '0 Slot'));
     document.getElementById('st-role-sub').textContent = me.is_admin
-      ? 'Akses penuh Administrator'
+      ? 'Akses Staff Bot Manager'
       : (me.plan_aktif ? 'Slot bot aktif' : 'Belum ada slot aktif');
 
     const exp = me.plan_expired_at ? new Date(me.plan_expired_at) : null;
@@ -247,6 +298,30 @@
   function renderBots() {
     const grid = document.getElementById('bot-grid');
     grid.innerHTML = '';
+
+    if (me?.is_superadmin) {
+      const tileOmzet = document.createElement('article');
+      tileOmzet.className = 'bt-tile bt-k bt-bot bt-s4 bt-r2 bt-lime bt-anim';
+      tileOmzet.innerHTML =
+        '<div class="bt-row"><span class="bt-pill">Sistem</span><span class="bt-pill bt-on">Active</span></div>' +
+        '<div><h3>Pertumbuhan & Omzet Ekosistem</h3><p class="bt-d">Pantau seluruh order, total omzet, verifikasi pembayaran, dan keuangan gateway.</p></div>' +
+        '<div class="bt-btns" style="margin-top:auto"><a href="/kountole/users" class="bt-pri" style="text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center">Buka Portal Admin</a>' +
+        '<a href="/kountole/users#tab-pesanan" style="text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center">Kelola Billing</a></div>';
+      grid.appendChild(tileOmzet);
+
+      const tileSistem = document.createElement('article');
+      tileSistem.className = 'bt-tile bt-k bt-bot bt-s4 bt-r2 bt-sky bt-anim';
+      tileSistem.innerHTML =
+        '<div class="bt-row"><span class="bt-pill">Infrastruktur</span><span class="bt-pill bt-on">Online</span></div>' +
+        '<div><h3>Kesehatan Node & Audit Log</h3><p class="bt-d">Pantau load server, jejak aktivitas sistem, broadcast pesan, dan error log server.</p></div>' +
+        '<div class="bt-btns" style="margin-top:auto"><a href="/kountole/users#tab-sistem" class="bt-pri" style="text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center">Status Sistem</a>' +
+        '<a href="/kountole/users#tab-audit" style="text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center">Audit Log</a></div>';
+      grid.appendChild(tileSistem);
+
+      btAnimated = true;
+      renderSide();
+      return;
+    }
 
     const PL = {
       whatsapp: { c: 'bt-lime', n: 'WhatsApp', s: 'bt-s-wa' },
