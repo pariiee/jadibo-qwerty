@@ -5508,7 +5508,31 @@ body.page-dashboard .bt-tile.bt-skeleton {
   color: #151515 !important;
 }
 
-/* ══ Mobile Admin Responsive (<= 900px) ══ */
+/* Neo-Brutalist Action Popover */
+.action-popover {
+  background: #FFFFFF !important;
+  border: 2px solid #151515 !important;
+  border-radius: 16px !important;
+  box-shadow: 3px 3px 0px #151515 !important;
+  padding: 6px !important;
+}
+.action-popover .act-item {
+  color: #151515 !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  border-radius: 10px !important;
+}
+.action-popover .act-item:hover {
+  background: #F4F3FF !important;
+  color: #151515 !important;
+}
+.action-popover .act-danger {
+  color: #E11D48 !important;
+}
+.action-popover .act-danger:hover {
+  background: #FFF1F2 !important;
+  color: #E11D48 !important;
+}
 @media (max-width: 900px) {
   html body.page-admin .content.admin-bento-content {
     padding: 12px 0 32px !important;
