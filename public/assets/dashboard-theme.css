@@ -3771,7 +3771,9 @@ body.page-bot-config .term-panel {
   border-radius: 24px !important;
   box-shadow: 4px 4px 0px #151515 !important;
 }
-body.page-bot-config .term-head {
+.term-panel .term-head,
+body.page-bot-config .term-head,
+body.page-log .term-head {
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
@@ -3779,54 +3781,78 @@ body.page-bot-config .term-head {
   background: #202020 !important;
   border-bottom: 2px solid #2D2D2D !important;
 }
-body.page-bot-config .term-left {
+.term-panel .term-left,
+body.page-bot-config .term-left,
+body.page-log .term-left {
   display: flex !important;
   align-items: center !important;
   gap: 12px !important;
 }
-body.page-bot-config .term-dots {
+.term-panel .term-dots,
+body.page-bot-config .term-dots,
+body.page-log .term-dots {
   display: flex !important;
   align-items: center !important;
   gap: 6px !important;
 }
-body.page-bot-config .term-dots span {
+.term-panel .term-dots span,
+body.page-bot-config .term-dots span,
+body.page-log .term-dots span {
   width: 11px !important;
   height: 11px !important;
   border-radius: 50% !important;
   display: inline-block !important;
 }
-body.page-bot-config .term-dots .dot-r { background: #FF5F56 !important; }
-body.page-bot-config .term-dots .dot-y { background: #FFBD2E !important; }
-body.page-bot-config .term-dots .dot-g { background: #27C93F !important; }
+.term-panel .term-dots .dot-r,
+body.page-bot-config .term-dots .dot-r,
+body.page-log .term-dots .dot-r { background: #FF5F56 !important; }
+.term-panel .term-dots .dot-y,
+body.page-bot-config .term-dots .dot-y,
+body.page-log .term-dots .dot-y { background: #FFBD2E !important; }
+.term-panel .term-dots .dot-g,
+body.page-bot-config .term-dots .dot-g,
+body.page-log .term-dots .dot-g { background: #27C93F !important; }
 
-body.page-bot-config .term-title {
+.term-panel .term-title,
+body.page-bot-config .term-title,
+body.page-log .term-title {
   font-size: 13px !important;
   font-weight: 800 !important;
   color: #F8FAFC !important;
   letter-spacing: .02em !important;
   line-height: 1 !important;
 }
-body.page-bot-config .term-right {
+.term-panel .term-right,
+body.page-bot-config .term-right,
+body.page-log .term-right {
   display: flex !important;
   align-items: center !important;
   gap: 8px !important;
 }
-body.page-bot-config .term-right .state {
+.term-panel .term-right .state,
+body.page-bot-config .term-right .state,
+body.page-log .term-right .state {
   width: 8px !important;
   height: 8px !important;
   border-radius: 50% !important;
   background: #64748B !important;
 }
-body.page-bot-config .term-right .state.live {
+.term-panel .term-right .state.live,
+body.page-bot-config .term-right .state.live,
+body.page-log .term-right .state.live {
   background: #D8FF7A !important;
   box-shadow: 0 0 8px #D8FF7A !important;
 }
-body.page-bot-config .term-right .lbl {
+.term-panel .term-right .lbl,
+body.page-bot-config .term-right .lbl,
+body.page-log .term-right .lbl {
   font-size: 11.5px !important;
   font-weight: 700 !important;
   color: #94A3B8 !important;
 }
-body.page-bot-config .clear-btn {
+.term-panel .clear-btn,
+body.page-bot-config .clear-btn,
+body.page-log .clear-btn {
   background: #2A2A30 !important;
   border: 1.5px solid rgba(255, 255, 255, .25) !important;
   border-radius: 8px !important;
@@ -3837,7 +3863,9 @@ body.page-bot-config .clear-btn {
   cursor: pointer !important;
   transition: background .15s ease !important;
 }
-body.page-bot-config .clear-btn:hover {
+.term-panel .clear-btn:hover,
+body.page-bot-config .clear-btn:hover,
+body.page-log .clear-btn:hover {
   background: #3E3E48 !important;
 }
 
