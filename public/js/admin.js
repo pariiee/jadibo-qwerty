@@ -1150,4 +1150,27 @@
   window.tutupSaldo = tutupSaldo;
   window.simpanAdjust = simpanAdjust;
   window.kirimBroadcast = kirimBroadcast;
+
+  let ws = null;
+  function connectWS() {
+    try { if (ws) ws.close(); } catch {}
+    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+    ws = new WebSocket(proto + '://' + location.host);
+    ws.onopen = () => ws.send(JSON.stringify({ type: 'subscribe_user' }));
+    ws.onmessage = (e) => {
+      try {
+        const d = JSON.parse(e.data);
+        if (d.type === 'status' || d.type === 'order' || d.type === 'balance') {
+          const activePane = document.querySelector('section[id^="pane-"][style*="display: block"]');
+          if (activePane) {
+            if (activePane.id === 'pane-bot') muatBot();
+            else if (activePane.id === 'pane-order') muatOrder();
+            else if (activePane.id === 'pane-saldo') muatSaldo();
+          }
+        }
+      } catch {}
+    };
+    ws.onclose = () => setTimeout(connectWS, 4000);
+  }
+  connectWS();
 })();

@@ -47,7 +47,6 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Khusus asset auth: selalu Network First
   if (url.pathname.includes('auth.css') || url.pathname.includes('auth-page.js')) {
     event.respondWith(
       fetch(req).catch(() => caches.match(req))
@@ -55,19 +54,15 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 2. Static Asset (CSS, JS, Fonts, Images): Stale-While-Revalidate
   if (url.origin === self.origin && (url.pathname.startsWith('/assets/') || url.pathname.startsWith('/js/'))) {
     event.respondWith(
-      caches.match(req).then((cached) => {
-        const networkFetch = fetch(req).then((res) => {
-          if (res && res.status === 200) {
-            const clone = res.clone();
-            caches.open(CACHE_NAME).then((c) => c.put(req, clone));
-          }
-          return res;
-        }).catch(() => cached);
-        return cached || networkFetch;
-      })
+      fetch(req).then((res) => {
+        if (res && res.status === 200) {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then((c) => c.put(req, clone));
+        }
+        return res;
+      }).catch(() => caches.match(req))
     );
   }
 });

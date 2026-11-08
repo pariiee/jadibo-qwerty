@@ -1,14 +1,9 @@
-// Halaman ini dulunya inline <script>, jadi fungsi-fungsinya global.
-// CSP sekarang nggak ngebolehin script inline, jadi dibungkus fungsi biasa —
-// yang perlu dipanggil HTML diekspor ke window di bawah.
 (function () {
-// ── Session (cookie-based, no localStorage) ──────────────────────
   let botData = null;
   let isRunning = false;
   let ws = null;
   let statusPoller = null;
 
-  // id bisa slug ATAU nomor lama — pakai helper bersama, jangan regex sendiri.
   const botId = botIdDariPath(location.pathname);
   if (!botId) { location.href = '/dashboard'; }
 
@@ -24,7 +19,6 @@
     } catch { return null; }
   }
 
-  // ── Multi-tab sync via BroadcastChannel ──────────────────────────
   const bc = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('qwertygate_bot') : null;
   function broadcast(payload) {
     if (!bc || !botId) return;
@@ -147,10 +141,6 @@
     toggleEl(document.getElementById('w-banner'), !isDc, 'flex');
     toggleEl(document.getElementById('w-qris'), !isDc, 'flex');
 
-    // is_running = "user mau bot ini jalan", BUKAN "socket kebuka"
-    // (engine/whatsappEngine.js:347). Jadi pas WA drop koneksi dan engine
-    // reconnect 5 detik lagi, halaman ini tetap 'connected' — bukan kedip
-    // 'Disconnected' tiap kali WA mutusin koneksi.
     updateStatus(b.is_running ? 'connected' : b.status);
 
     document.getElementById('cfg-name').value    = b.bot_name || '';
@@ -170,8 +160,6 @@
     setPfxVal(b.prefix ?? '.');
     document.getElementById('cfg-footer').value  = b.footer_text || '';
     document.getElementById('cfg-desc').value    = b.description || '';
-    // Token SENGAJA nggak di-echo: yang dikirim publicBot() cuma '•••'. Kalau
-    // diisi di sini, PATCH bakal ngirim '•••' dan ketiban token asli di DB.
     document.getElementById('cfg-token').value   = '';
     document.getElementById('cfg-channel').value = b.channel_id || '';
     document.getElementById('cfg-qris').value    = b.qris_url || '';
@@ -210,8 +198,6 @@
   }
 
   async function loadLogs() {
-    // Guard: kalau WS sudah keburu nyambung, 80 baris riwayat cuma numpuk di
-    // bawah log live yang sudah lewat — dan browser nggak auto-scroll ke atas.
     if (ws && ws.readyState === WebSocket.OPEN) return;
     const d = await api('/api/bots/' + botId + '/logs?limit=80');
     if (!d?.ok) return;
@@ -219,8 +205,6 @@
     scrollTerm();
   }
 
-  // Server kirim created_at UTC (kolom MySQL default TIMESTAMP).
-  // Tanpa 'Z', JS bacanya sebagai waktu lokal → jam log meleset sebesar offset.
   function logTime(v) {
     if (!v) return new Date().toLocaleTimeString('id-ID', { hour12: false });
     const s = /Z|[+-]\d\d:?\d\d$/.test(v) ? v : String(v).replace(' ', 'T') + 'Z';
@@ -465,22 +449,13 @@
   }
   function stopPolling() { if (statusPoller) { clearInterval(statusPoller); statusPoller = null; } }
 
-  // ── Save config ──────────────────────────────────────────────────
   function saveConfig() { document.getElementById('cfg-form').requestSubmit(); }
 
-  // Token yang boleh dikirim: apa pun yang diketik user, KECUALI mask server.
-  // '•' cuma muncul kalau server yang nulis (publicBot). Kalau ada '•', artinya
-  // itu bukan token — kirim undefined biar DB nggak ketiban.
   function tokenBaru() {
     const v = document.getElementById('cfg-token').value.trim();
     return v && !v.includes('•') ? v : undefined;
   }
 
-  // ── Import / Export config ───────────────────────────────────────
-  // File export isinya publicBot() — token Telegram sudah DIMASK '•••'.
-  // Karena itu import NGGAK nulis apa-apa ke server: dia cuma ngisi form, user
-  // yang nekan Simpan. Kalau import auto-PATCH, '•••' bakal ketulis ke DB dan
-  // token Telegram asli user hilang tanpa pesan error apa pun.
   async function doImport(file) {
     const el = document.getElementById('imp-msg');
     const imp = (m, t) => { el.textContent = m; el.className = 'ctrl-msg show' + (t === 'err' ? ' err' : ''); };
@@ -530,10 +505,6 @@
       prefix: document.getElementById('cfg-prefix').value.trim(),
       footer_text: document.getElementById('cfg-footer').value.trim(),
       description: document.getElementById('cfg-desc').value.trim(),
-      // Token sengaja TIDAK dikirim dari form. Nilai di input itu '•••' (hasil
-      // mask server), dan PATCH bakal nulis '•••' ke DB → token asli hilang.
-      // Kosong + ada • → biarin, cuma diisi user yang mau ganti. Ganti token
-      // lewat field itu cuma jalan kalau user ngetik token beneran (bukan •).
       telegram_token: botData?.platform === 'telegram' ? (tokenBaru() || undefined) : undefined,
       discord_token: botData?.platform === 'discord' ? (tokenBaru() || undefined) : undefined,
       channel_id: document.getElementById('cfg-channel').value.trim() || null,

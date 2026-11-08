@@ -416,9 +416,7 @@ const halaman = (nama, kode = 200) => (_, res) => {
   try {
     const html = fs.readFileSync(path.join(PUBLIC_HTML, nama), 'utf8')
       .replace(INCLUDE_RE, (_, f) =>
-        fs.readFileSync(path.join(PUBLIC_HTML, 'partials', f), 'utf8'))
-      .replace(/(\/(?:assets|js)\/[\w.-]+\.(?:css|js))"/g,
-        (m, p) => `${p}?v=${mtimeAset(p)}"`);
+        fs.readFileSync(path.join(PUBLIC_HTML, 'partials', f), 'utf8'));
     res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.status(kode).type('html').send(html);
   } catch (e) {
@@ -540,23 +538,49 @@ app.use((err, req, res, _next) => {
 // ─── WebSocket Hub ────────────────────────────────────────────────────────────
 // Map: botId -> Set<WebSocket>
 const botSubscribers = new Map();
+const userSubscribers = new Map();
 
 wss.on('connection', (ws, req) => {
   let subscribedBotId = null;
+  let subscribedUserId = null;
 
   ws.on('message', async (raw) => {
     try {
       const data = JSON.parse(raw);
 
-      // Client sends { type: 'subscribe', botId: 3, token: '...' }
-      if (data.type === 'subscribe' && data.botId) {
-        // Verify JWT: prioritas dari cookie httpOnly, fallback payload token (legacy)
-        const jwt = require('jsonwebtoken');
+      const ambilToken = () => {
         let token = data.token;
         if (!token) {
           const m = (req.headers.cookie || '').match(/(?:^|;\s*)token=([^;]+)/);
           if (m) token = decodeURIComponent(m[1]);
         }
+        return token;
+      };
+
+      if (data.type === 'subscribe_user') {
+        const jwt = require('jsonwebtoken');
+        const token = ambilToken();
+        let decoded = null;
+        try {
+          decoded = jwt.verify(token, process.env.JWT_SECRET || 'changeme');
+        } catch {
+          ws.send(JSON.stringify({ type: 'error', message: 'Unauthorized' }));
+          return;
+        }
+        subscribedUserId = decoded.id;
+        if (!userSubscribers.has(subscribedUserId)) {
+          userSubscribers.set(subscribedUserId, new Set());
+        }
+        userSubscribers.get(subscribedUserId).add(ws);
+        ws.send(JSON.stringify({ type: 'subscribed_user', userId: subscribedUserId }));
+        return;
+      }
+
+      // Client sends { type: 'subscribe', botId: 3, token: '...' }
+      if (data.type === 'subscribe' && data.botId) {
+        // Verify JWT: prioritas dari cookie httpOnly, fallback payload token (legacy)
+        const jwt = require('jsonwebtoken');
+        const token = ambilToken();
 
         let decoded = null;
         try {
@@ -640,6 +664,11 @@ wss.on('connection', (ws, req) => {
         redisBus.unsubscribeBot(subscribedBotId);
       }
     }
+    if (subscribedUserId && userSubscribers.has(subscribedUserId)) {
+      const set = userSubscribers.get(subscribedUserId);
+      set.delete(ws);
+      if (set.size === 0) userSubscribers.delete(subscribedUserId);
+    }
   });
 
   ws.on('error', () => {});
@@ -665,11 +694,17 @@ const redisBus = require('./config/redisBus');
 const INSTANCE_ID = Math.random().toString(36).slice(2);
 
 const broadcastLokal = (data) => {
-  const subs = botSubscribers.get(data.botId);
-  if (!subs || subs.size === 0) return;
   const payload = JSON.stringify(data);
-  subs.forEach((ws) => {
-    if (ws.readyState === WebSocket.OPEN) ws.send(payload);
+  const subs = botSubscribers.get(data.botId);
+  if (subs && subs.size > 0) {
+    subs.forEach((ws) => {
+      if (ws.readyState === WebSocket.OPEN) ws.send(payload);
+    });
+  }
+  userSubscribers.forEach((sockets) => {
+    sockets.forEach((ws) => {
+      if (ws.readyState === WebSocket.OPEN) ws.send(payload);
+    });
   });
 };
 

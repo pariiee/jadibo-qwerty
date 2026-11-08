@@ -1,6 +1,3 @@
-// Halaman Log Aktivitas (/log). Datanya dari GET /api/bots/:id/logs — endpoint
-// itu sudah ada dan sudah ter-scope kepemilikan (dipakai modal log di /admin),
-// jadi halaman ini nol endpoint baru.
 (function () {
   const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');

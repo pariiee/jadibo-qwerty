@@ -1,7 +1,4 @@
-// Halaman statistik bot. Nol WebSocket — angka di sini nggak perlu realtime,
-// jadi cukup satu fetch pas buka + refresh manual. Live log ada di /config/:id.
 (function () {
-  // id bisa slug ATAU nomor lama — pakai helper bersama, jangan regex sendiri.
   const botId = botIdDariPath(location.pathname);
   if (!botId) { location.href = '/dashboard'; return; }
 
@@ -246,8 +243,6 @@
     document.getElementById('hdr-icon').innerHTML = platIcon(b.platform, 18);
     document.getElementById('btn-config').href = '/config/' + botHref(b);
 
-    // is_running = "user mau bot ini jalan", bukan "socket kebuka" — sama seperti
-    // di halaman config, biar nggak kedip Offline tiap WA mutusin koneksi.
     const st = b.is_running ? 'connected' : b.status;
     const map = { connected: ['on', 'Online'], connecting: ['wait', 'Connecting'], qr_pending: ['wait', 'QR Pending'] };
     const [c, l] = map[st] || ['', 'Offline'];
@@ -255,7 +250,24 @@
     document.getElementById('hdr-status').textContent = l;
 
     load();
-    setInterval(() => { if (!document.hidden) load(); }, 5000);
+
+    let ws = null;
+    function connectWS() {
+      try { if (ws) ws.close(); } catch {}
+      const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+      ws = new WebSocket(proto + '://' + location.host);
+      ws.onopen = () => {
+        ws.send(JSON.stringify({ type: 'subscribe', botId: b.id || botId }));
+      };
+      ws.onmessage = (e) => {
+        try {
+          const msg = JSON.parse(e.data);
+          if (msg.type === 'log' || msg.type === 'status') load();
+        } catch {}
+      };
+      ws.onclose = () => setTimeout(connectWS, 4000);
+    }
+    connectWS();
   })();
 
   window.tambahRespon = async function () {

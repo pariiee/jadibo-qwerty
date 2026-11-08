@@ -1,8 +1,4 @@
-// Halaman ini dulunya inline <script>, jadi fungsi-fungsinya global.
-// CSP sekarang nggak ngebolehin script inline, jadi dibungkus fungsi biasa —
-// yang perlu dipanggil HTML diekspor ke window di bawah.
 (function () {
-// ── Session via cookie — tidak pakai localStorage ────────────────
   let me = null;
   function typeWriter(el, text, speed) {
     if (!el || !text) return;
@@ -439,12 +435,31 @@
     };
   }
 
-  // ── Live stats ──────────────────────────────────────────────────
-  // Socket dashboard dibuang bareng indikator "bot online" di topbar — satu-satunya
-  // yang dia dengerin cuma pesan `stats`. Log live tetap jalan di /bot/:id
-  // (bot-detail.js punya socket sendiri).
+  let ws = null;
+  function connectWS() {
+    try { if (ws) ws.close(); } catch {}
+    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+    ws = new WebSocket(proto + '://' + location.host);
+    ws.onopen = () => {
+      ws.send(JSON.stringify({ type: 'subscribe_user' }));
+    };
+    ws.onmessage = (e) => {
+      try {
+        const d = JSON.parse(e.data);
+        if (d.type === 'status' && d.botId) {
+          const b = bots.find(x => x.id === d.botId);
+          if (b) {
+            b.status = d.payload.status;
+            b.is_running = (d.payload.status === 'connected') ? 1 : 0;
+            renderBots();
+            renderStats();
+          }
+        }
+      } catch {}
+    };
+    ws.onclose = () => setTimeout(connectWS, 4000);
+  }
 
-  // Setup toggle intip / sembunyikan token bot
   const btnToggle = document.getElementById('toggle-token-btn');
   if (btnToggle) {
     btnToggle.addEventListener('click', (e) => {
@@ -463,6 +478,7 @@
     if (!(await whoami())) return;
     await loadBots();
     muatPengumuman();
+    connectWS();
   })();
 
   // ── Pengumuman dari admin ───────────────────────────────────────
