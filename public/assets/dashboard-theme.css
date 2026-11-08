@@ -787,10 +787,16 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 .faq-a ol, .faq-a ul{margin:6px 0 8px!important;padding-left:16px!important}
 .faq-a li{margin-bottom:4px!important}
 .faq-a p{margin:5px 0!important}
-.faq-a code{
-  font-family:monospace!important;font-size:11.5px!important;
-  background:rgba(255,255,255,0.07)!important;border:1px solid rgba(255,255,255,0.08)!important;
-  padding:1px 5px!important;border-radius:5px!important;color:#c7d2fe!important;
+.faq-a code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  background: #F4F3FF !important;
+  border: 1.5px solid #151515 !important;
+  padding: 2px 6px !important;
+  border-radius: 6px !important;
+  color: #151515 !important;
+  box-shadow: 1px 1px 0px #151515 !important;
 }
 
 /* Matikan switch tema & sembunyikan sidebar permanen */
