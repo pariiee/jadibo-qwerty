@@ -5471,7 +5471,9 @@ body.page-dashboard #add-overlay .modal .field .hint {
   margin-top: 4px !important;
 }
 
-body.page-dashboard #add-overlay .modal .inp {
+body.page-dashboard #add-overlay .modal .inp,
+body.page-dashboard #add-overlay input.inp,
+#f-name, #f-botnum, #f-owner, #f-token {
   height: 44px !important;
   padding: 0 14px !important;
   border-radius: 14px !important;
@@ -5479,6 +5481,7 @@ body.page-dashboard #add-overlay .modal .inp {
   border: 2px solid #151515 !important;
   box-shadow: 2px 2px 0px #151515 !important;
   color: #151515 !important;
+  -webkit-text-fill-color: #151515 !important;
   font-size: 14px !important;
   font-weight: 700 !important;
   outline: none !important;
@@ -5486,8 +5489,11 @@ body.page-dashboard #add-overlay .modal .inp {
   transition: all .15s ease !important;
 }
 
-body.page-dashboard #add-overlay .modal .inp:focus {
+body.page-dashboard #add-overlay .modal .inp:focus,
+#f-name:focus, #f-botnum:focus, #f-owner:focus, #f-token:focus {
   background: #F4F3FF !important;
+  color: #151515 !important;
+  -webkit-text-fill-color: #151515 !important;
   border-color: #7A63F0 !important;
   box-shadow: 3px 3px 0px #7A63F0 !important;
 }
