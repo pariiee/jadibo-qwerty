@@ -58,27 +58,29 @@
       </div>
 
       <!-- Terminal Box Bento Neo-Brutalist -->
-      <div class="log-terminal-card" id="terminal-card">
-        <div class="log-term-header">
-          <div class="log-term-dots">
-            <span class="dot dot-r"></span>
-            <span class="dot dot-y"></span>
-            <span class="dot dot-g"></span>
+      <div class="panel term-panel log-terminal-card" id="terminal-card">
+        <div class="term-head">
+          <div class="term-left">
+            <div class="term-dots" aria-hidden="true">
+              <span class="dot-r"></span>
+              <span class="dot-y"></span>
+              <span class="dot-g"></span>
+            </div>
+            <span class="term-title" id="log-term-title">Live Terminal</span>
           </div>
-          <span class="log-term-title" id="log-term-title">BOT LIVE LOG</span>
-          <div class="log-term-right">
-            <span class="log-pulse-dot"></span>
-            <span class="log-term-status">LIVE STREAM</span>
+          <div class="term-right">
+            <span class="state" id="ws-dot"></span><span class="lbl" id="ws-lbl">Disconnected</span>
+            <button class="clear-btn" id="btn-clear-terminal" title="Bersihkan riwayat log bot">Clear</button>
           </div>
         </div>
-        <div class="terminal" id="terminal">
-          <p class="log-line term-hint">// memuat log aktivitas…</p>
+        <div id="terminal">
+          <p class="log-line term-hint">// Memuat log aktivitas…</p>
         </div>
       </div>
     </div>
   </main>
 </div>
 
-<script src="/js/log.js?v=2.3" defer></script>
+<script src="/js/log.js?v=2.4" defer></script>
 </body>
 </html>

@@ -366,24 +366,46 @@
     const tokenInp = document.getElementById('f-token');
     const hintToken = document.getElementById('hint-token');
 
-    const selPrefix = document.getElementById('f-prefix');
+    const hiddenPfx = document.getElementById('f-prefix');
+    const chipWrap = document.getElementById('f-pfx-chips');
+    const setPfxVal = (v) => {
+      if (hiddenPfx) hiddenPfx.value = v;
+      if (chipWrap) {
+        const arr = String(v || '').split('');
+        chipWrap.querySelectorAll('.pfx-chip').forEach(c => c.classList.toggle('active', arr.includes(c.dataset.pfx)));
+      }
+    };
+
     if (isTg) {
       if (tokenLbl) tokenLbl.textContent = 'Token Telegram Bot *';
       if (tokenInp) tokenInp.placeholder = '123456:ABC-DEF...';
       if (hintToken) hintToken.innerHTML = 'Ambil token via <a href="https://t.me/BotFather" target="_blank" rel="noopener" style="color:#7A63F0;font-weight:700;text-decoration:underline">@BotFather</a> di Telegram.';
-      if (selPrefix) selPrefix.value = '/';
+      setPfxVal('/');
       lbl.textContent = 'Owner Telegram ID'; inp.placeholder = 'Contoh: 123456789'; hint.textContent = 'Telegram user ID pemilik bot — untuk akses command owner-only';
     } else if (isDc) {
       if (tokenLbl) tokenLbl.textContent = 'Token Bot Discord *';
       if (tokenInp) tokenInp.placeholder = 'Bot token dari Discord Developer Portal';
       if (hintToken) hintToken.innerHTML = 'Ambil token di <a href="https://discord.com/developers/applications" target="_blank" rel="noopener" style="color:#7A63F0;font-weight:700;text-decoration:underline">Discord Developer Portal → Bot</a>. <a href="/panduan#panduan-discord" target="_blank" style="color:#7A63F0;text-decoration:underline">Lihat Panduan</a>';
-      if (selPrefix) selPrefix.value = '!';
+      setPfxVal('!');
       lbl.textContent = 'Owner Discord ID'; inp.placeholder = 'Contoh: 123456789012345678'; hint.textContent = 'Discord User ID pemilik bot (aktifkan Developer Mode lalu Copy ID)';
     } else {
       if (hintToken) hintToken.innerHTML = '';
-      if (selPrefix) selPrefix.value = '.';
+      setPfxVal('.');
       lbl.textContent = 'Nomor Owner'; inp.placeholder = '628xxxxxxxxxx'; hint.textContent = 'Nomor pemilik bot — untuk akses command owner-only';
     }
+  }
+
+  const chipWrap = document.getElementById('f-pfx-chips');
+  if (chipWrap) {
+    chipWrap.addEventListener('click', (e) => {
+      const btn = e.target.closest('.pfx-chip');
+      if (!btn) return;
+      btn.classList.toggle('active');
+      const act = Array.from(chipWrap.querySelectorAll('.pfx-chip.active')).map(b => b.dataset.pfx);
+      if (!act.length) { btn.classList.add('active'); act.push(btn.dataset.pfx); }
+      const inp = document.getElementById('f-prefix');
+      if (inp) inp.value = act.join('');
+    });
   }
 
   document.getElementById('add-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeAdd(); });

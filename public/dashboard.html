@@ -133,15 +133,16 @@
         </div>
         <div class="field"><label for="f-owner">Nomor owner</label><input class="inp" id="f-owner" inputmode="tel" placeholder="628xxxxxxxxxx"></div>
         <div class="field">
-          <label for="f-prefix">Prefix</label>
-          <select class="inp" id="f-prefix">
-            <option value=".">.</option>
-            <option value="/">/</option>
-            <option value="!">!</option>
-            <option value="#">#</option>
-            <option value="?">?</option>
-            <option value="$">$</option>
-          </select>
+          <label>Prefix Command <small style="font-weight:600;color:var(--mute)">(Bisa pilih lebih dari satu)</small></label>
+          <div class="pfx-chips" id="f-pfx-chips">
+            <button type="button" class="pfx-chip active" data-pfx=".">.</button>
+            <button type="button" class="pfx-chip" data-pfx="/">/</button>
+            <button type="button" class="pfx-chip" data-pfx="!">!</button>
+            <button type="button" class="pfx-chip" data-pfx="#">#</button>
+            <button type="button" class="pfx-chip" data-pfx="?">?</button>
+            <button type="button" class="pfx-chip" data-pfx="$">$</button>
+          </div>
+          <input type="hidden" id="f-prefix" value="." />
         </div>
         <input id="f-footer" type="hidden" value="Powered by qwertygate">
         <div class="form-error" id="add-error" role="alert"></div>

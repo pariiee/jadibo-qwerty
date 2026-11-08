@@ -37,16 +37,17 @@
       <div class="hint">Akses command owner-only</div>
     </div>
 
-    <div class="field" id="w-prefix">
-      <label for="cfg-prefix">Prefix</label>
-      <select class="inp" id="cfg-prefix">
-        <option value=".">.</option>
-        <option value="/">/</option>
-        <option value="!">!</option>
-        <option value="#">#</option>
-        <option value="?">?</option>
-        <option value="$">$</option>
-      </select>
+    <div class="field f-full" id="w-prefix">
+      <label>Prefix Command <small style="font-weight:600;color:#5E5C70">(Bisa pilih lebih dari satu)</small></label>
+      <div class="pfx-chips" id="cfg-pfx-chips">
+        <button type="button" class="pfx-chip" data-pfx=".">.</button>
+        <button type="button" class="pfx-chip" data-pfx="/">/</button>
+        <button type="button" class="pfx-chip" data-pfx="!">!</button>
+        <button type="button" class="pfx-chip" data-pfx="#">#</button>
+        <button type="button" class="pfx-chip" data-pfx="?">?</button>
+        <button type="button" class="pfx-chip" data-pfx="$">$</button>
+      </div>
+      <input type="hidden" id="cfg-prefix" value="." />
     </div>
     <div class="field" id="w-daily">
       <label for="cfg-daily">Limit Harian</label>

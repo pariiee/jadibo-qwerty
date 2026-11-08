@@ -157,12 +157,17 @@
     document.getElementById('cfg-botnum').value  = b.bot_number || '';
     document.getElementById('cfg-owner').value   = b.owner_number || '';
     document.getElementById('cfg-ownername').value = b.owner_name || '';
-    const selPfx = document.getElementById('cfg-prefix');
-    if (selPfx) {
-      const pfx = b.prefix ?? '.';
-      if (!Array.from(selPfx.options).some(o => o.value === pfx)) selPfx.add(new Option(pfx, pfx));
-      selPfx.value = pfx;
-    }
+    const hiddenPfx = document.getElementById('cfg-prefix');
+    const chipWrap = document.getElementById('cfg-pfx-chips');
+    const setPfxVal = (v) => {
+      const pfxStr = String(v || '.');
+      if (hiddenPfx) hiddenPfx.value = pfxStr;
+      if (chipWrap) {
+        const arr = pfxStr.split('');
+        chipWrap.querySelectorAll('.pfx-chip').forEach(c => c.classList.toggle('active', arr.includes(c.dataset.pfx)));
+      }
+    };
+    setPfxVal(b.prefix ?? '.');
     document.getElementById('cfg-footer').value  = b.footer_text || '';
     document.getElementById('cfg-desc').value    = b.description || '';
     // Token SENGAJA nggak di-echo: yang dikirim publicBot() cuma '•••'. Kalau
@@ -578,6 +583,18 @@
       btnTxt.textContent = 'Import (.json)';
     }
   };
+  const cfgChips = document.getElementById('cfg-pfx-chips');
+  if (cfgChips) {
+    cfgChips.addEventListener('click', (e) => {
+      const btn = e.target.closest('.pfx-chip');
+      if (!btn) return;
+      btn.classList.toggle('active');
+      const act = Array.from(cfgChips.querySelectorAll('.pfx-chip.active')).map(b => b.dataset.pfx);
+      if (!act.length) { btn.classList.add('active'); act.push(btn.dataset.pfx); }
+      const inp = document.getElementById('cfg-prefix');
+      if (inp) inp.value = act.join('');
+    });
+  }
   document.getElementById('btn-del').onclick = confirmDelete;
   // Pemilih bot: id-nya ada di URL, jadi pindah bot = pindah URL (reload).
   // Nol state baru, nol risiko "setengah ter-render".
