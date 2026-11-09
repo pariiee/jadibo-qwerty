@@ -588,7 +588,7 @@ async function webhook(req, res) {
 async function adminOrders(req, res) {
   const status = String(req.query.status || '').trim();
   const [rows] = await pool.execute(
-    `SELECT o.*, u.username FROM orders o JOIN users u ON u.id = o.user_id
+    `SELECT o.*, COALESCE(u.username, 'User #' + o.user_id) as username FROM orders o LEFT JOIN users u ON u.id = o.user_id
      ${status ? 'WHERE o.status = ?' : ''}
      ORDER BY o.id DESC LIMIT 100`,
     status ? [status] : []
