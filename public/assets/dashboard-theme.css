@@ -5503,9 +5503,15 @@ html body.page-admin .modal-close:hover {
 
 /* Modal Add Bot Form Neo-Brutalist */
 body.page-dashboard #add-overlay .modal .field {
-  display: flex !important;
-  flex-direction: column !important;
-  margin-bottom: 14px !important;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 14px;
+}
+
+body.page-dashboard #add-overlay .modal .field[style*="display: none"],
+body.page-dashboard #add-overlay .modal #wrap-botnum[style*="display: none"],
+body.page-dashboard #add-overlay .modal #wrap-token[style*="display: none"] {
+  display: none !important;
 }
 
 body.page-dashboard #add-overlay .modal .field label {

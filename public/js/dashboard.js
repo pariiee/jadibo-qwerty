@@ -515,8 +515,10 @@
     const isTg = platform === 'telegram';
     const isDc = platform === 'discord';
     const isTokenBased = isTg || isDc;
-    document.getElementById('wrap-token').style.display = isTokenBased ? '' : 'none';
-    document.getElementById('wrap-botnum').style.display = isTokenBased ? 'none' : '';
+    const wToken = document.getElementById('wrap-token');
+    const wBotnum = document.getElementById('wrap-botnum');
+    if (wToken) wToken.style.setProperty('display', isTokenBased ? 'flex' : 'none', 'important');
+    if (wBotnum) wBotnum.style.setProperty('display', isTokenBased ? 'none' : 'flex', 'important');
     const lbl = document.getElementById('lbl-owner');
     const inp = document.getElementById('f-owner');
     const hint = document.getElementById('hint-owner');
