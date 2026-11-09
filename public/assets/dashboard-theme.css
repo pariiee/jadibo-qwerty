@@ -883,7 +883,16 @@ body.is-kawula #nav-log,
 body.is-kawula #nav-panduan,
 body.is-kawula #dx-add,
 body.is-kawula .bt-promo,
-body.is-kawula .bt-add {
+body.is-kawula .bt-add,
+body.is-kawula .pop-menu a[href="/billing"],
+body.is-kawula .pop-menu a[href="/saldo"],
+body.is-kawula .pop-menu a[href="/pricing"],
+body.is-kawula #drw-command,
+body.is-kawula #drw-log,
+body.is-kawula #drw-panduan,
+body.is-kawula #drw-billing,
+body.is-kawula #drw-saldo,
+body.is-kawula #drw-pricing {
   display: none !important;
 }
 

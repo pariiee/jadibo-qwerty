@@ -68,6 +68,16 @@
       if (trialBtn) trialBtn.style.display = 'none';
       const promoCard = document.querySelector('.bt-promo');
       if (promoCard) promoCard.style.display = 'none';
+
+      const popMenu = document.querySelector('.pop-menu');
+      if (popMenu && !document.getElementById('pop-admin-portal')) {
+        const a = document.createElement('a');
+        a.id = 'pop-admin-portal';
+        a.href = '/kountole/users';
+        a.className = 'pop-item';
+        a.innerHTML = '<svg class="nv-i" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg><span>Portal Admin</span>';
+        popMenu.insertBefore(a, popMenu.firstChild);
+      }
     }
 
     renderStats();
