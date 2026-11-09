@@ -53,13 +53,15 @@
     if (nd) nd.classList.add('on', 'active');
 
     if (me.is_superadmin) {
+      ['nav-command', 'nav-log', 'nav-panduan'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+      });
+
       const btnAdd = document.getElementById('dx-add');
-      if (btnAdd) {
-        btnAdd.innerHTML = 'Portal Admin<span><svg class="i" viewBox="0 0 24 24"><path d="M7 17 17 7M8 7h9v9"/></svg></span>';
-        btnAdd.onclick = () => location.href = '/kountole/users';
-      }
+      if (btnAdd) btnAdd.style.display = 'none';
       const heroLead = document.querySelector('.bt-hero .bt-lead');
-      if (heroLead) heroLead.textContent = 'Ringkasan ekosistem qwertygate, omzet transaksi, dan kesehatan infrastruktur sistem.';
+      if (heroLead) heroLead.textContent = 'Monitoring telemetri ekosistem qwertygate, omzet transaksi, dan performa server.';
       const trialBtn = document.querySelector('.bt-peach .bt-pill-btn');
       if (trialBtn) trialBtn.style.display = 'none';
       const promoCard = document.querySelector('.bt-promo');
@@ -216,15 +218,14 @@
     };
 
     if (me?.is_superadmin) {
-      txt('st-role', 'Kawula', 'ok');
-      const subRole = document.getElementById('st-role-sub');
-      if (subRole) subRole.textContent = 'Super Administrator';
-
       const lbOnline = document.querySelector('.bt-purple .bt-lb');
       if (lbOnline) lbOnline.innerHTML = '<span class="bt-ic"><svg class="i" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>Total Omzet';
 
+      const lbRole = document.querySelector('.bt-lav .bt-lb');
+      if (lbRole) lbRole.innerHTML = '<span class="bt-ic"><svg class="i" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>RAM Server';
+
       const lbSlot = document.querySelector('.bt-sky .bt-lb');
-      if (lbSlot) lbSlot.innerHTML = '<span class="bt-ic"><svg class="i" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>RAM & Disk';
+      if (lbSlot) lbSlot.innerHTML = '<span class="bt-ic"><svg class="i" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg></span>Disk Server';
 
       const lbExp = document.querySelector('.bt-peach .bt-lb');
       if (lbExp) lbExp.innerHTML = '<span class="bt-ic"><svg class="i" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4"/></svg></span>Transaksi';
@@ -249,13 +250,13 @@
             const ramPct = r ? Math.round((r.terpakai / r.total) * 100) : 0;
             const diskPct = dk ? Math.round((dk.terpakai / dk.total) * 100) : 0;
 
-            txt('st-slot', `${ramPct}% · Disk ${diskPct}%`, (ramPct > 85 || diskPct > 85) ? 'warn' : 'ok');
+            txt('st-role', ramPct + '%', ramPct > 85 ? 'warn' : 'ok');
+            const subRole = document.getElementById('st-role-sub');
+            if (subRole && r) subRole.textContent = Math.round(r.terpakai / 1048576) + ' MB / ' + Math.round(r.total / 1048576) + ' MB';
+
+            txt('st-slot', diskPct + '%', diskPct > 85 ? 'warn' : 'ok');
             const subSlot = document.getElementById('st-slot-sub');
-            if (subSlot) {
-              const rMb = r ? Math.round(r.terpakai / 1048576) + ' MB' : '';
-              const dGb = dk ? (dk.terpakai / 1073741824).toFixed(1) + '/' + (dk.total / 1073741824).toFixed(1) + ' GB' : '';
-              subSlot.textContent = `${rMb} RAM · ${dGb} Disk`;
-            }
+            if (subSlot && dk) subSlot.textContent = (dk.terpakai / 1073741824).toFixed(1) + ' GB / ' + (dk.total / 1073741824).toFixed(1) + ' GB';
           }
         });
       };
@@ -325,23 +326,81 @@
     grid.innerHTML = '';
 
     if (me?.is_superadmin) {
-      const tileOmzet = document.createElement('article');
-      tileOmzet.className = 'bt-tile bt-k bt-bot bt-s4 bt-r2 bt-lime bt-anim';
-      tileOmzet.innerHTML =
-        '<div class="bt-row"><span class="bt-pill">Sistem</span><span class="bt-pill bt-on">Active</span></div>' +
-        '<div><h3>Pertumbuhan & Omzet Ekosistem</h3><p class="bt-d">Pantau seluruh order, total omzet, verifikasi pembayaran, dan keuangan gateway.</p></div>' +
-        '<div class="bt-btns" style="margin-top:auto"><a href="/kountole/users" class="bt-pri" style="text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center">Buka Portal Admin</a>' +
-        '<a href="/kountole/users#tab-pesanan" style="text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center">Kelola Billing</a></div>';
-      grid.appendChild(tileOmzet);
+      const tileChart = document.createElement('article');
+      tileChart.className = 'bt-tile bt-k bt-s6 bt-r2 bt-lime bt-anim';
+      tileChart.style.minHeight = '280px';
+      tileChart.innerHTML =
+        '<div class="bt-row"><span class="bt-pill">Grafik Sistem</span><span class="bt-pill bt-on">14 Hari Terakhir</span></div>' +
+        '<div style="margin:8px 0 16px"><h3 style="font-size:18px;font-weight:800;letter-spacing:-.02em">Omzet & Pertumbuhan Penjualan</h3>' +
+        '<p class="bt-d" style="font-size:12.5px;color:var(--bt-mute)">Grafik akumulasi transaksi dan nominal gateway realtime.</p></div>' +
+        '<div id="super-chart" style="width:100%;height:140px;display:flex;align-items:flex-end;gap:6px;padding-top:10px;border-bottom:2px solid #151515"></div>' +
+        '<div id="super-chart-labels" style="width:100%;display:flex;justify-content:space-between;padding-top:6px;font-size:10.5px;font-weight:700;color:#151515"></div>';
+      grid.appendChild(tileChart);
 
-      const tileSistem = document.createElement('article');
-      tileSistem.className = 'bt-tile bt-k bt-bot bt-s4 bt-r2 bt-sky bt-anim';
-      tileSistem.innerHTML =
-        '<div class="bt-row"><span class="bt-pill">Infrastruktur</span><span class="bt-pill bt-on">Online</span></div>' +
-        '<div><h3>Kesehatan Node & Audit Log</h3><p class="bt-d">Pantau load server, jejak aktivitas sistem, broadcast pesan, dan error log server.</p></div>' +
-        '<div class="bt-btns" style="margin-top:auto"><a href="/kountole/users#tab-sistem" class="bt-pri" style="text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center">Status Sistem</a>' +
-        '<a href="/kountole/users#tab-audit" style="text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center">Audit Log</a></div>';
-      grid.appendChild(tileSistem);
+      const tileTable = document.createElement('article');
+      tileTable.className = 'bt-tile bt-k bt-s6 bt-r2 bt-lav bt-anim';
+      tileTable.style.minHeight = '280px';
+      tileTable.innerHTML =
+        '<div class="bt-row"><span class="bt-pill">Aktivitas</span><span class="bt-pill bt-on">Realtime</span></div>' +
+        '<div style="margin:8px 0 12px"><h3 style="font-size:18px;font-weight:800;letter-spacing:-.02em">Transaksi Terbaru</h3>' +
+        '<p class="bt-d" style="font-size:12.5px;color:var(--bt-mute)">Daftar order masuk terbaru di ekosistem qwertygate.</p></div>' +
+        '<div class="tbl-wrap" style="width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;margin-top:auto">' +
+          '<table style="width:100%;border-collapse:collapse;font-size:12px;font-weight:600;color:#151515;text-align:left">' +
+            '<thead><tr style="border-bottom:2px solid #151515"><th style="padding:6px 8px">ID ORDER</th><th style="padding:6px 8px">NOMINAL</th><th style="padding:6px 8px">STATUS</th><th style="padding:6px 8px">WAKTU</th></tr></thead>' +
+            '<tbody id="super-order-rows"><tr><td colspan="4" style="padding:12px;text-align:center;color:var(--bt-mute)">Memuat transaksi...</td></tr></tbody>' +
+          '</table>' +
+        '</div>';
+      grid.appendChild(tileTable);
+
+      const updateSuperGrid = () => {
+        api('/api/admin/pendapatan').then(d => {
+          if (!d?.ok || !d.seri) return;
+          const chartEl = document.getElementById('super-chart');
+          const lblEl = document.getElementById('super-chart-labels');
+          if (!chartEl) return;
+          const maxVal = Math.max(...d.seri.map(s => s.total), 1);
+          chartEl.innerHTML = d.seri.map(s => {
+            const pct = Math.max(4, Math.round((s.total / maxVal) * 100));
+            const hasVal = s.total > 0;
+            return `<div title="${s.tgl}: Rp ${Number(s.total).toLocaleString('id-ID')} (${s.jumlah} order)" style="flex:1;height:${pct}%;background:${hasVal ? '#151515' : '#D4D4D8'};border-radius:4px 4px 0 0;transition:height .3s;min-width:12px;cursor:pointer"></div>`;
+          }).join('');
+          if (lblEl) {
+            const first = d.seri[0]?.tgl?.slice(5) || '';
+            const mid = d.seri[Math.floor(d.seri.length / 2)]?.tgl?.slice(5) || '';
+            const last = d.seri[d.seri.length - 1]?.tgl?.slice(5) || '';
+            lblEl.innerHTML = `<span>${first}</span><span>${mid}</span><span>${last}</span>`;
+          }
+        });
+
+        api('/api/admin/billing/orders').then(d => {
+          const tbody = document.getElementById('super-order-rows');
+          if (!tbody || !d?.ok || !d.orders) return;
+          const rows = d.orders.slice(0, 5);
+          if (!rows.length) {
+            tbody.innerHTML = '<tr><td colspan="4" style="padding:12px;text-align:center">Belum ada transaksi</td></tr>';
+            return;
+          }
+          tbody.innerHTML = rows.map(o => {
+            const isPaid = o.status === 'paid';
+            const badgeBg = isPaid ? '#10B981' : '#F59E0B';
+            const badgeTxt = isPaid ? 'Lunas' : 'Pending';
+            const tgl = new Date(o.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' · ' + new Date(o.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+            return `<tr style="border-bottom:1px solid rgba(0,0,0,0.08)">
+              <td style="padding:8px 8px;font-family:monospace;font-weight:700">${esc(String(o.order_id || o.id).slice(0, 14))}</td>
+              <td style="padding:8px 8px;font-weight:800">Rp ${Number(o.amount || 0).toLocaleString('id-ID')}</td>
+              <td style="padding:8px 8px"><span style="background:${badgeBg};color:#fff;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:800;text-transform:uppercase">${badgeTxt}</span></td>
+              <td style="padding:8px 8px;font-size:11px;color:var(--bt-mute)">${tgl}</td>
+            </tr>`;
+          }).join('');
+        });
+      };
+
+      updateSuperGrid();
+      if (!window._superGridInterval) {
+        window._superGridInterval = setInterval(() => {
+          if (!document.hidden) updateSuperGrid();
+        }, 5000);
+      }
 
       btAnimated = true;
       renderSide();
