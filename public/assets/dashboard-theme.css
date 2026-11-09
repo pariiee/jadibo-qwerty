@@ -878,15 +878,15 @@ body.page-dashboard .bt-s3{grid-column:span 3}
 body.page-dashboard .bt-s2{grid-column:span 2}
 body.page-dashboard .bt-r2{grid-row:span 2}
 
+html body.is-kawula .user-popover .pop-item[href="/billing"],
+html body.is-kawula .user-popover .pop-item[href="/saldo"],
+html body.is-kawula .user-popover .pop-item[href="/pricing"],
 body.is-kawula #nav-command,
 body.is-kawula #nav-log,
 body.is-kawula #nav-panduan,
 body.is-kawula #dx-add,
 body.is-kawula .bt-promo,
 body.is-kawula .bt-add,
-body.is-kawula .pop-menu a[href="/billing"],
-body.is-kawula .pop-menu a[href="/saldo"],
-body.is-kawula .pop-menu a[href="/pricing"],
 body.is-kawula #drw-command,
 body.is-kawula #drw-log,
 body.is-kawula #drw-panduan,
