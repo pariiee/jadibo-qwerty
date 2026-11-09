@@ -193,13 +193,21 @@ document.addEventListener('DOMContentLoaded', function () {
       var dName = document.getElementById('drawer-user-name');
       if (dName && u.username) dName.textContent = 'Hai, ' + u.username + '!';
       var dRole = document.getElementById('drawer-user-role');
-      if (dRole) dRole.textContent = u.role_label || (u.is_admin ? 'Admin' : (u.slots ? u.slots + ' Slot' : 'Member'));
+      if (dRole) dRole.textContent = u.role_label || (u.is_superadmin ? 'Super Admin' : (u.is_admin ? 'Staff' : (u.slots ? u.slots + ' Slot' : 'Member')));
       if (pName) pName.textContent = u.username || 'User';
       if (pEmail) pEmail.textContent = u.email || (u.username + '@gmail.com');
-      if (pRole) pRole.textContent = u.is_admin ? 'Admin' : (u.slots ? u.slots + ' Slot' : 'User');
+      if (pRole) pRole.textContent = u.role_label || (u.is_superadmin ? 'Super Admin' : (u.is_admin ? 'Staff' : (u.slots ? u.slots + ' Slot' : 'User')));
       if (u.is_admin) {
         localStorage.setItem('yb-is-admin', '1');
         document.documentElement.classList.add('is-admin');
+        if (!u.is_superadmin) {
+          document.documentElement.classList.add('is-staff');
+          document.body.classList.add('is-staff');
+          var superOnly = ['/kountole/users', '/kountole/orders', '/kountole/saldo', '/kountole/harga'];
+          superOnly.forEach(function (href) {
+            document.querySelectorAll('a[href="' + href + '"]').forEach(function (el) { el.remove(); });
+          });
+        }
         var elNav = document.getElementById('nav-admin');
         if (elNav) elNav.style.display = '';
         var elDrwAdmin = document.getElementById('drawer-admin-group');

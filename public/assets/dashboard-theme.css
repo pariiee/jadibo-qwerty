@@ -896,6 +896,13 @@ body.is-kawula #drw-pricing {
   display: none !important;
 }
 
+body.is-staff a[href="/kountole/users"],
+body.is-staff a[href="/kountole/orders"],
+body.is-staff a[href="/kountole/saldo"],
+body.is-staff a[href="/kountole/harga"] {
+  display: none !important;
+}
+
 body.is-kawula .bt-tile.bt-purple { grid-column: span 4 !important; }
 body.is-kawula .bt-tile.bt-peach  { grid-column: span 3 !important; }
 body.is-kawula .bt-tile.bt-lav    { grid-column: span 4 !important; }
