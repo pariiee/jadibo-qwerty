@@ -4,28 +4,29 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>{{CODE}} — {{TITLE}} | qwertygate</title>
-<!-- @include head.html -->
+<link rel="icon" type="image/svg+xml" href="/assets/parigate.svg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
 <style>
-  html, body.page-error {
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    width: 100% !important;
     height: 100% !important;
     min-height: 100vh !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     background-color: #FAFAFA !important;
-    background-image: radial-gradient(#151515 1px, transparent 1px) !important;
+    background-image: radial-gradient(#151515 1.2px, transparent 1.2px) !important;
     background-size: 24px 24px !important;
-    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
     padding: 20px !important;
     margin: 0 !important;
-    box-sizing: border-box !important;
   }
   .err-card {
     width: 100% !important;
     max-width: 420px !important;
-    height: auto !important;
-    min-height: auto !important;
-    max-height: fit-content !important;
     background: #FFFFFF !important;
     border: 2.5px solid #151515 !important;
     border-radius: 28px !important;
@@ -34,7 +35,6 @@
     text-align: center !important;
     box-sizing: border-box !important;
     margin: auto !important;
-    position: relative !important;
   }
   .err-brand {
     display: inline-flex;
@@ -103,10 +103,11 @@
     background: #151515;
     color: #FFFFFF;
     border: 2px solid #151515;
-    box-shadow: 3px 3px 0px #7A63F0;
+    box-shadow: 3px 3px 0px #151515;
   }
   .err-btn:hover {
     transform: translate(-1px, -1px);
+    box-shadow: 4px 4px 0px #151515;
   }
   .err-btn:active {
     transform: translate(2px, 2px);
@@ -118,7 +119,7 @@
   }
 </style>
 </head>
-<body class="page-error">
+<body>
 
 <div class="err-card" role="alert">
   <div class="err-brand">
