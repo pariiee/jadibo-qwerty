@@ -62,11 +62,11 @@ async function validasiTokenPlatform(platform, token, ignoreBotId = null) {
         return { ok: false, message: `Token Telegram tidak valid: ${meData.description || 'Periksa kembali token bot kamu'}` };
       }
 
-      // Deteksi Webhook aktif di server lain
+      // Deteksi & otomatis bersihkan Webhook aktif dari web/hosting lama
       const whRes = await fetch(`https://api.telegram.org/bot${clean}/getWebhookInfo`, { signal: AbortSignal.timeout(5000) });
       const whData = await whRes.json().catch(() => ({}));
       if (whData.ok && whData.result?.url) {
-        return { ok: false, message: `Bot ini sedang aktif terhubung ke webhook di web lain (${whData.result.url}). Hapus webhook dulu atau buat token baru di @BotFather.` };
+        await fetch(`https://api.telegram.org/bot${clean}/deleteWebhook?drop_pending_updates=true`, { signal: AbortSignal.timeout(5000) }).catch(() => {});
       }
 
       // Deteksi polling aktif di server lain (Conflict 409)

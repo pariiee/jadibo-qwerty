@@ -332,6 +332,9 @@ async function startTelegramBot(botData) {
   await pool.execute("UPDATE bots SET status = 'connecting' WHERE id = ?", [botId]);
   broadcast(botId, 'status', { status: 'connecting' });
 
+  // Bersihkan webhook lama jika ada agar long-polling langsung aktif mulus
+  await fetch(`https://api.telegram.org/bot${token}/deleteWebhook?drop_pending_updates=true`, { signal: AbortSignal.timeout(5000) }).catch(() => {});
+
   // Buat instance bot dengan polling
   const tgBot = new TelegramBot(token, { polling: true });
 
