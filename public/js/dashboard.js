@@ -54,11 +54,16 @@
 
     if (me.is_superadmin) {
       const btnAdd = document.getElementById('dx-add');
-      if (btnAdd) btnAdd.style.display = 'none';
+      if (btnAdd) {
+        btnAdd.innerHTML = 'Portal Admin<span><svg class="i" viewBox="0 0 24 24"><path d="M7 17 17 7M8 7h9v9"/></svg></span>';
+        btnAdd.onclick = () => location.href = '/kountole/users';
+      }
       const heroLead = document.querySelector('.bt-hero .bt-lead');
       if (heroLead) heroLead.textContent = 'Ringkasan ekosistem qwertygate, omzet transaksi, dan kesehatan infrastruktur sistem.';
       const trialBtn = document.querySelector('.bt-peach .bt-pill-btn');
       if (trialBtn) trialBtn.style.display = 'none';
+      const promoCard = document.querySelector('.bt-promo');
+      if (promoCard) promoCard.style.display = 'none';
     }
 
     renderStats();
@@ -237,12 +242,12 @@
       });
 
       api('/api/admin/sistem').then(d => {
-        if (d?.ok && d.sistem?.ram) {
-          const r = d.sistem.ram;
+        if (d?.ok && d.resource?.ram) {
+          const r = d.resource.ram;
           const ramPct = Math.round((r.terpakai / r.total) * 100);
           txt('st-slot', ramPct + '%', ramPct > 80 ? 'warn' : 'ok');
           const subSlot = document.getElementById('st-slot-sub');
-          if (subSlot) subSlot.textContent = Math.round(r.terpakai / 1048576) + 'MB / ' + Math.round(r.total / 1048576) + 'MB';
+          if (subSlot) subSlot.textContent = Math.round(r.terpakai / 1048576) + ' MB / ' + Math.round(r.total / 1048576) + ' MB';
         }
       });
 
@@ -285,6 +290,10 @@
   function renderSide() {
     const pips = document.getElementById('bt-pips');
     if (!pips) return;
+    if (me?.is_superadmin) {
+      pips.innerHTML = '';
+      return;
+    }
     const used = bots.length;
     const unlimited = !!(me && me.is_admin);
     const cap = unlimited ? 0 : (me && me.plan_aktif ? (me.slots || 1) : 0);
