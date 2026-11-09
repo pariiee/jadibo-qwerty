@@ -1,13 +1,7 @@
 'use strict';
 
-/**
- * server.js — YaaParBot Main Entry Point
- * Express + WebSocket server with JWT auth, REST API, and live bot log streaming
- */
-
 require('dotenv').config();
 
-// Isolasi crash proses utama dari async error pustaka WhatsApp/DB pihak ketiga
 process.on('unhandledRejection', (reason) => {
   console.error('[Process] Unhandled Rejection:', reason?.message || reason);
 });
@@ -16,30 +10,18 @@ process.on('uncaughtException', (err) => {
   if (err?.code === 'EADDRINUSE') process.exit(1);
 });
 
-// Guard boot: JWT_SECRET kosong = token siapa pun bisa ditandatangani sendiri.
-// Lebih baik gagal start daripada jalan dengan pintu kebuka.
 if (!process.env.JWT_SECRET) {
   console.error('[Boot] JWT_SECRET kosong di .env — server dihentikan.');
   process.exit(1);
 }
-// Kunci jalur internal web ↔ worker. Kalau kosong dan jatuh ke JWT_SECRET,
-// bocornya satu kunci = bocor sesi user sekalian. Dipisah, dan wajib.
 if (!process.env.INTERNAL_KEY) {
   console.error('[Boot] INTERNAL_KEY kosong di .env — server dihentikan.');
   process.exit(1);
 }
-// KING_PASSWORD: tanpa fallback. Kalau .env lupa diisi (atau di-reset tanpa
-// niat), admin akan ter-seed dengan password PUBLIK. Itu lebih bahaya
-// daripada server tidak jalan — bot auto-scanner mencoba 'admin/king123'
-// dalam menit pertama setelah VPS online.
 if (!process.env.KING_PASSWORD) {
   console.error('[Boot] KING_PASSWORD kosong di .env — server dihentikan.');
   process.exit(1);
 }
-// KING_USERNAME: wajib juga, simetris dengan KING_PASSWORD. Tanpa default
-// publik ('admin' / 'king' di .env.example) yang tetap di-hardcode di source
-// — admin publik tercipta kalau env lupa diisi. Pakai placeholder yang
-// jelas di .env.example; yang asli Pak yang isi.
 if (!process.env.KING_USERNAME) {
   console.error('[Boot] KING_USERNAME kosong di .env — server dihentikan.');
   process.exit(1);
@@ -47,23 +29,6 @@ if (!process.env.KING_USERNAME) {
 
 require('./config/net'); // paksa IPv4 (lihat komentarnya) — worker juga pakai
 
-/**
- * Bendera uji: jalankan server TANPA efek samping boot.
- *
- * Kenapa perlu: menjalankan `server.js` penuh untuk menguji RUTE ternyata ikut
- * menyalakan bot (autoStartBots) dan menulis ke DB lewat cron — di DB yang SAMA
- * dengan proses PM2 yang sedang jalan. Untuk uji rute, satu-satunya yang
- * dibutuhkan adalah Express-nya "listen"; sisanya efek samping yang tidak
- * diminta. Dua proses juga bisa rebutan bot.
- *
- * Dengan NO_BOOT_SIDE_EFFECTS=1:
- *   - `autoStartBots()` dilewati (tidak ada bot dinyalakan)
- *   - SELURUH `cron.schedule` jadi no-op (tidak ada cron yang terdaftar)
- *   - seed admin tetap jalan (idempoten, tidak mengubah apa pun kalau sudah ada)
- *
- * Diverifikasi oleh test/boot-tanpa-efek.js — yang membaca source ini, jadi
- * tidak ada cara menjalankan server penuh "untuk uji" tanpa ketahuan.
- */
 const TANPA_EFEK = process.env.NO_BOOT_SIDE_EFFECTS === '1';
 if (TANPA_EFEK) {
   console.warn('[Boot] NO_BOOT_SIDE_EFFECTS=1 — autoStartBots & SELURUH cron dimatikan (mode uji).');
@@ -102,12 +67,10 @@ const wss    = new WebSocket.Server({ server });
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
 
-// Panel ini & panel engine lama berbagi tabel `bots` di DB yang sama.
 const { ENGINE_BOT_ID, mine, isMine } = require('./config/engineScope');
 const { ADMIN_ROLE } = require('./config/roles');
 const { resolveBotId, pastikanSlug } = require('./config/botSlug');
 
-// ─── Security & Middleware ────────────────────────────────────────────────────
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -122,11 +85,6 @@ app.use(helmet({
   },
 }));
 
-// Di balik Cloudflare Tunnel semua koneksi datang dari 127.0.0.1 — tanpa ini
-// req.ip jadi 127.0.0.1 untuk SEMUA user dan rate-limit berubah jadi satu ember
-// global (20x login habis dipakai satu orang, sisanya kena blok). 'loopback'
-// hanya mempercayai proxy dari localhost (cloudflared), jadi X-Forwarded-For
-// dari luar tetap tidak bisa dipalsukan.
 app.set('trust proxy', 'loopback');
 
 app.use(cors({
@@ -138,9 +96,6 @@ app.use(cors({
 
 app.use(cookieParser());
 
-// Webhook Alpay HARUS dapat badan mentah: tanda tangan dihitung dari byte asli.
-// Jadi rute ini dipasang SEBELUM express.json — kalau tidak, JSON sudah diparse
-// dan byte aslinya hilang, verifikasi tidak akan pernah cocok.
 app.post(
   ['/api/payment/webhook', '/webhook'],
   express.raw({ type: '*/*', limit: '256kb' }),
@@ -150,16 +105,6 @@ app.post(
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Lapis kedua CSRF: Origin/Referer, HANYA untuk POST ber-cookie.
-//
-// Dipasang SETELAH `cookieParser` (butuh req.cookies) dan SETELAH rute webhook
-// di atas — jadi webhook TIDAK pernah kena: dia bukan request browser, tidak
-// punya Origin, dan keasliannya sudah dibuktikan tanda tangan HMAC dari raw
-// body. Kalau webhook ikut diperiksa, pembayaran sah akan ditolak.
-//
-// Pertahanan utamanya tetap `SameSite=Lax` di cookie (controllers/authController.js),
-// yang memang tidak mengirim cookie pada POST lintas-situs. Ini tambahan di
-// jalur uang, karena satu POST yang lolos = saldo atau paket berubah.
 app.use(cekOrigin.cekOrigin);
 
 const PUBLIC_HTML = path.join(__dirname, 'public');
@@ -265,7 +210,6 @@ app.use(express.static(path.join(__dirname, 'public'), {
   },
 }));
 
-// ─── Rate Limiter ─────────────────────────────────────────────────────────────
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 20,
@@ -280,15 +224,6 @@ const apiLimiter = rateLimit({
   message: { ok: false, message: 'Rate limit terlampaui.' },
 });
 
-// Limiter jalur UANG. Lebih ketat dari apiLimiter, dan dipisah supaya
-// permintaan murah (baca daftar command, statistik) tidak memakan jatah
-// pembelian.
-//
-// Angkanya sengaja sedang: 10/menit masih longgar untuk user yang mengubah
-// pikiran beberapa kali, tapi membuat penebakan harga/nominal atau percobaan
-// perpanjang beruntun jadi tidak berguna. `topupLimiter` lebih ketat lagi
-// karena tiap panggilan membuat tagihan BARU di QRISku — akun gateway-nya bisa
-// kena rate limit (60/menit per IP di sisi mereka) kalau kita tidak menahan.
 const moneyLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 10,
@@ -305,7 +240,6 @@ const topupLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// Limiter registrasi: maks 5 akun per jam per IP untuk mencegah bot/spam akun fake
 const registerLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 5,
@@ -314,7 +248,6 @@ const registerLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// Limiter kirim ulang verifikasi email: maks 3x per IP per jam agar tidak spam SMTP
 const resendLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 3,
@@ -323,7 +256,6 @@ const resendLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// ─── Auth Routes ──────────────────────────────────────────────────────────────
 app.post('/api/auth/register', registerLimiter, auth.register);
 app.post('/api/auth/login',    authLimiter, auth.login);
 app.post('/api/auth/logout',   auth.logout);
@@ -338,7 +270,6 @@ app.get('/api/auth/me',        auth.requireAuth, auth.me);
 app.get('/api/auth/google',          auth.googleRedirect);
 app.get('/api/auth/google/callback', auth.googleCallback);
 
-// ─── Stats (public) ───────────────────────────────────────────────────────────
 app.get('/api/stats', async (req, res) => {
   try {
     const stats = await getStats();
@@ -348,15 +279,8 @@ app.get('/api/stats', async (req, res) => {
   }
 });
 
-// ─── Bot Routes ───────────────────────────────────────────────────────────────
 app.get('/api/bots',                    apiLimiter, auth.requireAuth, bot.listBots);
 app.post('/api/bots',                   apiLimiter, auth.requireAuth, bot.createBot);
-// `:id` di sini boleh nomor LAMA (4) atau slug publik. Ditulis SEKALI di sini,
-// bukan di tiap handler: 11 endpoint bot + 2 endpoint admin bot semuanya lewat
-// `req.params.id`, dan menambal satu per satu berarti yang terlewat tetap
-// bekerja dengan nomor — persis jenis lubang yang bikin "kok cuma sebagian".
-// `HANYA` rute /api/bots & /api/admin/bots: `/api/admin/users/:id` juga `:id`
-// dan itu id USER, bukan bot.
 const resolveIdBot = async (req, res, next) => {
   const idAngka = await resolveBotId(req.params.id);
   if (idAngka === null) return res.status(404).json({ ok: false, message: 'Bot tidak ditemukan' });
@@ -364,9 +288,6 @@ const resolveIdBot = async (req, res, next) => {
   next();
 };
 app.param('id', (req, res, next, nilai) => {
-  // app.param berlaku untuk SEMUA rute ber-`:id`. Supaya rute user tidak ikut
-  // ditafsirkan sebagai slug bot, hanya jalur /api/bots & /api/admin/bots yang
-  // di-resolve; sisanya diteruskan apa adanya.
   const jalurBot = /^\/api\/(admin\/)?bots\//.test(req.path);
   if (!jalurBot) return next();
   resolveIdBot(req, res, next);
@@ -385,27 +306,16 @@ app.get('/api/bots/:id/config',        apiLimiter, auth.requireAuth, bot.exportC
 app.post('/api/bots/:id/resolve-invite', apiLimiter, auth.requireAuth, bot.resolveInvite);
 app.post('/api/bots/:id/tambah-respon',  apiLimiter, auth.requireAuth, bot.beliRespon);
 
-// ─── Kesehatan sistem ─────────────────────────────────────────────────────────
-// Publik dan TANPA limiter: uptime monitor dari luar harus bisa memanggilnya
-// kapan saja, dan yang dibalas cuma angka kasar — bukan data siapa pun.
 app.get('/health', async (_, res) => {
   const h = await require('./engine/health').cek();
   res.status(h.ok ? 200 : 503).json(h);
 });
 
-// ─── Langganan & Pembayaran ──────────────────────────────────────────────────
 app.get('/api/plans',                apiLimiter, billing.daftarPaket);
-// Sisa kuota pesan per bot — dipakai halaman /kuota.
 app.get('/api/kuota',                apiLimiter, auth.requireAuth, billing.kuota);
-// Banner pengumuman dari admin — dipakai dashboard.
 app.get('/api/pengumuman',           apiLimiter, auth.requireAuth, billing.pengumuman);
-// Daftar command bot (halaman /command). Login dulu — daftar fitur itu bagian
-// dari produk, bukan info publik.
 app.get('/api/command',              apiLimiter, auth.requireAuth, command.daftarCommand);
-// Ganti password sendiri. authLimiter (bukan apiLimiter): endpoint ini nerima
-// password lama, jadi harus dibatasi kayak login — jangan dikasih kuota 120/menit.
 app.post('/api/auth/password',         authLimiter, auth.requireAuth, auth.gantiPassword);
-// Nomor HP — jalur notif kedua. authLimiter karena endpoint ini nulis ke akun.
 app.post('/api/auth/phone',            authLimiter, auth.requireAuth, auth.simpanPhone);
 app.post('/api/auth/email',            authLimiter, auth.requireAuth, auth.simpanEmail);
 app.post('/api/billing/checkout',    apiLimiter, auth.requireAuth, billing.checkout);
@@ -413,35 +323,14 @@ app.post('/api/billing/addon',       moneyLimiter, auth.requireAuth, billing.bel
 app.post('/api/billing/trial',       apiLimiter, auth.requireAuth, billing.klaimTrialSendiri);
 app.get('/api/billing/orders',       apiLimiter, auth.requireAuth, billing.daftarOrder);
 app.get('/api/billing/orders/:orderId', apiLimiter, auth.requireAuth, billing.detailOrder);
-// "Cek status" manual — bukan polling. Dijatah 15 detik per transaksi di
-// config/alpay.js supaya tidak flooding gateway.
 app.post('/api/billing/orders/:orderId/check', apiLimiter, auth.requireAuth, billing.cekOrder);
 
-// ─── Dompet (saldo) ──────────────────────────────────────────────────────────
-//
-// Halaman /saldo. Semua POST di sini memindahkan uang, jadi pakai moneyLimiter
-// / topupLimiter — bukan apiLimiter (120/menit itu jatah baca, bukan jatah
-// transaksi).
-//
-// `:userId` (bukan `:id`) SENGAJA: `app.param('id')` di atas dipakai buat
-// me-resolve slug bot, dan walaupun regex-nya cuma cocok untuk /api/(admin/)bots/,
-// memakai nama parameter yang berbeda menghilangkan kemungkinan salah tangkap
-// sepenuhnya.
 app.get('/api/wallet',               apiLimiter,   auth.requireAuth, wallet.ringkasan);
 app.get('/api/wallet/ledger',        apiLimiter,   auth.requireAuth, wallet.riwayat);
 app.post('/api/wallet/topup',        topupLimiter, auth.requireAuth, wallet.buatOrderTopup);
 app.post('/api/wallet/perpanjang',   moneyLimiter, auth.requireAuth, wallet.perpanjang);
 app.post('/api/wallet/auto-renew',   moneyLimiter, auth.requireAuth, wallet.setAutoRenew);
 
-// ─── Admin Routes (king only) ─────────────────────────────────────────────────
-//
-// Jejak aktivitas admin: SATU middleware untuk seluruh `/api/admin/*`, dipasang
-// SEBELUM route-nya. Route admin yang ditambah nanti otomatis ikut terekam —
-// pencatatan manual di tiap handler akan bocor begitu ada route baru.
-//
-// `res.on('finish')` dipakai karena status code belum final saat middleware
-// jalan. Pencatatannya fire-and-forget (lihat sistem.catatAudit): gagal mencatat
-// TIDAK BOLEH menggagalkan aksi admin.
 app.use('/api/admin', auth.requireAuth, (req, res, next) => {
   res.on('finish', () => {
     sistem.catatAudit({
@@ -450,8 +339,6 @@ app.use('/api/admin', auth.requireAuth, (req, res, next) => {
       method: req.method,
       path: req.originalUrl,
       status: res.statusCode,
-      // Di belakang Cloudflare Tunnel, req.ip selalu 127.0.0.1 — IP asli ada di
-      // header ini. Jatuh ke req.ip kalau header-nya tidak ada (akses lokal).
       ip: req.headers['cf-connecting-ip'] || req.ip,
     });
   });
@@ -483,9 +370,6 @@ app.get('/api/admin/system-logs', auth.requireAuth, auth.requireKing, sistem.get
 app.get('/api/admin/pendapatan',  auth.requireAuth, auth.requireSuperAdmin, sistem.pendapatan);
 app.post('/api/admin/broadcast',  auth.requireAuth, auth.requireSuperAdmin, sistem.broadcast);
 
-// ─── Halaman HTML ─────────────────────────────────────────────────────────────
-// Versi aset = mtime file. Dipakai di halaman() supaya URL aset berubah tiap
-// file diubah; tanpa ini browser + Cloudflare menyajikan CSS/JS lama sampai 4 jam.
 const mtimeAset = (p) => {
   try { return Math.round(fs.statSync(path.join(PUBLIC_HTML, p)).mtimeMs); }
   catch { return 0; }
@@ -504,40 +388,18 @@ const halaman = (nama, kode = 200) => (_, res) => {
   }
 };
 app.get('/dashboard', halaman('dashboard.html'));
-// `:id` di URL halaman boleh nomor LAMA (4) atau slug publik. Nomor tetap
-// didukung supaya bookmark & riwayat lama tidak mati — lihat config/botSlug.js.
 app.get('/bot/:id',   halaman('bot-detail.html'));
-// Setup bot dipisah dari /bot/:id — di sana sekarang statistik. Halaman ini
-// yang megang form konfigurasi + import/export, dan punya pemilih bot sendiri
-// (dropdown) biar user multi-slot nggak perlu bolak-balik ke dashboard.
 app.get('/config/:id', halaman('config.html'));
 app.get('/command',    halaman('command.html'));
-// Riwayat pembayaran & profil: dua-duanya halaman USER (bukan admin).
 app.get('/billing',    halaman('billing.html'));
 app.get('/kuota',      halaman('kuota.html'));
-// Dompet: saldo, top up, perpanjang, riwayat, auto-perpanjang.
 app.get('/saldo',      halaman('saldo.html'));
 app.get('/invoice/:orderId', halaman('invoice.html'));
 app.get('/log',        halaman('log.html'));
 app.get('/panduan',    halaman('panduan.html'));
 app.get('/profil',     halaman('profil.html'));
 app.get('/pricing',    halaman('pricing.html'));
-// Tautan lama: bot sempat ngasih pesan "buka halaman Langganan", dan orang
-// mungkin sudah bookmark /langganan. Tanpa ini, /langganan jatuh ke catch-all
-// dan diam-diam nampilin landing page — bingung, bukan 404 yang jelas.
 app.get('/langganan', (_, res) => res.redirect(301, '/pricing'));
-// Panel admin sengaja TIDAK di /admin.
-//
-// Bot WhatsApp itu auto-scanner: begitu ada nomor baru masuk, bot jahat langsung
-// mencoba `/.env`, `/admin`, `/config`, `/.git`. Nama yang bisa ditebak = satu
-// permintaan gagal, tapi satu permintaan yang BERHASIL sudah cukup fatal. Jadi
-// path-nya dipindah, dan `/admin` DIHAPUS (bukan di-redirect) — redirect justru
-// memberi tahu penebak bahwa halamannya cuma pindah.
-//
-// Yang benar-benar melindungi tetap sesi login + role `kawula` di dalamnya
-// (`auth.requireKing` di tiap endpoint /api/admin/*). Nama aneh itu lapisan
-// kedua, bukan pengganti.
-// ─── Peta Halaman Error Lengkap (dideklarasikan di atas) ─────────────────────────
 app.get([
   '/kountole',
   '/kountole/users',
@@ -560,13 +422,9 @@ app.get('/terms',           halaman('terms.html'));
 app.get('/',             halaman('index.html'));
 app.get('*',             halamanError(404));
 
-// ─── Error Handler (500 / 503 / 403 / 429 dll) ────────────────────────────────
 app.use((err, req, res, _next) => {
   console.error('[Server] Error:', err.message);
   const status = err.status && err.status >= 400 && err.status < 600 ? err.status : 500;
-  // Handler ini jaring TERAKHIR: `err.message` di sini belum tentu manusiawi
-  // (bisa bawa nama kolom DB, path, atau errno). Log detailnya, tapi yang
-  // keluar ke user cuma kalimat generik — sama seperti engine/pesanError.js.
   const pesan = 'Terjadi kesalahan pada server. Coba lagi sebentar lagi.';
   if (req.path.startsWith('/api/') || req.xhr || (req.headers.accept || '').includes('json')) {
     return res.status(status).json({ ok: false, message: pesan });
@@ -574,8 +432,6 @@ app.use((err, req, res, _next) => {
   return halamanError(status)(req, res);
 });
 
-// ─── WebSocket Hub ────────────────────────────────────────────────────────────
-// Map: botId -> Set<WebSocket>
 const botSubscribers = new Map();
 const userSubscribers = new Map();
 
@@ -615,9 +471,7 @@ wss.on('connection', (ws, req) => {
         return;
       }
 
-      // Client sends { type: 'subscribe', botId: 3, token: '...' }
       if (data.type === 'subscribe' && data.botId) {
-        // Verify JWT: prioritas dari cookie httpOnly, fallback payload token (legacy)
         const jwt = require('jsonwebtoken');
         const token = ambilToken();
 
@@ -630,9 +484,6 @@ wss.on('connection', (ws, req) => {
           return;
         }
 
-        // Sesi yang sudah diputus ganti password TIDAK boleh tetap nyambung ke
-        // WebSocket — kalau nggak dicek di sini, lubangnya cuma pindah dari
-        // HTTP ke WS.
         try {
           const { pool } = require('./config/database');
           const [tvRows] = await pool.execute('SELECT token_version FROM users WHERE id = ?', [decoded.id]);
@@ -661,7 +512,6 @@ wss.on('connection', (ws, req) => {
           return;
         }
 
-        // Ownership check — user hanya boleh subscribe bot miliknya (king bebas)
         try {
           const { pool } = require('./config/database');
           const [rows] = await pool.execute(
@@ -712,12 +562,10 @@ wss.on('connection', (ws, req) => {
 
   ws.on('error', () => {});
 
-  // Heartbeat ping
   ws.isAlive = true;
   ws.on('pong', () => { ws.isAlive = true; });
 });
 
-// Heartbeat interval
 const heartbeat = setInterval(() => {
   wss.clients.forEach((ws) => {
     if (!ws.isAlive) return ws.terminate();
@@ -728,7 +576,6 @@ const heartbeat = setInterval(() => {
 
 wss.on('close', () => clearInterval(heartbeat));
 
-// ── Inject broadcast function into both engines + Redis Pub/Sub ─────────────
 const redisBus = require('./config/redisBus');
 const INSTANCE_ID = Math.random().toString(36).slice(2);
 
@@ -752,7 +599,6 @@ const broadcastFn = (data) => {
   redisBus.publishEvent({ ...data, _sender: INSTANCE_ID });
 };
 
-// Event dari browser/instance lain via Redis Pub/Sub diteruskan ke WS lokal
 redisBus.onEvent((data) => {
   if (data._sender === INSTANCE_ID) return;
   broadcastLokal(data);
@@ -762,23 +608,12 @@ setWsBroadcastWa(broadcastFn);
 setWsBroadcastTg(broadcastFn);
 setWsBroadcastDc(broadcastFn);
 
-// Jalur lintas panel: user Start bot zapo dari panel labs, dan log/QR-nya
-// dibalikin ke sana. Dipasang di sini (setelah broadcastFn siap, sebelum
-// server.listen) supaya event yang keluar pas auto-start di bawah tetap
-// kejangkau. Nggak ada yang dibuka ke jaringan: cuma nambah 1 rute yang
-// nolak dari luar loopback.
 const bridge = require('./engine/bridge');
 const broadcastGabungan = bridge.pasangRelay(broadcastFn);
 setWsBroadcastWa(broadcastGabungan);
 setWsBroadcastTg(broadcastGabungan);
 app.post('/internal/op', bridge.route);
 
-// Pembungkus cron: no-op total saat NO_BOOT_SIDE_EFFECTS=1.
-//
-// Diambil sebagai SATU pembungkus (bukan `if (TANPA_EFEK) return;` di dalam
-// tiap callback) supaya cron BARU yang ditambahkan nanti otomatis ikut mati di
-// mode uji — tidak ada cara lupa. Yang salah itu bukan isi cron-nya, tapi
-// "menjalankan cron sama sekali" waktu cuma mau menguji rute.
 const cronAman = TANPA_EFEK ? { schedule: () => ({ stop() {}, destroy() {} }) } : cron;
 
 cronAman.schedule('*/10 * * * * *', async () => {
@@ -791,14 +626,9 @@ cronAman.schedule('*/10 * * * * *', async () => {
   } catch { /* non-critical */ }
 });
 
-// ─── Boot ─────────────────────────────────────────────────────────────────────
 async function autoStartBots() {
   try {
     const [sc, sp] = mine('id', 'AND');
-    // Filter stop_reason='expired': cron 1-menit (server.js:628) set ini saat
-    // paket habis. Tanpa filter, server restart antara cron & boot akan
-    // nyalakan bot yang sudah dimatikan sistem — boot harusnya respect
-    // keputusan cron, bukan override.
     const [rows] = await pool.execute(
       `SELECT * FROM bots WHERE is_running = 1
          AND (stop_reason IS NULL OR stop_reason <> 'expired')${sc}`, sp
@@ -827,8 +657,6 @@ async function autoStartBots() {
 async function boot() {
   await testConnection();
 
-  // Hash king password and seed. KING_PASSWORD sudah dijaga kosong di guard
-  // boot di atas — di sini tinggal dipakai. Tanpa fallback.
   const hashed = await bcrypt.hash(process.env.KING_PASSWORD, 12);
   await seedDefaults(process.env.KING_USERNAME, hashed);
 
@@ -840,9 +668,6 @@ async function boot() {
     console.log(`║  Mode : ${(process.env.NODE_ENV || 'development').padEnd(32)}║`);
     console.log('╚══════════════════════════════════════════╝');
     console.log('');
-    // Keadaan lapis kedua CSRF dilaporkan saat boot. Kalau ALLOWED_ORIGIN kosong,
-    // hanya origin sendiri yang diterima — dan itu HARUS kelihatan di log,
-    // bukan jadi perilaku diam-diam yang beda antara dev dan produksi.
     const csrf = cekOrigin.csrfDiperiksa();
     console.log(`[Boot] CSRF origin: ${csrf.env} = ${csrf.jumlah ? csrf.izin.join(', ') : '(kosong — hanya origin sendiri)'}`);
     if (TANPA_EFEK) {
@@ -853,23 +678,12 @@ async function boot() {
   });
 }
 
-// ─── Auto Reset Limit Harian — setiap hari jam 00:00 WIB (UTC+7) ─────────────
 cronAman.schedule('0 17 * * *', async () => {
   try {
-    // Reset per-bot sesuai daily_limit masing-masing
     const [sc, sp] = mine('id', 'AND');
     const [bots] = await pool.execute(`SELECT id, daily_limit FROM bots WHERE is_running = 1${sc}`, sp);
     const gate = require('./engine/gatePaket');
     for (const bot of bots) {
-      // Kuota harian dibaca dari paket yang SEDANG berlaku, bukan
-      // `bots.daily_limit` yang dibekukan waktu checkout — kalau tidak, trial
-      // 5 hari yang sudah lewat tetap dapat limit 20 pesan selamanya, dan masa
-      // aktif yang dijual jadi tidak ada artinya. `kuotaBot()` sudah menangani
-      // ketiganya: admin tanpa batas, paket habis = 0, dan kolom bot cuma boleh
-      // menurunkan jatah paket.
-      //
-      // SENGAJA BUKAN `receive_limit`: itu kuota pesan SEUMUR PAKET (direset
-      // hanya saat beli lagi), sedangkan `lim` di sini reset tiap hari.
       const lim = await gate.kuotaHarian(bot);
 
       const [res] = await pool.execute(
@@ -883,17 +697,11 @@ cronAman.schedule('0 17 * * *', async () => {
   }
 }, { timezone: 'Asia/Jakarta' });
 
-// ─── Cron Pangkas Log — harian 03:00 WIB ──────────────────────────────────────
-// `bot_logs` tumbuh ~1 MB/hari (1.187 baris/1,1 MB dalam 1 hari) dan TIDAK
-// pernah dibersihkan. Yang ditampilkan cuma 100 baris terakhir (getBotLogs,
-// maks 500) — jadi sisanya cuma berat. Simpan 500 terakhir per bot.
 cronAman.schedule('0 3 * * *', async () => {
   try {
     const [bots] = await pool.execute('SELECT id FROM bots');
     let total = 0;
     for (const b of bots) {
-      // Subquery dibungkus tabel turunan: MySQL nolak DELETE yang menunjuk
-      // tabelnya sendiri (error 1093) kalau tidak dibungkus.
       const [res] = await pool.execute(
         `DELETE FROM bot_logs WHERE bot_id = ?
            AND id NOT IN (SELECT id FROM (
@@ -909,29 +717,13 @@ cronAman.schedule('0 3 * * *', async () => {
   }
 }, { timezone: 'Asia/Jakarta' });
 
-// ─── Cron Jadwal Buka/Tutup Grup Otomatis — setiap menit ─────────────────────
 cronAman.schedule('* * * * *', async () => {
-  // ── Bot yang paketnya habis: matikan ──────────────────────────────────────
-  // Sebelum ini paket lewat cuma nge-drop fitur ke jatah Gratis sementara
-  // botnya tetap nyambung ke WhatsApp — bayar atau tidak, nomornya tetap
-  // online. Ini yang bikin langganan nggak ada artinya.
-  //
-  // Pakai cron yang SUDAH ada (tiap menit) — jangan bikin jadwal baru.
   try {
     for (const bot of await require('./engine/gatePaket').botKedaluwarsa()) {
       try {
-        // `stop_reason='expired'` DULU, baru matikan. Urutan ini penting: kalau
-        // ditulis sesudah, matinya bisa gagal di tengah dan bot berhenti tanpa
-        // penanda — lalu nggak akan pernah dinyalakan lagi sesudah dibayar.
         await pool.execute("UPDATE bots SET stop_reason = 'expired' WHERE id = ?", [bot.id]);
         await require('./config/engineBus').stopIfRunning(bot.id);
         console.log(`[Cron] Bot ${bot.id} (${bot.username}) dimatikan — paket habis ${bot.plan_expired_at}`);
-        // Kabari pemiliknya, SEKALI per bot (bukan tiap menit): syaratnya
-        // `stop_reason` masih kosong saat giliran ini masuk.
-        //
-        // SENGAJA TIDAK di-await dan dijalankan SETELAH stop — balasannya lewat
-        // bot user sendiri, dan balasan itu nggak bisa jalan selagi botnya masih
-        // terhubung. Untuk paket habis, botnya justru mau dimatikan.
         if (bot.stop_reason !== 'expired') {
           require('./engine/notify').kirimKeOwner(bot.user_id,
             `⏰ *Paket bot kamu sudah habis.*\n\n` +
@@ -948,9 +740,6 @@ cronAman.schedule('* * * * *', async () => {
     console.error('[Cron] Cek paket habis error:', e.message);
   }
 
-  // ── Alarm kesehatan ───────────────────────────────────────────────────────
-  // Pakai cron yang SUDAH ada (tiap menit) — jangan bikin jadwal baru.
-  // Modulnya sendiri yang mengatur toleransi & anti-spam; di sini cuma panggil.
   try {
     require('./engine/health').periksaDanAlarm().catch(() => {});
   } catch (e) {
@@ -958,7 +747,6 @@ cronAman.schedule('* * * * *', async () => {
   }
 
   try {
-    // Ambil semua group_settings yang punya open_time atau close_time
     const [rows] = await pool.execute(
       `SELECT gs.bot_id, gs.group_jid, gs.open_time, gs.close_time
        FROM group_settings gs
@@ -967,7 +755,6 @@ cronAman.schedule('* * * * *', async () => {
 
     if (!rows.length) return;
 
-    // Waktu WIB sekarang
     const now   = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
     const HH    = String(now.getHours()).padStart(2, '0');
     const MM    = String(now.getMinutes()).padStart(2, '0');
@@ -997,19 +784,6 @@ cronAman.schedule('* * * * *', async () => {
   }
 }, { timezone: 'Asia/Jakarta' });
 
-// ─── Cron Auto-Perpanjang — TIAP JAM ─────────────────────────────────────────
-//
-// Jadwal TERPISAH, bukan numpang cron 1-menit: jendelanya 24 jam, jadi
-// memeriksanya tiap menit cuma mengulang pekerjaan yang sama 1.440 kali sehari.
-// Tiap jam sudah lebih dari cukup — perpanjangan terjadi minimal 24 jam sebelum
-// paket habis, jadi tidak ada momen mepet yang terlewat.
-//
-// Basis waktu: jam WIB, konsisten dengan cron lain di file ini. Perbandingan
-// tanggalnya sendiri memakai UTC_TIMESTAMP() di dalam `autoRenew()` — jangan
-// dicampur, karena `plan_expired_at` disimpan UTC oleh pool (timezone '+00:00').
-//
-// AMAN kalau jalan dua kali (mis. restart tepat di menit yang sama): idempotensi
-// dijaga ref 'auto:<userId>:<tanggalExpired>' yang UNIK di wallet_ledger.
 cronAman.schedule('0 * * * *', async () => {
   try {
     await wallet.autoRenew();
@@ -1018,7 +792,6 @@ cronAman.schedule('0 * * * *', async () => {
   }
 }, { timezone: 'Asia/Jakarta' });
 
-// ─── Auto-cleanup: email_verifications kadaluarsa & terpakai (tiap jam) ─────────
 cronAman.schedule('30 * * * *', async () => {
   try {
     const [res] = await pool.execute(
@@ -1039,7 +812,6 @@ cronAman.schedule('30 * * * *', async () => {
   }
 }, { timezone: 'Asia/Jakarta' });
 
-// ─── Auto-purge: akun is_active = 0 yang terbengkalai > 3 hari (tiap hari jam 04:00 WIB)
 cronAman.schedule('0 4 * * *', async () => {
   try {
     const [staleUsers] = await pool.execute(
@@ -1069,7 +841,6 @@ cronAman.schedule('0 4 * * *', async () => {
   }
 }, { timezone: 'Asia/Jakarta' });
 
-// ─── Graceful Shutdown ────────────────────────────────────────────────────────
 async function shutdown() {
   console.log('[Shutdown] Resetting bot statuses...');
   try {

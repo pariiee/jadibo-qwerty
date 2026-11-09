@@ -90,7 +90,6 @@
     return me;
   }
 
-  // ── API helper ──────────────────────────────────────────────────
   async function api(path, opts = {}) {
     try {
       const res = await fetch(path, {
@@ -107,7 +106,6 @@
     location.href = '/';
   }
 
-  // ── Data ────────────────────────────────────────────────────────
   let bots = [];
   let botKuota = new Map();
   let maxSlots = 2;
@@ -166,19 +164,6 @@
       : `Sisa ${beli - used} slot lagi dari ${beli}`;
   }
 
-  /**
-   * Banner peringatan di atas dashboard.
-   *
-   * KENAPA ADA: peringatan kuota & masa aktif dikirim lewat WhatsApp, dan
-   * pengirimnya adalah bot MILIK USER SENDIRI (engine/notify.js). Jadi tepat
-   * saat kuota habis — bot berhenti membalas — kabar itu ikut tidak sampai, dan
-   * user cuma melihat bot yang diam tanpa sebab. Ini kanal yang tidak
-   * bergantung pada bot.
-   *
-   * Datanya dari `me` + `bots` yang SUDAH dimuat halaman ini: nol request
-   * tambahan, nol endpoint baru. Ambangnya sengaja sama dengan
-   * engine/kuota.js (80%/95%) — kalau di sana diubah, ubah di sini juga.
-   */
   function renderPeringatan() {
     const el = document.getElementById('kuota-alert');
     if (!el) return;
@@ -487,11 +472,8 @@
     renderSide();
   }
 
-  // ── Add bot ─────────────────────────────────────────────────────
   let platform = 'whatsapp';
   function openAddBot() {
-    // Slot 0 = akun gratis. Arahkan ke halaman pricing, bukan cuma alert:
-    // dari situ user bisa langsung klaim Trial atau pilih paket.
     if (maxSlots === 0) { location.href = '/pricing'; return; }
     if (bots.length >= maxSlots) { alert('Slot penuh. Maksimal ' + maxSlots + ' bot per akun.'); return; }
     platform = 'whatsapp';
@@ -618,7 +600,6 @@
     else { err.textContent = d.message; err.classList.add('show'); }
   });
 
-  // ── Multi-tab sync via BroadcastChannel ──────────────────────────
   const bc = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('qwertygate_bot') : null;
   if (bc) {
     bc.onmessage = (e) => {
@@ -679,10 +660,6 @@
     connectWS();
   })();
 
-  // ── Pengumuman dari admin ───────────────────────────────────────
-  // Ditutup -> diingat di localStorage pakai `updated_at`. Admin menulis
-  // pengumuman baru = stempelnya berubah = muncul lagi sendiri, tanpa user
-  // perlu menghapus apa pun.
   function kunciPengumuman(stempel) { return 'yb-pengumuman-tutup:' + (stempel || 'x'); }
 
   async function muatPengumuman() {
@@ -699,8 +676,6 @@
     const box = document.getElementById('pengumuman');
     box.dataset.stempel = p.updated_at || '';
     document.getElementById('peng-judul').textContent = p.judul;
-    // textContent, BUKAN innerHTML: isinya tulisan admin, dan innerHTML bikin
-    // satu tag yang tidak sengaja ditulis jadi HTML yang jalan di browser user.
     document.getElementById('peng-isi').textContent = p.isi;
     box.style.display = '';
   }
@@ -716,14 +691,11 @@ window.openAddBot = openAddBot; window.closeAdd = closeAdd;
 window.showStep = showStep; window.backStep = backStep; window.pickPlatform = pickPlatform;
 window.logout = logout;
 
-// Tombol "Tambah bot" di tile Welcome
 const dxAdd = document.getElementById('dx-add');
 if (dxAdd) dxAdd.addEventListener('click', openAddBot);
 
-// Stagger animasi masuk untuk tile statis
 document.querySelectorAll('.bt-grid > .bt-anim').forEach((el, i) => { el.style.animationDelay = (i * 60) + 'ms'; });
 
-// Tandai menu navbar aktif
 document.querySelectorAll('.cx-nav-item[href]').forEach(a => {
   const h = a.getAttribute('href');
   if (location.pathname === h || location.pathname.startsWith(h + '/')) a.classList.add('on', 'active');

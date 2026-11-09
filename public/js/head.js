@@ -1,6 +1,4 @@
-// ── Tema (§10) ───────────────────────────────────────────────────────
 if (window.__HEAD_JS_LOADED__) {
-  // Cegah binding listener ganda jika dimuat ulang
 } else {
   window.__HEAD_JS_LOADED__ = true;
 }
@@ -24,15 +22,8 @@ function toggleTheme() {
   try { localStorage.setItem('yb-theme', baru); } catch (e) { /* abaikan */ }
 }
 
-// ── Sidebar aplikasi (§8.1) ──────────────────────────────────────────
-// >760px : penuh ↔ mini (230px ↔ 76px) saat burger diklik
-// ≤760px : mulai MINI; burger membuka overlay (lihat palette.css §7)
-// Kelas penanda = `mini` di `.app`. Ini menggantikan mekanisme lama
-// (`aside.open` + `#sidebar-overlay`) yang cuma bisa buka/tutup, bukan
-// mengecilkan — spec minta dua keadaan berbeda per breakpoint.
 function appShell() { return document.querySelector('.shell, .app'); }
 
-// `aria-expanded` diurus DI SINI saja, satu tempat, mengikuti keadaan nyata.
 function setSidebarMini(mini) {
   var s = appShell();
   if (s) s.classList.toggle('mini', mini);
@@ -45,7 +36,6 @@ window.toggleSidebar = function () {
 };
 window.closeSidebar = function () { setSidebarMini(true); };
 
-// ── Drawer navbar landing (§8.2) ─────────────────────────────────────
 function siapkanDrawer() {
   var menu = document.getElementById('nav-burger');
   var drawer = document.getElementById('drawer');
@@ -73,24 +63,12 @@ function siapkanDrawer() {
   });
 }
 
-// ── Ikon platform (§7) ───────────────────────────────────────────────
-// Satu definisi untuk halaman mana pun lewat `window.waIcon(s)` /
-// `window.tgIcon(s)`. Sebelumnya SVG-nya ditulis ulang di bot-stats.js,
-// bot-detail.js, config.js, dan dashboard.js — dan salinannya sudah berbeda:
-// dashboard.html punya versi bergaris putih (`.plat-btn`, ikon besar),
-// sisanya versi satu-lapis. Perbedaan itu yang bikin ikon WhatsApp di satu
-// halaman kelihatan beda dari halaman lain.
-//
-// Ikon di `.plat-btn` dashboard.html DIBIARKAN inline: ukurannya 34px, dan
-// versi bergaris putih memang lebih enak dilihat di ukuran itu.
 (function () {
   var WA_PATH =
     '<path fill="#25D366" d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>';
   window.waIcon = function (s) {
     return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24" aria-hidden="true">' + WA_PATH + '</svg>';
   };
-  // Telegram: lingkaran penuh, jadi logo aslinya pakai warna latar. Dipakai
-  // satu lapis supaya seragam dengan waIcon di ukuran kecil (13–18px).
   var TG_PATH = '<path fill="#229ED9" d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161l-1.97 9.288c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.022c.24-.213-.054-.333-.373-.12L7.94 13.428l-2.943-.92c-.64-.203-.652-.64.133-.948l11.5-4.432c.534-.194 1-.12.932.633z"/>';
   var DC_PATH = '<path fill="#5865F2" d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.894.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>';
   window.tgIcon = function (s) {
@@ -99,7 +77,6 @@ function siapkanDrawer() {
   window.dcIcon = function (s) {
     return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24" aria-hidden="true">' + DC_PATH + '</svg>';
   };
-  /** Ikon sesuai platform bot. */
   window.platIcon = function (platform, s) {
     if (platform === 'telegram') return window.tgIcon(s);
     if (platform === 'discord') return window.dcIcon(s);
@@ -107,64 +84,39 @@ function siapkanDrawer() {
   };
 })();
 
-// ── Alamat bot untuk URL halaman ─────────────────────────────────────
-// Link memakai `slug` (acak, dari `bots.public_id`) supaya `/bot/4` tidak
-// gampang ditebak bot auto-scanner. `id` tetap jadi cadangan untuk bot lama
-// yang belum sempat punya slug — server menerima dua-duanya.
 window.botHref = function (bot) {
   if (!bot) return '';
   return bot.slug || bot.public_id || bot.id || (bot.bot && (bot.bot.slug || bot.bot.id)) || '';
 };
 
-/**
- * Ambil id/slug bot dari pathname halaman.
- *
- * WAJIB dipakai semua halaman /bot/:id & /config/:id — JANGAN tulis regex
- * sendiri. Versi lama masing-masing file cuma cocok angka (`\/(\d+)\/?$`),
- * jadi begitu URL-nya jadi slug, hasilnya `undefined` dan halaman langsung
- * mental ke /dashboard tanpa pesan apa pun.
- *
- * `(?:bot|config)` sengaja disebut eksplisit: tanpa itu, `/dashboard` ikut
- * cocok sebagai "slug" dan halaman mengirim permintaan ke bot bernama
- * "dashboard".
- */
 window.botIdDariPath = function (pathname) {
   const m = String(pathname || '').match(/^\/(?:bot|config)\/([^/]+)\/?$/);
   return m ? decodeURIComponent(m[1]) : null;
 };
 
-// ── Menu aktif ikut halaman yang sedang dibuka ───────────────────────
-// Dulu `active` ditulis mati di sidebar.html (selalu "Dashboard"), jadi di
-// /pricing & /admin salah nyala.
 document.addEventListener('DOMContentLoaded', function () {
   if (window.__SIDEBAR_BOUND__) return;
   window.__SIDEBAR_BOUND__ = true;
 
   siapkanDrawer();
 
-  // §8.1: keadaan awal sidebar. Di HP mulai mini; di desktop mulai penuh.
-  // Breakpoint diubah (HP diputar / jendela diubah) → keadaan di-reset.
   var s = appShell();
   if (s) {
     var mq = matchMedia('(max-width:760px)');
     var setMini = setSidebarMini;   // satu jalur, jadi `aria-expanded` ikut benar
     setMini(mq.matches);
     mq.addEventListener('change', function (e) { setMini(e.matches); });
-    // Klik area konten menutup overlay (mobile).
     var utama = document.querySelector('main');
     if (utama) utama.addEventListener('click', function (e) {
       if (mq.matches && !s.classList.contains('mini') &&
           !(e.target.closest && e.target.closest('[data-act="toggleSidebar"]'))) setMini(true);
     });
-    // §8.1: overlay juga ditutup dengan Esc.
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' && mq.matches) setMini(true);
     });
   }
 
   var kini = (location.pathname.replace(/\/+$/, '') || '/');
-  // cocokkan nama halamannya saja, biar jalan juga saat diakses sebagai
-  // /pricing.html (preview) maupun /pricing (rute server.js)
   var nama = kini === '/' ? 'index' : kini.split('/').pop().replace(/\.html$/, '');
   if (/^\/bot\//.test(kini)) nama = 'dashboard';   // halaman detail bot = anak Dashboard
   document.querySelectorAll('#sidebar nav a[href], aside nav a[href]').forEach(function (a) {
@@ -175,7 +127,6 @@ document.addEventListener('DOMContentLoaded', function () {
     a.classList.toggle('on', match);
   });
 
-  // Isi avatar topbar jika ada & popover user data
   var topAv = document.getElementById('top-avatar-txt');
   var pName = document.getElementById('pop-name');
   var pEmail = document.getElementById('pop-email');
@@ -213,7 +164,6 @@ document.addEventListener('DOMContentLoaded', function () {
         var elDrwAdmin = document.getElementById('drawer-admin-group');
         if (elDrwAdmin) elDrwAdmin.style.display = 'block';
 
-        // Sembunyikan menu transaksi/saldo/pricing user dari popover & drawer admin
         var popMenu = document.querySelector('.pop-menu');
         if (popMenu) {
           ['/billing', '/saldo', '/pricing'].forEach(function (href) {
@@ -235,7 +185,6 @@ document.addEventListener('DOMContentLoaded', function () {
           if (el) el.style.display = 'none';
         });
 
-        // Alihkan admin jika membuka langsung halaman konsumen
         var cp = location.pathname;
         if (cp === '/saldo' || cp.indexOf('/saldo/') === 0) {
           location.replace('/kountole/saldo');
@@ -267,7 +216,6 @@ document.addEventListener('DOMContentLoaded', function () {
     };
   }
 
-  // Dropdown Accordion Manage di Topbar & Sidebar
   var navAdminGroup = document.getElementById('nav-admin');
   var btnNavManage = document.getElementById('btn-nav-manage');
   if (btnNavManage && navAdminGroup) {
@@ -292,7 +240,6 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  // ── Mobile Drawer Sidebar Navigation Controller ──
   function $d(id) { return document.getElementById(id); }
 
   function syncDrawer() {
@@ -320,11 +267,9 @@ document.addEventListener('DOMContentLoaded', function () {
     var drawer = $d('mobile-drawer'), overlay = $d('mobile-drawer-overlay');
     if (!drawer || !overlay) return;
 
-    // Lepas dari header: pindahkan ke <body> supaya fixed menempel ke layar penuh
     if (overlay.parentNode !== document.body) document.body.appendChild(overlay);
     if (drawer.parentNode !== document.body) document.body.appendChild(drawer);
 
-    // Indeks animasi bertahap
     var n = 0;
     var uc = drawer.querySelector('.drawer-user-card');
     if (uc) uc.style.setProperty('--n', n++);
@@ -332,7 +277,6 @@ document.addEventListener('DOMContentLoaded', function () {
     var lo = drawer.querySelector('.drawer-logout-btn');
     if (lo) lo.style.setProperty('--n', n);
 
-    // Tandai menu aktif (+ buka accordion bila halaman admin)
     drawer.querySelectorAll('.drawer-nav-item[href], .drawer-sub-item[href]').forEach(function (a) {
       var h = a.getAttribute('href');
       if (location.pathname === h || location.pathname.indexOf(h + '/') === 0) {
@@ -345,7 +289,6 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
 
-    // Data user + grup Admin ikut berubah saat JS lain mengisinya
     var mo = new MutationObserver(syncDrawer);
     ['top-name', 'top-role', 'top-avatar-txt'].forEach(function (id) {
       var el = $d(id);
@@ -355,12 +298,10 @@ document.addEventListener('DOMContentLoaded', function () {
     if (adm) mo.observe(adm, { attributes: true, attributeFilter: ['style'] });
     syncDrawer();
 
-    // Tutup otomatis bila layar melebar ke desktop
     window.matchMedia('(min-width: 901px)').addEventListener('change', function (e) {
       if (e.matches) setMobileDrawer(false);
     });
 
-    // Fokus tetap di dalam panel saat terbuka
     drawer.addEventListener('keydown', function (e) {
       if (e.key !== 'Tab') return;
       var items = Array.prototype.filter.call(
@@ -371,7 +312,6 @@ document.addEventListener('DOMContentLoaded', function () {
       if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
       else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
     });
-    // Geser jari ke kiri untuk menutup drawer (swipe left to close)
     var touchStartX = 0, touchStartY = 0;
     drawer.addEventListener('touchstart', function (e) {
       touchStartX = e.touches[0].clientX;
@@ -386,7 +326,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
   initDrawer();
 
-  // Delegasi klik global: burger, tutup, overlay, accordion
   document.addEventListener('click', function (e) {
     if (e.target.closest('#cx-burger-btn')) {
       e.preventDefault(); e.stopPropagation(); setMobileDrawer(true); return;
@@ -429,7 +368,6 @@ document.addEventListener('DOMContentLoaded', function () {
     if (location.pathname === h || location.pathname.startsWith(h + '/')) a.classList.add('on', 'active');
   });
 
-  // ── Custom Select Dropdown (§Obsidian Glassmorphic) ─────────────────
   function enhanceCustomSelect(sel) {
     if (!sel || sel.dataset.csInit === '1') return;
     sel.dataset.csInit = '1';

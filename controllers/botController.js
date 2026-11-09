@@ -10,11 +10,7 @@ const pricingStore = require('../config/pricingStore');
 
 const SESSIONS_DIR = path.resolve(process.env.SESSIONS_DIR || './sessions');
 
-// State bot hidup di engine (satu proses dengan panel ini): `activeBots` dkk
-// tinggal di engine/runtime.js. Engine yang nyimpen, rute web baca dari sini.
 const { activeBots, activeGroupsPerBot, activeChannelsPerBot } = require('../engine/runtime');
-// Perintah nyala/matiin bot tetap lewat bus — biar controller nggak perlu tahu
-// engine-nya di proses mana (di panel zapo: proses ini juga).
 const engineBus = require('../config/engineBus');
 const redisBus = require('../config/redisBus');
 
@@ -25,7 +21,6 @@ function cekKapasitasServer() {
   const totalMemMb = os.totalmem() / (1024 * 1024);
   const running = (typeof activeBots !== 'undefined' && activeBots) ? activeBots.size : 0;
   const maxConfig = parseInt(process.env.MAX_RUNNING_BOTS, 10);
-  // ponytail: buffer 300MB untuk OS + MySQL + Redis, estimasi ~120MB per instans bot WA
   const maxBots = Number.isInteger(maxConfig) && maxConfig > 0
     ? maxConfig
     : Math.max(1, Math.floor((totalMemMb - 300) / 120));
@@ -44,7 +39,6 @@ async function validasiTokenPlatform(platform, token, ignoreBotId = null) {
   const clean = token.trim();
   if (!clean) return { ok: true };
 
-  // 1. Cek apakah sudah terdaftar di bot lain di database lokal
   const [dup] = await pool.execute(
     `SELECT id, bot_name FROM bots WHERE (telegram_token = ? OR discord_token = ?) ${ignoreBotId ? 'AND id != ?' : ''} LIMIT 1`,
     ignoreBotId ? [clean, clean, ignoreBotId] : [clean, clean]
@@ -53,7 +47,6 @@ async function validasiTokenPlatform(platform, token, ignoreBotId = null) {
     return { ok: false, message: `Token ini sudah dipakai oleh bot "${dup[0].bot_name}". Gunakan bot lain atau token baru.` };
   }
 
-  // 2. Cek status aktif ke API Telegram
   if (platform === 'telegram') {
     try {
       const meRes = await fetch(`https://api.telegram.org/bot${clean}/getMe`, { signal: AbortSignal.timeout(5000) });
@@ -62,14 +55,12 @@ async function validasiTokenPlatform(platform, token, ignoreBotId = null) {
         return { ok: false, message: `Token Telegram tidak valid: ${meData.description || 'Periksa kembali token bot kamu'}` };
       }
 
-      // Deteksi & otomatis bersihkan Webhook aktif dari web/hosting lama
       const whRes = await fetch(`https://api.telegram.org/bot${clean}/getWebhookInfo`, { signal: AbortSignal.timeout(5000) });
       const whData = await whRes.json().catch(() => ({}));
       if (whData.ok && whData.result?.url) {
         await fetch(`https://api.telegram.org/bot${clean}/deleteWebhook?drop_pending_updates=true`, { signal: AbortSignal.timeout(5000) }).catch(() => {});
       }
 
-      // Deteksi polling aktif di server lain (Conflict 409)
       const pollRes = await fetch(`https://api.telegram.org/bot${clean}/getUpdates?offset=-1&limit=1&timeout=0`, { signal: AbortSignal.timeout(5000) });
       if (pollRes.status === 409) {
         return { ok: false, message: 'Bot ini sedang aktif berjalan di web/server lain (Conflict 409). Matikan bot lama dulu sebelum memasukkan ke sini.' };
@@ -81,7 +72,6 @@ async function validasiTokenPlatform(platform, token, ignoreBotId = null) {
     }
   }
 
-  // 3. Cek status aktif ke API Discord
   if (platform === 'discord') {
     try {
       const res = await fetch('https://discord.com/api/v10/users/@me', {
@@ -108,11 +98,6 @@ function sendError(res, status, message) {
   return res.status(status).json({ ok: false, message });
 }
 
-// Pesan engine itu buat kita, bukan buat user: cuma kalimat yang jelas
-// manusiawi yang diteruskan, sisanya jadi pesan umum (jangan bocorin path/errno).
-// Pesan dari worker (lewat engineBus) itu kalimat yang kita tulis sendiri, jadi
-// diteruskan apa adanya. Yang diganti cuma error mentah: jangan sampai user
-// lihat path/errno/stack.
 const STATUS_MANUSIA = new Set([400, 403, 404, 409, 503, 504]);
 function pesanManusia(e, fallback = 'Terjadi kesalahan server') {
   const st = Number(e?.status) || 0;
@@ -128,13 +113,7 @@ function getDbPath(botId) {
   return path.join(getBotDir(botId), 'session.db');
 }
 
-/**
- * Ensure the user owns this bot (or is admin tertinggi).
- */
 async function assertOwnership(req, res, botId) {
-  // `:id` sudah di-resolve jadi id angka oleh app.param('id') di server.js
-  // (menerima nomor lama maupun slug publik). Baris ini cadangan untuk pemanggil
-  // yang tidak lewat rute itu.
   const idAngka = (await resolveBotId(botId)) ?? Number(botId);
 
   const [rows] = await pool.execute(
@@ -147,19 +126,12 @@ async function assertOwnership(req, res, botId) {
     sendError(res, 403, 'Akses ditolak');
     return null;
   }
-  // Slug publik: dipakai untuk link di UI. Bot lama yang belum punya langsung
-  // dibuatkan di sini, jadi migrasi kolom saja sudah cukup.
   if (!bot.public_id) bot.public_id = await pastikanSlug(bot.id);
   return bot;
 }
 
-/**
- * Masking token Telegram: tampilkan hanya 4 digit terakhir.
- * Token asli tetap tersimpan di DB — dipakai engine saat start.
- */
 function maskToken(token) {
   if (!token) return null;
-  // Format: <bot_id>:<35-char secret>
   const parts = String(token).split(':');
   if (parts.length < 2) return '••••••••';
   const secret = parts[1];
@@ -175,8 +147,6 @@ function getDiscordInviteUrl(token, perms = 'standard') {
     const part = String(token).split('.')[0];
     const decoded = Buffer.from(part, 'base64').toString('utf8');
     if (/^\d{16,21}$/.test(decoded)) {
-      // standard = 412317243456 (View, Send, Embeds, Attach Files, History, Reactions, Slash Cmds — tanpa bahaya Administrator)
-      // admin    = 8 (Administrator)
       const p = perms === 'admin' ? '8' : '412317243456';
       return `https://discord.com/oauth2/authorize?client_id=${decoded}&permissions=${p}&scope=bot%20applications.commands`;
     }
@@ -192,8 +162,6 @@ function publicBot(bot) {
   const discord_invite_admin_url = bot.platform === 'discord' ? getDiscordInviteUrl(rawToken, 'admin') : null;
   const tgUser = bot.bot_number ? String(bot.bot_number).replace(/^@/, '') : null;
   const telegram_bot_url = bot.platform === 'telegram' && tgUser ? `https://t.me/${tgUser}` : null;
-  // `public_id` diteruskan APA ADANYA (bisa null untuk bot lama) — UI memakai
-  // `slug` yang sudah diisi di bawah, bukan kolom mentahnya.
   return {
     ...rest,
     telegram_token: maskToken(telegram_token),
@@ -204,27 +172,16 @@ function publicBot(bot) {
   };
 }
 
-/**
- * Tambahkan `slug` (alamat halaman) & buang `public_id` mentah dari payload.
- * Dipakai semua jalur yang mengembalikan bot ke UI supaya link selalu slug.
- */
 function denganSlug(bot) {
   if (!bot) return bot;
   const { public_id, ...rest } = publicBot(bot);
   return { ...rest, slug: public_id || null };
 }
 
-// ─── GET /api/bots ────────────────────────────────────────────────────────────
-
 async function listBots(req, res) {
   try {
     const isKing = req.user.role === ADMIN_ROLE;
-    // cmd_count = statistik pemakaian per bot (jumlah command yang benar-benar
-    // dijalankan). Subquery, bukan JOIN + GROUP BY — jumlah bot masih kecil.
     const kolom = `b.*, (SELECT COUNT(*) FROM bot_logs l WHERE l.bot_id = b.id AND l.level = 'cmd') AS cmd_count, (SELECT kt.jumlah FROM kuota_tambahan kt WHERE kt.bot_id = b.id) AS bonus_kuota`;
-    // Pencarian & batas DI SQL, bukan tarik-semua-lalu-saring-di-browser: begitu
-    // botnya ratusan, cara lama bikin /admin lemot + payload gede.
-    // ponytail: LIMIT tanpa OFFSET. Tambah halaman kalau ada yang punya >500 bot.
     const limit = Math.min(parseInt(req.query.limit || '500', 10) || 500, 500);
     const q = String(req.query.q || '').trim().slice(0, 60);
 
@@ -240,13 +197,9 @@ async function listBots(req, res) {
          WHERE 1=1${where} ORDER BY b.created_at DESC LIMIT ${limit}`;
 
     const [bots] = await pool.execute(query, params);
-    // publicBot() nge-`...rest` → username yang di-JOIN KEHILANGAN. Ambil dulu.
     const enriched = bots.map(b => ({
       ...denganSlug(b),
       username: b.username,
-      // is_running harus dari DB (di-update engine pas connected/disconnected),
-      // bukan activeBots.has() — Map itu ke-set SEBELUM connect selesai,
-      // jadi polling frontend salah anggap 'connected' & nutup QR yang baru muncul.
       is_running: b.is_running === 1,
     }));
     return res.json({ ok: true, bots: enriched });
@@ -255,8 +208,6 @@ async function listBots(req, res) {
     return sendError(res, 500, 'Terjadi kesalahan server');
   }
 }
-
-// ─── GET /api/bots/:id ────────────────────────────────────────────────────────
 
 async function getBot(req, res) {
   try {
@@ -274,8 +225,6 @@ async function getBot(req, res) {
   }
 }
 
-// ─── POST /api/bots ───────────────────────────────────────────────────────────
-
 async function createBot(req, res) {
   try {
     const cap = cekKapasitasServer();
@@ -283,7 +232,6 @@ async function createBot(req, res) {
       return sendError(res, 503, `Kapasitas server VPS sedang penuh (RAM sisa ${cap.freeMemMb}MB). Hubungi admin.`);
     }
 
-    // Slot check — bolehnya berapa bot ditentukan paket langganan user.
     const [me] = await pool.execute(
       'SELECT role, plan, plan_expired_at, plan_slots FROM users WHERE id = ?',
       [req.user.id]
@@ -322,7 +270,6 @@ async function createBot(req, res) {
     if (platform === 'discord' && !discord_token && !telegram_token)
       return sendError(res, 400, 'Token Bot Discord wajib diisi untuk platform Discord');
 
-    // Owner number = nomor yang dianggap owner bot. Jumlahnya dibatasi paket.
     const ownerMaxN = ownerMax(me[0], pricingStore.plans());
     const jumlahOwner = String(owner_number || '').split(',').map((s) => s.trim()).filter(Boolean).length;
     if (jumlahOwner > ownerMaxN)
@@ -351,17 +298,12 @@ async function createBot(req, res) {
 
     const botId = result.insertId;
 
-    // Slug publik untuk URL halaman. Dibuat SEKARANG, bukan saat pertama dibuka:
-    // response create sudah mengembalikannya, dan UI langsung mengarahkan ke
-    // `/config/<slug>` — kalau masih null, user melihat URL angka lagi.
     const slug = await pastikanSlug(botId);
 
     const dbPath = getDbPath(botId);
 
-    // Create session directory
     fs.mkdirSync(getBotDir(botId), { recursive: true });
 
-    // Save sqlite path
     await pool.execute(
       'UPDATE bots SET sqlite_db_path = ? WHERE id = ?',
       [dbPath, botId]
@@ -379,8 +321,6 @@ async function createBot(req, res) {
   }
 }
 
-// ─── PATCH /api/bots/:id ──────────────────────────────────────────────────────
-
 async function updateBot(req, res) {
   try {
     const bot = await assertOwnership(req, res, req.params.id);
@@ -390,7 +330,6 @@ async function updateBot(req, res) {
     const sets = [];
     const vals = [];
 
-    // Batas owner number juga berlaku saat edit, bukan cuma saat bikin bot.
     if (req.body.owner_number !== undefined) {
       const [me] = await pool.execute(
         'SELECT role, plan, plan_expired_at FROM users WHERE id = ?', [req.user.id]);
@@ -415,7 +354,6 @@ async function updateBot(req, res) {
 
     for (const key of allowed) {
       if (req.body[key] !== undefined) {
-        // Token masked (•••) dari FE jangan ditimpa ke DB — pertahankan token asli
         if ((key === 'telegram_token' || key === 'discord_token') && String(req.body[key]).includes('•')) continue;
         sets.push(`${key} = ?`);
         vals.push(req.body[key]);
@@ -434,18 +372,13 @@ async function updateBot(req, res) {
   }
 }
 
-// ─── DELETE /api/bots/:id ─────────────────────────────────────────────────────
-
 async function deleteBot(req, res) {
   try {
     const bot = await assertOwnership(req, res, req.params.id);
     if (!bot) return;
 
-    // Matiin dulu lewat worker — kalau nggak, auto-reconnect engine nyalain
-    // ulang bot yang folder sesinya lagi dihapus.
     await engineBus.stopIfRunning(bot.id);
 
-    // Remove session folder — retry karena Windows bisa hold file SQLite
     const dir = getBotDir(bot.id);
     if (fs.existsSync(dir)) {
       let deleted = false;
@@ -474,8 +407,6 @@ async function deleteBot(req, res) {
   }
 }
 
-// ─── POST /api/bots/:id/start ─────────────────────────────────────────────────
-
 async function startBot(req, res) {
   try {
     const cap = cekKapasitasServer();
@@ -492,14 +423,6 @@ async function startBot(req, res) {
     const [rows] = await pool.execute('SELECT * FROM bots WHERE id = ?', [bot.id]);
     const botData = rows[0];
 
-    // Temuan audit #25 — bot yang dimatikan cron karena paket habis
-    // (stop_reason='expired') TIDAK boleh dinyalakan manual. Tanpa guard ini,
-    // pemilik bisa klik Start berulang: bot hidup ~1 menit, cron matiin,
-    // klik lagi — bot hidup ~50-60% waktu tanpa bayar.
-    //
-    // Pengecualian: kalau paketnya SUDAH dibayar lagi (plan_expired_at masih
-    // di depan), Start sah — jadi cek paket dulu, bukan cuma stop_reason.
-    // Admin (kawula) tetap boleh, sama seperti jalur lain di controller ini.
     if (botData && botData.stop_reason === 'expired' && req.user.role !== ADMIN_ROLE) {
       const [u] = await pool.execute(
         'SELECT role, plan_expired_at FROM users WHERE id = ?', [botData.user_id]);
@@ -509,10 +432,7 @@ async function startBot(req, res) {
       }
     }
 
-    // Engine-nya ada di proses lain — kirim perintah, bukan panggil fungsi.
     const usePairingCode = req.body.use_pairing_code === true;
-    // Jawaban diambil dari worker, bukan dari cermin lokal — cermin bisa basi,
-    // dan guard "bot sudah berjalan" yang salah bikin bot nggak bisa dinyalain.
     const out = await engineBus.start(bot.id, usePairingCode);
     redisBus.publishEvent({ botId: bot.id, type: 'status', payload: { status: 'connecting' }, ts: Date.now() });
     return res.json({ ok: true, message: out.message });
@@ -522,16 +442,11 @@ async function startBot(req, res) {
   }
 }
 
-// ─── POST /api/bots/:id/stop ──────────────────────────────────────────────────
-
 async function stopBot(req, res) {
   try {
     const bot = await assertOwnership(req, res, req.params.id);
     if (!bot) return;
 
-    // Nggak ada guard cermin di sini: worker yang tau pasti statusnya dan dia
-    // yang jawab. Guard lokal cuma bisa salah (cermin ke-isi 'running' dari
-    // auto-start saat worker belum selesai baca DB) -> tombol stop mati.
     const out = await engineBus.stop(bot.id);
     redisBus.publishEvent({ botId: bot.id, type: 'status', payload: { status: 'disconnected' }, ts: Date.now() });
 
@@ -542,18 +457,13 @@ async function stopBot(req, res) {
   }
 }
 
-// ─── POST /api/bots/:id/restart ───────────────────────────────────────────────
-
 async function restartBot(req, res) {
   try {
     const bot = await assertOwnership(req, res, req.params.id);
     if (!bot) return;
 
-    // Bersihkan log terminal lama saat restart agar sesi baru bersih
     await pool.execute('DELETE FROM bot_logs WHERE bot_id = ?', [bot.id]);
 
-    // Satu jalur restart, di worker: command WA .restart dan tombol ini
-    // nggak boleh punya logika masing-masing (dulu pernah, hasilnya beda).
     const out = await engineBus.restart(bot.id);
     redisBus.publishEvent({ botId: bot.id, type: 'status', payload: { status: 'connecting' }, ts: Date.now() });
     return res.json({ ok: true, message: out.message });
@@ -563,7 +473,6 @@ async function restartBot(req, res) {
   }
 }
 
-// ─── DELETE /api/bots/:id/logs ────────────────────────────────────────────────
 async function clearBotLogs(req, res) {
   try {
     const bot = await assertOwnership(req, res, req.params.id);
@@ -577,8 +486,6 @@ async function clearBotLogs(req, res) {
   }
 }
 
-// ─── POST /api/bots/:id/clear-session ────────────────────────────────────────
-
 async function clearSession(req, res) {
   try {
     const bot = await assertOwnership(req, res, req.params.id);
@@ -588,7 +495,6 @@ async function clearSession(req, res) {
     redisBus.publishEvent({ botId: bot.id, type: 'status', payload: { status: 'disconnected' }, ts: Date.now() });
     redisBus.publishEvent({ botId: bot.id, type: 'clear_terminal', ts: Date.now() });
 
-    // Hapus sesi — retry karena Windows bisa hold file SQLite walau socket udah tutup
     const dir = getBotDir(bot.id);
     if (fs.existsSync(dir)) {
       let deleted = false;
@@ -599,7 +505,6 @@ async function clearSession(req, res) {
           break;
         } catch (e) {
           if (e.code === 'EPERM' || e.code === 'EBUSY') {
-            // Windows masih hold file — tunggu lalu retry
             await new Promise(r => setTimeout(r, 800 * (attempt + 1)));
           } else {
             throw e; // error lain langsung lempar
@@ -607,7 +512,6 @@ async function clearSession(req, res) {
         }
       }
       if (!deleted) {
-        // Fallback: rename folder lama, buat folder baru bersih
         const oldDir = dir + '_old_' + Date.now();
         fs.renameSync(dir, oldDir);
         console.log(`[Bot] clearSession: folder ${dir} tidak bisa dihapus — direname ke ${oldDir}`);
@@ -620,8 +524,6 @@ async function clearSession(req, res) {
       [getDbPath(bot.id), bot.id]
     );
 
-    // Log lama ikut dibuang — kalau nggak, panel nge-replay riwayat sesi
-    // sebelumnya pas dibuka, keliatan kayak kejadian baru.
     await pool.execute('DELETE FROM bot_logs WHERE bot_id = ?', [bot.id]);
 
     return res.json({ ok: true, message: 'Sesi dihapus. Bot perlu scan QR ulang.' });
@@ -631,9 +533,6 @@ async function clearSession(req, res) {
   }
 }
 
-// ─── GET /api/bots/:id/logs ───────────────────────────────────────────────────
-// ponytail: tanpa halaman/`sebelum_id`, cuma `limit` (maks 500). Cukup selama
-// log satu bot masih bisa di-scroll; tambah cursor `id < ?` kalau sudah tidak.
 async function getBotLogs(req, res) {
   try {
     const bot = await assertOwnership(req, res, req.params.id);
@@ -652,27 +551,6 @@ async function getBotLogs(req, res) {
   }
 }
 
-// ─── GET /api/bots/:id/stats ──────────────────────────────────────────────────
-// Statistik dari `bot_logs` yang SUDAH ada — 0 tabel baru. Bentuk barisnya
-// (engine/whatsappEngine.js:775-790 logLineDisplay):
-//   cmd  : `Nama: .tt link`        (yg kehitung cuma `cmd`, `cmderr` dibuang)
-//   info : `Nama: teks` atau `Nama: .s` (command yg nggak dibalas)
-// Jadi kolom pertama = NAMA USER: `cmd` = pemakai command, `info` = yang nulis.
-// Statistik dibaca dari pola TEKS `bot_logs.message`, bukan kolom terstruktur.
-// Formatnya ditulis di engine/whatsappEngine.js:1066-1068 dan sudah dicek ke
-// 25 baris produksi (VPS B):
-//   grup  : "<Nama> @ <Nama Grup>: <.cmd argumen> (+4983ms)"
-//   DM    : "<Nama>: <.cmd argumen> (+814ms)"
-//   media : "<Nama> @ <Nama Grup> [stiker] (+12ms)"      ← body kosong, nggak ada ": "
-// Yang gampang salah: " @ " itu pemisah nama↔grup dan letaknya SEBELUM ": ",
-// bukan sesudah command. Sisa ekor yang harus dibuang cuma " (+Nms)" dan " [tipe]".
-//
-// Batas yang diketahui (bukan bug, tapi bisa salah hitung):
-//   - nama grup yang mengandung ": " bikin potongan nama/command meleset
-//   - nama pengirim yang mengandung " @ " dianggap pemisah grup
-// Keduanya cuma bikin satu baris salah hitung, bukan bikin halaman error.
-// Kalau ini keliru di data nyata, jalan keluarnya: simpan `sender_name` sebagai
-// kolom sendiri di bot_logs, bukan nambah regex.
 const ADA_AT   = `LOCATE(' @ ', message) > 0`;
 const ADA_KOLOM = `LOCATE(': ', message) > 0`;
 const AT_DULU  = `(${ADA_AT} AND (NOT ${ADA_KOLOM} OR LOCATE(' @ ', message) < LOCATE(': ', message)))`;
@@ -685,20 +563,10 @@ const GRUP = `TRIM(IF(${AT_DULU},
     SUBSTRING_INDEX(SUBSTRING(message, LOCATE(' @ ', message) + 3), ': ', 1),
     ' \\\\(\\\\+[0-9]+ms\\\\)$', ''), ' \\\\[[^]]*\\\\]$', ''),
   ''))`;
-// Isi pesan = semuanya setelah ": " pertama, minus ekor " (+Nms)".
 const BODY = `TRIM(REGEXP_REPLACE(SUBSTRING(message, LOCATE(': ', message) + 2), ' \\\\(\\\\+[0-9]+ms\\\\)$', ''))`;
-// Nama command = token PERTAMA isi pesan ('.tt video lucu' → '.tt').
-// Baris media nggak punya ": " → BODY kosong → CMD kosong → kebuang filter '.%'.
-// Command yang cuma titik ('.' / '..') dibuang: itu bukan command, nggak ada di
-// registry (scripts/audit-cmd.js), cuma ketikan nyasar.
 const CMD   = `TRIM(SUBSTRING_INDEX(${BODY}, ' ', 1))`;
-// CAST('4983ms' AS UNSIGNED) = 4983 — nggak butuh lookahead regex.
 const WAKTU = `CAST(REGEXP_SUBSTR(message, '[0-9]+ms') AS UNSIGNED)`;
 
-// Baris yang beneran pesan user. Baris sistem (lifecycle engine: "Memulai bot
-// ...", "Bot terhubung ke WhatsApp", "Paired sebagai") juga masuk level 'info',
-// tapi nggak punya ": " maupun " @ " — dan NAMA-nya jadi seluruh isi baris.
-// Efek samping yang diterima: media di DM (nggak ada ": ") ikut kebuang.
 const BARIS_USER = `(${ADA_KOLOM} OR ${ADA_AT})`;
 const CMD_OK = `cmd LIKE '.%' AND TRIM(BOTH '.' FROM cmd) <> ''`;
 
@@ -709,8 +577,6 @@ async function getBotStats(req, res) {
 
     const hari = Math.min(Math.max(parseInt(req.query.hari || '7', 10) || 7, 1), 365);
 
-    // `info` = tiap pesan masuk, `cmd` = yang beneran dibalas. Baris `info`
-    // (termasuk media) tetap kehitung sebagai aktivitas user.
     const [[ringkas]] = await pool.execute(
       `SELECT
          SUM(level = 'cmd')    AS cmd_total,
@@ -765,9 +631,6 @@ async function getBotStats(req, res) {
       harian.push({ tgl: kunci, n: petaHarian.get(kunci) || 0 });
     }
 
-    // Command yang sering gagal. `cmderr` punya dua bentuk: baris command biasa
-    // (level cmd yang gagal) dan 'handler: <pesan>' dari engine @1072 — yang
-    // kedua nggak punya nama command, jadi kebuang sendiri sama filter '.%'.
     const [error] = await pool.execute(
       `SELECT ${CMD} AS cmd, COUNT(*) AS n
          FROM bot_logs
@@ -794,7 +657,6 @@ async function getBotStats(req, res) {
         baris_total: Number(ringkas.baris_total || 0),
         hari,
       },
-      // nama = pushName (kalau kosong jatuh ke nomor, lihat engine @775)
       cmd: cmd.map(c => ({ ...c, n: Number(c.n), ms: c.ms === null ? null : Math.round(Number(c.ms)) })),
       user: usr.map(u => ({ ...u, ncmd: Number(u.ncmd || 0), n: Number(u.n || 0) })),
       error: error.map(e => ({ ...e, n: Number(e.n) })),
@@ -806,20 +668,13 @@ async function getBotStats(req, res) {
   }
 }
 
-// ─── GET /api/bots/:id/config ─────────────────────────────────────────────────
-// Export config sebagai file JSON (atribut `download` di FE yang ngunduh).
-// Token Telegram IKUT tapi sudah DIMASK publicBot() — jadi file ini aman
-// di-share, dan import nggak akan pernah nimpa token asli.
 async function exportConfig(req, res) {
   try {
-    // assertOwnership cuma nge-SELECT id+user_id (buat cek hak akses). Untuk
-    // export butuh baris UTUH — kalau nggak, file-nya cuma isi {id:1}.
     const own = await assertOwnership(req, res, req.params.id);
     if (!own) return;
     const [[bot]] = await pool.execute('SELECT * FROM bots WHERE id = ?', [own.id]);
     if (!bot) return sendError(res, 404, 'Bot tidak ditemukan');
 
-    // Buang yang bukan config — biar file-nya bersih waktu di-import balik.
     const { id, user_id, is_running, status, sqlite_db_path, created_at, updated_at, ...cfg } = publicBot(bot);
     const nama = String(bot.bot_name || 'bot').replace(/[^\w.-]+/g, '_');
     res.setHeader('Content-Disposition', `attachment; filename="config-${bot.id}-${nama}.json"`);
@@ -830,9 +685,6 @@ async function exportConfig(req, res) {
   }
 }
 
-// ─── POST /api/bots/:id/resolve-invite ───────────────────────────────────────
-// Link undangan grup → JID. Cuma jalan kalau botnya lagi terhubung: yang
-// nanya ke WhatsApp itu sesi bot, bukan panel.
 async function resolveInvite(req, res) {
   try {
     const bot = await assertOwnership(req, res, req.params.id);
@@ -844,21 +696,18 @@ async function resolveInvite(req, res) {
 
     const trimmed = input.trim();
 
-    // Sudah JID — validasi format saja
     if (trimmed.endsWith('@g.us')) {
       const valid = /^\d+@g\.us$/.test(trimmed);
       if (!valid) return sendError(res, 400, 'Format JID tidak valid');
       return res.json({ ok: true, jid: trimmed, name: null });
     }
 
-    // Extract invite code dari link WA
     const linkMatch = trimmed.match(/chat\.whatsapp\.com\/([A-Za-z0-9_-]+)/);
     if (!linkMatch)
       return sendError(res, 400, 'Bukan link grup WhatsApp atau JID yang valid');
 
     const code = linkMatch[1];
 
-    // Butuh bot aktif untuk resolve
     const client = activeBots.get(String(bot.id));
     if (!client)
       return sendError(res, 400, 'Bot harus aktif/terhubung untuk resolve link grup');
@@ -870,7 +719,6 @@ async function resolveInvite(req, res) {
       if (!jid) return sendError(res, 400, 'Gagal mendapatkan JID dari link ini');
       return res.json({ ok: true, jid, name });
     } catch (e) {
-      // Pesan asli (errno/path/nama library) jangan sampai ke layar user.
       console.error('[Bot] resolveInvite gagal:', e.message);
       return sendError(res, 400, 'Link undangan tidak bisa dibaca. Pastikan link masih aktif.');
     }
@@ -939,7 +787,6 @@ module.exports = {
   listBots, getBot, createBot, updateBot, deleteBot,
   startBot, stopBot, restartBot, clearSession, getBotLogs, clearBotLogs, getBotStats, exportConfig,
   resolveInvite, beliRespon,
-  // State runtime — dibaca engine (whatsappEngine/telegramEngine) & plugin.
   activeBots, activeGroupsPerBot, activeChannelsPerBot,
 };
 
