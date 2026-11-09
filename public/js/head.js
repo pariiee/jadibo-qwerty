@@ -213,7 +213,23 @@ document.addEventListener('DOMContentLoaded', function () {
         var elDrwAdmin = document.getElementById('drawer-admin-group');
         if (elDrwAdmin) elDrwAdmin.style.display = 'block';
 
-        // Sembunyikan menu transaksi/saldo/pricing user dari sidebar admin
+        // Sembunyikan menu transaksi/saldo/pricing user dari popover & drawer admin
+        var popMenu = document.querySelector('.pop-menu');
+        if (popMenu) {
+          ['/billing', '/saldo', '/pricing'].forEach(function (href) {
+            var el = popMenu.querySelector('a[href="' + href + '"]');
+            if (el) el.remove();
+          });
+          if (!u.is_superadmin && !document.getElementById('pop-staff-bot')) {
+            var aBot = document.createElement('a');
+            aBot.id = 'pop-staff-bot';
+            aBot.href = '/kountole/bots';
+            aBot.className = 'pop-item';
+            aBot.innerHTML = '<svg class="nv-i" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg><span>Manage Bot</span>';
+            popMenu.insertBefore(aBot, popMenu.firstChild);
+          }
+        }
+
         ['nav-saldo', 'nav-pricing', 'nav-billing', 'drw-saldo', 'drw-pricing', 'drw-billing'].forEach(function (id) {
           var el = document.getElementById(id);
           if (el) el.style.display = 'none';
