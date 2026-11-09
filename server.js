@@ -528,7 +528,6 @@ const halamanError = (kode = 500, customMsg = null) => (_, res) => {
   try {
     const raw = fs.readFileSync(path.join(PUBLIC_HTML, 'error.html'), 'utf8')
       .replace(INCLUDE_RE, (_, f) => fs.readFileSync(path.join(PUBLIC_HTML, 'partials', f), 'utf8'))
-      .replace(/(\/(?:assets|js)\/[\w.-]+\.(?:css|js))"/g, (m, p) => `${p}?v=${mtimeAset(p)}"`)
       .replace(/\{\{CODE\}\}/g, String(c))
       .replace(/\{\{TITLE\}\}/g, info.t)
       .replace(/\{\{MESSAGE\}\}/g, customMsg || info.d)

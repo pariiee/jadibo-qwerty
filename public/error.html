@@ -3,30 +3,130 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>{{CODE}} — {{TITLE}} | parigate</title>
+<title>{{CODE}} — {{TITLE}} | qwertygate</title>
 <!-- @include head.html -->
+<style>
+  body.page-error {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #FAFAFA;
+    background-image: radial-gradient(#151515 1px, transparent 1px);
+    background-size: 24px 24px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    padding: 20px;
+    margin: 0;
+    box-sizing: border-box;
+  }
+  .err-card {
+    width: 100%;
+    max-width: 440px;
+    background: #FFFFFF;
+    border: 2.5px solid #151515;
+    border-radius: 24px;
+    box-shadow: 6px 6px 0px #151515;
+    padding: 36px 28px;
+    text-align: center;
+    box-sizing: border-box;
+    position: relative;
+  }
+  .err-brand {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 20px;
+    background: #D8FF7A;
+    border: 2px solid #151515;
+    box-shadow: 3px 3px 0px #151515;
+    margin-bottom: 20px;
+  }
+  .err-badge {
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: 999px;
+    background: #FFE4E6;
+    color: #BE123C;
+    border: 2px solid #151515;
+    font-size: 12.5px;
+    font-weight: 800;
+    letter-spacing: .04em;
+    margin-bottom: 14px;
+    box-shadow: 2px 2px 0px #151515;
+  }
+  .err-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: #151515;
+    letter-spacing: -.03em;
+    margin: 0 0 10px;
+  }
+  .err-desc {
+    font-size: 13.5px;
+    color: #52525B;
+    line-height: 1.55;
+    font-weight: 500;
+    margin: 0 0 28px;
+  }
+  .err-btns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .err-btn {
+    height: 46px;
+    border-radius: 14px;
+    font-size: 13.5px;
+    font-weight: 800;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all .15s ease;
+    box-sizing: border-box;
+  }
+  .err-btn-sec {
+    background: #FFFFFF;
+    color: #151515;
+    border: 2px solid #151515;
+    box-shadow: 3px 3px 0px #151515;
+  }
+  .err-btn-pri {
+    background: #151515;
+    color: #FFFFFF;
+    border: 2px solid #151515;
+    box-shadow: 3px 3px 0px #7A63F0;
+  }
+  .err-btn:hover {
+    transform: translate(-1px, -1px);
+  }
+  .err-btn:active {
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0px #151515;
+  }
+  @media (max-width: 480px) {
+    .err-card { padding: 28px 20px; }
+    .err-btns { grid-template-columns: 1fr; }
+  }
+</style>
 </head>
-<body class="page-auth page-error">
+<body class="page-error">
 
-<button class="theme-btn theme-btn-auth" data-act="toggleTheme" aria-label="Ganti tema" title="Ganti tema">
-  <svg class="ic-moon" width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-  <svg class="ic-sun" width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4.2" stroke="currentColor" stroke-width="2"/><path d="M12 2v2.4M12 19.6V22M2 12h2.4M19.6 12H22M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M19.1 4.9l-1.7 1.7M6.6 17.4l-1.7 1.7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-</button>
-
-<div class="auth-wrap">
-  <div class="modal auth-card">
-    <div class="auth-brand">
-      <img src="/assets/parigate.svg" alt="parigate" class="auth-logo" width="60" height="60" />
-    </div>
-    <div class="error-badge">ERROR {{CODE}}</div>
-    <h2>{{TITLE}}</h2>
-    <p class="auth-desc">{{MESSAGE}}</p>
-    <div class="error-actions">
-      <button type="button" class="btn btn-social" onclick="history.length>1?history.back():location.href='/'">Kembali</button>
-      <a class="btn btn-dark btn-auth-submit" href="{{PRIMARY_HREF}}">{{PRIMARY_LABEL}}</a>
-    </div>
+<main class="err-card" role="main">
+  <div class="err-brand">
+    <img src="/assets/parigate.svg" alt="qwertygate" width="38" height="38" />
   </div>
-</div>
+  <div><span class="err-badge">ERROR {{CODE}}</span></div>
+  <h1 class="err-title">{{TITLE}}</h1>
+  <p class="err-desc">{{MESSAGE}}</p>
+  <div class="err-btns">
+    <button type="button" class="err-btn err-btn-sec" onclick="history.length>1?history.back():location.href='/'">Kembali</button>
+    <a class="err-btn err-btn-pri" href="{{PRIMARY_HREF}}">{{PRIMARY_LABEL}}</a>
+  </div>
+</main>
 
 </body>
 </html>
