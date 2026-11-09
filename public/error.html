@@ -6,30 +6,35 @@
 <title>{{CODE}} — {{TITLE}} | qwertygate</title>
 <!-- @include head.html -->
 <style>
-  body.page-error {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #FAFAFA;
-    background-image: radial-gradient(#151515 1px, transparent 1px);
-    background-size: 24px 24px;
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    padding: 20px;
-    margin: 0;
-    box-sizing: border-box;
+  html, body.page-error {
+    height: 100% !important;
+    min-height: 100vh !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background-color: #FAFAFA !important;
+    background-image: radial-gradient(#151515 1px, transparent 1px) !important;
+    background-size: 24px 24px !important;
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    padding: 20px !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
   }
   .err-card {
-    width: 100%;
-    max-width: 440px;
-    background: #FFFFFF;
-    border: 2.5px solid #151515;
-    border-radius: 24px;
-    box-shadow: 6px 6px 0px #151515;
-    padding: 36px 28px;
-    text-align: center;
-    box-sizing: border-box;
-    position: relative;
+    width: 100% !important;
+    max-width: 420px !important;
+    height: auto !important;
+    min-height: auto !important;
+    max-height: fit-content !important;
+    background: #FFFFFF !important;
+    border: 2.5px solid #151515 !important;
+    border-radius: 28px !important;
+    box-shadow: 6px 6px 0px #151515 !important;
+    padding: 36px 28px !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
+    margin: auto !important;
+    position: relative !important;
   }
   .err-brand {
     display: inline-flex;
@@ -108,14 +113,14 @@
     box-shadow: 1px 1px 0px #151515;
   }
   @media (max-width: 480px) {
-    .err-card { padding: 28px 20px; }
+    .err-card { padding: 28px 20px !important; }
     .err-btns { grid-template-columns: 1fr; }
   }
 </style>
 </head>
 <body class="page-error">
 
-<main class="err-card" role="main">
+<div class="err-card" role="alert">
   <div class="err-brand">
     <img src="/assets/parigate.svg" alt="qwertygate" width="38" height="38" />
   </div>
@@ -126,7 +131,7 @@
     <button type="button" class="err-btn err-btn-sec" onclick="history.length>1?history.back():location.href='/'">Kembali</button>
     <a class="err-btn err-btn-pri" href="{{PRIMARY_HREF}}">{{PRIMARY_LABEL}}</a>
   </div>
-</main>
+</div>
 
 </body>
 </html>
