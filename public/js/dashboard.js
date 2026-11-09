@@ -224,32 +224,48 @@
       if (lbOnline) lbOnline.innerHTML = '<span class="bt-ic"><svg class="i" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>Total Omzet';
 
       const lbSlot = document.querySelector('.bt-sky .bt-lb');
-      if (lbSlot) lbSlot.innerHTML = '<span class="bt-ic"><svg class="i" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>RAM Server';
+      if (lbSlot) lbSlot.innerHTML = '<span class="bt-ic"><svg class="i" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>RAM & Disk';
 
       const lbExp = document.querySelector('.bt-peach .bt-lb');
       if (lbExp) lbExp.innerHTML = '<span class="bt-ic"><svg class="i" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4"/></svg></span>Transaksi';
 
-      api('/api/admin/pendapatan').then(d => {
-        if (d?.ok && d.ringkas) {
-          txt('st-online', 'Rp ' + Number(d.ringkas.total_lunas || 0).toLocaleString('id-ID'), 'ok');
-          const subOnline = document.getElementById('st-online-sub');
-          if (subOnline) subOnline.textContent = (d.ringkas.jumlah_lunas || 0) + ' transaksi berhasil';
+      const updateSys = () => {
+        api('/api/admin/pendapatan').then(d => {
+          if (d?.ok && d.ringkas) {
+            txt('st-online', 'Rp ' + Number(d.ringkas.total_lunas || 0).toLocaleString('id-ID'), 'ok');
+            const subOnline = document.getElementById('st-online-sub');
+            if (subOnline) subOnline.textContent = (d.ringkas.jumlah_lunas || 0) + ' transaksi berhasil';
 
-          txt('st-exp', (d.ringkas.jumlah_lunas || 0) + ' Order', 'ok');
-          const subExp = document.getElementById('st-exp-sub');
-          if (subExp) subExp.textContent = (d.ringkas.jumlah_pending || 0) + ' order pending';
-        }
-      });
+            txt('st-exp', (d.ringkas.jumlah_lunas || 0) + ' Order', 'ok');
+            const subExp = document.getElementById('st-exp-sub');
+            if (subExp) subExp.textContent = (d.ringkas.jumlah_pending || 0) + ' order pending';
+          }
+        });
 
-      api('/api/admin/sistem').then(d => {
-        if (d?.ok && d.resource?.ram) {
-          const r = d.resource.ram;
-          const ramPct = Math.round((r.terpakai / r.total) * 100);
-          txt('st-slot', ramPct + '%', ramPct > 80 ? 'warn' : 'ok');
-          const subSlot = document.getElementById('st-slot-sub');
-          if (subSlot) subSlot.textContent = Math.round(r.terpakai / 1048576) + ' MB / ' + Math.round(r.total / 1048576) + ' MB';
-        }
-      });
+        api('/api/admin/sistem').then(d => {
+          if (d?.ok && d.resource) {
+            const r = d.resource.ram;
+            const dk = d.resource.disk;
+            const ramPct = r ? Math.round((r.terpakai / r.total) * 100) : 0;
+            const diskPct = dk ? Math.round((dk.terpakai / dk.total) * 100) : 0;
+
+            txt('st-slot', `${ramPct}% · Disk ${diskPct}%`, (ramPct > 85 || diskPct > 85) ? 'warn' : 'ok');
+            const subSlot = document.getElementById('st-slot-sub');
+            if (subSlot) {
+              const rMb = r ? Math.round(r.terpakai / 1048576) + ' MB' : '';
+              const dGb = dk ? (dk.terpakai / 1073741824).toFixed(1) + '/' + (dk.total / 1073741824).toFixed(1) + ' GB' : '';
+              subSlot.textContent = `${rMb} RAM · ${dGb} Disk`;
+            }
+          }
+        });
+      };
+
+      updateSys();
+      if (!window._sysPollInterval) {
+        window._sysPollInterval = setInterval(() => {
+          if (!document.hidden) updateSys();
+        }, 3000);
+      }
 
       renderPeringatan();
       return;
