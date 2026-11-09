@@ -870,11 +870,50 @@ body.page-dashboard .bt-tile{position:relative;overflow:hidden;min-width:0;displ
 body.page-dashboard .bt-tile:hover{transform:translateY(-4px)}
 body.page-dashboard .bt-tile>*{position:relative;z-index:1}
 body.page-dashboard .bt-anim{animation:bt-rise .65s cubic-bezier(.16,1,.3,1) backwards}
+body.page-dashboard .bt-s6{grid-column:span 6}
+body.page-dashboard .bt-s12{grid-column:span 12}
 body.page-dashboard .bt-s5{grid-column:span 5;grid-row:span 2}
 body.page-dashboard .bt-s4{grid-column:span 4}
 body.page-dashboard .bt-s3{grid-column:span 3}
 body.page-dashboard .bt-s2{grid-column:span 2}
 body.page-dashboard .bt-r2{grid-row:span 2}
+
+body.is-kawula #nav-command,
+body.is-kawula #nav-log,
+body.is-kawula #nav-panduan,
+body.is-kawula #dx-add,
+body.is-kawula .bt-promo,
+body.is-kawula .bt-add {
+  display: none !important;
+}
+
+body.is-kawula .bt-tile.bt-purple { grid-column: span 4 !important; }
+body.is-kawula .bt-tile.bt-peach  { grid-column: span 3 !important; }
+body.is-kawula .bt-tile.bt-lav    { grid-column: span 4 !important; }
+body.is-kawula .bt-tile.bt-sky    { grid-column: span 3 !important; }
+body.is-kawula #super-tile-chart  { grid-column: span 6 !important; min-height: 320px; }
+body.is-kawula #super-tile-table  { grid-column: span 6 !important; min-height: 320px; }
+
+@media (max-width: 900px) {
+  body.is-kawula .bt-tile.bt-purple,
+  body.is-kawula .bt-tile.bt-peach,
+  body.is-kawula .bt-tile.bt-lav,
+  body.is-kawula .bt-tile.bt-sky,
+  body.is-kawula #super-tile-chart,
+  body.is-kawula #super-tile-table {
+    grid-column: span 6 !important;
+  }
+}
+@media (max-width: 640px) {
+  body.is-kawula .bt-tile.bt-purple,
+  body.is-kawula .bt-tile.bt-peach,
+  body.is-kawula .bt-tile.bt-lav,
+  body.is-kawula .bt-tile.bt-sky,
+  body.is-kawula #super-tile-chart,
+  body.is-kawula #super-tile-table {
+    grid-column: span 2 !important;
+  }
+}
 
 /* Warna solid */
 body.page-dashboard .bt-k{color:#151515;--bt-text:#151515;--bt-mute:rgba(21,21,21,.68);--bt-soft:rgba(255,255,255,.6)}

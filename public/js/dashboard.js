@@ -52,6 +52,8 @@
     const nd = document.getElementById('nav-dashboard');
     if (nd) nd.classList.add('on', 'active');
 
+    document.body.classList.toggle('is-kawula', !!me.is_superadmin);
+
     if (me.is_superadmin) {
       ['nav-command', 'nav-log', 'nav-panduan'].forEach(id => {
         const el = document.getElementById(id);
@@ -327,6 +329,7 @@
 
     if (me?.is_superadmin) {
       const tileChart = document.createElement('article');
+      tileChart.id = 'super-tile-chart';
       tileChart.className = 'bt-tile bt-k bt-s6 bt-r2 bt-lime bt-anim';
       tileChart.style.minHeight = '280px';
       tileChart.innerHTML =
@@ -338,6 +341,7 @@
       grid.appendChild(tileChart);
 
       const tileTable = document.createElement('article');
+      tileTable.id = 'super-tile-table';
       tileTable.className = 'bt-tile bt-k bt-s6 bt-r2 bt-lav bt-anim';
       tileTable.style.minHeight = '280px';
       tileTable.innerHTML =
