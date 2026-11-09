@@ -60,7 +60,7 @@ function paketOf(planId, plans) {
  */
 function slotsOf(user, plans) {
   if (!user) return 0;
-  if (user.role === ADMIN_ROLE) return 999;
+  if ([ADMIN_ROLE, SUBADMIN_ROLE].includes(user.role)) return 999;
   // Langganan habis = 0 slot, titik. Dicek DULU sebelum `plan_slots`, karena
   // sisa nilai trial/paket lama masih nempel di kolom itu — kalau urutannya
   // kebalik, slot gratis jalan terus walau masa aktifnya sudah lewat.
@@ -77,7 +77,7 @@ function slotsOf(user, plans) {
  * dilewati sendiri oleh pemilik — benefit yang dijual jadi tidak ada artinya.
  */
 function kuotaBot(pemilik, bot, plans) {
-  if (pemilik && pemilik.role === ADMIN_ROLE) return 99999;
+  if (pemilik && [ADMIN_ROLE, SUBADMIN_ROLE].includes(pemilik.role)) return 99999;
   if (!pemilik || !aktif(pemilik)) return 0;
   const p = paketOf(pemilik.plan, plans);
   const langit = p?.daily_limit || LIMIT_DEFAULT;

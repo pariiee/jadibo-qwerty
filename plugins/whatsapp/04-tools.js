@@ -4642,8 +4642,7 @@ ${rapikanError(e)}`);
         return true;
       }
       try {
-        const axios  = require('axios');
-        const { buatPaketSticker, bagiSticker } = require('../../engine/stickerPack');
+        const axios = require('axios');
         await react(mess.reactLoading);
         const { data } = await axios.get(`${process.env.BASE_API}api/download/telesticker`, {
           params: { url },
@@ -4653,36 +4652,30 @@ ${rapikanError(e)}`);
         const hasil = data?.results || {};
         const stickers = hasil.stickers;
         if (!stickers || !stickers.length) throw new Error('Tidak ada sticker dari API');
-        // Telegram juga punya pack animasi (.tgs) & video (.webm) — cuma .webp yang bisa dikirim apa adanya
+
         const webp = stickers.filter(s => !s.format || s.format === 'webp');
         if (!webp.length) throw new Error('Pack ini cuma sticker animasi/video, belum didukung');
 
-        const pilih = webp;
-        const isi = [];
-        for (const s of pilih) {
+        const nama = hasil.title || 'Sticker Telegram';
+        let terkirim = 0;
+        for (const s of webp) {
           const sUrl = s.url || s.file_url || s;
           if (!sUrl) continue;
-          const res = await axios.get(sUrl, { responseType: 'arraybuffer', timeout: 30000 });
-          isi.push({ isi: Buffer.from(res.data), emoji: s.emoji || '' });
+          try {
+            const res = await axios.get(sUrl, { responseType: 'arraybuffer', timeout: 30000 });
+            const buf = Buffer.from(res.data);
+            const exifBuf = await addStickerExif(buf, nama, mess.author).catch(() => buf);
+            await client.message.send(jid, { type: 'sticker', media: exifBuf, mimetype: 'image/webp' });
+            terkirim++;
+            await new Promise(r => setTimeout(r, 250));
+          } catch (err) {
+            console.error('[stele] Gagal kirim item sticker:', err.message);
+          }
         }
-        if (isi.length < 3) throw new Error(`Pack ini cuma punya ${isi.length} sticker, minimal 3`);
 
-        // WA batas 60 sticker PER pack, bukan per total -> 130 sticker = 3 kartu (60/60/10).
-        const nama = hasil.title || 'Sticker Pack';
-        const bagian = bagiSticker(isi);
-        const jumlahPack = bagian.length;
-        const paket = [];
-        for (const b of bagian) {
-          paket.push(await buatPaketSticker(b, {
-            nama: jumlahPack > 1 ? `${nama} (${paket.length + 1}/${jumlahPack})` : nama,
-          }));
-        }
-        // Zip pack + thumbnail di-enkripsi & diupload di adapter (harus satu media key).
-        for (const p of paket) await client.message.send(jid, { paketSticker: p }, { quoted: msg });
+        if (!terkirim) throw new Error('Gagal mengirim stiker');
         await react(mess.reactSuccess);
-        await reply(`📦 *Sticker Pack Telegram*\nNama: ${nama}\nIsi: ${isi.length} sticker`
-          + (jumlahPack > 1 ? ` -> *${jumlahPack} pack* (${paket.map(p => p.sticker.length).join('/')})` : '')
-          + `\nUkuran: ${Math.round(paket.reduce((a, p) => a + p.zip.length, 0) / 1024)} KB\n\nTekan *Tambah* di tiap kartu buat nyimpen pack-nya ke WhatsApp.`);
+        await reply(`✅ Berhasil mengirim *${terkirim} stiker* dari pack *${nama}*!`);
       } catch (e) {
         await react(mess.reactError);
         await reply(`❌ Gagal download Telegram Sticker: ${rapikanError(e)}`);

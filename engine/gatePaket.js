@@ -18,7 +18,7 @@
  */
 const { pool } = require('../config/database');
 const pricingStore = require('../config/pricingStore');
-const { ADMIN_ROLE, TRIAL, DEFAULT_PLANS, LIMIT_DEFAULT, aktif, kuotaBot } = require('../config/plan');
+const { ADMIN_ROLE, SUBADMIN_ROLE, TRIAL, DEFAULT_PLANS, LIMIT_DEFAULT, aktif, kuotaBot } = require('../config/plan');
 
 // ponytail: cache global 60 detik — pakai per-bot + invalidasi kalau paketnya
 // berubah lebih sering dari itu (belum perlu: paket cuma diubah admin/checkout,
@@ -75,7 +75,7 @@ function paketPemilik(pemilik) {
 async function batasKuota(botId, botData) {
   const pemilik = await pemilikBot(botId);
   if (!pemilik) return 0;                    // gagal baca → jangan blokir siapa pun
-  if (pemilik.role === ADMIN_ROLE) return 0; // admin tanpa batas
+  if ([ADMIN_ROLE, SUBADMIN_ROLE].includes(pemilik.role)) return 0; // admin & subadmin tanpa batas
   if (!aktif(pemilik)) return -1;            // paket habis → berhenti melayani
 
   const paket = paketPemilik(pemilik);
@@ -184,10 +184,10 @@ async function botKedaluwarsa() {
     `SELECT b.id, b.platform, b.user_id, b.bot_name, u.username, u.plan_expired_at
        FROM bots b JOIN users u ON u.id = b.user_id
       WHERE b.is_running = 1
-        AND u.role <> ?
+        AND u.role NOT IN (?, ?)
         AND u.plan_expired_at IS NOT NULL
         AND u.plan_expired_at < NOW()`,
-    [ADMIN_ROLE]
+    [ADMIN_ROLE, SUBADMIN_ROLE]
   );
   return rows;
 }

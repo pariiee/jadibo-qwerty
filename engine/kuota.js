@@ -16,7 +16,7 @@
  */
 const { pool } = require('../config/database');
 const pricingStore = require('../config/pricingStore');
-const { ADMIN_ROLE, DEFAULT_PLANS, TRIAL, aktif, kuotaBot } = require('../config/plan');
+const { ADMIN_ROLE, SUBADMIN_ROLE, DEFAULT_PLANS, TRIAL, aktif, kuotaBot } = require('../config/plan');
 
 // Ambang peringatan: 80% dan 95% dari kuota SEUMUR PAKET.
 const AMBANG = [0.8, 0.95];
@@ -56,7 +56,7 @@ async function sisaKuota(botId) {
   );
   const u = uRows[0];
   if (!u) return null;
-  if (u.role === ADMIN_ROLE) return { tanpaBatas: true, paketAktif: true, habis: false };
+  if ([ADMIN_ROLE, SUBADMIN_ROLE].includes(u.role)) return { tanpaBatas: true, paketAktif: true, habis: false };
 
   const paketAktif = aktif(u);
   const paket = paketAktif
