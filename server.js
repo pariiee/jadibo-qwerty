@@ -162,7 +162,53 @@ app.use(express.urlencoded({ extended: true }));
 // jalur uang, karena satu POST yang lolos = saldo atau paket berubah.
 app.use(cekOrigin.cekOrigin);
 
-// Static files — compression + 1-day cache untuk asset publik, index:false supaya disajikan via renderer
+const jsCache = new Map();
+app.use('/js', async (req, res, next) => {
+  const dest = req.headers['sec-fetch-dest'];
+  const mode = req.headers['sec-fetch-mode'];
+  const referer = req.headers['referer'] || '';
+  const host = req.headers['host'] || '';
+
+  if (dest === 'document' || mode === 'navigate' || (referer && !referer.includes(host))) {
+    return res.status(403).type('html').send('<h1>403 Forbidden</h1><p>Akses langsung dilarang.</p>');
+  }
+
+  if (req.path.endsWith('.js') && !req.path.includes('..')) {
+    const filePath = path.join(PUBLIC_HTML, 'js', req.path);
+    if (fs.existsSync(filePath)) {
+      try {
+        const stat = fs.statSync(filePath);
+        const cacheKey = `${req.path}:${stat.mtimeMs}`;
+        if (jsCache.has(cacheKey)) {
+          res.set('Content-Type', 'application/javascript; charset=utf-8');
+          res.set('Cache-Control', 'public, max-age=86400, must-revalidate');
+          return res.send(jsCache.get(cacheKey));
+        }
+
+        const src = fs.readFileSync(filePath, 'utf8');
+        let minified = src;
+        try {
+          const { minify } = require('terser');
+          const out = await minify(src, {
+            compress: true,
+            mangle: true,
+            format: { comments: false }
+          });
+          if (out.code) minified = out.code;
+        } catch {}
+
+        jsCache.set(cacheKey, minified);
+        res.set('Content-Type', 'application/javascript; charset=utf-8');
+        res.set('Cache-Control', 'public, max-age=86400, must-revalidate');
+        return res.send(minified);
+      } catch {
+        return next();
+      }
+    }
+  }
+  next();
+});
+
 app.use(compression());
 app.use(express.static(path.join(__dirname, 'public'), {
   index: false,
@@ -410,9 +456,7 @@ const halaman = (nama, kode = 200) => (_, res) => {
   try {
     const html = fs.readFileSync(path.join(PUBLIC_HTML, nama), 'utf8')
       .replace(INCLUDE_RE, (_, f) =>
-        fs.readFileSync(path.join(PUBLIC_HTML, 'partials', f), 'utf8'))
-      .replace(/(\/(?:assets|js)\/[\w.-]+\.(?:css|js))"/g,
-        (m, p) => `${p}?v=${mtimeAset(p)}"`);
+        fs.readFileSync(path.join(PUBLIC_HTML, 'partials', f), 'utf8'));
     res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.status(kode).type('html').send(html);
   } catch (e) {
