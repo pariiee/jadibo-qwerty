@@ -169,8 +169,9 @@ app.use('/js', async (req, res, next) => {
   const referer = req.headers['referer'] || '';
   const host = req.headers['host'] || '';
 
-  if (dest === 'document' || mode === 'navigate' || (referer && !referer.includes(host))) {
-    return res.status(403).type('html').send('<h1>403 Forbidden</h1><p>Akses langsung dilarang.</p>');
+  const isInternalScript = (dest === 'script' || (referer && referer.includes(host))) && dest !== 'document' && mode !== 'navigate';
+  if (!isInternalScript) {
+    return res.status(403).type('html').send('<!DOCTYPE html><html><head><title>403 Forbidden</title></head><body style="background:#151515;color:#fff;font-family:sans-serif;padding:40px;text-align:center;"><h1>403 Forbidden</h1><p>Akses langsung ke berkas script dilarang.</p></body></html>');
   }
 
   if (req.path.endsWith('.js') && !req.path.includes('..')) {
