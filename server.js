@@ -162,6 +162,9 @@ app.use(express.urlencoded({ extended: true }));
 // jalur uang, karena satu POST yang lolos = saldo atau paket berubah.
 app.use(cekOrigin.cekOrigin);
 
+const PUBLIC_HTML = path.join(__dirname, 'public');
+const INCLUDE_RE  = /<!--\s*@include\s+([\w.\/-]+)\s*-->/g;
+
 const ERROR_MAP = {
   400: { t: 'Bad Request', d: 'Server tidak dapat memproses permintaan karena format salah atau data tidak lengkap.' },
   401: { t: 'Unauthorized', d: 'Kamu belum login atau sesi telah berakhir. Silakan login kembali.', p: '/login', pl: 'Login Sekarang' },
@@ -481,10 +484,6 @@ app.get('/api/admin/pendapatan',  auth.requireAuth, auth.requireSuperAdmin, sist
 app.post('/api/admin/broadcast',  auth.requireAuth, auth.requireSuperAdmin, sistem.broadcast);
 
 // ─── Halaman HTML ─────────────────────────────────────────────────────────────
-// Halaman berisi <!-- @include head.html --> dll; partial di public/partials/
-// dirangkai di sini, jadi halaman baru cukup <link> + include, tanpa duplikat.
-const PUBLIC_HTML = path.join(__dirname, 'public');
-const INCLUDE_RE  = /<!--\s*@include\s+([\w.\/-]+)\s*-->/g;
 // Versi aset = mtime file. Dipakai di halaman() supaya URL aset berubah tiap
 // file diubah; tanpa ini browser + Cloudflare menyajikan CSS/JS lama sampai 4 jam.
 const mtimeAset = (p) => {
