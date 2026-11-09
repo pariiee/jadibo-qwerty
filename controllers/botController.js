@@ -39,6 +39,71 @@ function cekKapasitasServer() {
   };
 }
 
+async function validasiTokenPlatform(platform, token, ignoreBotId = null) {
+  if (!token || typeof token !== 'string') return { ok: true };
+  const clean = token.trim();
+  if (!clean) return { ok: true };
+
+  // 1. Cek apakah sudah terdaftar di bot lain di database lokal
+  const [dup] = await pool.execute(
+    `SELECT id, bot_name FROM bots WHERE (telegram_token = ? OR discord_token = ?) ${ignoreBotId ? 'AND id != ?' : ''} LIMIT 1`,
+    ignoreBotId ? [clean, clean, ignoreBotId] : [clean, clean]
+  );
+  if (dup.length > 0) {
+    return { ok: false, message: `Token ini sudah dipakai oleh bot "${dup[0].bot_name}". Gunakan bot lain atau token baru.` };
+  }
+
+  // 2. Cek status aktif ke API Telegram
+  if (platform === 'telegram') {
+    try {
+      const meRes = await fetch(`https://api.telegram.org/bot${clean}/getMe`, { signal: AbortSignal.timeout(5000) });
+      const meData = await meRes.json().catch(() => ({}));
+      if (!meData.ok) {
+        return { ok: false, message: `Token Telegram tidak valid: ${meData.description || 'Periksa kembali token bot kamu'}` };
+      }
+
+      // Deteksi Webhook aktif di server lain
+      const whRes = await fetch(`https://api.telegram.org/bot${clean}/getWebhookInfo`, { signal: AbortSignal.timeout(5000) });
+      const whData = await whRes.json().catch(() => ({}));
+      if (whData.ok && whData.result?.url) {
+        return { ok: false, message: `Bot ini sedang aktif terhubung ke webhook di web lain (${whData.result.url}). Hapus webhook dulu atau buat token baru di @BotFather.` };
+      }
+
+      // Deteksi polling aktif di server lain (Conflict 409)
+      const pollRes = await fetch(`https://api.telegram.org/bot${clean}/getUpdates?offset=-1&limit=1&timeout=0`, { signal: AbortSignal.timeout(5000) });
+      if (pollRes.status === 409) {
+        return { ok: false, message: 'Bot ini sedang aktif berjalan di web/server lain (Conflict 409). Matikan bot lama dulu sebelum memasukkan ke sini.' };
+      }
+    } catch (e) {
+      if (e.name === 'TimeoutError') {
+        return { ok: false, message: 'Gagal memverifikasi ke server Telegram (timeout). Coba lagi beberapa saat.' };
+      }
+    }
+  }
+
+  // 3. Cek status aktif ke API Discord
+  if (platform === 'discord') {
+    try {
+      const res = await fetch('https://discord.com/api/v10/users/@me', {
+        headers: { Authorization: `Bot ${clean}` },
+        signal: AbortSignal.timeout(5000)
+      });
+      if (res.status === 401) {
+        return { ok: false, message: 'Token Bot Discord tidak valid. Salin ulang token dari Discord Developer Portal.' };
+      }
+      if (!res.ok) {
+        return { ok: false, message: `Gagal memverifikasi token Discord (HTTP ${res.status}).` };
+      }
+    } catch (e) {
+      if (e.name === 'TimeoutError') {
+        return { ok: false, message: 'Gagal memverifikasi ke server Discord (timeout). Coba lagi beberapa saat.' };
+      }
+    }
+  }
+
+  return { ok: true };
+}
+
 function sendError(res, status, message) {
   return res.status(status).json({ ok: false, message });
 }
@@ -267,6 +332,12 @@ async function createBot(req, res) {
 
     const dcToken = discord_token || (platform === 'discord' ? telegram_token : null);
     const tgToken = platform === 'telegram' ? telegram_token : null;
+    const tokenCek = platform === 'telegram' ? tgToken : (platform === 'discord' ? dcToken : null);
+
+    if (tokenCek) {
+      const v = await validasiTokenPlatform(platform, tokenCek);
+      if (!v.ok) return sendError(res, 400, v.message);
+    }
 
     const [result] = await pool.execute(
       `INSERT INTO bots
@@ -334,6 +405,12 @@ async function updateBot(req, res) {
     if (req.body.owner_number !== undefined && !String(req.body.owner_number).trim()) {
       const lblOwner = bot.platform === 'discord' ? 'Owner Discord ID' : (bot.platform === 'telegram' ? 'Owner Telegram ID' : 'Nomor owner');
       return sendError(res, 400, `${lblOwner} tidak boleh dikosongkan`);
+    }
+
+    const tokenBaru = bot.platform === 'telegram' ? req.body.telegram_token : (bot.platform === 'discord' ? req.body.discord_token : null);
+    if (tokenBaru && !String(tokenBaru).includes('•')) {
+      const v = await validasiTokenPlatform(bot.platform, tokenBaru, bot.id);
+      if (!v.ok) return sendError(res, 400, v.message);
     }
 
     for (const key of allowed) {
