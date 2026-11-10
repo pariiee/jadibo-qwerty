@@ -12,22 +12,24 @@
     display: none !important;
   }
   body.not-logged-in .content {
-    padding-top: 32px !important;
+    padding-top: 24px !important;
   }
   
   .health-container {
-    max-width: 1100px;
+    max-width: 1120px;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
     gap: 20px;
   }
   
+  /* Hero Banner Rounded Bento */
   .health-hero {
-    background: #D8FF7A;
-    border: 2.5px solid #151515;
+    background: #BFD7FF;
+    border: 2px solid #151515;
+    border-radius: 16px;
     box-shadow: 4px 4px 0 #151515;
-    padding: 24px;
+    padding: 24px 28px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -43,7 +45,7 @@
   }
   .health-hero-left p {
     font-size: 13px;
-    color: #333333;
+    color: #2D3748;
     max-width: 620px;
     line-height: 1.5;
     font-weight: 600;
@@ -54,10 +56,11 @@
     color: #FFFFFF;
     font-size: 11px;
     font-weight: 800;
-    padding: 3px 8px;
-    border-radius: 4px;
+    padding: 3px 10px;
+    border-radius: 999px;
     margin-bottom: 8px;
     text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
   .health-hero-right {
     display: flex;
@@ -67,13 +70,14 @@
   .btn-portal-act {
     background: #FFFFFF;
     color: #151515;
-    border: 2.5px solid #151515;
+    border: 2px solid #151515;
+    border-radius: 12px;
     box-shadow: 3px 3px 0 #151515;
-    padding: 10px 20px;
+    padding: 10px 22px;
     font-weight: 800;
     font-size: 13px;
     text-decoration: none;
-    transition: all 0.1s;
+    transition: all 0.15s;
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -83,18 +87,21 @@
     box-shadow: 4px 4px 0 #151515;
   }
 
+  /* Bento Layout 2 Kolom */
   .health-bento-grid {
     display: grid;
-    grid-template-columns: 1.5fr 1fr;
+    grid-template-columns: 1.4fr 1fr;
     gap: 20px;
   }
   @media (max-width: 900px) {
     .health-bento-grid { grid-template-columns: 1fr; }
   }
 
+  /* Kartu Kiri: Telemetri Rounded */
   .telemetry-card {
     background: #FFFFFF;
-    border: 2.5px solid #151515;
+    border: 2px solid #151515;
+    border-radius: 16px;
     box-shadow: 4px 4px 0 #151515;
     padding: 24px;
     display: flex;
@@ -105,7 +112,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 2px dashed #E5E7EB;
+    border-bottom: 1.5px dashed #E2E8F0;
     padding-bottom: 14px;
   }
   .telemetry-tag {
@@ -115,12 +122,14 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    color: #151515;
   }
   .live-dot {
-    width: 10px;
-    height: 10px;
+    width: 9px;
+    height: 9px;
     background: #10B981;
     border-radius: 50%;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
     animation: pulse 1.5s infinite;
   }
   @keyframes pulse {
@@ -128,10 +137,12 @@
     50% { opacity: 0.4; transform: scale(0.85); }
   }
 
+  /* Sparkline Chart Rounded */
   .spark-box {
-    background: #FAFAFA;
-    border: 2px solid #151515;
-    padding: 16px;
+    background: #F8FAFC;
+    border: 1.5px solid #E2E8F0;
+    border-radius: 14px;
+    padding: 18px;
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -143,19 +154,21 @@
   }
   .spark-number {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 28px;
+    font-size: 30px;
     font-weight: 800;
     color: #151515;
+    letter-spacing: -0.5px;
   }
   .spark-sub {
     font-size: 11px;
     font-weight: 700;
-    color: #666;
+    color: #64748B;
     text-transform: uppercase;
+    margin-left: 6px;
   }
   .spark-svg-wrap {
     width: 100%;
-    height: 60px;
+    height: 64px;
   }
   .spark-svg-wrap svg {
     width: 100%;
@@ -163,15 +176,17 @@
     overflow: visible;
   }
 
+  /* 4 Mini Stat Box Rounded */
   .mini-stats-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 14px;
   }
   .mini-box {
-    background: #FAFAFA;
-    border: 2px solid #151515;
-    padding: 14px;
+    background: #F8FAFC;
+    border: 1.5px solid #E2E8F0;
+    border-radius: 14px;
+    padding: 16px;
     display: flex;
     flex-direction: column;
     gap: 4px;
@@ -179,130 +194,164 @@
   .mini-label {
     font-size: 11px;
     font-weight: 800;
-    color: #666666;
+    color: #64748B;
     text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
   .mini-val {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 800;
     color: #151515;
   }
   .mini-desc {
     font-size: 11px;
-    color: #888888;
+    color: #94A3B8;
     font-family: 'JetBrains Mono', monospace;
   }
 
+  /* Service Chips */
   .services-chip-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 10px;
   }
   .svc-chip {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 6px 12px;
-    background: #FAFAFA;
-    border: 1.5px solid #151515;
-    font-size: 11px;
-    font-weight: 800;
+    gap: 8px;
+    padding: 8px 14px;
+    background: #F8FAFC;
+    border: 1.5px solid #E2E8F0;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
     font-family: 'JetBrains Mono', monospace;
+    color: #151515;
   }
   .svc-chip .dot {
-    width: 6px;
-    height: 6px;
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
     background: #10B981;
   }
 
+  /* Kartu Kanan: Live Terminal Style MacOS (Persis /log) */
   .feed-card {
-    background: #FFFFFF;
-    border: 2.5px solid #151515;
+    background: #151515;
+    border: 2px solid #151515;
+    border-radius: 16px;
     box-shadow: 4px 4px 0 #151515;
-    padding: 24px;
+    padding: 20px;
     display: flex;
     flex-direction: column;
     gap: 14px;
+    color: #F8FAFC;
   }
   .feed-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 2px dashed #E5E7EB;
+    border-bottom: 1px solid #262626;
     padding-bottom: 12px;
   }
-  .feed-header h3 {
-    font-size: 15px;
-    font-weight: 800;
-    color: #151515;
+  .macos-dots {
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
-  .feed-count-tag {
+  .macos-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+  .macos-dot.red { background: #FF5F56; }
+  .macos-dot.yellow { background: #FFBD2E; }
+  .macos-dot.green { background: #27C93F; }
+
+  .feed-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: #F8FAFC;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    font-weight: 700;
-    background: #E5E7EB;
-    padding: 2px 8px;
-    border: 1px solid #151515;
+  }
+  .feed-live-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(16, 185, 129, 0.15);
+    color: #34D399;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 999px;
+    padding: 3px 10px;
+    font-size: 10px;
+    font-weight: 800;
+    font-family: 'JetBrains Mono', monospace;
   }
 
   .feed-stream-box {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    max-height: 410px;
+    max-height: 420px;
     overflow-y: auto;
-    padding-right: 6px;
+    padding-right: 4px;
     scrollbar-width: thin;
-    scrollbar-color: #151515 #FAFAFA;
+    scrollbar-color: #333333 #151515;
   }
   .feed-stream-box::-webkit-scrollbar {
-    width: 6px;
+    width: 5px;
   }
   .feed-stream-box::-webkit-scrollbar-track {
-    background: #FAFAFA;
-    border: 1px solid #151515;
+    background: #151515;
   }
   .feed-stream-box::-webkit-scrollbar-thumb {
-    background: #151515;
+    background: #333333;
+    border-radius: 4px;
   }
 
   .feed-row {
-    background: #FAFAFA;
-    border: 1.5px solid #151515;
-    padding: 8px 10px;
+    background: #1F1F1F;
+    border: 1px solid #2B2B2B;
+    border-radius: 8px;
+    padding: 8px 12px;
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
     display: flex;
-    flex-direction: column;
-    gap: 3px;
-  }
-  .feed-row-top {
-    display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    transition: background 0.15s;
+  }
+  .feed-row:hover {
+    background: #262626;
+  }
+  .feed-row-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow: hidden;
   }
   .act-badge {
     font-size: 9px;
     font-weight: 800;
     padding: 2px 6px;
-    border: 1px solid #151515;
+    border-radius: 4px;
+    flex-shrink: 0;
   }
-  .act-badge.bot { background: #D8FF7A; color: #151515; }
-  .act-badge.cron { background: #BFD7FF; color: #151515; }
-  .act-badge.sys { background: #FFD27A; color: #151515; }
-  .act-badge.msg { background: #BFD7FF; color: #151515; }
+  .act-badge.bot { background: rgba(216, 255, 122, 0.2); color: #D8FF7A; }
+  .act-badge.sys { background: rgba(255, 210, 122, 0.2); color: #FFD27A; }
+  .act-badge.msg { background: rgba(56, 189, 248, 0.2); color: #38BDF8; }
 
+  .feed-msg {
+    color: #E2E8F0;
+    word-break: break-all;
+    font-weight: 600;
+  }
   .feed-time {
     font-size: 10px;
-    color: #777777;
-  }
-  .feed-msg {
-    color: #151515;
-    word-break: break-all;
-    line-height: 1.4;
-    font-weight: 600;
+    color: #64748B;
+    flex-shrink: 0;
   }
 </style>
 </head>
@@ -313,19 +362,19 @@
 
     <div class="content">
       <div class="health-container">
-        <!-- Hero Banner -->
+        <!-- Hero Banner Rounded -->
         <section class="health-hero">
           <div class="health-hero-left">
             <span class="health-hero-badge">TELEMETRY & FLEET STATUS</span>
             <h1>Aktivitas Server</h1>
-            <p>Apa yang sedang dikerjakan armada server sekarang — angka asli dari mesin yang sedang beroperasi, bukan ilustrasi.</p>
+            <p>Apa yang sedang dikerjakan armada bot server sekarang — angka asli dari mesin yang sedang beroperasi, bukan ilustrasi.</p>
           </div>
           <div class="health-hero-right">
             <a href="/login" id="btn-health-action" class="btn-portal-act">Masuk / Daftar →</a>
           </div>
         </section>
 
-        <!-- Bento Grid -->
+        <!-- Bento Grid Rounded -->
         <div class="health-bento-grid">
           <!-- Sisi Kiri: Metrik -->
           <div class="telemetry-card">
@@ -334,7 +383,7 @@
                 <span class="live-dot"></span>
                 AKTIVITAS FLEET 1 · LIVE
               </span>
-              <span id="health-clock" style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:800">--:--:--</span>
+              <span id="health-clock" style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:800;color:#64748B">--:--:--</span>
             </div>
 
             <div class="spark-box">
@@ -344,12 +393,12 @@
                   <span class="spark-sub">Respon / Detik</span>
                 </div>
                 <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:800;color:#10B981">
-                  PUNCAK 9.9 · AKTIF
+                  PUNCAK 9.9 · NORMAL
                 </div>
               </div>
               <div class="spark-svg-wrap">
                 <svg viewBox="0 0 400 60" preserveAspectRatio="none">
-                  <path id="svg-fill" d="M0,45 L40,40 L80,42 L120,35 L160,30 L200,38 L240,25 L280,32 L320,20 L360,28 L400,15 L400,60 L0,60 Z" fill="#D8FF7A"/>
+                  <path id="svg-fill" d="M0,45 L40,40 L80,42 L120,35 L160,30 L200,38 L240,25 L280,32 L320,20 L360,28 L400,15 L400,60 L0,60 Z" fill="#D8FF7A" fill-opacity="0.5"/>
                   <path id="svg-line" d="M0,45 L40,40 L80,42 L120,35 L160,30 L200,38 L240,25 L280,32 L320,20 L360,28 L400,15" fill="none" stroke="#151515" stroke-width="2.5" stroke-linecap="round"/>
                 </svg>
               </div>
@@ -374,27 +423,35 @@
               <div class="mini-box">
                 <span class="mini-label">Uptime Sistem</span>
                 <span class="mini-val" id="val-uptime">0j 0m</span>
-                <span class="mini-desc">Stabil beroperasi</span>
+                <span class="mini-desc">Stabil online</span>
               </div>
             </div>
 
+            <!-- Service Status Chips (Hanya WhatsApp, Telegram, Discord) -->
             <div class="services-chip-row">
               <div class="svc-chip"><span class="dot"></span>WhatsApp (<span id="s-wa">0</span>)</div>
               <div class="svc-chip"><span class="dot"></span>Telegram (<span id="s-tg">0</span>)</div>
               <div class="svc-chip"><span class="dot"></span>Discord (<span id="s-dc">0</span>)</div>
-              <div class="svc-chip"><span class="dot"></span>Database MySQL</div>
             </div>
           </div>
 
-          <!-- Sisi Kanan: Feed Log -->
+          <!-- Sisi Kanan: Live Terminal Style -->
           <div class="feed-card">
             <div class="feed-header">
-              <h3>Aktivitas Terbaru</h3>
-              <span class="feed-count-tag" id="feed-count">15 events</span>
+              <div class="macos-dots">
+                <span class="macos-dot red"></span>
+                <span class="macos-dot yellow"></span>
+                <span class="macos-dot green"></span>
+                <span class="feed-title" style="margin-left:8px">Aktivitas Terbaru</span>
+              </div>
+              <span class="feed-live-pill">
+                <span class="live-dot" style="width:6px;height:6px"></span>
+                Live Feed
+              </span>
             </div>
 
             <div class="feed-stream-box" id="feed-box">
-              <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#888;">Menghubungkan ke telemetri...</div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#64748B;">Menghubungkan ke telemetri...</div>
             </div>
           </div>
         </div>
@@ -480,27 +537,25 @@
     const logs = data.logs || [];
     const box = document.getElementById('feed-box');
     if (logs.length) {
-      document.getElementById('feed-count').textContent = logs.length + ' events';
       const itemsHtml = logs.map(l => {
         let badgeCls = 'sys';
         const a = String(l.act || '').toUpperCase();
         if (a === 'BOT') badgeCls = 'bot';
-        else if (a === 'CRON') badgeCls = 'cron';
         else if (a === 'MSG') badgeCls = 'msg';
 
         const t = formatRel(l.time);
         return `
           <div class="feed-row">
-            <div class="feed-row-top">
+            <div class="feed-row-left">
               <span class="act-badge ${badgeCls}">[ ${escape(a)} ]</span>
-              <span class="feed-time">${t}</span>
+              <span class="feed-msg">${escape(l.msg)}</span>
             </div>
-            <div class="feed-msg">${escape(l.msg)}</div>
+            <span class="feed-time">${t}</span>
           </div>
         `;
       }).join('');
       box.innerHTML = itemsHtml;
-      // Auto scroll ke bawah
+      // Auto-scroll ke paling bawah
       box.scrollTop = box.scrollHeight;
     }
   }
