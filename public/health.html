@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Status & Health — QwertyGate</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #F4F4F0;
+      --card: #FFFFFF;
+      --text: #151515;
+      --muted: #666666;
+      --border: #151515;
+      --green: #10B981;
+      --red: #EF4444;
+      --yellow: #F59E0B;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      background-image: radial-gradient(#D1D5DB 1px, transparent 1px);
+      background-size: 20px 20px;
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      padding: 32px 16px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .container {
+      width: 100%;
+      max-width: 860px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--card);
+      border: 2.5px solid var(--border);
+      box-shadow: 4px 4px 0 var(--border);
+      padding: 20px 24px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .logo-badge {
+      background: var(--text);
+      color: #fff;
+      font-weight: 800;
+      font-size: 14px;
+      padding: 6px 10px;
+      border: 1.5px solid var(--border);
+      letter-spacing: -0.5px;
+    }
+    .title h1 {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .title p {
+      font-size: 12px;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: #ECFDF5;
+      border: 2px solid var(--border);
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      background: var(--green);
+      border-radius: 50%;
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+    }
+    .bento-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+    @media (max-width: 768px) {
+      .bento-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    .card {
+      background: var(--card);
+      border: 2.5px solid var(--border);
+      box-shadow: 4px 4px 0 var(--border);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .card-label {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--muted);
+      letter-spacing: 0.5px;
+    }
+    .card-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 24px;
+      font-weight: 800;
+    }
+    .progress-bar {
+      height: 10px;
+      background: #E5E7EB;
+      border: 1.5px solid var(--border);
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--text);
+      width: 0%;
+      transition: width 0.4s ease;
+    }
+    .card-sub {
+      font-size: 11px;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+    @media (max-width: 768px) {
+      .services-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    .service-item {
+      background: var(--card);
+      border: 2.5px solid var(--border);
+      box-shadow: 3px 3px 0 var(--border);
+      padding: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .service-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .service-name {
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .service-state {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .terminal-box {
+      background: #151515;
+      color: #F4F4F0;
+      border: 2.5px solid var(--border);
+      box-shadow: 4px 4px 0 var(--border);
+      padding: 16px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .terminal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1.5px solid #333;
+      padding-bottom: 10px;
+      margin-bottom: 12px;
+    }
+    .terminal-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #9CA3AF;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .live-indicator {
+      width: 8px;
+      height: 8px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+    .terminal-logs {
+      font-size: 12px;
+      line-height: 1.6;
+      max-height: 260px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .log-line {
+      display: flex;
+      gap: 10px;
+      word-break: break-all;
+    }
+    .log-time { color: #6B7280; flex-shrink: 0; }
+    .log-act { color: #F59E0B; font-weight: 600; flex-shrink: 0; }
+    .log-msg { color: #E5E7EB; }
+    .back-nav {
+      text-align: center;
+      margin-top: 8px;
+    }
+    .back-btn {
+      display: inline-block;
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 700;
+      font-size: 13px;
+      padding: 8px 18px;
+      background: var(--card);
+      border: 2px solid var(--border);
+      box-shadow: 3px 3px 0 var(--border);
+      transition: all 0.1s;
+    }
+    .back-btn:hover {
+      transform: translate(-1px, -1px);
+      box-shadow: 4px 4px 0 var(--border);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="brand">
+        <div class="logo-badge">SYS-MON</div>
+        <div class="title">
+          <h1>System Telemetry & Health</h1>
+          <p id="last-update">Connecting to node...</p>
+        </div>
+      </div>
+      <div class="status-pill" id="overall-pill">
+        <span class="status-dot"></span>
+        <span id="overall-text">ALL SYSTEMS OPERATIONAL</span>
+      </div>
+    </header>
+
+    <div class="bento-grid">
+      <div class="card">
+        <span class="card-label">RAM Usage</span>
+        <span class="card-val" id="ram-val">0%</span>
+        <div class="progress-bar">
+          <div class="progress-fill" id="ram-bar"></div>
+        </div>
+        <span class="card-sub" id="ram-sub">0 MB / 0 MB</span>
+      </div>
+
+      <div class="card">
+        <span class="card-label">Disk Storage</span>
+        <span class="card-val" id="disk-val">0%</span>
+        <div class="progress-bar">
+          <div class="progress-fill" id="disk-bar"></div>
+        </div>
+        <span class="card-sub" id="disk-sub">0 GB / 0 GB</span>
+      </div>
+
+      <div class="card">
+        <span class="card-label">Active Bots</span>
+        <span class="card-val" id="bots-val">0 / 0</span>
+        <div class="progress-bar">
+          <div class="progress-fill" id="bots-bar"></div>
+        </div>
+        <span class="card-sub" id="bots-sub">Server Capacity</span>
+      </div>
+
+      <div class="card">
+        <span class="card-label">Node Uptime</span>
+        <span class="card-val" id="uptime-val" style="font-size: 20px;">0j 0m</span>
+        <div style="height: 10px;"></div>
+        <span class="card-sub">Continuous online</span>
+      </div>
+    </div>
+
+    <div class="services-grid">
+      <div class="service-item">
+        <div class="service-info">
+          <span class="service-name">WhatsApp Engine</span>
+          <span class="service-state" id="svc-wa-text" style="color: var(--green);">OPERATIONAL</span>
+        </div>
+        <span class="status-dot" id="svc-wa-dot"></span>
+      </div>
+
+      <div class="service-item">
+        <div class="service-info">
+          <span class="service-name">Telegram Bot API</span>
+          <span class="service-state" id="svc-tg-text" style="color: var(--green);">OPERATIONAL</span>
+        </div>
+        <span class="status-dot" id="svc-tg-dot"></span>
+      </div>
+
+      <div class="service-item">
+        <div class="service-info">
+          <span class="service-name">Discord Gateway</span>
+          <span class="service-state" id="svc-dc-text" style="color: var(--green);">OPERATIONAL</span>
+        </div>
+        <span class="status-dot" id="svc-dc-dot"></span>
+      </div>
+
+      <div class="service-item">
+        <div class="service-info">
+          <span class="service-name">Database Core</span>
+          <span class="service-state" id="svc-db-text" style="color: var(--green);">OPERATIONAL</span>
+        </div>
+        <span class="status-dot" id="svc-db-dot"></span>
+      </div>
+    </div>
+
+    <div class="terminal-box">
+      <div class="terminal-head">
+        <span class="terminal-title">
+          <span class="live-indicator"></span>
+          Sanitized Live System Feed (Realtime)
+        </span>
+        <span style="font-size: 11px; color: #6B7280;" id="feed-count">15 events</span>
+      </div>
+      <div class="terminal-logs" id="log-list">
+        <div style="color: #6B7280;">Loading telemetry log stream...</div>
+      </div>
+    </div>
+
+    <div class="back-nav">
+      <a href="/dashboard" class="back-btn">← Kembali ke Dashboard</a>
+    </div>
+  </div>
+
+  <script>
+    async function fetchHealth() {
+      try {
+        const res = await fetch('/api/health');
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        render(data);
+      } catch (err) {
+        document.getElementById('last-update').textContent = 'Feed disconnected: ' + err.message;
+        document.getElementById('overall-text').textContent = 'TELEMETRY DISCONNECTED';
+        document.getElementById('overall-pill').style.background = '#FEF2F2';
+      }
+    }
+
+    function render(data) {
+      const m = data.metrics || {};
+      const s = data.services || {};
+
+      document.getElementById('ram-val').textContent = (m.ram?.percent || 0) + '%';
+      document.getElementById('ram-bar').style.width = (m.ram?.percent || 0) + '%';
+      document.getElementById('ram-sub').textContent = (m.ram?.usedMb || 0) + ' MB / ' + (m.ram?.totalMb || 0) + ' MB';
+
+      document.getElementById('disk-val').textContent = (m.disk?.percent || 0) + '%';
+      document.getElementById('disk-bar').style.width = (m.disk?.percent || 0) + '%';
+      document.getElementById('disk-sub').textContent = (m.disk?.usedGb || 0) + ' GB / ' + (m.disk?.totalGb || 0) + ' GB';
+
+      const online = m.bots?.online || 0;
+      const max = m.bots?.max || 50;
+      const botPct = Math.min(100, Math.round((online / max) * 100));
+      document.getElementById('bots-val').textContent = online + ' / ' + max;
+      document.getElementById('bots-bar').style.width = botPct + '%';
+      document.getElementById('bots-sub').textContent = (m.bots?.totalRegistered || 0) + ' bot terdaftar';
+
+      document.getElementById('uptime-val').textContent = m.uptime || '0j 0m';
+      document.getElementById('last-update').textContent = 'Last ping: ' + new Date(data.timestamp).toLocaleTimeString();
+
+      const setSvc = (prefix, state) => {
+        const isOk = state === 'healthy' || state === 'idle';
+        const txt = document.getElementById(prefix + '-text');
+        const dot = document.getElementById(prefix + '-dot');
+        txt.textContent = isOk ? 'OPERATIONAL' : 'DEGRADED';
+        txt.style.color = isOk ? 'var(--green)' : 'var(--red)';
+        dot.style.background = isOk ? 'var(--green)' : 'var(--red)';
+      };
+
+      setSvc('svc-wa', s.whatsapp?.status);
+      setSvc('svc-tg', s.telegram?.status);
+      setSvc('svc-dc', s.discord?.status);
+      setSvc('svc-db', s.database?.status);
+
+      const logs = data.logs || [];
+      const logList = document.getElementById('log-list');
+      if (logs.length) {
+        logList.innerHTML = logs.map(l => {
+          const t = new Date(l.time).toLocaleTimeString();
+          return `<div class="log-line">
+            <span class="log-time">[${t}]</span>
+            <span class="log-act">${l.act || 'INFO'}</span>
+            <span class="log-msg">${escapeHtml(l.msg)}</span>
+          </div>`;
+        }).join('');
+      } else {
+        logList.innerHTML = '<div style="color:#6B7280;">Belum ada log tercatat.</div>';
+      }
+    }
+
+    function escapeHtml(s) {
+      return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    fetchHealth();
+    setInterval(fetchHealth, 3000);
+  </script>
+</body>
+</html>

@@ -26,10 +26,12 @@ const TABLES = {
     // yang mendaftarkan banyak bot), dan unique akan bikin register gagal
     // dengan pesan yang bikin bingung.
     ['email',           "VARCHAR(254) DEFAULT NULL"],
-    ['plan',            "VARCHAR(32) NOT NULL DEFAULT 'user'"],
+    ['plan',            "VARCHAR(32) DEFAULT NULL"],
     ['plan_expired_at', "DATETIME DEFAULT NULL"],
-    ['plan_slots',      "INT NOT NULL DEFAULT 1"],
+    ['plan_slots',      "INT NOT NULL DEFAULT 0"],
     ['trial_used_at',   "DATETIME DEFAULT NULL"],
+    ['trial_ip',        "VARCHAR(64) DEFAULT NULL"],
+    ['notif_h1_sent_at',"DATETIME DEFAULT NULL"],
     ['extra_owners',    "INT NOT NULL DEFAULT 0"],
     ['extra_quota',     "INT NOT NULL DEFAULT 0"],
     // Dompet. `saldo` SIGNED (bukan UNSIGNED): dengan UNSIGNED, `saldo - ?`

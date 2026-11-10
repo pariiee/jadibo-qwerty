@@ -158,7 +158,22 @@
       }
     };
     setPfxVal(b.prefix ?? '.');
-    document.getElementById('cfg-footer').value  = b.footer_text || '';
+    const fFooter = document.getElementById('cfg-footer');
+    if (fFooter) {
+      fFooter.value = b.footer_text || '';
+      const isPaid = me && (['juragan', 'sultan', 'basic', 'premium'].includes(me.plan) || me.is_admin);
+      if (!isPaid) {
+        fFooter.disabled = true;
+        fFooter.title = 'Custom footer hanya untuk paket berbayar (Juragan / Sultan)';
+        const lbl = document.querySelector('label[for="cfg-footer"]');
+        if (lbl) lbl.textContent = 'Footer Bot [Khusus Paket Berbayar]';
+      } else {
+        fFooter.disabled = false;
+        fFooter.title = '';
+        const lbl = document.querySelector('label[for="cfg-footer"]');
+        if (lbl) lbl.textContent = 'Footer Bot';
+      }
+    }
     document.getElementById('cfg-desc').value    = b.description || '';
     document.getElementById('cfg-token').value   = '';
     document.getElementById('cfg-channel').value = b.channel_id || '';

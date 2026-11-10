@@ -121,7 +121,7 @@ async function terapkanPaket(userId, planId, days, conn = null) {
   // jadi kalau admin mengubah jatah per harga, semua user langsung ikut.
   // Kolom itu disisakan untuk override manual per user.
   await q.execute(
-    'UPDATE users SET plan = ?, plan_expired_at = ? WHERE id = ?',
+    'UPDATE users SET plan = ?, plan_expired_at = ?, notif_h1_sent_at = NULL WHERE id = ?',
     [plan.id, akhir, userId]
   );
 
@@ -237,37 +237,52 @@ async function jalankanEfekSamping({ userId, plan, akhir, kuota, matiKarenaPaket
  * jadi menghapus paket tidak menghidupkan trial lagi. Dipanggil dari register
  * dan dari /api/auth/me (biar akun lama pun kebagian sekali, tanpa skrip migrasi).
  */
-async function klaimTrial(userId) {
+async function klaimTrial(userId, ip = null) {
   const [rows] = await pool.execute(
-    'SELECT trial_used_at FROM users WHERE id = ?',
+    'SELECT trial_used_at, phone FROM users WHERE id = ?',
     [userId]
   );
-  if (!rows[0] || rows[0].trial_used_at) return null;
+  if (!rows[0] || rows[0].trial_used_at) return { ok: false, message: 'Trial sudah pernah dipakai di akun ini' };
+
+  const userPhone = rows[0].phone ? String(rows[0].phone).trim() : null;
+
+  // Anti-Spam: Kunci klaim per IP / per nomor WhatsApp agar tidak bikin akun dummy berulang
+  if (ip || userPhone) {
+    const [dupl] = await pool.execute(
+      `SELECT id FROM users
+        WHERE id != ?
+          AND trial_used_at IS NOT NULL
+          AND ((? IS NOT NULL AND trial_ip = ?) OR (? IS NOT NULL AND phone = ?))
+        LIMIT 1`,
+      [userId, ip, ip, userPhone, userPhone]
+    );
+    if (dupl.length > 0) {
+      return { ok: false, message: 'Trial gratis sudah pernah diklaim dari IP atau nomor WhatsApp ini' };
+    }
+  }
 
   // Tandai DULU (syarat balapan: dua request bersamaan tetap cuma dapat satu).
   const [upd] = await pool.execute(
-    'UPDATE users SET trial_used_at = NOW() WHERE id = ? AND trial_used_at IS NULL',
-    [userId]
+    'UPDATE users SET trial_used_at = NOW(), trial_ip = ? WHERE id = ? AND trial_used_at IS NULL',
+    [ip, userId]
   );
-  if (upd.affectedRows !== 1) return null;
+  if (upd.affectedRows !== 1) return { ok: false, message: 'Trial sudah pernah dipakai di akun ini' };
 
   const days = pricingStore.all().trial_days || TRIAL.days;
   const akhir = new Date(Date.now() + days * 86400000);
-  // `plan_slots` sengaja TIDAK diisi: jatah trial dibaca dari TRIAL di
-  // config/plan.js. Kalau disimpan ke kolom, nilainya jadi sisa yang tidak
-  // ikut terhapus saat trial habis.
   await pool.execute(
-    'UPDATE users SET plan = ?, plan_expired_at = ? WHERE id = ?',
+    'UPDATE users SET plan = ?, plan_slots = 1, plan_expired_at = ? WHERE id = ?',
     [TRIAL.id, akhir, userId]
   );
-  return { plan: TRIAL.id, days, sampai: akhir };
+  return { ok: true, plan: TRIAL.id, days, sampai: akhir };
 }
 
-/** POST /api/billing/trial — klaim trial 5 hari (sekali per akun). */
+/** POST /api/billing/trial — klaim trial 3 hari (sekali per akun/IP/nomor). */
 async function klaimTrialSendiri(req, res) {
   try {
-    const hasil = await klaimTrial(req.user.id);
-    if (!hasil) return sendError(res, 400, 'Trial sudah pernah dipakai di akun ini');
+    const ip = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    const hasil = await klaimTrial(req.user.id, ip);
+    if (!hasil.ok) return sendError(res, 400, hasil.message);
     return res.json({ ok: true, hari: hasil.days, message: `Trial ${hasil.days} hari aktif` });
   } catch (err) {
     console.error('[Billing] klaimTrialSendiri error:', err.message);

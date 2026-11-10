@@ -352,4 +352,87 @@ async function getSystemLogs(req, res) {
   }
 }
 
-module.exports = { status, audit, pendapatan, broadcast, catatAudit, catatLogSistem, getSystemLogs };
+async function publicHealth(req, res) {
+  try {
+    const resrc = resource();
+    let dbOk = false;
+    let counts = { wa: 0, tg: 0, dc: 0, online: 0, total: 0 };
+    try {
+      await pool.execute('SELECT 1');
+      dbOk = true;
+      const [r] = await pool.execute(`
+        SELECT 
+          SUM(platform = 'whatsapp' AND status = 'connected') AS wa_online,
+          SUM(platform = 'telegram' AND status = 'connected') AS tg_online,
+          SUM(platform = 'discord' AND status = 'connected') AS dc_online,
+          SUM(status = 'connected') AS total_online,
+          COUNT(*) AS total_bots
+        FROM bots
+      `);
+      counts = {
+        wa: Number(r[0]?.wa_online || 0),
+        tg: Number(r[0]?.tg_online || 0),
+        dc: Number(r[0]?.dc_online || 0),
+        online: Number(r[0]?.total_online || 0),
+        total: Number(r[0]?.total_bots || 0),
+      };
+    } catch {}
+
+    const maxBots = parseInt(process.env.MAX_RUNNING_BOTS, 10) || 50;
+
+    let cleanLogs = [];
+    try {
+      const [rawLogs] = await pool.execute(`
+        SELECT category, level, action, message, created_at
+        FROM system_logs
+        ORDER BY id DESC LIMIT 15
+      `);
+      cleanLogs = (rawLogs || []).map(l => {
+        let msg = String(l.message || '')
+          .replace(/(08\d{2}|\+?628\d{2})\d{4,8}(\d{2})/g, '$1****$2')
+          .replace(/([a-zA-Z0-9._%+-]{1,3})[a-zA-Z0-9._%+-]*@([a-zA-Z0-9.-]+)/g, '$1***@$2')
+          .replace(/(\d{1,3}\.\d{1,3}\.)\d{1,3}\.\d{1,3}/g, '$1***.***');
+        return {
+          cat: l.category,
+          lvl: l.level,
+          act: l.action,
+          msg,
+          time: l.created_at,
+        };
+      });
+    } catch {}
+
+    const ramUsedMb = Math.round(resrc.ram.terpakai / (1024 * 1024));
+    const ramTotalMb = Math.round(resrc.ram.total / (1024 * 1024));
+    const ramPercent = Math.min(100, Math.round((ramUsedMb / ramTotalMb) * 100));
+
+    const diskUsedGb = resrc.disk ? (resrc.disk.terpakai / (1024 ** 3)).toFixed(1) : '0';
+    const diskTotalGb = resrc.disk ? (resrc.disk.total / (1024 ** 3)).toFixed(1) : '0';
+    const diskPercent = resrc.disk ? Math.min(100, Math.round((resrc.disk.terpakai / resrc.disk.total) * 100)) : 0;
+
+    const upSec = Math.floor(resrc.uptimeProses || 0);
+    const upStr = `${Math.floor(upSec / 3600)}j ${Math.floor((upSec % 3600) / 60)}m ${upSec % 60}d`;
+
+    return res.json({
+      ok: true,
+      timestamp: Date.now(),
+      metrics: {
+        ram: { percent: ramPercent, usedMb: ramUsedMb, totalMb: ramTotalMb },
+        disk: { percent: diskPercent, usedGb: diskUsedGb, totalGb: diskTotalGb },
+        uptime: upStr,
+        bots: { online: counts.online, max: maxBots, totalRegistered: counts.total }
+      },
+      services: {
+        database: { status: dbOk ? 'healthy' : 'down' },
+        whatsapp: { status: counts.wa > 0 ? 'healthy' : 'idle', online_bots: counts.wa },
+        telegram: { status: counts.tg > 0 ? 'healthy' : 'idle', online_bots: counts.tg },
+        discord:  { status: counts.dc > 0 ? 'healthy' : 'idle', online_bots: counts.dc }
+      },
+      logs: cleanLogs
+    });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+}
+
+module.exports = { status, audit, pendapatan, broadcast, catatAudit, catatLogSistem, getSystemLogs, publicHealth };

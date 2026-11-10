@@ -181,12 +181,12 @@ async function kuotaHarian(botData) {
  */
 async function botKedaluwarsa() {
   const [rows] = await pool.execute(
-    `SELECT b.id, b.platform, b.user_id, b.bot_name, u.username, u.plan_expired_at
+    `SELECT b.id, b.platform, b.user_id, b.bot_name, u.username, u.plan, u.plan_expired_at
        FROM bots b JOIN users u ON u.id = b.user_id
       WHERE b.is_running = 1
         AND u.role NOT IN (?, ?)
         AND u.plan_expired_at IS NOT NULL
-        AND u.plan_expired_at < NOW()`,
+        AND u.plan_expired_at < DATE_SUB(NOW(), INTERVAL 1 HOUR)`,
     [ADMIN_ROLE, SUBADMIN_ROLE]
   );
   return rows;

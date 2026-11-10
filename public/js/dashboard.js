@@ -474,12 +474,35 @@
 
   let platform = 'whatsapp';
   function openAddBot() {
-    if (maxSlots === 0) { location.href = '/pricing'; return; }
+    if (maxSlots === 0) {
+      if (me && !me.trial_used) {
+        if (confirm('Akun Anda belum memiliki slot bot.\nKlaim Trial 3 Hari sekarang gratis?')) {
+          klaimTrialAction();
+        }
+        return;
+      }
+      location.href = '/pricing';
+      return;
+    }
     if (bots.length >= maxSlots) { alert('Slot penuh. Maksimal ' + maxSlots + ' bot per akun.'); return; }
     platform = 'whatsapp';
     setPlatUI();
     showStep('platform');
     document.getElementById('add-overlay').classList.add('show');
+  }
+
+  async function klaimTrialAction() {
+    try {
+      const res = await api('/api/billing/trial', { method: 'POST' });
+      if (res && res.ok) {
+        alert(res.message || 'Trial 3 hari berhasil aktif!');
+        location.reload();
+      } else {
+        alert(res?.message || 'Gagal klaim trial.');
+      }
+    } catch (e) {
+      alert('Error klaim trial: ' + e.message);
+    }
   }
   function closeAdd() { document.getElementById('add-overlay').classList.remove('show'); }
   function showStep(s) {
@@ -540,6 +563,23 @@
       if (lbl) lbl.textContent = 'Nomor owner *';
       if (inp) inp.placeholder = '628xxxxxxxxxx';
       if (hint) hint.textContent = 'Nomor pemilik bot — untuk akses command owner-only';
+    }
+
+    const isPaid = me && (['juragan', 'sultan', 'basic', 'premium'].includes(me.plan) || me.is_admin);
+    const fFooter = document.getElementById('f-footer');
+    if (fFooter) {
+      if (!isPaid) {
+        fFooter.value = 'Powered by qwertygate';
+        fFooter.disabled = true;
+        fFooter.title = 'Custom footer hanya untuk paket berbayar (Juragan / Sultan)';
+        const lblF = document.querySelector('label[for="f-footer"]');
+        if (lblF) lblF.textContent = 'Footer Bot [Khusus Paket Berbayar]';
+      } else {
+        fFooter.disabled = false;
+        fFooter.title = '';
+        const lblF = document.querySelector('label[for="f-footer"]');
+        if (lblF) lblF.textContent = 'Footer Bot';
+      }
     }
   }
 

@@ -306,9 +306,12 @@ app.get('/api/bots/:id/config',        apiLimiter, auth.requireAuth, bot.exportC
 app.post('/api/bots/:id/resolve-invite', apiLimiter, auth.requireAuth, bot.resolveInvite);
 app.post('/api/bots/:id/tambah-respon',  apiLimiter, auth.requireAuth, bot.beliRespon);
 
-app.get('/health', async (_, res) => {
-  const h = await require('./engine/health').cek();
-  res.status(h.ok ? 200 : 503).json(h);
+app.get('/api/health', sistem.publicHealth);
+app.get('/health', async (req, res) => {
+  if (req.accepts('html') && !req.xhr && !req.query.json) {
+    return res.sendFile(path.join(__dirname, 'public', 'health.html'));
+  }
+  return sistem.publicHealth(req, res);
 });
 
 app.get('/api/plans',                apiLimiter, billing.daftarPaket);
@@ -721,23 +724,47 @@ cronAman.schedule('* * * * *', async () => {
   try {
     for (const bot of await require('./engine/gatePaket').botKedaluwarsa()) {
       try {
+        await require('./engine/notify').kirimKeOwner(bot.user_id,
+          `⏰ *Masa aktif paket bot kamu sudah habis.*\n\n` +
+          `Bot *${bot.bot_name || bot.id}* dimatikan otomatis karena masa aktifnya ` +
+          `berakhir (+ tenggang 1 jam). Data & pengaturannya tetap aman — begitu paket diperpanjang, ` +
+          `bot dapat dinyalakan kembali tanpa perlu setting ulang.\n\n` +
+          `Perpanjang di: https://labs.yapari.web.id/pricing`).catch(() => {});
         await pool.execute("UPDATE bots SET stop_reason = 'expired' WHERE id = ?", [bot.id]);
         await require('./config/engineBus').stopIfRunning(bot.id);
-        console.log(`[Cron] Bot ${bot.id} (${bot.username}) dimatikan — paket habis ${bot.plan_expired_at}`);
-        if (bot.stop_reason !== 'expired') {
-          require('./engine/notify').kirimKeOwner(bot.user_id,
-            `⏰ *Paket bot kamu sudah habis.*\n\n` +
-            `Bot *${bot.bot_name || bot.id}* dimatikan otomatis karena masa aktifnya ` +
-            `berakhir. Data & pengaturannya tetap aman — begitu paket diperpanjang, ` +
-            `bot dinyalakan otomatis tanpa perlu setting ulang.\n\n` +
-            `Perpanjang: /pricing`).catch(() => {});
-        }
+        console.log(`[Cron] Bot ${bot.id} (${bot.username}) dimatikan — paket habis + 1 jam: ${bot.plan_expired_at}`);
       } catch (e) {
         console.error(`[Cron] Gagal matikan bot ${bot.id}:`, e.message);
       }
     }
   } catch (e) {
     console.error('[Cron] Cek paket habis error:', e.message);
+  }
+
+  // Notifikasi H-1 sebelum expired (Trial / Berbayar)
+  try {
+    const { ADMIN_ROLE, SUBADMIN_ROLE } = require('./config/roles');
+    const [h1Users] = await pool.execute(
+      `SELECT u.id, u.username, u.plan, u.plan_expired_at
+         FROM users u
+        WHERE u.plan_expired_at IS NOT NULL
+          AND u.plan_expired_at BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 24 HOUR)
+          AND u.notif_h1_sent_at IS NULL
+          AND u.role NOT IN (?, ?)`,
+      [ADMIN_ROLE, SUBADMIN_ROLE]
+    );
+    for (const u of h1Users) {
+      await pool.execute('UPDATE users SET notif_h1_sent_at = NOW() WHERE id = ?', [u.id]);
+      const sisaJam = Math.max(1, Math.round((new Date(u.plan_expired_at) - Date.now()) / (3600 * 1000)));
+      require('./engine/notify').kirimKeOwner(u.id,
+        `⚠️ *Pemberitahuan Masa Aktif Bot*\n\n` +
+        `Halo *${u.username}*, masa aktif paket (*${u.plan || 'Trial'}*) bot kamu tersisa *${sisaJam} jam lagi* ` +
+        `(berakhir pada ${new Date(u.plan_expired_at).toLocaleString('id-ID')}).\n\n` +
+        `Segera perpanjang paket di dashboard agar bot kamu tidak terhenti:\nhttps://labs.yapari.web.id/pricing`
+      ).catch(() => {});
+    }
+  } catch (e) {
+    console.error('[Cron] Notif H-1 error:', e.message);
   }
 
   try {

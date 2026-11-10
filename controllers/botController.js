@@ -286,13 +286,16 @@ async function createBot(req, res) {
       if (!v.ok) return sendError(res, 400, v.message);
     }
 
+    const isPaid = me[0] && (['juragan', 'sultan', 'basic', 'premium'].includes(me[0].plan) || [ADMIN_ROLE, SUBADMIN_ROLE].includes(me[0].role));
+    const finalFooter = isPaid && footer_text ? String(footer_text).trim().slice(0, 100) : 'Powered by qwertygate';
+
     const [result] = await pool.execute(
       `INSERT INTO bots
          (user_id, platform, bot_name, bot_number, owner_number, prefix, footer_text,
           description, telegram_token, discord_token, receive_limit, status)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'disconnected')`,
       [req.user.id, platform, bot_name, bot_number || null, owner_number || null,
-       prefix, footer_text, description, tgToken, dcToken,
+       prefix, finalFooter, description, tgToken, dcToken,
        receiveLimit(me[0], pricingStore.plans())]
     );
 
@@ -339,6 +342,14 @@ async function updateBot(req, res) {
         return sendError(res, 400, maks === 0
           ? 'Paket kamu belum bisa pakai Owner Number. Upgrade di halaman Pricing.'
           : `Paket kamu maksimal ${maks} Owner Number.`);
+    }
+
+    if (req.body.footer_text !== undefined) {
+      const [me] = await pool.execute('SELECT role, plan FROM users WHERE id = ?', [req.user.id]);
+      const isPaid = me[0] && (['juragan', 'sultan', 'basic', 'premium'].includes(me[0].plan) || [ADMIN_ROLE, SUBADMIN_ROLE].includes(me[0].role));
+      if (!isPaid) {
+        return sendError(res, 403, 'Fitur custom footer hanya tersedia untuk paket berbayar (Juragan / Sultan).');
+      }
     }
 
     if (req.body.owner_number !== undefined && !String(req.body.owner_number).trim()) {
