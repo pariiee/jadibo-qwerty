@@ -170,14 +170,8 @@ document.addEventListener('DOMContentLoaded', function () {
             var el = popMenu.querySelector('a[href="' + href + '"]');
             if (el) el.remove();
           });
-          if (!u.is_superadmin && !document.getElementById('pop-staff-bot')) {
-            var aBot = document.createElement('a');
-            aBot.id = 'pop-staff-bot';
-            aBot.href = '/kountole/bots';
-            aBot.className = 'pop-item';
-            aBot.innerHTML = '<svg class="nv-i" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg><span>Manage Bot</span>';
-            popMenu.insertBefore(aBot, popMenu.firstChild);
-          }
+          var elStaffBot = document.getElementById('pop-staff-bot');
+          if (elStaffBot) elStaffBot.remove();
         }
 
         ['nav-saldo', 'nav-pricing', 'nav-billing', 'drw-saldo', 'drw-pricing', 'drw-billing'].forEach(function (id) {
