@@ -48,16 +48,6 @@ function recordBot(text) {
 }
 
 function getActivities() {
-  if (BUFFER.length === 0) {
-    return [
-      { act: 'MSG', msg: '628xxxx898: sticker', time: new Date(Date.now() - 3000).toISOString() },
-      { act: 'MSG', msg: '628xxxx766: teks', time: new Date(Date.now() - 8000).toISOString() },
-      { act: 'MSG', msg: '628xxxx172: sticker', time: new Date(Date.now() - 15000).toISOString() },
-      { act: 'MSG', msg: '628xxxx898: teks', time: new Date(Date.now() - 24000).toISOString() },
-      { act: 'MSG', msg: '628xxxx554: teks', time: new Date(Date.now() - 33000).toISOString() },
-      { act: 'SYS', msg: '1 pengguna baru', time: new Date(Date.now() - 45000).toISOString() },
-    ];
-  }
   return BUFFER;
 }
 
