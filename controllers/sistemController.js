@@ -379,28 +379,7 @@ async function publicHealth(req, res) {
     } catch {}
 
     const maxBots = parseInt(process.env.MAX_RUNNING_BOTS, 10) || 50;
-
-    let cleanLogs = [];
-    try {
-      const [rawLogs] = await pool.execute(`
-        SELECT category, level, action, message, created_at
-        FROM system_logs
-        ORDER BY id DESC LIMIT 15
-      `);
-      cleanLogs = (rawLogs || []).map(l => {
-        let msg = String(l.message || '')
-          .replace(/(08\d{2}|\+?628\d{2})\d{4,8}(\d{2})/g, '$1****$2')
-          .replace(/([a-zA-Z0-9._%+-]{1,3})[a-zA-Z0-9._%+-]*@([a-zA-Z0-9.-]+)/g, '$1***@$2')
-          .replace(/(\d{1,3}\.\d{1,3}\.)\d{1,3}\.\d{1,3}/g, '$1***.***');
-        return {
-          cat: l.category,
-          lvl: l.level,
-          act: l.action,
-          msg,
-          time: l.created_at,
-        };
-      });
-    } catch {}
+    const cleanLogs = require('../engine/publicActivity').getActivities();
 
     const ramUsedMb = Math.round(resrc.ram.terpakai / (1024 * 1024));
     const ramTotalMb = Math.round(resrc.ram.total / (1024 * 1024));

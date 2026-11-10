@@ -407,6 +407,7 @@ async function verifyConfirm(req, res) {
     try {
       const { catatLogSistem } = require('./sistemController');
       catatLogSistem({ category: 'auth', level: 'success', actor: item.username, action: 'VERIFY_EMAIL', message: `Verifikasi email berhasil untuk akun: ${item.username} (${item.email})`, ip: req.ip });
+      require('../engine/publicActivity').recordSystem('1 pengguna baru');
     } catch {}
 
     return res.json({

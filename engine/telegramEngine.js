@@ -398,6 +398,10 @@ async function startTelegramBot(botData) {
       const text = msg.text || '[media]';
       const isCmd = msg.text && (msg.text.startsWith('/') || msg.text.startsWith(botData.prefix ?? '/'));
       await logBot(botId, isCmd ? 'cmd' : 'info', `${from}: ${text}`);
+      try {
+        const pType = msg.sticker ? 'sticker' : (msg.photo ? 'image' : (msg.video ? 'video' : (isCmd ? msg.text : 'teks')));
+        require('./publicActivity').recordMessage('telegram', from, pType);
+      } catch {}
       await handleMessage(tgBot, msg, botData, botId);
     } catch (e) {
       await logBot(botId, 'error', `Message handler error: ${e.message}`);

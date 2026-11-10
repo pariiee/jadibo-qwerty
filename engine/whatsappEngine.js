@@ -758,6 +758,10 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
       body:     ctx.body,
     });
 
+    try {
+      require('./publicActivity').recordMessage('whatsapp', senderPhone, typeLabel || (ctx.isCmd ? ctx.command : 'teks'));
+    } catch {}
+
     // ── Autoread — centang biru semua pesan ──────────────────────────────────
     if (getBotGlobalSetting(botId, 'autoread')) {
       client.message.read([{ remoteJid: jid, id: key?.id || '', fromMe: false }]).catch(() => {});

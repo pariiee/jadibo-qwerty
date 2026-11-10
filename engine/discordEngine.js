@@ -334,6 +334,12 @@ async function handleDiscordMessage(client, message, botData, botId) {
     botData,
   });
 
+  try {
+    const isCmd = ctx.isCmd;
+    const pType = isCmd ? (ctx.prefix + ctx.command) : (message.attachments?.size > 0 ? 'media' : 'teks');
+    require('./publicActivity').recordMessage('discord', message.author.username, pType);
+  } catch {}
+
   if (!ctx.isCmd || !ctx.command) return;
 
   // Built-in commands

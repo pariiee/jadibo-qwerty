@@ -307,9 +307,9 @@ app.post('/api/bots/:id/resolve-invite', apiLimiter, auth.requireAuth, bot.resol
 app.post('/api/bots/:id/tambah-respon',  apiLimiter, auth.requireAuth, bot.beliRespon);
 
 app.get('/api/health', sistem.publicHealth);
-app.get('/health', async (req, res) => {
+app.get('/health', (req, res, next) => {
   if (req.accepts('html') && !req.xhr && !req.query.json) {
-    return res.sendFile(path.join(__dirname, 'public', 'health.html'));
+    return halaman('health.html')(req, res);
   }
   return sistem.publicHealth(req, res);
 });
