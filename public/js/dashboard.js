@@ -565,15 +565,18 @@
       if (hint) hint.textContent = 'Nomor pemilik bot — untuk akses command owner-only';
     }
 
-    const isPaid = me && (['juragan', 'sultan', 'basic', 'premium'].includes(me.plan) || me.is_admin);
+    const isPaid = me && (
+      me.is_admin ||
+      (me.plan !== 'trial' && !!me.plan_expired_at && new Date(me.plan_expired_at) > new Date())
+    );
     const fFooter = document.getElementById('f-footer');
     if (fFooter) {
       if (!isPaid) {
         fFooter.value = 'Powered by qwertygate';
         fFooter.disabled = true;
-        fFooter.title = 'Custom footer hanya untuk paket berbayar (Juragan / Sultan)';
+        fFooter.title = 'Custom footer hanya untuk langganan berbayar (bukan akun Trial)';
         const lblF = document.querySelector('label[for="f-footer"]');
-        if (lblF) lblF.textContent = 'Footer Bot [Khusus Paket Berbayar]';
+        if (lblF) lblF.textContent = 'Footer Bot [Khusus Langganan Berbayar]';
       } else {
         fFooter.disabled = false;
         fFooter.title = '';

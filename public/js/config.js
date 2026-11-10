@@ -161,12 +161,15 @@
     const fFooter = document.getElementById('cfg-footer');
     if (fFooter) {
       fFooter.value = b.footer_text || '';
-      const isPaid = me && (['juragan', 'sultan', 'basic', 'premium'].includes(me.plan) || me.is_admin);
+      const isPaid = me && (
+        me.is_admin ||
+        (me.plan !== 'trial' && !!me.plan_expired_at && new Date(me.plan_expired_at) > new Date())
+      );
       if (!isPaid) {
         fFooter.disabled = true;
-        fFooter.title = 'Custom footer hanya untuk paket berbayar (Juragan / Sultan)';
+        fFooter.title = 'Custom footer hanya untuk langganan berbayar (bukan akun Trial)';
         const lbl = document.querySelector('label[for="cfg-footer"]');
-        if (lbl) lbl.textContent = 'Footer Bot [Khusus Paket Berbayar]';
+        if (lbl) lbl.textContent = 'Footer Bot [Khusus Langganan Berbayar]';
       } else {
         fFooter.disabled = false;
         fFooter.title = '';

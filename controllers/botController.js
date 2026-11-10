@@ -286,7 +286,10 @@ async function createBot(req, res) {
       if (!v.ok) return sendError(res, 400, v.message);
     }
 
-    const isPaid = me[0] && (['juragan', 'sultan', 'basic', 'premium'].includes(me[0].plan) || [ADMIN_ROLE, SUBADMIN_ROLE].includes(me[0].role));
+    const isPaid = me[0] && (
+      [ADMIN_ROLE, SUBADMIN_ROLE].includes(me[0].role) ||
+      (me[0].plan !== 'trial' && !!me[0].plan_expired_at && new Date(me[0].plan_expired_at) > new Date())
+    );
     const finalFooter = isPaid && footer_text ? String(footer_text).trim().slice(0, 100) : 'Powered by qwertygate';
 
     const [result] = await pool.execute(
@@ -345,10 +348,13 @@ async function updateBot(req, res) {
     }
 
     if (req.body.footer_text !== undefined) {
-      const [me] = await pool.execute('SELECT role, plan FROM users WHERE id = ?', [req.user.id]);
-      const isPaid = me[0] && (['juragan', 'sultan', 'basic', 'premium'].includes(me[0].plan) || [ADMIN_ROLE, SUBADMIN_ROLE].includes(me[0].role));
+      const [me] = await pool.execute('SELECT role, plan, plan_expired_at FROM users WHERE id = ?', [req.user.id]);
+      const isPaid = me[0] && (
+        [ADMIN_ROLE, SUBADMIN_ROLE].includes(me[0].role) ||
+        (me[0].plan !== 'trial' && !!me[0].plan_expired_at && new Date(me[0].plan_expired_at) > new Date())
+      );
       if (!isPaid) {
-        return sendError(res, 403, 'Fitur custom footer hanya tersedia untuk paket berbayar (Juragan / Sultan).');
+        return sendError(res, 403, 'Fitur custom footer hanya tersedia untuk langganan berbayar (bukan akun Trial).');
       }
     }
 
