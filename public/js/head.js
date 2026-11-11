@@ -205,6 +205,36 @@ document.addEventListener('DOMContentLoaded', function () {
         document.documentElement.classList.remove('is-admin');
         var elNav = document.getElementById('nav-admin');
         if (elNav) elNav.style.display = 'none';
+
+        var pProfil = document.querySelector('.pop-menu a[href="/profil"]');
+        if (pProfil && !document.getElementById('pop-billing')) {
+          var items = [
+            { href: '/billing', id: 'pop-billing', label: 'Riwayat', icon: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6"/>' },
+            { href: '/saldo', id: 'pop-saldo', label: 'Saldo', icon: '<path d="M3 7a2 2 0 0 1 2-2h13v4M3 7v11a2 2 0 0 0 2 2h15V9H5a2 2 0 0 1-2-2zM16 14h2"/>' },
+            { href: '/pricing', id: 'pop-pricing', label: 'Pricing', icon: '<path d="M3 12V4h8l10 10-8 8zM7.5 7.5h.01"/>' }
+          ];
+          items.forEach(function (it) {
+            var a = document.createElement('a');
+            a.href = it.href; a.id = it.id; a.className = 'pop-item';
+            a.innerHTML = '<svg class="nv-i" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + it.icon + '</svg><span>' + it.label + '</span>';
+            pProfil.parentNode.insertBefore(a, pProfil);
+          });
+        }
+
+        var dProfil = document.getElementById('drw-profil');
+        if (dProfil && !document.getElementById('drw-billing')) {
+          var dItems = [
+            { href: '/billing', id: 'drw-billing', label: 'Riwayat', icon: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6"/>' },
+            { href: '/saldo', id: 'drw-saldo', label: 'Saldo', icon: '<path d="M3 7a2 2 0 0 1 2-2h13v4M3 7v11a2 2 0 0 0 2 2h15V9H5a2 2 0 0 1-2-2zM16 14h2"/>' },
+            { href: '/pricing', id: 'drw-pricing', label: 'Pricing', icon: '<path d="M3 12V4h8l10 10-8 8zM7.5 7.5h.01"/>' }
+          ];
+          dItems.forEach(function (it) {
+            var a = document.createElement('a');
+            a.href = it.href; a.id = it.id; a.className = 'drawer-nav-item';
+            a.innerHTML = '<svg class="drw-i" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + it.icon + '</svg>' + it.label;
+            dProfil.parentNode.insertBefore(a, dProfil);
+          });
+        }
       }
     }
   }).catch(function () {});
