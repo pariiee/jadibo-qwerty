@@ -13,25 +13,16 @@
     <!-- @include topbar.html -->
 
     <div class="content profil-bento-content">
-      <!-- Hero Banner Bento dengan Avatar Integratif -->
+      <!-- Hero Banner Bento -->
       <section class="profil-hero-banner">
         <div class="profil-hero-left">
           <span class="profil-hero-chip">PENGATURAN AKUN</span>
           <h2>Profil Saya</h2>
-          <p>Kelola foto profil, nomor notifikasi WhatsApp, alamat email, dan keamanan akunmu.</p>
+          <p>Kelola nomor notifikasi WhatsApp, alamat email cadangan, dan keamanan kata sandi akunmu.</p>
         </div>
-        <div class="profil-hero-avatar-card">
-          <div id="pf-avatar-box">
-            <span id="pf-avatar-initial">?</span>
-          </div>
-          <div class="pf-avatar-meta">
-            <input type="file" id="avatar-input" accept="image/jpeg,image/png,image/webp" style="display:none;" />
-            <div class="pf-avatar-btns">
-              <button type="button" class="pf-btn-avatar-pick" id="btn-pilih-avatar">Ganti Foto</button>
-              <button type="button" class="pf-btn-avatar-del" id="btn-hapus-avatar" style="display:none;">Hapus</button>
-            </div>
-            <span class="pf-avatar-hint">Maks. 500 KB (JPG/PNG/WebP)</span>
-          </div>
+        <div class="profil-hero-stat">
+          <span class="profil-stat-lbl">Keamanan Akun</span>
+          <b class="profil-stat-val">Terproteksi</b>
         </div>
       </section>
 
@@ -84,6 +75,33 @@
 
       <!-- Bento Form Section -->
       <div class="profil-forms-grid">
+        <!-- Card 0: Foto Profil (Avatar) -->
+        <section class="profil-form-card">
+          <div class="pf-card-header">
+            <div class="pf-ic-box" style="background:#D8FF7A">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#151515" stroke-width="2.2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            </div>
+            <div>
+              <h3>Foto Profil</h3>
+              <p>Maksimal 500 KB (JPG, PNG, WebP).</p>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:16px;margin:12px 0 6px;">
+            <div id="pf-avatar-box" style="width:62px;height:62px;border-radius:50%;border:2px solid #151515;box-shadow:3px 3px 0 #151515;background:#7C3AED;color:#FFF;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;overflow:hidden;flex-shrink:0;">
+              <span id="pf-avatar-initial">?</span>
+            </div>
+            <div style="flex:1;">
+              <input type="file" id="avatar-input" accept="image/jpeg,image/png,image/webp" style="display:none;" />
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button type="button" class="pf-btn-submit" id="btn-pilih-avatar" style="height:36px;padding:0 14px;border-radius:10px;">Pilih Foto</button>
+                <button type="button" class="btn btn-outline" id="btn-hapus-avatar" style="height:36px;padding:0 12px;border-radius:10px;display:none;color:#B42318;border-color:#151515;">Hapus</button>
+              </div>
+            </div>
+          </div>
+          <div class="err pf-err" id="avatar-error"></div>
+          <div class="ok pf-ok" id="avatar-ok"></div>
+        </section>
+
         <!-- Card 1: Nomor HP -->
         <section class="profil-form-card">
           <div class="pf-card-header">
@@ -92,7 +110,7 @@
             </div>
             <div>
               <h3>Nomor WhatsApp</h3>
-              <p>Jalur notifikasi otomatis pembayaran &amp; peringatan bot offline.</p>
+              <p>Jalur notifikasi otomatis pembayaran &amp; bot offline.</p>
             </div>
           </div>
           <form id="hp-form">
@@ -129,7 +147,7 @@
         </section>
 
         <!-- Card 3: Ganti Password -->
-        <section class="profil-form-card pf-span-2">
+        <section class="profil-form-card pf-span-full">
           <div class="pf-card-header">
             <div class="pf-ic-box" style="background:#FFDFC0">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#151515" stroke-width="2.2"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>

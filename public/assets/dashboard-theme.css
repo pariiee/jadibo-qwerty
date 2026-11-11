@@ -3207,118 +3207,80 @@ body.page-saldo .saldo-kosong-card {
   body.page-saldo .saldo-hero-stat { display: none !important; }
 }
 
-/* ══ Profil: perbaiki spacing & samakan dengan dashboard ══ */
-body.page-profil { --pf-gap: 22px; }
+/* ══ Profil: perbaiki spacing & samakan persis dengan halaman lain ══ */
+body.page-profil { --pf-gap: 16px; }
 
-/* Menang atas "display:block" dari blok Fix Full-Width */
 html body.page-dashboard.page-profil .content.profil-bento-content {
   display: flex !important;
   flex-direction: column !important;
-  gap: var(--pf-gap) !important;
-  padding-top: 30px !important;
-  padding-bottom: 28px !important;
+  gap: 16px !important;
+  padding-top: 0 !important;
+  padding-bottom: 24px !important;
+  width: 100% !important;
+  max-width: 1360px !important;
+  margin: 0 auto !important;
 }
-html body.page-profil .profil-stats-grid { gap: var(--pf-gap) !important; margin: 0 !important; }
-html body.page-profil .profil-forms-grid { gap: var(--pf-gap) !important; }
+html body.page-profil .profil-stats-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 16px !important;
+  margin: 0 !important;
+}
+html body.page-profil .profil-forms-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 16px !important;
+}
 
-/* Samakan shadow Neo-Brutalist profil dengan halaman lain */
+/* Samakan banner & shadow Neo-Brutalist profil persis dengan pricing/dashboard */
 html body.page-profil .profil-hero-banner {
-  border: 2px solid #151515 !important;
-  border-radius: 24px !important;
-  box-shadow: 4px 4px 0 #151515 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  flex-wrap: wrap !important;
+  gap: 16px !important;
+  background: #D9D3FF !important;
+  border: 2.5px solid #151515 !important;
+  border-radius: 26px !important;
+  padding: 22px 28px !important;
+  box-shadow: 4px 4px 0px #151515 !important;
+  color: #151515 !important;
 }
 html body.page-profil .profil-hero-stat {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-end !important;
+  background: #fff !important;
   border: 2px solid #151515 !important;
   border-radius: 18px !important;
-  box-shadow: 3px 3px 0 #151515 !important;
+  padding: 10px 18px !important;
+  box-shadow: 2px 2px 0px #151515 !important;
 }
 html body.page-profil .profil-stat-tile {
   border: 2px solid #151515 !important;
-  border-radius: 20px !important;
+  border-radius: 22px !important;
   box-shadow: 4px 4px 0 #151515 !important;
 }
 html body.page-profil .profil-form-card {
-  border: 2px solid #151515 !important;
-  border-radius: 20px !important;
+  border: 2.5px solid #151515 !important;
+  border-radius: 22px !important;
   box-shadow: 4px 4px 0 #151515 !important;
 }
+html body.page-profil .pf-span-full {
+  grid-column: 1 / -1 !important;
+}
 html body.page-profil .pf-btn-submit {
-  box-shadow: 2.5px 2.5px 0 #151515 !important;
+  box-shadow: 2px 2px 0 #151515 !important;
 }
 html body.page-profil .pf-btn-submit:hover {
   transform: translate(-1px, -1px) !important;
-  box-shadow: 3.5px 3.5px 0 #151515 !important;
-}
-
-/* Avatar Bento Card di dalam Hero Banner */
-body.page-profil .profil-hero-avatar-card {
-  display: flex !important;
-  align-items: center !important;
-  gap: 14px !important;
-  background: #FFFFFF !important;
-  border: 2px solid #151515 !important;
-  border-radius: 20px !important;
-  padding: 12px 18px !important;
   box-shadow: 3px 3px 0 #151515 !important;
 }
-body.page-profil #pf-avatar-box {
-  width: 58px !important;
-  height: 58px !important;
-  border-radius: 50% !important;
-  border: 2px solid #151515 !important;
-  box-shadow: 2px 2px 0 #151515 !important;
-  background: #7C3AED !important;
-  color: #FFF !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  font-size: 24px !important;
-  font-weight: 800 !important;
-  overflow: hidden !important;
-  flex-shrink: 0 !important;
-}
-body.page-profil .pf-avatar-meta {
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 4px !important;
-}
-body.page-profil .pf-avatar-btns {
-  display: flex !important;
-  gap: 8px !important;
-  align-items: center !important;
-}
-body.page-profil .pf-btn-avatar-pick {
-  height: 32px !important;
-  padding: 0 14px !important;
-  border-radius: 10px !important;
-  background: #151515 !important;
-  color: #FFF !important;
-  font-size: 12px !important;
-  font-weight: 700 !important;
-  border: 1.5px solid #151515 !important;
-  cursor: pointer !important;
-  box-shadow: 1.5px 1.5px 0 #151515 !important;
-  transition: transform .1s, box-shadow .1s !important;
-}
-body.page-profil .pf-btn-avatar-pick:hover {
-  transform: translate(-1px, -1px) !important;
-  box-shadow: 2.5px 2.5px 0 #151515 !important;
-}
-body.page-profil .pf-btn-avatar-del {
-  height: 32px !important;
-  padding: 0 10px !important;
-  border-radius: 10px !important;
-  background: #FFF !important;
-  color: #B42318 !important;
-  font-size: 12px !important;
-  font-weight: 700 !important;
-  border: 1.5px solid #B42318 !important;
-  cursor: pointer !important;
-}
-body.page-profil .pf-avatar-hint {
-  font-size: 11px !important;
-  font-weight: 600 !important;
-  color: #6B7280 !important;
+
+@media (max-width: 900px) {
+  html body.page-profil .profil-forms-grid {
+    grid-template-columns: 1fr !important;
+  }
 }
 
 /* ── Profil: paksa semua bagian selebar kontainer ── */
