@@ -3176,50 +3176,23 @@ body.page-saldo .saldo-kosong-card {
 /* ══ Profil: perbaiki spacing & samakan persis dengan halaman lain ══ */
 body.page-profil { --pf-gap: 16px; }
 
-/* Scope khusus halaman profil */
-body.page-profil .content {
+html body.page-dashboard.page-profil .content.profil-bento-content {
   display: flex !important;
   flex-direction: column !important;
   gap: 16px !important;
+  padding-top: 0 !important;
+  padding-bottom: 24px !important;
   width: 100% !important;
   max-width: 1360px !important;
   margin: 0 auto !important;
-  padding-bottom: 24px !important;
 }
-
-body.page-profil .bt-grid,
-body.page-profil .profil-stats-grid,
-body.page-profil .profil-forms-grid {
-  margin: 0 !important;
-  width: 100% !important;
-}
-
-/* Judul dan deskripsi profil hitam tegas #151515 */
-body.page-profil .bt-hero h1,
-body.page-profil .bt-hero .bt-hello {
-  color: #151515 !important;
-  -webkit-text-fill-color: #151515 !important;
-  font-size: clamp(24px, 3vw, 32px) !important;
-  font-weight: 800 !important;
-  letter-spacing: -0.02em !important;
-  line-height: 1.15 !important;
-}
-
-body.page-profil .bt-hero .bt-lead {
-  max-width: none !important;
-  color: rgba(21, 21, 21, 0.8) !important;
-  font-size: 14px !important;
-  line-height: 1.5 !important;
-  margin-top: 6px !important;
-}
-
-body.page-profil .profil-stats-grid {
+html body.page-profil .profil-stats-grid {
   display: grid !important;
   grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
   gap: 16px !important;
+  margin: 0 !important;
 }
-
-body.page-profil .profil-forms-grid {
+html body.page-profil .profil-forms-grid {
   display: grid !important;
   grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   gap: 16px !important;
@@ -3232,7 +3205,6 @@ html body.page-profil .profil-stat-tile {
   box-shadow: 4px 4px 0 #151515 !important;
 }
 html body.page-profil .profil-form-card {
-  background: #FFFFFF !important;
   border: 2.5px solid #151515 !important;
   border-radius: 22px !important;
   box-shadow: 4px 4px 0 #151515 !important;
@@ -3249,8 +3221,9 @@ html body.page-profil .pf-btn-submit:hover {
 }
 
 @media (max-width: 900px) {
-  body.page-profil .profil-stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
-  body.page-profil .profil-forms-grid { grid-template-columns: 1fr !important; }
+  html body.page-profil .profil-forms-grid {
+    grid-template-columns: 1fr !important;
+  }
 }
 
 /* ══ Kuota Component Styles ══ */
