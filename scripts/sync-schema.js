@@ -46,6 +46,7 @@ const TABLES = {
     ['auto_renew',          "TINYINT(1) NOT NULL DEFAULT 0"],
     ['auto_renew_status',   "VARCHAR(32) DEFAULT NULL"],
     ['auto_renew_status_at',"DATETIME DEFAULT NULL"],
+    ['avatar_url',          "VARCHAR(255) DEFAULT NULL"],
   ],
   bots: [
     // Alamat publik bot untuk URL halaman (`/bot/<slug>`), mis. mh3gs9kdfj2p.

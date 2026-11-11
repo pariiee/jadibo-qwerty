@@ -321,6 +321,8 @@ app.get('/api/command',              apiLimiter, auth.requireAuth, command.dafta
 app.post('/api/auth/password',         authLimiter, auth.requireAuth, auth.gantiPassword);
 app.post('/api/auth/phone',            authLimiter, auth.requireAuth, auth.simpanPhone);
 app.post('/api/auth/email',            authLimiter, auth.requireAuth, auth.simpanEmail);
+app.post('/api/user/avatar',           authLimiter, auth.requireAuth, auth.uploadAvatar);
+app.delete('/api/user/avatar',         authLimiter, auth.requireAuth, auth.hapusAvatar);
 app.post('/api/billing/checkout',    apiLimiter, auth.requireAuth, billing.checkout);
 app.post('/api/billing/addon',       moneyLimiter, auth.requireAuth, billing.beliAddon);
 app.post('/api/billing/trial',       apiLimiter, auth.requireAuth, billing.klaimTrialSendiri);

@@ -1,5 +1,7 @@
 'use strict';
 
+const fs        = require('fs');
+const path      = require('path');
 const crypto    = require('crypto');
 const bcrypt    = require('bcryptjs');
 const jwt       = require('jsonwebtoken');
@@ -504,7 +506,7 @@ function logout(req, res) {
 async function me(req, res) {
   try {
     const [rows] = await pool.execute(
-      'SELECT id, username, role, plan, plan_expired_at, plan_slots, trial_used_at, phone, email, saldo, auto_renew, auto_renew_status, created_at FROM users WHERE id = ?',
+      'SELECT id, username, role, plan, plan_expired_at, plan_slots, trial_used_at, phone, email, saldo, auto_renew, auto_renew_status, avatar_url, created_at FROM users WHERE id = ?',
       [req.user.id]
     );
     if (rows.length === 0) return sendError(res, 404, 'User tidak ditemukan');
@@ -560,6 +562,7 @@ async function me(req, res) {
         extra_owners: Number(u.extra_owners || 0),
         extra_quota: Number(u.extra_quota || 0),
         saldo: Number(u.saldo || 0),
+        avatar_url: u.avatar_url || null,
         auto_renew: !!u.auto_renew,
         auto_renew_status: u.auto_renew_status || null,
         created_at: u.created_at,
@@ -790,6 +793,80 @@ async function simpanEmail(req, res) {
   }
 }
 
+// ─── Upload Foto Profil (Maks 500 KB) ─────────────────────────────────────────
+const AVATAR_DIR = path.join(__dirname, '..', 'public', 'uploads', 'avatars');
+if (!fs.existsSync(AVATAR_DIR)) fs.mkdirSync(AVATAR_DIR, { recursive: true });
+
+async function uploadAvatar(req, res) {
+  try {
+    const raw = req.body?.image;
+    if (!raw || typeof raw !== 'string') {
+      return sendError(res, 400, 'Gambar foto profil wajib disertakan.');
+    }
+
+    const matches = raw.match(/^data:image\/(jpeg|png|webp|jpg);base64,(.+)$/i);
+    if (!matches) {
+      return sendError(res, 400, 'Format tidak didukung (gunakan JPG, PNG, atau WebP).');
+    }
+
+    const ext = matches[1].toLowerCase() === 'jpeg' ? 'jpg' : matches[1].toLowerCase();
+    const buf = Buffer.from(matches[2], 'base64');
+
+    // Batas 500 KB = 512.000 byte
+    if (buf.length > 500 * 1024) {
+      return sendError(res, 400, 'Ukuran foto melebihi batas maksimal 500 KB.');
+    }
+
+    const isJpeg = buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff;
+    const isPng  = buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47;
+    const isWebp = buf.length > 12 && buf.slice(0, 4).toString('ascii') === 'RIFF' && buf.slice(8, 12).toString('ascii') === 'WEBP';
+
+    if (!isJpeg && !isPng && !isWebp) {
+      return sendError(res, 400, 'Berkas bukan gambar yang valid.');
+    }
+
+    ['jpg', 'png', 'webp'].forEach((e) => {
+      const old = path.join(AVATAR_DIR, `avatar_${req.user.id}.${e}`);
+      if (fs.existsSync(old)) {
+        try { fs.unlinkSync(old); } catch {}
+      }
+    });
+
+    const filename = `avatar_${req.user.id}.${ext}`;
+    const filePath = path.join(AVATAR_DIR, filename);
+    fs.writeFileSync(filePath, buf);
+
+    const avatarUrl = `/uploads/avatars/${filename}?v=${Date.now()}`;
+    await pool.execute('UPDATE users SET avatar_url = ? WHERE id = ?', [avatarUrl, req.user.id]);
+
+    return res.json({
+      ok: true,
+      message: 'Foto profil berhasil diperbarui.',
+      avatar_url: avatarUrl
+    });
+  } catch (err) {
+    console.error('[Auth] uploadAvatar error:', err);
+    return sendError(res, 500, 'Gagal mengunggah foto profil.');
+  }
+}
+
+async function hapusAvatar(req, res) {
+  try {
+    ['jpg', 'png', 'webp'].forEach((e) => {
+      const old = path.join(AVATAR_DIR, `avatar_${req.user.id}.${e}`);
+      if (fs.existsSync(old)) {
+        try { fs.unlinkSync(old); } catch {}
+      }
+    });
+
+    await pool.execute('UPDATE users SET avatar_url = NULL WHERE id = ?', [req.user.id]);
+    return res.json({ ok: true, message: 'Foto profil berhasil dihapus.' });
+  } catch (err) {
+    console.error('[Auth] hapusAvatar error:', err);
+    return sendError(res, 500, 'Gagal menghapus foto profil.');
+  }
+}
+
 // ─── Google OAuth 2.0 ────────────────────────────────────────────────────────
 const GOOGLE_CLIENT_ID     = () => process.env.GOOGLE_CLIENT_ID || '';
 const GOOGLE_CLIENT_SECRET = () => process.env.GOOGLE_CLIENT_SECRET || '';
@@ -1016,6 +1093,7 @@ async function resetPassword(req, res) {
 
 module.exports = {
   register, login, logout, me, gantiPassword, simpanPhone, simpanEmail,
+  uploadAvatar, hapusAvatar,
   verifyEmail, resendVerification, getVerifyInfo, verifyConfirm, getPendingInfo,
   forgotPassword, resetPassword,
   googleRedirect, googleCallback,

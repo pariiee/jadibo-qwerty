@@ -75,6 +75,34 @@
 
       <!-- Bento Form Section -->
       <div class="profil-forms-grid">
+        <!-- Card 0: Foto Profil -->
+        <section class="profil-form-card pf-span-2">
+          <div class="pf-card-header">
+            <div class="pf-ic-box" style="background:#D8FF7A">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#151515" stroke-width="2.2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            </div>
+            <div>
+              <h3>Foto Profil (Avatar)</h3>
+              <p>Foto ini akan tampil di sudut navbar dan navigasi dashboard.</p>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-top:10px;">
+            <div id="pf-avatar-box" style="width:72px;height:72px;border-radius:50%;border:2.5px solid #151515;box-shadow:3px 3px 0 #151515;background:#7C3AED;color:#FFF;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;overflow:hidden;flex-shrink:0;">
+              <span id="pf-avatar-initial">?</span>
+            </div>
+            <div style="flex:1;min-width:200px;">
+              <input type="file" id="avatar-input" accept="image/jpeg,image/png,image/webp" style="display:none;" />
+              <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
+                <button type="button" class="pf-btn-submit" id="btn-pilih-avatar" style="height:36px;padding:0 16px;border-radius:10px;">Pilih Foto</button>
+                <button type="button" class="btn btn-outline" id="btn-hapus-avatar" style="height:36px;padding:0 14px;border-radius:10px;display:none;color:#B42318;border-color:#151515;">Hapus</button>
+              </div>
+              <div style="font-size:12px;font-weight:600;color:var(--mute);">Maksimal <b>500 KB</b> (JPG, PNG, atau WebP).</div>
+            </div>
+          </div>
+          <div class="err pf-err" id="avatar-error" style="margin-top:10px;"></div>
+          <div class="ok pf-ok" id="avatar-ok" style="margin-top:10px;"></div>
+        </section>
+
         <!-- Card 1: Nomor HP -->
         <section class="profil-form-card">
           <div class="pf-card-header">

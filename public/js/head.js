@@ -134,13 +134,25 @@ document.addEventListener('DOMContentLoaded', function () {
   fetch('/api/auth/me').then(function (r) { return r.json(); }).then(function (d) {
     if (d && d.ok && d.user) {
       var u = d.user;
-      if (topAv && u.username) topAv.textContent = u.username[0].toUpperCase();
+      if (topAv) {
+        if (u.avatar_url) {
+          topAv.innerHTML = '<img src="' + u.avatar_url + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;" alt="Avatar" />';
+        } else if (u.username) {
+          topAv.textContent = u.username[0].toUpperCase();
+        }
+      }
       var tn = document.getElementById('top-name');
       if (tn && u.username) tn.textContent = 'Hai, ' + u.username + '!';
       var tr = document.getElementById('top-role');
       if (tr) tr.textContent = u.role_label || (u.is_admin ? 'Admin' : (u.slots ? u.slots + ' Slot' : 'Member'));
       var dAv = document.getElementById('drawer-user-av');
-      if (dAv && u.username) dAv.textContent = u.username[0].toUpperCase();
+      if (dAv) {
+        if (u.avatar_url) {
+          dAv.innerHTML = '<img src="' + u.avatar_url + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;" alt="Avatar" />';
+        } else if (u.username) {
+          dAv.textContent = u.username[0].toUpperCase();
+        }
+      }
       var dName = document.getElementById('drawer-user-name');
       if (dName && u.username) dName.textContent = 'Hai, ' + u.username + '!';
       var dRole = document.getElementById('drawer-user-role');
