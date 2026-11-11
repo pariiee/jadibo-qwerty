@@ -2188,7 +2188,8 @@ body.page-panduan .faq-note {
 }
 
 /* ══ Pricing Component Styles ══ */
-body.page-pricing .pricing-bento-content {
+body.page-pricing .pricing-bento-content,
+body.page-profil .pricing-bento-content {
   width: 100% !important;
   max-width: 1360px !important;
   margin: 0 auto !important;
@@ -2197,31 +2198,39 @@ body.page-pricing .pricing-bento-content {
   gap: 16px !important;
 }
 
-body.page-pricing .pricing-hero-banner {
+body.page-pricing .pricing-hero-banner,
+body.page-profil .pricing-hero-banner {
   display: flex !important; align-items: center !important; justify-content: space-between !important;
   flex-wrap: wrap !important; gap: 16px !important; background: #D9D3FF !important;
   border: 2.5px solid #151515 !important; border-radius: 26px !important; padding: 22px 28px !important;
   box-shadow: 4px 4px 0px #151515 !important; color: #151515 !important;
 }
-body.page-pricing .pricing-hero-chip {
+body.page-pricing .pricing-hero-chip,
+body.page-profil .pricing-hero-chip {
   display: inline-block !important; background: #fff !important; color: #151515 !important;
   border: 2px solid #151515 !important; border-radius: 999px !important; font-size: 11.5px !important;
   font-weight: 800 !important; padding: 3px 12px !important; margin-bottom: 8px !important;
 }
-body.page-pricing .pricing-hero-left h2, body.page-pricing h2 {
+body.page-pricing .pricing-hero-left h2, body.page-pricing h2,
+body.page-profil .pricing-hero-left h2, body.page-profil h2 {
   font-size: clamp(24px, 3vw, 32px) !important; font-weight: 800 !important;
   color: #151515 !important; margin: 0 0 6px !important; line-height: 1.15 !important;
 }
-body.page-pricing .pricing-hero-left p {
+body.page-pricing .pricing-hero-left p,
+body.page-profil .pricing-hero-left p {
   font-size: 14px !important; font-weight: 500 !important; color: rgba(21, 21, 21, 0.8) !important; margin: 0 !important;
 }
-body.page-pricing .pricing-hero-stat {
+body.page-pricing .pricing-hero-stat,
+body.page-profil .pricing-hero-stat {
   display: flex !important; flex-direction: column !important; align-items: flex-end !important;
   background: #fff !important; border: 2px solid #151515 !important; border-radius: 18px !important;
   padding: 10px 18px !important; box-shadow: 2px 2px 0px #151515 !important; gap: 4px !important;
 }
-body.page-pricing .pricing-stat-lbl { font-size: 11px !important; font-weight: 700 !important; color: #5E5C70 !important; text-transform: uppercase !important; }
+body.page-pricing .pricing-stat-lbl,
+body.page-profil .pricing-stat-lbl { font-size: 11px !important; font-weight: 700 !important; color: #5E5C70 !important; text-transform: uppercase !important; }
 body.page-pricing .pricing-stat-badge-row { display: flex !important; align-items: center !important; gap: 8px !important; }
+body.page-pricing .pricing-stat-val,
+body.page-profil .pricing-stat-val { font-size: 18px !important; font-weight: 800 !important; color: #151515 !important; }
 body.page-pricing .pricing-stat-val { font-size: 18px !important; font-weight: 800 !important; color: #151515 !important; }
 body.page-pricing .pricing-stat-sub { font-size: 12px !important; font-weight: 600 !important; color: #5E5C70 !important; }
 body.page-pricing .pricing-btn-trial-hero {
