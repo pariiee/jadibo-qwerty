@@ -36,27 +36,15 @@
   }
 
   function renderStatus() {
-    document.getElementById('plan-badge').textContent = me.plan_name ? me.plan_name : (me.slots ? me.slots + ' Slot' : 'Belum Ada Slot');
-    document.getElementById('plan-until').textContent =
-      me.plan_aktif ? 'aktif sampai ' + tanggal(me.plan_expired_at) : 'tanpa masa aktif';
+    const elBadge = document.getElementById('plan-badge');
+    if (elBadge) elBadge.textContent = me.plan_name ? me.plan_name : (me.slots ? me.slots + ' Slot' : 'Belum Ada Slot');
+    const elUntil = document.getElementById('plan-until');
+    if (elUntil) elUntil.textContent = me.plan_aktif ? 'aktif sampai ' + tanggal(me.plan_expired_at) : 'tanpa masa aktif';
 
-    // Trial cuma bisa diklaim sekali seumur akun — kalau sudah dipakai,
-    // tombolnya hilang dan tinggal penjelasan singkat.
     const btn = document.getElementById('btn-trial');
     const note = document.getElementById('trial-note');
-    if (!me.trial_used_at) {
-      btn.style.display = '';
-      note.style.display = '';
-      note.textContent = 'Akun ini belum pernah pakai Trial. Dapat ' + (me.trial_hari || 5) +
-        ' hari gratis — cuma sekali seumur akun.';
-    } else if (me.plan_id === 'trial' && me.plan_aktif) {
-      btn.style.display = 'none';
-      note.style.display = '';
-      note.textContent = 'Trial kamu sedang berjalan sampai ' + tanggal(me.plan_expired_at) + '.';
-    } else {
-      btn.style.display = 'none';
-      note.style.display = 'none';
-    }
+    if (btn) btn.style.display = 'none';
+    if (note) note.style.display = 'none';
   }
 
   async function loadPaket() {
