@@ -169,7 +169,7 @@ app.use('/js', async (req, res, next) => {
         const cacheKey = `${req.path}:${stat.mtimeMs}`;
         if (jsCache.has(cacheKey)) {
           res.set('Content-Type', 'application/javascript; charset=utf-8');
-          res.set('Cache-Control', 'public, max-age=86400, must-revalidate');
+          res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
           return res.send(jsCache.get(cacheKey));
         }
 
@@ -187,7 +187,7 @@ app.use('/js', async (req, res, next) => {
 
         jsCache.set(cacheKey, minified);
         res.set('Content-Type', 'application/javascript; charset=utf-8');
-        res.set('Cache-Control', 'public, max-age=86400, must-revalidate');
+        res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
         return res.send(minified);
       } catch {
         return next();

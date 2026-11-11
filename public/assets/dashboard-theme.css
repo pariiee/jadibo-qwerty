@@ -923,7 +923,11 @@ html.is-kawula #drw-pricing,
 .is-staff a[href="/kountole/users"],
 .is-staff a[href="/kountole/orders"],
 .is-staff a[href="/kountole/saldo"],
-.is-staff a[href="/kountole/harga"] {
+.is-staff a[href="/kountole/harga"],
+#pop-staff-bot,
+#pop-admin-portal,
+.pop-menu a[href="/kountole/bots"],
+.pop-menu a[href="/kountole/users"] {
   display: none !important;
 }
 
