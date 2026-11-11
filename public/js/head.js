@@ -151,6 +151,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (u.is_admin) {
         localStorage.setItem('yb-is-admin', '1');
         document.documentElement.classList.add('is-admin');
+        document.body.classList.add('is-admin');
         if (!u.is_superadmin) {
           document.documentElement.classList.add('is-staff');
           document.body.classList.add('is-staff');
@@ -173,6 +174,13 @@ document.addEventListener('DOMContentLoaded', function () {
           var elStaffBot = document.getElementById('pop-staff-bot');
           if (elStaffBot) elStaffBot.remove();
         }
+
+        // Hapus link retail dari mobile drawer untuk admin/staff
+        ['/billing', '/saldo', '/pricing'].forEach(function (href) {
+          document.querySelectorAll('.mobile-drawer a[href="' + href + '"], #drw-billing, #drw-saldo, #drw-pricing').forEach(function (el) {
+            el.remove();
+          });
+        });
 
         ['nav-saldo', 'nav-pricing', 'nav-billing', 'drw-saldo', 'drw-pricing', 'drw-billing'].forEach(function (id) {
           var el = document.getElementById(id);
