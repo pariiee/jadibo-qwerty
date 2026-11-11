@@ -202,9 +202,10 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       } else {
         localStorage.removeItem('yb-is-admin');
-        document.documentElement.classList.remove('is-admin');
+        document.documentElement.classList.remove('is-admin', 'is-staff');
+        if (document.body) document.body.classList.remove('is-admin', 'is-staff');
         var elNav = document.getElementById('nav-admin');
-        if (elNav) elNav.style.display = 'none';
+        if (elNav) elNav.remove();
 
         var pProfil = document.querySelector('.pop-menu a[href="/profil"]');
         if (pProfil && !document.getElementById('pop-billing')) {

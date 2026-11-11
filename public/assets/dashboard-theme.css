@@ -1152,7 +1152,10 @@ html body.page-dashboard .user-popover .pop-menu { display: flex; flex-direction
 html body.page-dashboard .user-popover .pop-item { display: flex !important; align-items: center !important; gap: 10px !important; padding: 10px 12px !important; border: 0 !important; border-radius: 12px !important; background: transparent !important; color: #151515 !important; font: 700 14px/1 inherit !important; text-decoration: none !important; cursor: pointer; width: 100%; text-align: left; }
 html body.page-dashboard .user-popover .pop-item:hover { background: #F1EFFF !important; }
 html body.page-dashboard .user-popover .pop-logout { color: #B42318 !important; }
-html body.page-dashboard .cx-nav-dropdown { position: relative !important; display: inline-flex !important; }
+html body.page-dashboard .cx-nav-dropdown { position: relative !important; }
+html body:not(.is-admin) #nav-admin,
+html body:not(.is-admin) .cx-nav-dropdown#nav-admin { display: none !important; }
+html body.is-admin #nav-admin { display: inline-flex !important; }
 html body.page-dashboard .cx-dropdown-menu {
   display: none !important;
   position: absolute !important;
