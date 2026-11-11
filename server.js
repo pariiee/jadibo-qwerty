@@ -701,22 +701,66 @@ cronAman.schedule('0 17 * * *', async () => {
 }, { timezone: 'Asia/Jakarta' });
 
 cronAman.schedule('0 3 * * *', async () => {
+  // 1. Pangkas bot_logs (sisakan maks 150 baris terbaru per bot & hapus yang > 7 hari)
   try {
     const [bots] = await pool.execute('SELECT id FROM bots');
     let total = 0;
     for (const b of bots) {
       const [res] = await pool.execute(
         `DELETE FROM bot_logs WHERE bot_id = ?
-           AND id NOT IN (SELECT id FROM (
-                 SELECT id FROM bot_logs WHERE bot_id = ? ORDER BY id DESC LIMIT 500
-               ) t)`,
+           AND (created_at < DATE_SUB(NOW(), INTERVAL 7 DAY)
+                OR id NOT IN (SELECT id FROM (
+                     SELECT id FROM bot_logs WHERE bot_id = ? ORDER BY id DESC LIMIT 150
+                   ) t))`,
         [b.id, b.id]
       );
       total += res.affectedRows;
     }
-    if (total) console.log(`[Cron] Pangkas bot_logs: ${total} baris dibuang (sisakan 500/bot)`);
+    if (total) console.log(`[Cron] Pangkas bot_logs: ${total} baris dibuang (sisakan maks 150/bot)`);
   } catch (e) {
     console.error('[Cron] Pangkas log error:', e.message);
+  }
+
+  // 2. Bersihkan file sampah media temp (> 1 jam)
+  try {
+    const tmpDirs = [path.join(__dirname, 'tmp'), path.join(__dirname, 'temp'), path.join(__dirname, 'data', 'temp')];
+    let cleanedFiles = 0;
+    for (const dir of tmpDirs) {
+      if (!fs.existsSync(dir)) continue;
+      for (const f of fs.readdirSync(dir)) {
+        try {
+          const p = path.join(dir, f);
+          const stat = fs.statSync(p);
+          if (stat.isFile() && Date.now() - stat.mtimeMs > 3600_000) {
+            fs.unlinkSync(p);
+            cleanedFiles++;
+          }
+        } catch {}
+      }
+    }
+    if (cleanedFiles) console.log(`[Cron] Bersihkan temp: ${cleanedFiles} file sampah dibuang`);
+  } catch (e) {
+    console.error('[Cron] Bersihkan temp error:', e.message);
+  }
+
+  // 3. Ciutkan ukuran SQLite session.db (VACUUM)
+  try {
+    const Database = require('better-sqlite3');
+    const SESSIONS_DIR = path.join(__dirname, 'sessions');
+    if (fs.existsSync(SESSIONS_DIR)) {
+      for (const d of fs.readdirSync(SESSIONS_DIR)) {
+        const dbFile = path.join(SESSIONS_DIR, d, 'session.db');
+        if (fs.existsSync(dbFile)) {
+          try {
+            const db = new Database(dbFile);
+            db.exec('VACUUM;');
+            db.close();
+          } catch {}
+        }
+      }
+    }
+  } catch (e) {
+    console.error('[Cron] Vacuum sqlite error:', e.message);
   }
 }, { timezone: 'Asia/Jakarta' });
 
