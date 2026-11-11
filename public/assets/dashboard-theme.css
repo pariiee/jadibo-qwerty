@@ -2913,14 +2913,6 @@ body.page-profil .pf-ok {
   body.page-profil .profil-hero-stat { display: none !important; }
 }
 
-/* ══ Fix Full-Width Profil Page ══ */
-html body.page-dashboard.page-profil .content,
-body.page-profil .content {
-  display: block !important;
-  width: 100% !important;
-  max-width: none !important;
-}
-
 /* ══ Saldo / Wallet Component Styles ══ */
 body.page-saldo .saldo-bento-content {
   width: 100% !important;
@@ -3290,26 +3282,6 @@ html body.page-profil .pf-btn-submit:hover {
   html body.page-profil .profil-forms-grid {
     grid-template-columns: 1fr !important;
   }
-}
-
-/* ── Profil: paksa semua bagian selebar kontainer ── */
-html body.page-dashboard.page-profil .content.profil-bento-content {
-  align-items: stretch !important;
-  justify-content: flex-start !important;
-  width: 100% !important;
-  max-width: none !important;
-  margin: 0 !important;
-}
-html body.page-profil .profil-bento-content > * {
-  align-self: stretch !important;
-  width: 100% !important;
-  max-width: none !important;
-  box-sizing: border-box !important;
-}
-html body.page-profil .profil-stats-grid,
-html body.page-profil .profil-forms-grid {
-  width: 100% !important;
-  max-width: none !important;
 }
 
 /* ══ Kuota Component Styles ══ */
