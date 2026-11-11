@@ -896,22 +896,34 @@ body.is-kawula .bt-add,
 body.is-kawula #drw-command,
 body.is-kawula #drw-log,
 body.is-kawula #drw-panduan,
-body.is-admin #drw-billing,
-body.is-admin #drw-saldo,
-body.is-admin #drw-pricing,
-body.is-staff #drw-billing,
-body.is-staff #drw-saldo,
-body.is-staff #drw-pricing,
-body.is-kawula #drw-billing,
-body.is-kawula #drw-saldo,
-body.is-kawula #drw-pricing {
+html.is-admin #drw-billing,
+html.is-admin #drw-saldo,
+html.is-admin #drw-pricing,
+html.is-staff #drw-billing,
+html.is-staff #drw-saldo,
+html.is-staff #drw-pricing,
+html.is-kawula #drw-billing,
+html.is-kawula #drw-saldo,
+html.is-kawula #drw-pricing,
+.is-admin .retail-only,
+.is-staff .retail-only,
+.is-kawula .retail-only,
+.is-admin #drw-billing,
+.is-admin #drw-saldo,
+.is-admin #drw-pricing,
+.is-staff #drw-billing,
+.is-staff #drw-saldo,
+.is-staff #drw-pricing,
+.is-kawula #drw-billing,
+.is-kawula #drw-saldo,
+.is-kawula #drw-pricing {
   display: none !important;
 }
 
-body.is-staff a[href="/kountole/users"],
-body.is-staff a[href="/kountole/orders"],
-body.is-staff a[href="/kountole/saldo"],
-body.is-staff a[href="/kountole/harga"] {
+.is-staff a[href="/kountole/users"],
+.is-staff a[href="/kountole/orders"],
+.is-staff a[href="/kountole/saldo"],
+.is-staff a[href="/kountole/harga"] {
   display: none !important;
 }
 

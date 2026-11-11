@@ -151,10 +151,10 @@ document.addEventListener('DOMContentLoaded', function () {
       if (u.is_admin) {
         localStorage.setItem('yb-is-admin', '1');
         document.documentElement.classList.add('is-admin');
-        document.body.classList.add('is-admin');
+        if (document.body) document.body.classList.add('is-admin');
         if (!u.is_superadmin) {
           document.documentElement.classList.add('is-staff');
-          document.body.classList.add('is-staff');
+          if (document.body) document.body.classList.add('is-staff');
           var superOnly = ['/kountole/users', '/kountole/orders', '/kountole/saldo', '/kountole/harga'];
           superOnly.forEach(function (href) {
             document.querySelectorAll('a[href="' + href + '"]').forEach(function (el) { el.remove(); });
@@ -177,7 +177,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Hapus link retail dari mobile drawer untuk admin/staff
         ['/billing', '/saldo', '/pricing'].forEach(function (href) {
-          document.querySelectorAll('.mobile-drawer a[href="' + href + '"], #drw-billing, #drw-saldo, #drw-pricing').forEach(function (el) {
+          document.querySelectorAll('.mobile-drawer a[href="' + href + '"], #drw-billing, #drw-saldo, #drw-pricing, .retail-only').forEach(function (el) {
             el.remove();
           });
         });
