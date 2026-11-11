@@ -206,8 +206,8 @@
   }
 
   (async () => {
-    await whoami();
-    await loadPaket();
+    try { await whoami(); } catch (e) { console.warn('whoami:', e); }
+    try { await loadPaket(); } catch (e) { console.error('loadPaket:', e); }
   })();
 
   window.klaimTrial = klaimTrial;
