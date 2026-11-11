@@ -15,83 +15,19 @@
     padding-top: 24px !important;
   }
   
-  .health-container {
-    max-width: 1120px;
-    margin: 0 auto;
+  .health-bento-content {
     display: flex;
     flex-direction: column;
     gap: 20px;
-  }
-  
-  /* Hero Banner Rounded Bento */
-  .health-hero {
-    background: #BFD7FF;
-    border: 2px solid #151515;
-    border-radius: 16px;
-    box-shadow: 4px 4px 0 #151515;
-    padding: 24px 28px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 20px;
-    flex-wrap: wrap;
-  }
-  .health-hero-left h1 {
-    font-size: 26px;
-    font-weight: 800;
-    letter-spacing: -0.5px;
-    margin-bottom: 6px;
-    color: #151515;
-  }
-  .health-hero-left p {
-    font-size: 13px;
-    color: #2D3748;
-    max-width: 620px;
-    line-height: 1.5;
-    font-weight: 600;
-  }
-  .health-hero-badge {
-    display: inline-block;
-    background: #151515;
-    color: #FFFFFF;
-    font-size: 11px;
-    font-weight: 800;
-    padding: 3px 10px;
-    border-radius: 999px;
-    margin-bottom: 8px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-  .health-hero-right {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .btn-portal-act {
-    background: #FFFFFF;
-    color: #151515;
-    border: 2px solid #151515;
-    border-radius: 12px;
-    box-shadow: 3px 3px 0 #151515;
-    padding: 10px 22px;
-    font-weight: 800;
-    font-size: 13px;
-    text-decoration: none;
-    transition: all 0.15s;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .btn-portal-act:hover {
-    transform: translate(-1px, -1px);
-    box-shadow: 4px 4px 0 #151515;
+    width: 100%;
   }
 
-  /* Bento Layout 2 Kolom */
+  /* Bento Layout 2 Kolom Lebar Penuh */
   .health-bento-grid {
     display: grid;
     grid-template-columns: 1.4fr 1fr;
     gap: 20px;
+    width: 100%;
   }
   @media (max-width: 900px) {
     .health-bento-grid { grid-template-columns: 1fr; }
@@ -100,8 +36,8 @@
   /* Kartu Kiri: Telemetri Rounded */
   .telemetry-card {
     background: #FFFFFF;
-    border: 2px solid #151515;
-    border-radius: 16px;
+    border: 2.5px solid #151515;
+    border-radius: 24px;
     box-shadow: 4px 4px 0 #151515;
     padding: 24px;
     display: flex;
@@ -112,7 +48,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1.5px dashed #E2E8F0;
+    border-bottom: 2px dashed #E2E8F0;
     padding-bottom: 14px;
   }
   .telemetry-tag {
@@ -140,8 +76,8 @@
   /* Sparkline Chart Rounded */
   .spark-box {
     background: #F8FAFC;
-    border: 1.5px solid #E2E8F0;
-    border-radius: 14px;
+    border: 2px solid #151515;
+    border-radius: 18px;
     padding: 18px;
     display: flex;
     flex-direction: column;
@@ -184,8 +120,8 @@
   }
   .mini-box {
     background: #F8FAFC;
-    border: 1.5px solid #E2E8F0;
-    border-radius: 14px;
+    border: 2px solid #151515;
+    border-radius: 16px;
     padding: 16px;
     display: flex;
     flex-direction: column;
@@ -222,7 +158,7 @@
     gap: 8px;
     padding: 8px 14px;
     background: #F8FAFC;
-    border: 1.5px solid #E2E8F0;
+    border: 2px solid #151515;
     border-radius: 999px;
     font-size: 12px;
     font-weight: 700;
@@ -239,10 +175,10 @@
   /* Kartu Kanan: Live Terminal Style MacOS (Persis /log) */
   .feed-card {
     background: #151515;
-    border: 2px solid #151515;
-    border-radius: 16px;
+    border: 2.5px solid #151515;
+    border-radius: 24px;
     box-shadow: 4px 4px 0 #151515;
-    padding: 20px;
+    padding: 22px;
     display: flex;
     flex-direction: column;
     gap: 14px;
@@ -313,7 +249,7 @@
   .feed-row {
     background: #1F1F1F;
     border: 1px solid #2B2B2B;
-    border-radius: 8px;
+    border-radius: 10px;
     padding: 8px 12px;
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
@@ -355,104 +291,103 @@
   }
 </style>
 </head>
-<body class="page-dashboard not-logged-in">
+<body class="page-dashboard page-log not-logged-in">
 <div class="app">
   <main>
     <!-- @include topbar.html -->
 
-    <div class="content">
-      <div class="health-container">
-        <!-- Hero Banner Rounded -->
-        <section class="health-hero">
-          <div class="health-hero-left">
-            <span class="health-hero-badge">TELEMETRY & FLEET STATUS</span>
-            <h1>Aktivitas Server</h1>
-            <p>Apa yang sedang dikerjakan armada bot server sekarang — angka asli dari mesin yang sedang beroperasi, bukan ilustrasi.</p>
+    <div class="content health-bento-content">
+      <!-- Hero Banner Log Bento (Lebar Penuh, Persis Halaman /log) -->
+      <section class="log-hero-banner">
+        <div class="log-hero-left">
+          <span class="log-hero-chip">TELEMETRY & FLEET</span>
+          <h2>Aktivitas Server</h2>
+          <p>Catatan real-time performa armada bot server — angka asli dari mesin yang sedang beroperasi, bukan ilustrasi.</p>
+        </div>
+        <div class="log-hero-stat">
+          <span class="log-stat-lbl">Fleet Status</span>
+          <b class="log-stat-val" id="stat-fleet-val" style="color:#10B981">Operational</b>
+        </div>
+      </section>
+
+      <!-- Bento Grid 2 Kolom -->
+      <div class="health-bento-grid">
+        <!-- Sisi Kiri: Metrik -->
+        <div class="telemetry-card">
+          <div class="telemetry-head">
+            <span class="telemetry-tag">
+              <span class="live-dot"></span>
+              AKTIVITAS FLEET 1 · LIVE
+            </span>
+            <span id="health-clock" style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:800;color:#64748B">--:--:--</span>
           </div>
-          <div class="health-hero-right">
-            <a href="/login" id="btn-health-action" class="btn-portal-act">Masuk / Daftar →</a>
-          </div>
-        </section>
 
-        <!-- Bento Grid Rounded -->
-        <div class="health-bento-grid">
-          <!-- Sisi Kiri: Metrik -->
-          <div class="telemetry-card">
-            <div class="telemetry-head">
-              <span class="telemetry-tag">
-                <span class="live-dot"></span>
-                AKTIVITAS FLEET 1 · LIVE
-              </span>
-              <span id="health-clock" style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:800;color:#64748B">--:--:--</span>
-            </div>
-
-            <div class="spark-box">
-              <div class="spark-val-row">
-                <div>
-                  <span class="spark-number" id="spark-num">1.0</span>
-                  <span class="spark-sub">Respon / Detik</span>
-                </div>
-                <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:800;color:#10B981">
-                  PUNCAK 9.9 · NORMAL
-                </div>
+          <div class="spark-box">
+            <div class="spark-val-row">
+              <div>
+                <span class="spark-number" id="spark-num">1.0</span>
+                <span class="spark-sub">Respon / Detik</span>
               </div>
-              <div class="spark-svg-wrap">
-                <svg viewBox="0 0 400 60" preserveAspectRatio="none">
-                  <path id="svg-fill" d="M0,45 L40,40 L80,42 L120,35 L160,30 L200,38 L240,25 L280,32 L320,20 L360,28 L400,15 L400,60 L0,60 Z" fill="#D8FF7A" fill-opacity="0.5"/>
-                  <path id="svg-line" d="M0,45 L40,40 L80,42 L120,35 L160,30 L200,38 L240,25 L280,32 L320,20 L360,28 L400,15" fill="none" stroke="#151515" stroke-width="2.5" stroke-linecap="round"/>
-                </svg>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:800;color:#10B981">
+                PUNCAK 9.9 · NORMAL
               </div>
             </div>
-
-            <div class="mini-stats-grid">
-              <div class="mini-box">
-                <span class="mini-label">Sesi Bot Aktif</span>
-                <span class="mini-val" id="val-bots">0 / 0</span>
-                <span class="mini-desc" id="val-bots-sub">0 bot terdaftar</span>
-              </div>
-              <div class="mini-box">
-                <span class="mini-label">Penggunaan RAM</span>
-                <span class="mini-val" id="val-ram">0%</span>
-                <span class="mini-desc" id="val-ram-sub">0 MB</span>
-              </div>
-              <div class="mini-box">
-                <span class="mini-label">Penyimpanan Disk</span>
-                <span class="mini-val" id="val-disk">0%</span>
-                <span class="mini-desc" id="val-disk-sub">0 GB</span>
-              </div>
-              <div class="mini-box">
-                <span class="mini-label">Uptime Sistem</span>
-                <span class="mini-val" id="val-uptime">0j 0m</span>
-                <span class="mini-desc">Stabil online</span>
-              </div>
-            </div>
-
-            <!-- Service Status Chips (Hanya WhatsApp, Telegram, Discord) -->
-            <div class="services-chip-row">
-              <div class="svc-chip"><span class="dot"></span>WhatsApp (<span id="s-wa">0</span>)</div>
-              <div class="svc-chip"><span class="dot"></span>Telegram (<span id="s-tg">0</span>)</div>
-              <div class="svc-chip"><span class="dot"></span>Discord (<span id="s-dc">0</span>)</div>
+            <div class="spark-svg-wrap">
+              <svg viewBox="0 0 400 60" preserveAspectRatio="none">
+                <path id="svg-fill" d="M0,45 L40,40 L80,42 L120,35 L160,30 L200,38 L240,25 L280,32 L320,20 L360,28 L400,15 L400,60 L0,60 Z" fill="#D8FF7A" fill-opacity="0.5"/>
+                <path id="svg-line" d="M0,45 L40,40 L80,42 L120,35 L160,30 L200,38 L240,25 L280,32 L320,20 L360,28 L400,15" fill="none" stroke="#151515" stroke-width="2.5" stroke-linecap="round"/>
+              </svg>
             </div>
           </div>
 
-          <!-- Sisi Kanan: Live Terminal Style -->
-          <div class="feed-card">
-            <div class="feed-header">
-              <div class="macos-dots">
-                <span class="macos-dot red"></span>
-                <span class="macos-dot yellow"></span>
-                <span class="macos-dot green"></span>
-                <span class="feed-title" style="margin-left:8px">Aktivitas Terbaru</span>
-              </div>
-              <span class="feed-live-pill">
-                <span class="live-dot" style="width:6px;height:6px"></span>
-                Live Feed
-              </span>
+          <div class="mini-stats-grid">
+            <div class="mini-box">
+              <span class="mini-label">Sesi Bot Aktif</span>
+              <span class="mini-val" id="val-bots">0 / 0</span>
+              <span class="mini-desc" id="val-bots-sub">0 bot terdaftar</span>
             </div>
+            <div class="mini-box">
+              <span class="mini-label">Penggunaan RAM</span>
+              <span class="mini-val" id="val-ram">0%</span>
+              <span class="mini-desc" id="val-ram-sub">0 MB</span>
+            </div>
+            <div class="mini-box">
+              <span class="mini-label">Penyimpanan Disk</span>
+              <span class="mini-val" id="val-disk">0%</span>
+              <span class="mini-desc" id="val-disk-sub">0 GB</span>
+            </div>
+            <div class="mini-box">
+              <span class="mini-label">Uptime Sistem</span>
+              <span class="mini-val" id="val-uptime">0j 0m</span>
+              <span class="mini-desc">Stabil online</span>
+            </div>
+          </div>
 
-            <div class="feed-stream-box" id="feed-box">
-              <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#64748B;">Menghubungkan ke telemetri...</div>
+          <!-- Service Status Chips (Hanya WhatsApp, Telegram, Discord) -->
+          <div class="services-chip-row">
+            <div class="svc-chip"><span class="dot"></span>WhatsApp (<span id="s-wa">0</span>)</div>
+            <div class="svc-chip"><span class="dot"></span>Telegram (<span id="s-tg">0</span>)</div>
+            <div class="svc-chip"><span class="dot"></span>Discord (<span id="s-dc">0</span>)</div>
+          </div>
+        </div>
+
+        <!-- Sisi Kanan: Live Terminal Style -->
+        <div class="feed-card">
+          <div class="feed-header">
+            <div class="macos-dots">
+              <span class="macos-dot red"></span>
+              <span class="macos-dot yellow"></span>
+              <span class="macos-dot green"></span>
+              <span class="feed-title" style="margin-left:8px">Live Terminal</span>
             </div>
+            <span class="feed-live-pill">
+              <span class="live-dot" style="width:6px;height:6px"></span>
+              Live Feed
+            </span>
+          </div>
+
+          <div class="feed-stream-box" id="feed-box">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#64748B;">Menghubungkan ke telemetri...</div>
           </div>
         </div>
       </div>
@@ -469,22 +404,12 @@
         if (d && d.ok && d.user) {
           document.body.classList.remove('not-logged-in');
           document.body.classList.add('is-auth');
-          const btn = document.getElementById('btn-health-action');
-          if (btn) {
-            btn.textContent = 'Buka Dashboard →';
-            btn.href = '/dashboard';
-          }
           return;
         }
       }
     } catch {}
     document.body.classList.add('not-logged-in');
     document.body.classList.remove('is-auth');
-    const btn = document.getElementById('btn-health-action');
-    if (btn) {
-      btn.textContent = 'Masuk / Daftar →';
-      btn.href = '/login';
-    }
   }
 
   function tickClock() {
@@ -557,7 +482,7 @@
       box.innerHTML = itemsHtml;
       box.scrollTop = box.scrollHeight;
     } else {
-      box.innerHTML = '<div style="font-family:\'JetBrains Mono\',monospace;font-size:11px;color:#64748B;padding:12px 0;">Menunggu aktivitas pesan live...</div>';
+      box.innerHTML = '<div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#64748B;padding:12px 0;">Menunggu aktivitas pesan live...</div>';
     }
   }
 
