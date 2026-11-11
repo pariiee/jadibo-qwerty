@@ -3221,15 +3221,105 @@ html body.page-dashboard.page-profil .content.profil-bento-content {
 html body.page-profil .profil-stats-grid { gap: var(--pf-gap) !important; margin: 0 !important; }
 html body.page-profil .profil-forms-grid { gap: var(--pf-gap) !important; }
 
-/* Tanpa bayangan keras, garis 2px seperti dashboard */
-html body.page-profil .profil-hero-banner,
-html body.page-profil .profil-hero-stat,
-html body.page-profil .profil-stat-tile,
-html body.page-profil .profil-form-card,
-html body.page-profil .pf-btn-submit { box-shadow: none !important; }
-html body.page-profil .profil-hero-banner,
-html body.page-profil .profil-form-card { border-width: 2px !important; }
-html body.page-profil .pf-btn-submit:hover { transform: translateY(-2px) !important; box-shadow: none !important; }
+/* Samakan shadow Neo-Brutalist profil dengan halaman lain */
+html body.page-profil .profil-hero-banner {
+  border: 2px solid #151515 !important;
+  border-radius: 24px !important;
+  box-shadow: 4px 4px 0 #151515 !important;
+}
+html body.page-profil .profil-hero-stat {
+  border: 2px solid #151515 !important;
+  border-radius: 18px !important;
+  box-shadow: 3px 3px 0 #151515 !important;
+}
+html body.page-profil .profil-stat-tile {
+  border: 2px solid #151515 !important;
+  border-radius: 20px !important;
+  box-shadow: 4px 4px 0 #151515 !important;
+}
+html body.page-profil .profil-form-card {
+  border: 2px solid #151515 !important;
+  border-radius: 20px !important;
+  box-shadow: 4px 4px 0 #151515 !important;
+}
+html body.page-profil .pf-btn-submit {
+  box-shadow: 2.5px 2.5px 0 #151515 !important;
+}
+html body.page-profil .pf-btn-submit:hover {
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 3.5px 3.5px 0 #151515 !important;
+}
+
+/* Avatar Bento Card di dalam Hero Banner */
+body.page-profil .profil-hero-avatar-card {
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+  background: #FFFFFF !important;
+  border: 2px solid #151515 !important;
+  border-radius: 20px !important;
+  padding: 12px 18px !important;
+  box-shadow: 3px 3px 0 #151515 !important;
+}
+body.page-profil #pf-avatar-box {
+  width: 58px !important;
+  height: 58px !important;
+  border-radius: 50% !important;
+  border: 2px solid #151515 !important;
+  box-shadow: 2px 2px 0 #151515 !important;
+  background: #7C3AED !important;
+  color: #FFF !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 24px !important;
+  font-weight: 800 !important;
+  overflow: hidden !important;
+  flex-shrink: 0 !important;
+}
+body.page-profil .pf-avatar-meta {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+}
+body.page-profil .pf-avatar-btns {
+  display: flex !important;
+  gap: 8px !important;
+  align-items: center !important;
+}
+body.page-profil .pf-btn-avatar-pick {
+  height: 32px !important;
+  padding: 0 14px !important;
+  border-radius: 10px !important;
+  background: #151515 !important;
+  color: #FFF !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  border: 1.5px solid #151515 !important;
+  cursor: pointer !important;
+  box-shadow: 1.5px 1.5px 0 #151515 !important;
+  transition: transform .1s, box-shadow .1s !important;
+}
+body.page-profil .pf-btn-avatar-pick:hover {
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 2.5px 2.5px 0 #151515 !important;
+}
+body.page-profil .pf-btn-avatar-del {
+  height: 32px !important;
+  padding: 0 10px !important;
+  border-radius: 10px !important;
+  background: #FFF !important;
+  color: #B42318 !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  border: 1.5px solid #B42318 !important;
+  cursor: pointer !important;
+}
+body.page-profil .pf-avatar-hint {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: #6B7280 !important;
+}
 
 /* ── Profil: paksa semua bagian selebar kontainer ── */
 html body.page-dashboard.page-profil .content.profil-bento-content {
