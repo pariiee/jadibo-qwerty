@@ -319,6 +319,25 @@
             </div>
           </div>
 
+          <div style="font-size:13px;font-weight:700;color:var(--ink);margin:18px 0 8px;text-transform:uppercase;letter-spacing:0.5px;border-top:1px solid var(--edge);padding-top:14px;">Iklan / Promosi Bot Trial</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:14px;">
+            <div class="field" style="margin:0;">
+              <label style="font-size:12px;font-weight:600;color:var(--ink);margin-bottom:6px;display:flex;align-items:center;gap:8px;cursor:pointer;">
+                <input type="checkbox" id="f-trial-ad-aktif" style="width:16px;height:16px;accent-color:#151515;" />
+                <span>Aktifkan Iklan Promosi</span>
+              </label>
+              <div class="hint" style="font-size:11px;color:var(--mute);margin-top:4px;">Bot milik akun Trial akan mengirim pesan iklan ke grup.</div>
+            </div>
+            <div class="field" style="margin:0;">
+              <label for="f-trial-ad-interval" style="font-size:12px;font-weight:600;color:var(--mute);margin-bottom:6px;display:block;">Interval Kirim (Jam Sekali)</label>
+              <input class="inp" id="f-trial-ad-interval" type="number" min="1" max="168" placeholder="6" style="height:38px;" />
+            </div>
+          </div>
+          <div class="field" style="margin:0 0 16px;">
+            <label for="f-trial-ad-pesan" style="font-size:12px;font-weight:600;color:var(--mute);margin-bottom:6px;display:block;">Teks Promosi (Formatting WhatsApp didukung)</label>
+            <textarea class="inp" id="f-trial-ad-pesan" rows="3" placeholder="Contoh: ⚡ Bot ini berjalan menggunakan qwertygate. Dapatkan bot kamu sendiri di https://labs.yapari.web.id" style="padding:10px 12px;resize:vertical;"></textarea>
+          </div>
+
           <div class="err" id="harga-error" style="margin-bottom:12px;"></div>
           <button class="btn btn-dark" data-act="simpanSetelan" style="height:38px;padding:0 22px;border-radius:10px;font-weight:700;">Simpan Setelan</button>
         </div>

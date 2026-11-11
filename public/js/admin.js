@@ -565,6 +565,13 @@
     if (elAdOwner) elAdOwner.value = d.price_per_owner ?? 2500;
     const elAdQuota = document.getElementById('f-addon-quota');
     if (elAdQuota) elAdQuota.value = d.price_per_1k_quota ?? 5000;
+    const ad = d.trial_ad || {};
+    const elAdAktif = document.getElementById('f-trial-ad-aktif');
+    if (elAdAktif) elAdAktif.checked = !!ad.aktif;
+    const elAdInterval = document.getElementById('f-trial-ad-interval');
+    if (elAdInterval) elAdInterval.value = ad.interval_hours ?? 6;
+    const elAdPesan = document.getElementById('f-trial-ad-pesan');
+    if (elAdPesan) elAdPesan.value = ad.pesan || '';
     const p = d.pengumuman || {};
     document.getElementById('f-peng-judul').value = p.judul || '';
     document.getElementById('f-peng-isi').value = p.isi || '';
@@ -672,7 +679,12 @@
       trial_owner_max: Number(document.getElementById('f-trial-owner')?.value || 1),
       trial_receive_limit: Number(document.getElementById('f-trial-quota')?.value || 5000),
       price_per_owner: Number(document.getElementById('f-addon-owner')?.value || 2500),
-      price_per_1k_quota: Number(document.getElementById('f-addon-quota')?.value || 5000)
+      price_per_1k_quota: Number(document.getElementById('f-addon-quota')?.value || 5000),
+      trial_ad: {
+        aktif: document.getElementById('f-trial-ad-aktif')?.checked || false,
+        interval_hours: Math.max(1, Number(document.getElementById('f-trial-ad-interval')?.value || 6)),
+        pesan: document.getElementById('f-trial-ad-pesan')?.value.trim() || ''
+      }
     };
     const d = await api('/api/admin/billing/settings', { method: 'PUT', body: JSON.stringify(body) });
     if (!d?.ok) { err.textContent = d?.message || 'Gagal menyimpan setelan'; return; }

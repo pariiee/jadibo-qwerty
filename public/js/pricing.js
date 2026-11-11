@@ -65,20 +65,20 @@
     // Card 1: Free Trial (hanya jika belum pernah klaim)
     const trialUsed = Boolean(me && me.trial_used_at);
     if (!trialUsed) {
-      const trialData = d.trial || { days: 3, slots: 1, owner_max: 1, receive_limit: 5000 };
+      const trialData = d.trial || { days: 7, slots: 1, owner_max: 1, receive_limit: 5000 };
       const kTrial = fnDaftar({
         name: 'Free Trial',
         slots: trialData.slots || 1,
         receive_limit: trialData.receive_limit || 5000,
         owner_max: trialData.owner_max || 1,
-        days: trialData.days || 3,
+        days: trialData.days || 7,
       }, jumlahFitur);
 
       cards.push(
         '<div class="plan-card">' +
         '<div class="pc-head"><span class="pc-name">Free Trial</span>' +
         '<span class="pc-tag" style="background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.3)">Gratis</span></div>' +
-        '<div class="pc-price">Rp 0<small> / ' + (trialData.days || 3) + ' hari</small></div>' +
+        '<div class="pc-price">Rp 0<small> / ' + (trialData.days || 7) + ' hari</small></div>' +
         '<ul class="pc-list">' + kTrial.baris.map((t) => '<li>' + t + '</li>').join('') + '</ul>' +
         '<div class="muted small">' + kTrial.extra + '</div>' +
         '<button class="btn btn-dark" data-act="klaimTrial">Klaim Trial Gratis</button>' +

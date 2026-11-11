@@ -653,10 +653,11 @@ async function adminSettings(req, res) {
   return res.json({
     ok: true,
     plans: s.plans,
-    trial_days: s.trial_days || 5,
+    trial_days: s.trial_days || 7,
     trial_slots: s.trial_slots || 1,
     trial_owner_max: s.trial_owner_max || 1,
     trial_receive_limit: s.trial_receive_limit || 5000,
+    trial_ad: s.trial_ad || { aktif: false, interval_hours: 6, pesan: '' },
     price_per_owner: s.price_per_owner || 2500,
     price_per_1k_quota: s.price_per_1k_quota || 5000,
     qris_static_url: s.qris_static_url,
@@ -725,6 +726,7 @@ async function adminSetSettings(req, res) {
     const {
       qris_static_url, pay_mode, gateway_enabled,
       trial_days, trial_slots, trial_owner_max, trial_receive_limit,
+      trial_ad,
       price_per_owner, price_per_1k_quota,
       pengumuman
     } = req.body || {};
@@ -754,6 +756,16 @@ async function adminSetSettings(req, res) {
     }
     if (trial_receive_limit !== undefined) {
       await pricingStore.set('trial_receive_limit', Math.max(100, parseInt(trial_receive_limit, 10) || 5000));
+    }
+    if (trial_ad !== undefined) {
+      const ad = trial_ad || {};
+      const pesan = String(ad.pesan || '').trim();
+      const interval_hours = Math.max(1, Math.min(168, parseInt(ad.interval_hours, 10) || 6));
+      await pricingStore.set('trial_ad', {
+        aktif: !!ad.aktif && !!pesan,
+        interval_hours,
+        pesan: pesan.slice(0, 1000)
+      });
     }
     if (price_per_owner !== undefined) {
       await pricingStore.set('price_per_owner', Math.max(0, parseInt(price_per_owner, 10) || 0));

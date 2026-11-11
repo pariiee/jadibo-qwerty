@@ -29,7 +29,7 @@ const { ADMIN_ROLE, SUBADMIN_ROLE } = require('./roles');
 // Trial juga dapat jatah fitur — kalau cuma perintah inti, orang nggak akan
 // tahu botnya bisa apa dan nggak ada alasan lanjut bayar.
 const TRIAL = {
-  id: 'trial', name: 'Trial', days: 3, slots: 1, daily_limit: 20, once: true,
+  id: 'trial', name: 'Trial', days: 7, slots: 1, daily_limit: 20, once: true,
   owner_max: 1, receive_limit: 5000,
 };
 

@@ -106,6 +106,7 @@ CREATE TABLE IF NOT EXISTS bots (
   stop_reason    VARCHAR(32) DEFAULT NULL,
   sqlite_db_path VARCHAR(500) DEFAULT NULL,
   is_running     TINYINT(1) NOT NULL DEFAULT 0,
+  last_ad_sent_at DATETIME DEFAULT NULL,
   status         ENUM('connected', 'disconnected', 'connecting', 'qr_pending') NOT NULL DEFAULT 'disconnected',
   telegram_token VARCHAR(255) DEFAULT NULL,
   created_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

@@ -71,6 +71,7 @@ const TABLES = {
     ['stop_reason',    "VARCHAR(32) DEFAULT NULL"],
     ['discord_token',  "TEXT DEFAULT NULL"],
     ['platform',       "VARCHAR(32) NOT NULL DEFAULT 'whatsapp'"],
+    ['last_ad_sent_at',"DATETIME DEFAULT NULL"],
   ],
   admin_log: [
     ['user_id',    "INT UNSIGNED DEFAULT NULL"],

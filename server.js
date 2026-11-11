@@ -773,6 +773,13 @@ cronAman.schedule('* * * * *', async () => {
     console.error('[Cron] Health check error:', e.message);
   }
 
+  // Broadcast iklan berkala bot trial (jika aktif)
+  try {
+    require('./engine/trialAd').broadcastIklanTrial().catch(() => {});
+  } catch (e) {
+    console.error('[Cron] Trial ad error:', e.message);
+  }
+
   try {
     const [rows] = await pool.execute(
       `SELECT gs.bot_id, gs.group_jid, gs.open_time, gs.close_time
