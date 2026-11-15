@@ -1,3 +1,8 @@
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.register('/sw.js').catch(function() {});
+    });
+  }
 if (window.__HEAD_JS_LOADED__) {
 } else {
   window.__HEAD_JS_LOADED__ = true;

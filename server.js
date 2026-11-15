@@ -75,11 +75,10 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc:    ["'self'"],
-      scriptSrc:     ["'self'", "'unsafe-inline'", 'cdn.tailwindcss.com', 'cdn.jsdelivr.net'],
-      // 'none', bukan dihapus: script-src-attr jatuh balik ke script-src kalau
-      // tidak di-set eksplisit, jadi menghapus baris ini tetap mewarisi
-      // 'unsafe-inline' dari scriptSrc di atas dan onclick="" tetap jalan.
+      scriptSrc:     ["'self'", 'cdn.tailwindcss.com', 'cdn.jsdelivr.net'],
+      // Block inline event handlers independently of script-src.
       scriptSrcAttr: ["'none'"],
+      // Inline CSS remains necessary for existing styles and generated UI styles.
       styleSrc:      ["'self'", "'unsafe-inline'", 'cdn.tailwindcss.com', 'fonts.googleapis.com'],
       fontSrc:       ["'self'", 'fonts.gstatic.com'],
       imgSrc:        ["'self'", 'data:', 'https:'],
@@ -119,19 +118,19 @@ const ERROR_MAP = {
   403: { t: 'Akses Ditolak', d: 'Kamu tidak memiliki izin untuk mengakses halaman atau fitur ini.', p: '/login', pl: 'Masuk Akun Lain' },
   404: { t: 'Halaman Tidak Ditemukan', d: 'Alamat URL yang kamu tuju salah ketik, sudah dihapus, atau tidak tersedia.' },
   405: { t: 'Method Not Allowed', d: 'Metode pengiriman data yang digunakan dilarang untuk halaman ini.' },
-  408: { t: 'Request Timeout', d: 'Server memutus koneksi karena proses memakan waktu terlalu lama.', p: 'javascript:location.reload()', pl: 'Coba Lagi' },
+  408: { t: 'Request Timeout', d: 'Server memutus koneksi karena proses memakan waktu terlalu lama.', p: '#', action: 'muatUlang', pl: 'Coba Lagi' },
   409: { t: 'Conflict', d: 'Permintaan bertabrakan dengan kondisi akun atau sistem saat ini.' },
   410: { t: 'Gone', d: 'Halaman atau data ini sudah dihapus permanen dan tidak akan kembali.' },
   413: { t: 'Payload Too Large', d: 'Ukuran file atau data yang diunggah melebihi batas maksimal server.' },
   415: { t: 'Unsupported Media Type', d: 'Format atau tipe berkas yang dikirim tidak didukung oleh sistem.' },
   422: { t: 'Unprocessable Entity', d: 'Format data benar namun isi data tidak memenuhi syarat sistem.' },
-  429: { t: 'Too Many Requests', d: 'Terlalu banyak permintaan dalam waktu singkat. Tunggu beberapa saat lagi.', p: 'javascript:location.reload()', pl: 'Refresh Halaman' },
+  429: { t: 'Too Many Requests', d: 'Terlalu banyak permintaan dalam waktu singkat. Tunggu beberapa saat lagi.', p: '#', action: 'muatUlang', pl: 'Refresh Halaman' },
   451: { t: 'Unavailable For Legal Reasons', d: 'Akses ke konten ini dibatasi karena regulasi hukum atau sensor.' },
-  500: { t: 'Terjadi Gangguan Server', d: 'Server kami sedang mengalami kendala internal sementara.', p: 'javascript:location.reload()', pl: 'Muat Ulang' },
+  500: { t: 'Terjadi Gangguan Server', d: 'Server kami sedang mengalami kendala internal sementara.', p: '#', action: 'muatUlang', pl: 'Muat Ulang' },
   501: { t: 'Not Implemented', d: 'Fitur atau metode ini belum didukung atau belum dibuat di server.' },
-  502: { t: 'Bad Gateway', d: 'Gateway menerima respons tidak valid dari layanan server di belakangnya.', p: 'javascript:location.reload()', pl: 'Muat Ulang' },
-  503: { t: 'Sedang Dalam Pemeliharaan', d: 'Sistem sedang dalam proses pemeliharaan atau kapasitas penuh.', p: 'javascript:location.reload()', pl: 'Cek Status' },
-  504: { t: 'Gateway Timeout', d: 'Gateway kehabisan waktu menunggu respons dari server utama.', p: 'javascript:location.reload()', pl: 'Muat Ulang' },
+  502: { t: 'Bad Gateway', d: 'Gateway menerima respons tidak valid dari layanan server di belakangnya.', p: '#', action: 'muatUlang', pl: 'Muat Ulang' },
+  503: { t: 'Sedang Dalam Pemeliharaan', d: 'Sistem sedang dalam proses pemeliharaan atau kapasitas penuh.', p: '#', action: 'muatUlang', pl: 'Cek Status' },
+  504: { t: 'Gateway Timeout', d: 'Gateway kehabisan waktu menunggu respons dari server utama.', p: '#', action: 'muatUlang', pl: 'Muat Ulang' },
   505: { t: 'HTTP Version Not Supported', d: 'Versi protokol HTTP browser Anda tidak didukung oleh server.' },
 };
 
@@ -145,6 +144,7 @@ const halamanError = (kode = 500, customMsg = null) => (_, res) => {
       .replace(/\{\{TITLE\}\}/g, info.t)
       .replace(/\{\{MESSAGE\}\}/g, customMsg || info.d)
       .replace(/\{\{PRIMARY_HREF\}\}/g, info.p || '/dashboard')
+      .replace(/\{\{PRIMARY_ACTION\}\}/g, info.action || '')
       .replace(/\{\{PRIMARY_LABEL\}\}/g, info.pl || 'Ke Dashboard');
     res.status(c).type('html').send(raw);
   } catch {

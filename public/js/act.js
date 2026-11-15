@@ -112,3 +112,5 @@ window.daftarPaket = function (p, fitur) {
     extra: 'Custom Bot (Nama & Prefix)',
   };
 };
+
+window.muatUlang = function () { location.reload(); };

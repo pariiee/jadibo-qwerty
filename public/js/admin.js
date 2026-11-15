@@ -134,9 +134,8 @@
   window.addEventListener('scroll', tutupAksiMenu, { passive: true });
   window.addEventListener('resize', tutupAksiMenu, { passive: true });
 
-  function bukaMenuAksi(e, items) {
+  function bukaMenuAksi(e, btn, items) {
     e.stopPropagation();
-    const btn = e.currentTarget;
     if (btn.classList.contains('active')) {
       tutupAksiMenu();
       return;
@@ -174,9 +173,9 @@
     });
   }
 
-  window.menuUser = function (e, id, username, isActive) {
+  window.menuUser = function (id, username, isActive, el, e) {
     const uName = esc(username);
-    bukaMenuAksi(e, [
+    bukaMenuAksi(e, el, [
       { label: 'Edit Akun', act: `bukaUser(${id})`, icon: '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>' },
       { label: 'Atur Saldo', act: `bukaSaldo(${id}, '${uName}')`, icon: '<rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>' },
       { label: isActive ? 'Matikan Akun' : 'Aktifkan Akun', act: `toggleAktif(${id}, ${isActive ? 0 : 1})`, icon: '<path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/>' },
@@ -185,8 +184,8 @@
     ]);
   };
 
-  window.menuBot = function (e, id, slug) {
-    bukaMenuAksi(e, [
+  window.menuBot = function (id, slug, el, e) {
+    bukaMenuAksi(e, el, [
       { label: 'Kontrol & Pairing', href: '/config/' + slug, icon: '<line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>' },
       { label: 'Statistik Bot', href: '/bot/' + slug, icon: '<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>' },
       { label: 'Lihat Log', act: `bukaLog(${id})`, icon: '<polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/>' },
@@ -276,7 +275,7 @@
         '<td><code style="background:rgba(18,20,43,.06);padding:3px 7px;border-radius:6px;font-weight:700">' + esc(b.prefix || '.') + '</code></td>' +
         '<td>' + (b.cmd_count ?? 0) + '</td>' +
         '<td class="aksi">' +
-          '<button type="button" class="btn-more" onclick="menuBot(event, ' + b.id + ', \'' + botHref(b) + '\')" title="Pilihan aksi">' +
+          '<button type="button" class="btn-more" data-act="menuBot(' + b.id + ', \'' + botHref(b) + '\')" title="Pilihan aksi">' +
             '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2.2"/><circle cx="12" cy="12" r="2.2"/><circle cx="12" cy="19" r="2.2"/></svg>' +
           '</button>' +
         '</td>';
@@ -386,7 +385,7 @@
         '<td>' + (u.bot_count ?? u.slots_used ?? 0) + '</td>' +
         '<td>' + (u.is_active ? '<span class="dot on"></span> Aktif' : '<span class="dot off"></span> Nonaktif') + '</td>' +
         '<td class="aksi">' +
-          '<button type="button" class="btn-more" onclick="menuUser(event, ' + u.id + ', \'' + esc(u.username) + '\', ' + (u.is_active ? 1 : 0) + ')" title="Pilihan aksi">' +
+          '<button type="button" class="btn-more" data-act="menuUser(' + u.id + ', \'' + esc(u.username) + '\', ' + (u.is_active ? 1 : 0) + ')" title="Pilihan aksi">' +
             '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2.2"/><circle cx="12" cy="12" r="2.2"/><circle cx="12" cy="19" r="2.2"/></svg>' +
           '</button>' +
         '</td>';
@@ -596,7 +595,7 @@
             '<code style="font-size:11.5px;color:var(--mute);background:var(--subtle);padding:2px 6px;border-radius:6px;">' + esc(p.id) + '</code>' +
           '</div>' +
           (tetap ? '' :
-            '<button type="button" class="btn btn-outline btn-sm" onclick="hapusPaket(' + i + ')" style="color:var(--errTxt);border-color:rgba(239,68,68,.3);height:30px;padding:0 12px;font-size:12px;border-radius:8px;display:inline-flex;align-items:center;gap:5px;">' +
+            '<button type="button" class="btn btn-outline btn-sm" data-act="hapusPaket(' + i + ')" style="color:var(--errTxt);border-color:rgba(239,68,68,.3);height:30px;padding:0 12px;font-size:12px;border-radius:8px;display:inline-flex;align-items:center;gap:5px;">' +
               '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>' +
               'Hapus Paket' +
             '</button>') +
@@ -959,7 +958,7 @@
         `<td style="text-align:right" class="muted">${rupiah(u.jurnal_total)}<br><span style="font-size:11px">${u.jurnal_baris} baris</span></td>` +
         `<td style="text-align:right">${selisihBadge}</td>` +
         `<td>${auto}</td>` +
-        `<td class="aksi" style="text-align:right;"><button type="button" class="btn btn-outline btn-sm" onclick="bukaSaldo(${u.id}, '${esc(u.username)}')" style="height:28px;padding:0 12px;font-size:12px;border-radius:8px;">Atur Saldo</button></td>` +
+        `<td class="aksi" style="text-align:right;"><button type="button" class="btn btn-outline btn-sm" data-act="bukaSaldo(${u.id}, '${esc(u.username)}')" style="height:28px;padding:0 12px;font-size:12px;border-radius:8px;">Atur Saldo</button></td>` +
         '</tr>';
     }).join('');
   }

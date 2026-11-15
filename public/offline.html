@@ -93,10 +93,6 @@
       Coba Sambungkan Lagi
     </button>
   </div>
-  <script>
-    // onclick="" dicabut CSP (scriptSrcAttr 'none'); halaman offline tidak
-    // boleh bergantung pada /js/act.js lewat jaringan, jadi listener inline.
-    document.getElementById('btn-retry').addEventListener('click', () => location.reload());
-  </script>
+  <script src="/assets/offline.js"></script>
 </body>
 </html>
