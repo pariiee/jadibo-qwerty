@@ -129,10 +129,11 @@
   <h1 class="err-title">{{TITLE}}</h1>
   <p class="err-desc">{{MESSAGE}}</p>
   <div class="err-btns">
-    <button type="button" class="err-btn err-btn-sec" onclick="history.length>1?history.back():location.href='/'">Kembali</button>
+    <button type="button" class="err-btn err-btn-sec" data-act="kembaliAtauBeranda">Kembali</button>
     <a class="err-btn err-btn-pri" href="{{PRIMARY_HREF}}">{{PRIMARY_LABEL}}</a>
   </div>
 </div>
 
+<script src="/js/act.js"></script>
 </body>
 </html>

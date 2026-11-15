@@ -5,6 +5,9 @@ node_modules.bak/
 # ── Backup salinan kode lokal (bukan untuk di-commit) ──
 backupcode_coding-high/
 
+# ── Bundle deploy sementara (dibuat scripts/deploy.py, jangan ikut commit) ──
+*.bundle
+
 # ── Backup files ──
 *.bak*
 

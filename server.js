@@ -76,7 +76,10 @@ app.use(helmet({
     directives: {
       defaultSrc:    ["'self'"],
       scriptSrc:     ["'self'", "'unsafe-inline'", 'cdn.tailwindcss.com', 'cdn.jsdelivr.net'],
-      scriptSrcAttr: ["'unsafe-inline'"],
+      // 'none', bukan dihapus: script-src-attr jatuh balik ke script-src kalau
+      // tidak di-set eksplisit, jadi menghapus baris ini tetap mewarisi
+      // 'unsafe-inline' dari scriptSrc di atas dan onclick="" tetap jalan.
+      scriptSrcAttr: ["'none'"],
       styleSrc:      ["'self'", "'unsafe-inline'", 'cdn.tailwindcss.com', 'fonts.googleapis.com'],
       fontSrc:       ["'self'", 'fonts.gstatic.com'],
       imgSrc:        ["'self'", 'data:', 'https:'],
@@ -462,7 +465,7 @@ wss.on('connection', (ws, req) => {
         const token = ambilToken();
         let decoded = null;
         try {
-          decoded = jwt.verify(token, process.env.JWT_SECRET || 'changeme');
+          decoded = jwt.verify(token, process.env.JWT_SECRET);
         } catch {
           ws.send(JSON.stringify({ type: 'error', message: 'Unauthorized' }));
           return;
@@ -495,7 +498,7 @@ wss.on('connection', (ws, req) => {
 
         let decoded = null;
         try {
-          decoded = jwt.verify(token, process.env.JWT_SECRET || 'changeme');
+          decoded = jwt.verify(token, process.env.JWT_SECRET);
         } catch {
           ws.send(JSON.stringify({ type: 'error', message: 'Unauthorized' }));
           ws.close();
@@ -902,6 +905,21 @@ cronAman.schedule('30 * * * *', async () => {
     }
   } catch (e) {
     console.error('[Cron] Cleanup email_verifications error:', e.message);
+  }
+}, { timezone: 'Asia/Jakarta' });
+
+// Order gateway (QRIS otomatis) yang lewat expired_at tanpa dibayar ditandai
+// 'expired'. Order manual (expired_at NULL, dikonfirmasi admin) sengaja TIDAK
+// disentuh. status='expired' tetap bisa dilunaskan webhook susulan — lihat
+// billingController.tandaiLunas yang menerima status IN ('pending','expired').
+cronAman.schedule('*/15 * * * *', async () => {
+  try {
+    const [res] = await pool.execute(
+      "UPDATE orders SET status = 'expired' WHERE status = 'pending' AND expired_at IS NOT NULL AND expired_at < NOW()"
+    );
+    if (res.affectedRows > 0) console.log(`[Cron] Order expired: ${res.affectedRows} order gateway basi ditandai`);
+  } catch (e) {
+    console.error('[Cron] Expire order error:', e.message);
   }
 }, { timezone: 'Asia/Jakarta' });
 

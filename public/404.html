@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>404 — Halaman Tidak Ditemukan | parigate</title>
 <!-- @include head.html -->
+<script src="/js/act.js"></script>
 </head>
 <body class="page-auth page-error">
 
@@ -22,7 +23,7 @@
     <h2>Halaman Tidak Ditemukan</h2>
     <p class="auth-desc">Alamat URL yang kamu tuju salah ketik, sudah dihapus, atau tidak tersedia.</p>
     <div class="error-actions">
-      <button type="button" class="btn btn-social" onclick="history.length>1?history.back():location.href='/'">Kembali</button>
+      <button type="button" class="btn btn-social" data-act="kembaliAtauBeranda">Kembali</button>
       <a class="btn btn-dark btn-auth-submit" href="/dashboard">Ke Dashboard</a>
     </div>
   </div>

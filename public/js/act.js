@@ -53,6 +53,14 @@ if (!window.__actInit) {
   });
 }
 
+// Dipakai tombol "Kembali" di halaman error (403/404/500/503) — pengganti
+// onclick="history.length>1?history.back():location.href='/'" supaya CSP
+// scriptSrcAttr bisa 'none' tanpa mematikan tombolnya.
+window.kembaliAtauBeranda = function () {
+  if (history.length > 1) history.back();
+  else location.href = '/';
+};
+
 window.togglePfx = function (el) {
   if (!el) return;
   el.classList.toggle('active');

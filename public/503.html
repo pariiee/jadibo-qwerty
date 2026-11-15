@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>503 — Sedang Pemeliharaan | parigate</title>
 <!-- @include head.html -->
+<script src="/js/act.js"></script>
 </head>
 <body class="page-auth page-error">
 
@@ -22,7 +23,7 @@
     <h2>Sedang Dalam Pemeliharaan</h2>
     <p class="auth-desc">Kami sedang melakukan peningkatan sistem dan infrastruktur bot gateway. Layanan akan segera kembali normal dalam beberapa saat.</p>
     <div class="error-actions">
-      <button type="button" class="btn btn-social" onclick="history.length>1?history.back():location.href='/'">Kembali</button>
+      <button type="button" class="btn btn-social" data-act="kembaliAtauBeranda">Kembali</button>
       <a class="btn btn-dark btn-auth-submit" href="javascript:location.reload()">Cek Status</a>
     </div>
   </div>
