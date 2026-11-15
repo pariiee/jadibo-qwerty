@@ -1333,7 +1333,7 @@ module.exports = async function ownerHandler(ctx) {
         const pnJid = String(sender).split(':')[0].split('@')[0];
         const nama  = ctx.pushName || pnJid;
         const role  = mess.roleLabel[ctx.role] || mess.roleLabel.user;
-        const botNm = botData.bot_name || 'YaaParBot';
+        const botNm = botData.bot_name || 'qwertygate';
         const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
         const pad = (n) => String(n).padStart(2, '0');
         const hari = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'][now.getDay()];
@@ -1417,7 +1417,7 @@ module.exports = async function ownerHandler(ctx) {
               jpegThumbnail: thumb,
             },
             contentText: body,
-            footerText: botData.footer_text || 'Powered by YaaParBot',
+            footerText: botData.footer_text || 'Powered by qwertygate',
             headerType: 6,
           },
         });

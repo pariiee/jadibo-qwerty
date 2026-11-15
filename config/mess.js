@@ -7,11 +7,11 @@
 
 const mess = {
   // Sticker
-  packname: process.env.STICKER_PACK_NAME || 'YaaParBot',
+  packname: process.env.STICKER_PACK_NAME || 'qwertygate',
   author:   process.env.STICKER_AUTHOR    || 'yapari.web.id',
 
   // Footer global
-  footer: process.env.FOOTER_TEXT || 'Powered by YaaParBot',
+  footer: process.env.FOOTER_TEXT || 'Powered by qwertygate',
 
   // Pesan umum
   loading:    process.env.MSG_LOADING       || '⏳ Tunggu sebentar...',

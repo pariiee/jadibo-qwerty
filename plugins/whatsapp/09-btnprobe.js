@@ -34,7 +34,7 @@ module.exports = async function btnProbeHandler(ctx) {
 
   if (command !== 'btnprobe') return false;
 
-  const footer = botData.footer_text || 'Powered by YaaParBot';
+  const footer = botData.footer_text || 'Powered by qwertygate';
 
   // 1) interactiveMessage + quick_reply — pakai messageParamsJson (cara LevviCode)
   const A = { interactiveMessage: {
@@ -114,7 +114,7 @@ module.exports = async function btnProbeHandler(ctx) {
   } catch { /* banner nggak kebaca -> varian thumbnail di-skip */ }
 
   const adReply = (pakaiThumb) => ({
-    title: 'YaaParBot',
+    title: 'qwertygate',
     body: 'yapari.web.id',
     mediaType: 1, // IMAGE
     ...(pakaiThumb && thumb ? { thumbnail: thumb } : {}),
@@ -133,7 +133,7 @@ module.exports = async function btnProbeHandler(ctx) {
       hasMediaAttachment: true,
       locationMessage: {
         degreesLatitude: 0, degreesLongitude: 0,
-        name: 'YaaParBot', address: 'yapari.web.id', jpegThumbnail: thumb,
+        name: 'qwertygate', address: 'yapari.web.id', jpegThumbnail: thumb,
       },
     },
     body:   { text: 'G. interactive + header lokasi + externalAdReply (bentuk .test)' },

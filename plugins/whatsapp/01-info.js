@@ -481,7 +481,7 @@ module.exports = async function infoHandler(ctx) {
             locationMessage: {
               degreesLatitude: 0,
               degreesLongitude: 0,
-              name: botData.bot_name || 'YaaParBot',
+              name: botData.bot_name || 'qwertygate',
               // Alamat di header lokasi = link API + jadibot (samain pola .env).
               // ponytail: literal, nggak ada config per-bot buat ini — angkat ke env kalau Pak mau tiap bot beda.
               address: 'Jadibot? labs.yapari.web.id',
@@ -490,7 +490,7 @@ module.exports = async function infoHandler(ctx) {
             // Semua teks menu = sapaan+deskripsi (sub-menu aja) + INFO USER & BOT + isi.
             contentText: subBody ? headInfo + subBody : captionImg,
             // Footer SELALU ikut — Pak: "tetep ada footer yah setiap menunya atau pesan".
-            footerText: botData.footer_text || 'Powered by YaaParBot',   // footer SELALU ikut (Pak)
+            footerText: botData.footer_text || 'Powered by qwertygate',   // footer SELALU ikut (Pak)
             buttons: subBody ? [btnMenu] : [btnMenu, btnOwner],
           },
         });

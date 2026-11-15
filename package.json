@@ -1,7 +1,7 @@
 {
-  "name": "yaaparbot",
+  "name": "qwertygate",
   "version": "1.0.0",
-  "description": "WhatsApp & Telegram Gateway - YaaParBot",
+  "description": "WhatsApp & Telegram Gateway - qwertygate",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

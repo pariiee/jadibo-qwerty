@@ -28,7 +28,7 @@ async function sendCategoryDropdown(ctx) {
       locationMessage: {
         degreesLatitude: 0,
         degreesLongitude: 0,
-        name: ctx.botData?.bot_name || 'YaaParBot',
+        name: ctx.botData?.bot_name || 'qwertygate',
         address: 'yapari.web.id',
         jpegThumbnail: thumb,
       },
@@ -39,7 +39,7 @@ async function sendCategoryDropdown(ctx) {
     interactiveMessage: {
       ...(header ? { header } : {}),
       body: { text: '📂 *Pilih Kategori*\nKetuk tombol di bawah untuk buka daftar menu.' },
-      footer: { text: ctx.botData?.footer_text || 'Powered by YaaParBot' },
+      footer: { text: ctx.botData?.footer_text || 'Powered by qwertygate' },
       nativeFlowMessage: {
         buttons: [{
           name: 'single_select',

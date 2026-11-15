@@ -58,7 +58,7 @@ async function kirimKeOwner(userId, teks) {
   // HANYA dipanggil di sini (setelah dua-duanya gagal): kalau tidak, user yang
   // botnya normal bakal dapat notif dobel, WA + email, untuk hal yang sama.
   const { kirimKeUser } = require('./email');
-  if (await kirimKeUser(userId, 'Kabar dari YaaParBot', teks)) return true;
+  if (await kirimKeUser(userId, 'Kabar dari qwertygate', teks)) return true;
 
   return false;
 }

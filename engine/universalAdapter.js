@@ -4,7 +4,7 @@
  * engine/universalAdapter.js
  * Universal message & context adapter untuk Telegram & Discord.
  * Menjembatani kontrak `client.message.send(...)` dan `ctx.reply(...)`
- * yang dipakai oleh seluruh plugins yaparbots.
+ * yang dipakai oleh seluruh plugins qwertygate.
  */
 
 function extractTextFromPayload(content) {

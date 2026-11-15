@@ -1,4 +1,4 @@
--- YaaParBot Database Schema (sinkron dengan kode — jangan edit separuh)
+-- qwertygate Database Schema (sinkron dengan kode — jangan edit separuh)
 -- Jalankan ke database yang sudah dibuat, nama DB diambil dari .env (DB_NAME):
 --   mysql -u <user> -p <nama_db> < schema.sql
 -- File ini sengaja TIDAK memuat CREATE DATABASE / USE supaya tidak mengunci
@@ -91,7 +91,7 @@ CREATE TABLE IF NOT EXISTS bots (
   owner_number   VARCHAR(20) DEFAULT NULL,
   owner_name     VARCHAR(100) DEFAULT NULL,
   prefix         VARCHAR(5) NOT NULL DEFAULT '!',
-  footer_text    VARCHAR(255) DEFAULT 'Powered by YaaParBot',
+  footer_text    VARCHAR(255) DEFAULT 'Powered by qwertygate',
   description    TEXT DEFAULT NULL,
   channel_id     VARCHAR(100) DEFAULT NULL,
   qris_url       TEXT DEFAULT NULL,

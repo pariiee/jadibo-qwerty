@@ -877,15 +877,35 @@ function googleRedirect(req, res) {
   if (!clientId) {
     return res.status(503).send('Google OAuth belum dikonfigurasi. Hubungi admin.');
   }
+  const state = crypto.randomBytes(32).toString('hex');
+  res.cookie('google_oauth_state', state, {
+    httpOnly: true,
+    secure: req.protocol === 'https',
+    sameSite: 'lax',
+    path: '/api/auth/google',
+    maxAge: 10 * 60 * 1000
+  });
   const redirectUri = encodeURIComponent(GOOGLE_REDIRECT_URI());
   const scope = encodeURIComponent('openid email profile');
-  const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&prompt=select_account`;
+  const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&prompt=select_account&state=${state}`;
   return res.redirect(url);
 }
 
 async function googleCallback(req, res) {
-  const { code, error } = req.query;
-  if (error || !code) {
+  const { code, error, state } = req.query;
+  const expectedState = req.cookies?.google_oauth_state;
+  res.clearCookie('google_oauth_state', {
+    httpOnly: true,
+    secure: req.protocol === 'https',
+    sameSite: 'lax',
+    path: '/api/auth/google'
+  });
+  if (typeof state !== 'string' || typeof expectedState !== 'string' ||
+      !/^[a-f0-9]{64}$/.test(state) || !/^[a-f0-9]{64}$/.test(expectedState) ||
+      !crypto.timingSafeEqual(Buffer.from(state), Buffer.from(expectedState))) {
+    return res.redirect('/login?err=' + encodeURIComponent('Sesi login Google tidak valid. Silakan coba lagi.'));
+  }
+  if (error || typeof code !== 'string' || !code) {
     return res.redirect('/login?err=' + encodeURIComponent(error || 'Login Google dibatalkan'));
   }
 

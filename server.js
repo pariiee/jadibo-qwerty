@@ -467,6 +467,19 @@ wss.on('connection', (ws, req) => {
           ws.send(JSON.stringify({ type: 'error', message: 'Unauthorized' }));
           return;
         }
+        try {
+          const { pool } = require('./config/database');
+          const [tvRows] = await pool.execute('SELECT token_version FROM users WHERE id = ?', [decoded.id]);
+          if (!tvRows.length || Number(tvRows[0].token_version || 0) !== Number(decoded.tv || 0)) {
+            ws.send(JSON.stringify({ type: 'error', message: 'Sesi sudah tidak berlaku' }));
+            ws.close();
+            return;
+          }
+        } catch {
+          ws.send(JSON.stringify({ type: 'error', message: 'Unauthorized' }));
+          ws.close();
+          return;
+        }
         subscribedUserId = decoded.id;
         if (!userSubscribers.has(subscribedUserId)) {
           userSubscribers.set(subscribedUserId, new Set());
@@ -668,7 +681,7 @@ async function boot() {
   server.listen(PORT, async () => {
     console.log('');
     console.log('╔══════════════════════════════════════════╗');
-    console.log('║         YaaParBot Server Started         ║');
+    console.log('║        qwertygate Server Started         ║');
     console.log(`║  URL  : http://localhost:${PORT}            ║`);
     console.log(`║  Mode : ${(process.env.NODE_ENV || 'development').padEnd(32)}║`);
     console.log('╚══════════════════════════════════════════╝');

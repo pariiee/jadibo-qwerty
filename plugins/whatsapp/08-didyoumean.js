@@ -150,7 +150,7 @@ module.exports = async function didyoumeanHandler(ctx) {
       buttonsMessage: {
         contentText: `Nama menu : *${p}${mean}*
 Kemiripan : *${sim}%*`,
-        footerText:  botData.footer_text || 'YaaParBot',
+        footerText:  botData.footer_text || 'qwertygate',
         headerType:  proto.Message.ButtonsMessage.HeaderType.TEXT,
         text:        `Halo Kak @${pnJid.split('@')[0].split(':')[0]}! 👋 Kayaknya kamu nyari *${p}${mean}*, ya?`,
         contextInfo: { mentionedJid: [pnJid] },

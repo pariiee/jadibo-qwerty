@@ -392,7 +392,7 @@ module.exports = async function toolsHandler(ctx) {
       // Parse packname & author dari args
       const wmInput   = args.join(' ').trim();
       const [wmPack, wmAuthor] = wmInput.split('|').map(s => s.trim());
-      const packname  = wmPack   || process.env.STICKER_PACK_NAME || 'YaaParBot';
+      const packname  = wmPack   || process.env.STICKER_PACK_NAME || 'qwertygate';
       const author    = wmAuthor || process.env.STICKER_AUTHOR    || 'yapari.web.id';
 
       try {

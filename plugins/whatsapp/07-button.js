@@ -42,7 +42,7 @@ module.exports = async function buttonHandler(ctx) {
         return await require('./01-info')({ ...ctx, isCmd: true, command: 'menu', args: ['all'] });
       case 'btn_info':
         await reply(
-          '🤖 *YaaParBot v1.0.0*\n\n' +
+          '🤖 *qwertygate v1.0.0*\n\n' +
           'Multi-bot WhatsApp + Telegram gateway.\n' +
           'Dibangun dengan zapo-js & node-telegram-bot-api.'
         );
@@ -100,7 +100,7 @@ module.exports = async function buttonHandler(ctx) {
       case '.menu':    return await require('./01-info')({ ...ctx, isCmd: true, command: 'menu', args: [] });
       case 'lst_menu': await reply('📋 Ketik `.menu` untuk daftar command.'); return true;
       case 'lst_info':
-        await reply('🤖 *YaaParBot* — multi-bot WhatsApp + Telegram gateway.');
+        await reply('🤖 *qwertygate* — multi-bot WhatsApp + Telegram gateway.');
         return true;
       case 'btn_menu':
         return await require('./01-info')({ ...ctx, isCmd: true, command: 'menu', args: [] });
@@ -147,7 +147,7 @@ module.exports = async function buttonHandler(ctx) {
         await client.message.send(jid, {
           buttonsMessage: {
             contentText:   'Pilih menu di bawah ini:',
-            footerText:    ctx.botData?.footer_text || 'YaaParBot',
+            footerText:    ctx.botData?.footer_text || 'qwertygate',
             headerType:    proto.Message.ButtonsMessage.HeaderType.TEXT,      // 2
             text:          '🤖 *Menu Utama*',
             buttons: [
@@ -184,7 +184,7 @@ module.exports = async function buttonHandler(ctx) {
             body: {
               text: 'Selamat datang di test *Interactive Native Flow Buttons*!\n\nPilih salah satu demo tombol di dropdown bawah:',
             },
-            footer: { text: ctx.botData?.footer_text || 'YaaParBot' },
+            footer: { text: ctx.botData?.footer_text || 'qwertygate' },
             nativeFlowMessage: {
               buttons: [
                 {
@@ -356,7 +356,7 @@ module.exports = async function buttonHandler(ctx) {
           title:       'Menu',
           description: 'Pilih salah satu opsi',
           buttonText:  'Lihat Menu',
-          footerText:  ctx.botData?.footer_text || 'YaaParBot',
+          footerText:  ctx.botData?.footer_text || 'qwertygate',
           listType:    proto.Message.ListMessage.ListType.SINGLE_SELECT,
           sections: [
             {
@@ -376,7 +376,7 @@ module.exports = async function buttonHandler(ctx) {
         await client.message.send(jid, {
           buttonsMessage: {
             contentText: '📋 *Menu Utama*',
-            footerText:  ctx.botData?.footer_text || 'YaaParBot',
+            footerText:  ctx.botData?.footer_text || 'qwertygate',
             headerType:  proto.Message.ButtonsMessage.HeaderType.TEXT,
             buttons: [
               { buttonId: 'btn_ping', buttonText: { displayText: '🏓 Ping' }, type: proto.Message.ButtonsMessage.Button.Type.RESPONSE },

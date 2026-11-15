@@ -88,7 +88,7 @@ async function kumpulkan(botId) {
     berkas: {
       dibuat: new Date().toISOString(),
       format: 1,
-      keterangan: 'Cadangan data bot dari yaparbots. Data ini milik satu bot saja.',
+      keterangan: 'Cadangan data bot dari qwertygate. Data ini milik satu bot saja.',
     },
     bot,
     data,

@@ -23,7 +23,7 @@ async function addStickerExif(webpBuffer, packname, author) {
     const img      = new webp.Image();
     const json     = {
       'sticker-pack-id':        'https://yapari.web.id',
-      'sticker-pack-name':      packname || 'YaaParBot',
+      'sticker-pack-name':      packname || 'qwertygate',
       'sticker-pack-publisher': author   || 'yapari.web.id',
       'emojis':                 [''],
     };
