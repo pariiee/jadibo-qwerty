@@ -335,6 +335,7 @@ const DESKRIPSI = {
   "wilayah": "Info wilayah dari kode pos",
   "wm": "Bikin stiker dengan watermark nama pack",
   "youtube": "Download video YouTube",
+  "ytmp3": "Download audio YouTube",
 };
 
 const ALIAS = {
@@ -424,7 +425,7 @@ const ALIAS = {
   "twitter": ["twit", "xdl"],
   "upscale": ["enhance", "hd"],
   "wilayah": ["cariwilayah"],
-  "youtube": ["yt", "ytdl"],
+  "youtube": ["yt", "ytdl", "ytmp4"],
 };
 
 module.exports = { DESKRIPSI, ALIAS };

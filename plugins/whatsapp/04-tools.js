@@ -5274,13 +5274,42 @@ ${rapikanError(e)}`);
     }
 
     // ── youtube — YouTube Downloader ─────────────────────────────────────────
+    case 'ytmp3': {
+      const url = args[0];
+      if (!url) {
+        await reply(`Masukkan link YouTube.\nContoh: *${p}ytmp3 https://youtu.be/...*`);
+        return true;
+      }
+      try {
+        const axios = require('axios');
+        await react(mess.reactLoading);
+        const { data } = await axios.get(`${process.env.BASE_API}api/download/ytmp3`, {
+          params: { url },
+          headers: { 'X-API-Key': process.env.KEY_API },
+          timeout: 90000,
+        });
+        const d = data?.results;
+        const a = (Array.isArray(d?.audios) ? d.audios.find(x => x.format === 'm4a') : null) || d?.audio;
+        if (!a?.url) throw new Error('Tidak ada audio dari API');
+        const dlUrl = `${process.env.BASE_API}api/download/ytfile?url=${encodeURIComponent(a.url)}`;
+        const res = await axios.get(dlUrl, { responseType: 'arraybuffer', timeout: 120000, headers: { 'X-API-Key': process.env.KEY_API } });
+        await react(mess.reactSuccess);
+        await client.message.send(jid, { type: 'audio', media: Buffer.from(res.data), mimetype: a.format === 'm4a' ? 'audio/mp4' : 'audio/ogg; codecs=opus' });
+        await reply(`🎵 *${d.title || 'YouTube'}*${d.duration_str ? ` (${d.duration_str})` : ''}`);
+      } catch (e) {
+        await react(mess.reactError);
+        await reply(`❌ Gagal download audio YouTube: ${rapikanError(e)}`);
+      }
+      return true;
+    }
+
     case 'youtube':
     case 'ytdl':
+    case 'ytmp4':
     case 'yt': {
       const url  = args[0];
-      const mode = (args[1] || 'video').toLowerCase(); // video | audio
       if (!url) {
-        await reply(`Masukkan link YouTube.\nContoh:\n• *${p}yt https://youtu.be/... video*\n• *${p}yt https://youtu.be/... audio*`);
+        await reply(`Masukkan link YouTube.\nContoh:\n• *${p}ytmp4 https://youtu.be/...* (video)\n• *${p}ytmp3 https://youtu.be/...* (audio)`);
         return true;
       }
       try {
@@ -5292,16 +5321,7 @@ ${rapikanError(e)}`);
           timeout: 60000,
         });
         const title = data?.results?.title || 'YouTube';
-        if (mode === 'audio') {
-          const audios = data?.results?.audios;
-          if (!audios || !audios.length) throw new Error('Tidak ada audio dari API');
-          const a = audios[0];
-          const dlUrl = `${process.env.BASE_API}api/download/ytfile?url=${encodeURIComponent(a.url || a.download_url)}`;
-          const res = await axios.get(dlUrl, { responseType: 'arraybuffer', timeout: 90000, headers: { 'X-API-Key': process.env.KEY_API } });
-          await react(mess.reactSuccess);
-          await client.message.send(jid, { type: 'audio', media: Buffer.from(res.data), mimetype: 'audio/mpeg' });
-          await reply(`🎵 *${title}*`);
-        } else {
+        {
           const videos = data?.results?.videos;
           if (!videos || !videos.length) throw new Error('Tidak ada video dari API');
           // Format video-only (DASH) nggak bisa ditempel di sini tanpa ffmpeg —
@@ -6080,7 +6100,7 @@ module.exports.limitedCmds = new Set([
   'tiktok','tiktokdl','ttdl','tt',
   'pindl',
   'threads','threadsdl',
-  'youtube','ytdl','yt',
+  'youtube','ytdl','yt','ytmp4','ytmp3',
   'gdrive','gdrivedl',
   'instagram','igdl','ig',
   'kuaishou','kwai','kuaishoudl',

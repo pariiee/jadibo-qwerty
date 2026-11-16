@@ -42,7 +42,7 @@ const TABEL = {
     daftar: [
       // 04-tools — downloader
       'play','tiktok','tiktokdl','ttdl','tt','ttsearch',
-      'youtube','ytdl','yt','igdl','ig','instagram',
+      'youtube','ytdl','yt','ytmp4','ytmp3','igdl','ig','instagram',
       'fbdl','fb','facebook','twitter','twit','xdl',
       'soundcloud','scdl','mediafire','mfdl','capcut','capcutdl',
       'douyin','douyindl','bilibili','bilibildl','sfile','sfilemobi','sfileco',
