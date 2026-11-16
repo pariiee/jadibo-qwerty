@@ -191,7 +191,7 @@ module.exports = async function toolsHandler(ctx) {
       const d = mp3.data?.results;
       if (!d?.audio?.url) return { ok: false, alasan: 'Tidak ada audio dari konverter' };
       const chosen = (Array.isArray(d.audios) ? d.audios.find(a => a.format === 'm4a') : null) || d.audio;
-      const res = await axios.get(chosen.url, { responseType: 'arraybuffer', timeout: 120000 });
+      const res = await axios.get(`${process.env.BASE_API}api/download/ytfile?url=${encodeURIComponent(chosen.url)}`, { responseType: 'arraybuffer', timeout: 120000, headers: { 'X-API-Key': process.env.KEY_API } });
       return {
         ok: true, buf: Buffer.from(res.data), mime: chosen.format === 'm4a' ? 'audio/mp4' : 'audio/mpeg',
         title: d.title || conv.title, artist: d.channel || conv.author?.name, dur: d.duration_str || conv.timestamp,
@@ -266,7 +266,7 @@ module.exports = async function toolsHandler(ctx) {
         const audios = Array.isArray(d?.audios) ? d.audios : [];
         const chosen = audios.find(a => (a.bitrate || '').includes('128')) || d?.audio;
         if (!chosen?.url) return { ok: false, alasan: 'Tidak ada audio dari konverter' };
-        const res = await axios.get(chosen.url, { responseType: 'arraybuffer', timeout: 120000 });
+        const res = await axios.get(`${process.env.BASE_API}api/download/ytfile?url=${encodeURIComponent(chosen.url)}`, { responseType: 'arraybuffer', timeout: 120000, headers: { 'X-API-Key': process.env.KEY_API } });
         return {
           ok: true, buf: Buffer.from(res.data),
           mime: chosen.ext === 'm4a' || chosen.ext === 'mp4' ? 'audio/mp4' : 'audio/mpeg',

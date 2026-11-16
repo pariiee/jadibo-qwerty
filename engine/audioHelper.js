@@ -115,7 +115,7 @@ async function ambilAudioLagu(kueri) {
       const d = mp3.data?.results;
       if (!d?.audio?.url) return { ok: false, alasan: 'Audio konverter tidak tersedia' };
       const chosen = (Array.isArray(d.audios) ? d.audios.find(a => a.format === 'm4a') : null) || d.audio;
-      const res = await axios.get(chosen.url, { responseType: 'arraybuffer', timeout: 120000 });
+      const res = await axios.get(`${process.env.BASE_API || 'http://163.172.110.146:2280/'}api/download/ytfile?url=${encodeURIComponent(chosen.url)}`, { responseType: 'arraybuffer', timeout: 120000, headers: { 'X-API-Key': process.env.KEY_API || '' } });
 
       return {
         ok: true,
@@ -206,7 +206,7 @@ async function ambilAudioLagu(kueri) {
       const d = mp3.data?.results;
       if (!d?.audio?.url) return { ok: false, alasan: 'Audio konverter tidak tersedia' };
       const chosen = (Array.isArray(d.audios) ? d.audios.find(a => a.format === 'm4a') : null) || d.audio;
-      const res = await axios.get(chosen.url, { responseType: 'arraybuffer', timeout: 120000 });
+      const res = await axios.get(`${process.env.BASE_API || 'http://163.172.110.146:2280/'}api/download/ytfile?url=${encodeURIComponent(chosen.url)}`, { responseType: 'arraybuffer', timeout: 120000, headers: { 'X-API-Key': process.env.KEY_API || '' } });
 
       return {
         ok: true,
