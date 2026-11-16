@@ -5296,8 +5296,8 @@ ${rapikanError(e)}`);
           const audios = data?.results?.audios;
           if (!audios || !audios.length) throw new Error('Tidak ada audio dari API');
           const a = audios[0];
-          const dlUrl = a.url || a.download_url;
-          const res = await axios.get(dlUrl, { responseType: 'arraybuffer', timeout: 90000 });
+          const dlUrl = `${process.env.BASE_API}api/download/ytfile?url=${encodeURIComponent(a.url || a.download_url)}`;
+          const res = await axios.get(dlUrl, { responseType: 'arraybuffer', timeout: 90000, headers: { 'X-API-Key': process.env.KEY_API } });
           await react(mess.reactSuccess);
           await client.message.send(jid, { type: 'audio', media: Buffer.from(res.data), mimetype: 'audio/mpeg' });
           await reply(`🎵 *${title}*`);
@@ -5312,8 +5312,9 @@ ${rapikanError(e)}`);
                  || videos.find(x => x.has_audio)
                  || videos.find(x => ringan(x.quality))
                  || videos[0];
-          const dlUrl = v.url || v.download_url;
-          const res = await axios.get(dlUrl, { responseType: 'arraybuffer', timeout: 120000 });
+          const rawUrl = v.url || v.download_url;
+          const dlUrl = `${process.env.BASE_API}api/download/ytfile?url=${encodeURIComponent(rawUrl)}`;
+          const res = await axios.get(dlUrl, { responseType: 'arraybuffer', timeout: 120000, headers: { 'X-API-Key': process.env.KEY_API } });
           await react(mess.reactSuccess);
           const thumb = await genThumbnail(Buffer.from(res.data), 'video/mp4');
           await client.message.send(jid, {
