@@ -124,14 +124,14 @@
 
     if (o.status === 'pending') {
       startCountdown(o.expired_at);
-      // Auto-check status ke gateway setiap 20 detik (sesuai cooldown QRISku)
+      // Auto-check status ke gateway setiap 5 detik
       if (!pollingInterval) {
         pollingInterval = setInterval(async () => {
           const res = await api('/api/billing/orders/' + encodeURIComponent(orderId) + '/check', { method: 'POST' });
           if (res?.ok && res?.status === 'paid') {
             handleLunas();
           }
-        }, 20000);
+        }, 5000);
       }
     }
   }

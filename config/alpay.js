@@ -16,7 +16,7 @@ const BASE = process.env.ALPAY_BASE_URL || 'https://pay.ghifari.biz.id';
 const KEY  = process.env.ALPAY_API_KEY || '';
 
 // Cegah spam: jeda minimal antar pengecekan manual per transaksi
-const JEDA_CEK_MS = 15_000;
+const JEDA_CEK_MS = 5_000;
 const _cekTrakhir = new Map();
 
 async function call(method, path, body, useKey = true) {
