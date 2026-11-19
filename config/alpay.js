@@ -15,6 +15,12 @@ const crypto = require('crypto');
 const BASE = process.env.ALPAY_BASE_URL || 'https://pay.ghifari.biz.id';
 const KEY  = process.env.ALPAY_API_KEY || '';
 
+// Webhook tujuan per transaksi. Alpay hanya kirim ke URL ini kalau field-nya
+// dikirim; tanpa itu dia menembak SEMUA URL merchant yang terdaftar.
+// Harus identik dengan Webhook URL di Settings Alpay (https, tanpa trailing
+// slash) — beda satu karakter dibalas 400.
+const CALLBACK = process.env.ALPAY_CALLBACK_URL || 'https://labs.yapari.web.id/api/payment/webhook';
+
 // Cegah spam: jeda minimal antar pengecekan manual per transaksi
 const JEDA_CEK_MS = 5_000;
 const _cekTrakhir = new Map();
@@ -62,6 +68,7 @@ async function buatTagihan({ amount, customer_name = 'User', note = 'Pembayaran 
     customer_name: String(customer_name || 'Pelanggan').slice(0, 50),
     note: String(note || 'Pembayaran JadiBot').slice(0, 100),
     valid_minutes: 5,
+    callback_url: CALLBACK,
   });
 
   const expUnix = d.expires_at
