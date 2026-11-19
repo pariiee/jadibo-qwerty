@@ -835,6 +835,13 @@ cronAman.schedule('* * * * *', async () => {
     console.error('[Cron] Health check error:', e.message);
   }
 
+  // Auto-reconnect: platform mana pun yang botnya sudah tidak hidup, nyalakan lagi.
+  try {
+    await require('./engine/supervisor').jalankan();
+  } catch (e) {
+    console.error('[Cron] Supervisor error:', e.message);
+  }
+
   // Broadcast iklan berkala bot trial (jika aktif)
   try {
     require('./engine/trialAd').broadcastIklanTrial().catch(() => {});

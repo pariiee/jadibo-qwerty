@@ -891,7 +891,13 @@ async function startDiscordBot(botData) {
     logBot(botId, 'error', `Discord error: ${err.message}`);
   });
 
-  await client.login(token);
+
+  // Timeout: login yang menggantung bikin promise di cron supervisor menumpuk
+  // dan map percobaanTerakhir tidak pernah terisi.
+  await Promise.race([
+    client.login(token),
+    new Promise((_, rej) => setTimeout(() => rej(new Error("Discord login timeout 20s")), 20000)),
+  ]);
   activeDiscordBots.set(botId, client);
 }
 
@@ -912,9 +918,22 @@ async function stopDiscordBot(botId) {
   broadcast(botId, 'status', { status: 'stopped' });
 }
 
+// Dipakai supervisor auto-reconnect. client.destroy() juga melepas dari Map ini,
+// jadi entri yang hilang berarti bot benar-benar sudah tidak jalan.
+function isDiscordAlive(botId) {
+  const client = activeDiscordBots.get(botId);
+  if (!client) return false;
+  // client.user sengaja TIDAK dicek: discord.js mengosongkannya sesaat saat
+  // reconnect, dan supervisor akan salah sangka botnya mati lalu menabraknya.
+  // Yang menentukan hidup cuma apakah client masih terpasang & ws belum ditutup.
+  const ws = client.ws;
+  return !(ws && ws.destroyed);
+}
+
 module.exports = {
   startDiscordBot,
   stopDiscordBot,
   setWsBroadcast,
   logBot,
+  isDiscordAlive,
 };

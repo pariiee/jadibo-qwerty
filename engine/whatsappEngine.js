@@ -62,9 +62,9 @@ function saveGroupsCache(botId) {
 }
 
 // ─── Lazy-load zapo-js ────────────────────────────────────────────────────────
-let WaClient, createStore;
+let WaClient, createStore, fetchLatestWaWebVersion;
 try {
-  ({ WaClient, createStore } = require('zapo-js'));
+  ({ WaClient, createStore, fetchLatestWaWebVersion } = require('zapo-js'));
 } catch {
   console.warn('[Engine] zapo-js tidak terinstall — WhatsApp engine disabled');
 }
@@ -344,8 +344,26 @@ async function startWhatsAppBot(botData, usePairingCode = false) {
   const store  = buildStore(dbPath);
   const logger = noopLogger;
 
+  // WA menolak client yang versi Web-nya ketinggalan (failure_client_too_old).
+  // Versi hardcode di dalam zapo-js cepat basi, jadi ambil versi live dari
+  // server WA tiap connect. Kalau fetch gagal, zapo pakai default-nya sendiri.
+  const versionResolver = async () => {
+    if (typeof fetchLatestWaWebVersion !== 'function') return undefined;
+    try {
+      const v = await fetchLatestWaWebVersion();
+      return v?.version;
+    } catch {
+      return undefined;
+    }
+  };
+
   const client = new WaClient(
-    { store, sessionId: `bot_${botId}` },
+    {
+      store,
+      sessionId: `bot_${botId}`,
+      version: versionResolver,
+      recoverFromClientTooOld: true,
+    },
     logger
   );
 
@@ -1161,9 +1179,16 @@ function botNyangkut(botId) {
   return restartingBots.has(Number(botId));
 }
 
+// Dipakai supervisor auto-reconnect. Bot yang sedang di-restart manual sengaja
+// dianggap hidup supaya supervisor tidak menabraknya.
+function isWhatsAppAlive(botId) {
+  return activeBots.has(Number(botId)) || restartingBots.has(Number(botId));
+}
+
 module.exports = {
   startWhatsAppBot, stopWhatsAppBot,
   restartWhatsAppBot, restartWhatsAppBotInBackground, getBotConnectedAt, botNyangkut,
+  isWhatsAppAlive,
   setWsBroadcast, getBotGlobalSetting, setBotGlobalSetting,
   logBot,
   loadPlugins,

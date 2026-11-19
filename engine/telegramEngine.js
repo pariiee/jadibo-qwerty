@@ -321,10 +321,9 @@ async function startTelegramBot(botData) {
 
   // Stop instance lama kalau ada — cegah conflict polling
   if (activeBots.has(botId)) {
-    try { await activeBots.get(botId).destroy?.(); } catch {}
-    activeBots.delete(botId);
-    // Tunggu Telegram server release koneksi lama
-    await new Promise(r => setTimeout(r, 2000));
+    // Sudah jalan: jangan dimulai ulang. Tanpa ini, supervisor auto-reconnect
+    // membunuh bot sehat tiap menit (destroy() juga menulis is_running = 0).
+    return { ok: true, already: true };
   }
 
   await logBot(botId, 'info', 'Memulai Telegram bot...');
@@ -560,4 +559,11 @@ async function stopTelegramBot(botId) {
   return { ok: true };
 }
 
-module.exports = { startTelegramBot, stopTelegramBot, setWsBroadcast };
+// Dipakai supervisor auto-reconnect untuk memastikan bot ini benar-benar hidup.
+function isTelegramAlive(botId) {
+  const inst = activeBots.get(botId);
+  if (!inst?.instance) return false;
+  return inst.instance.isPolling ? inst.instance.isPolling() !== false : true;
+}
+
+module.exports = { startTelegramBot, stopTelegramBot, setWsBroadcast, isTelegramAlive };
