@@ -40,7 +40,6 @@ cek('blok case swgc ditemukan', mulai > 0 && blok.length > 500, `panjang ${blok.
 
 console.log('\n=== LAPIS 2: kegagalan tidak boleh ditelan ===');
 
-// 1. Tidak ada lagi penyaringan yang membuang 'negative publish ack'.
 cek('tidak ada lagi `includes(\'negative publish ack\')` yang menelan error',
   !/includes\(\s*['"]negative publish ack['"]\s*\)/.test(blok));
 

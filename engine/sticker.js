@@ -52,7 +52,7 @@ async function addStickerExif(webpBuffer, packname, author) {
 // frame ≥8ms. Jadi durasi dipatok 10 detik dan yang diturunkan bertahap cuma
 // fps + quality — canvas JANGAN dikecilin — sampai masuk 400KB (sisain ruang
 // buat EXIF & overhead kirim).
-// ponytail: 4 tangga udah nutup video 10 detik pada umumnya; tambah tangga
+// 4 tangga udah nutup video 10 detik pada umumnya; tambah tangga
 // kalau nanti masih ada yang kejegal.
 const UKURAN_STICKER = 512;
 // Semua jalur sticker lewat filter ini: px JANGAN pernah dikecilin, cuma scale+pad.

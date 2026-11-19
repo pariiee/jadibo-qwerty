@@ -178,7 +178,7 @@ module.exports = async function crmHandler(ctx) {
   // 2. Kirim kodenya sekaligus: file .js di header + tombol native-flow
   //    "Salin kode" (cta_copy) — tap = panel kode monospace + tombol Salin.
   //    Header.documentMessage => satu kiriman, file & tombol nempel bareng.
-  //    ponytail: cta_copy kepotong kalau kode >~60k char; di situ tombolnya
+  // cta_copy kepotong kalau kode >~60k char; di situ tombolnya
   //    di-skip, filenya tetap kekirim utuh (gk ada fallback lain di WA).
   const typeName = typeNameFromContent(clean);
   const fileName = `${typeName}.js`;

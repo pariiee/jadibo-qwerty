@@ -6,7 +6,7 @@
 // sehat — user lihat "video tidak dapat diputar". Dua hal yang dibenerin:
 //   1. track audio wajib ada → ditambah audio senyap (anullsrc) kalau kosong;
 //   2. container di-remux ulang + faststart (moov di depan, brand isom).
-// ponytail: stream video di-copy, jadi nol biaya CPU & nol turun kualitas.
+// stream video di-copy, jadi nol biaya CPU & nol turun kualitas.
 // Ceiling: input non-mp4 (webm dll) bakal gagal remux → balik ke buffer asli.
 const fs = require('fs');
 const os = require('os');

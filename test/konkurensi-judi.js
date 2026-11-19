@@ -102,7 +102,6 @@ function cekReachable() {
     assert.strictEqual(saldo1, 0, `saldo harus 0, dapat ${saldo1}`);
     console.log(`✅ tepat ${sukses1} sukses, saldo 0, tidak pernah negatif`);
 
-    // ── 2. Gacha: 300× taruhan 50 dari saldo 5.000 ─────────────────────────
     console.log('\n=== 2. Gacha: 300× taruhan 50 dari saldo 5.000 ===');
     await pool.execute('UPDATE rpg_members SET money = 5000 WHERE bot_id=? AND jid=?', [botId, jid]);
     const N2 = 300, BIAYA2 = 50;

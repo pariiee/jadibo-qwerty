@@ -35,7 +35,6 @@ function ctx({ isCmd = true, command = 'menu', sender = '628111@s.whatsapp.net',
 const tunggu = (ms) => new Promise((r) => setTimeout(r, ms));
 
 (async () => {
-  // ── a. Pesan non-command tidak diblokir ────────────────────────────────────
   console.log('=== a. Non-command TIDAK diblokir ===');
   reset();
   for (let i = 0; i < 5; i++) {
@@ -46,7 +45,6 @@ const tunggu = (ms) => new Promise((r) => setTimeout(r, ms));
   // 5 pemanggilan tanpa jeda, semuanya harus lolos.
   console.log('✅ 5 pesan non-command berturut-turut: semua lolos');
 
-  // ── b. Command kedua di jendela cooldown diblokir ──────────────────────────
   console.log('\n=== b. Command kedua dalam jendela diblokir ===');
   reset();
   // 'menu' masuk kelompok 'umum' (500ms, diam).
@@ -68,7 +66,6 @@ const tunggu = (ms) => new Promise((r) => setTimeout(r, ms));
   assert.strictEqual(r3.ok, true, 'setelah jendela lewat harus lolos lagi');
   console.log(`✅ setelah ${TABEL.umum.ms}ms lewat: lolos lagi`);
 
-  // ── c. Owner & developer lolos dari 'umum' ─────────────────────────────────
   console.log('\n=== c. Owner & developer lolos dari "umum" ===');
   reset();
   const co = ctx({ command: 'menu', isOwner: true });
@@ -115,7 +112,6 @@ const tunggu = (ms) => new Promise((r) => setTimeout(r, ms));
     'dev lolos lagi di "umum"');
   console.log('✅ owner & dev dibebaskan di "umum" (satu-satunya kelompok ber-`pengecualian`)');
 
-  // ── d. Balasan "⏳ Tunggu" sekali per jendela ───────────────────────────────
   console.log('\n=== d. Balasan sekali per jendela ===');
   reset();
   // 'play' ada di kelompok 'berat' (3s, balasan:true).
@@ -161,7 +157,6 @@ const tunggu = (ms) => new Promise((r) => setTimeout(r, ms));
     false, 'A kedua harus diblokir');
   console.log('✅ sender A diblokir, sender B tidak terpengaruh');
 
-  // ── f. Command berbeda = jendela berbeda ───────────────────────────────────
   console.log('\n=== f. Command berbeda, jendela terpisah ===');
   reset();
   assert.strictEqual((await cooldownGuard(ctx({ command: 'play' }))).ok, true, 'play lolos');

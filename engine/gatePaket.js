@@ -20,7 +20,7 @@ const { pool } = require('../config/database');
 const pricingStore = require('../config/pricingStore');
 const { ADMIN_ROLE, SUBADMIN_ROLE, TRIAL, DEFAULT_PLANS, LIMIT_DEFAULT, aktif, kuotaBot } = require('../config/plan');
 
-// ponytail: cache global 60 detik — pakai per-bot + invalidasi kalau paketnya
+// cache global 60 detik — pakai per-bot + invalidasi kalau paketnya
 // berubah lebih sering dari itu (belum perlu: paket cuma diubah admin/checkout,
 // bukan operasi per-pesan).
 const TTL_MS = 60 * 1000;

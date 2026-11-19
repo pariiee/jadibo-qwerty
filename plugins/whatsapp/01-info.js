@@ -18,7 +18,7 @@ const START_TIME = Date.now();
 // START_TIME (nempel di proses) nggak pernah kek-reset — semua bot dalam satu
 // proses bakal nunjukin angka yang sama.
 // `.runtime` SENGAJA nggak pakai ini — dia baca umur PROSES (process.uptime()).
-// ponytail: fallback ke START_TIME kalau bot belum pernah connect (mis. lagi
+// fallback ke START_TIME kalau bot belum pernah connect (mis. lagi
 // pairing) — angkanya memang umur proses, tapi itu yang paling dekat.
 function botUptimeMs(ctx) {
   try {
@@ -42,14 +42,14 @@ function infoEngine() {
 // VPS tapi HP tetap tampil polos; kemungkinan besar sisi WA/akun yang tidak
 // merender media di header interactiveMessage. Jalur banner dimatikan biar tiap
 // .menu tidak buang upload + 56 KB buffer. Kalau mau coba lagi: MENU_BANNER=1.
-// ponytail: cache in-memory 1 entri; banner jarang ganti.
+// cache in-memory 1 entri; banner jarang ganti.
 let _bannerCache = null; // { src, buf } | null
 
 async function _readBanner(src) {
   if (_bannerCache?.src === src) return _bannerCache.buf;
   let buf;
   if (/^https?:\/\//i.test(src)) {
-    // ponytail: tanpa proxy — kalau nanti ada bot di belakang proxy, pindah ke axios
+    // tanpa proxy — kalau nanti ada bot di belakang proxy, pindah ke axios
     // (axios sudah terpasang). fetch bawaan dipakai supaya tidak tambah dependensi.
     const res = await fetch(src, { signal: AbortSignal.timeout(15000) });
     if (!res.ok) throw new Error(`banner HTTP ${res.status}`);
@@ -300,7 +300,7 @@ module.exports = async function infoHandler(ctx) {
 
     // ── runtime — umur PROSES Node (semua bot + web) ────────────────────────
     // Beda dari .uptime (umur KONEKSI bot ini, iterest saat .restart).
-    // ponytail: satu proses; kalau nanti ada worker terpisah, sumbernya harus
+    // satu proses; kalau nanti ada worker terpisah, sumbernya harus
     // dipisah juga.
     case 'runtime': {
       await reply(`⏱️ *Runtime Aplikasi*\n${formatUptime(process.uptime() * 1000)}\n_semua proses Node — bot & web_`);
@@ -419,7 +419,7 @@ module.exports = async function infoHandler(ctx) {
 
       // Pesan TEKS: filler readmore 4001 char (`RM`) — lipatan "Baca selengkapnya"
       // jatuh persis di bawah baris `Limit`; sisa menu ke bawah cuma kesembunyi.
-      // ponytail: cuma dipakai jalur gagal (`reply(caption)`) + audio caption.
+      // cuma dipakai jalur gagal (`reply(caption)`) + audio caption.
       const caption = head + `${RM}\n` + tail;
 
       // Caption gambar dibatasi WA 1024 char → filler 4001 nggak muat. Sisa jatah
@@ -483,7 +483,7 @@ module.exports = async function infoHandler(ctx) {
               degreesLongitude: 0,
               name: botData.bot_name || 'qwertygate',
               // Alamat di header lokasi = link API + jadibot (samain pola .env).
-              // ponytail: literal, nggak ada config per-bot buat ini — angkat ke env kalau Pak mau tiap bot beda.
+              // literal, nggak ada config per-bot buat ini — angkat ke env kalau Pak mau tiap bot beda.
               address: 'Jadibot? labs.yapari.web.id',
               ...(thumb ? { jpegThumbnail: thumb } : {}),
             },

@@ -116,7 +116,6 @@ const JAM = 3600 * 1000;
     assert.strictEqual(Number(s2.money), 2000, `money harus 2000, dapat ${s2.money}`);
     console.log('✅ klaim berikutnya menambah money lagi');
 
-    // ── 3. klaimBerEnergi: energi kurang → 0 menang ────────────────────────
     console.log('\n=== 3. klaimBerEnergi: energi kurang → 0 menang ===');
     await pool.execute('UPDATE rpg_members SET energi = 5, last_kerja = NULL, money = 1000 WHERE bot_id=? AND jid=?', [botId, jid]);
     const gagal = await klaimBerEnergi(botId, jid, {
@@ -129,7 +128,6 @@ const JAM = 3600 * 1000;
     assert.strictEqual(Number(s3.energi), 5, 'energi tidak boleh berubah');
     console.log('✅ energi kurang: 0 menang, tidak ada yang berubah');
 
-    // ── 4. klaimBerEnergi: 50× paralel → tepat 1, energi -25 ───────────────
     console.log('\n=== 4. klaimBerEnergi: 50× paralel (energi 100, biaya 25) ===');
     await pool.execute('UPDATE rpg_members SET energi = 100, last_kerja = NULL, money = 1000 WHERE bot_id=? AND jid=?', [botId, jid]);
     const hasil4 = await Promise.all(
@@ -146,7 +144,6 @@ const JAM = 3600 * 1000;
     assert.strictEqual(Number(s4.money), 1100, `money harus 1100, dapat ${s4.money}`);
     console.log('✅ energi terpotong sekali, money naik sekali');
 
-    // ── 5. Energi tidak pernah negatif walau dispam ────────────────────────
     console.log('\n=== 5. Energi tidak negatif walau dispam ===');
     await pool.execute('UPDATE rpg_members SET energi = 30, last_kerja = NULL WHERE bot_id=? AND jid=?', [botId, jid]);
     await Promise.all(Array.from({ length: 20 }, () => klaimBerEnergi(botId, jid, {

@@ -310,7 +310,7 @@ async function perpanjangDariSaldo(userId, planId, { tipe = 'perpanjang', ref = 
     // ditolak DB (ER_DUP_ENTRY) dan user tidak tercharge dua kali. Dengan ref
     // acak, dobel-klik justru lolos dua-duanya.
     //
-    // ponytail: kunci idempotensi manual = (user, paket, milidetik). Dua
+    // kunci idempotensi manual = (user, paket, milidetik). Dua
     // pembelian SENGAJA dalam milidetik yang sama akan ditolak — praktis tidak
     // mungkin dari UI, dan menolaknya lebih baik daripada mencharge dobel.
     // Kalau nanti butuh tombol "beli 2x sekaligus", kirim idempotency key dari
@@ -453,7 +453,7 @@ async function perpanjang(req, res) {
 
 // Jeda anti-dobel-klik untuk perpanjang manual tanpa idempotency_key.
 //
-// ponytail: map di memori, per PROSES. Cukup karena app ini satu proses; kalau
+// map di memori, per PROSES. Cukup karena app ini satu proses; kalau
 // nanti di-scale ke beberapa worker, ganti ke kunci di DB (baris per user) —
 // penjaga `ref` ledger sudah tahan lintas-proses, ini cuma lapis pertama.
 const KUNCI_PER_ID = new Map();

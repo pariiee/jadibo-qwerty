@@ -15,10 +15,7 @@ const crypto = require('crypto');
 const BASE = process.env.ALPAY_BASE_URL || 'https://pay.ghifari.biz.id';
 const KEY  = process.env.ALPAY_API_KEY || '';
 
-// Webhook tujuan per transaksi. Alpay hanya kirim ke URL ini kalau field-nya
-// dikirim; tanpa itu dia menembak SEMUA URL merchant yang terdaftar.
-// Harus identik dengan Webhook URL di Settings Alpay (https, tanpa trailing
-// slash) — beda satu karakter dibalas 400.
+// Harus sama persis dengan Webhook URL di Settings Alpay — https, tanpa trailing slash.
 const CALLBACK = process.env.ALPAY_CALLBACK_URL || 'https://labs.yapari.web.id/api/payment/webhook';
 
 // Cegah spam: jeda minimal antar pengecekan manual per transaksi

@@ -158,7 +158,7 @@ async function ensureBlockedLoaded(botId) {
 // Load warn dari DB saat pertama kali dibutuhkan per botId.
 // Tanpa ini, warnData selalu mulai dari 0 tiap restart -> member yang sudah
 // dikumpulin warn-nya lolos begitu bot restart.
-// ponytail: muat semua grup sekaligus (bukan per-grup); pecah per-grup kalau
+// muat semua grup sekaligus (bukan per-grup); pecah per-grup kalau
 // warn_records sudah puluhan ribu baris.
 async function ensureWarnLoaded(botId) {
   if (warnLoaded.has(botId)) return;

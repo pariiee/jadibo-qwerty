@@ -138,7 +138,7 @@ const emojiItem  = (it) => EMOJI_ITEM[(it || {}).type] || '📦';
 const ENERGI_MAKS       = 100;
 const ENERGI_REGEN_MENIT = 2;   // 1 poin / 2 menit
 
-// ponytail: regen cuma jalan saat ada command. Kalau nanti butuh energi "live",
+// regen cuma jalan saat ada command. Kalau nanti butuh energi "live",
 // panggil energiSekarang() juga di `.profil`/`.rpg` (udah aman, cuma baca).
 /** Nilai energi terkini (udah dihitung regen-nya) — TANPA nulis DB. */
 function energiSekarang(member) {
@@ -159,7 +159,7 @@ async function pakaiEnergi(botId, jid, member, biaya) {
   await updateMember(botId, jid, {
     energi: energi - biaya,
     last_energi: new Date().toISOString().slice(0, 19).replace('T', ' '),
-    // ponytail: read-modify-write, bukan `energi = energi - ?`. Dua command
+    // read-modify-write, bukan `energi = energi - ?`. Dua command
     // barengan bisa bikin 1 poin hilang — nggak masalah buat RPG chat.
   });
   return { ok: true, energi: energi - biaya, biaya };
@@ -228,7 +228,7 @@ function bacaAtm(args) {
 
 // ─── Gear terpasang ──────────────────────────────────────────────────────────
 // Level + durability disimpan di hewan_json.gear, bukan kolom baru.
-// ponytail: kalau nanti gear perlu query lintas-user (mis. "siapa paling banyak
+// kalau nanti gear perlu query lintas-user (mis. "siapa paling banyak
 // pedang naga"), pindah ke tabel `rpg_gear` (bot_id, jid, slot, lv, dur).
 
 /** Level gear terpasang. 0 = belum punya. */
@@ -281,7 +281,7 @@ function barisDur(data, slot, ikon, label) {
 }
 
 // ─── Inventory item (disimpan di hewan_json, schema sengaja ga diubah) ───────
-// ponytail: 1 kolom JSON, bukan tabel `inventory` baru. Pisah ke tabel kalau
+// 1 kolom JSON, bukan tabel `inventory` baru. Pisah ke tabel kalau
 // item udah perlu query lintas-user (mis. leaderboard pemilik item).
 const KEY_ITEM = 'item';
 const KEY_GEAR = 'gear';
@@ -777,7 +777,7 @@ module.exports = async function funRpgHandler(ctx) {
             ];
             const monster  = MONSTER_LIST[Math.floor(Math.random() * MONSTER_LIST.length)];
             // Skill atk tim nambah peluang menang — biar `.skill` kerasa di dungeon.
-            // ponytail: monster nyerang 1×, jadi buff-nya ⅓ pasukan (def diabaikan,
+            // monster nyerang 1×, jadi buff-nya ⅓ pasukan (def diabaikan,
             // dungeon lama juga nggak pakai def). Naikin kalau sekalian rombak dungeon.
             let skTim = 0;
             for (const pJid of [...new Set(players)]) {
@@ -1377,7 +1377,7 @@ module.exports = async function funRpgHandler(ctx) {
         let info = '';
 
         // Gear: langsung dipakai kalau lebih bagus ATAU gear lama udah rusak.
-        // ponytail: gear lama tetap dihitung walau dur 0 — kalau nggak, beli
+        // gear lama tetap dihitung walau dur 0 — kalau nggak, beli
         // Lv.1 pas rusak bikin "turun pangkat" dari Lv.3.
         if (item.type === 'weapon' || item.type === 'armor') {
           const slot   = item.type;
@@ -1657,7 +1657,7 @@ module.exports = async function funRpgHandler(ctx) {
           [botId, sender]
         );
         if (kini && cdRemain(kini.last_berburu, 3600000) <= 0) {
-          // ponytail: ditulis sebagai kolom terpisah, JANGAN JSON.stringify(map
+          // ditulis sebagai kolom terpisah, JANGAN JSON.stringify(map
           // hasil `member.hewan_json` — nilainya bisa string kalau driver balikin
           // JSON mentah, dan JSON.stringify(string) = string ber-quote dobel.
           const hewanData = bacaJson(kini);
@@ -1944,7 +1944,7 @@ module.exports = async function funRpgHandler(ctx) {
       const roomName = args.join(' ').trim() || null;
 
       // Cek syarat: gear Lv >= 1 & durability masih ada, healt >= 90
-      // ponytail: pakai gearDipakai(), BUKAN gearLevel() — gear rusak (dur 0)
+      // pakai gearDipakai(), BUKAN gearLevel() — gear rusak (dur 0)
       // levelnya masih > 0, jadi gate-nya bocor kalau pakai level doang.
       const sword = gearDipakai(member, 'weapon');
       const armor = gearDipakai(member, 'armor');

@@ -77,7 +77,6 @@ const wd = require('../engine/watchdog');
   await new Promise((r) => setTimeout(r, 350));
   cek("status DB 'connected' -> nggak dikirimi", kiriman.length === 0, `${kiriman.length}x`);
 
-  // 6. batalkan yang nggak ada -> false, nggak melempar
   cek('batalkan yang nggak ada -> false', wd.batalkanNotifMati(999) === false);
 
   console.log(gagal ? `\n=== GAGAL: ${gagal} masalah ===` : '\n=== SEMUA CEK LULUS ===');

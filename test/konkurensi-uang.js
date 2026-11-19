@@ -129,7 +129,6 @@ function cekReachable() {
       [botId, jidB]
     );
 
-    // ── 1. updateMoneyDelta paralel: 100× -1 dari A ────────────────────────
     console.log('=== 1. updateMoneyDelta paralel: 100× -1 dari A ===');
     const N1 = 100;
     const promises1 = Array.from({ length: N1 }, () => updateMoneyDelta(botId, jidA, -1));
@@ -148,7 +147,6 @@ function cekReachable() {
     assert.ok(saldoAkhirA >= 0, `saldo NEGATIF: ${saldoAkhirA}`);
     console.log(`✅ ${N1} paralel -1: saldo konsisten`);
 
-    // ── 2. transferMoney paralel: 50× A→B (50) dan 50× B→A (50) ────────────
     console.log('\n=== 2. transferMoney paralel: 50× A→B dan 50× B→A ===');
     const N2 = 50;
     const totalAwal = (await baca(pool, botId, jidA)) + (await baca(pool, botId, jidB));
@@ -185,7 +183,6 @@ function cekReachable() {
     }
     console.log(`✅ ${N2 * 2} paralel transfer: total konstan (atomic)`);
 
-    // ── 3. Coinflip-like: 100× ±10 paralel ──────────────────────────────────
     console.log('\n=== 3. Coinflip-like paralel: 100× ±10 ===');
     await pool.execute('UPDATE rpg_members SET money=10000 WHERE bot_id=? AND jid=?', [botId, jidA]);
     const N3 = 100;

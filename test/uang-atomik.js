@@ -40,7 +40,6 @@ assert.ok(/async\s+function\s+transferMoney\s*\(/.test(src),
   'transferMoney() tidak ditemukan di 03-fun-rpg.js');
 console.log('✅ updateMoneyDelta & transferMoney ter-ekspor di file');
 
-// ── 2. updateMoneyDelta memakai transaksi & FOR UPDATE ──────────────────────
 console.log('\n=== 2. updateMoneyDelta: transaksi + FOR UPDATE ===');
 const u = src.match(/async\s+function\s+updateMoneyDelta\s*\([^)]*\)\s*\{([\s\S]*?)\n\}/);
 assert.ok(u, 'gagal menemukan body updateMoneyDelta');
@@ -59,7 +58,6 @@ assert.ok(/next\s*<\s*0[\s\S]{0,40}rollback/i.test(uBody),
   'guard next < 0 + rollback tidak ditemukan');
 console.log('✅ guard `next < 0` ada, rollback dulu');
 
-// ── 4. transferMoney: lock dua baris, satu transaksi ────────────────────────
 console.log('\n=== 4. transferMoney: dua baris, satu transaksi ===');
 const t = src.match(/async\s+function\s+transferMoney\s*\([^)]*\)\s*\{([\s\S]*?)\n\}/);
 assert.ok(t, 'gagal menemukan body transferMoney');

@@ -74,7 +74,7 @@ function renderTemplate(teks, ctx = {}) {
 }
 
 // Daftar variable buat `.catatan` — sumbernya KEYS di atas, biar nggak beda.
-// ponytail: `groupname` & `subject` masih ADA di KEYS/map (template lama yang
+// `groupname` & `subject` masih ADA di KEYS/map (template lama yang
 // sudah tersimpan di DB tetap ke-render), tapi sengaja nggak didaftarkan di sini
 // — nama grup cukup `@namegc`. Hapus dari KEYS juga kalau nggak ada teks lama.
 const VAR_INFO = {

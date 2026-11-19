@@ -306,7 +306,6 @@ async function handleMessage(tgBot, msg, botData, botId) {
     console.warn('[TelegramAdapter] Error:', e.message);
   }
 
-  // Command tidak dikenal
   await tgBot.sendMessage(chatId, `Command tidak dikenal. Ketik ${prefix || '/'}menu untuk daftar.`);
   await logBot(botId, 'cmderr', `[unknown] ${normalized}`);
 }

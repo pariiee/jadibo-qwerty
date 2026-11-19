@@ -136,15 +136,12 @@ assert.strictEqual(dicurigai.length, 0,
   'fitur yang menulisnya akan mati dengan "Unknown column"');
 console.log('✅ semua kolom yang ditulis updateMember() ada di skema');
 
-// ── 3. Sapu SQL mentah di handler (SET/INSERT) ───────────────────────────────
 console.log('\n=== 3. SQL mentah (SET/INSERT) di handler ===');
 
 const sqlKolom = new Set();
-// UPDATE rpg_members SET a = ?, b = ?, ...
 for (const mm of rpg.matchAll(/UPDATE\s+rpg_members[\s\S]{0,600}?SET\s+([\s\S]{0,400}?)WHERE/gi)) {
   for (const k of mm[1].matchAll(/`?([a-zA-Z_][a-zA-Z0-9_]*)`?\s*=/g)) sqlKolom.add(k[1]);
 }
-// INSERT INTO rpg_members (a, b, c)
 for (const mm of rpg.matchAll(/INSERT\s+INTO\s+rpg_members\s*\(([^)]*)\)/gi)) {
   for (const k of mm[1].split(',')) sqlKolom.add(k.trim().replace(/`/g, ''));
 }

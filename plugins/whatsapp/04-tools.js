@@ -75,7 +75,7 @@ async function extractMedia(ctx, allowed = ['imageMessage', 'videoMessage', 'sti
 // ─── Helper: pilih N video terbaik dari hasil pencarian TikTok ───────────────
 // Skor = berapa banyak kata kunci (>2 huruf) yang muncul di judul; seri →
 // durasi terpendek; masih seri → peringkat API yang lebih atas.
-// ponytail: heuristik kata-per-kata; upgrade ke fuzzy/embedding kalau hasil
+// heuristik kata-per-kata; upgrade ke fuzzy/embedding kalau hasil
 // teratas sering melenceng. Endpoint tidak mengirim playCount, jadi popularitas
 // belum bisa dipakai sebagai patokan.
 const keyWords = (q) => String(q || '').toLowerCase().split(/\s+/).filter(w => w.length > 2);
@@ -819,7 +819,6 @@ ${rapikanError(e)}`);
         const imageUrl = uploadRes.data?.results?.file_url;
         if (!imageUrl) throw new Error('Upload foto gagal');
 
-        // GET fake-channel-ios
         const res = await axios.get(`${process.env.BASE_API}api/maker/fake-channel-ios`, {
           params: { name: nama, followers, time, image: imageUrl },
           headers: { 'X-API-Key': process.env.KEY_API },
@@ -902,7 +901,6 @@ ${rapikanError(e)}`);
         const imageUrl2 = uploadRes2.data?.results?.file_url;
         if (!imageUrl2) throw new Error('Upload foto gagal');
 
-        // GET fakecallandro
         const res2 = await axios.get(`${process.env.BASE_API}api/maker/fakecallandro`, {
           params: { name: nama2, duration, image: imageUrl2 },
           headers: { 'X-API-Key': process.env.KEY_API },
@@ -3665,7 +3663,6 @@ ${rapikanError(e)}`);
       return true;
     }
 
-    // ── chatgpt — ChatGPT AI ──────────────────────────────────────────────────
     case 'chatgpt':
     case 'gpt': {
       const prompt = args.join(' ').trim();
@@ -4319,7 +4316,6 @@ ${rapikanError(e)}`);
       return true;
     }
 
-    // ── gemini — Gemini AI ────────────────────────────────────────────────────
     case 'gemini': {
       const prompt = args.join(' ').trim();
       if (!prompt) {
@@ -4934,7 +4930,7 @@ ${rapikanError(e)}`);
         const res = await axios.get(dlUrl, { responseType: 'arraybuffer', timeout: 90000 });
         const buf = Buffer.from(res.data);
 
-        // ponytail: video X sering datang tanpa track audio (klip hasil cut, durasi pas
+        // video X sering datang tanpa track audio (klip hasil cut, durasi pas
         // 1 detik). WA nolak file kayak gitu walau isinya sehat — muncul "video tidak
         // dapat diputar". Remux passthrough + audio senyap = 0 re-encode, 0 turun kualitas.
         const bersih = await normalVideo(buf);
@@ -4976,7 +4972,7 @@ ${rapikanError(e)}`);
         // pindah ke cadangan → link yang SAH kebaca "gagal" di member.
         // Sekarang: beri BE kesempatan menyelesaikan 9 dtk-nya, sisakan jeda buat
         // kirim media (video diunduh di bawah dengan timeout 90 dtk sendiri).
-        // ponytail: satu angka sinkron dgn TIMEOUT BE — kalau BE diubah, samakan.
+        // satu angka sinkron dgn TIMEOUT BE — kalau BE diubah, samakan.
         const { data } = await axios.get(`${process.env.BASE_API}api/download/tiktok`, {
           params: { url },
           headers: { 'X-API-Key': process.env.KEY_API },

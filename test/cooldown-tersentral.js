@@ -73,7 +73,6 @@ assert.ok(iC > 0 && iD > 0, 'cooldownGuard atau loop plugin tidak ditemukan di t
 assert.ok(iC < iD, 'cooldownGuard dipanggil SETELAH loop plugin di Telegram');
 console.log('✅ cooldownGuard() dipanggil sebelum loop plugin di Telegram');
 
-// ── 5. Pengecualian owner & dev (Opsi A) ────────────────────────────────────
 console.log('\n=== 5. Pengecualian owner & dev (Opsi A: hanya kelompok ber-`pengecualian`) ===');
 // engine/cooldown.js: pengecualian dibaca dari tabel config. Opsi A — owner/dev
 // HANYA dibebaskan di kelompok yang mendefinisikan `pengecualian` (cuma 'umum').
@@ -107,7 +106,6 @@ assert.ok(/if\s*\(\s*now\s*-\s*lastB\s*>=\s*ms\s*\)/.test(cdEngine),
   'pembatas "sekali per jendela" tidak ada — bisa spam balasan');
 console.log('✅ lastBalas Map: balas sekali per jendela cooldown');
 
-// ── 7. Kelompok 'umum' diam ─────────────────────────────────────────────────
 console.log('\n=== 7. Kelompok "umum" diam (balasan:false) ===');
 assert.strictEqual(tabel.TABEL['umum'].balasan, false,
   'kelompok "umum" harus balasan:false — spam user biasa tidak boleh dapat balasan');

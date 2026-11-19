@@ -277,7 +277,7 @@ async function broadcast(req, res) {
   const gagal = [];
   let terkirim = 0;
 
-  // ponytail: berurutan, bukan paralel. Satu bot yang mengirim dan WA membatasi
+  // berurutan, bukan paralel. Satu bot yang mengirim dan WA membatasi
   // laju — paralel di sini cuma bikin pesan ditolak. Ganti ke antrean kalau
   // jumlah user sudah ratusan.
   for (const u of users) {

@@ -46,7 +46,6 @@ for (const { var: v, label } of ENV_WAJIB) {
 }
 console.log(`✅ ${ENV_WAJIB.length} guard boot ada`);
 
-// ── 2. Tidak ada fallback publik 'king123' ────────────────────────────────────
 console.log('\n=== 2. Tidak ada fallback hardcode "king123" / "admin" ===');
 // "king123" — password publik terkenal
 assert.ok(!server.includes("'king123'") && !server.includes('"king123"'),
@@ -60,14 +59,12 @@ assert.ok(!fallbackKing.test(server),
   'server.js masih punya fallback KING_USERNAME default "king"');
 console.log('✅ tidak ada fallback publik "king123" / "admin" / "king"');
 
-// ── 3. seedDefaults tidak punya default publik ──────────────────────────────
 console.log('\n=== 3. seedDefaults: tidak ada default publik ===');
 const seedFn = server.match(/seedDefaults\s*\(\s*process\.env\.KING_USERNAME\s*,\s*hashed\s*\)/);
 assert.ok(seedFn,
   'server.js tidak memanggil seedDefaults(process.env.KING_USERNAME, hashed) — kedua env dipakai langsung');
 console.log('✅ seedDefaults dipanggil dengan env langsung, tanpa fallback');
 
-// ── 4. .env.example: placeholder, bukan nilai default publik ───────────────
 console.log('\n=== 4. .env.example: placeholder, bukan default publik ===');
 const lines = envEx.split('\n');
 for (const ln of lines) {
