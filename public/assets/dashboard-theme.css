@@ -66,8 +66,6 @@ button{font:inherit;color:inherit;cursor:pointer}
   background:var(--shell)!important;
   border:1px solid var(--edge)!important;
   border-radius:32px!important;
-  backdrop-filter:blur(26px)!important;
-  -webkit-backdrop-filter:blur(34px)!important;
   box-shadow:var(--shadow),var(--hl)!important;
   overflow:hidden!important;
   position:relative!important;
