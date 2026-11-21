@@ -690,13 +690,15 @@ async function gantiPassword(req, res) {
   try {
     const lama = String(req.body?.lama || '');
     const baru = String(req.body?.baru || '');
-    if (!lama || !baru)   return sendError(res, 400, 'Password lama dan baru wajib diisi');
+    if (!baru)            return sendError(res, 400, 'Password baru wajib diisi');
     if (baru.length < 6)  return sendError(res, 400, 'Password baru minimal 6 karakter');
     if (baru === lama)    return sendError(res, 400, 'Password baru sama dengan yang lama');
 
     const [rows] = await pool.execute('SELECT password FROM users WHERE id = ?', [req.user.id]);
     if (rows.length === 0) return sendError(res, 404, 'User tidak ditemukan');
-    if (!await bcrypt.compare(lama, rows[0].password))
+    // `lama` opsional: form profil cuma minta password baru. Kalau klien lama
+    // masih mengirimkannya, tetap diverifikasi.
+    if (lama && !await bcrypt.compare(lama, rows[0].password))
       return sendError(res, 401, 'Password lama salah');
 
     // `token_version + 1` sekaligus jadi penanda: SEMUA token lama (termasuk

@@ -77,6 +77,60 @@
     body.page-profil .profil-stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
     body.page-profil .profil-forms-grid { grid-template-columns: 1fr !important; }
   }
+
+  /* Card password baru (1 kolom + mata + meter kekuatan) */
+body.page-profil .pf-pass-wrap {
+  position: relative !important;
+  display: flex !important;
+  flex: 1 1 auto !important;
+}
+body.page-profil .pf-pass-wrap .pf-inp { padding-right: 46px !important; }
+body.page-profil .pf-eye {
+  position: absolute !important;
+  right: 8px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 32px !important;
+  height: 32px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  color: #6B6B6B !important;
+  cursor: pointer !important;
+}
+body.page-profil .pf-eye:hover { color: #151515 !important; background: #F2F0FF !important; }
+body.page-profil .pass-strength {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  margin: 10px 0 0 !important;
+}
+body.page-profil .strength-bars { display: flex !important; gap: 6px !important; flex: 1 !important; }
+body.page-profil .s-bar {
+  flex: 1 !important;
+  height: 8px !important;
+  background: #FFFFFF !important;
+  border: 2px solid #151515 !important;
+  border-radius: 999px !important;
+  transition: background .2s ease !important;
+}
+body.page-profil .strength-txt {
+  min-width: 84px !important;
+  text-align: right !important;
+  font-size: 12.5px !important;
+  font-weight: 800 !important;
+  color: #6B6B6B !important;
+}
+body.page-profil .pass-strength.weak .s-bar:nth-child(1) { background: #FF6B6B !important; }
+body.page-profil .pass-strength.weak .strength-txt { color: #D64545 !important; }
+body.page-profil .pass-strength.medium .s-bar:nth-child(-n+2) { background: #FFC857 !important; }
+body.page-profil .pass-strength.medium .strength-txt { color: #A9761B !important; }
+body.page-profil .pass-strength.strong .s-bar { background: #D8FF7A !important; }
+body.page-profil .pass-strength.strong .strength-txt { color: #4A7A00 !important; }
 </style>
 </head>
 <body class="page-dashboard page-profil">
@@ -226,24 +280,23 @@
             </div>
           </div>
           <form id="pw-form">
-            <div class="pf-pw-fields">
-              <div class="field">
-                <label class="pf-label" for="pw-lama">Password Lama</label>
-                <input class="inp pf-inp" id="pw-lama" type="password" autocomplete="current-password" placeholder="Password saat ini" required />
-              </div>
-              <div class="field">
-                <label class="pf-label" for="pw-baru">Password Baru</label>
+            <label class="pf-label" for="pw-baru">Password Baru</label>
+            <div class="pf-input-group">
+              <div class="pf-pass-wrap">
                 <input class="inp pf-inp" id="pw-baru" type="password" placeholder="Min. 6 karakter" autocomplete="new-password" required />
+                <button type="button" class="pf-eye" id="pw-eye" aria-label="Lihat password" title="Lihat password">
+                  <svg class="eye-off" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                  <svg class="eye-on" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
               </div>
-              <div class="field">
-                <label class="pf-label" for="pw-ulang">Ulangi Password Baru</label>
-                <input class="inp pf-inp" id="pw-ulang" type="password" placeholder="Ulangi password baru" autocomplete="new-password" required />
-              </div>
+              <button class="pf-btn-submit" id="pw-btn" type="submit">Simpan</button>
+            </div>
+            <div class="pass-strength" id="pw-strength">
+              <div class="strength-bars"><i class="s-bar"></i><i class="s-bar"></i><i class="s-bar"></i><i class="s-bar"></i></div>
+              <span class="strength-txt" id="pw-strength-txt">Belum diisi</span>
             </div>
             <div class="err pf-err" id="pw-error"></div>
-            <div class="pf-actions" style="margin-top:4px">
-              <button class="pf-btn-submit" type="submit">Perbarui Password</button>
-            </div>
+            <div class="ok pf-ok" id="pw-ok"></div>
           </form>
         </section>
       </div>
@@ -251,6 +304,6 @@
   </main>
 </div>
 
-<script src="/js/profil.js?v=5.2" defer></script>
+<script src="/js/profil.js?v=5.3" defer></script>
 </body>
 </html>

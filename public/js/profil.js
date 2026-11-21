@@ -180,28 +180,63 @@
     pesan(document.getElementById('pw-error'), msg);
   }
 
+  // Satu kolom saja: password baru. Skor 0-5, dipetakan ke 4 label.
+  // ponytail: logika skor diduplikasi dari auth-page.js (10 baris) — jadikan
+  // modul bersama kalau nanti ada halaman ketiga yang butuh.
+  const pwBaru   = document.getElementById('pw-baru');
+  const pwStr    = document.getElementById('pw-strength');
+  const pwStrTxt = document.getElementById('pw-strength-txt');
+  const pwOk     = document.getElementById('pw-ok');
+
+  function cekKekuatan(p) {
+    if (!p) return { level: '', label: 'Belum diisi' };
+    let skor = 0;
+    if (p.length >= 8) skor++;
+    if (p.length >= 10) skor++;
+    if (p.length >= 14) skor++;
+    if (/[a-z]/.test(p) && /[A-Z]/.test(p)) skor++;
+    if (/\d/.test(p)) skor++;
+    if (/[^a-zA-Z0-9]/.test(p)) skor++;
+    if (p.length < 8 || skor <= 2) return { level: 'weak',   label: 'Lemah' };
+    if (skor <= 4)                  return { level: 'medium', label: 'Kuat' };
+    return { level: 'strong', label: 'Sangat kuat' };
+  }
+
+  function updateStrength() {
+    const { level, label } = cekKekuatan(pwBaru.value);
+    pwStr.className = 'pass-strength' + (level ? ' ' + level : '');
+    pwStrTxt.textContent = label;
+  }
+
+  pwBaru?.addEventListener('input', updateStrength);
+
+  document.getElementById('pw-eye')?.addEventListener('click', (ev) => {
+    const btn = ev.currentTarget;
+    const buka = pwBaru.type === 'password';
+    pwBaru.type = buka ? 'text' : 'password';
+    btn.querySelector('.eye-off').style.display = buka ? 'none' : '';
+    btn.querySelector('.eye-on').style.display  = buka ? '' : 'none';
+  });
+
   async function simpanPassword(e) {
     e.preventDefault();
-    tampilError('');
-    const lama = document.getElementById('pw-lama').value;
-    const baru = document.getElementById('pw-baru').value;
-    const ulang = document.getElementById('pw-ulang').value;
+    tampilError(''); pesan(pwOk, '');
+    const baru = pwBaru.value;
 
-    // Dicek di sini juga biar nggak bolak-balik ke server buat salah ketik.
+    // Dicek di sini biar nggak bolak-balik ke server buat salah ketik.
     // Server tetap memvalidasi ulang (klien nggak boleh jadi satu-satunya penjaga).
     if (baru.length < 6) return tampilError('Password baru minimal 6 karakter.');
-    if (baru !== ulang) return tampilError('Ulangi password baru belum sama.');
 
-    const tombol = e.target.querySelector('button[type="submit"]');
+    const tombol = document.getElementById('pw-btn');
     tombol.disabled = true;
     const d = await api('/api/auth/password', {
-      method: 'POST', body: JSON.stringify({ lama, baru }),
+      method: 'POST', body: JSON.stringify({ baru }),
     });
     tombol.disabled = false;
 
     if (!d?.ok) return tampilError(d?.message || 'Gagal ganti password.');
-    e.target.reset();
-    showToast(d.message || 'Password diganti', 'success');
+    pesan(pwOk, d.message || 'Password diperbarui.');
+    pwBaru.value = ''; pwBaru.type = 'password'; updateStrength();
   }
 
   async function simpanPhone(e) {
