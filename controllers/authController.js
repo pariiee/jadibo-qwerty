@@ -738,10 +738,7 @@ async function gantiPassword(req, res) {
 async function simpanPhone(req, res) {
   try {
     const nomor = String(req.body?.phone || '').replace(/\D/g, '');
-    if (!nomor) {
-      await pool.execute('UPDATE users SET phone = NULL WHERE id = ?', [req.user.id]);
-      return res.json({ ok: true, message: 'Nomor HP dihapus.' });
-    }
+    if (!nomor) return sendError(res, 400, 'Nomor HP wajib diisi.');
 
     // Terima 08xx / +628xx / 628xx — disimpan sebagai 628xx biar konsisten
     // dengan `owner_number`, jadi konversi ke JID nggak perlu mikir lagi.
