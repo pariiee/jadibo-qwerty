@@ -64,8 +64,6 @@
       if (btnAdd) btnAdd.style.display = 'none';
       const heroLead = document.querySelector('.bt-hero .bt-lead');
       if (heroLead) heroLead.textContent = 'Monitoring telemetri ekosistem qwertygate, omzet transaksi, dan performa server.';
-      const trialBtn = document.querySelector('.bt-peach .bt-pill-btn');
-      if (trialBtn) trialBtn.style.display = 'none';
       const promoCard = document.querySelector('.bt-promo');
       if (promoCard) promoCard.style.display = 'none';
 
