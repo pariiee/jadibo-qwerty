@@ -2191,8 +2191,7 @@ body.page-panduan .faq-note {
 }
 
 /* ══ Pricing Component Styles ══ */
-body.page-pricing .pricing-bento-content,
-body.page-profil .pricing-bento-content {
+body.page-pricing .pricing-bento-content {
   width: 100% !important;
   max-width: 1360px !important;
   margin: 0 auto !important;
