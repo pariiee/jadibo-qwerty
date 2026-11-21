@@ -63,10 +63,11 @@
     document.getElementById('pf-paket').textContent = u.plan_name + ' · limit ' + u.daily_limit + '/hari';
 
     const hari = sisaHari(u.plan_expired_at);
-    document.getElementById('pf-exp').textContent = u.plan_aktif ? (hari + ' hari') : 'Habis';
-    document.getElementById('pf-exp-sub').textContent = u.plan_expired_at
-      ? 'Berakhir ' + tanggal(u.plan_expired_at)
-      : u.is_admin ? 'Tanpa masa aktif' : 'Belum pernah berlangganan';
+    document.getElementById('pf-exp').textContent = u.is_admin ? 'Tanpa masa aktif'
+      : (u.plan_aktif ? (hari + ' hari') : 'Habis');
+    document.getElementById('pf-exp-sub').textContent = u.is_admin ? 'Berlaku selama jadi admin'
+      : u.plan_expired_at ? 'Berakhir ' + tanggal(u.plan_expired_at)
+      : 'Belum pernah berlangganan';
 
     const jml = (bots?.bots || []).length;
     document.getElementById('pf-bot').textContent = jml;
