@@ -1515,13 +1515,6 @@ body.page-dashboard .bt-q { padding: 8px 12px; }
 body.page-dashboard .bt-stk { top: 46px; width: 70px; height: 70px; }
 body.page-dashboard .bt-stk svg { width: 40px; height: 40px; }
 
-/* Tombol "Klaim trial" pindah ke pojok kanan atas tile Kedaluwarsa (layar lebar) */
-@media (min-width: 1180px) {
-  body.page-dashboard .bt-grid .bt-tile.bt-peach > div:last-child {
-    position: absolute !important; top: 14px; right: 14px; margin: 0 !important; z-index: 2;
-  }
-}
-
 /* ══ Command Manager Component Styles ══ */
 body.page-command .cmd-bento-content {
   width: 100% !important;
