@@ -1,4 +1,5 @@
 (function () {
+  let me = null;
   let botData = null;
   let isRunning = false;
   let ws = null;
@@ -596,7 +597,12 @@
     sel.onchange = (e) => { location.href = '/config/' + e.target.value; };   // value = slug
   })();
 
-  loadBot();
+  async function whoami() {
+    const d = await api('/api/auth/me');
+    if (d?.ok) me = d.user;
+  }
+
+  (async () => { await whoami(); await loadBot(); })();
 window.startBot = startBot; window.stopBot = stopBot; window.confirmStart = confirmStart;
 window.restartBot = restartBot; window.clearSession = clearSession; window.dismissQr = dismissQr;
 window.clearTerminal = clearTerminal; window.toggleToken = toggleToken;

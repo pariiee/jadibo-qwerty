@@ -202,12 +202,16 @@
     e.preventDefault();
     const err = document.getElementById('hp-error');
     const ok = document.getElementById('hp-ok');
+    const tombol = document.getElementById('hp-btn');
     err.textContent = ''; ok.textContent = '';
 
     const nomor = document.getElementById('hp-nomor').value.trim();
+    if (!nomor) { err.textContent = 'Nomor HP wajib diisi.'; return; }
+    tombol.disabled = true; tombol.textContent = 'Menyimpan…';
     const d = await api('/api/auth/phone', {
       method: 'POST', body: JSON.stringify({ phone: nomor }),
     });
+    tombol.disabled = false; tombol.textContent = 'Simpan';
     if (!d?.ok) { err.textContent = d?.message || 'Gagal menyimpan nomor.'; return; }
 
     // Server yang menormalkan (08xx -> 628xx) — tampilkan balik hasilnya biar
