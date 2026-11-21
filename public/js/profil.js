@@ -66,7 +66,7 @@
     document.getElementById('pf-exp').textContent = u.plan_aktif ? (hari + ' hari') : 'Habis';
     document.getElementById('pf-exp-sub').textContent = u.plan_expired_at
       ? 'Berakhir ' + tanggal(u.plan_expired_at)
-      : 'Belum pernah berlangganan';
+      : u.is_admin ? 'Tanpa masa aktif' : 'Belum pernah berlangganan';
 
     const jml = (bots?.bots || []).length;
     document.getElementById('pf-bot').textContent = jml;
