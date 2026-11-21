@@ -2012,6 +2012,11 @@ body.page-log .log-terminal-card[style*="display:none"] {
   display: none !important;
 }
 
+/* .bt-go global dipaksa align-self:flex-start; di kartu kosong harus center */
+body.page-log .log-kosong-card .bt-go {
+  align-self: center !important;
+}
+
 @media (max-width: 640px) {
   body.page-log .log-hero-stat { display: none !important; }
   body.page-log .log-toolbar { flex-wrap: wrap !important; gap: 10px !important; }
