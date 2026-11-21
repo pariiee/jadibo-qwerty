@@ -972,6 +972,23 @@ async function googleCallback(req, res) {
       user = { id: ins.insertId, username: candidate, role: 'user', token_version: 0 };
     }
 
+    // Google sudah membuktikan kepemilikan email (userinfo + email_verified),
+    // jadi jangan suruh dia verifikasi ulang. Sumber kebenaran status di app ini
+    // adalah baris `used_at` di email_verifications (lihat listUsers), bukan
+    // kolom di users — jadi catat satu baris terpakai, sekali saja.
+    if (profile.email_verified) {
+      const [[cek]] = await pool.execute(
+        'SELECT COUNT(*) AS n FROM email_verifications WHERE user_id = ? AND used_at IS NOT NULL',
+        [user.id]
+      );
+      if (!Number(cek.n)) {
+        await pool.execute(
+          'INSERT INTO email_verifications (user_id, token, expires_at, used_at) VALUES (?, ?, NOW(), NOW())',
+          [user.id, crypto.randomBytes(16).toString('hex')]
+        );
+      }
+    }
+
     const token = signToken({ id: user.id, username: user.username, role: user.role, tv: user.token_version || 0 });
 
     res.cookie('token', token, {
