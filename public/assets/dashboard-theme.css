@@ -1073,6 +1073,7 @@ body.page-dashboard .bt-foot b{color:var(--bt-text)}
   body.page-dashboard .bt-hero{grid-column:span 2 !important;grid-row:auto !important;padding:20px 18px !important;min-height:auto !important}
   body.page-dashboard .bt-stat-card{grid-column:span 1 !important;grid-row:auto !important;min-height:140px !important}
   body.page-dashboard .bt-s4,
+  body.page-dashboard .bt-start,
   body.page-dashboard .bt-bot,
   body.page-dashboard .bt-add,
   body.page-dashboard .bt-streak{grid-column:span 2 !important;grid-row:auto !important;width:100% !important}
@@ -5756,7 +5757,11 @@ body.page-dashboard .bt-tile.bt-skeleton {
   }
 }
 
+/* ══ Tile statistik: nilai naik ke atas, tidak terdorong ke dasar ══ */
+body.page-dashboard .bt-stat-card{justify-content:flex-start;gap:14px}
 
-
-
-
+/* ══ Tile "Mulai di sini" (akun tanpa slot) ══ */
+body.page-dashboard .bt-start h3{font-size:22px;font-weight:800;letter-spacing:-.035em}
+body.page-dashboard .bt-steps{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+body.page-dashboard .bt-steps li{display:inline-flex;align-items:center;gap:8px;padding:6px 12px 6px 6px;border:1.5px solid #151515;border-radius:999px;background:#fff;font-size:12.5px;font-weight:700}
+body.page-dashboard .bt-steps i{width:22px;height:22px;border-radius:50%;background:#151515;color:#D8FF7A;display:grid;place-items:center;font-style:normal;font-size:11.5px;font-weight:800}

@@ -451,14 +451,36 @@
       card.querySelector('[data-stat]').onclick = (e) => { e.stopPropagation(); location.href = '/bot/' + botHref(bot); };
     });
 
-    const add = document.createElement('button');
-    add.type = 'button';
-    add.className = 'bt-tile bt-add bt-s3 bt-r2' + (btAnimated ? '' : ' bt-anim');
-    if (!btAnimated) add.style.animationDelay = (300 + bots.length * 70) + 'ms';
-    const slotDesc = (me && me.is_admin) ? (bots.length + ' / \u221e slot terpakai') : (bots.length + ' / ' + (me && me.slots ? me.slots : 1) + ' slot terpakai');
-    add.innerHTML = '<span class="bt-pl"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><span>Tambah bot</span><small style="font-size:12px;color:var(--bt-mute);font-weight:600">' + esc(slotDesc) + '</small>';
-    add.onclick = openAddBot;
-    grid.appendChild(add);
+    const noSlot = !(me && me.is_admin) && maxSlots === 0;
+    if (noSlot) {
+      const canTrial = !!(me && !me.trial_used);
+      const start = document.createElement('article');
+      start.className = 'bt-tile bt-k bt-lime bt-start bt-s6 bt-r2' + (btAnimated ? '' : ' bt-anim');
+      if (!btAnimated) start.style.animationDelay = (300 + bots.length * 70) + 'ms';
+      start.innerHTML =
+        '<div class="bt-row"><span class="bt-pill">Mulai di sini</span><span class="bt-pill">3 langkah</span></div>' +
+        '<h3>' + (canTrial ? 'Coba gratis 3 hari dulu' : 'Pilih paket untuk mulai') + '</h3>' +
+        '<p class="bt-d">' + (canTrial ? 'Klaim trial, lalu bot pertamamu bisa langsung dibuat.' : 'Trial kamu sudah terpakai. Pilih paket supaya bisa membuat bot.') + '</p>' +
+        '<ol class="bt-steps">' +
+          '<li><i>1</i>' + (canTrial ? 'Klaim trial' : 'Pilih paket') + '</li>' +
+          '<li><i>2</i>Buat bot</li>' +
+          '<li><i>3</i>Hubungkan platform</li>' +
+        '</ol>' +
+        '<button type="button" class="bt-go" data-start>' + (canTrial ? 'Klaim trial 3 hari' : 'Lihat paket') +
+          '<span><svg class="i" viewBox="0 0 24 24"><path d="M7 17 17 7M8 7h9v9"/></svg></span></button>';
+      start.querySelector('[data-start]').onclick = () => { if (canTrial) { klaimTrialAction(); } else { location.href = '/pricing'; } };
+      grid.appendChild(start);
+    } else {
+      const add = document.createElement('button');
+      add.type = 'button';
+      add.className = 'bt-tile bt-add bt-s3 bt-r2' + (btAnimated ? '' : ' bt-anim');
+      if (!btAnimated) add.style.animationDelay = (300 + bots.length * 70) + 'ms';
+      const beli = me?.slots_beli ?? maxSlots;
+      const slotDesc = (me && me.is_admin) ? (bots.length + ' / \u221e slot terpakai') : (bots.length + ' / ' + beli + ' slot terpakai');
+      add.innerHTML = '<span class="bt-pl"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><span>Tambah bot</span><small style="font-size:12px;color:var(--bt-mute);font-weight:600">' + esc(slotDesc) + '</small>';
+      add.onclick = openAddBot;
+      grid.appendChild(add);
+    }
 
     btAnimated = true;
     renderSide();
