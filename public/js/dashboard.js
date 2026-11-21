@@ -491,7 +491,7 @@
   function openAddBot() {
     if (maxSlots === 0) {
       if (me && !me.trial_used) {
-        if (confirm('Akun Anda belum memiliki slot bot.\nKlaim Trial 3 Hari sekarang gratis?')) {
+        if (confirm('Akun Anda belum memiliki slot bot.\nKlaim Trial ' + ((me && me.trial_hari) || 7) + ' hari sekarang gratis?')) {
           klaimTrialAction();
         }
         return;
@@ -510,7 +510,7 @@
     try {
       const res = await api('/api/billing/trial', { method: 'POST' });
       if (res && res.ok) {
-        alert(res.message || 'Trial 3 hari berhasil aktif!');
+        alert(res.message || ('Trial ' + ((me && me.trial_hari) || 7) + ' hari berhasil aktif!'));
         location.reload();
       } else {
         alert(res?.message || 'Gagal klaim trial.');
