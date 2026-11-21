@@ -437,7 +437,8 @@
     else ctrlMsg(d.message, 'error');
   }
   async function clearSession() {
-    if (!confirm('Hapus sesi? Bot perlu scan QR ulang setelah ini.')) return;
+    if (!(await uiConfirm('Hapus sesi? Bot perlu scan QR ulang setelah ini.',
+      { ok: 'Ya, hapus sesi', danger: true }))) return;
     const d = await api('/api/bots/' + botId + '/clear-session', { method: 'POST' });
     if (!d) return;
     if (d.ok) {

@@ -271,7 +271,8 @@
   })();
 
   window.tambahRespon = async function () {
-    if (!confirm('Beli 1.000 kuota respon seharga Rp 500 dari saldo dompet?')) return;
+    if (!(await uiConfirm('Beli 1.000 kuota respon seharga Rp 500 dari saldo dompet?',
+      { ok: 'Ya, beli' }))) return;
     const btn = document.getElementById('btn-tambah-respon');
     if (btn) btn.disabled = true;
     try {

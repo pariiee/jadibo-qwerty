@@ -271,7 +271,8 @@
         (Date.now().toString(36) + Math.random().toString(36).slice(2));
     }
 
-    if (!confirm(`Perpanjang paket ${namaPaket} seharga ${hargaPaket} dari saldo?`)) return;
+    if (!(await uiConfirm(`Perpanjang paket ${namaPaket} seharga ${hargaPaket} dari saldo?`,
+      { ok: 'Ya, perpanjang' }))) return;
 
     await kunci(tombol, async () => {
       const idempotency_key = kunciNiat[planId];

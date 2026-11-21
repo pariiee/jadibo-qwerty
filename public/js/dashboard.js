@@ -488,12 +488,12 @@
   }
 
   let platform = 'whatsapp';
-  function openAddBot() {
+  async function openAddBot() {
     if (maxSlots === 0) {
       if (me && !me.trial_used) {
-        if (confirm('Akun Anda belum memiliki slot bot.\nKlaim Trial ' + ((me && me.trial_hari) || 7) + ' hari sekarang gratis?')) {
-          klaimTrialAction();
-        }
+        const ambil = await uiConfirm('Akun Anda belum memiliki slot bot.\nKlaim Trial ' + ((me && me.trial_hari) || 7) + ' hari sekarang gratis?',
+          { ok: 'Klaim trial', title: 'Trial gratis' });
+        if (ambil) klaimTrialAction();
         return;
       }
       location.href = '/pricing';
@@ -510,7 +510,7 @@
     try {
       const res = await api('/api/billing/trial', { method: 'POST' });
       if (res && res.ok) {
-        alert(res.message || ('Trial ' + ((me && me.trial_hari) || 7) + ' hari berhasil aktif!'));
+        await uiToast(res.message || ('Trial ' + ((me && me.trial_hari) || 7) + ' hari berhasil aktif!'), 1400);
         location.reload();
       } else {
         alert(res?.message || 'Gagal klaim trial.');
