@@ -151,7 +151,7 @@
     elSlot.className = 'bt-v' + (beli > 0 && used >= beli ? ' warn' : '');
     document.getElementById('st-slot-sub').textContent =
       me?.is_admin ? `Tak terbatas \u00b7 ${used} terpakai`
-      : beli === 0 ? 'Belum ada slot \u2014 klaim Trial atau beli paket'
+      : beli === 0 ? 'Belum ada slot \u2014 beli paket dulu'
       : used >= beli ? `Slot penuh \u2014 ${used} dari ${beli} terpakai`
       : `Sisa ${beli - used} slot lagi dari ${beli}`;
   }
@@ -282,7 +282,7 @@
       document.getElementById('st-exp-sub').textContent = 'Paket berakhir \u2014 perpanjang di halaman Pricing';
     } else {
       txt('st-exp', 'Tidak ada', 'dim');
-      document.getElementById('st-exp-sub').textContent = `Belum ambil paket \u2014 klaim Trial ${me.trial_hari ?? 3} hari gratis`;
+      document.getElementById('st-exp-sub').textContent = 'Belum ada paket aktif';
     }
 
     const online = bots.filter(b => b.is_running).length;
