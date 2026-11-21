@@ -1761,6 +1761,7 @@ body.page-command .cmd-pager-info { font-size: 13px !important; font-weight: 700
 }
 
 /* ══ Log Activity Component Styles ══ */
+/* ponytail: toolbar ikut lebar kartu; display tanpa !important supaya JS bisa sembunyikan saat tanpa bot */
 body.page-log .log-bento-content {
   width: 100% !important;
   max-width: 1360px !important;
@@ -1797,7 +1798,7 @@ body.page-log .log-stat-lbl { font-size: 11px !important; font-weight: 700 !impo
 body.page-log .log-stat-val { font-size: 20px !important; font-weight: 800 !important; color: #151515 !important; }
 
 body.page-log .log-toolbar {
-  display: flex !important;
+  display: flex;
   align-items: center !important;
   gap: 12px !important;
   flex-wrap: nowrap !important;
@@ -1807,10 +1808,10 @@ body.page-log select.inp {
 }
 body.page-log .log-select-wrap {
   position: relative !important;
-  flex: 0 0 240px !important;
+  flex: 1 1 240px !important;
 }
 body.page-log .log-select-level {
-  flex: 0 0 180px !important;
+  flex: 0 0 200px !important;
 }
 body.page-log .log-select-wrap .custom-select-wrap {
   position: relative !important;
@@ -2005,6 +2006,9 @@ body.page-log .log-kosong-card {
 }
 body.page-log .log-kosong-card[style*="display: none"],
 body.page-log .log-kosong-card[style*="display:none"] {
+  display: none !important;
+}body.page-log .log-terminal-card[style*="display: none"],
+body.page-log .log-terminal-card[style*="display:none"] {
   display: none !important;
 }
 

@@ -150,10 +150,16 @@
       if (kosong) kosong.style.display = '';
       const bar = document.querySelector('.adm-bar');
       if (bar) bar.style.display = 'none';
+      const kartu = document.getElementById('terminal-card');
+      if (kartu) kartu.style.display = 'none';
       if (sel) sel.innerHTML = '';
       return false;
     }
     if (kosong) kosong.style.display = 'none';
+    const kartu = document.getElementById('terminal-card');
+    if (kartu) kartu.style.display = '';
+    const barAtas = document.querySelector('.adm-bar');
+    if (barAtas) barAtas.style.display = '';
     bots.forEach(b => botMap.set(b.id, b));
     if (sel) {
       sel.innerHTML = bots.map(b => '<option value="' + b.id + '">' + esc(b.bot_name) + '</option>').join('');
@@ -180,5 +186,15 @@
   const sapaan = document.getElementById('greeting');
   if (sapaan) sapaan.textContent = 'Log Aktivitas';
   window.openAddBot = () => { location.href = '/dashboard'; };
-  window.muatLogHalaman = loadLogs;
+  // Tombol "Muat Ulang": muat ulang daftar bot (kalau sebelumnya kosong) + log terbaru.
+  window.muatLogHalaman = async function () {
+    if (!botId) {
+      const ada = await isiPilihanBot();
+      uiToast(ada ? 'Log diperbarui' : 'Belum ada bot terdaftar', 1400);
+      if (!ada) return;
+    } else {
+      uiToast('Log diperbarui', 1200);
+    }
+    switchBot();
+  };
 })();
