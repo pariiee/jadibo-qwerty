@@ -104,12 +104,12 @@
   if (btnPilih && inpAvatar) {
     btnPilih.addEventListener('click', () => inpAvatar.click());
     inpAvatar.addEventListener('change', async function () {
-      avErr.textContent = ''; avOk.textContent = '';
+      pesan(avErr, ''); pesan(avOk, '');
       const file = this.files && this.files[0];
       if (!file) return;
 
       if (file.size > 500 * 1024) {
-        avErr.textContent = 'Ukuran foto terlalu besar (' + Math.round(file.size / 1024) + ' KB). Maksimal 500 KB.';
+        pesan(avErr, 'Ukuran foto terlalu besar (' + Math.round(file.size / 1024) + ' KB). Maksimal 500 KB.');
         this.value = '';
         return;
       }
@@ -128,12 +128,12 @@
         inpAvatar.value = '';
 
         if (!d?.ok) {
-          avErr.textContent = d?.message || 'Gagal mengunggah foto.';
+          pesan(avErr, d?.message || 'Gagal mengunggah foto.');
           return;
         }
 
         renderAvatar(d.avatar_url);
-        avOk.textContent = d.message || 'Foto profil diperbarui!';
+        pesan(avOk, d.message || 'Foto profil diperbarui!');
         showToast('Foto profil diperbarui', 'success');
 
         const topAv = document.getElementById('top-avatar-txt');
@@ -142,7 +142,7 @@
       reader.onerror = function () {
         btnPilih.disabled = false;
         btnPilih.textContent = 'Pilih Foto';
-        avErr.textContent = 'Gagal membaca berkas gambar.';
+        pesan(avErr, 'Gagal membaca berkas gambar.');
       };
       reader.readAsDataURL(file);
     });
@@ -150,17 +150,17 @@
 
   if (btnHapus) {
     btnHapus.addEventListener('click', async function () {
-      avErr.textContent = ''; avOk.textContent = '';
+      pesan(avErr, ''); pesan(avOk, '');
       btnHapus.disabled = true;
       const d = await api('/api/user/avatar', { method: 'DELETE' });
       btnHapus.disabled = false;
       if (!d?.ok) {
-        avErr.textContent = d?.message || 'Gagal menghapus foto.';
+        pesan(avErr, d?.message || 'Gagal menghapus foto.');
         return;
       }
       const uName = document.getElementById('pf-user')?.textContent || '?';
       renderAvatar(null, uName);
-      avOk.textContent = d.message || 'Foto profil dihapus.';
+      pesan(avOk, d.message || 'Foto profil dihapus.');
       showToast('Foto profil dihapus', 'info');
 
       const topAv = document.getElementById('top-avatar-txt');
@@ -168,10 +168,16 @@
     });
   }
 
+  // .err / .ok disembunyikan CSS (display:none). Tanpa toggling display, pesan
+  // yang sudah diisi tetap tak terlihat — user cuma lihat tombol balik normal.
+  function pesan(el, text) {
+    if (!el) return;
+    el.textContent = text || '';
+    el.style.display = text ? 'block' : 'none';
+  }
+
   function tampilError(msg) {
-    const el = document.getElementById('pw-error');
-    el.textContent = msg;
-    el.style.display = msg ? 'block' : 'none';
+    pesan(document.getElementById('pw-error'), msg);
   }
 
   async function simpanPassword(e) {
@@ -203,21 +209,21 @@
     const err = document.getElementById('hp-error');
     const ok = document.getElementById('hp-ok');
     const tombol = document.getElementById('hp-btn');
-    err.textContent = ''; ok.textContent = '';
+    pesan(err, ''); pesan(ok, '');
 
     const nomor = document.getElementById('hp-nomor').value.trim();
-    if (!nomor) { err.textContent = 'Nomor HP wajib diisi.'; return; }
+    if (!nomor) { pesan(err, 'Nomor HP wajib diisi.'); return; }
     tombol.disabled = true; tombol.textContent = 'Menyimpan…';
     const d = await api('/api/auth/phone', {
       method: 'POST', body: JSON.stringify({ phone: nomor }),
     });
     tombol.disabled = false; tombol.textContent = 'Simpan';
-    if (!d?.ok) { err.textContent = d?.message || 'Gagal menyimpan nomor.'; return; }
+    if (!d?.ok) { pesan(err, d?.message || 'Gagal menyimpan nomor.'); return; }
 
     // Server yang menormalkan (08xx -> 628xx) — tampilkan balik hasilnya biar
     // user lihat bentuk yang benar-benar dipakai buat kirim notif.
     if (d.phone) document.getElementById('hp-nomor').value = d.phone;
-    ok.textContent = d.message || 'Nomor disimpan.';
+    pesan(ok, d.message || 'Nomor disimpan.');
     showToast(d.message || 'Nomor HP disimpan', 'success');
   }
 
@@ -226,16 +232,16 @@
     e.preventDefault();
     const err = document.getElementById('em-error');
     const ok = document.getElementById('em-ok');
-    err.textContent = ''; ok.textContent = '';
+    pesan(err, ''); pesan(ok, '');
 
     const alamat = document.getElementById('em-alamat').value.trim();
     const d = await api('/api/auth/email', {
       method: 'POST', body: JSON.stringify({ email: alamat }),
     });
-    if (!d?.ok) { err.textContent = d?.message || 'Gagal menyimpan email.'; return; }
+    if (!d?.ok) { pesan(err, d?.message || 'Gagal menyimpan email.'); return; }
 
     if (d.email) document.getElementById('em-alamat').value = d.email;
-    ok.textContent = d.message || 'Email disimpan.';
+    pesan(ok, d.message || 'Email disimpan.');
     showToast(d.message || 'Email disimpan', 'success');
   }
 
