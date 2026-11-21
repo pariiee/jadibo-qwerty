@@ -454,19 +454,20 @@
     const noSlot = !(me && me.is_admin) && maxSlots === 0;
     if (noSlot) {
       const canTrial = !!(me && !me.trial_used);
+      const days = (me && me.trial_hari) || 7;
       const start = document.createElement('article');
       start.className = 'bt-tile bt-k bt-lime bt-start bt-s6 bt-r2' + (btAnimated ? '' : ' bt-anim');
       if (!btAnimated) start.style.animationDelay = (300 + bots.length * 70) + 'ms';
       start.innerHTML =
         '<div class="bt-row"><span class="bt-pill">Mulai di sini</span><span class="bt-pill">3 langkah</span></div>' +
-        '<h3>' + (canTrial ? 'Coba gratis 3 hari dulu' : 'Pilih paket untuk mulai') + '</h3>' +
+        '<h3>' + (canTrial ? 'Coba gratis ' + days + ' hari dulu' : 'Pilih paket untuk mulai') + '</h3>' +
         '<p class="bt-d">' + (canTrial ? 'Klaim trial, lalu bot pertamamu bisa langsung dibuat.' : 'Trial kamu sudah terpakai. Pilih paket supaya bisa membuat bot.') + '</p>' +
         '<ol class="bt-steps">' +
           '<li><i>1</i>' + (canTrial ? 'Klaim trial' : 'Pilih paket') + '</li>' +
           '<li><i>2</i>Buat bot</li>' +
           '<li><i>3</i>Hubungkan platform</li>' +
         '</ol>' +
-        '<button type="button" class="bt-go" data-start>' + (canTrial ? 'Klaim trial 3 hari' : 'Lihat paket') +
+        '<button type="button" class="bt-go" data-start>' + (canTrial ? 'Klaim trial ' + days + ' hari' : 'Lihat paket') +
           '<span><svg class="i" viewBox="0 0 24 24"><path d="M7 17 17 7M8 7h9v9"/></svg></span></button>';
       start.querySelector('[data-start]').onclick = () => { if (canTrial) { klaimTrialAction(); } else { location.href = '/pricing'; } };
       grid.appendChild(start);
