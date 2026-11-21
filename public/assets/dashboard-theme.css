@@ -1517,7 +1517,12 @@ body.page-dashboard .bt-stk { top: 46px; width: 70px; height: 70px; }
 body.page-dashboard .bt-stk svg { width: 40px; height: 40px; }
 
 /* ══ Command Manager Component Styles ══ */
-body.page-command .cmd-bento-content {
+/* shell konten bersama: semua halaman pakai satu aturan (bukan 7 salinan) */
+body.page-command .cmd-bento-content,
+body.page-log .log-bento-content,
+body.page-panduan .panduan-bento-content,
+body.page-billing .billing-bento-content,
+body.page-saldo .saldo-bento-content{
   width: 100% !important;
   max-width: 1360px !important;
   margin: 0 auto !important;
@@ -1525,6 +1530,16 @@ body.page-command .cmd-bento-content {
   flex-direction: column !important;
   gap: 14px !important;
 }
+body.page-pricing .pricing-bento-content,
+body.page-kuota .kuota-bento-content{
+  width: 100% !important;
+  max-width: 1360px !important;
+  margin: 0 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+}
+
 
 body.page-command .cmd-hero-banner {
   display: flex !important; align-items: center !important; justify-content: space-between !important;
@@ -1762,14 +1777,7 @@ body.page-command .cmd-pager-info { font-size: 13px !important; font-weight: 700
 
 /* ══ Log Activity Component Styles ══ */
 /* ponytail: toolbar ikut lebar kartu; display tanpa !important supaya JS bisa sembunyikan saat tanpa bot */
-body.page-log .log-bento-content {
-  width: 100% !important;
-  max-width: 1360px !important;
-  margin: 0 auto !important;
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 14px !important;
-}
+
 
 body.page-log .log-hero-banner {
   display: flex !important; align-items: center !important; justify-content: space-between !important;
@@ -2026,14 +2034,7 @@ body.page-log .log-kosong-card .bt-go {
 }
 
 /* ══ Panduan Component Styles ══ */
-body.page-panduan .panduan-bento-content {
-  width: 100% !important;
-  max-width: 1360px !important;
-  margin: 0 auto !important;
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 14px !important;
-}
+
 
 body.page-panduan .panduan-hero-banner {
   display: flex !important; align-items: center !important; justify-content: space-between !important;
@@ -2191,14 +2192,7 @@ body.page-panduan .faq-note {
 }
 
 /* ══ Pricing Component Styles ══ */
-body.page-pricing .pricing-bento-content {
-  width: 100% !important;
-  max-width: 1360px !important;
-  margin: 0 auto !important;
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 16px !important;
-}
+
 
 body.page-pricing .pricing-hero-banner,
 body.page-profil .pricing-hero-banner {
@@ -2519,14 +2513,7 @@ body.page-pricing .pricing-btn-secondary {
 }
 
 /* ══ Billing / Riwayat Component Styles ══ */
-body.page-billing .billing-bento-content {
-  width: 100% !important;
-  max-width: 1360px !important;
-  margin: 0 auto !important;
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 14px !important;
-}
+
 
 body.page-billing .billing-hero-banner {
   display: flex !important; align-items: center !important; justify-content: space-between !important;
@@ -2881,14 +2868,7 @@ body.page-profil .pf-ok {
 }
 
 /* ══ Saldo / Wallet Component Styles ══ */
-body.page-saldo .saldo-bento-content {
-  width: 100% !important;
-  max-width: 1360px !important;
-  margin: 0 auto !important;
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 14px !important;
-}
+
 
 body.page-saldo .saldo-hero-banner {
   display: flex !important; align-items: center !important; justify-content: space-between !important;
@@ -3253,14 +3233,7 @@ html body.page-profil .pf-btn-submit:hover {
 }
 
 /* ══ Kuota Component Styles ══ */
-body.page-kuota .kuota-bento-content {
-  width: 100% !important;
-  max-width: 1360px !important;
-  margin: 0 auto !important;
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 16px !important;
-}
+
 
 body.page-kuota .kuota-hero-banner {
   display: flex !important; align-items: center !important; justify-content: space-between !important;
